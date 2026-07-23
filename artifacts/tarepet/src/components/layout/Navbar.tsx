@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
-  { href: "/about", label: "About Us" },
+  { href: "/about", label: "About" },
   { href: "/programs", label: "Programs" },
-  { href: "/blog", label: "News & Blog" },
+  { href: "/admissions", label: "Admissions" },
+  { href: "/journal", label: "Journal" },
+  { href: "/events", label: "Events" },
   { href: "/contact", label: "Contact" },
 ];
 
@@ -55,8 +57,8 @@ export function Navbar() {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
-            <ul className="flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-6">
+            <ul className="flex items-center gap-6">
               {NAV_LINKS.map((link) => (
                 <li key={link.href}>
                   <Link 
@@ -70,7 +72,16 @@ export function Navbar() {
                 </li>
               ))}
             </ul>
-            <Link href="/admissions" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6 py-2 shadow-sm">
+            <Link 
+              href="/sign-in" 
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-primary text-primary hover:bg-primary/5 h-10 px-6 py-2"
+            >
+              Sign In
+            </Link>
+            <Link 
+              href="/admissions" 
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6 py-2 shadow-sm"
+            >
               Admissions
             </Link>
           </nav>
@@ -103,8 +114,17 @@ export function Navbar() {
               </li>
             ))}
           </ul>
-          <div className="pt-4 border-t border-border">
-            <Link href="/admissions" className="flex w-full items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8 py-2">
+          <div className="pt-4 border-t border-border flex flex-col gap-3">
+            <Link 
+              href="/sign-in" 
+              className="flex w-full items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-primary text-primary hover:bg-primary/5 h-11 px-8 py-2"
+            >
+              Sign In
+            </Link>
+            <Link 
+              href="/admissions" 
+              className="flex w-full items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8 py-2"
+            >
               Admissions
             </Link>
           </div>
