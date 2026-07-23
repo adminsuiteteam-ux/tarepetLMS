@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/"
+title = "Tarepet Montessori School"
+version = "1.0.0"
+id = "artifacts/tarepet"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 26019
+
+[services.development]
+run = "pnpm --filter @workspace/tarepet run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/tarepet", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/tarepet/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "26019"
+BASE_PATH = "/"

@@ -1,0 +1,275 @@
+{
+  "prompt_metadata": {
+    "version": "2.0",
+    "created_by": "Senior Full-Stack Architect & Prompt Engineer (10+ years)",
+    "target_llm": "Claude 3.7 Sonnet / GPT-4 Turbo",
+    "project_value": "$10,000 USD",
+    "response_format": "structured_code_blocks"
+  },
+  "system_context": {
+    "role": "Principal Full-Stack Developer with expertise in EdTech platforms serving 50k+ concurrent users",
+    "experience": [
+      "Built 3 production LLMs",
+      "Designed 1 commercial IDE",
+      "10+ years Django + React development"
+    ],
+    "constraints": [
+      "All code must be PEP8 compliant (Django) and ESLint compliant (React)",
+      "Security-first: OWASP Top 10 protections mandatory",
+      "Mobile-first responsive design",
+      "Accessibility: WCAG 2.1 AA compliance"
+    ]
+  },
+  "project_specifications": {
+    "name": "Montessori Secondary School Platform",
+    "target_audience": "Parents of children aged 11-18 seeking holistic, character-based education",
+    "pedagogical_focus": "Montessori methodology adapted for secondary education (Erdkinder approach)",
+    "reference_institution": "Best Breed Academy (structure and school spirit) but with Montessori philosophy",
+    "budget_tier_features": [
+      "Lead generation engine with automated nurture sequences",
+      "Virtual tour scheduler with calendar integration",
+      "Parent portal with student progress tracking",
+      "House system with gamification leaderboards",
+      "AI-powered chatbot for parent inquiries",
+      "Blog/News engine with WYSIWYG editor",
+      "Event management and registration",
+      "Multi-language support (English + local language)"
+    ]
+  },
+  "technical_stack": {
+    "backend": {
+      "framework": "Django 5.0",
+      "api": "Django Rest Framework (DRF) 3.15",
+      "database": "PostgreSQL 16",
+      "authentication": "JWT (SimpleJWT) with refresh/access tokens",
+      "task_queue": "Celery 5.3 + Redis 7",
+      "caching": "Redis (for session and API caching)",
+      "search": "django-filter + PostgreSQL full-text search",
+      "email": "SendGrid/SMTP with templated emails",
+      "file_storage": "AWS S3 / Cloudinary for media files",
+      "structure": "Modular apps: accounts, academics, admissions, activities, blog, api"
+    },
+    "frontend": {
+      "framework": "React 18",
+      "build_tool": "Vite",
+      "styling": "Tailwind CSS 3 (custom Montessori earth-tone theme)",
+      "state_management": "TanStack Query (server state) + Context API (client state)",
+      "routing": "React Router v6 (lazy-loaded routes)",
+      "forms": "React Hook Form + Zod validation",
+      "ui_components": "Headless UI + Radix UI primitives",
+      "chat_interface": "Custom RAG-powered component with streaming responses",
+      "seo": "react-helmet-async for dynamic meta tags",
+      "performance": "Code splitting, image optimization (WebP), bundle size < 200KB initial"
+    },
+    "devops": {
+      "containerization": "Docker + Docker Compose",
+      "ci_cd": "GitHub Actions (optional)",
+      "environment_variables": "Separate .env files for local/staging/production",
+      "monitoring": "Sentry for error tracking (optional)"
+    }
+  },
+  "database_schema_requirements": {
+    "custom_user_model": {
+      "fields": ["email", "phone", "user_type", "is_parent", "is_staff", "is_student"],
+      "extends": "AbstractUser"
+    },
+    "student_profile": {
+      "fields": ["user", "parent", "grade_level", "house", "admission_date", "medical_info"],
+      "relationships": ["Many-to-One with User", "Many-to-One with House"]
+    },
+    "house_model": {
+      "fields": ["name", "color", "motto", "points", "head_of_house"],
+      "predefined": ["Red (Passion)", "Blue (Wisdom)", "Green (Growth)", "Purple (Royalty)"]
+    },
+    "inquiry_model": {
+      "fields": ["parent_name", "email", "phone", "child_age", "message", "status", "created_at"],
+      "statuses": ["new", "contacted", "toured", "enrolled", "lost"]
+    },
+    "blog_post": {
+      "fields": ["title", "slug", "content", "author", "category", "published_date", "featured_image"],
+      "categories": ["Montessori Method", "School Events", "Student Achievements", "Sports", "Parenting"]
+    },
+    "event_model": {
+      "fields": ["title", "description", "date", "time", "location", "capacity", "registered_count"]
+    }
+  },
+  "api_endpoints_required": {
+    "auth": {
+      "POST /api/v1/auth/token/": "Obtain JWT access/refresh tokens",
+      "POST /api/v1/auth/refresh/": "Refresh access token",
+      "POST /api/v1/auth/register/": "Parent registration",
+      "POST /api/v1/auth/password-reset/": "Password reset email"
+    },
+    "admissions": {
+      "GET /api/v1/inquiries/": "List inquiries (admin only)",
+      "POST /api/v1/inquiries/": "Submit new inquiry (public)",
+      "GET /api/v1/tours/availability/": "Get available tour slots",
+      "POST /api/v1/tours/book/": "Book a campus tour"
+    },
+    "academics": {
+      "GET /api/v1/programs/": "List academic programs (Montessori levels)",
+      "GET /api/v1/curriculum/": "Get curriculum details by grade"
+    },
+    "activities": {
+      "GET /api/v1/houses/": "List houses with points",
+      "POST /api/v1/houses/{id}/points/": "Add points (admin only)",
+      "GET /api/v1/events/": "List upcoming events",
+      "POST /api/v1/events/{id}/register/": "Register for event"
+    },
+    "blog": {
+      "GET /api/v1/posts/": "List blog posts (paginated)",
+      "GET /api/v1/posts/{slug}/": "Get single post",
+      "POST /api/v1/posts/": "Create post (admin only)"
+    },
+    "parent_portal": {
+      "GET /api/v1/students/": "List parent's children",
+      "GET /api/v1/students/{id}/progress/": "Get student progress reports",
+      "GET /api/v1/students/{id}/portfolio/": "Get student work portfolio"
+    }
+  },
+  "frontend_routes": {
+    "public": [
+      { "path": "/", "component": "HomePage", "features": ["Hero", "Programs Preview", "Testimonials", "News"] },
+      { "path": "/about", "component": "AboutPage", "features": ["Mission", "Montessori Philosophy", "Team"] },
+      { "path": "/programs", "component": "ProgramsPage", "features": ["Grade Levels", "Curriculum Overview"] },
+      { "path": "/admissions", "component": "AdmissionsPage", "features": ["Inquiry Form", "Tour Scheduler"] },
+      { "path": "/blog", "component": "BlogPage", "features": ["Posts", "Categories", "Search"] },
+      { "path": "/blog/:slug", "component": "BlogPostPage", "features": ["Full Article", "Related Posts"] },
+      { "path": "/contact", "component": "ContactPage", "features": ["Form", "Map", "Hours"] }
+    ],
+    "private": [
+      { "path": "/dashboard", "component": "ParentDashboard", "features": ["Children Overview", "Progress Reports"] },
+      { "path": "/student/:id", "component": "StudentProfile", "features": ["Portfolio", "Assignments", "House Points"] },
+      { "path": "/events", "component": "EventsPage", "features": ["Calendar View", "Registration"] }
+    ]
+  },
+  "design_system": {
+    "colors": {
+      "primary": "#8B7A6B",  // Warm earth tone
+      "secondary": "#C9B8A4", // Soft beige
+      "accent": "#6B8F71",   // Nature green
+      "background": "#FDF9F5", // Off-white
+      "text": "#3D2E26",     // Dark brown
+      "highlight": "#D4A373" // Golden accent
+    },
+    "typography": {
+      "heading": "Georgia, serif",
+      "body": "Inter, sans-serif",
+      "base_size": "16px"
+    },
+    "spacing": "Consistent padding/margins using Tailwind scale (1-16)",
+    "components_to_build": [
+      "Navbar (sticky, responsive with hamburger)",
+      "Footer (multi-column with links)",
+      "Hero (full-width with CTA)",
+      "Card grid (for programs, blog posts)",
+      "Form components (Input, Select, Textarea, Button)",
+      "Modal (for tour booking)",
+      "Chat bubble (floating AI assistant)",
+      "Progress bar (for house points)"
+    ]
+  },
+  "business_logic_requirements": {
+    "lead_nurture": {
+      "triggers": "On inquiry submission",
+      "sequence": [
+        {"day": 0, "email": "Welcome and Thank You"},
+        {"day": 3, "email": "Montessori Philosophy Explained"},
+        {"day": 7, "email": "Virtual Tour Invitation"},
+        {"day": 14, "email": "Parent Testimonial Video"},
+        {"day": 21, "email": "Final Call to Schedule Tour"}
+      ],
+      "task_engine": "Celery scheduled tasks"
+    },
+    "tour_scheduler": {
+      "slots": "Mon-Fri 9AM, 10:30AM, 1PM, 2:30PM",
+      "booking_rules": "Max 3 families per slot, confirmation email required",
+      "calendar_integration": "Google Calendar API (optional)"
+    },
+    "house_system": {
+      "points_calculation": "Academic achievements + Sports wins + Community service",
+      "leaderboard_update": "Re-calculate daily via Celery Beat"
+    }
+  },
+  "development_instructions": {
+    "setup_phase": [
+      "Create Django project structure with modular apps",
+      "Configure settings.py to use environment variables",
+      "Set up PostgreSQL and Redis via Docker Compose",
+      "Initialize React app with Vite and Tailwind",
+      "Configure JWT authentication"
+    ],
+    "backend_development_phase": [
+      "Build Custom User Model and extend with StudentProfile",
+      "Create Admissions app (models, serializers, viewsets)",
+      "Implement Celery tasks for email nurture sequence",
+      "Create Blog app with slug generation and SEO meta fields",
+      "Build Houses and Events models with CRUD operations",
+      "Create Parent Portal APIs (progress reports, portfolio)",
+      "Add API documentation using drf-spectacular (OpenAPI)",
+      "Write comprehensive unit tests (pytest) covering all endpoints"
+    ],
+    "frontend_development_phase": [
+      "Set up routing with React Router (public + private routes)",
+      "Build reusable components (Button, Input, Card, Modal)",
+      "Create TanStack Query hooks for all API endpoints",
+      "Implement authentication context (JWT storage, refresh logic)",
+      "Build Inquiry Form with validation and mutation",
+      "Create Tour Scheduler component with availability calendar",
+      "Build Blog page with pagination and category filter",
+      "Create Parent Dashboard with secure route protection",
+      "Implement House Points leaderboard with animated counter",
+      "Build RAG-based AI chat component (placeholder for backend connection)"
+    ],
+    "deployment_checklist": [
+      "All .env variables documented in README",
+      "CORS configured for production domain",
+      "Static and media files configured for S3/Cloudinary",
+      "Django DEBUG = False with proper error pages",
+      "Database migrations checked and tested",
+      "Performance audit (Lighthouse score > 90)",
+      "Security headers implemented (HSTS, CSP, XSS Protection)"
+    ]
+  },
+  "output_formatting": {
+    "code_delivery": {
+      "file_paths": "Relative path from project root (e.g., `backend/apps/admissions/models.py`)",
+      "language_blocks": "Use triple backticks with language annotation (python, javascript, jsx, css)",
+      "explanations": "Provide concise comments for complex logic, focus on code generation"
+    },
+    "priority_sequence": [
+      "Project directory structure",
+      "Django settings.py and Docker setup",
+      "Custom User Model and authentication",
+      "Inquiries and Tours API",
+      "React routing and authentication context",
+      "Inquiry Form frontend component",
+      "Blog API and frontend",
+      "Parent Portal and House System"
+    ],
+    "testing_requirements": {
+      "backend_tests": "pytest with factory_boy for models; APIClient for endpoints",
+      "frontend_tests": "Vitest for unit tests; React Testing Library for component tests"
+    }
+  },
+  "seo_and_analytics": {
+    "meta_tags": "Dynamic meta titles, descriptions, OG tags for social sharing",
+    "sitemap": "Automated sitemap.xml generation",
+    "robots_txt": "Allow Googlebot, disallow admin pages",
+    "analytics": "Google Analytics 4 (GTAG) with consent management"
+  },
+  "additional_enhancements": {
+    "accessibility": {
+      "aria_labels": "All interactive elements must have appropriate ARIA attributes",
+      "keyboard_navigation": "Full keyboard support for all components",
+      "color_contrast": "WCAG 2.1 AA compliance (4.5:1 ratio for text)"
+    },
+    "internationalization": "i18n support for English + local language (placeholder)",
+    "performance_budget": {
+      "initial_load": "< 2.5s on 3G",
+      "time_to_interactive": "< 3.5s",
+      "core_web_vitals": "LCP < 2.5s, FID < 100ms, CLS < 0.1"
+    }
+  },
+  "final_instruction": "Generate the complete codebase in sequential phases, starting with the Django project structure and core models, then moving to API endpoints, and finally the React frontend. For every component, ensure you include proper error handling, loading states, and type definitions (Python type hints + PropTypes/Typescript). The final output must be deployable as a functional MVP that can be hosted on a cloud provider like AWS, Heroku, or DigitalOcean."
+}
