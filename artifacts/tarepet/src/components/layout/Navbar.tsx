@@ -143,24 +143,19 @@ export function Navbar() {
               {/* Nav links */}
               <nav className="flex-1 overflow-y-auto px-4 py-6">
                 <ul className="flex flex-col gap-1">
-                  {NAV_LINKS.map((link, i) => (
-                    <motion.li
-                      key={link.href}
-                      initial={{ opacity: 0, x: -16 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.08 + i * 0.05, duration: 0.25 }}
-                    >
+                  {NAV_LINKS.map((link) => (
+                    <li key={link.href}>
                       <Link
                         href={link.href}
                         className={`flex items-center px-3 py-3 rounded-lg font-sans text-base font-medium transition-colors ${
                           location === link.href
-                            ? "bg-primary/8 text-primary"
-                            : "text-foreground/80 hover:bg-muted hover:text-foreground"
+                            ? "bg-primary/10 text-primary"
+                            : "text-foreground hover:bg-muted hover:text-primary"
                         }`}
                       >
                         {link.label}
                       </Link>
-                    </motion.li>
+                    </li>
                   ))}
                 </ul>
               </nav>
