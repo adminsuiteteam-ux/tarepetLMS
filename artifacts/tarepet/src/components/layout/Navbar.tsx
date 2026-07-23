@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import tarepetLogo from "@assets/tarepet__1784835204178.png";
 import { Button } from "@/components/ui/button";
 
@@ -97,39 +98,92 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Navigation */}
-      {mobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-white border-t border-border shadow-lg py-4 px-4 flex flex-col gap-4 max-h-[calc(100vh-80px)] overflow-y-auto">
-          <ul className="flex flex-col gap-4">
-            {NAV_LINKS.map((link) => (
-              <li key={link.href}>
-                <Link 
-                  href={link.href}
-                  className={`block py-2 font-sans text-base font-medium ${
-                    location === link.href ? "text-primary" : "text-foreground/80"
-                  }`}
-                >
-                  {link.label}
+      {/* Mobile Navigation — slides in from the left */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              key="backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="md:hidden fixed inset-0 bg-black/40 z-40"
+              onClick={() => setMobileMenuOpen(false)}
+            />
+
+            {/* Drawer */}
+            <motion.div
+              key="drawer"
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
+              className="md:hidden fixed top-0 left-0 bottom-0 w-72 bg-white z-50 flex flex-col shadow-2xl"
+            >
+              {/* Drawer header */}
+              <div className="flex items-center justify-between px-5 py-5 border-b border-border">
+                <Link href="/" className="flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
+                  <img src={tarepetLogo} alt="Tarepet Logo" className="w-9 h-9 object-contain" />
+                  <div className="flex flex-col">
+                    <span className="font-serif font-bold text-lg text-primary leading-none">Tarepet</span>
+                    <span className="font-sans text-[10px] uppercase tracking-[0.12em] text-secondary font-medium mt-0.5">montessori school</span>
+                  </div>
                 </Link>
-              </li>
-            ))}
-          </ul>
-          <div className="pt-4 border-t border-border flex flex-col gap-3">
-            <Link 
-              href="/sign-in" 
-              className="flex w-full items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-primary text-primary hover:bg-primary/5 h-11 px-8 py-2"
-            >
-              Sign In
-            </Link>
-            <Link 
-              href="/admissions" 
-              className="flex w-full items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8 py-2"
-            >
-              Admissions
-            </Link>
-          </div>
-        </div>
-      )}
+                <button
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-1.5 rounded-md text-foreground/60 hover:text-foreground hover:bg-muted transition-colors"
+                  aria-label="Close menu"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Nav links */}
+              <nav className="flex-1 overflow-y-auto px-4 py-6">
+                <ul className="flex flex-col gap-1">
+                  {NAV_LINKS.map((link, i) => (
+                    <motion.li
+                      key={link.href}
+                      initial={{ opacity: 0, x: -16 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.08 + i * 0.05, duration: 0.25 }}
+                    >
+                      <Link
+                        href={link.href}
+                        className={`flex items-center px-3 py-3 rounded-lg font-sans text-base font-medium transition-colors ${
+                          location === link.href
+                            ? "bg-primary/8 text-primary"
+                            : "text-foreground/80 hover:bg-muted hover:text-foreground"
+                        }`}
+                      >
+                        {link.label}
+                      </Link>
+                    </motion.li>
+                  ))}
+                </ul>
+              </nav>
+
+              {/* Bottom CTAs */}
+              <div className="px-4 pb-6 pt-3 border-t border-border flex flex-col gap-3">
+                <Link
+                  href="/sign-in"
+                  className="flex w-full items-center justify-center rounded-md text-sm font-medium border border-primary text-primary hover:bg-primary/5 h-11 px-6 transition-colors"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/admissions"
+                  className="flex w-full items-center justify-center rounded-md text-sm font-medium bg-primary text-white hover:bg-primary/90 h-11 px-6 transition-colors shadow-sm"
+                >
+                  Admissions
+                </Link>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </header>
   );
 }
