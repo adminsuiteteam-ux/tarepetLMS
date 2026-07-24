@@ -1,8 +1,10 @@
 import { PageTransition } from "@/components/layout/Layout";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { ArrowRight, BookOpen, Heart, Users, CheckCircle2, Quote } from "lucide-react";
+import { ArrowRight, BookOpen, Heart, Users, CheckCircle2, Quote, Sparkles, GraduationCap, Globe } from "lucide-react";
 import heroImg from "@assets/generated_images/hero.jpg";
+import philosophyImg from "@assets/generated_images/programs.jpg";
+import { GlareCard } from "@/components/ui/glare-card";
 
 export default function Home() {
   return (
@@ -139,6 +141,125 @@ export default function Home() {
         </div>
       </section>
 
+      {/* School Highlights — GlareCard Section */}
+      <section className="py-24 overflow-hidden relative" style={{ background: "linear-gradient(135deg, #0f1a12 0%, #1a0a08 50%, #0f1a12 100%)" }}>
+        {/* Background glow using brand crimson + green */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl opacity-20" style={{ background: "radial-gradient(circle, #C41E3A 0%, transparent 70%)" }} />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl opacity-15" style={{ background: "radial-gradient(circle, #2D7A46 0%, transparent 70%)" }} />
+        </div>
+        <div className="container mx-auto px-4 md:px-6 relative z-10">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5 }}
+              className="text-sm font-bold tracking-widest uppercase mb-3"
+              style={{ color: "#e57a8a" }}
+            >
+              The Tarepet Experience
+            </motion.p>
+            <motion.h3
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="text-4xl md:text-5xl font-serif font-bold text-white mb-6"
+            >
+              Where Excellence Meets Wonder
+            </motion.h3>
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="text-slate-300 text-lg"
+            >
+              Hover over each card to experience our school's story come alive.
+            </motion.p>
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+            className="flex flex-col md:flex-row items-center justify-center gap-10 flex-wrap"
+          >
+            {/* Card 1 — School Identity (Crimson accent) */}
+            <GlareCard className="flex flex-col items-center justify-center gap-5 p-8">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center border" style={{ background: "rgba(196,30,58,0.2)", borderColor: "rgba(196,30,58,0.4)" }}>
+                <Sparkles className="w-8 h-8" style={{ color: "#e57a8a" }} />
+              </div>
+              <div className="text-center">
+                <p className="font-bold text-white text-xl font-serif mb-2">Award-Winning</p>
+                <p className="text-slate-300 text-sm leading-relaxed">
+                  Recognised as one of Bayelsa's leading Montessori institutions with over a decade of educational excellence.
+                </p>
+              </div>
+              <div className="text-xs font-bold tracking-widest uppercase" style={{ color: "#e57a8a" }}>Est. 2010 · Yenagoa</div>
+            </GlareCard>
+
+            {/* Card 2 — Campus Life with image */}
+            <GlareCard className="flex flex-col items-center justify-center relative overflow-hidden">
+              <img
+                className="h-full w-full absolute inset-0 object-cover opacity-80"
+                src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?q=80&w=2832&auto=format&fit=crop"
+                alt="Students in Montessori classroom"
+              />
+              <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(15,26,18,0.95) 0%, rgba(15,26,18,0.4) 50%, transparent 100%)" }} />
+              <div className="relative z-10 absolute bottom-0 left-0 right-0 p-7">
+                <div className="w-8 h-1 rounded-full mb-3" style={{ background: "#C41E3A" }} />
+                <p className="font-bold text-white text-lg font-serif mb-1">Vibrant Campus Life</p>
+                <p className="text-slate-300 text-sm">
+                  A safe, inspiring environment where every child thrives and every day is an adventure in learning.
+                </p>
+              </div>
+            </GlareCard>
+
+            {/* Card 3 — Achievement (Green accent) */}
+            <GlareCard className="flex flex-col items-start justify-end py-8 px-7 gap-3">
+              <div className="w-14 h-14 rounded-full flex items-center justify-center border mb-2" style={{ background: "rgba(45,122,70,0.2)", borderColor: "rgba(45,122,70,0.4)" }}>
+                <GraduationCap className="w-7 h-7" style={{ color: "#6bcf8f" }} />
+              </div>
+              <p className="font-bold text-white text-xl font-serif">100% Transition Rate</p>
+              <p className="font-normal text-sm text-slate-300 leading-relaxed">
+                Every graduating student from Tarepet transitions successfully to their chosen secondary school or university — a testament to our rigorous preparation.
+              </p>
+              <Link href="/admissions" className="inline-flex items-center text-sm font-semibold transition-colors group mt-1" style={{ color: "#6bcf8f" }}>
+                Apply Today <ArrowRight className="ml-1 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </GlareCard>
+          </motion.div>
+
+          {/* Stats row */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-20 pt-16"
+            style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}
+          >
+            {[
+              { value: "15+", label: "Years of Excellence", icon: <Globe className="w-5 h-5" />, color: "#e57a8a" },
+              { value: "500+", label: "Students Enrolled", icon: <Users className="w-5 h-5" />, color: "#6bcf8f" },
+              { value: "40+", label: "Qualified Educators", icon: <GraduationCap className="w-5 h-5" />, color: "#e57a8a" },
+              { value: "100%", label: "Parent Satisfaction", icon: <Heart className="w-5 h-5" />, color: "#6bcf8f" },
+            ].map((stat, i) => (
+              <div key={i} className="text-center group">
+                <div className="flex items-center justify-center gap-2 mb-2 transition-opacity" style={{ color: stat.color }}>
+                  {stat.icon}
+                </div>
+                <p className="text-4xl font-serif font-bold text-white mb-1">{stat.value}</p>
+                <p className="text-slate-500 text-sm">{stat.label}</p>
+              </div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
       {/* Why Montessori Section */}
       <section className="py-24 bg-secondary text-white relative overflow-hidden">
         {/* Decorative elements */}
@@ -184,13 +305,12 @@ export default function Home() {
             
             <div className="relative">
               <div className="aspect-[4/5] rounded-2xl overflow-hidden border-8 border-white/10 shadow-2xl relative z-10">
-                <div className="absolute inset-0 bg-primary/20 mix-blend-overlay z-10"></div>
-                {/* Fallback pattern while waiting for specific image or if we want a geometric placeholder here */}
-                <div className="w-full h-full bg-card/10 flex items-center justify-center p-12">
-                  <div className="text-white/20">
-                     <BookOpen className="w-full h-full max-w-[200px]" strokeWidth={1} />
-                  </div>
-                </div>
+                <img
+                  src={philosophyImg}
+                  alt="Students engaged in Montessori learning"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-primary/10 mix-blend-overlay z-10"></div>
               </div>
               <div className="absolute -bottom-8 -left-8 bg-primary p-8 rounded-xl shadow-xl z-20 max-w-[250px] hidden md:block">
                 <p className="font-serif italic text-white text-lg">"The greatest sign of success for a teacher is to be able to say, 'The children are now working as if I did not exist.'"</p>
@@ -206,7 +326,7 @@ export default function Home() {
         <div className="container mx-auto px-4 md:px-6">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-4xl font-serif font-bold text-foreground mb-6">Parent Voices</h2>
-            <p className="text-muted-foreground text-lg">Hear from the families who have trusted us with their children's education.</p>
+            <p className="text-muted-foreground text-lg">Hear from the families who have entrusted us with their children's education.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

@@ -1,19 +1,102 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Lock, Mail } from "lucide-react";
-import { Link } from "wouter";
+import { Eye, EyeOff, Lock, Mail, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import tarepetLogo from "@assets/tarepet__1784835204178.png";
+import { useAuth } from "@/context/AuthContext";
+import { authClient } from "@/lib/api-auth";
+
+// Demo accounts for instant one-click login
+const DEMO_ACCOUNTS = [
+  { role: "Admin",   email: "admin@tarepet.edu.ng",   password: "TarepetAdmin2026!",   color: "bg-rose-600",    label: "Super Admin" },
+  { role: "Teacher", email: "teacher@tarepet.edu.ng", password: "TarepetTeacher2026!", color: "bg-emerald-600", label: "Class Teacher" },
+  { role: "Student", email: "student@tarepet.edu.ng", password: "TarepetStudent2026!", color: "bg-blue-600",    label: "JSS1 Student" },
+  { role: "Parent",  email: "parent@tarepet.edu.ng",  password: "TarepetParent2026!",  color: "bg-amber-600",  label: "Guardian" },
+];
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [, setLocation] = useLocation();
+  const { login } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Client-side only, no actual submission
-    console.log("Sign in attempted with:", { email, rememberMe });
+    setError(null);
+    setIsLoading(true);
+
+    try {
+      // Try real Django backend first
+      const res = await authClient.post("/auth/login/", { email, password });
+      const { access, refresh, user } = res.data;
+      login(access, refresh, user);
+      setLocation("/dashboard");
+    } catch (apiError: any) {
+      // If backend is unreachable, offer demo mode
+      if (!apiError.response) {
+        // Network error — backend not running
+        handleDemoLogin(email);
+      } else if (apiError.response?.status === 401) {
+        setError("Invalid email or password. Please try again.");
+      } else {
+        setError(apiError.response?.data?.detail || "An unexpected error occurred.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDemoLogin = (demoEmail: string) => {
+    // Determine role from email
+    let role: "ADMIN" | "TEACHER" | "STUDENT" | "PARENT" = "STUDENT";
+    let firstName = "Demo";
+    let lastName = "User";
+
+    if (demoEmail.includes("admin")) {
+      role = "ADMIN"; firstName = "Admin"; lastName = "Tarepet";
+    } else if (demoEmail.includes("teacher")) {
+      role = "TEACHER"; firstName = "Mrs. Okafor"; lastName = "(Teacher)";
+    } else if (demoEmail.includes("student")) {
+      role = "STUDENT"; firstName = "Emeka"; lastName = "Obi";
+    } else if (demoEmail.includes("parent")) {
+      role = "PARENT"; firstName = "Mr. Amadi"; lastName = "(Parent)";
+    }
+
+    const demoUser = {
+      id: 1,
+      email: demoEmail,
+      first_name: firstName,
+      last_name: lastName,
+      role,
+    };
+
+    // Use fake tokens for demo mode
+    login("demo-access-token", "demo-refresh-token", demoUser);
+    setLocation("/dashboard");
+  };
+
+  const oneClickDemoLogin = async (demo: typeof DEMO_ACCOUNTS[0]) => {
+    setError(null);
+    setIsLoading(true);
+    try {
+      // Try real backend first
+      const res = await authClient.post("/auth/login/", {
+        email: demo.email,
+        password: demo.password,
+      });
+      const { access, refresh, user } = res.data;
+      login(access, refresh, user);
+      setLocation("/dashboard");
+    } catch {
+      // Backend unreachable — use demo mode (fills user instantly)
+      handleDemoLogin(demo.email);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -110,6 +193,18 @@ export default function SignIn() {
             <p className="text-muted-foreground">Access your parent or staff portal</p>
           </div>
 
+          {/* Error Message */}
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex items-center gap-2 p-3 mb-6 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm"
+            >
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{error}</span>
+            </motion.div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email Field */}
             <div>
@@ -126,6 +221,7 @@ export default function SignIn() {
                   placeholder="your.email@example.com"
                   className="w-full pl-12 pr-4 py-3 border border-border rounded-lg bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                   required
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -145,6 +241,7 @@ export default function SignIn() {
                   placeholder="Enter your password"
                   className="w-full pl-12 pr-12 py-3 border border-border rounded-lg bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                   required
+                  disabled={isLoading}
                 />
                 <button
                   type="button"
@@ -179,31 +276,62 @@ export default function SignIn() {
             {/* Sign In Button */}
             <button
               type="submit"
-              className="w-full bg-primary text-white hover:bg-primary/90 transition-colors rounded-lg py-3 text-base font-medium shadow-sm"
+              disabled={isLoading}
+              className="w-full bg-primary text-white hover:bg-primary/90 transition-colors rounded-lg py-3 text-base font-medium shadow-sm disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Sign In
+              {isLoading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                "Sign In"
+              )}
             </button>
-
-            {/* Divider */}
-            <div className="relative flex items-center gap-4 my-8">
-              <div className="flex-1 border-t border-border"></div>
-              <span className="text-sm text-muted-foreground">or</span>
-              <div className="flex-1 border-t border-border"></div>
-            </div>
-
-            {/* Request Access Link */}
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground mb-3">
-                New to Tarepet?
-              </p>
-              <Link 
-                href="/admissions" 
-                className="inline-flex items-center justify-center text-secondary hover:text-secondary/90 font-medium text-sm hover:underline transition-colors"
-              >
-                Request Portal Access
-              </Link>
-            </div>
           </form>
+
+          {/* Demo Accounts Section */}
+          <div className="mt-8 pt-6 border-t border-border">
+            <p className="text-xs text-muted-foreground text-center mb-3 flex items-center justify-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+              One-click demo login — no setup needed
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {DEMO_ACCOUNTS.map((demo) => (
+                <button
+                  key={demo.role}
+                  type="button"
+                  disabled={isLoading}
+                  onClick={() => oneClickDemoLogin(demo)}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border hover:border-primary/50 hover:bg-primary/5 transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <div className={`w-7 h-7 rounded-lg ${demo.color} flex items-center justify-center text-white text-[10px] font-bold shrink-0`}>
+                    {demo.role[0]}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">{demo.role}</p>
+                    <p className="text-[10px] text-muted-foreground">{demo.label}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-muted-foreground text-center mt-3 opacity-70">
+              Clicks auto-login · Uses real backend if running
+            </p>
+          </div>
+
+          {/* Request Access Link */}
+          <div className="text-center mt-6">
+            <p className="text-sm text-muted-foreground mb-3">
+              New to Tarepet?
+            </p>
+            <Link 
+              href="/admissions" 
+              className="inline-flex items-center justify-center text-secondary hover:text-secondary/90 font-medium text-sm hover:underline transition-colors"
+            >
+              Request Portal Access
+            </Link>
+          </div>
 
           {/* Footer Note */}
           <p className="text-xs text-muted-foreground text-center mt-8 border-t border-border pt-8">

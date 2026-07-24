@@ -78,7 +78,7 @@ const UPCOMING_EVENTS = [
   },
 ];
 
-const PAST_EVENTS = [
+const PAST_EVENTS: Array<{ id: number; title: string; date: string; time?: string; location: string; description: string; colorClass: string }> = [
   {
     id: 9,
     title: "Christmas Carol Concert",

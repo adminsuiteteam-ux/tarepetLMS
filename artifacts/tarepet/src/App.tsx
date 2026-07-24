@@ -5,6 +5,7 @@ import NotFound from '@/pages/not-found';
 import { Route, Switch, Router as WouterRouter } from 'wouter';
 import { Layout } from '@/components/layout/Layout';
 import { AnimatePresence } from 'framer-motion';
+import { AuthProvider } from '@/context/AuthContext';
 
 // Pages
 import Home from '@/pages/home';
@@ -16,16 +17,26 @@ import Contact from '@/pages/contact';
 import Journal from '@/pages/journal';
 import Events from '@/pages/events';
 import SignIn from '@/pages/sign-in';
+import DashboardRedirect from '@/pages/dashboard/DashboardRedirect';
+import AdminDashboard from '@/pages/dashboard/AdminDashboard';
+import TeacherDashboard from '@/pages/dashboard/TeacherDashboard';
+import StudentDashboard from '@/pages/dashboard/StudentDashboard';
+import ParentDashboard from '@/pages/dashboard/ParentDashboard';
 
 const queryClient = new QueryClient();
 
 function Router() {
   return (
     <Switch>
-      {/* Sign In page renders standalone without Layout */}
+      {/* Standalone Pages (No public Header/Footer layout) */}
       <Route path="/sign-in" component={SignIn} />
+      <Route path="/dashboard" component={DashboardRedirect} />
+      <Route path="/dashboard/admin" component={AdminDashboard} />
+      <Route path="/dashboard/teacher" component={TeacherDashboard} />
+      <Route path="/dashboard/student" component={StudentDashboard} />
+      <Route path="/dashboard/parent" component={ParentDashboard} />
       
-      {/* All other pages use Layout wrapper */}
+      {/* Public Pages with Layout wrapper */}
       <Route>
         <Layout>
           <AnimatePresence mode="wait">
@@ -50,12 +61,14 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-          <Router />
-        </WouterRouter>
-        <Toaster />
-      </TooltipProvider>
+      <AuthProvider>
+        <TooltipProvider>
+          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+            <Router />
+          </WouterRouter>
+          <Toaster />
+        </TooltipProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
