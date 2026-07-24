@@ -32,7 +32,7 @@ jobs:
           version: 9
 
       - name: Install dependencies
-        run: pnpm install --ignore-scripts
+        run: pnpm install --no-frozen-lockfile
         working-directory: .
 
       - name: Build Tarepet app
