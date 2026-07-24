@@ -1812,7 +1812,7 @@ export default function AdminDashboard() {
                     <h3 className="font-serif font-bold text-foreground text-sm leading-snug">{exam.title}</h3>
                     <p className="text-xs text-muted-foreground mt-0.5">{exam.subject}</p>
                   </div>
-                  <span className={`shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full border ${statusColor(exam.status)}`}>
+                  <span className={`shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full border ${statusColor(exam.status as ExamStatus)}`}>
                     {exam.status}
                   </span>
                 </div>
@@ -2168,8 +2168,8 @@ export default function AdminDashboard() {
               <ChevronLeft className="w-4 h-4" /> Manage Subjects
             </button>
             <span className="text-muted-foreground">/</span>
-            <button onClick={() => { setSelectedSubjectStream(null); setOpenSubjectClassDropdown(cls.key); }}
-              className="text-muted-foreground hover:text-foreground transition-colors">{cls.label}</button>
+            <button onClick={() => { setSelectedSubjectStream(null); setOpenSubjectClassDropdown(cls?.key ?? null); }}
+              className="text-muted-foreground hover:text-foreground transition-colors">{cls?.label}</button>
             <span className="text-muted-foreground">/</span>
             <span className="text-foreground font-semibold">{selectedSubjectStream} Stream</span>
           </div>
@@ -2177,7 +2177,7 @@ export default function AdminDashboard() {
           {/* Header + Toolbar */}
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
             <div>
-              <h2 className="text-xl font-serif font-bold text-foreground">{cls.label} — {selectedSubjectStream} Subjects</h2>
+              <h2 className="text-xl font-serif font-bold text-foreground">{cls?.label} — {selectedSubjectStream} Subjects</h2>
               <p className="text-xs text-muted-foreground mt-0.5">{filteredSubjects.length} subjects available</p>
             </div>
             
