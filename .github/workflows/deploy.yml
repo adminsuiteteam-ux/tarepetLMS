@@ -39,7 +39,7 @@ jobs:
         run: pnpm --filter "@workspace/tarepet" build
         working-directory: .
         env:
-          BASE_PATH: /tarepetmontessorischool/
+          BASE_PATH: /tarepet/
           NODE_ENV: production
 
       - name: Upload Pages artifact

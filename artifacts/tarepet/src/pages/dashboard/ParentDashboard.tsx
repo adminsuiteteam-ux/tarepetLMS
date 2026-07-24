@@ -325,8 +325,8 @@ export default function ParentDashboard() {
           <div className="flex items-center gap-3 border-b border-border pb-3">
             <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-xs">C</div>
             <div>
-              <p className="font-bold text-foreground text-sm">{selectedTeacher}</p>
-              <p className="text-[10px] text-muted-foreground">{t('Class Teacher')} &middot; {t('Re:')} {activeChild.name}</p>
+              <p className="font-bold text-foreground text-sm" aria-label={selectedTeacher}>{selectedTeacher}</p>
+              <p className="text-[10px] text-muted-foreground">{t('Class Teacher · Re:')} {activeChild.name}</p>
             </div>
           </div>
           <div className="space-y-3 h-48 overflow-y-auto">
@@ -341,7 +341,7 @@ export default function ParentDashboard() {
           </div>
           <div className="flex gap-2 pt-2 border-t border-border">
             <input value={chatMsg} onChange={e => setChatMsg(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMessage()} placeholder={t('Send a message to teacher...')} className="flex-1 border border-border rounded-xl px-3 py-2 text-xs bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary" />
-            <button onClick={sendMessage} className="bg-primary text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors flex items-center gap-1.5"><Send className="w-3.5 h-3.5" />{t('Send')}</button>
+            <button onClick={sendMessage} className="bg-primary text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors flex items-center gap-1.5"><Send className="w-3.5 h-3.5" /><span>{t('send_message')}</span></button>
           </div>
         </div>
       </div>
@@ -356,7 +356,7 @@ export default function ParentDashboard() {
             <div className="w-12 h-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold">🦅</div>
             <div>
               <h3 className="font-serif font-bold text-foreground text-lg">{activeChild.name} — Blue House (Eagle)</h3>
-              <p className="text-xs text-muted-foreground">{t('Rank: ')}<strong>#1 Overall</strong> · Motto: "Wisdom & Integrity"</p>
+              <p className="text-xs text-muted-foreground">{t('Rank: ')}<strong>#1 Overall</strong> &middot; Motto: &quot;Wisdom &amp; Integrity&quot;</p>
             </div>
           </div>
         </div>
