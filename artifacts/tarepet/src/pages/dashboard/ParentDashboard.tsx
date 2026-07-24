@@ -341,7 +341,7 @@ export default function ParentDashboard() {
           </div>
           <div className="flex gap-2 pt-2 border-t border-border">
             <input value={chatMsg} onChange={e => setChatMsg(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMessage()} placeholder={t('Send a message to teacher...')} className="flex-1 border border-border rounded-xl px-3 py-2 text-xs bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary" />
-            <button onClick={sendMessage} className="bg-primary text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors flex items-center gap-1.5"><Send className="w-3.5 h-3.5" />{t('Send Message')}</button>
+            <button onClick={sendMessage} className="bg-primary text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors flex items-center gap-1.5"><Send className="w-3.5 h-3.5" />{t('Send')}</button>
           </div>
         </div>
       </div>

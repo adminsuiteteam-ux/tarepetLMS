@@ -11,19 +11,12 @@ if (Number.isNaN(port) || port <= 0) {
 }
 
 const basePath = process.env.BASE_PATH || '/';
-const isReplit = process.env.REPL_ID !== undefined;
 
 export default defineConfig({
   base: basePath,
   plugins: [
     react(),
     tailwindcss(),
-    ...(process.env.NODE_ENV !== 'production' && isReplit
-      ? [
-          // Replit-specific plugins are only loaded locally inside Replit
-          // They are excluded from production/CI builds automatically
-        ]
-      : []),
   ],
   resolve: {
     alias: {
