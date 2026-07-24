@@ -100,6 +100,7 @@ export default function ParentDashboard() {
   const [confDate, setConfDate] = useState('Aug 10, 2026 - 2:00 PM');
   const [confBooked, setConfBooked] = useState(false);
   const [leaveSubmitted, setLeaveSubmitted] = useState(false);
+  const [showReportCardModal, setShowReportCardModal] = useState(false);
 
   const activeChild = CHILDREN.find(c => c.id === selectedChildId) ?? CHILDREN[0];
 
@@ -188,8 +189,8 @@ export default function ParentDashboard() {
       <div className="space-y-5">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-serif font-bold text-foreground">{activeChild.name}'s Academic Gradebook</h2>
-          <button className="flex items-center gap-2 border border-border px-4 py-2 rounded-xl text-xs font-bold hover:bg-accent transition-colors">
-            <Download className="w-3.5 h-3.5" /> Download Report Card (PDF)
+          <button onClick={() => setShowReportCardModal(true)} className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors shadow-sm">
+            <Download className="w-3.5 h-3.5" /> Official Terminal Report Card (PDF)
           </button>
         </div>
 
@@ -216,6 +217,129 @@ export default function ParentDashboard() {
             ))}
           </div>
         </div>
+
+        {/* Printable Official Terminal Report Card Modal */}
+        {showReportCardModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto">
+            <div className="bg-card rounded-3xl border border-border shadow-2xl w-full max-w-3xl p-6 md:p-8 space-y-6 max-h-[90vh] overflow-y-auto">
+              {/* Header Actions */}
+              <div className="flex justify-between items-center border-b border-border pb-4">
+                <div>
+                  <h3 className="font-serif font-bold text-lg text-foreground">{t('Official Continuous Assessment Report')}</h3>
+                  <p className="text-xs text-muted-foreground">{t('Tarepet Montessori & Erdkinder College · Term 2 Academic Session')}</p>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => window.print()} className="bg-primary text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-1.5 shadow-sm">
+                    <Download className="w-3.5 h-3.5" /> {t('Print / Save PDF')}
+                  </button>
+                  <button onClick={() => setShowReportCardModal(false)} className="border border-border text-foreground text-xs font-bold px-3 py-2 rounded-xl hover:bg-accent transition-colors">
+                    {t('Close')}
+                  </button>
+                </div>
+              </div>
+
+              {/* Printable Document Body */}
+              <div className="space-y-6 bg-white text-slate-900 p-6 rounded-2xl border border-slate-200 text-xs">
+                {/* School Letterhead Header */}
+                <div className="flex items-center justify-between border-b-2 border-primary pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-xl bg-primary text-white flex items-center justify-center font-bold text-xl">TM</div>
+                    <div>
+                      <h2 className="font-serif font-bold text-base text-primary uppercase tracking-wide">{t('Tarepet Montessori International College')}</h2>
+                      <p className="text-[10px] text-slate-500">{t('Motto: Excellence, Integrity & Practical Life Erdkinder Mastery')}</p>
+                      <p className="text-[10px] text-slate-500">{t('Km 14 Airport Road, Abuja & Port Harcourt Campuses · www.tarepet.edu.ng')}</p>
+                    </div>
+                  </div>
+                  <div className="text-right border-l border-slate-200 pl-4">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 block">{t('Report Ref')}</span>
+                    <span className="font-mono font-bold text-slate-800">{t('TRP-2026-T2-0841')}</span>
+                  </div>
+                </div>
+
+                {/* Student Info Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase text-slate-400 block">{t('Student Name')}</span>
+                    <strong className="text-slate-900 text-sm">{activeChild.name}</strong>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase text-slate-400 block">{t('Class / Grade')}</span>
+                    <strong className="text-slate-800">{activeChild.grade}</strong>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase text-slate-400 block">{t('House / Squad')}</span>
+                    <strong className="text-slate-800">{activeChild.house}</strong>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase text-slate-400 block">{t('Term GPA / Position')}</span>
+                    <strong className="text-primary">{activeChild.gpa} / 4.0 (3rd of {activeChild.classSize})</strong>
+                  </div>
+                </div>
+
+                {/* Academic Scores Table */}
+                <div>
+                  <h4 className="font-serif font-bold text-slate-800 mb-2 text-sm uppercase tracking-wider">{t('Academic Subject Performance')}</h4>
+                  <table className="w-full text-left border-collapse border border-slate-200 text-xs">
+                    <thead>
+                      <tr className="bg-slate-100 text-slate-600 font-bold uppercase border-b border-slate-200">
+                        <th className="py-2 px-3 border-r border-slate-200">{t('Subject')}</th>
+                        <th className="py-2 px-3 text-center border-r border-slate-200">{t('CA (40%)')}</th>
+                        <th className="py-2 px-3 text-center border-r border-slate-200">{t('Exam (60%)')}</th>
+                        <th className="py-2 px-3 text-center border-r border-slate-200">{t('Total (100%)')}</th>
+                        <th className="py-2 px-3 text-center border-r border-slate-200">{t('Grade')}</th>
+                        <th className="py-2 px-3">{t('Subject Teacher')}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200">
+                      {SUBJECTS_EMEKA.map(s => (
+                        <tr key={s.code}>
+                          <td className="py-2 px-3 font-semibold text-slate-800 border-r border-slate-200">{s.name} ({s.code})</td>
+                          <td className="py-2 px-3 text-center border-r border-slate-200">{Math.round(s.score * 0.36)}</td>
+                          <td className="py-2 px-3 text-center border-r border-slate-200">{Math.round(s.score * 0.64)}</td>
+                          <td className="py-2 px-3 text-center font-bold text-primary border-r border-slate-200">{s.score}%</td>
+                          <td className="py-2 px-3 text-center font-bold border-r border-slate-200">{s.grade}</td>
+                          <td className="py-2 px-3 text-slate-600">{s.teacher}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Montessori Character & Conduct Matrix */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="border border-slate-200 p-3.5 rounded-xl bg-slate-50 space-y-2">
+                    <h5 className="font-serif font-bold text-slate-800 text-xs uppercase">{t('Practical Life & Erdkinder Assessment')}</h5>
+                    <ul className="space-y-1 text-[11px] text-slate-600">
+                      <li>• {t('Tool Handling & Safety: ')}<strong className="text-emerald-700">{t('Exemplary (94%)')}</strong></li>
+                      <li>• {t('Team Collaboration & Courtesy: ')}<strong className="text-emerald-700">{t('Exemplary (92%)')}</strong></li>
+                      <li>• {t('Self-Directed Focus & Discipline: ')}<strong className="text-slate-800">{t('Proficient (88%)')}</strong></li>
+                    </ul>
+                  </div>
+                  <div className="border border-slate-200 p-3.5 rounded-xl bg-slate-50 space-y-2">
+                    <h5 className="font-serif font-bold text-slate-800 text-xs uppercase">{t("Teacher's & Principal's Remarks")}</h5>
+                    <p className="text-[11px] italic text-slate-700">
+                      &quot;{t('Emeka is an outstanding, highly motivated scholar with commendable passion for practical agronomy and applied mathematics. Recommended for leadership roles in Term 3.')}&quot;
+                    </p>
+                    <p className="text-[10px] font-bold text-slate-500 text-right">— Mrs. Okafor Chioma (Form Teacher)</p>
+                  </div>
+                </div>
+
+                {/* Signatures & Official Seal */}
+                <div className="flex justify-between items-end border-t border-slate-200 pt-4 text-[10px] text-slate-500">
+                  <div>
+                    <p className="font-bold text-slate-800">{t('Principal Signature & Stamp')}</p>
+                    <div className="mt-2 h-8 w-32 border-b border-dashed border-slate-400 font-serif italic text-primary flex items-center">Dr. A. E. Okon (Principal)</div>
+                  </div>
+                  <div className="text-right">
+                    <span className="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 font-bold rounded-full border border-emerald-300">
+                      {t('OFFICIALLY VERIFIED & SEALED')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
 

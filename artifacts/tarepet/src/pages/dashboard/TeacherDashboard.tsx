@@ -61,6 +61,31 @@ export default function TeacherDashboard() {
   const [obsList, setObsList] = useState(MONTESSORI_OBSERVATIONS);
   const [showPointModal, setShowPointModal] = useState(false);
   const [pointForm, setPointForm] = useState({ student: 'Emeka Amadi', points: 15, category: 'Academic Excellence', house: 'Blue House (Eagle)' });
+  
+  // New Enhanced States
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [gradingSubTab, setGradingSubTab] = useState<'queue' | 'gradebook'>('queue');
+  const [showExamModal, setShowExamModal] = useState(false);
+  const [examForm, setExamForm] = useState({ title: '', classCode: 'MTH-101', subject: 'Mathematics', date: '2026-08-10', venue: 'Hall A', duration: '3hrs' });
+  const [selectedSchemeCourse, setSelectedSchemeCourse] = useState<string | null>(null);
+  const [completedWeeks, setCompletedWeeks] = useState<Record<string, number[]>>({
+    'MTH-101': [1, 2, 3, 4],
+    'BOT-102': [1, 2, 3],
+    'ENG-103': [1, 2, 3, 4, 5],
+  });
+
+  const [gradebookScores, setGradebookScores] = useState<Record<number, { ca1: number; ca2: number; midterm: number; exam: number }>>({
+    1: { ca1: 9, ca2: 9, midterm: 18, exam: 52 },
+    2: { ca1: 10, ca2: 10, midterm: 19, exam: 54 },
+    3: { ca1: 6, ca2: 7, midterm: 12, exam: 38 },
+    4: { ca1: 8, ca2: 9, midterm: 16, exam: 48 },
+    5: { ca1: 9, ca2: 8, midterm: 17, exam: 50 },
+  });
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 3500);
+  };
 
   // Handlers
   const handleGradeSubmit = () => {
@@ -69,11 +94,13 @@ export default function TeacherDashboard() {
     setSelectedSub(null);
     setGradeInput('');
     setFeedbackInput('');
+    showToast(`Graded submission for ${selectedSub.student} successfully!`);
   };
 
   const handleCreateLesson = () => {
     if (!lessonForm.title) return;
     setShowLessonModal(false);
+    showToast(`Lesson "${lessonForm.title}" published successfully!`);
     setLessonForm({ title: '', classCode: 'MTH-101', type: 'Video', duration: '20 min' });
   };
 
@@ -88,7 +115,30 @@ export default function TeacherDashboard() {
       mastery: obsForm.mastery,
     }, ...prev]);
     setShowObsModal(false);
+    showToast(`Montessori observation logged for ${obsForm.student}.`);
     setObsForm({ student: 'Emeka Amadi', category: 'Practical Life', observation: '', mastery: 'Proficient' });
+  };
+
+  const handleAwardPoints = () => {
+    setShowPointModal(false);
+    showToast(`Awarded ${pointForm.points} House Points to ${pointForm.student} (${pointForm.house})! 🎉`);
+  };
+
+  const handleCreateExam = () => {
+    if (!examForm.title) return;
+    setShowExamModal(false);
+    showToast(`Exam paper "${examForm.title}" submitted to Admin for approval!`);
+    setExamForm({ title: '', classCode: 'MTH-101', subject: 'Mathematics', date: '2026-08-10', venue: 'Hall A', duration: '3hrs' });
+  };
+
+  const toggleWeekCompletion = (courseCode: string, weekNum: number) => {
+    setCompletedWeeks(prev => {
+      const current = prev[courseCode] || [];
+      const updated = current.includes(weekNum)
+        ? current.filter(w => w !== weekNum)
+        : [...current, weekNum];
+      return { ...prev, [courseCode]: updated };
+    });
   };
 
   const renderSection = () => {
@@ -143,28 +193,95 @@ export default function TeacherDashboard() {
     // 2. MY CLASSES & COURSES
     if (activeSection === 'classes') return (
       <div className="space-y-5">
-        <h2 className="text-xl font-serif font-bold text-foreground">My Assigned Courses</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          {TEACHER_CLASSES.map(c => (
-            <div key={c.id} className="bg-card rounded-2xl border border-border p-5 shadow-sm space-y-4 hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start">
-                <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">{c.code}</span>
-                <span className="text-xs font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded">Avg: {c.avgGrade}</span>
-              </div>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-serif font-bold text-foreground">My Assigned Courses</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Manage syllabus, scheme of work, and submit exams to admin.</p>
+          </div>
+          <button onClick={() => setShowExamModal(true)} className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors shadow-sm self-start sm:self-auto">
+            <Plus className="w-4 h-4" /> Draft & Submit Exam Paper
+          </button>
+        </div>
+
+        {selectedSchemeCourse ? (
+          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
+            <div className="flex items-center justify-between border-b border-border pb-4">
               <div>
-                <h3 className="font-serif font-bold text-foreground text-lg">{c.title}</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">{c.grade} · {c.students} Students</p>
+                <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-lg">{selectedSchemeCourse}</span>
+                <h3 className="font-serif font-bold text-xl text-foreground mt-1">Scheme of Work — Term 2 Syllabus</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">Track weekly topic progress and completion status.</p>
               </div>
-              <div className="space-y-1.5 text-xs text-muted-foreground">
-                <p>📍 {c.room}</p>
-                <p>⏰ {c.schedule}</p>
-              </div>
-              <button onClick={() => setActiveSection('content')} className="w-full bg-primary/10 text-primary border border-primary/20 py-2 rounded-xl text-xs font-bold hover:bg-primary/20 transition-colors">
-                Manage Course Content
+              <button onClick={() => setSelectedSchemeCourse(null)} className="text-xs font-bold border border-border px-3.5 py-2 rounded-xl hover:bg-accent transition-colors">
+                Back to Courses
               </button>
             </div>
-          ))}
-        </div>
+
+            <div className="space-y-3">
+              {[
+                { week: 1, topic: 'Introduction & Curriculum Setup', detail: 'Foundational review, syllabus guidelines, and course material introduction.' },
+                { week: 2, topic: 'Core Theoretical Framework', detail: 'Primary theories, key definitions, and practical demonstrations.' },
+                { week: 3, topic: 'Applied Practical Fieldwork', detail: 'Hands-on practical session, tool organization, and field observations.' },
+                { week: 4, topic: 'Montessori Control of Error Analysis', detail: 'Self-correction exercises, peer collaboration, and material scaling.' },
+                { week: 5, topic: 'Mid-Term Assessment & Review', detail: 'Comprehensive mid-term evaluation and student feedback.' },
+                { week: 6, topic: 'Advanced Problem Solving', detail: 'Complex problem analysis, case studies, and application.' },
+                { week: 7, topic: 'Collaborative Project Workshop', detail: 'Group ledgers, practical life applications, and presentations.' },
+                { week: 8, topic: 'Revision & Interactive Drills', detail: 'Targeted revision drills for developing student competencies.' },
+                { week: 9, topic: 'Terminal Exam Revision', detail: 'Mock tests, exam rules review, and final questions practice.' },
+                { week: 10, topic: 'Final Terminal Examination', detail: 'Official term examination administration and evaluation.' },
+              ].map(w => {
+                const isDone = (completedWeeks[selectedSchemeCourse] || []).includes(w.week);
+                return (
+                  <div key={w.week} className={`p-4 rounded-xl border transition-all ${isDone ? 'bg-emerald-500/5 border-emerald-200' : 'bg-muted/10 border-border'}`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3">
+                        <button
+                          onClick={() => toggleWeekCompletion(selectedSchemeCourse, w.week)}
+                          className={`w-5 h-5 rounded-md border mt-0.5 flex items-center justify-center transition-colors ${isDone ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-border bg-card'}`}
+                        >
+                          {isDone && <CheckCircle2 className="w-3.5 h-3.5" />}
+                        </button>
+                        <div>
+                          <p className="font-bold text-foreground text-sm">Week {w.week}: {w.topic}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{w.detail}</p>
+                        </div>
+                      </div>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isDone ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-200' : 'bg-amber-500/10 text-amber-600 border border-amber-200'}`}>
+                        {isDone ? 'Completed' : 'Scheduled'}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {TEACHER_CLASSES.map(c => (
+              <div key={c.id} className="bg-card rounded-2xl border border-border p-5 shadow-sm space-y-4 hover:shadow-md transition-shadow">
+                <div className="flex justify-between items-start">
+                  <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">{c.code}</span>
+                  <span className="text-xs font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded">Avg: {c.avgGrade}</span>
+                </div>
+                <div>
+                  <h3 className="font-serif font-bold text-foreground text-lg">{c.title}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">{c.grade} · {c.students} Students</p>
+                </div>
+                <div className="space-y-1.5 text-xs text-muted-foreground">
+                  <p>📍 {c.room}</p>
+                  <p>⏰ {c.schedule}</p>
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <button onClick={() => setSelectedSchemeCourse(c.code)} className="flex-1 bg-primary/10 text-primary border border-primary/20 py-2 rounded-xl text-xs font-bold hover:bg-primary/20 transition-colors">
+                    Scheme of Work
+                  </button>
+                  <button onClick={() => setActiveSection('content')} className="flex-1 bg-muted/40 text-foreground border border-border py-2 rounded-xl text-xs font-bold hover:bg-accent transition-colors">
+                    Manage Lessons
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
 
@@ -236,31 +353,118 @@ export default function TeacherDashboard() {
     // 4. GRADING & RUBRICS
     if (activeSection === 'grading') return (
       <div className="space-y-5">
-        <h2 className="text-xl font-serif font-bold text-foreground">Grading Queue ({submissions.length} Pending)</h2>
-        <div className="space-y-4">
-          {submissions.map(sub => (
-            <div key={sub.id} className="bg-card rounded-2xl border border-border p-5 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">{sub.classCode}</span>
-                  <span className="text-xs font-bold text-foreground">{sub.student}</span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h2 className="text-xl font-serif font-bold text-foreground">Grading & Score Entry</h2>
+          <div className="flex bg-muted p-1 rounded-xl gap-1">
+            <button
+              onClick={() => setGradingSubTab('queue')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${gradingSubTab === 'queue' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              Submissions Queue ({submissions.length})
+            </button>
+            <button
+              onClick={() => setGradingSubTab('gradebook')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${gradingSubTab === 'gradebook' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+            >
+              Term CA Gradebook Sheet
+            </button>
+          </div>
+        </div>
+
+        {gradingSubTab === 'queue' && (
+          <div className="space-y-4">
+            {submissions.map(sub => (
+              <div key={sub.id} className="bg-card rounded-2xl border border-border p-5 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">{sub.classCode}</span>
+                    <span className="text-xs font-bold text-foreground">{sub.student}</span>
+                  </div>
+                  <h4 className="font-serif font-bold text-foreground text-base">{sub.title}</h4>
+                  <p className="text-xs text-muted-foreground mt-0.5">Submitted: {sub.submittedAt} · File: <strong className="text-primary">{sub.file}</strong></p>
                 </div>
-                <h4 className="font-serif font-bold text-foreground text-base">{sub.title}</h4>
-                <p className="text-xs text-muted-foreground mt-0.5">Submitted: {sub.submittedAt} · File: <strong className="text-primary">{sub.file}</strong></p>
+                <button onClick={() => setSelectedSub(sub)} className="bg-primary text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-primary/90 transition-colors shadow-sm">
+                  Grade Submission
+                </button>
               </div>
-              <button onClick={() => setSelectedSub(sub)} className="bg-primary text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-primary/90 transition-colors shadow-sm">
-                Grade Submission
+            ))}
+            {submissions.length === 0 && (
+              <div className="text-center py-10 bg-card rounded-2xl border border-border">
+                <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-2" />
+                <p className="font-serif font-bold text-foreground text-lg">All Submissions Graded!</p>
+                <p className="text-xs text-muted-foreground mt-1">Great job! There are no pending items in your queue.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {gradingSubTab === 'gradebook' && (
+          <div className="bg-card rounded-2xl border border-border p-5 shadow-sm space-y-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="font-serif font-bold text-foreground text-base">Continuous Assessment (CA) & Exam Score Sheet</h3>
+                <p className="text-xs text-muted-foreground">Class: JSS1 · Course: MTH-101 (Montessori Applied Mathematics)</p>
+              </div>
+              <button onClick={() => showToast('Gradebook scores saved & synchronized!')} className="bg-emerald-600 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-emerald-700 transition-colors shadow-sm">
+                Save Gradebook
               </button>
             </div>
-          ))}
-          {submissions.length === 0 && (
-            <div className="text-center py-10 bg-card rounded-2xl border border-border">
-              <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-2" />
-              <p className="font-serif font-bold text-foreground text-lg">All Submissions Graded!</p>
-              <p className="text-xs text-muted-foreground mt-1">Great job! There are no pending items in your queue.</p>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-muted/40 text-muted-foreground font-bold uppercase">
+                  <tr>
+                    <th className="py-3 px-3">Student</th>
+                    <th className="py-3 px-3 text-center">CA1 (10%)</th>
+                    <th className="py-3 px-3 text-center">CA2 (10%)</th>
+                    <th className="py-3 px-3 text-center">Mid-Term (20%)</th>
+                    <th className="py-3 px-3 text-center">Terminal Exam (60%)</th>
+                    <th className="py-3 px-3 text-center">Total (100%)</th>
+                    <th className="py-3 px-3 text-center">Grade</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {roster.map(st => {
+                    const sc = gradebookScores[st.id] || { ca1: 0, ca2: 0, midterm: 0, exam: 0 };
+                    const total = sc.ca1 + sc.ca2 + sc.midterm + sc.exam;
+                    const gradeLetter = total >= 85 ? 'A' : total >= 75 ? 'B+' : total >= 65 ? 'B' : total >= 50 ? 'C' : 'F';
+                    return (
+                      <tr key={st.id} className="hover:bg-muted/20">
+                        <td className="py-3 px-3 font-bold text-foreground">{st.name}</td>
+                        <td className="py-2 px-2 text-center">
+                          <input type="number" max="10" min="0" value={sc.ca1}
+                            onChange={e => setGradebookScores(prev => ({ ...prev, [st.id]: { ...sc, ca1: Number(e.target.value) } }))}
+                            className="w-14 text-center border border-border rounded-lg py-1 font-bold text-foreground bg-muted/20 focus:outline-none focus:ring-1 focus:ring-primary" />
+                        </td>
+                        <td className="py-2 px-2 text-center">
+                          <input type="number" max="10" min="0" value={sc.ca2}
+                            onChange={e => setGradebookScores(prev => ({ ...prev, [st.id]: { ...sc, ca2: Number(e.target.value) } }))}
+                            className="w-14 text-center border border-border rounded-lg py-1 font-bold text-foreground bg-muted/20 focus:outline-none focus:ring-1 focus:ring-primary" />
+                        </td>
+                        <td className="py-2 px-2 text-center">
+                          <input type="number" max="20" min="0" value={sc.midterm}
+                            onChange={e => setGradebookScores(prev => ({ ...prev, [st.id]: { ...sc, midterm: Number(e.target.value) } }))}
+                            className="w-14 text-center border border-border rounded-lg py-1 font-bold text-foreground bg-muted/20 focus:outline-none focus:ring-1 focus:ring-primary" />
+                        </td>
+                        <td className="py-2 px-2 text-center">
+                          <input type="number" max="60" min="0" value={sc.exam}
+                            onChange={e => setGradebookScores(prev => ({ ...prev, [st.id]: { ...sc, exam: Number(e.target.value) } }))}
+                            className="w-16 text-center border border-border rounded-lg py-1 font-bold text-foreground bg-muted/20 focus:outline-none focus:ring-1 focus:ring-primary" />
+                        </td>
+                        <td className="py-3 px-3 text-center font-serif font-bold text-primary text-sm">{total}%</td>
+                        <td className="py-3 px-3 text-center">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${total >= 75 ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-200' : 'bg-amber-500/10 text-amber-600 border border-amber-200'}`}>
+                            {gradeLetter}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {selectedSub && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
