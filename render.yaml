@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: tarepet-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120"
+    plan: free
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com,localhost,127.0.0.1"
+      - key: DATABASE_URL
+        sync: false   # Set this manually in Render dashboard - paste your Xata URL
+      - key: REDIS_URL
+        value: "redis://127.0.0.1:6379/0"
+      - key: CELERY_BROKER_URL
+        value: "redis://127.0.0.1:6379/0"
+      - key: CELERY_RESULT_BACKEND
+        value: "redis://127.0.0.1:6379/0"
+      - key: ACCESS_TOKEN_LIFETIME_MINUTES
+        value: "60"
+      - key: REFRESH_TOKEN_LIFETIME_DAYS
+        value: "7"
+      - key: PYTHON_VERSION
+        value: "3.12.0"

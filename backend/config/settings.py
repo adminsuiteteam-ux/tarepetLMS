@@ -37,6 +37,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Render static files
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -66,13 +67,25 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Database Configuration (PostgreSQL with sqlite3 fallback for local unit tests)
-DATABASES = {
-    'default': env.db(
-        'DATABASE_URL',
-        default=f"sqlite:///{os.path.join(BASE_DIR, 'db.sqlite3')}"
-    )
-}
+# Database Configuration (Xata PostgreSQL Serverless)
+_db_config = env.db(
+    'DATABASE_URL',
+    default=f"sqlite:///{os.path.join(BASE_DIR, 'db.sqlite3')}"
+)
+# Xata serverless keepalive settings - prevents dropped connections
+if _db_config.get('ENGINE') != 'django.db.backends.sqlite3':
+    _db_config.update({
+        'CONN_MAX_AGE': 0,  # short-lived connections for serverless
+        'OPTIONS': {
+            'sslmode': 'require',
+            'keepalives': 1,
+            'keepalives_idle': 60,
+            'keepalives_interval': 10,
+            'keepalives_count': 5,
+            'connect_timeout': 10,
+        },
+    })
+DATABASES = {'default': _db_config}
 
 # Custom User Model
 AUTH_USER_MODEL = 'users.CustomUser'
@@ -147,6 +160,7 @@ USE_TZ = True
 # Static & Media Files
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
