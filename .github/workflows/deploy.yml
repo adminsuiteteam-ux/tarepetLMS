@@ -41,6 +41,7 @@ jobs:
         env:
           BASE_PATH: /tarepet/
           NODE_ENV: production
+          VITE_API_URL: https://tarepet-backend.onrender.com/api/v1
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1

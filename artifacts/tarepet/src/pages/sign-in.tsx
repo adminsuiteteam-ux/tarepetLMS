@@ -8,10 +8,10 @@ import { authClient } from "@/lib/api-auth";
 
 // Demo accounts for instant one-click login
 const DEMO_ACCOUNTS = [
-  { role: "Admin",   email: "admin@tarepet.edu.ng",   password: "TarepetAdmin2026!",   color: "bg-rose-600",    label: "Super Admin" },
-  { role: "Teacher", email: "teacher@tarepet.edu.ng", password: "TarepetTeacher2026!", color: "bg-emerald-600", label: "Class Teacher" },
-  { role: "Student", email: "student@tarepet.edu.ng", password: "TarepetStudent2026!", color: "bg-blue-600",    label: "JSS1 Student" },
-  { role: "Parent",  email: "parent@tarepet.edu.ng",  password: "TarepetParent2026!",  color: "bg-amber-600",  label: "Guardian" },
+  { role: "Admin",   email: "admin@tarepet.edu.ng",   password: "AdminPassword123!",   color: "bg-rose-600",    label: "Super Admin" },
+  { role: "Teacher", email: "teacher@tarepet.edu.ng", password: "TeacherPassword123!", color: "bg-emerald-600", label: "Class Teacher" },
+  { role: "Student", email: "student@tarepet.edu.ng", password: "StudentPassword123!", color: "bg-blue-600",    label: "JSS1 Student" },
+  { role: "Parent",  email: "parent@tarepet.edu.ng",  password: "ParentPassword123!",  color: "bg-amber-600",  label: "Guardian" },
 ];
 
 export default function SignIn() {
