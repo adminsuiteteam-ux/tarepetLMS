@@ -436,7 +436,7 @@ export default function StudentCBTExam() {
             {passed ? <CheckCircle2 className="w-10 h-10 text-green-600" /> : <AlertTriangle className="w-10 h-10 text-red-500" />}
           </div>
           <h2 className="text-2xl font-bold text-slate-900 mb-2">
-            {result.auto_submitted ? 'Time's Up!' : 'Exam Submitted!'}
+            {result.auto_submitted ? "Time's Up!" : "Exam Submitted!"}
           </h2>
           <p className="text-slate-500 text-sm mb-6">
             {result.auto_submitted ? 'Your exam was automatically submitted when the timer expired.' : 'Your exam has been submitted and graded.'}
