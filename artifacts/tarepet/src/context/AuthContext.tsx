@@ -71,7 +71,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('user_data');
     setUser(null);
-    window.location.href = '/sign-in';
+    const baseUrl = import.meta.env.BASE_URL || '/';
+    const target = baseUrl.endsWith('/') ? `${baseUrl}sign-in` : `${baseUrl}/sign-in`;
+    window.location.href = target;
   };
 
   const isAdmin = user?.role === 'ADMIN';

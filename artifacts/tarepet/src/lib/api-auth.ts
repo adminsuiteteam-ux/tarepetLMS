@@ -47,7 +47,9 @@ authClient.interceptors.response.use(
           localStorage.removeItem('access_token');
           localStorage.removeItem('refresh_token');
           localStorage.removeItem('user_data');
-          window.location.href = '/sign-in';
+          const baseUrl = import.meta.env.BASE_URL || '/';
+          const target = baseUrl.endsWith('/') ? `${baseUrl}sign-in` : `${baseUrl}/sign-in`;
+          window.location.href = target;
           return Promise.reject(refreshError);
         }
       }
