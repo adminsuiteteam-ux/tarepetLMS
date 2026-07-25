@@ -47,3 +47,11 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Python & Secrets
+.env
+__pycache__/
+*.pyc
+venv/
+*.sqlite3
+

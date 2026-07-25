@@ -6,32 +6,53 @@ from .models import StudentProfile, TeacherProfile, ParentProfile, AdminProfile
 User = get_user_model()
 
 
-class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    @classmethod
-    def get_token(cls, user):
-        token = super().get_token(user)
-
-        # Add custom claims
-        token['email'] = user.email
-        token['role'] = user.role
-        token['first_name'] = user.first_name
-        token['last_name'] = user.last_name
-        token['full_name'] = user.get_full_name()
-        return token
+class CustomTokenObtainPairSerializer(serializers.Serializer):
+    """Accepts either 'email' or 'username' alongside 'password' for JWT login."""
+    email = serializers.EmailField(required=False, allow_blank=True)
+    username = serializers.CharField(required=False, allow_blank=True)
+    password = serializers.CharField(write_only=True, trim_whitespace=False)
 
     def validate(self, attrs):
-        data = super().validate(attrs)
+        identifier = (
+            attrs.get('email') or
+            attrs.get('username') or
+            self.initial_data.get('email') or
+            self.initial_data.get('username')
+        )
+        password = attrs.get('password')
 
-        # Append user data to initial login response
-        data['user'] = {
-            'id': self.user.id,
-            'email': self.user.email,
-            'first_name': self.user.first_name,
-            'last_name': self.user.last_name,
-            'role': self.user.role,
-            'phone': self.user.phone,
+        if not identifier:
+            raise serializers.ValidationError({'email': 'Email or username is required.'})
+        if not password:
+            raise serializers.ValidationError({'password': 'Password is required.'})
+
+        from django.contrib.auth import authenticate
+        from rest_framework_simplejwt.exceptions import AuthenticationFailed
+        from rest_framework_simplejwt.tokens import RefreshToken
+
+        user = authenticate(self.context.get('request'), username=identifier, password=password)
+        if not user or not user.is_active:
+            raise AuthenticationFailed('No active account found with the given credentials')
+
+        refresh = RefreshToken.for_user(user)
+        refresh['email'] = user.email
+        refresh['role'] = user.role
+        refresh['first_name'] = user.first_name
+        refresh['last_name'] = user.last_name
+        refresh['full_name'] = user.get_full_name()
+
+        return {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'user': {
+                'id': user.id,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'role': user.role,
+                'phone': user.phone,
+            }
         }
-        return data
 
 
 class ParentProfileSerializer(serializers.ModelSerializer):
