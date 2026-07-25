@@ -141,7 +141,7 @@ export default function StudentDashboard() {
     if (activeSection === 'courses') return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-serif font-bold text-foreground">My Enrolled Courses</h2>
+          <h2 className="text-2xl font-serif font-bold text-foreground">My course</h2>
           <p className="text-xs text-muted-foreground mt-0.5">Active subjects, course progress, and assigned teachers.</p>
         </div>
 
@@ -367,7 +367,7 @@ export default function StudentDashboard() {
     if (activeSection === 'settings') return (
       <div className="space-y-6 max-w-3xl">
         <div>
-          <h2 className="text-2xl font-serif font-bold text-foreground">Setting & Profile</h2>
+          <h2 className="text-2xl font-serif font-bold text-foreground">Setting/profile</h2>
           <p className="text-xs text-muted-foreground mt-0.5">Manage your student profile, account security, and notifications.</p>
         </div>
 

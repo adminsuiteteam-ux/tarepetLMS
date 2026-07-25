@@ -42,12 +42,12 @@ const ROLE_NAV: Record<string, NavSection[]> = {
   ],
   STUDENT: [
     { id: 'overview',  label: 'Overview',        icon: LayoutDashboard },
-    { id: 'courses',   label: 'My Courses',      icon: BookOpen },
+    { id: 'courses',   label: 'My course',       icon: BookOpen },
     { id: 'exams',     label: 'Exams/Test',      icon: ClipboardList, badge: 1 },
     { id: 'results',   label: 'Check Results',   icon: BarChart2 },
     { id: 'payments',  label: 'Payment Page',    icon: CreditCard },
     { id: 'calendar',  label: 'Calendar',        icon: Calendar },
-    { id: 'settings',  label: 'Setting/Profile', icon: Settings },
+    { id: 'settings',  label: 'Setting/profile', icon: Settings },
   ],
   PARENT: [
     { id: 'overview',    label: 'Dashboard Overview',       icon: LayoutDashboard },
