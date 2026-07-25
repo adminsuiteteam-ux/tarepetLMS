@@ -151,7 +151,19 @@ export default function TeacherDashboard() {
           <p className="text-emerald-100 text-sm">Managing 3 classes · 65 total students · {submissions.length} pending submissions to grade.</p>
         </div>
 
-        {/* Quick Stats */}
+        {/* CBT Quick Action Banner */}
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-2xl p-5 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <span className="bg-white/20 text-white text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full mb-1.5 inline-block">CBT Assessment System</span>
+            <h3 className="text-xl font-bold">CBT Exam Builder & Management</h3>
+            <p className="text-blue-100 text-xs mt-1">Create CBT tests/exams, submit for admin approval, upload to students & sync scores to report cards.</p>
+          </div>
+          <Link href="/dashboard/cbt-builder">
+            <button className="px-5 py-2.5 rounded-xl bg-white text-blue-700 font-bold text-sm hover:bg-blue-50 transition shadow-md whitespace-nowrap">
+              Open CBT Builder →
+            </button>
+          </Link>
+        </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
             { label: 'Assigned Classes', val: '3', sub: '65 Students', icon: BookOpen, color: 'text-primary bg-primary/10 border-primary/20' },

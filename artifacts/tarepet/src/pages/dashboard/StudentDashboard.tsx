@@ -474,6 +474,20 @@ export default function StudentDashboard() {
           ))}
         </div>
 
+        {/* Student CBT Exam Banner */}
+        <div className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-2xl p-5 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <span className="bg-white/20 text-white text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full mb-1.5 inline-block">Online Examinations</span>
+            <h3 className="text-xl font-bold">CBT Exams & C.A. Tests</h3>
+            <p className="text-emerald-100 text-xs mt-1">Take your online tests and exams with automatic timer submission and instant results.</p>
+          </div>
+          <Link href="/dashboard/cbt-exam">
+            <button className="px-5 py-2.5 rounded-xl bg-white text-emerald-800 font-bold text-sm hover:bg-emerald-50 transition shadow-md whitespace-nowrap">
+              Take CBT Exam →
+            </button>
+          </Link>
+        </div>
+
         {/* Quick Actions */}
         <div className="bg-card rounded-2xl border border-border p-5 shadow-sm">
           <h2 className="font-serif font-bold text-lg text-foreground mb-4">Quick Actions</h2>

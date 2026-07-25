@@ -160,6 +160,16 @@ export default function CBTBuilder() {
     }
   };
 
+  const handlePublishExam = async (examId: number) => {
+    try {
+      await authClient.post(`/assessments/cbt-exams/${examId}/publish/`);
+      alert('Exam uploaded and published to your students!');
+      fetchExams();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || 'Publish failed');
+    }
+  };
+
   const inputClass = "w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition";
   const labelClass = "block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5";
 
@@ -175,7 +185,7 @@ export default function CBTBuilder() {
               </Link>
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-slate-900">CBT Exam Builder</h1>
-                <p className="text-slate-500 text-sm">Create, manage, and review CBT exams</p>
+                <p className="text-slate-500 text-sm">Create, manage, and upload CBT exams to students</p>
               </div>
             </div>
             <button
@@ -200,7 +210,7 @@ export default function CBTBuilder() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${STATUS_STYLES[exam.status] || ''}`}>
-                          {exam.status}
+                          {exam.status === 'APPROVED' ? 'Approved by Admin' : exam.status === 'PUBLISHED' ? '🚀 Live for Students' : exam.status}
                         </span>
                         <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
                           {exam.assessment_type === 'TEST' ? 'C.A. Test' : 'Final Exam'}
@@ -223,10 +233,18 @@ export default function CBTBuilder() {
                       )}
                       {exam.status === 'APPROVED' && (
                         <button
-                          onClick={() => { setSelectedExamId(exam.id); fetchAttempts(exam.id); setView('attempts'); }}
-                          className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-50 text-green-600 hover:bg-green-100 transition flex items-center gap-1"
+                          onClick={() => handlePublishExam(exam.id)}
+                          className="px-4 py-2 rounded-lg text-xs font-bold bg-green-600 text-white hover:bg-green-700 transition flex items-center gap-1 shadow-md animate-bounce"
                         >
-                          <Users className="w-3.5 h-3.5" /> View Results
+                          <Send className="w-3.5 h-3.5" /> Upload / Publish to Students
+                        </button>
+                      )}
+                      {(exam.status === 'APPROVED' || exam.status === 'PUBLISHED') && (
+                        <button
+                          onClick={() => { setSelectedExamId(exam.id); fetchAttempts(exam.id); setView('attempts'); }}
+                          className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-600 hover:bg-blue-100 transition flex items-center gap-1"
+                        >
+                          <Users className="w-3.5 h-3.5" /> View Student Results
                         </button>
                       )}
                     </div>

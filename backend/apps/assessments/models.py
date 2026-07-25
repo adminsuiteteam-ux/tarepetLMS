@@ -132,7 +132,8 @@ class CBTExam(models.Model):
     class Status(models.TextChoices):
         DRAFT = 'DRAFT', _('Draft')
         PENDING_APPROVAL = 'PENDING', _('Pending Admin Approval')
-        APPROVED = 'APPROVED', _('Approved & Published')
+        APPROVED = 'APPROVED', _('Approved by Admin')
+        PUBLISHED = 'PUBLISHED', _('Published to Class')
         REJECTED = 'REJECTED', _('Rejected by Admin')
 
     title = models.CharField(max_length=255)
