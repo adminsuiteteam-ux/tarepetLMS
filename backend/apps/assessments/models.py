@@ -113,3 +113,126 @@ class BehaviorLog(models.Model):
 
     def __str__(self):
         return f"{self.student.user.get_full_name()} - {self.get_category_display()} ({self.points} pts)"
+
+
+# ==========================================
+# CBT (Computer Based Testing) System Models
+# ==========================================
+
+class CBTExam(models.Model):
+    class AssessmentType(models.TextChoices):
+        TEST = 'TEST', _('Continuous Assessment Test')
+        EXAM = 'EXAM', _('Term Final Examination')
+
+    class Term(models.TextChoices):
+        FIRST_TERM = '1ST_TERM', _('1st Term')
+        SECOND_TERM = '2ND_TERM', _('2nd Term')
+        THIRD_TERM = '3RD_TERM', _('3rd Term')
+
+    class Status(models.TextChoices):
+        DRAFT = 'DRAFT', _('Draft')
+        PENDING_APPROVAL = 'PENDING', _('Pending Admin Approval')
+        APPROVED = 'APPROVED', _('Approved & Published')
+        REJECTED = 'REJECTED', _('Rejected by Admin')
+
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    instructions = models.TextField(blank=True, null=True, help_text=_('Instructions for students before starting exam'))
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='cbt_exams')
+    teacher = models.ForeignKey(TeacherProfile, on_delete=models.CASCADE, related_name='created_cbt_exams')
+    assessment_type = models.CharField(max_length=10, choices=AssessmentType.choices, default=AssessmentType.TEST)
+    term = models.CharField(max_length=10, choices=Term.choices, default=Term.FIRST_TERM)
+    duration_minutes = models.PositiveIntegerField(default=30, help_text=_('Duration in minutes'))
+    questions_per_page = models.PositiveIntegerField(default=1, help_text=_('Number of questions displayed per screen view'))
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
+    rejection_reason = models.TextField(blank=True, null=True)
+    approved_by = models.ForeignKey('users.CustomUser', on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_exams')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"[{self.get_assessment_type_display()}] {self.title} ({self.get_term_display()}) - {self.get_status_display()}"
+
+
+class CBTQuestion(models.Model):
+    class CorrectOption(models.TextChoices):
+        OPTION_A = 'A', _('Option A')
+        OPTION_B = 'B', _('Option B')
+        OPTION_C = 'C', _('Option C')
+        OPTION_D = 'D', _('Option D')
+
+    exam = models.ForeignKey(CBTExam, on_delete=models.CASCADE, related_name='questions')
+    question_text = models.TextField()
+    option_a = models.CharField(max_length=255)
+    option_b = models.CharField(max_length=255)
+    option_c = models.CharField(max_length=255)
+    option_d = models.CharField(max_length=255)
+    correct_option = models.CharField(max_length=1, choices=CorrectOption.choices, default=CorrectOption.OPTION_A)
+    points = models.FloatField(default=1.0)
+    order = models.IntegerField(default=1)
+
+    class Meta:
+        ordering = ['order', 'id']
+
+    def __str__(self):
+        return f"Question {self.order} for {self.exam.title}"
+
+
+class CBTStudentAttempt(models.Model):
+    exam = models.ForeignKey(CBTExam, on_delete=models.CASCADE, related_name='student_attempts')
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='cbt_attempts')
+    started_at = models.DateTimeField(auto_now_add=True)
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    is_submitted = models.BooleanField(default=False)
+    auto_submitted = models.BooleanField(default=False, help_text=_('True if timer expired before manual submission'))
+    score = models.FloatField(default=0.0)
+    total_possible = models.FloatField(default=0.0)
+    percentage = models.FloatField(default=0.0)
+    gradebook_synced = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('exam', 'student')
+        ordering = ['-started_at']
+
+    def __str__(self):
+        return f"Attempt: {self.student.user.get_full_name()} on {self.exam.title} ({'Submitted' if self.is_submitted else 'In Progress'})"
+
+
+class CBTStudentAnswer(models.Model):
+    attempt = models.ForeignKey(CBTStudentAttempt, on_delete=models.CASCADE, related_name='answers')
+    question = models.ForeignKey(CBTQuestion, on_delete=models.CASCADE)
+    selected_option = models.CharField(max_length=1, choices=CBTQuestion.CorrectOption.choices, null=True, blank=True)
+    is_correct = models.BooleanField(default=False)
+    points_awarded = models.FloatField(default=0.0)
+
+    class Meta:
+        unique_together = ('attempt', 'question')
+
+    def __str__(self):
+        return f"Answer for Q{self.question.order}: {self.selected_option} ({'Correct' if self.is_correct else 'Wrong'})"
+
+
+class CBTNotification(models.Model):
+    class NotificationType(models.TextChoices):
+        PENDING_APPROVAL = 'PENDING_APPROVAL', _('Exam Submitted for Approval')
+        APPROVED = 'APPROVED', _('Exam Approved')
+        REJECTED = 'REJECTED', _('Exam Rejected')
+        EXAM_SUBMITTED = 'EXAM_SUBMITTED', _('Student Completed Exam')
+
+    user = models.ForeignKey('users.CustomUser', on_delete=models.CASCADE, related_name='cbt_notifications')
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    notification_type = models.CharField(max_length=30, choices=NotificationType.choices)
+    exam = models.ForeignKey(CBTExam, on_delete=models.CASCADE, null=True, blank=True)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"[{self.get_notification_type_display()}] For {self.user.email}: {self.title}"
+

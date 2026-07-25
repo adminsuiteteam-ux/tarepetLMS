@@ -22,6 +22,9 @@ import AdminDashboard from '@/pages/dashboard/AdminDashboard';
 import TeacherDashboard from '@/pages/dashboard/TeacherDashboard';
 import StudentDashboard from '@/pages/dashboard/StudentDashboard';
 import ParentDashboard from '@/pages/dashboard/ParentDashboard';
+import CBTExam from '@/pages/dashboard/CBTExam';
+import CBTBuilder from '@/pages/dashboard/CBTBuilder';
+import CBTApproval from '@/pages/dashboard/CBTApproval';
 
 const queryClient = new QueryClient();
 
@@ -35,6 +38,9 @@ function Router() {
       <Route path="/dashboard/teacher" component={TeacherDashboard} />
       <Route path="/dashboard/student" component={StudentDashboard} />
       <Route path="/dashboard/parent" component={ParentDashboard} />
+      <Route path="/dashboard/cbt-exam" component={CBTExam} />
+      <Route path="/dashboard/cbt-builder" component={CBTBuilder} />
+      <Route path="/dashboard/cbt-approval" component={CBTApproval} />
       
       {/* Public Pages with Layout wrapper */}
       <Route>

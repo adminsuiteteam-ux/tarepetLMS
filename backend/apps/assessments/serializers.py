@@ -53,3 +53,65 @@ class BehaviorLogSerializer(serializers.ModelSerializer):
     class Meta:
         model = BehaviorLog
         fields = ['id', 'student', 'student_detail', 'teacher', 'teacher_detail', 'date', 'category', 'description', 'points']
+
+
+# CBT Serializers
+from .models import CBTExam, CBTQuestion, CBTStudentAttempt, CBTStudentAnswer, CBTNotification
+from apps.courses.serializers import CourseSerializer
+
+
+class CBTQuestionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CBTQuestion
+        fields = ['id', 'exam', 'question_text', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_option', 'points', 'order']
+
+
+class CBTQuestionStudentSerializer(serializers.ModelSerializer):
+    """Question serializer for students taking exam — hides correct_option."""
+    class Meta:
+        model = CBTQuestion
+        fields = ['id', 'question_text', 'option_a', 'option_b', 'option_c', 'option_d', 'points', 'order']
+
+
+class CBTExamSerializer(serializers.ModelSerializer):
+    course_detail = CourseSerializer(source='course', read_only=True)
+    teacher_name = serializers.CharField(source='teacher.user.get_full_name', read_only=True)
+    questions_count = serializers.IntegerField(source='questions.count', read_only=True)
+    questions = CBTQuestionSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = CBTExam
+        fields = [
+            'id', 'title', 'description', 'instructions', 'course', 'course_detail',
+            'teacher', 'teacher_name', 'assessment_type', 'term', 'duration_minutes',
+            'questions_per_page', 'status', 'rejection_reason', 'approved_by',
+            'questions_count', 'questions', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'teacher', 'status', 'approved_by', 'created_at', 'updated_at']
+
+
+class CBTStudentAnswerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CBTStudentAnswer
+        fields = ['id', 'attempt', 'question', 'selected_option', 'is_correct', 'points_awarded']
+
+
+class CBTStudentAttemptSerializer(serializers.ModelSerializer):
+    student_name = serializers.CharField(source='student.user.get_full_name', read_only=True)
+    exam_title = serializers.CharField(source='exam.title', read_only=True)
+
+    class Meta:
+        model = CBTStudentAttempt
+        fields = [
+            'id', 'exam', 'exam_title', 'student', 'student_name', 'started_at',
+            'submitted_at', 'is_submitted', 'auto_submitted', 'score',
+            'total_possible', 'percentage', 'gradebook_synced'
+        ]
+        read_only_fields = ['id', 'started_at', 'submitted_at', 'score', 'total_possible', 'percentage']
+
+
+class CBTNotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CBTNotification
+        fields = ['id', 'user', 'title', 'message', 'notification_type', 'exam', 'is_read', 'created_at']
+
