@@ -21,3 +21,4 @@ EXPOSE 8000
 
 RUN chmod +x /app/docker-entrypoint.sh /app/build.sh
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
+CMD ["/app/docker-entrypoint.sh"]
