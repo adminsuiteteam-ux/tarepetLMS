@@ -22,8 +22,9 @@ services:
       - key: PYTHON_VERSION
         value: "3.12.0"
 
-  - type: static
+  - type: web
     name: tarepet-frontend
+    env: static
     buildCommand: "pnpm install --no-frozen-lockfile && pnpm --filter \"@workspace/tarepet\" build"
     staticPublishPath: "./artifacts/tarepet/dist/public"
     routes:
