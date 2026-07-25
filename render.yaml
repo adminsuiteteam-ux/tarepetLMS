@@ -25,7 +25,7 @@ services:
   - type: web
     name: tarepet-frontend
     env: static
-    buildCommand: "npx pnpm install --no-frozen-lockfile && npx pnpm --filter \"@workspace/tarepet\" build"
+    buildCommand: "npm install -g pnpm@9.15.0 && pnpm install --no-frozen-lockfile && pnpm --filter \"@workspace/tarepet\" build"
     staticPublishPath: "./artifacts/tarepet/dist/public"
     routes:
       - type: rewrite
@@ -34,3 +34,5 @@ services:
     envVars:
       - key: VITE_API_URL
         value: "https://tarepet-backend.onrender.com/api/v1"
+      - key: NODE_VERSION
+        value: "20.18.0"
