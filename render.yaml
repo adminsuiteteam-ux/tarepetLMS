@@ -25,7 +25,7 @@ services:
   - type: web
     name: tarepet-frontend
     env: static
-    buildCommand: "pnpm install --no-frozen-lockfile && pnpm --filter \"@workspace/tarepet\" build"
+    buildCommand: "npx pnpm install --no-frozen-lockfile && npx pnpm --filter \"@workspace/tarepet\" build"
     staticPublishPath: "./artifacts/tarepet/dist/public"
     routes:
       - type: rewrite
