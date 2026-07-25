@@ -57,8 +57,8 @@ export default function Home() {
               transition={{ delay: 0.5, duration: 0.6 }}
               className="flex flex-col sm:flex-row gap-4"
             >
-              <Link href="/admissions" className="inline-flex items-center justify-center rounded-md text-base font-medium transition-colors bg-primary text-white hover:bg-primary/90 h-14 px-8 py-3 group shadow-xl">
-                Apply Now
+              <Link href="/sign-in" className="inline-flex items-center justify-center rounded-md text-base font-medium transition-colors bg-primary text-white hover:bg-primary/90 h-14 px-8 py-3 group shadow-xl">
+                Portal Login
                 <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link href="/about" className="inline-flex items-center justify-center rounded-md text-base font-medium transition-colors bg-white text-secondary hover:bg-white/90 h-14 px-8 py-3">
@@ -362,8 +362,8 @@ export default function Home() {
             <h2 className="text-4xl md:text-5xl font-serif font-bold text-foreground mb-6">Begin Your Child's Journey</h2>
             <p className="text-muted-foreground text-lg mb-10">We invite you to visit our campus in Kpansia-Epje to see our Montessori classrooms in action.</p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Link href="/admissions" className="inline-flex items-center justify-center rounded-md text-base font-medium bg-primary text-white hover:bg-primary/90 h-14 px-8 py-3">
-                Start Admission Process
+              <Link href="/sign-in" className="inline-flex items-center justify-center rounded-md text-base font-medium bg-primary text-white hover:bg-primary/90 h-14 px-8 py-3">
+                Portal Login
               </Link>
               <Link href="/contact" className="inline-flex items-center justify-center rounded-md text-base font-medium border border-border bg-white text-foreground hover:bg-muted h-14 px-8 py-3">
                 Schedule a Tour
