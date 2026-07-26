@@ -75,5 +75,12 @@
     "vite": "7.3.2",
     "wouter": "3.3.5",
     "zod": "3.25.76"
+  },
+  "pnpm": {
+    "overrides": {
+      "js-yaml": "^4.3.0",
+      "brace-expansion": "^5.0.8",
+      "esbuild": "^0.28.1"
+    }
   }
 }
