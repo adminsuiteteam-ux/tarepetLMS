@@ -302,141 +302,257 @@ export default function StudentCBTExam() {
 
   // ============ EXAM INTERFACE ============
   if (phase === 'exam' && examData) {
+    const currentQ = examData.questions[currentPage] || examData.questions[0];
+
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col">
-        {/* Top Bar with Timer */}
-        <div className={`sticky top-0 z-50 border-b shadow-sm px-4 py-3 flex items-center justify-between ${timerWarning ? 'bg-red-600 text-white' : 'bg-white text-slate-900'}`}>
+      <div className="min-h-screen bg-[#F0FDF4] flex flex-col font-sans">
+        {/* Top Sticky Header with Timer */}
+        <div className={`sticky top-0 z-50 px-4 md:px-6 py-3 flex items-center justify-between border-b shadow-sm ${timerWarning ? 'bg-red-600 text-white' : 'bg-emerald-800 text-white'}`}>
           <div className="flex items-center gap-3">
-            <BookOpen className="w-5 h-5" />
-            <span className="font-bold text-sm truncate max-w-[200px]">{selectedExam?.title}</span>
+            <Link href="/dashboard/student">
+              <button className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition cursor-pointer">
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+            </Link>
+            <div className="flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-emerald-200" />
+              <h1 className="font-serif font-bold text-sm md:text-base text-white truncate max-w-xs md:max-w-md">
+                {selectedExam?.title || 'CBT Assessment'}
+              </h1>
+            </div>
           </div>
-          <div className={`flex items-center gap-2 font-mono text-lg font-bold ${timerWarning ? 'animate-pulse' : ''}`}>
-            <Clock className="w-5 h-5" />
-            {formatTime(timeLeft)}
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs">{answeredCount}/{examData.questions.length} answered</span>
+
+          <div className="flex items-center gap-4 md:gap-6">
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/15 font-mono text-sm md:text-base font-bold text-white ${timerWarning ? 'animate-pulse bg-red-700' : ''}`}>
+              <Clock className="w-4 h-4 text-emerald-200" />
+              <span>{formatTime(timeLeft)}</span>
+            </div>
+
             <button
               onClick={() => { if (confirm('Are you sure you want to submit your exam now?')) handleSubmit(false); }}
               disabled={isSubmitting}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${timerWarning ? 'bg-white text-red-600 hover:bg-red-50' : 'bg-blue-600 text-white hover:bg-blue-700'} disabled:opacity-50`}
+              className="bg-emerald-400 hover:bg-emerald-300 text-emerald-950 font-bold px-3.5 py-2 rounded-xl text-xs transition shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
-              <Send className="w-4 h-4 inline mr-1" /> Submit
+              <Send className="w-3.5 h-3.5" /> Submit Exam
             </button>
           </div>
         </div>
 
-        {/* Timer Progress Bar */}
-        <div className="w-full h-1 bg-slate-200">
-          <div
-            className={`h-full transition-all duration-1000 ${timerWarning ? 'bg-red-500' : 'bg-blue-500'}`}
-            style={{ width: `${(timeLeft / ((examData?.duration_minutes || 1) * 60)) * 100}%` }}
-          />
-        </div>
+        {/* Main Interface Layout: Left Green Sidebar + Main Canvas */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Left Emerald Sidebar */}
+          <div className="w-64 bg-[#0D9488] text-white p-5 flex flex-col justify-between hidden lg:flex shrink-0">
+            <div>
+              <div className="flex items-center gap-3 mb-8 px-2">
+                <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center font-bold text-lg text-white shadow-inner">
+                  🎓
+                </div>
+                <div>
+                  <h2 className="font-serif font-bold text-base leading-tight text-white">Tarepet Montessori</h2>
+                  <p className="text-[10px] text-teal-100/80 uppercase font-semibold tracking-wider">CBT Exam Center</p>
+                </div>
+              </div>
 
-        <div className="flex-1 flex">
-          {/* Question Navigation Sidebar */}
-          <div className="hidden md:block w-20 bg-white border-r p-3 overflow-y-auto">
-            <p className="text-[10px] text-slate-400 text-center mb-2 uppercase font-semibold">Nav</p>
-            <div className="grid grid-cols-2 gap-1.5">
-              {examData.questions.map((q, i) => (
-                <button
-                  key={q.id}
-                  onClick={() => setCurrentPage(Math.floor(i / questionsPerPage))}
-                  className={`w-8 h-8 rounded-lg text-xs font-bold flex items-center justify-center transition ${
-                    answers[q.id]
-                      ? 'bg-green-500 text-white'
-                      : currentPage === Math.floor(i / questionsPerPage)
-                        ? 'bg-blue-100 text-blue-700 ring-2 ring-blue-400'
-                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
+              <nav className="space-y-1 text-sm font-semibold">
+                <div className="px-4 py-3 rounded-xl bg-white/10 text-teal-100 flex items-center gap-3">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                  <span>Dashboard</span>
+                </div>
+                <div className="px-4 py-3 rounded-xl bg-white/20 text-white font-bold flex items-center gap-3 shadow-sm border border-white/20">
+                  <span className="w-2 h-2 rounded-full bg-white"></span>
+                  <span>Test Seleksi</span>
+                </div>
+                <div className="px-4 py-3 rounded-xl text-teal-100/80 hover:bg-white/10 transition flex items-center gap-3 cursor-pointer">
+                  <span>Student Profile</span>
+                </div>
+                <div className="px-4 py-3 rounded-xl text-teal-100/80 hover:bg-white/10 transition flex items-center gap-3 cursor-pointer">
+                  <span>Notifications</span>
+                </div>
+                <div className="px-4 py-3 rounded-xl text-teal-100/80 hover:bg-white/10 transition flex items-center gap-3 cursor-pointer">
+                  <span>Payments</span>
+                </div>
+              </nav>
+            </div>
+
+            <div className="pt-6 border-t border-white/20">
+              <div className="flex items-center gap-3 px-2">
+                <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center font-bold text-sm text-white">
+                  {user?.first_name?.[0] || 'S'}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-bold text-white truncate">{user ? `${user.first_name} ${user.last_name}` : 'Emeka Amadi'}</p>
+                  <p className="text-[10px] text-teal-100/70 truncate">Student (SS1 Science)</p>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Questions Area */}
-          <div className="flex-1 p-4 md:p-8 max-w-3xl mx-auto w-full">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentPage}
-                initial={{ opacity: 0, x: 30 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -30 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-8"
-              >
-                {currentQuestions.map((q) => (
-                  <div key={q.id} className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6">
-                    <div className="flex items-start gap-3 mb-5">
-                      <span className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold shrink-0">
-                        {q.order}
-                      </span>
-                      <p className="text-slate-800 font-medium leading-relaxed">{q.question_text}</p>
-                    </div>
-                    <div className="space-y-2.5 ml-11">
-                      {(['A', 'B', 'C', 'D'] as const).map(opt => {
-                        const optionText = q[`option_${opt.toLowerCase()}` as keyof Question] as string;
-                        const isSelected = answers[q.id] === opt;
-                        return (
-                          <button
-                            key={opt}
-                            onClick={() => handleSelectOption(q.id, opt)}
-                            className={`w-full text-left px-4 py-3 rounded-xl border-2 transition-all flex items-center gap-3 ${
-                              isSelected
-                                ? 'border-blue-500 bg-blue-50 text-blue-800 shadow-sm'
-                                : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700'
-                            }`}
-                          >
-                            <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                              isSelected ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-500'
-                            }`}>
-                              {opt}
-                            </span>
-                            <span className="text-sm">{optionText}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
+          {/* Main Work Area: Left Info Cards Column + Right Question Card Column */}
+          <div className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
+            <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+              {/* Left Column (Cards: Test, Sisa Waktu, Soal Palette, Test Selanjutnya) */}
+              <div className="lg:col-span-4 space-y-4">
+
+                {/* Card 1: Test Info */}
+                <div className="bg-white rounded-2xl p-5 border border-emerald-100 shadow-sm space-y-1">
+                  <p className="text-xs font-bold uppercase tracking-wider text-emerald-600">Test</p>
+                  <h3 className="font-serif font-bold text-base text-slate-800">{selectedExam?.title || 'Test Potensi Skolastik'}</h3>
+                  <p className="text-xs text-slate-500 mt-1">{selectedExam?.assessment_type === 'TEST' ? 'Continuous Assessment Test' : 'Terminal Examination'} • {selectedExam?.course_detail?.name || 'Mathematics'}</p>
+                </div>
+
+                {/* Card 2: Sisa Waktu (Timer Display) */}
+                <div className="bg-white rounded-2xl p-5 border border-emerald-100 shadow-sm space-y-2">
+                  <p className="text-xs font-bold uppercase tracking-wider text-emerald-600">Sisa Waktu</p>
+                  <div className="flex items-center gap-3">
+                    <Clock className="w-6 h-6 text-emerald-600" />
+                    <span className="font-mono font-extrabold text-2xl text-emerald-600 tracking-wider">
+                      {formatTime(timeLeft)}
+                    </span>
                   </div>
-                ))}
-              </motion.div>
-            </AnimatePresence>
+                  <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mt-1">
+                    <div
+                      className={`h-full transition-all duration-1000 ${timerWarning ? 'bg-red-500' : 'bg-emerald-500'}`}
+                      style={{ width: `${(timeLeft / ((examData?.duration_minutes || 1) * 60)) * 100}%` }}
+                    />
+                  </div>
+                </div>
 
-            {/* Page Navigation */}
-            <div className="flex items-center justify-between mt-8">
-              <button
-                onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
-                disabled={currentPage === 0}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 font-medium hover:bg-slate-50 transition disabled:opacity-30"
-              >
-                <ArrowLeft className="w-4 h-4" /> Previous
-              </button>
-              <span className="text-sm text-slate-400">Page {currentPage + 1} of {totalPages}</span>
-              <button
-                onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
-                disabled={currentPage >= totalPages - 1}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-600 font-medium hover:bg-slate-50 transition disabled:opacity-30"
-              >
-                Next <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
+                {/* Card 3: Soal (Question Palette Grid) */}
+                <div className="bg-white rounded-2xl p-5 border border-emerald-100 shadow-sm space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold uppercase tracking-wider text-emerald-600">Soal</p>
+                    <span className="text-xs font-semibold text-slate-500">{answeredCount}/{examData.questions.length} Answered</span>
+                  </div>
+                  <div className="grid grid-cols-6 gap-2">
+                    {examData.questions.map((q, i) => {
+                      const isAnswered = Boolean(answers[q.id]);
+                      const isCurrent = currentPage === i;
 
-            {/* Mobile Question Nav */}
-            <div className="md:hidden flex flex-wrap gap-1.5 mt-6 justify-center">
-              {examData.questions.map((q, i) => (
-                <button
-                  key={q.id}
-                  onClick={() => setCurrentPage(Math.floor(i / questionsPerPage))}
-                  className={`w-8 h-8 rounded-lg text-xs font-bold ${
-                    answers[q.id] ? 'bg-green-500 text-white' : 'bg-slate-200 text-slate-600'
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
+                      return (
+                        <button
+                          key={q.id}
+                          onClick={() => setCurrentPage(i)}
+                          className={`h-9 rounded-xl text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${
+                            isAnswered
+                              ? 'bg-emerald-600 text-white shadow-xs'
+                              : isCurrent
+                                ? 'bg-emerald-100 text-emerald-800 ring-2 ring-emerald-500 font-extrabold'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          }`}
+                        >
+                          {i + 1}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Card 4: Test Selanjutnya (Next Exam Preview) */}
+                <div className="bg-white rounded-2xl p-5 border border-emerald-100 shadow-sm space-y-1">
+                  <p className="text-xs font-bold uppercase tracking-wider text-emerald-600">Test Selanjutnya</p>
+                  <h4 className="font-serif font-bold text-sm text-slate-800">Test Potensi Akademik</h4>
+                  <p className="text-[11px] text-slate-400">Scheduled upon completion of current session</p>
+                </div>
+
+              </div>
+
+              {/* Right Column (Question Card) */}
+              <div className="lg:col-span-8">
+                <div className="bg-white rounded-2xl p-6 md:p-8 border border-emerald-100 shadow-md space-y-6">
+
+                  {/* Top Bar: Previous | Pertanyaan X | Next */}
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                    <button
+                      onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                      disabled={currentPage === 0}
+                      className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-emerald-700 disabled:opacity-30 disabled:hover:text-slate-600 cursor-pointer"
+                    >
+                      <ArrowLeft className="w-4 h-4" /> Sebelumnya
+                    </button>
+
+                    <h3 className="font-serif font-bold text-lg text-emerald-600">
+                      Pertanyaan {currentPage + 1} <span className="text-slate-400 font-normal text-sm">/ {examData.questions.length}</span>
+                    </h3>
+
+                    <button
+                      onClick={() => setCurrentPage(p => Math.min(examData.questions.length - 1, p + 1))}
+                      disabled={currentPage >= examData.questions.length - 1}
+                      className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-emerald-700 disabled:opacity-30 disabled:hover:text-slate-600 cursor-pointer"
+                    >
+                      Selanjutnya <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Question Text */}
+                  <div className="py-2">
+                    <p className="text-slate-800 font-medium text-sm md:text-base leading-relaxed">
+                      {currentQ.question_text}
+                    </p>
+                  </div>
+
+                  {/* Radio Options List */}
+                  <div className="space-y-3">
+                    {(['A', 'B', 'C', 'D'] as const).map(opt => {
+                      const optionText = currentQ[`option_${opt.toLowerCase()}` as keyof Question] as string;
+                      const isSelected = answers[currentQ.id] === opt;
+
+                      return (
+                        <button
+                          key={opt}
+                          onClick={() => handleSelectOption(currentQ.id, opt)}
+                          className={`w-full text-left p-4 rounded-xl border-2 transition-all flex items-start gap-3.5 cursor-pointer ${
+                            isSelected
+                              ? 'border-emerald-500 bg-emerald-50/60 text-slate-900 shadow-xs'
+                              : 'border-slate-200 hover:border-emerald-300 hover:bg-slate-50 text-slate-700'
+                          }`}
+                        >
+                          {/* Custom Radio Button Circle */}
+                          <div className={`w-5 h-5 rounded-full border-2 mt-0.5 flex items-center justify-center shrink-0 transition-colors ${
+                            isSelected ? 'border-emerald-600 bg-white' : 'border-slate-300 bg-white'
+                          }`}>
+                            {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-emerald-600" />}
+                          </div>
+
+                          <span className="text-sm font-medium leading-normal flex-1">
+                            {optionText}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Bottom Action Footer */}
+                  <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                    <div className="text-xs text-slate-400">
+                      {answers[currentQ.id] ? (
+                        <span className="text-emerald-600 font-bold flex items-center gap-1">
+                          <CheckCircle2 className="w-4 h-4" /> Option {answers[currentQ.id]} selected
+                        </span>
+                      ) : (
+                        <span>Please select an option to mark answer</span>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        if (currentPage < examData.questions.length - 1) {
+                          setCurrentPage(p => p + 1);
+                        } else {
+                          if (confirm('You have reached the last question. Would you like to submit your exam now?')) {
+                            handleSubmit(false);
+                          }
+                        }
+                      }}
+                      className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md transition-colors flex items-center gap-2 cursor-pointer"
+                    >
+                      {currentPage === examData.questions.length - 1 ? 'Submit Exam' : 'Submit Jawaban'}
+                    </button>
+                  </div>
+
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
