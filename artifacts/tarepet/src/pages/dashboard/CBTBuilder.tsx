@@ -4,7 +4,7 @@ import { authClient } from '@/lib/api-auth';
 import { motion } from 'framer-motion';
 import { 
   Plus, Trash2, Send, BookOpen, Clock, ChevronLeft, CheckCircle2,
-  FileText, AlertTriangle, Eye, Users
+  FileText, AlertTriangle, Eye, Users, FlaskConical, Palette, ClipboardList
 } from 'lucide-react';
 import { Link } from 'wouter';
 
@@ -77,9 +77,34 @@ const STATUS_STYLES: Record<string, string> = {
 
 import { getStoredExams, saveCBTExam, updateExamStatus, getStoredSubmissions, subscribeToCBTStore, SENIOR_COURSES } from '@/lib/cbt-store';
 
+const SS_CLASSES = [
+  {
+    key: 'SS1',
+    label: 'SS1 (Senior Secondary 1)',
+    color: 'bg-blue-50/50 border-blue-200 hover:border-blue-400',
+    iconBg: 'bg-blue-100 text-blue-700',
+    accent: 'text-blue-700',
+  },
+  {
+    key: 'SS2',
+    label: 'SS2 (Senior Secondary 2)',
+    color: 'bg-purple-50/50 border-purple-200 hover:border-purple-400',
+    iconBg: 'bg-purple-100 text-purple-700',
+    accent: 'text-purple-700',
+  },
+  {
+    key: 'SS3',
+    label: 'SS3 (Senior Secondary 3)',
+    color: 'bg-emerald-50/50 border-emerald-200 hover:border-emerald-400',
+    iconBg: 'bg-emerald-100 text-emerald-700',
+    accent: 'text-emerald-700',
+  },
+];
+
 export default function CBTBuilder() {
   const { user } = useAuth();
   const [view, setView] = useState<View>('list');
+  const [openClassDropdown, setOpenClassDropdown] = useState<string | null>(null);
   const [exams, setExams] = useState<any[]>([]);
   const [selectedExamId, setSelectedExamId] = useState<number | null>(null);
   const [questions, setQuestions] = useState<any[]>([]);
@@ -254,99 +279,103 @@ export default function CBTBuilder() {
             </button>
           </div>
 
-          {/* Class Selection Cards (SS1, SS2, SS3 — Science / Arts / Commercial) */}
+          {/* Class Selection Cards with Dropdowns (SS1, SS2, SS3 — Science & Art only) */}
           <div className="mb-8 space-y-4">
             <div>
               <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-emerald-600" />
-                Select Target Class & Department to Create Exam
+                Select Target Class & Department Stream
               </h2>
               <p className="text-slate-500 text-xs mt-0.5">
-                Click any department button below to configure exams or tests for that class level.
+                Click a class card below to drop down Science or Art stream options to configure tests or exams.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {[
-                {
-                  classKey: 'SS1',
-                  title: 'SS1 (Senior Secondary 1)',
-                  badge: 'Senior 1 Level',
-                  badgeBg: 'bg-blue-100 text-blue-800 border-blue-200',
-                  description: 'First year senior secondary curriculum & continuous assessments',
-                  streams: [
-                    { name: 'Science', btnClass: 'bg-emerald-600 hover:bg-emerald-700 text-white', icon: '🔬' },
-                    { name: 'Arts', btnClass: 'bg-purple-600 hover:bg-purple-700 text-white', icon: '🎨' },
-                    { name: 'Commercial', btnClass: 'bg-amber-600 hover:bg-amber-700 text-white', icon: '💼' },
-                  ]
-                },
-                {
-                  classKey: 'SS2',
-                  title: 'SS2 (Senior Secondary 2)',
-                  badge: 'Senior 2 Level',
-                  badgeBg: 'bg-indigo-100 text-indigo-800 border-indigo-200',
-                  description: 'Second year senior secondary intermediate exams & term tests',
-                  streams: [
-                    { name: 'Science', btnClass: 'bg-emerald-600 hover:bg-emerald-700 text-white', icon: '🔬' },
-                    { name: 'Arts', btnClass: 'bg-purple-600 hover:bg-purple-700 text-white', icon: '🎨' },
-                    { name: 'Commercial', btnClass: 'bg-amber-600 hover:bg-amber-700 text-white', icon: '💼' },
-                  ]
-                },
-                {
-                  classKey: 'SS3',
-                  title: 'SS3 (Senior Secondary 3)',
-                  badge: 'Senior 3 Level',
-                  badgeBg: 'bg-rose-100 text-rose-800 border-rose-200',
-                  description: 'Final year senior mock exams & WAEC/NECO CBT prep',
-                  streams: [
-                    { name: 'Science', btnClass: 'bg-emerald-600 hover:bg-emerald-700 text-white', icon: '🔬' },
-                    { name: 'Arts', btnClass: 'bg-purple-600 hover:bg-purple-700 text-white', icon: '🎨' },
-                    { name: 'Commercial', btnClass: 'bg-amber-600 hover:bg-amber-700 text-white', icon: '💼' },
-                  ]
-                },
-              ].map(card => (
-                <div key={card.classKey} className="bg-white rounded-2xl p-5 border border-slate-200 shadow-md hover:shadow-lg transition-all space-y-4 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border ${card.badgeBg}`}>
-                        {card.badge}
-                      </span>
-                      <span className="text-xs font-bold font-mono text-slate-400">{card.classKey}</span>
-                    </div>
-                    <h3 className="font-serif font-bold text-lg text-slate-900">{card.title}</h3>
-                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">{card.description}</p>
-                  </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              {SS_CLASSES.map(cls => {
+                const sciExams = exams.filter(e => e.class === cls.key && (e.stream === 'Science' || e.stream === 'STEM'));
+                const artExams = exams.filter(e => e.class === cls.key && (e.stream === 'Arts' || e.stream === 'Art' || e.stream === 'Humanities'));
+                const totalCount = sciExams.length + artExams.length;
 
-                  <div className="space-y-2 pt-2 border-t border-slate-100">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Select Department Stream:</p>
-                    <div className="grid grid-cols-1 gap-2">
-                      {card.streams.map(st => (
+                return (
+                  <div key={cls.key} className="relative">
+                    <button
+                      onClick={() => setOpenClassDropdown(prev => prev === cls.key ? null : cls.key)}
+                      className={`group w-full text-left rounded-2xl border-2 p-6 shadow-sm transition-all duration-200 hover:shadow-md hover:scale-[1.02] cursor-pointer ${cls.color} ${openClassDropdown === cls.key ? 'ring-2 ring-emerald-400' : ''}`}
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className={`p-3 rounded-2xl ${cls.iconBg}`}>
+                          <ClipboardList className="w-6 h-6" />
+                        </div>
+                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${cls.iconBg}`}>
+                          {totalCount} Tests / Exams
+                        </span>
+                      </div>
+                      <h3 className="font-serif font-bold text-xl text-slate-900 mb-1">{cls.label}</h3>
+                      <div className="flex gap-4 text-xs mt-2">
+                        <span className="text-slate-500">Science: <strong className={cls.accent}>{sciExams.length}</strong></span>
+                        <span className="text-slate-500">Art: <strong className={cls.accent}>{artExams.length}</strong></span>
+                      </div>
+                      <div className={`flex items-center gap-1.5 text-xs font-bold mt-3 ${cls.accent}`}>
+                        <span>Select Stream</span>
+                        <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${openClassDropdown === cls.key ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    </button>
+
+                    {/* Stream dropdown menu: Science or Art only */}
+                    {openClassDropdown === cls.key && (
+                      <div className="absolute left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-2xl z-40 py-2">
+                        <p className="px-4 pt-1 pb-2 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Choose Stream</p>
                         <button
-                          key={st.name}
                           onClick={() => {
-                            const streamCourses = SENIOR_COURSES.filter(c => c.stream === st.name);
+                            const streamCourses = SENIOR_COURSES.filter(c => c.stream === 'Science');
                             setForm(prev => ({
                               ...prev,
-                              class: card.classKey,
-                              stream: st.name,
-                              course: streamCourses[0]?.code || '',
-                              title: `${card.classKey} ${st.name} Assessment`,
+                              class: cls.key,
+                              stream: 'Science',
+                              course: streamCourses[0]?.code || 'MTH-101',
+                              title: `${cls.key} Science Assessment`,
                             }));
+                            setOpenClassDropdown(null);
                             setView('create');
                           }}
-                          className={`w-full py-2.5 px-3.5 rounded-xl text-xs font-bold flex items-center justify-between transition-colors shadow-xs cursor-pointer ${st.btnClass}`}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-emerald-50 hover:text-emerald-700 transition-colors text-left cursor-pointer"
                         >
-                          <span className="flex items-center gap-2">
-                            <span>{st.icon}</span>
-                            <span>{card.classKey} {st.name}</span>
+                          <span className="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700">
+                            <FlaskConical className="w-4 h-4" />
                           </span>
-                          <span className="text-[10px] opacity-90 font-semibold">Configure →</span>
+                          Science Stream
+                          <span className="ml-auto text-xs text-slate-400">{sciExams.length} available</span>
                         </button>
-                      ))}
-                    </div>
+
+                        <button
+                          onClick={() => {
+                            const streamCourses = SENIOR_COURSES.filter(c => c.stream === 'Arts' || c.stream === 'Art');
+                            setForm(prev => ({
+                              ...prev,
+                              class: cls.key,
+                              stream: 'Arts',
+                              course: streamCourses[0]?.code || 'ENG-101',
+                              title: `${cls.key} Art Assessment`,
+                            }));
+                            setOpenClassDropdown(null);
+                            setView('create');
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-slate-800 hover:bg-purple-50 hover:text-purple-700 transition-colors text-left cursor-pointer"
+                        >
+                          <span className="w-8 h-8 rounded-xl bg-purple-100 flex items-center justify-center text-purple-700">
+                            <Palette className="w-4 h-4" />
+                          </span>
+                          Art Stream
+                          <span className="ml-auto text-xs text-slate-400">{artExams.length} available</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -461,8 +490,7 @@ export default function CBTBuilder() {
                   onChange={e => handleStreamChange(e.target.value)}
                 >
                   <option value="Science">Science Department</option>
-                  <option value="Arts">Arts Department</option>
-                  <option value="Commercial">Commercial Department</option>
+                  <option value="Arts">Art Department</option>
                 </select>
               </div>
             </div>
