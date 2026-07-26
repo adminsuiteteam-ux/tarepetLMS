@@ -753,6 +753,34 @@ export default function AdminDashboard() {
   const [selectedSubjectPreview, setSelectedSubjectPreview] = useState<any>(null);
   const [settingsTab, setSettingsTab] = useState<'general' | 'academic' | 'security' | 'database'>('general');
 
+  const syncAdminExams = () => {
+    const stored = getStoredExams();
+    const mapped = stored.map(e => ({
+      id: e.id,
+      title: e.title,
+      type: e.assessment_type === 'TEST' ? 'Test' : 'Exam',
+      subject: e.course_name || e.course_code,
+      class: e.class || 'SS1',
+      stream: e.stream === 'Arts' || e.stream === 'Art' ? 'Art' : 'Science',
+      date: new Date(e.created_at).toISOString().split('T')[0],
+      time: '09:00',
+      duration: `${e.duration_minutes} mins`,
+      questionsCount: e.questions_count || e.questions?.length || 0,
+      venue: 'CBT Hall A',
+      status: e.status === 'APPROVED' ? 'Approved' : e.status === 'REJECTED' ? 'Rejected' : e.status === 'ACTIVE' ? 'Approved' : 'Pending Approval',
+      invigilator: e.teacher_name || 'Mrs. Okafor Chioma',
+      totalCandidates: 25,
+      questions: e.questions,
+    }));
+    setExamsList(mapped);
+  };
+
+  React.useEffect(() => {
+    syncAdminExams();
+    const unsub = subscribeToCBTStore(syncAdminExams);
+    return () => unsub();
+  }, []);
+
   React.useEffect(() => {
     if (activeSection !== 'users') {
       setUserSubPage(null); setSelectedUser(null);

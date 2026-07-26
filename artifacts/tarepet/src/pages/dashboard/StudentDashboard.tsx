@@ -104,6 +104,20 @@ export default function StudentDashboard() {
   const [timetableDay, setTimetableDay] = useState<DayKey>('Monday');
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
+  const [examsList, setExamsList] = useState<any[]>([]);
+  const [submissionsList, setSubmissionsList] = useState<any[]>([]);
+
+  const syncStudentCBTData = () => {
+    setExamsList(getStoredExams());
+    setSubmissionsList(getStoredSubmissions());
+  };
+
+  React.useEffect(() => {
+    syncStudentCBTData();
+    const unsub = subscribeToCBTStore(syncStudentCBTData);
+    return () => unsub();
+  }, []);
+
   // Settings form state
   const [profileForm, setProfileForm] = useState({
     firstName: user?.first_name || 'Student',
@@ -253,15 +267,15 @@ export default function StudentDashboard() {
     // 3. EXAMS / TEST
     // =========================================================
     if (activeSection === 'exams') {
-      const activeExams = getStoredExams().filter(e => e.status === 'ACTIVE' || e.status === 'APPROVED');
-      const studentSubs = getStoredSubmissions();
+      const activeExams = examsList.filter(e => e.status === 'ACTIVE' || e.status === 'APPROVED');
+      const studentSubs = submissionsList;
 
       return (
         <div className="space-y-6">
           <div className="bg-gradient-to-r from-emerald-700 via-teal-800 to-blue-900 text-white p-6 rounded-2xl shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <span className="bg-white/20 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full inline-block mb-2">CBT Examination System</span>
-              <h2 className="text-2xl sm:text-3xl font-serif font-bold">SS1 Science CBT Exams & Tests</h2>
+              <h2 className="text-2xl sm:text-3xl font-serif font-bold">Online CBT Exams & Assessments</h2>
               <p className="text-emerald-100 text-xs mt-1 max-w-xl">Take active CBT continuous assessment tests and terminal exams. Automatic timer submission & instant results.</p>
             </div>
             <Link href="/dashboard/cbt-exam">
