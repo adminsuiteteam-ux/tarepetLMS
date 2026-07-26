@@ -39,7 +39,7 @@ jobs:
         run: pnpm --filter "@workspace/tarepet" build
         working-directory: .
         env:
-          BASE_PATH: /tarepet/
+          BASE_PATH: ./
           NODE_ENV: production
           VITE_API_URL: https://tarepet-backend.onrender.com/api/v1
 
