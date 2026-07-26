@@ -235,7 +235,7 @@ export default function CBTBuilder() {
   if (view === 'list') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-emerald-50 p-4 md:p-8">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <Link href="/dashboard/teacher">
@@ -243,7 +243,7 @@ export default function CBTBuilder() {
               </Link>
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-slate-900">CBT Exam Builder</h1>
-                <p className="text-slate-500 text-sm">Create, manage, and upload CBT exams to students</p>
+                <p className="text-slate-500 text-sm">Select target class & department to set exams or tests for students</p>
               </div>
             </div>
             <button
@@ -252,6 +252,108 @@ export default function CBTBuilder() {
             >
               <Plus className="w-4 h-4" /> New Exam
             </button>
+          </div>
+
+          {/* Class Selection Cards (SS1, SS2, SS3 — Science / Arts / Commercial) */}
+          <div className="mb-8 space-y-4">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-emerald-600" />
+                Select Target Class & Department to Create Exam
+              </h2>
+              <p className="text-slate-500 text-xs mt-0.5">
+                Click any department button below to configure exams or tests for that class level.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                {
+                  classKey: 'SS1',
+                  title: 'SS1 (Senior Secondary 1)',
+                  badge: 'Senior 1 Level',
+                  badgeBg: 'bg-blue-100 text-blue-800 border-blue-200',
+                  description: 'First year senior secondary curriculum & continuous assessments',
+                  streams: [
+                    { name: 'Science', btnClass: 'bg-emerald-600 hover:bg-emerald-700 text-white', icon: '🔬' },
+                    { name: 'Arts', btnClass: 'bg-purple-600 hover:bg-purple-700 text-white', icon: '🎨' },
+                    { name: 'Commercial', btnClass: 'bg-amber-600 hover:bg-amber-700 text-white', icon: '💼' },
+                  ]
+                },
+                {
+                  classKey: 'SS2',
+                  title: 'SS2 (Senior Secondary 2)',
+                  badge: 'Senior 2 Level',
+                  badgeBg: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+                  description: 'Second year senior secondary intermediate exams & term tests',
+                  streams: [
+                    { name: 'Science', btnClass: 'bg-emerald-600 hover:bg-emerald-700 text-white', icon: '🔬' },
+                    { name: 'Arts', btnClass: 'bg-purple-600 hover:bg-purple-700 text-white', icon: '🎨' },
+                    { name: 'Commercial', btnClass: 'bg-amber-600 hover:bg-amber-700 text-white', icon: '💼' },
+                  ]
+                },
+                {
+                  classKey: 'SS3',
+                  title: 'SS3 (Senior Secondary 3)',
+                  badge: 'Senior 3 Level',
+                  badgeBg: 'bg-rose-100 text-rose-800 border-rose-200',
+                  description: 'Final year senior mock exams & WAEC/NECO CBT prep',
+                  streams: [
+                    { name: 'Science', btnClass: 'bg-emerald-600 hover:bg-emerald-700 text-white', icon: '🔬' },
+                    { name: 'Arts', btnClass: 'bg-purple-600 hover:bg-purple-700 text-white', icon: '🎨' },
+                    { name: 'Commercial', btnClass: 'bg-amber-600 hover:bg-amber-700 text-white', icon: '💼' },
+                  ]
+                },
+              ].map(card => (
+                <div key={card.classKey} className="bg-white rounded-2xl p-5 border border-slate-200 shadow-md hover:shadow-lg transition-all space-y-4 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border ${card.badgeBg}`}>
+                        {card.badge}
+                      </span>
+                      <span className="text-xs font-bold font-mono text-slate-400">{card.classKey}</span>
+                    </div>
+                    <h3 className="font-serif font-bold text-lg text-slate-900">{card.title}</h3>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">{card.description}</p>
+                  </div>
+
+                  <div className="space-y-2 pt-2 border-t border-slate-100">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Select Department Stream:</p>
+                    <div className="grid grid-cols-1 gap-2">
+                      {card.streams.map(st => (
+                        <button
+                          key={st.name}
+                          onClick={() => {
+                            const streamCourses = SENIOR_COURSES.filter(c => c.stream === st.name);
+                            setForm(prev => ({
+                              ...prev,
+                              class: card.classKey,
+                              stream: st.name,
+                              course: streamCourses[0]?.code || '',
+                              title: `${card.classKey} ${st.name} Assessment`,
+                            }));
+                            setView('create');
+                          }}
+                          className={`w-full py-2.5 px-3.5 rounded-xl text-xs font-bold flex items-center justify-between transition-colors shadow-xs cursor-pointer ${st.btnClass}`}
+                        >
+                          <span className="flex items-center gap-2">
+                            <span>{st.icon}</span>
+                            <span>{card.classKey} {st.name}</span>
+                          </span>
+                          <span className="text-[10px] opacity-90 font-semibold">Configure →</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Existing Exams Section Header */}
+          <div className="mb-4">
+            <h2 className="text-lg font-bold text-slate-900">Configured CBT Exams ({exams.length})</h2>
+            <p className="text-slate-500 text-xs">Existing tests and examinations saved in system</p>
           </div>
 
           {exams.length === 0 ? (
