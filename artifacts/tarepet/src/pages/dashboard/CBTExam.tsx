@@ -46,6 +46,15 @@ type Phase = 'list' | 'confirm' | 'exam' | 'result';
 
 import { getStoredExams, submitStudentCBTAttempt, subscribeToCBTStore } from '@/lib/cbt-store';
 
+function getQuestionOption(q: Question, opt: 'A' | 'B' | 'C' | 'D'): string {
+  switch (opt) {
+    case 'A': return q.option_a;
+    case 'B': return q.option_b;
+    case 'C': return q.option_c;
+    case 'D': return q.option_d;
+  }
+}
+
 export default function StudentCBTExam() {
   const { user } = useAuth();
   const [phase, setPhase] = useState<Phase>('list');
@@ -494,7 +503,7 @@ export default function StudentCBTExam() {
                   {/* Radio Options List */}
                   <div className="space-y-3">
                     {(['A', 'B', 'C', 'D'] as const).map(opt => {
-                      const optionText = currentQ[`option_${opt.toLowerCase()}` as keyof Question] as string;
+                      const optionText = getQuestionOption(currentQ, opt);
                       const isSelected = answers[currentQ.id] === opt;
 
                       return (
