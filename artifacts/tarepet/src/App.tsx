@@ -28,6 +28,14 @@ import CBTApproval from '@/pages/dashboard/CBTApproval';
 
 const queryClient = new QueryClient();
 
+function PublicRoute({ component: Component }: { component: React.ComponentType }) {
+  return (
+    <Layout>
+      <Component />
+    </Layout>
+  );
+}
+
 function Router() {
   return (
     <Switch>
@@ -42,24 +50,33 @@ function Router() {
       <Route path="/dashboard/cbt-builder" component={CBTBuilder} />
       <Route path="/dashboard/cbt-approval" component={CBTApproval} />
       
-      {/* Public Pages with Layout wrapper */}
-      <Route>
-        <Layout>
-          <AnimatePresence mode="wait">
-            <Switch>
-              <Route path="/" component={Home} />
-              <Route path="/about" component={About} />
-              <Route path="/programs" component={Programs} />
-              <Route path="/admissions" component={Admissions} />
-              <Route path="/blog" component={Blog} />
-              <Route path="/journal" component={Journal} />
-              <Route path="/events" component={Events} />
-              <Route path="/contact" component={Contact} />
-              <Route component={NotFound} />
-            </Switch>
-          </AnimatePresence>
-        </Layout>
+      {/* Public Pages with Layout */}
+      <Route path="/">
+        <PublicRoute component={Home} />
       </Route>
+      <Route path="/about">
+        <PublicRoute component={About} />
+      </Route>
+      <Route path="/programs">
+        <PublicRoute component={Programs} />
+      </Route>
+      <Route path="/admissions">
+        <PublicRoute component={Admissions} />
+      </Route>
+      <Route path="/blog">
+        <PublicRoute component={Blog} />
+      </Route>
+      <Route path="/journal">
+        <PublicRoute component={Journal} />
+      </Route>
+      <Route path="/events">
+        <PublicRoute component={Events} />
+      </Route>
+      <Route path="/contact">
+        <PublicRoute component={Contact} />
+      </Route>
+      
+      <Route component={NotFound} />
     </Switch>
   );
 }
@@ -67,11 +84,12 @@ function Router() {
 function getRouterBase() {
   if (typeof window === 'undefined') return '';
   const pathname = window.location.pathname;
-  const match = pathname.match(/^\/([^/]+)/);
-  if (match && ['tarepetLCBT', 'tarepetLMS', 'tarepet'].includes(match[1])) {
-    return `/${match[1]}`;
+  const segments = pathname.split('/').filter(Boolean);
+  const knownRoutes = ['sign-in', 'dashboard', 'about', 'programs', 'admissions', 'blog', 'journal', 'events', 'contact'];
+  if (segments.length > 0 && !knownRoutes.includes(segments[0])) {
+    return `/${segments[0]}`;
   }
-  return (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+  return '';
 }
 
 function App() {
