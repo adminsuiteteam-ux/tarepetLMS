@@ -79,7 +79,98 @@ export const SENIOR_COURSES = [
 
 export const SS1_SCIENCE_COURSES = SENIOR_COURSES.filter(c => c.stream === 'Science');
 
-const INITIAL_SS1_SCIENCE_EXAMS: CBTExam[] = [];
+const INITIAL_SS1_SCIENCE_EXAMS: CBTExam[] = [
+  {
+    id: 101,
+    title: 'SS1 Science Mathematics Continuous Assessment Test',
+    description: 'Mid-term continuous assessment evaluation on algebra, indices, and logarithms.',
+    instructions: 'Select the single best answer for each question. The test will auto-submit when time expires.',
+    course_code: 'MTH-101',
+    course_name: 'Mathematics',
+    class: 'SS1',
+    stream: 'Science',
+    assessment_type: 'TEST',
+    term: '2ND_TERM',
+    duration_minutes: 15,
+    questions_count: 3,
+    questions_per_page: 2,
+    teacher_name: 'Mr. Okonkwo Paul',
+    status: 'ACTIVE',
+    questions: [
+      {
+        id: 1,
+        question_text: 'Solve for x in the quadratic equation: x^2 - 5x + 6 = 0',
+        option_a: 'x = 1 or x = 6',
+        option_b: 'x = 2 or x = 3',
+        option_c: 'x = -2 or x = -3',
+        option_d: 'x = 0 or x = 5',
+        correct_option: 'B',
+        points: 5,
+      },
+      {
+        id: 2,
+        question_text: 'What is the value of log10(1000)?',
+        option_a: '2',
+        option_b: '3',
+        option_c: '10',
+        option_d: '100',
+        correct_option: 'B',
+        points: 5,
+      },
+      {
+        id: 3,
+        question_text: 'Simplify 2^4 * 2^3',
+        option_a: '2^12',
+        option_b: '2^7',
+        option_c: '4^7',
+        option_d: '2^1',
+        correct_option: 'B',
+        points: 5,
+      },
+    ],
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 102,
+    title: 'SS1 Art English Language Continuous Assessment Test',
+    description: 'Grammar, vocabulary, and sentence structure continuous assessment test.',
+    instructions: 'Choose the option that best completes each sentence.',
+    course_code: 'ENG-101',
+    course_name: 'English Language',
+    class: 'SS1',
+    stream: 'Arts',
+    assessment_type: 'TEST',
+    term: '2ND_TERM',
+    duration_minutes: 15,
+    questions_count: 2,
+    questions_per_page: 2,
+    teacher_name: 'Dr. Grace Bassey',
+    status: 'ACTIVE',
+    questions: [
+      {
+        id: 1,
+        question_text: 'Identify the noun in the sentence: "The diligent student passed the examination with flying colors."',
+        option_a: 'diligent',
+        option_b: 'passed',
+        option_c: 'student',
+        option_d: 'flying',
+        correct_option: 'C',
+        points: 5,
+      },
+      {
+        id: 2,
+        question_text: 'Choose the antonym of the word "Generous".',
+        option_a: 'Stingy',
+        option_b: 'Kind',
+        option_c: 'Polite',
+        option_d: 'Brave',
+        correct_option: 'A',
+        points: 5,
+      },
+    ],
+    created_at: new Date().toISOString(),
+  },
+];
 const INITIAL_SUBMISSIONS: CBTSubmission[] = [];
 
 const STORAGE_KEYS = {
@@ -96,26 +187,18 @@ export function clearCBTStoreCache() {
   window.dispatchEvent(new Event('cbt_store_updated'));
 }
 
-// Initialize Storage (Clean slate)
+// Initialize Storage
 export function initCBTStore() {
   if (typeof window === 'undefined') return;
 
   const rawExams = localStorage.getItem(STORAGE_KEYS.EXAMS);
   const rawSubmissions = localStorage.getItem(STORAGE_KEYS.SUBMISSIONS);
 
-  // If cached data contains old pre-seeded records (e.g. Emeka Amadi or id: 101), clear them out!
-  if (rawExams && (rawExams.includes('101') || rawExams.includes('Quadratic Equations'))) {
-    localStorage.removeItem(STORAGE_KEYS.EXAMS);
+  if (!rawExams || rawExams === '[]') {
+    localStorage.setItem(STORAGE_KEYS.EXAMS, JSON.stringify(INITIAL_SS1_SCIENCE_EXAMS));
   }
-  if (rawSubmissions && (rawSubmissions.includes('Emeka Amadi') || rawSubmissions.includes('TMS-2024-101'))) {
-    localStorage.removeItem(STORAGE_KEYS.SUBMISSIONS);
-  }
-
-  if (!localStorage.getItem(STORAGE_KEYS.EXAMS)) {
-    localStorage.setItem(STORAGE_KEYS.EXAMS, JSON.stringify([]));
-  }
-  if (!localStorage.getItem(STORAGE_KEYS.SUBMISSIONS)) {
-    localStorage.setItem(STORAGE_KEYS.SUBMISSIONS, JSON.stringify([]));
+  if (!rawSubmissions) {
+    localStorage.setItem(STORAGE_KEYS.SUBMISSIONS, JSON.stringify(INITIAL_SUBMISSIONS));
   }
 }
 
