@@ -82,14 +82,10 @@ function Router() {
 }
 
 function getRouterBase() {
-  if (typeof window === 'undefined') return '';
-  const pathname = window.location.pathname;
-  const segments = pathname.split('/').filter(Boolean);
-  const knownRoutes = ['sign-in', 'dashboard', 'about', 'programs', 'admissions', 'blog', 'journal', 'events', 'contact'];
-  if (segments.length > 0 && !knownRoutes.includes(segments[0])) {
-    return `/${segments[0]}`;
-  }
-  return '';
+  // Vite injects BASE_URL from the BASE_PATH env var at build time.
+  // Strip trailing slash for wouter compatibility: '/tarepetLMS/' -> '/tarepetLMS'
+  const base = import.meta.env.BASE_URL || '/';
+  return base === '/' ? '' : base.replace(/\/$/, '');
 }
 
 function App() {

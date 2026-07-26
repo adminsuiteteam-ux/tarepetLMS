@@ -37,7 +37,7 @@ jobs:
       - name: Build project
         run: pnpm run build
         env:
-          BASE_PATH: '/tarepetLCBT/'
+          BASE_PATH: "/${{ github.event.repository.name }}/"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
