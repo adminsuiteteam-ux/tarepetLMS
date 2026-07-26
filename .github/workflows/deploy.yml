@@ -29,9 +29,11 @@ jobs:
         run: pnpm install --no-frozen-lockfile
 
       - name: Build Tarepet app
-        run: pnpm --filter "@workspace/tarepet" build
+        run: |
+          pnpm --filter "@workspace/tarepet" build
+          cp artifacts/tarepet/dist/public/index.html artifacts/tarepet/dist/public/404.html
         env:
-          BASE_PATH: ./
+          BASE_PATH: /tarepetwebapp/
           NODE_ENV: production
           VITE_API_URL: https://tarepet-backend.onrender.com/api/v1
 
