@@ -64,12 +64,22 @@ function Router() {
   );
 }
 
+function getRouterBase() {
+  if (typeof window === 'undefined') return '';
+  const pathname = window.location.pathname;
+  const match = pathname.match(/^\/([^/]+)/);
+  if (match && ['tarepetLCBT', 'tarepetLMS', 'tarepet'].includes(match[1])) {
+    return `/${match[1]}`;
+  }
+  return (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+          <WouterRouter base={getRouterBase()}>
             <Router />
           </WouterRouter>
           <Toaster />
