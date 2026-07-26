@@ -30,6 +30,8 @@ export default function TeacherDashboard() {
   // Sub-tab states
   const [studentSubTab, setStudentSubTab] = useState<'roster' | 'attendance' | 'montessori'>('roster');
   const [resultsSubTab, setResultsSubTab] = useState<'queue' | 'gradebook'>('queue');
+  const [selectedExamClass, setSelectedExamClass] = useState<string>('ALL');
+  const [selectedExamStream, setSelectedExamStream] = useState<string>('ALL');
 
   // Data states
   const [submissions, setSubmissions] = useState(PENDING_SUBMISSIONS);
@@ -354,23 +356,80 @@ export default function TeacherDashboard() {
     if (activeSection === 'exams') {
       const allExams = getStoredExams();
       const allSubmissions = getStoredSubmissions();
-      const approvedExams = allExams.filter(e => e.status === 'APPROVED');
-      const activeExams = allExams.filter(e => e.status === 'ACTIVE');
-      const pendingExams = allExams.filter(e => e.status === 'PENDING');
+
+      const filteredExams = allExams.filter(e => {
+        const matchClass = selectedExamClass === 'ALL' || !e.class || e.class === selectedExamClass;
+        const matchStream = selectedExamStream === 'ALL' || !e.stream || e.stream === selectedExamStream;
+        return matchClass && matchStream;
+      });
+
+      const approvedExams = filteredExams.filter(e => e.status === 'APPROVED');
+      const activeExams = filteredExams.filter(e => e.status === 'ACTIVE');
+      const pendingExams = filteredExams.filter(e => e.status === 'PENDING');
+
+      const filteredSubmissions = allSubmissions.filter(s => {
+        const matchClass = selectedExamClass === 'ALL' || !s.class || s.class === selectedExamClass;
+        const matchStream = selectedExamStream === 'ALL' || !s.stream || s.stream === selectedExamStream;
+        return matchClass && matchStream;
+      });
 
       return (
         <div className="space-y-6">
           <div className="bg-gradient-to-r from-blue-700 via-indigo-800 to-purple-900 text-white p-6 rounded-2xl shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <span className="bg-white/20 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full inline-block mb-2">CBT Examination System</span>
-              <h2 className="text-2xl sm:text-3xl font-serif font-bold">SS1 Science CBT Exam Control</h2>
-              <p className="text-blue-100 text-xs mt-1 max-w-xl">Create MCQs, monitor Admin approvals, click Proceed to activate live exams for SS1 Science students, and review submitted scores.</p>
+              <h2 className="text-2xl sm:text-3xl font-serif font-bold">
+                {selectedExamClass === 'ALL' ? 'All Senior Classes' : selectedExamClass} {selectedExamStream === 'ALL' ? 'General' : selectedExamStream} CBT Exam Control
+              </h2>
+              <p className="text-blue-100 text-xs mt-1 max-w-xl">Create MCQs, select target class & stream (SS1-SS3 Science/Arts/Commercial), monitor approvals, and activate live exams for students.</p>
             </div>
             <Link href="/dashboard/cbt-builder">
               <button className="bg-white text-blue-700 hover:bg-blue-50 font-bold px-6 py-3 rounded-xl text-sm transition-all shadow-lg whitespace-nowrap">
                 Launch CBT Exam Builder →
               </button>
             </Link>
+          </div>
+
+          {/* Class & Department Filter Bar */}
+          <div className="bg-card rounded-2xl border border-border p-4 shadow-sm space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-serif font-bold text-foreground text-sm">Select Target Class & Department</h3>
+                <p className="text-xs text-muted-foreground">Filter exams and student submissions by Senior Level & Department Stream</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 pt-1">
+              {/* Class Tabs */}
+              <div className="flex gap-1.5 bg-muted/40 p-1 rounded-xl border border-border">
+                {['ALL', 'SS1', 'SS2', 'SS3'].map(cls => (
+                  <button
+                    key={cls}
+                    onClick={() => setSelectedExamClass(cls)}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      selectedExamClass === cls ? 'bg-primary text-white shadow-xs' : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {cls === 'ALL' ? 'All Classes' : cls}
+                  </button>
+                ))}
+              </div>
+
+              {/* Stream Tabs */}
+              <div className="flex gap-1.5 bg-muted/40 p-1 rounded-xl border border-border">
+                {['ALL', 'Science', 'Arts', 'Commercial'].map(st => (
+                  <button
+                    key={st}
+                    onClick={() => setSelectedExamStream(st)}
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      selectedExamStream === st ? 'bg-emerald-600 text-white shadow-xs' : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {st === 'ALL' ? 'All Streams' : st}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Action Required: Approved Exams Waiting to Proceed */}
@@ -380,19 +439,22 @@ export default function TeacherDashboard() {
                 <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                 <span>Admin Approved Exams Ready to Proceed ({approvedExams.length})</span>
               </div>
-              <p className="text-xs text-emerald-700">The Admin has reviewed and approved the following exams. Click <strong>"Proceed / Activate Exam"</strong> so your SS1 Science students can receive and take the exam in their portal.</p>
+              <p className="text-xs text-emerald-700">The Admin has reviewed and approved the following exams. Click <strong>"Proceed / Activate Exam"</strong> so target students can receive and take the exam in their portal.</p>
               <div className="space-y-3 pt-1">
                 {approvedExams.map(ex => (
                   <div key={ex.id} className="bg-white p-4 rounded-xl border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
                     <div>
-                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">{ex.course_code}</span>
-                      <h4 className="font-bold text-foreground text-sm mt-1">{ex.title}</h4>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">{ex.course_code}</span>
+                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">{ex.class || 'SS1'} {ex.stream || 'Science'}</span>
+                      </div>
+                      <h4 className="font-bold text-foreground text-sm">{ex.title}</h4>
                       <p className="text-xs text-muted-foreground">{ex.duration_minutes} mins · {ex.questions_count || ex.questions?.length} Objective Questions</p>
                     </div>
                     <button
                       onClick={() => {
                         updateExamStatus(ex.id, 'ACTIVE');
-                        showToast(`Activated "${ex.title}"! SS1 Science students can now start this exam.`);
+                        showToast(`Activated "${ex.title}"! ${ex.class || 'SS1'} ${ex.stream || 'Science'} students can now start this exam.`);
                       }}
                       className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-colors shadow-md flex items-center gap-1.5 self-start sm:self-auto ring-2 ring-emerald-400/50 animate-pulse"
                     >
@@ -417,7 +479,7 @@ export default function TeacherDashboard() {
                     <div>
                       <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">🟢 Live in Student Portal</span>
                       <h4 className="font-bold text-foreground text-sm mt-1">{ex.title}</h4>
-                      <p className="text-xs text-muted-foreground">{ex.course_code} · {ex.duration_minutes} mins · SS1 Science Students</p>
+                      <p className="text-xs text-muted-foreground">{ex.course_code} · {ex.duration_minutes} mins · {ex.class || 'SS1'} {ex.stream || 'Science'} Students</p>
                     </div>
                     <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-3 py-1.5 rounded-xl">
                       Receiving Submissions...
@@ -431,13 +493,13 @@ export default function TeacherDashboard() {
           {/* Real-Time Student CBT Submissions Queue */}
           <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-serif font-bold text-foreground text-base">Received Student CBT Submissions ({allSubmissions.length})</h3>
+              <h3 className="font-serif font-bold text-foreground text-base">Received Student CBT Submissions ({filteredSubmissions.length})</h3>
               <span className="text-xs font-semibold text-muted-foreground">Auto-Graded & Verified</span>
             </div>
 
-            {allSubmissions.length > 0 ? (
+            {filteredSubmissions.length > 0 ? (
               <div className="space-y-3">
-                {allSubmissions.map(sub => (
+                {filteredSubmissions.map(sub => (
                   <div key={sub.id} className="p-4 rounded-xl border border-border bg-card hover:bg-muted/10 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
