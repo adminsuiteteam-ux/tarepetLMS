@@ -52,13 +52,32 @@ export interface CBTSubmission {
   gradebook_synced: boolean;
 }
 
-export const SS1_SCIENCE_COURSES = [
-  { id: 1, code: 'MTH-101', name: 'SS1 Senior Secondary Mathematics I', category: 'STEM', teacher: 'Mrs. Okafor Chioma' },
-  { id: 2, code: 'PHY-101', name: 'SS1 Senior Secondary Physics I', category: 'STEM', teacher: 'Mr. Okonkwo Paul' },
-  { id: 3, code: 'CHM-101', name: 'SS1 Senior Secondary Chemistry I', category: 'STEM', teacher: 'Mrs. Okafor Chioma' },
-  { id: 4, code: 'BIO-101', name: 'SS1 Senior Secondary Biology I', category: 'STEM', teacher: 'Mr. Okonkwo Paul' },
-  { id: 5, code: 'AGR-101', name: 'SS1 Senior Secondary Agricultural Science I', category: 'STEM', teacher: 'Mrs. Okafor Chioma' },
+export const SENIOR_COURSES = [
+  // Science Stream
+  { id: 1, code: 'MTH-101', name: 'Mathematics', stream: 'Science', category: 'STEM' },
+  { id: 2, code: 'PHY-101', name: 'Physics', stream: 'Science', category: 'STEM' },
+  { id: 3, code: 'CHM-101', name: 'Chemistry', stream: 'Science', category: 'STEM' },
+  { id: 4, code: 'BIO-101', name: 'Biology', stream: 'Science', category: 'STEM' },
+  { id: 5, code: 'AGR-101', name: 'Agricultural Science', stream: 'Science', category: 'STEM' },
+  { id: 6, code: 'FMTH-101', name: 'Further Mathematics', stream: 'Science', category: 'STEM' },
+  { id: 7, code: 'CMP-101', name: 'Computer Studies', stream: 'Science', category: 'STEM' },
+  
+  // Arts Stream
+  { id: 8, code: 'ENG-101', name: 'English Language', stream: 'Arts', category: 'Humanities' },
+  { id: 9, code: 'LIT-101', name: 'Literature in English', stream: 'Arts', category: 'Humanities' },
+  { id: 10, code: 'GOV-101', name: 'Government', stream: 'Arts', category: 'Humanities' },
+  { id: 11, code: 'CRS-101', name: 'Christian Religious Studies (CRS)', stream: 'Arts', category: 'Humanities' },
+  { id: 12, code: 'HIS-101', name: 'History', stream: 'Arts', category: 'Humanities' },
+  { id: 13, code: 'CIV-101', name: 'Civic Education', stream: 'Arts', category: 'Humanities' },
+
+  // Commercial Stream
+  { id: 14, code: 'ACC-101', name: 'Financial Accounting', stream: 'Commercial', category: 'Business' },
+  { id: 15, code: 'ECO-101', name: 'Economics', stream: 'Commercial', category: 'Business' },
+  { id: 16, code: 'COM-101', name: 'Commerce', stream: 'Commercial', category: 'Business' },
+  { id: 17, code: 'OFF-101', name: 'Office Practice', stream: 'Commercial', category: 'Business' },
 ];
+
+export const SS1_SCIENCE_COURSES = SENIOR_COURSES.filter(c => c.stream === 'Science');
 
 const INITIAL_SS1_SCIENCE_EXAMS: CBTExam[] = [];
 const INITIAL_SUBMISSIONS: CBTSubmission[] = [];
@@ -119,32 +138,29 @@ export function saveStoredExams(exams: CBTExam[]) {
 }
 
 // Create or Update Exam
-export function saveCBTExam(examData: Partial<CBTExam> & { title: string; course_code: string }): CBTExam {
+export function saveCBTExam(examData: Partial<CBTExam> & { title: string; course_code?: string }): CBTExam {
   const exams = getStoredExams();
   const existingIdx = exams.findIndex(e => e.id === examData.id);
   
-  const course = SS1_SCIENCE_COURSES.find(c => c.code === examData.course_code) || SS1_SCIENCE_COURSES[0];
+  const foundCourse = SENIOR_COURSES.find(c => c.code === examData.course_code || c.name === examData.course_name) || SENIOR_COURSES[0];
   
   const newExam: CBTExam = {
     id: examData.id || Date.now(),
     title: examData.title,
     description: examData.description || 'Objective CBT Assessment',
     instructions: examData.instructions || 'Answer all objective questions. Multiple choice A, B, C, D.',
-    course_code: course.code,
-    course_name: course.name,
+    course_code: examData.course_code || foundCourse.code,
+    course_name: examData.course_name || foundCourse.name,
     class: examData.class || 'SS1',
     stream: examData.stream || 'Science',
     assessment_type: examData.assessment_type || 'TEST',
     term: examData.term || 'Term 2',
     duration_minutes: examData.duration_minutes || 45,
-    questions_count: examData.questions ? examData.questions.length : (examData.questions_count || 4),
+    questions_count: examData.questions ? examData.questions.length : (examData.questions_count || 0),
     questions_per_page: examData.questions_per_page || 2,
     teacher_name: examData.teacher_name || 'Mrs. Okafor Chioma',
     status: examData.status || 'PENDING',
-    questions: examData.questions || [
-      { id: 1, question_text: `What is the fundamental law in ${course.name}?`, option_a: 'Option A: Rule I', option_b: 'Option B: Principle II', option_c: 'Option C: Postulate III', option_d: 'Option D: Theorem IV', correct_option: 'A', points: 5 },
-      { id: 2, question_text: `Which unit measures standard output in ${course.name}?`, option_a: 'Option A: Metric X', option_b: 'Option B: Metric Y', option_c: 'Option C: Metric Z', option_d: 'Option D: Metric W', correct_option: 'B', points: 5 },
-    ],
+    questions: examData.questions || [],
     created_at: examData.created_at || new Date().toISOString(),
   };
 

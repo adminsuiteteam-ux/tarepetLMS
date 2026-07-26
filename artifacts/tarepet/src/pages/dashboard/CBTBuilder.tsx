@@ -12,6 +12,8 @@ interface ExamForm {
   title: string;
   description: string;
   instructions: string;
+  class: string;
+  stream: string;
   course: string;
   assessment_type: string;
   term: string;
@@ -73,13 +75,12 @@ const STATUS_STYLES: Record<string, string> = {
   REJECTED: 'bg-red-100 text-red-700',
 };
 
-import { getStoredExams, saveCBTExam, updateExamStatus, getStoredSubmissions, subscribeToCBTStore, SS1_SCIENCE_COURSES } from '@/lib/cbt-store';
+import { getStoredExams, saveCBTExam, updateExamStatus, getStoredSubmissions, subscribeToCBTStore, SENIOR_COURSES } from '@/lib/cbt-store';
 
 export default function CBTBuilder() {
   const { user } = useAuth();
   const [view, setView] = useState<View>('list');
   const [exams, setExams] = useState<any[]>([]);
-  const [courses] = useState(SS1_SCIENCE_COURSES);
   const [selectedExamId, setSelectedExamId] = useState<number | null>(null);
   const [questions, setQuestions] = useState<any[]>([]);
   const [newQuestion, setNewQuestion] = useState<QuestionForm>({ ...EMPTY_QUESTION });
@@ -87,9 +88,21 @@ export default function CBTBuilder() {
   const [attemptDetail, setAttemptDetail] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<ExamForm>({
-    title: '', description: '', instructions: '', course: 'MTH-101',
+    title: '', description: '', instructions: '',
+    class: 'SS1', stream: 'Science', course: 'MTH-101',
     assessment_type: 'TEST', term: '2ND_TERM', duration_minutes: 45, questions_per_page: 2,
   });
+
+  const availableCourses = SENIOR_COURSES.filter(c => c.stream === form.stream);
+
+  const handleStreamChange = (newStream: string) => {
+    const streamCourses = SENIOR_COURSES.filter(c => c.stream === newStream);
+    setForm(prev => ({
+      ...prev,
+      stream: newStream,
+      course: streamCourses[0]?.code || '',
+    }));
+  };
 
   const fetchExams = () => {
     const list = getStoredExams();
@@ -109,17 +122,17 @@ export default function CBTBuilder() {
     }
     setLoading(true);
     try {
-      const selectedCourse = courses.find(c => c.code === form.course) || courses[0];
+      const selectedCourse = SENIOR_COURSES.find(c => c.code === form.course) || availableCourses[0] || SENIOR_COURSES[0];
       const created = saveCBTExam({
         title: form.title,
         description: form.description,
         instructions: form.instructions,
         course_code: selectedCourse.code,
-        course_name: selectedCourse.name,
-        class: 'SS1',
-        stream: 'Science',
+        course_name: `${form.class} ${selectedCourse.name}`,
+        class: form.class,
+        stream: form.stream,
         assessment_type: form.assessment_type as any,
-        term: 'Term 2',
+        term: form.term === '1ST_TERM' ? 'Term 1' : form.term === '2ND_TERM' ? 'Term 2' : 'Term 3',
         duration_minutes: form.duration_minutes,
         questions_per_page: form.questions_per_page,
         teacher_name: user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Mrs. Okafor Chioma' : 'Mrs. Okafor Chioma',
@@ -176,7 +189,7 @@ export default function CBTBuilder() {
 
   const handleActivateProceed = (examId: number) => {
     updateExamStatus(examId, 'ACTIVE');
-    alert('Exam has been activated and proceeded! SS1 Science students can now see and start this exam in their portal.');
+    alert('Exam has been activated and proceeded! Students can now see and start this exam in their portal.');
     fetchExams();
   };
 
@@ -207,7 +220,7 @@ export default function CBTBuilder() {
   };
 
   const handleSyncGradebook = async (attemptId: number) => {
-    alert('Score synced to SS1 Science gradebook!');
+    alert('Score synced to gradebook!');
     if (selectedExamId) fetchAttempts(selectedExamId);
   };
 
@@ -258,7 +271,7 @@ export default function CBTBuilder() {
                           {exam.status === 'APPROVED' ? 'Approved by Admin' : exam.status === 'PUBLISHED' ? '🚀 Live for Students' : exam.status}
                         </span>
                         <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                          {exam.assessment_type === 'TEST' ? 'C.A. Test' : 'Final Exam'}
+                          {exam.class || 'SS1'} {exam.stream || 'Science'} • {exam.assessment_type === 'TEST' ? 'C.A. Test' : 'Final Exam'}
                         </span>
                       </div>
                       <h3 className="text-lg font-bold text-slate-900">{exam.title}</h3>
@@ -313,23 +326,78 @@ export default function CBTBuilder() {
             <h1 className="text-2xl font-bold text-slate-900">Create New CBT Exam</h1>
           </div>
           <div className="bg-white rounded-2xl shadow-lg p-6 space-y-4">
-            <div><label className={labelClass}>Exam Title</label><input className={inputClass} value={form.title} onChange={e => setForm({...form, title: e.target.value})} placeholder="e.g. Mathematics Mid-Term Test" /></div>
+            <div>
+              <label className={labelClass}>Exam Title</label>
+              <input
+                className={inputClass}
+                value={form.title}
+                onChange={e => setForm({...form, title: e.target.value})}
+                placeholder="e.g. SS1 Science Mathematics Mid-Term Test"
+              />
+            </div>
+
+            {/* Target Class & Stream / Department Row */}
             <div className="grid grid-cols-2 gap-4">
-              <div><label className={labelClass}>Course</label>
-                <select className={inputClass} value={form.course} onChange={e => setForm({...form, course: e.target.value})}>
-                  <option value="">Select Course</option>
-                  {courses.map(c => <option key={c.id} value={c.id}>{c.name} ({c.code})</option>)}
+              <div>
+                <label className={labelClass}>Target Class</label>
+                <select
+                  className={inputClass}
+                  value={form.class}
+                  onChange={e => setForm({...form, class: e.target.value})}
+                >
+                  <option value="SS1">SS1 (Senior Secondary 1)</option>
+                  <option value="SS2">SS2 (Senior Secondary 2)</option>
+                  <option value="SS3">SS3 (Senior Secondary 3)</option>
                 </select>
               </div>
-              <div><label className={labelClass}>Assessment Type</label>
-                <select className={inputClass} value={form.assessment_type} onChange={e => setForm({...form, assessment_type: e.target.value})}>
+
+              <div>
+                <label className={labelClass}>Department / Stream</label>
+                <select
+                  className={inputClass}
+                  value={form.stream}
+                  onChange={e => handleStreamChange(e.target.value)}
+                >
+                  <option value="Science">Science Department</option>
+                  <option value="Arts">Arts Department</option>
+                  <option value="Commercial">Commercial Department</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Course & Assessment Type Row */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={labelClass}>Subject / Course</label>
+                <select
+                  className={inputClass}
+                  value={form.course}
+                  onChange={e => setForm({...form, course: e.target.value})}
+                >
+                  {availableCourses.map(c => (
+                    <option key={c.code} value={c.code}>
+                      {c.name} ({c.code})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className={labelClass}>Assessment Type</label>
+                <select
+                  className={inputClass}
+                  value={form.assessment_type}
+                  onChange={e => setForm({...form, assessment_type: e.target.value})}
+                >
                   <option value="TEST">Continuous Assessment Test</option>
                   <option value="EXAM">Term Final Examination</option>
                 </select>
               </div>
             </div>
+
             <div className="grid grid-cols-3 gap-4">
-              <div><label className={labelClass}>Term</label>
+              <div>
+                <label className={labelClass}>Term</label>
                 <select className={inputClass} value={form.term} onChange={e => setForm({...form, term: e.target.value})}>
                   <option value="1ST_TERM">1st Term</option>
                   <option value="2ND_TERM">2nd Term</option>
@@ -344,7 +412,7 @@ export default function CBTBuilder() {
             <button
               onClick={handleCreateExam}
               disabled={!form.title || !form.course || loading}
-              className="w-full h-12 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition disabled:opacity-50"
+              className="w-full h-12 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition disabled:opacity-50 cursor-pointer shadow-md"
             >
               {loading ? 'Creating...' : 'Create & Add Questions →'}
             </button>
