@@ -2027,36 +2027,6 @@ export default function AdminDashboard() {
               <h2 className="text-xl font-serif font-bold text-foreground">{clsLabel} {selectedExamStream} — {selectedExamType} List</h2>
               <p className="text-xs text-muted-foreground mt-0.5">{filteredExamsList.length} assessment(s) available.</p>
             </div>
-
-            <div className="flex gap-2 items-center">
-              <button
-                onClick={() => {
-                  const newId = examsList.length + 1;
-                  setExamsList(prev => [
-                    ...prev,
-                    {
-                      id: newId,
-                      title: `New ${selectedExamClass} ${selectedExamStream} ${selectedExamType || 'Exam'}`,
-                      type: selectedExamType === 'Test' ? 'Test' : 'Exam',
-                      subject: selectedExamStream === 'Science' ? 'Physics' : 'Government',
-                      class: selectedExamClass || 'SS1',
-                      stream: selectedExamStream || 'Science',
-                      date: '2026-08-25',
-                      time: '09:00',
-                      duration: '1.5 hrs',
-                      questionsCount: 30,
-                      venue: 'CBT Hall A',
-                      status: 'Pending Approval',
-                      invigilator: 'Mrs. Okafor Chioma',
-                      totalCandidates: 20
-                    }
-                  ]);
-                }}
-                className="flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors whitespace-nowrap"
-              >
-                <Plus className="w-4 h-4" /> Request New {selectedExamType || 'Assessment'}
-              </button>
-            </div>
           </div>
 
           {/* Filter & Search Bar */}
