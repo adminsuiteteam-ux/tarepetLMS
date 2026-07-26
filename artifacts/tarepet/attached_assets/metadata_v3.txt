@@ -1,0 +1,585 @@
+{
+  "prompt_metadata": {
+    "version": "3.0",
+    "title": "Enterprise Montessori LMS Platform",
+    "description": "Full-featured Learning Management System with admin, teacher, student, and parent portals - University-level standard",
+    "target_llm": "Claude 3.7 Sonnet / GPT-4 Turbo / Gemini Ultra",
+    "project_value": "$10,000 USD",
+    "complexity_level": "Enterprise",
+    "reference_platforms": "Blackboard, Canvas, Moodle",
+    "pedagogical_framework": "Montessori Secondary (Erdkinder)",
+    "output_format": "Production-ready code with complete documentation"
+  },
+  "system_architecture": {
+    "backend": {
+      "framework": "Django 5.0 + Django REST Framework",
+      "database": "PostgreSQL 16 with full-text search",
+      "caching": "Redis 7 (session, API, query caching)",
+      "task_queue": "Celery 5.3 + Redis (async tasks, email, report generation)",
+      "real_time": "Django Channels + WebSockets (chat, notifications)",
+      "search_engine": "Elasticsearch 8 (optional) OR PostgreSQL full-text search",
+      "file_storage": "AWS S3 / Cloudinary / Django Storages",
+      "media_processing": "FFmpeg (video transcoding), ImageMagick (image optimization)",
+      "monitoring": "Sentry + Prometheus + Grafana",
+      "security": "JWT, CSRF tokens, rate limiting, AWS WAF"
+    },
+    "frontend": {
+      "framework": "React 18 (TypeScript optional)",
+      "build_tool": "Vite",
+      "styling": "Tailwind CSS + Radix UI (accessible components)",
+      "state_management": {
+        "server_state": "TanStack Query (caching, background sync)",
+        "client_state": "Zustand (global UI state)",
+        "real_time": "Socket.io-client or WebSocket API"
+      },
+      "routing": "React Router v6 with role-based route guards",
+      "forms": "React Hook Form + Zod (validation)",
+      "charts": "Chart.js / Recharts (analytics dashboards)",
+      "calendar": "FullCalendar (timetable, events)",
+      "rich_text": "TipTap / Quill (content creation)",
+      "pdf_generation": "react-pdf (reports, transcripts)",
+      "video_player": "Video.js / Plyr (course videos)"
+    },
+    "infrastructure": {
+      "containerization": "Docker + Docker Compose",
+      "orchestration": "Kubernetes (optional for scaling)",
+      "ci_cd": "GitHub Actions / GitLab CI",
+      "cloud_provider": "AWS (EC2, RDS, S3, ElastiCache) / DigitalOcean / Azure",
+      "cdn": "Cloudflare / AWS CloudFront",
+      "email_service": "SendGrid / AWS SES (transactional + marketing)"
+    }
+  },
+  "data_models": {
+    "core_models": [
+      {
+        "name": "CustomUser",
+        "fields": ["email (unique)", "phone", "role", "first_name", "last_name", "date_joined", "is_active"],
+        "methods": ["get_full_name", "get_role_display", "has_permission"],
+        "extends": "AbstractUser"
+      },
+      {
+        "name": "StudentProfile",
+        "fields": ["user (OneToOne)", "parent", "grade_level", "house", "admission_date", "date_of_birth", "medical_conditions", "allergies", "emergency_contact"],
+        "relationships": ["ManyToOne with Parent", "ManyToOne with House", "ManyToMany with Courses"]
+      },
+      {
+        "name": "TeacherProfile",
+        "fields": ["user (OneToOne)", "department", "subjects_taught", "hire_date", "qualifications", "bio"],
+        "relationships": ["ManyToMany with Courses"]
+      },
+      {
+        "name": "ParentProfile",
+        "fields": ["user (OneToOne)", "occupation", "address", "preferred_language", "newsletter_subscription"],
+        "relationships": ["ManyToMany with Students"]
+      },
+      {
+        "name": "AdminProfile",
+        "fields": ["user (OneToOne)", "role_type", "permissions (JSON field)"],
+        "relationships": []
+      }
+    ],
+    "lms_models": [
+      {
+        "name": "Course",
+        "fields": ["title", "slug", "description", "code", "teacher", "grade_level", "start_date", "end_date", "enrollment_limit", "is_active", "thumbnail"],
+        "methods": ["get_enrollment_count", "get_completion_rate", "get_average_grade"],
+        "relationships": ["ManyToOne Teacher", "ManyToMany Students", "ManyToMany Modules"]
+      },
+      {
+        "name": "Module",
+        "fields": ["course", "title", "description", "order", "is_published", "release_date"],
+        "relationships": ["ManyToOne Course", "ManyToMany Lessons"]
+      },
+      {
+        "name": "Lesson",
+        "fields": ["module", "title", "content_type", "content_url", "is_required", "estimated_time", "order"],
+        "content_types": ["video", "pdf", "audio", "external_link", "h5p", "scorm", "quiz"],
+        "relationships": ["ManyToOne Module", "OneToOne Quiz (optional)"],
+        "methods": ["mark_completed", "get_progress"]
+      },
+      {
+        "name": "Quiz",
+        "fields": ["lesson", "title", "description", "time_limit", "max_attempts", "passing_score", "shuffle_questions"],
+        "relationships": ["ManyToOne Lesson", "ManyToMany Questions"]
+      },
+      {
+        "name": "Question",
+        "fields": ["quiz", "question_text", "question_type", "options (JSON)", "correct_answer", "points", "order"],
+        "question_types": ["multiple_choice", "true_false", "essay", "matching", "fill_in_the_blank"]
+      },
+      {
+        "name": "Assignment",
+        "fields": ["course", "title", "description", "instructions", "due_date", "max_score", "allowed_file_types", "is_group_assignment"],
+        "relationships": ["ManyToOne Course", "ManyToMany Students"]
+      },
+      {
+        "name": "Submission",
+        "fields": ["assignment", "student", "submitted_at", "file_url", "text_answer", "grade", "feedback", "graded_at"],
+        "relationships": ["ManyToOne Assignment", "ManyToOne Student"],
+        "methods": ["is_late", "get_grade_percentage"]
+      },
+      {
+        "name": "Gradebook",
+        "fields": ["student", "course", "assignment", "score", "weight", "grade", "feedback"],
+        "methods": ["calculate_average", "get_final_grade"],
+        "relationships": ["ManyToOne Student", "ManyToOne Course", "ManyToOne Assignment"]
+      },
+      {
+        "name": "Attendance",
+        "fields": ["student", "course", "date", "status", "remarks"],
+        "statuses": ["present", "absent", "late", "excused"],
+        "relationships": ["ManyToOne Student", "ManyToOne Course"]
+      },
+      {
+        "name": "BehaviorLog",
+        "fields": ["student", "teacher", "date", "category", "description", "points"],
+        "categories": ["positive", "negative", "needs_improvement"],
+        "relationships": ["ManyToOne Student", "ManyToOne Teacher"]
+      },
+      {
+        "name": "House",
+        "fields": ["name", "color", "motto", "points", "head_of_house", "students (ManyToMany)"],
+        "predefined": ["Red House", "Blue House", "Green House", "Purple House"]
+      },
+      {
+        "name": "Announcement",
+        "fields": ["title", "content", "author", "target_audience", "priority", "is_pinned", "expiry_date"],
+        "target_audience": ["all", "teachers", "students", "parents", "specific_grade"]
+      },
+      {
+        "name": "Message",
+        "fields": ["sender", "recipient", "subject", "content", "timestamp", "is_read"],
+        "relationships": ["ManyToOne User (sender)", "ManyToOne User (recipient)"]
+      }
+    ],
+    "financial_models": [
+      {
+        "name": "FeeStructure",
+        "fields": ["grade_level", "term", "tuition_amount", "miscellaneous_fees", "discounts", "deadline"]
+      },
+      {
+        "name": "Invoice",
+        "fields": ["student", "parent", "amount", "due_date", "status", "paid_date", "transaction_id"],
+        "statuses": ["pending", "partial", "paid", "overdue", "cancelled"],
+        "relationships": ["ManyToOne Student", "ManyToOne Parent"]
+      },
+      {
+        "name": "Payment",
+        "fields": ["invoice", "amount_paid", "payment_method", "payment_date", "reference_number"],
+        "payment_methods": ["credit_card", "bank_transfer", "mobile_money", "cash"]
+      }
+    ],
+    "montessori_specific": [
+      {
+        "name": "Milestone",
+        "fields": ["student", "skill_area", "mastery_level", "assessed_date", "teacher_notes"],
+        "skill_areas": ["practical_life", "sensorial", "language", "mathematics", "cultural_studies"]
+      },
+      {
+        "name": "PortfolioItem",
+        "fields": ["student", "title", "description", "file_url", "upload_date", "category", "teacher_feedback"],
+        "categories": ["artwork", "writing", "project", "presentation", "work_sample"]
+      },
+      {
+        "name": "WorkJournal",
+        "fields": ["student", "date", "activity_description", "materials_used", "time_spent", "reflection", "teacher_observation"]
+      }
+    ]
+  },
+  "api_endpoints": {
+    "authentication": {
+      "POST /api/v1/auth/register/": "Multi-role registration (admin, teacher, student, parent)",
+      "POST /api/v1/auth/login/": "JWT login with role selection",
+      "POST /api/v1/auth/refresh/": "Refresh JWT token",
+      "POST /api/v1/auth/password-reset/": "Password reset via email/SMS",
+      "POST /api/v1/auth/verify-email/": "Email verification",
+      "POST /api/v1/auth/logout/": "Invalidate JWT token (blacklist)"
+    },
+    "users": {
+      "GET /api/v1/users/": "List users (admin only, with filtering)",
+      "GET /api/v1/users/{id}/": "Get user details (with role-specific profile)",
+      "PUT /api/v1/users/{id}/": "Update user profile",
+      "DELETE /api/v1/users/{id}/": "Deactivate user",
+      "POST /api/v1/users/bulk-upload/": "Bulk user import (CSV)"
+    },
+    "courses": {
+      "GET /api/v1/courses/": "List courses (filter by grade, teacher, active)",
+      "POST /api/v1/courses/": "Create course (teacher/admin)",
+      "GET /api/v1/courses/{id}/": "Get course details with modules",
+      "PUT /api/v1/courses/{id}/": "Update course",
+      "DELETE /api/v1/courses/{id}/": "Delete course (soft delete)",
+      "POST /api/v1/courses/{id}/enroll/": "Enroll student(s)",
+      "POST /api/v1/courses/{id}/unenroll/": "Unenroll student(s)",
+      "GET /api/v1/courses/{id}/students/": "List enrolled students",
+      "GET /api/v1/courses/{id}/grades/": "Get gradebook for course"
+    },
+    "modules_lessons": {
+      "GET /api/v1/courses/{id}/modules/": "List modules with nested lessons",
+      "POST /api/v1/courses/{id}/modules/": "Create module",
+      "PUT /api/v1/modules/{id}/": "Update module (drag-drop reorder)",
+      "DELETE /api/v1/modules/{id}/": "Delete module",
+      "POST /api/v1/modules/{id}/lessons/": "Create lesson",
+      "PUT /api/v1/lessons/{id}/": "Update lesson content",
+      "DELETE /api/v1/lessons/{id}/": "Delete lesson"
+    },
+    "assignments_submissions": {
+      "GET /api/v1/courses/{id}/assignments/": "List assignments",
+      "POST /api/v1/courses/{id}/assignments/": "Create assignment",
+      "GET /api/v1/assignments/{id}/": "Get assignment details",
+      "PUT /api/v1/assignments/{id}/": "Update assignment",
+      "DELETE /api/v1/assignments/{id}/": "Delete assignment",
+      "POST /api/v1/assignments/{id}/submit/": "Submit assignment (file or text)",
+      "GET /api/v1/assignments/{id}/submissions/": "List submissions (teacher only)",
+      "PUT /api/v1/submissions/{id}/grade/": "Grade submission with rubric",
+      "PUT /api/v1/submissions/{id}/feedback/": "Add feedback (text/audio/video)"
+    },
+    "quizzes_assessments": {
+      "GET /api/v1/lessons/{id}/quiz/": "Get quiz for lesson",
+      "POST /api/v1/lessons/{id}/quiz/": "Create quiz",
+      "POST /api/v1/quizzes/{id}/attempt/": "Start quiz attempt",
+      "POST /api/v1/quizzes/{id}/submit/": "Submit quiz (auto-graded)",
+      "GET /api/v1/quizzes/{id}/results/": "Get quiz results",
+      "GET /api/v1/quizzes/{id}/analysis/": "Get question analytics (admin/teacher)"
+    },
+    "attendance": {
+      "GET /api/v1/courses/{id}/attendance/": "List attendance (date range filter)",
+      "POST /api/v1/courses/{id}/attendance/": "Mark attendance (bulk or individual)",
+      "PUT /api/v1/attendance/{id}/": "Update attendance status",
+      "GET /api/v1/students/{id}/attendance/": "Get student attendance summary"
+    },
+    "analytics": {
+      "GET /api/v1/analytics/course/{id}/": "Course performance analytics",
+      "GET /api/v1/analytics/student/{id}/": "Student progress analytics (with predictions)",
+      "GET /api/v1/analytics/class/{grade}/": "Class-level performance",
+      "GET /api/v1/analytics/teacher/{id}/": "Teacher effectiveness metrics",
+      "GET /api/v1/analytics/engagement/": "Student engagement scores"
+    },
+    "parent_portal": {
+      "GET /api/v1/parent/children/": "List children under parent account",
+      "GET /api/v1/parent/child/{id}/grades/": "Get child's grades (current term)",
+      "GET /api/v1/parent/child/{id}/attendance/": "Get child's attendance",
+      "GET /api/v1/parent/child/{id}/behavior/": "Get child's behavior log",
+      "GET /api/v1/parent/child/{id}/portfolio/": "Get child's portfolio",
+      "GET /api/v1/parent/child/{id}/schedule/": "Get child's timetable",
+      "POST /api/v1/parent/child/{id}/message/": "Send message to teacher",
+      "GET /api/v1/parent/fees/": "View fee structure and invoices",
+      "POST /api/v1/parent/fees/pay/": "Pay tuition online"
+    },
+    "communication": {
+      "GET /api/v1/announcements/": "List announcements (filter by audience)",
+      "POST /api/v1/announcements/": "Create announcement",
+      "GET /api/v1/messages/": "List conversations",
+      "POST /api/v1/messages/send/": "Send message (WebSocket fallback)",
+      "GET /api/v1/messages/unread/": "Get unread count",
+      "POST /api/v1/messages/{id}/read/": "Mark message as read",
+      "GET /api/v1/forums/": "List discussion forums (by course)",
+      "POST /api/v1/forums/{id}/posts/": "Create forum post"
+    }
+  },
+  "frontend_components": {
+    "shared_components": [
+      "Navbar (role-aware, dynamic menu)",
+      "Sidebar (collapsible, with submenus)",
+      "Dashboard Layout (role-specific)",
+      "DataTable (sortable, filterable, paginated)",
+      "Modal System (confirmation, forms, alerts)",
+      "Toast Notifications (success, error, warning)",
+      "File Uploader (drag-and-drop, progress bar)",
+      "Rich Text Editor (lesson/content creation)",
+      "Calendar Component (events, deadlines, schedule)",
+      "Progress Tracker (course completion, grade progress)",
+      "Avatar (user profile with status indicator)",
+      "Search Bar (global search with autocomplete)",
+      "Breadcrumbs (navigation hierarchy)"
+    ],
+    "role_specific_pages": {
+      "admin_dashboard": {
+        "sections": [
+          "System Overview (total users, courses, active sessions)",
+          "Recent Activity Log (audit trail)",
+          "Pending Approvals (teacher requests, content reviews)",
+          "System Health (server load, error rates)",
+          "User Management (add/edit/delete users)",
+          "Bulk Operations (import/export users, courses)",
+          "Revenue Dashboard (fee collections, financial reports)",
+          "School Calendar (term dates, holidays)"
+        ]
+      },
+      "teacher_dashboard": {
+        "sections": [
+          "My Classes (list with quick stats)",
+          "Upcoming Deadlines (assignments, quizzes)",
+          "Recent Submissions (needs grading)",
+          "Attendance Overview (today's status)",
+          "Student Performance (at-risk students)",
+          "Course Builder (drag-drop curriculum)",
+          "Gradebook (manage grades per course)",
+          "Communications (messages from students/parents)"
+        ]
+      },
+      "student_dashboard": {
+        "sections": [
+          "My Courses (with progress bars)",
+          "Upcoming Tasks (assignments, quizzes, deadlines)",
+          "My Grades (current GPA with trend)",
+          "Attendance Summary (with alerts for absences)",
+          "Portfolio (showcase work)",
+          "House Points (leaderboard)",
+          "Timetable (today's schedule)",
+          "Notifications (announcements, messages)"
+        ]
+      },
+      "parent_dashboard": {
+        "sections": [
+          "My Children (select/dropdown)",
+          "Academic Progress (grades per child)",
+          "Attendance Report (weekly/monthly)",
+          "Fee Status (invoices, payment history)",
+          "School Announcements (filtered)",
+          "Teacher Messages (inbox)",
+          "Schedule/Calendar (child's timetable)",
+          "Permission Forms (field trips, medical)"
+        ]
+      }
+    }
+  },
+  "business_logic": {
+    "grading_system": {
+      "scales": {
+        "letter_grade": {"A": "90-100", "B": "80-89", "C": "70-79", "D": "60-69", "F": "0-59"},
+        "montessori_mastery": {"exemplary": "90-100%", "proficient": "75-89%", "developing": "50-74%", "beginning": "0-49%"}
+      },
+      "calculation": "Weighted category system (homework 20%, projects 30%, exams 40%, participation 10%)",
+      "gpa": "4.0 scale with +/- modifiers"
+    },
+    "automation_rules": [
+      {
+        "trigger": "Assignment due in 48 hours",
+        "action": "Send reminder email and push notification to students"
+      },
+      {
+        "trigger": "Student absences > 3 days",
+        "action": "Send alert to parent and teacher (automated email)"
+      },
+      {
+        "trigger": "Student grade drops below 70%",
+        "action": "Flag as at-risk, notify teacher and counselor"
+      },
+      {
+        "trigger": "Parent account created",
+        "action": "Send welcome email with orientation video"
+      },
+      {
+        "trigger": "Inquiry form submitted",
+        "action": "5-email nurture sequence over 14 days (Celery task)"
+      },
+      {
+        "trigger": "Quiz score below 60%",
+        "action": "Recommend remedial materials and schedule extra help"
+      },
+      {
+        "trigger": "Monthly report generation",
+        "action": "Auto-generate PDF progress reports for all students"
+      }
+    ],
+    "notification_channels": {
+      "email": "Transactional (SendGrid/AWS SES)",
+      "push": "Web Push (mobile app/PWA)",
+      "sms": "Twilio (critical alerts, password reset)",
+      "in_app": "WebSocket push notifications",
+      "whatsapp": "WhatsApp Business API (optional)"
+    }
+  },
+  "security_requirements": {
+    "authentication": {
+      "password_policy": "Minimum 12 chars, uppercase, lowercase, number, special",
+      "2fa": "Optional with TOTP (Google Authenticator)",
+      "session_management": "JWT tokens with refresh rotation",
+      "failed_attempts": "Account lockout after 5 attempts (30 mins)"
+    },
+    "authorization": {
+      "rbac": "Granular permissions per module (view, create, edit, delete)",
+      "row_level": "Teachers see only their students, parents only their children",
+      "content_access": "Course content accessible only if enrolled"
+    },
+    "data_protection": {
+      "encryption": "AES-256 for sensitive data (PII, medical records)",
+      "ssl": "TLS 1.3 required (HSTS)",
+      "audit_logs": "All changes tracked (who, what, when)",
+      "gdpr_compliance": "Right to be forgotten (data deletion), data portability"
+    },
+    "api_security": {
+      "rate_limiting": "100 requests per minute per user (custom per endpoint)",
+      "input_validation": "Zod on frontend, DRF serializers on backend",
+      "sql_injection": "ORM prevents SQL injection, raw queries sanitized",
+      "xss": "CSRF tokens, HTML sanitization in rich text"
+    }
+  },
+  "deployment_configuration": {
+    "environment_variables": {
+      "django": ["SECRET_KEY", "DEBUG", "ALLOWED_HOSTS", "DATABASE_URL", "REDIS_URL"],
+      "aws": ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_STORAGE_BUCKET_NAME"],
+      "email": ["SENDGRID_API_KEY", "DEFAULT_FROM_EMAIL"],
+      "third_party": ["STRIPE_PUBLIC_KEY", "STRIPE_SECRET_KEY", "GOOGLE_CLIENT_ID"]
+    },
+    "docker_compose": {
+      "services": ["django_app", "postgres_db", "redis_cache", "celery_worker", "celery_beat", "nginx_proxy"],
+      "volumes": ["static_files", "media_files", "postgres_data"],
+      "networks": ["backend_network", "frontend_network"]
+    },
+    "cicd_pipeline": {
+      "stages": ["build", "test", "security_scan", "deploy_staging", "migrate_db", "deploy_production"],
+      "tools": "GitHub Actions with automated testing (pytest, vitest)"
+    },
+    "monitoring": {
+      "logs": "AWS CloudWatch / ELK Stack",
+      "metrics": "Prometheus + Grafana dashboards",
+      "errors": "Sentry (real-time error tracking)",
+      "uptime": "Pingdom / UptimeRobot (24/7 monitoring)"
+    }
+  },
+  "development_phases": [
+    {
+      "phase": 1,
+      "name": "Foundation & Authentication",
+      "tasks": [
+        "Project structure with modular apps",
+        "Django settings (local/staging/production)",
+        "Docker Compose setup (Django, Postgres, Redis)",
+        "Custom User Model with multi-role support",
+        "JWT authentication with SimpleJWT",
+        "Role-based access control (RBAC) middleware",
+        "Email verification and password reset flows",
+        "Frontend authentication context (auth provider)"
+      ]
+    },
+    {
+      "phase": 2,
+      "name": "Core Data Models & APIs",
+      "tasks": [
+        "Student, Teacher, Parent, Admin profiles",
+        "Course, Module, Lesson models with ordering",
+        "Quiz and Question models (with JSON fields for options)",
+        "Assignment and Submission models",
+        "Gradebook and Analytics models",
+        "Attendance and Behavior models",
+        "House System model with points tracking",
+        "REST APIs for all core models",
+        "API documentation with drf-spectacular (OpenAPI)"
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "Business Logic & Automation",
+      "tasks": [
+        "Celery tasks for email nurture sequences",
+        "Automated grade calculation (weighted system)",
+        "Quiz auto-grading and feedback generation",
+        "Attendance tracking with QR code integration",
+        "House points calculation (weekly/monthly)",
+        "Analytics engine for student performance",
+        "Predictive at-risk student identification",
+        "PDF report generation (progress reports)",
+        "Backup and restore automation (database dumps)"
+      ]
+    },
+    {
+      "phase": 4,
+      "name": "Real-Time Communication",
+      "tasks": [
+        "Django Channels WebSocket setup",
+        "Real-time messaging (teacher-student-parent chat)",
+        "Live notifications (in-app + browser push)",
+        "Announcement system with targeted audiences",
+        "Discussion forums per course",
+        "Zoom/Google Meet integration for virtual classes",
+        "WebSocket connection management (reconnection logic)"
+      ]
+    },
+    {
+      "phase": 5,
+      "name": "Frontend Implementation (React)",
+      "tasks": [
+        "Role-based routing with private routes",
+        "Admin dashboard (system overview, user management)",
+        "Teacher dashboard (course builder, gradebook)",
+        "Student dashboard (courses, assignments, grades)",
+        "Parent portal (children overview, monitoring)",
+        "Course viewer (lesson progress, quiz taking)",
+        "Assignment submission (drag-and-drop file upload)",
+        "Grade visualizations (charts and trends)",
+        "Calendar and timetable views",
+        "Mobile-responsive PWA configuration"
+      ]
+    },
+    {
+      "phase": 6,
+      "name": "Parent Portal & Financial Module",
+      "tasks": [
+        "Parent account creation and child linking",
+        "Fee structure management (per grade/term)",
+        "Invoice generation and payment integration (Stripe)",
+        "Payment history and receipt generation",
+        "Permission forms (field trips, medical consent)",
+        "E-signature integration for forms"
+      ]
+    },
+    {
+      "phase": 7,
+      "name": "Testing, Optimization & Deployment",
+      "tasks": [
+        "Comprehensive unit tests (pytest for Django, Vitest for React)",
+        "Integration tests for critical workflows",
+        "Performance optimization (query optimization, caching)",
+        "Security audit (OWASP Top 10 checks)",
+        "Docker production configuration",
+        "CI/CD pipeline setup (GitHub Actions)",
+        "Deployment to production (AWS/DigitalOcean)",
+        "Post-deployment monitoring and error tracking"
+      ]
+    }
+  ],
+  "deliverables": {
+    "codebase": {
+      "backend": "Complete Django project with all apps, models, views, serializers, and tests",
+      "frontend": "Complete React application with all components, pages, and hooks",
+      "infrastructure": "Docker Compose files, environment templates, and deployment scripts"
+    },
+    "documentation": {
+      "api_docs": "OpenAPI/Swagger documentation (auto-generated)",
+      "setup_guide": "Step-by-step local development setup",
+      "deployment_guide": "Production deployment instructions",
+      "user_manual": "Role-based user guides (admin, teacher, student, parent)"
+    },
+    "seed_data": {
+      "management_command": "python manage.py seed_data (generates sample users, courses, students, etc.)",
+      "content": "Montessori secondary school sample data (4 houses, 10+ courses, 50+ students)"
+    },
+    "testing_suite": {
+      "backend": "pytest with 80%+ coverage",
+      "frontend": "Vitest + React Testing Library",
+      "e2e": "Playwright (critical user journeys)"
+    }
+  },
+  "performance_targets": {
+    "page_load": {
+      "initial": "< 2 seconds (3G)",
+      "subsequent": "< 500ms (cached)",
+      "time_to_interactive": "< 3 seconds"
+    },
+    "api_response": {
+      "p95": "< 200ms (cached), < 500ms (uncached)",
+      "p99": "< 1 second"
+    },
+    "concurrency": {
+      "users": "500 concurrent users",
+      "requests": "1000 requests per minute"
+    },
+    "core_web_vitals": {
+      "lcp": "< 2.5s",
+      "fid": "< 100ms",
+      "cls": "< 0.1"
+    }
+  },
+  "final_instructions": "Generate the complete production-ready codebase for this enterprise-grade Montessori LMS platform. Begin with Phase 1 (Foundation & Authentication) and provide the following in sequence: the project directory structure, Docker Compose configuration, Django settings with environment variables, the Custom User Model with multi-role support, JWT authentication with refresh tokens, and the React authentication provider. Ensure all code includes proper error handling, logging, and security measures. For every API endpoint, provide the corresponding React Query hooks with caching strategies. Include comprehensive comments and type hints for maintainability. The final output must be deployable to a cloud provider and immediately usable by students, teachers, parents, and administrators." 
+}
