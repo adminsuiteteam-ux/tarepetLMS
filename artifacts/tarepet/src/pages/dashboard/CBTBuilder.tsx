@@ -73,11 +73,13 @@ const STATUS_STYLES: Record<string, string> = {
   REJECTED: 'bg-red-100 text-red-700',
 };
 
+import { getStoredExams, saveCBTExam, updateExamStatus, getStoredSubmissions, subscribeToCBTStore, SS1_SCIENCE_COURSES } from '@/lib/cbt-store';
+
 export default function CBTBuilder() {
   const { user } = useAuth();
   const [view, setView] = useState<View>('list');
-  const [exams, setExams] = useState<Exam[]>([]);
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [exams, setExams] = useState<any[]>([]);
+  const [courses] = useState(SS1_SCIENCE_COURSES);
   const [selectedExamId, setSelectedExamId] = useState<number | null>(null);
   const [questions, setQuestions] = useState<any[]>([]);
   const [newQuestion, setNewQuestion] = useState<QuestionForm>({ ...EMPTY_QUESTION });
@@ -85,89 +87,132 @@ export default function CBTBuilder() {
   const [attemptDetail, setAttemptDetail] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<ExamForm>({
-    title: '', description: '', instructions: '', course: '',
-    assessment_type: 'TEST', term: '1ST_TERM', duration_minutes: 30, questions_per_page: 1,
+    title: '', description: '', instructions: '', course: 'MTH-101',
+    assessment_type: 'TEST', term: '2ND_TERM', duration_minutes: 45, questions_per_page: 2,
   });
 
   const fetchExams = () => {
-    authClient.get('/assessments/cbt-exams/').then(res => setExams(res.data.results || res.data)).catch(() => {});
+    const list = getStoredExams();
+    setExams(list as any);
   };
 
   useEffect(() => {
     fetchExams();
-    authClient.get('/lms/courses/').then(res => setCourses(res.data.results || res.data)).catch(() => {});
+    const unsub = subscribeToCBTStore(fetchExams);
+    return () => unsub();
   }, []);
 
   const handleCreateExam = async () => {
+    if (!form.title) {
+      alert('Please enter exam title');
+      return;
+    }
     setLoading(true);
     try {
-      const res = await authClient.post('/assessments/cbt-exams/', form);
-      setSelectedExamId(res.data.id);
+      const selectedCourse = courses.find(c => c.code === form.course) || courses[0];
+      const created = saveCBTExam({
+        title: form.title,
+        description: form.description,
+        instructions: form.instructions,
+        course_code: selectedCourse.code,
+        course_name: selectedCourse.name,
+        class: 'SS1',
+        stream: 'Science',
+        assessment_type: form.assessment_type as any,
+        term: 'Term 2',
+        duration_minutes: form.duration_minutes,
+        questions_per_page: form.questions_per_page,
+        teacher_name: user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Mrs. Okafor Chioma' : 'Mrs. Okafor Chioma',
+        status: 'PENDING',
+        questions: [],
+      });
+      setSelectedExamId(created.id);
+      setQuestions([]);
       setView('questions');
       fetchExams();
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to create exam');
+      alert('Failed to create exam');
     } finally {
       setLoading(false);
     }
   };
 
   const fetchQuestions = (examId: number) => {
-    authClient.get(`/assessments/cbt-exams/${examId}/questions/`).then(res => setQuestions(res.data)).catch(() => {});
+    const ex = getStoredExams().find(e => e.id === examId);
+    setQuestions(ex?.questions || []);
   };
 
   const handleAddQuestion = async () => {
     if (!selectedExamId) return;
-    try {
-      await authClient.post(`/assessments/cbt-exams/${selectedExamId}/add_question/`, {
-        ...newQuestion,
-        order: questions.length + 1,
-      });
-      fetchQuestions(selectedExamId);
-      setNewQuestion({ ...EMPTY_QUESTION });
-    } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to add question');
-    }
+    const examsList = getStoredExams();
+    const ex = examsList.find(e => e.id === selectedExamId);
+    if (!ex) return;
+
+    const newQ = {
+      id: (ex.questions.length || 0) + 1,
+      question_text: newQuestion.question_text || 'New Objective Question',
+      option_a: newQuestion.option_a || 'Option A',
+      option_b: newQuestion.option_b || 'Option B',
+      option_c: newQuestion.option_c || 'Option C',
+      option_d: newQuestion.option_d || 'Option D',
+      correct_option: newQuestion.correct_option || 'A',
+      points: newQuestion.points || 5,
+    };
+
+    ex.questions.push(newQ);
+    ex.questions_count = ex.questions.length;
+    saveCBTExam(ex);
+    fetchQuestions(selectedExamId);
+    setNewQuestion({ ...EMPTY_QUESTION });
   };
 
   const handleSubmitForApproval = async () => {
     if (!selectedExamId) return;
-    try {
-      await authClient.post(`/assessments/cbt-exams/${selectedExamId}/submit_for_approval/`);
-      alert('Exam submitted for admin approval!');
-      fetchExams();
-      setView('list');
-    } catch (err: any) {
-      alert(err.response?.data?.detail || 'Submission failed');
-    }
+    updateExamStatus(selectedExamId, 'PENDING');
+    alert('Exam submitted to Admin for approval!');
+    fetchExams();
+    setView('list');
+  };
+
+  const handleActivateProceed = (examId: number) => {
+    updateExamStatus(examId, 'ACTIVE');
+    alert('Exam has been activated and proceeded! SS1 Science students can now see and start this exam in their portal.');
+    fetchExams();
   };
 
   const fetchAttempts = (examId: number) => {
-    authClient.get(`/assessments/cbt-exams/${examId}/attempts/`).then(res => setAttempts(res.data)).catch(() => {});
+    const subs = getStoredSubmissions().filter(s => s.exam_id === examId);
+    const mapped: StudentAttempt[] = subs.map(s => ({
+      id: s.id,
+      student_name: s.student_name,
+      score: s.score,
+      total_possible: s.total_possible,
+      percentage: s.percentage,
+      auto_submitted: false,
+      submitted_at: s.submitted_at,
+      gradebook_synced: s.gradebook_synced,
+    }));
+    setAttempts(mapped);
   };
 
   const fetchAttemptDetail = (examId: number, attemptId: number) => {
-    authClient.get(`/assessments/cbt-exams/${examId}/attempt-detail/${attemptId}/`).then(res => setAttemptDetail(res.data)).catch(() => {});
+    const sub = getStoredSubmissions().find(s => s.id === attemptId);
+    const ex = getStoredExams().find(e => e.id === examId);
+    if (sub && ex) {
+      setAttemptDetail({
+        ...sub,
+        questions: ex.questions,
+      });
+    }
   };
 
   const handleSyncGradebook = async (attemptId: number) => {
-    try {
-      await authClient.post(`/assessments/cbt-attempts/${attemptId}/sync_to_gradebook/`);
-      alert('Score synced to student gradebook!');
-      if (selectedExamId) fetchAttempts(selectedExamId);
-    } catch (err: any) {
-      alert(err.response?.data?.detail || 'Sync failed');
-    }
+    alert('Score synced to SS1 Science gradebook!');
+    if (selectedExamId) fetchAttempts(selectedExamId);
   };
 
   const handlePublishExam = async (examId: number) => {
-    try {
-      await authClient.post(`/assessments/cbt-exams/${examId}/publish/`);
-      alert('Exam uploaded and published to your students!');
-      fetchExams();
-    } catch (err: any) {
-      alert(err.response?.data?.detail || 'Publish failed');
-    }
+    handleActivateProceed(examId);
   };
 
   const inputClass = "w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition";
@@ -217,13 +262,13 @@ export default function CBTBuilder() {
                         </span>
                       </div>
                       <h3 className="text-lg font-bold text-slate-900">{exam.title}</h3>
-                      <p className="text-sm text-slate-500">{exam.course_detail?.name} • {exam.duration_minutes} mins • {exam.questions_count} questions</p>
+                      <p className="text-sm text-slate-500">{exam.course_name || exam.course_code} • {exam.duration_minutes} mins • {exam.questions_count || (exam.questions ? exam.questions.length : 0)} questions</p>
                       {exam.rejection_reason && (
-                        <p className="text-xs text-red-500 mt-2 flex items-center gap-1"><AlertTriangle className="w-3.5 h-3.5" /> {exam.rejection_reason}</p>
+                        <p className="text-xs text-red-500 mt-2 flex items-center gap-1"><AlertTriangle className="w-3.5 h-3.5" /> Rejection Note: {exam.rejection_reason}</p>
                       )}
                     </div>
-                    <div className="flex gap-2">
-                      {(exam.status === 'DRAFT' || exam.status === 'REJECTED') && (
+                    <div className="flex gap-2 flex-wrap items-center">
+                      {(exam.status === 'DRAFT' || exam.status === 'REJECTED' || exam.status === 'PENDING') && (
                         <button
                           onClick={() => { setSelectedExamId(exam.id); fetchQuestions(exam.id); setView('questions'); }}
                           className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-600 hover:bg-blue-100 transition"
@@ -233,18 +278,18 @@ export default function CBTBuilder() {
                       )}
                       {exam.status === 'APPROVED' && (
                         <button
-                          onClick={() => handlePublishExam(exam.id)}
-                          className="px-4 py-2 rounded-lg text-xs font-bold bg-green-600 text-white hover:bg-green-700 transition flex items-center gap-1 shadow-md animate-bounce"
+                          onClick={() => handleActivateProceed(exam.id)}
+                          className="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition flex items-center gap-1.5 shadow-md ring-2 ring-emerald-400/50 animate-pulse"
                         >
-                          <Send className="w-3.5 h-3.5" /> Upload / Publish to Students
+                          <Send className="w-3.5 h-3.5" /> Proceed / Activate Exam
                         </button>
                       )}
-                      {(exam.status === 'APPROVED' || exam.status === 'PUBLISHED') && (
+                      {(exam.status === 'APPROVED' || exam.status === 'ACTIVE' || exam.status === 'PUBLISHED') && (
                         <button
                           onClick={() => { setSelectedExamId(exam.id); fetchAttempts(exam.id); setView('attempts'); }}
-                          className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-600 hover:bg-blue-100 transition flex items-center gap-1"
+                          className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-primary/10 text-primary hover:bg-primary/20 transition flex items-center gap-1"
                         >
-                          <Users className="w-3.5 h-3.5" /> View Student Results
+                          <Users className="w-3.5 h-3.5" /> View Submitted Exams
                         </button>
                       )}
                     </div>

@@ -44,6 +44,8 @@ interface AvailableExam {
 
 type Phase = 'list' | 'confirm' | 'exam' | 'result';
 
+import { getStoredExams, submitStudentCBTAttempt, subscribeToCBTStore } from '@/lib/cbt-store';
+
 export default function StudentCBTExam() {
   const { user } = useAuth();
   const [phase, setPhase] = useState<Phase>('list');
@@ -59,9 +61,20 @@ export default function StudentCBTExam() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const submittedRef = useRef(false);
 
-  // Fetch available exams
+  const fetchExams = () => {
+    const all = getStoredExams();
+    const activeExams = all.filter(e => e.status === 'ACTIVE' || e.status === 'APPROVED');
+    const mapped = activeExams.map(e => ({
+      ...e,
+      course_detail: { name: e.course_name, code: e.course_code },
+    }));
+    setExams(mapped as any);
+  };
+
   useEffect(() => {
-    authClient.get('/assessments/cbt-exams/').then(res => setExams(res.data.results || res.data)).catch(() => {});
+    fetchExams();
+    const unsub = subscribeToCBTStore(fetchExams);
+    return () => unsub();
   }, []);
 
   // Timer
@@ -90,15 +103,26 @@ export default function StudentCBTExam() {
     if (!selectedExam) return;
     setLoading(true);
     try {
-      const res = await authClient.post(`/assessments/cbt-exams/${selectedExam.id}/start/`);
-      setExamData(res.data);
-      setTimeLeft(res.data.duration_minutes * 60);
+      const fullEx = getStoredExams().find(e => e.id === selectedExam.id);
+      if (!fullEx) throw new Error('Exam not found');
+
+      const data: ExamData = {
+        attempt_id: Date.now(),
+        started_at: new Date().toISOString(),
+        duration_minutes: fullEx.duration_minutes || 45,
+        questions_per_page: fullEx.questions_per_page || 2,
+        instructions: fullEx.instructions || 'Answer all objective questions.',
+        questions: fullEx.questions as any[],
+      };
+
+      setExamData(data);
+      setTimeLeft(data.duration_minutes * 60);
       setAnswers({});
       setCurrentPage(0);
       submittedRef.current = false;
       setPhase('exam');
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Failed to start exam');
+      alert('Failed to start exam');
     } finally {
       setLoading(false);
     }
@@ -106,13 +130,6 @@ export default function StudentCBTExam() {
 
   const handleSelectOption = async (questionId: number, option: string) => {
     setAnswers(prev => ({ ...prev, [questionId]: option }));
-    // Save answer in background
-    if (selectedExam) {
-      authClient.post(`/assessments/cbt-exams/${selectedExam.id}/save_answer/`, {
-        question_id: questionId,
-        selected_option: option,
-      }).catch(() => {});
-    }
   };
 
   const handleSubmit = useCallback(async (auto = false) => {
@@ -121,25 +138,31 @@ export default function StudentCBTExam() {
     setIsSubmitting(true);
     if (timerRef.current) clearInterval(timerRef.current);
 
-    const answersPayload = Object.entries(answers).map(([qId, opt]) => ({
-      question_id: parseInt(qId),
-      selected_option: opt,
-    }));
-
     try {
-      const res = await authClient.post(`/assessments/cbt-exams/${selectedExam.id}/submit_attempt/`, {
-        auto_submitted: auto,
-        answers: answersPayload,
+      const studentName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Emeka Amadi' : 'Emeka Amadi';
+      const studentEmail = user?.email || 'emeka.amadi@tarepet.edu.ng';
+
+      const subResult = submitStudentCBTAttempt(selectedExam.id, answers, {
+        name: studentName,
+        email: studentEmail,
+        student_id: 'TMS-2024-101',
       });
-      setResult(res.data);
+
+      setResult({
+        score: subResult.score,
+        total_possible: subResult.total_possible,
+        percentage: subResult.percentage,
+        passed: subResult.percentage >= 50,
+      });
+
       setPhase('result');
     } catch (err: any) {
-      alert(err.response?.data?.detail || 'Submission failed');
+      alert('Submission failed');
       submittedRef.current = false;
     } finally {
       setIsSubmitting(false);
     }
-  }, [selectedExam, examData, answers]);
+  }, [selectedExam, examData, answers, user]);
 
   // Pagination
   const questionsPerPage = examData?.questions_per_page || 1;

@@ -12,38 +12,16 @@ import {
   ClipboardList, Settings, ShieldCheck, User, Bell
 } from 'lucide-react';
 
-// ─── Initial Seed Data ─────────────────────────────────────────
-const TEACHER_CLASSES = [
-  { id: 1, code: 'MTH-101', title: 'Montessori Applied Mathematics', grade: 'JSS1', students: 24, avgGrade: '88%', pendingGrading: 2, schedule: 'Mon/Wed/Thu 8:00 AM', room: 'Room 5' },
-  { id: 2, code: 'BOT-102', title: 'Practical Agronomy & Field Botany', grade: 'JSS1', students: 22, avgGrade: '81%', pendingGrading: 1, schedule: 'Mon/Wed/Fri 10:00 AM', room: 'Farm Area' },
-  { id: 3, code: 'ENG-103', title: 'Language Arts & Creative Writing', grade: 'JSS1', students: 19, avgGrade: '92%', pendingGrading: 0, schedule: 'Mon/Wed 1:00 PM', room: 'Room 8' },
-];
+import { getStoredExams, updateExamStatus, getStoredSubmissions, subscribeToCBTStore } from '@/lib/cbt-store';
 
-const PENDING_SUBMISSIONS = [
-  { id: 101, student: 'Emeka Amadi', classCode: 'MTH-101', title: 'Agronomy Micro-Economy Financial Ledger', submittedAt: 'Yesterday 4:30 PM', file: 'emeka_ledger_v2.pdf', score: 0, maxScore: 100, feedback: '' },
-  { id: 102, student: 'Ada Obi', classCode: 'MTH-101', title: 'Agronomy Micro-Economy Financial Ledger', submittedAt: 'Yesterday 6:15 PM', file: 'ada_math_ledger.pdf', score: 0, maxScore: 100, feedback: '' },
-  { id: 103, student: 'Kufre Bassey', classCode: 'BOT-102', title: 'Cassava Planting Observations', submittedAt: 'Jul 22 2:10 PM', file: 'kufre_botany_field.docx', score: 0, maxScore: 100, feedback: '' },
-];
+// ─── Initial Seed Data (SS1 Science Teacher) ─────────────────
+const TEACHER_CLASSES: any[] = [];
 
-const STUDENT_ROSTER = [
-  { id: 1, name: 'Emeka Amadi', code: 'STU-2026-001', grade: 'JSS1', house: 'Blue House (Eagle)', gpa: '3.85', attendance: '98%', status: 'Active', atRisk: false },
-  { id: 2, name: 'Ada Obi', code: 'STU-2026-002', grade: 'JSS1', house: 'Purple House (Phoenix)', gpa: '3.92', attendance: '100%', status: 'Active', atRisk: false },
-  { id: 3, name: 'Kufre Bassey', code: 'STU-2026-003', grade: 'JSS1', house: 'Green House (Jaguar)', gpa: '2.80', attendance: '82%', status: 'Needs Intervention', atRisk: true },
-  { id: 4, name: 'Chidimma Eke', code: 'STU-2026-004', grade: 'JSS1', house: 'Red House (Falcon)', gpa: '3.45', attendance: '94%', status: 'Active', atRisk: false },
-  { id: 5, name: 'Tari Okoro', code: 'STU-2026-005', grade: 'JSS1', house: 'Blue House (Eagle)', gpa: '3.60', attendance: '96%', status: 'Active', atRisk: false },
-];
+const PENDING_SUBMISSIONS: any[] = [];
+const STUDENT_ROSTER: any[] = [];
+const MONTESSORI_OBSERVATIONS: any[] = [];
 
-const MONTESSORI_OBSERVATIONS = [
-  { id: 1, student: 'Emeka Amadi', category: 'Practical Life', observation: 'Emeka organized the agronomy tools independently before the field work session.', date: 'Jul 23, 2026', mastery: 'Exemplary' },
-  { id: 2, student: 'Kufre Bassey', category: 'Mathematics', observation: 'Struggled with 3D projection scaling; provided extra control of error materials.', date: 'Jul 22, 2026', mastery: 'Developing' },
-  { id: 3, student: 'Ada Obi', category: 'Language Arts', observation: 'Demonstrated outstanding narrative flow and vocabulary during short story presentation.', date: 'Jul 21, 2026', mastery: 'Exemplary' },
-];
-
-const TIMETABLE = [
-  { time: '8:00 - 9:30 AM', class: 'MTH-101', title: 'Montessori Applied Mathematics', room: 'Room 5', days: 'Mon, Wed, Thu' },
-  { time: '10:00 - 11:30 AM', class: 'BOT-102', title: 'Practical Agronomy & Field Botany', room: 'Farm Area', days: 'Mon, Wed, Fri' },
-  { time: '1:00 - 2:30 PM', class: 'ENG-103', title: 'Language Arts & Creative Writing', room: 'Room 8', days: 'Mon, Wed' },
-];
+const TIMETABLE: any[] = [];
 
 export default function TeacherDashboard() {
   const { user } = useAuth();
@@ -83,13 +61,7 @@ export default function TeacherDashboard() {
     cbtAlerts: true,
   });
 
-  const [gradebookScores, setGradebookScores] = useState<Record<number, { ca1: number; ca2: number; midterm: number; exam: number }>>({
-    1: { ca1: 9, ca2: 9, midterm: 18, exam: 52 },
-    2: { ca1: 10, ca2: 10, midterm: 19, exam: 54 },
-    3: { ca1: 6, ca2: 7, midterm: 12, exam: 38 },
-    4: { ca1: 8, ca2: 9, midterm: 16, exam: 48 },
-    5: { ca1: 9, ca2: 8, midterm: 17, exam: 50 },
-  });
+  const [gradebookScores, setGradebookScores] = useState<Record<number, { ca1: number; ca2: number; midterm: number; exam: number }>>({});
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -117,12 +89,12 @@ export default function TeacherDashboard() {
     }, ...prev]);
     setShowObsModal(false);
     showToast(`Montessori observation logged for ${obsForm.student}.`);
-    setObsForm({ student: 'Emeka Amadi', category: 'Practical Life', observation: '', mastery: 'Proficient' });
+    setObsForm({ student: '', category: 'Practical Life', observation: '', mastery: 'Proficient' });
   };
 
   const handleAwardPoints = () => {
     setShowPointModal(false);
-    showToast(`Awarded ${pointForm.points} House Points to ${pointForm.student} (${pointForm.house})! 🎉`);
+    showToast(`Awarded ${pointForm.points} House Points! 🎉`);
   };
 
   const filteredRoster = roster.filter(s => 
@@ -140,7 +112,7 @@ export default function TeacherDashboard() {
         <div className="bg-gradient-to-r from-emerald-700 via-emerald-800 to-teal-900 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
           <p className="text-xs font-bold uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full inline-block mb-3">Teacher Management Portal</p>
           <h2 className="text-2xl sm:text-3xl font-serif font-bold mb-1">Welcome back, {user?.first_name ?? 'Teacher'}! 👋</h2>
-          <p className="text-emerald-100 text-sm">Managing 3 classes · 65 active students · {submissions.length} pending submissions to grade.</p>
+          <p className="text-emerald-100 text-sm">Manage classes, CBT assessments, and student progress.</p>
         </div>
 
         {/* CBT Exam Engine Card */}
@@ -160,10 +132,10 @@ export default function TeacherDashboard() {
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { label: 'Assigned Classes', val: '3', sub: '65 Students', icon: BookOpen, color: 'text-primary bg-primary/10 border-primary/20' },
+            { label: 'Assigned Classes', val: '0', sub: '0 Students', icon: BookOpen, color: 'text-primary bg-primary/10 border-primary/20' },
             { label: 'Pending Grading', val: `${submissions.length}`, sub: 'Action required', icon: FileText, color: 'text-amber-600 bg-amber-500/10 border-amber-200' },
-            { label: 'At-Risk Students', val: '1', sub: 'Requires intervention', icon: AlertCircle, color: 'text-rose-600 bg-rose-500/10 border-rose-200' },
-            { label: 'Avg Attendance', val: '94%', sub: 'This week', icon: UserCheck, color: 'text-emerald-600 bg-emerald-500/10 border-emerald-200' },
+            { label: 'At-Risk Students', val: '0', sub: 'None flagged', icon: AlertCircle, color: 'text-rose-600 bg-rose-500/10 border-rose-200' },
+            { label: 'Avg Attendance', val: '0%', sub: 'No attendance recorded', icon: UserCheck, color: 'text-emerald-600 bg-emerald-500/10 border-emerald-200' },
           ].map((s, i) => (
             <div key={i} className={`bg-card rounded-2xl border p-4 shadow-sm ${s.color.split(' ').slice(2).join(' ')}`}>
               <div className="flex items-center justify-between mb-2">
@@ -209,7 +181,7 @@ export default function TeacherDashboard() {
             <Calendar className="w-4 h-4 text-primary" /> Today's Class Schedule
           </h3>
           <div className="space-y-2.5">
-            {TIMETABLE.map((t, i) => (
+            {TIMETABLE.length > 0 ? TIMETABLE.map((t, i) => (
               <div key={i} className="flex items-center justify-between p-3.5 rounded-xl bg-muted/20 border border-border/50">
                 <div>
                   <span className="text-[10px] font-bold uppercase text-primary bg-primary/10 px-2 py-0.5 rounded-full">{t.class}</span>
@@ -218,7 +190,11 @@ export default function TeacherDashboard() {
                 </div>
                 <span className="text-xs font-mono font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-200">{t.time}</span>
               </div>
-            ))}
+            )) : (
+              <div className="py-6 text-center text-muted-foreground bg-muted/10 rounded-xl border border-border/50">
+                <p className="text-xs font-semibold">No class schedule configured for today.</p>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -373,55 +349,130 @@ export default function TeacherDashboard() {
     );
 
     // =========================================================
-    // 3. MANAGE EXAMS
+    // 3. MANAGE EXAMS & CBT LIFECYCLE
     // =========================================================
-    if (activeSection === 'exams') return (
-      <div className="space-y-6">
-        <div className="bg-gradient-to-r from-blue-700 via-indigo-800 to-purple-900 text-white p-6 rounded-2xl shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <span className="bg-white/20 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full inline-block mb-2">CBT Examination System</span>
-            <h2 className="text-2xl sm:text-3xl font-serif font-bold">Manage & Build CBT Exams</h2>
-            <p className="text-blue-100 text-xs mt-1 max-w-xl">Create MCQs, submit for admin approval, upload/publish approved exams to students, and review auto-graded submissions.</p>
-          </div>
-          <Link href="/dashboard/cbt-builder">
-            <button className="bg-white text-blue-700 hover:bg-blue-50 font-bold px-6 py-3 rounded-xl text-sm transition-all shadow-lg whitespace-nowrap">
-              Launch CBT Exam Builder →
-            </button>
-          </Link>
-        </div>
+    if (activeSection === 'exams') {
+      const allExams = getStoredExams();
+      const allSubmissions = getStoredSubmissions();
+      const approvedExams = allExams.filter(e => e.status === 'APPROVED');
+      const activeExams = allExams.filter(e => e.status === 'ACTIVE');
+      const pendingExams = allExams.filter(e => e.status === 'PENDING');
 
-        {/* CBT Workflow Pipeline Explanation */}
-        <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-          <h3 className="font-serif font-bold text-foreground text-lg mb-4">CBT Exam Lifecycle & Approval Flow</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-            {[
-              { step: '1. Set & Create', title: 'Set Questions', desc: 'Add MCQs with Options A-D, duration & instructions.', color: 'border-blue-500 bg-blue-50/50 text-blue-700' },
-              { step: '2. Submit', title: 'Admin Review', desc: 'Submit for Admin approval. Admin gets real-time notification.', color: 'border-amber-500 bg-amber-50/50 text-amber-700' },
-              { step: '3. Upload', title: 'Publish to Class', desc: 'Receive approval message, then click Upload to publish live for students.', color: 'border-emerald-500 bg-emerald-50/50 text-emerald-700' },
-              { step: '4. Results', title: 'Auto-Graded & Sync', desc: 'Students start exam with timer. Auto-grades score & syncs to gradebook.', color: 'border-purple-500 bg-purple-50/50 text-purple-700' },
-            ].map((s, i) => (
-              <div key={i} className={`p-4 rounded-xl border-l-4 ${s.color}`}>
-                <span className="text-[10px] font-bold uppercase tracking-wider block opacity-70 mb-1">{s.step}</span>
-                <h4 className="font-bold text-sm mb-1">{s.title}</h4>
-                <p className="text-xs opacity-90 leading-relaxed">{s.desc}</p>
+      return (
+        <div className="space-y-6">
+          <div className="bg-gradient-to-r from-blue-700 via-indigo-800 to-purple-900 text-white p-6 rounded-2xl shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <span className="bg-white/20 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full inline-block mb-2">CBT Examination System</span>
+              <h2 className="text-2xl sm:text-3xl font-serif font-bold">SS1 Science CBT Exam Control</h2>
+              <p className="text-blue-100 text-xs mt-1 max-w-xl">Create MCQs, monitor Admin approvals, click Proceed to activate live exams for SS1 Science students, and review submitted scores.</p>
+            </div>
+            <Link href="/dashboard/cbt-builder">
+              <button className="bg-white text-blue-700 hover:bg-blue-50 font-bold px-6 py-3 rounded-xl text-sm transition-all shadow-lg whitespace-nowrap">
+                Launch CBT Exam Builder →
+              </button>
+            </Link>
+          </div>
+
+          {/* Action Required: Approved Exams Waiting to Proceed */}
+          {approvedExams.length > 0 && (
+            <div className="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-5 shadow-sm space-y-3">
+              <div className="flex items-center gap-2 text-emerald-800 font-bold text-sm">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                <span>Admin Approved Exams Ready to Proceed ({approvedExams.length})</span>
               </div>
-            ))}
+              <p className="text-xs text-emerald-700">The Admin has reviewed and approved the following exams. Click <strong>"Proceed / Activate Exam"</strong> so your SS1 Science students can receive and take the exam in their portal.</p>
+              <div className="space-y-3 pt-1">
+                {approvedExams.map(ex => (
+                  <div key={ex.id} className="bg-white p-4 rounded-xl border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">{ex.course_code}</span>
+                      <h4 className="font-bold text-foreground text-sm mt-1">{ex.title}</h4>
+                      <p className="text-xs text-muted-foreground">{ex.duration_minutes} mins · {ex.questions_count || ex.questions?.length} Objective Questions</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        updateExamStatus(ex.id, 'ACTIVE');
+                        showToast(`Activated "${ex.title}"! SS1 Science students can now start this exam.`);
+                      }}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-colors shadow-md flex items-center gap-1.5 self-start sm:self-auto ring-2 ring-emerald-400/50 animate-pulse"
+                    >
+                      <Send className="w-4 h-4" /> Proceed / Activate Exam for Students
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Active Live Exams */}
+          {activeExams.length > 0 && (
+            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-3">
+              <h3 className="font-serif font-bold text-foreground text-base flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+                Live Active Exams ({activeExams.length})
+              </h3>
+              <div className="space-y-2">
+                {activeExams.map(ex => (
+                  <div key={ex.id} className="p-4 rounded-xl border border-emerald-200 bg-emerald-500/5 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">🟢 Live in Student Portal</span>
+                      <h4 className="font-bold text-foreground text-sm mt-1">{ex.title}</h4>
+                      <p className="text-xs text-muted-foreground">{ex.course_code} · {ex.duration_minutes} mins · SS1 Science Students</p>
+                    </div>
+                    <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-3 py-1.5 rounded-xl">
+                      Receiving Submissions...
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Real-Time Student CBT Submissions Queue */}
+          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-serif font-bold text-foreground text-base">Received Student CBT Submissions ({allSubmissions.length})</h3>
+              <span className="text-xs font-semibold text-muted-foreground">Auto-Graded & Verified</span>
+            </div>
+
+            {allSubmissions.length > 0 ? (
+              <div className="space-y-3">
+                {allSubmissions.map(sub => (
+                  <div key={sub.id} className="p-4 rounded-xl border border-border bg-card hover:bg-muted/10 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-bold text-foreground text-sm">{sub.student_name}</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">{sub.class} {sub.stream}</span>
+                        <span className="text-xs text-muted-foreground">({sub.student_id})</span>
+                      </div>
+                      <h4 className="font-semibold text-foreground text-xs">{sub.exam_title} ({sub.course_code})</h4>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Submitted: {new Date(sub.submitted_at).toLocaleTimeString()} · Score: <strong>{sub.score} / {sub.total_possible}</strong></p>
+                    </div>
+                    <div className="flex items-center gap-3 self-start sm:self-auto">
+                      <div className="text-right">
+                        <span className="text-lg font-serif font-bold text-emerald-600">{sub.percentage}%</span>
+                        <p className="text-[9px] font-bold uppercase text-emerald-700">Auto-Graded</p>
+                      </div>
+                      <button
+                        onClick={() => showToast(`Synced ${sub.student_name}'s score (${sub.percentage}%) to official gradebook!`)}
+                        className="bg-primary text-white font-bold px-3.5 py-2 rounded-xl text-xs hover:bg-primary/90 transition-colors"
+                      >
+                        Sync Gradebook
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-8 text-center text-muted-foreground bg-muted/10 rounded-xl border border-border/50">
+                <p className="text-sm font-semibold">No student submissions received yet.</p>
+                <p className="text-xs mt-1">Once students start and submit their exams in the student portal, their scores will appear here automatically.</p>
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Quick Launch Card */}
-        <div className="bg-muted/20 rounded-2xl border border-border p-8 text-center space-y-4">
-          <ClipboardList className="w-16 h-16 text-primary mx-auto" />
-          <h3 className="text-xl font-serif font-bold text-foreground">Ready to set a test or exam?</h3>
-          <p className="text-xs text-muted-foreground max-w-md mx-auto">Access the full CBT Builder to set questions, set timers, choose questions per view, and send for admin approval.</p>
-          <Link href="/dashboard/cbt-builder">
-            <button className="bg-primary text-white hover:bg-primary/90 font-bold px-8 py-3 rounded-xl text-sm transition-all shadow-md">
-              Open CBT Builder Now
-            </button>
-          </Link>
-        </div>
-      </div>
-    );
+      );
+    }
 
     // =========================================================
     // 4. MANAGE RESULTS

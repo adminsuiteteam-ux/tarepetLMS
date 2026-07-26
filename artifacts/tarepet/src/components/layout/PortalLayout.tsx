@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'wouter';
 import { useAuth } from '@/context/AuthContext';
+import { useTranslation } from '@/lib/i18n';
 import tarepetLogo from '@assets/tarepet__1784835204178.png';
 import {
   LayoutDashboard, BookOpen, GraduationCap, Users, Award,
@@ -27,7 +28,7 @@ interface PortalLayoutProps {
 const ROLE_NAV: Record<string, NavSection[]> = {
   ADMIN: [
     { id: 'overview',   label: 'Dashboard Overview', icon: LayoutDashboard },
-    { id: 'users',      label: 'Manage Users',        icon: Users,       badge: 6 },
+    { id: 'users',      label: 'Manage Users',        icon: Users },
     { id: 'exams',      label: 'Manage Exams',        icon: ClipboardList },
     { id: 'courses',    label: 'All Courses',          icon: BookOpen },
     { id: 'operations', label: 'School Operations',   icon: Building2 },
@@ -37,13 +38,13 @@ const ROLE_NAV: Record<string, NavSection[]> = {
     { id: 'overview',  label: 'Overview',           icon: LayoutDashboard },
     { id: 'students',  label: 'Manage Students',    icon: Users },
     { id: 'exams',     label: 'Manage Exams',       icon: ClipboardList },
-    { id: 'results',   label: 'Manage Results',     icon: FileText, badge: 3 },
+    { id: 'results',   label: 'Manage Results',     icon: FileText },
     { id: 'settings',  label: 'Settings',           icon: Settings },
   ],
   STUDENT: [
     { id: 'overview',  label: 'Overview',        icon: LayoutDashboard },
     { id: 'courses',   label: 'My course',       icon: BookOpen },
-    { id: 'exams',     label: 'Exams/Test',      icon: ClipboardList, badge: 1 },
+    { id: 'exams',     label: 'Exams/Test',      icon: ClipboardList },
     { id: 'results',   label: 'Check Results',   icon: BarChart2 },
     { id: 'payments',  label: 'Payment Page',    icon: CreditCard },
     { id: 'calendar',  label: 'Calendar',        icon: Calendar },
@@ -54,30 +55,44 @@ const ROLE_NAV: Record<string, NavSection[]> = {
     { id: 'academic',    label: 'Academic Progress',        icon: GraduationCap },
     { id: 'montessori',  label: 'Montessori Development',   icon: Star },
     { id: 'attendance',  label: 'Attendance & Leave',       icon: UserCheck },
-    { id: 'messages',    label: 'Messages & Conferences',   icon: MessageSquare, badge: 2 },
+    { id: 'messages',    label: 'Messages & Conferences',   icon: MessageSquare },
     { id: 'houses',      label: 'House System',             icon: Trophy },
-    { id: 'fees',        label: 'Fee Management & Pay',     icon: CreditCard, badge: 1 },
+    { id: 'fees',        label: 'Fee Management & Pay',     icon: CreditCard },
     { id: 'support',     label: 'Support & Behavior',       icon: HeartHandshake },
     { id: 'engagement',  label: 'School & PTA Engagement',  icon: School },
     { id: 'settings',    label: 'Settings & Parent Tools',  icon: Settings },
   ],
 };
 
-const ROLE_COLORS: Record<string, string> = {
-  ADMIN:   'bg-rose-500/10 text-rose-600 border-rose-200',
-  TEACHER: 'bg-emerald-500/10 text-emerald-600 border-emerald-200',
-  STUDENT: 'bg-blue-500/10 text-blue-600 border-blue-200',
-  PARENT:  'bg-amber-500/10 text-amber-600 border-amber-200',
-};
+function getRoleColor(role?: string): string {
+  switch (role) {
+    case 'ADMIN': return 'bg-rose-500/10 text-rose-600 border-rose-200';
+    case 'TEACHER': return 'bg-emerald-500/10 text-emerald-600 border-emerald-200';
+    case 'STUDENT': return 'bg-blue-500/10 text-blue-600 border-blue-200';
+    case 'PARENT': return 'bg-amber-500/10 text-amber-600 border-amber-200';
+    default: return 'bg-primary/10 text-primary border-primary/20';
+  }
+}
+
+function getRoleNav(role?: string): NavSection[] {
+  switch (role) {
+    case 'ADMIN': return ROLE_NAV.ADMIN;
+    case 'TEACHER': return ROLE_NAV.TEACHER;
+    case 'STUDENT': return ROLE_NAV.STUDENT;
+    case 'PARENT': return ROLE_NAV.PARENT;
+    default: return [];
+  }
+}
 
 export const PortalLayout: React.FC<PortalLayoutProps> = ({
   children, title, activeSection, onNavigate,
 }) => {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  const roleColor = ROLE_COLORS[user?.role ?? ''] ?? 'bg-primary/10 text-primary border-primary/20';
-  const navItems = ROLE_NAV[user?.role ?? ''] ?? [];
+  const roleColor = getRoleColor(user?.role);
+  const navItems = getRoleNav(user?.role);
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
@@ -85,8 +100,8 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
       <div className="p-5 border-b border-border flex items-center gap-3 shrink-0">
         <img src={tarepetLogo} alt="Tarepet Logo" className="w-10 h-10 object-contain" />
         <div>
-          <h2 className="font-serif font-bold text-base text-foreground leading-tight">Tarepet LMS</h2>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">Portal System</p>
+          <h2 className="font-serif font-bold text-base text-foreground leading-tight">{t('common.app_name', 'Tarepet LMS')}</h2>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{t('common.portal_system', 'Portal System')}</p>
         </div>
       </div>
 

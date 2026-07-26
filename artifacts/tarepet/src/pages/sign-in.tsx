@@ -10,7 +10,7 @@ import { authClient } from "@/lib/api-auth";
 const DEMO_ACCOUNTS = [
   { role: "Admin",   email: "admin@tarepet.edu.ng",   password: "AdminPassword123!",   color: "bg-rose-600",    label: "Super Admin" },
   { role: "Teacher", email: "teacher@tarepet.edu.ng", password: "TeacherPassword123!", color: "bg-emerald-600", label: "Class Teacher" },
-  { role: "Student", email: "student@tarepet.edu.ng", password: "StudentPassword123!", color: "bg-blue-600",    label: "JSS1 Student" },
+  { role: "Student", email: "student@tarepet.edu.ng", password: "StudentPassword123!", color: "bg-blue-600",    label: "SS1 Science Student" },
   { role: "Parent",  email: "parent@tarepet.edu.ng",  password: "ParentPassword123!",  color: "bg-amber-600",  label: "Guardian" },
 ];
 

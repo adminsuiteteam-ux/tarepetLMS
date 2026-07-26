@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { PortalLayout } from '@/components/layout/PortalLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore } from '@/lib/cbt-store';
 import {
   Users, BookOpen, Server, CheckCircle2,
   Plus, FileText, Download, Upload, Search,
@@ -25,131 +26,26 @@ import {
 interface TabProps { id: string; label: string; icon: React.ReactNode; badge?: number }
 
 // ── Mock Data ────────────────────────────────────────────────
-const MOCK_USERS: any[] = [
-  {
-    id: 1, name: 'Mr. Chukwuemeka Obi', email: 'admin@tarepet.edu.ng', role: 'ADMIN', status: 'Active',
-    joined: '2026-01-01', lastLogin: '2026-07-24',
-    phone: '+234 801 000 0001', location: 'Lagos, Nigeria',
-    adminRole: 'Platform Administrator', department: 'ICT & Operations',
-    salary: '\u20a6450,000/month',
-  },
-  {
-    id: 2, name: 'Mrs. Okafor Chioma', email: 'teacher@tarepet.edu.ng', role: 'TEACHER', status: 'Active',
-    joined: '2026-01-15', lastLogin: '2026-07-24',
-    phone: '+234 802 111 2222', location: 'Port Harcourt, Nigeria',
-    subjects: ['Montessori Mathematics', 'Applied Sciences'],
-    classes: ['SS1 Science', 'SS2 Art'],
-    salary: '\u20a6280,000/month', qualification: 'B.Ed Mathematics, PGD Montessori Education',
-  },
-  {
-    id: 4, name: 'Mrs. Adaeze Nwosu', email: 'librarian@tarepet.edu.ng', role: 'PARENT', status: 'Active',
-    joined: '2026-02-01', lastLogin: '2026-07-22',
-    phone: '+234 804 555 6666', location: 'Abuja, Nigeria',
-    department: 'Library Services', staffId: 'STF-2026-004',
-    salary: '\u20a6180,000/month',
-  },
-  {
-    id: 6, name: 'Mr. James Eze', email: 'jeze@tarepet.edu.ng', role: 'TEACHER', status: 'Inactive',
-    joined: '2026-03-01', lastLogin: '2026-07-10',
-    phone: '+234 806 999 0000', location: 'Enugu, Nigeria',
-    subjects: ['Language Arts & Creative Writing', 'Social Studies'],
-    classes: ['SS2 Art', 'SS3 Art'],
-    salary: '\u20a6265,000/month', qualification: 'B.A English Language, PGDE',
-  },
-];
-
-// ── Senior Secondary Student Roster (SS1–SS3, Science & Art) ──
-const MOCK_SS_STUDENTS: any[] = [
-  // SS1 Science
-  { id: 101, name: 'Emeka Amadi',      email: 'emeka.amadi@tarepet.edu.ng',    role: 'STUDENT', status: 'Active', joined: '2024-09-01', lastLogin: '2026-07-23', phone: '+234 803 001 0001', location: 'Port Harcourt', grade: 'SS1', stream: 'Science', house: 'Blue House (Eagle)',   studentId: 'TMS-2024-101', dob: '2010-05-14' },
-  { id: 102, name: 'Chidinma Eze',     email: 'chidinma.eze@tarepet.edu.ng',   role: 'STUDENT', status: 'Active', joined: '2024-09-01', lastLogin: '2026-07-22', phone: '+234 803 001 0002', location: 'Enugu',         grade: 'SS1', stream: 'Science', house: 'Green House (Jaguar)', studentId: 'TMS-2024-102', dob: '2010-08-20' },
-  { id: 103, name: 'Tunde Balogun',    email: 'tunde.balogun@tarepet.edu.ng',  role: 'STUDENT', status: 'Active', joined: '2024-09-01', lastLogin: '2026-07-21', phone: '+234 803 001 0003', location: 'Lagos',         grade: 'SS1', stream: 'Science', house: 'Red House (Falcon)',   studentId: 'TMS-2024-103', dob: '2010-02-11' },
-  { id: 104, name: 'Ngozi Okafor',     email: 'ngozi.okafor@tarepet.edu.ng',   role: 'STUDENT', status: 'Active', joined: '2024-09-01', lastLogin: '2026-07-20', phone: '+234 803 001 0004', location: 'Owerri',        grade: 'SS1', stream: 'Science', house: 'Purple House (Phoenix)',studentId: 'TMS-2024-104', dob: '2010-11-03' },
-  { id: 105, name: 'Ifeanyi Nwosu',    email: 'ifeanyi.nwosu@tarepet.edu.ng',  role: 'STUDENT', status: 'Active', joined: '2024-09-01', lastLogin: '2026-07-23', phone: '+234 803 001 0005', location: 'Onitsha',       grade: 'SS1', stream: 'Science', house: 'Blue House (Eagle)',   studentId: 'TMS-2024-105', dob: '2010-06-27' },
-  // SS1 Art
-  { id: 106, name: 'Amara Obiora',     email: 'amara.obiora@tarepet.edu.ng',   role: 'STUDENT', status: 'Active', joined: '2024-09-01', lastLogin: '2026-07-22', phone: '+234 803 001 0006', location: 'Asaba',         grade: 'SS1', stream: 'Art',     house: 'Green House (Jaguar)', studentId: 'TMS-2024-106', dob: '2010-04-09' },
-  { id: 107, name: 'David Okeke',      email: 'david.okeke@tarepet.edu.ng',    role: 'STUDENT', status: 'Active', joined: '2024-09-01', lastLogin: '2026-07-21', phone: '+234 803 001 0007', location: 'Benin City',    grade: 'SS1', stream: 'Art',     house: 'Red House (Falcon)',   studentId: 'TMS-2024-107', dob: '2010-12-15' },
-  { id: 108, name: 'Fatima Abdullahi', email: 'fatima.abdullahi@tarepet.edu.ng',role: 'STUDENT', status: 'Active', joined: '2024-09-01', lastLogin: '2026-07-20', phone: '+234 803 001 0008', location: 'Abuja',         grade: 'SS1', stream: 'Art',     house: 'Blue House (Eagle)',   studentId: 'TMS-2024-108', dob: '2010-07-30' },
-  { id: 109, name: 'Kelechi Ogbu',     email: 'kelechi.ogbu@tarepet.edu.ng',   role: 'STUDENT', status: 'Inactive',joined: '2024-09-01', lastLogin: '2026-06-10', phone: '+234 803 001 0009', location: 'Uyo',           grade: 'SS1', stream: 'Art',     house: 'Purple House (Phoenix)',studentId: 'TMS-2024-109', dob: '2010-09-18' },
-  // SS2 Science
-  { id: 201, name: 'Ada Obi',          email: 'ada.obi@tarepet.edu.ng',        role: 'STUDENT', status: 'Active', joined: '2023-09-01', lastLogin: '2026-07-23', phone: '+234 803 002 0001', location: 'Lagos',         grade: 'SS2', stream: 'Science', house: 'Green House (Jaguar)', studentId: 'TMS-2023-201', dob: '2009-09-21' },
-  { id: 202, name: 'Chukwudi Eze',     email: 'chukwudi.eze@tarepet.edu.ng',   role: 'STUDENT', status: 'Active', joined: '2023-09-01', lastLogin: '2026-07-22', phone: '+234 803 002 0002', location: 'Enugu',         grade: 'SS2', stream: 'Science', house: 'Blue House (Eagle)',   studentId: 'TMS-2023-202', dob: '2009-03-05' },
-  { id: 203, name: 'Blessing Okonkwo', email: 'blessing.okonkwo@tarepet.edu.ng',role: 'STUDENT', status: 'Active', joined: '2023-09-01', lastLogin: '2026-07-21', phone: '+234 803 002 0003', location: 'Owerri',        grade: 'SS2', stream: 'Science', house: 'Red House (Falcon)',   studentId: 'TMS-2023-203', dob: '2009-01-19' },
-  { id: 204, name: 'Emmanuel Adeyemi', email: 'emmanuel.adeyemi@tarepet.edu.ng',role: 'STUDENT', status: 'Active', joined: '2023-09-01', lastLogin: '2026-07-23', phone: '+234 803 002 0004', location: 'Ibadan',        grade: 'SS2', stream: 'Science', house: 'Purple House (Phoenix)',studentId: 'TMS-2023-204', dob: '2009-07-08' },
-  // SS2 Art
-  { id: 205, name: 'Adaeze Nwofor',    email: 'adaeze.nwofor@tarepet.edu.ng',  role: 'STUDENT', status: 'Active', joined: '2023-09-01', lastLogin: '2026-07-22', phone: '+234 803 002 0005', location: 'Port Harcourt', grade: 'SS2', stream: 'Art',     house: 'Blue House (Eagle)',   studentId: 'TMS-2023-205', dob: '2009-05-12' },
-  { id: 206, name: 'Musa Ibrahim',     email: 'musa.ibrahim@tarepet.edu.ng',   role: 'STUDENT', status: 'Active', joined: '2023-09-01', lastLogin: '2026-07-21', phone: '+234 803 002 0006', location: 'Kano',          grade: 'SS2', stream: 'Art',     house: 'Green House (Jaguar)', studentId: 'TMS-2023-206', dob: '2009-10-25' },
-  { id: 207, name: 'Uchenna Obi',      email: 'uchenna.obi@tarepet.edu.ng',    role: 'STUDENT', status: 'Inactive',joined: '2023-09-01', lastLogin: '2026-05-30', phone: '+234 803 002 0007', location: 'Onitsha',       grade: 'SS2', stream: 'Art',     house: 'Red House (Falcon)',   studentId: 'TMS-2023-207', dob: '2009-02-14' },
-  // SS3 Science
-  { id: 301, name: 'Obioma Chukwu',    email: 'obioma.chukwu@tarepet.edu.ng',  role: 'STUDENT', status: 'Active', joined: '2022-09-01', lastLogin: '2026-07-23', phone: '+234 803 003 0001', location: 'Port Harcourt', grade: 'SS3', stream: 'Science', house: 'Blue House (Eagle)',   studentId: 'TMS-2022-301', dob: '2008-04-17' },
-  { id: 302, name: 'Chisom Nwosu',     email: 'chisom.nwosu@tarepet.edu.ng',   role: 'STUDENT', status: 'Active', joined: '2022-09-01', lastLogin: '2026-07-22', phone: '+234 803 003 0002', location: 'Aba',           grade: 'SS3', stream: 'Science', house: 'Purple House (Phoenix)',studentId: 'TMS-2022-302', dob: '2008-11-02' },
-  { id: 303, name: 'Adebayo Salami',   email: 'adebayo.salami@tarepet.edu.ng', role: 'STUDENT', status: 'Active', joined: '2022-09-01', lastLogin: '2026-07-21', phone: '+234 803 003 0003', location: 'Abeokuta',      grade: 'SS3', stream: 'Science', house: 'Green House (Jaguar)', studentId: 'TMS-2022-303', dob: '2008-08-22' },
-  { id: 304, name: 'Nkechi Onyeka',    email: 'nkechi.onyeka@tarepet.edu.ng',  role: 'STUDENT', status: 'Active', joined: '2022-09-01', lastLogin: '2026-07-23', phone: '+234 803 003 0004', location: 'Enugu',         grade: 'SS3', stream: 'Science', house: 'Red House (Falcon)',   studentId: 'TMS-2022-304', dob: '2008-06-30' },
-  // SS3 Art
-  { id: 305, name: 'Ifeoma Ezeh',      email: 'ifeoma.ezeh@tarepet.edu.ng',    role: 'STUDENT', status: 'Active', joined: '2022-09-01', lastLogin: '2026-07-22', phone: '+234 803 003 0005', location: 'Awka',          grade: 'SS3', stream: 'Art',     house: 'Blue House (Eagle)',   studentId: 'TMS-2022-305', dob: '2008-03-08' },
-  { id: 306, name: 'Seun Adewale',     email: 'seun.adewale@tarepet.edu.ng',   role: 'STUDENT', status: 'Active', joined: '2022-09-01', lastLogin: '2026-07-21', phone: '+234 803 003 0006', location: 'Ibadan',        grade: 'SS3', stream: 'Art',     house: 'Green House (Jaguar)', studentId: 'TMS-2022-306', dob: '2008-12-01' },
-  { id: 307, name: 'Amina Yusuf',      email: 'amina.yusuf@tarepet.edu.ng',    role: 'STUDENT', status: 'Active', joined: '2022-09-01', lastLogin: '2026-07-20', phone: '+234 803 003 0007', location: 'Kaduna',        grade: 'SS3', stream: 'Art',     house: 'Purple House (Phoenix)',studentId: 'TMS-2022-307', dob: '2008-09-14' },
-  { id: 308, name: 'Femi Adesanya',    email: 'femi.adesanya@tarepet.edu.ng',  role: 'STUDENT', status: 'Inactive',joined: '2022-09-01', lastLogin: '2026-04-15', phone: '+234 803 003 0008', location: 'Lagos',         grade: 'SS3', stream: 'Art',     house: 'Red House (Falcon)',   studentId: 'TMS-2022-308', dob: '2008-07-26' },
-];
-
-const MOCK_SUBJECTS = [
-  // SS1 Science
-  { id: 1,  code: 'MTH-101', title: 'Senior Secondary Mathematics I',   teacher: 'Mrs. Okafor Chioma', grade: 'SS1', stream: 'Science', category: 'STEM', enrolled: 24 },
-  { id: 2,  code: 'PHY-101', title: 'Senior Secondary Physics I',       teacher: 'Mr. Okonkwo Paul',   grade: 'SS1', stream: 'Science', category: 'STEM', enrolled: 24 },
-  { id: 3,  code: 'CHM-101', title: 'Senior Secondary Chemistry I',     teacher: 'Mrs. Okafor Chioma', grade: 'SS1', stream: 'Science', category: 'STEM', enrolled: 24 },
-  { id: 4,  code: 'BIO-101', title: 'Senior Secondary Biology I',       teacher: 'Mr. Okonkwo Paul',   grade: 'SS1', stream: 'Science', category: 'STEM', enrolled: 24 },
-  
-  // SS1 Art
-  { id: 5,  code: 'ENG-101', title: 'Senior Secondary English I',       teacher: 'Mrs. Dada Kemi',     grade: 'SS1', stream: 'Art',     category: 'Humanities', enrolled: 19 },
-  { id: 6,  code: 'LIT-101', title: 'Literature in English I',          teacher: 'Mr. James Eze',      grade: 'SS1', stream: 'Art',     category: 'Humanities', enrolled: 19 },
-  { id: 7,  code: 'GOV-101', title: 'Government I',                     teacher: 'Mr. James Eze',      grade: 'SS1', stream: 'Art',     category: 'Humanities', enrolled: 19 },
-  { id: 8,  code: 'CRS-101', title: 'Christian Religious Studies I',   teacher: 'Mrs. Dada Kemi',     grade: 'SS1', stream: 'Art',     category: 'Humanities', enrolled: 19 },
-
-  // SS2 Science
-  { id: 9,  code: 'MTH-201', title: 'Senior Secondary Mathematics II',  teacher: 'Mrs. Okafor Chioma', grade: 'SS2', stream: 'Science', category: 'STEM', enrolled: 22 },
-  { id: 10, code: 'PHY-201', title: 'Senior Secondary Physics II',      teacher: 'Mr. Okonkwo Paul',   grade: 'SS2', stream: 'Science', category: 'STEM', enrolled: 22 },
-  { id: 11, code: 'CHM-201', title: 'Senior Secondary Chemistry II',    teacher: 'Mrs. Okafor Chioma', grade: 'SS2', stream: 'Science', category: 'STEM', enrolled: 22 },
-
-  // SS2 Art
-  { id: 12, code: 'ENG-201', title: 'Senior Secondary English II',      teacher: 'Mrs. Dada Kemi',     grade: 'SS2', stream: 'Art',     category: 'Humanities', enrolled: 18 },
-  { id: 13, code: 'LIT-201', title: 'Literature in English II',         teacher: 'Mr. James Eze',      grade: 'SS2', stream: 'Art',     category: 'Humanities', enrolled: 18 },
-
-  // SS3 Science
-  { id: 14, code: 'MTH-301', title: 'Senior Secondary Mathematics III', teacher: 'Mrs. Okafor Chioma', grade: 'SS3', stream: 'Science', category: 'STEM', enrolled: 20 },
-  { id: 15, code: 'PHY-301', title: 'Senior Secondary Physics III',     teacher: 'Mr. Okonkwo Paul',   grade: 'SS3', stream: 'Science', category: 'STEM', enrolled: 20 },
-
-  // SS3 Art
-  { id: 16, code: 'ENG-301', title: 'Senior Secondary English III',     teacher: 'Mrs. Dada Kemi',     grade: 'SS3', stream: 'Art',     category: 'Humanities', enrolled: 17 },
-  { id: 17, code: 'LIT-301', title: 'Literature in English III',        teacher: 'Mr. James Eze',      grade: 'SS3', stream: 'Art',     category: 'Humanities', enrolled: 17 },
-];
+const MOCK_USERS: any[] = [];
+const MOCK_SS_STUDENTS: any[] = [];
+const MOCK_SUBJECTS: any[] = [];
 
 const MOCK_HOUSES = [
-  { name: 'Blue House (Eagle)', color: '#3B82F6', motto: 'Wisdom & Integrity', points: 520, students: 14, head: 'Mrs. Okafor Chioma' },
-  { name: 'Purple House (Phoenix)', color: '#8B5CF6', motto: 'Royalty & Distinction', points: 510, students: 13, head: 'Mr. James Eze' },
-  { name: 'Green House (Jaguar)', color: '#10B981', motto: 'Growth & Resilience', points: 480, students: 12, head: 'Ms. Adaobi' },
-  { name: 'Red House (Falcon)', color: '#EF4444', motto: 'Passion & Determination', points: 450, students: 11, head: 'Mr. Bello' },
+  { name: 'Blue House (Eagle)', color: '#3B82F6', motto: 'Wisdom & Integrity', points: 520, students: 0, head: 'Mrs. Okafor Chioma' },
+  { name: 'Purple House (Phoenix)', color: '#8B5CF6', motto: 'Royalty & Distinction', points: 510, students: 0, head: 'Mr. James Eze' },
+  { name: 'Green House (Jaguar)', color: '#10B981', motto: 'Growth & Resilience', points: 480, students: 0, head: 'Ms. Adaobi' },
+  { name: 'Red House (Falcon)', color: '#EF4444', motto: 'Passion & Determination', points: 450, students: 0, head: 'Mr. Bello' },
 ];
 
 const MOCK_AUDIT_LOGS = [
   { id: 1, user: 'admin@tarepet.edu.ng', action: 'LOGIN', target: 'Auth System', ip: '127.0.0.1', timestamp: '2026-07-24 07:00:12', status: 'SUCCESS' },
-  { id: 2, user: 'admin@tarepet.edu.ng', action: 'BULK_IMPORT', target: 'Users (4 created)', ip: '127.0.0.1', timestamp: '2026-07-24 07:02:48', status: 'SUCCESS' },
-  { id: 3, user: 'teacher@tarepet.edu.ng', action: 'GRADE_SUBMISSION', target: 'Submission #3 (Emeka Amadi)', ip: '192.168.1.20', timestamp: '2026-07-24 07:15:33', status: 'SUCCESS' },
-  { id: 4, user: 'teacher@tarepet.edu.ng', action: 'MARK_ATTENDANCE', target: 'MTH-101 Class (24 students)', ip: '192.168.1.20', timestamp: '2026-07-24 08:05:00', status: 'SUCCESS' },
-  { id: 5, user: 'unknown@invalid.com', action: 'LOGIN_ATTEMPT', target: 'Auth System', ip: '45.33.32.156', timestamp: '2026-07-24 08:23:11', status: 'FAILED' },
-  { id: 6, user: 'admin@tarepet.edu.ng', action: 'AWARD_HOUSE_POINTS', target: 'Blue House Eagle (+25 pts)', ip: '127.0.0.1', timestamp: '2026-07-24 09:10:02', status: 'SUCCESS' },
-  { id: 7, user: 'admin@tarepet.edu.ng', action: 'UPDATE_SETTINGS', target: 'School Config (Grading Schema)', ip: '127.0.0.1', timestamp: '2026-07-24 09:45:00', status: 'SUCCESS' },
+  { id: 2, user: 'admin@tarepet.edu.ng', action: 'BULK_IMPORT', target: 'System Users', ip: '127.0.0.1', timestamp: '2026-07-24 07:02:48', status: 'SUCCESS' },
+  { id: 3, user: 'teacher@tarepet.edu.ng', action: 'MARK_ATTENDANCE', target: 'SS1 Science Class', ip: '192.168.1.20', timestamp: '2026-07-24 08:05:00', status: 'SUCCESS' },
+  { id: 4, user: 'admin@tarepet.edu.ng', action: 'AWARD_HOUSE_POINTS', target: 'Blue House Eagle (+25 pts)', ip: '127.0.0.1', timestamp: '2026-07-24 09:10:02', status: 'SUCCESS' },
+  { id: 5, user: 'admin@tarepet.edu.ng', action: 'UPDATE_SETTINGS', target: 'School Config (Grading Schema)', ip: '127.0.0.1', timestamp: '2026-07-24 09:45:00', status: 'SUCCESS' },
 ];
 
-const INITIAL_EXAMS = [
-  { id: 1,  title: 'SS1 Science Mid-Term Examination',      subject: 'Mathematics',            class: 'SS1', stream: 'Science', date: '2026-08-05', time: '09:00', duration: '3hrs', venue: 'Hall A', status: 'Pending Approval',  invigilator: 'Mrs. Okafor Chioma',  totalCandidates: 5  },
-  { id: 2,  title: 'SS1 Art Mid-Term Examination',          subject: 'English Language',       class: 'SS1', stream: 'Art',     date: '2026-08-06', time: '09:00', duration: '3hrs', venue: 'Hall B', status: 'Pending Approval',  invigilator: 'Mr. James Eze',       totalCandidates: 4  },
-  { id: 3,  title: 'SS2 Science Mid-Term Examination',      subject: 'Physics',                class: 'SS2', stream: 'Science', date: '2026-08-07', time: '10:00', duration: '3hrs', venue: 'Hall A', status: 'Ongoing',            invigilator: 'Mrs. Okafor Chioma',  totalCandidates: 4  },
-  { id: 4,  title: 'SS2 Art Mid-Term Examination',          subject: 'Literature in English',  class: 'SS2', stream: 'Art',     date: '2026-08-07', time: '13:00', duration: '2hrs', venue: 'Hall B', status: 'Ongoing',            invigilator: 'Mr. James Eze',       totalCandidates: 3  },
-  { id: 5,  title: 'SS3 Science WAEC Prep Mock',            subject: 'Chemistry',              class: 'SS3', stream: 'Science', date: '2026-07-20', time: '09:00', duration: '3hrs', venue: 'Hall A', status: 'Completed',          invigilator: 'Mrs. Okafor Chioma',  totalCandidates: 4  },
-  { id: 6,  title: 'SS3 Art WAEC Prep Mock',                subject: 'Economics',              class: 'SS3', stream: 'Art',     date: '2026-07-21', time: '09:00', duration: '2hrs', venue: 'Hall B', status: 'Completed',          invigilator: 'Mr. James Eze',       totalCandidates: 4  },
-  { id: 7,  title: 'SS1 Science Biology Practical',         subject: 'Biology',                class: 'SS1', stream: 'Science', date: '2026-08-10', time: '08:00', duration: '4hrs', venue: 'Lab 1', status: 'Approved',           invigilator: 'Mr. Okonkwo Paul',    totalCandidates: 5  },
-  { id: 8,  title: 'SS3 Science Terminal Examination',      subject: 'Further Mathematics',    class: 'SS3', stream: 'Science', date: '2026-07-15', time: '09:00', duration: '3hrs', venue: 'Hall A', status: 'Cancelled',          invigilator: 'Mrs. Okafor Chioma',  totalCandidates: 4  },
-];
+const INITIAL_EXAMS: any[] = [];
 
 // ── Sub-components ───────────────────────────────────────────
 const MetricCard = ({
@@ -405,20 +301,40 @@ const AwardPointsModal = ({ house, onClose }: { house: any; onClose: () => void 
 };
 
 const ExamPreviewModal = ({ exam, onClose }: { exam: any; onClose: () => void }) => {
-  // Generate realistic questions if not defined
+  // Objective Multiple Choice Questions (A, B, C, D)
   const questions = exam.questions || [
-    { num: 1, text: `Discuss the key concepts of the topic in relation to ${exam.subject || 'this course'}.`, answer: "Subjective evaluation based on standard course guidelines." },
-    { num: 2, text: `Explain how the principles of Montessori methodology apply to the study of ${exam.subject || 'this subject'}.`, answer: "Observation records & teacher evaluation." },
-    { num: 3, text: `State three core rules or equations used in resolving problems in ${exam.subject || 'this course'}.`, answer: "Verify formula usage & step-by-step logic." },
-    { num: 4, text: `Analyze the main differences between classical and contemporary approaches to ${exam.subject || 'this field'}.`, answer: "Refer to Chapter 4, section 2." },
+    {
+      num: 1,
+      text: `Which of the following represents the primary theorem/rule applied in ${exam.subject || 'this course'}?`,
+      options: ['Option A: Fundamental Principle I', 'Option B: Secondary Derivation II', 'Option C: Empirical Postulate III', 'Option D: Auxiliary Rule IV'],
+      correct: 'Option A: Fundamental Principle I'
+    },
+    {
+      num: 2,
+      text: `In Montessori practical application, what is the main objective during ${exam.subject || 'this subject'} practical work?`,
+      options: ['Option A: Theoretical memorization', 'Option B: Self-directed experiential learning', 'Option C: Group lectures', 'Option D: Rote repetition'],
+      correct: 'Option B: Self-directed experiential learning'
+    },
+    {
+      num: 3,
+      text: `Identify the correct unit or standard formula used when calculating metrics in ${exam.subject || 'this topic'}:`,
+      options: ['Option A: Formula X = a + b', 'Option B: Formula Y = m * c^2', 'Option C: Standard Metric Alpha', 'Option D: Derived Constant Beta'],
+      correct: 'Option C: Standard Metric Alpha'
+    },
+    {
+      num: 4,
+      text: `Which scientist or scholar is credited with establishing the foundational theory of ${exam.subject || 'this domain'}?`,
+      options: ['Option A: Dr. Maria Montessori', 'Option B: Isaac Newton', 'Option C: Albert Einstein', 'Option D: Michael Faraday'],
+      correct: 'Option A: Dr. Maria Montessori'
+    },
   ];
 
   const rules = exam.rules || [
+    "All questions are 100% Objective Multiple Choice (A, B, C, D).",
+    "Select your answers using the CBT computer terminal interface.",
     "Arrive at the exam venue at least 15 minutes before the start time.",
-    "No mobile phones, smartwatches, or other electronic communication devices allowed.",
-    "All answers must be written legibly in the provided answer sheets.",
-    "Scientific calculators are allowed only for science & mathematics subjects.",
-    "Cheating or any form of academic malpractice will result in immediate disqualification.",
+    "No mobile phones, smartwatches, or other unauthorized electronic devices allowed.",
+    "Automatic timer submission is enforced when exam time expires.",
   ];
 
   return (
@@ -428,7 +344,7 @@ const ExamPreviewModal = ({ exam, onClose }: { exam: any; onClose: () => void })
         <div className="p-6 border-b border-border flex items-start justify-between bg-muted/20 rounded-t-3xl">
           <div>
             <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-primary/10 text-primary">
-              {exam.class} · {exam.stream}
+              {exam.class} · {exam.stream} · Objective CBT
             </span>
             <h3 className="font-serif font-bold text-xl text-foreground mt-2">{exam.title}</h3>
             <p className="text-xs text-muted-foreground mt-1">Subject: <span className="text-foreground font-semibold">{exam.subject}</span></p>
@@ -472,19 +388,29 @@ const ExamPreviewModal = ({ exam, onClose }: { exam: any; onClose: () => void })
             </ul>
           </div>
 
-          {/* Questions Preview */}
+          {/* Objective Questions Preview */}
           <div className="space-y-4">
             <h4 className="font-serif font-bold text-sm text-foreground flex items-center gap-1.5">
-              <FileText className="w-4 h-4 text-primary" /> Exam Questions & Marking Guide Preview
+              <FileText className="w-4 h-4 text-primary" /> Objective CBT Questions & Answer Key
             </h4>
             <div className="space-y-3">
               {questions.map((q: any, i: number) => (
-                <div key={i} className="p-4 border border-border rounded-xl bg-card hover:bg-muted/10 transition-colors">
+                <div key={i} className="p-4 border border-border rounded-xl bg-card hover:bg-muted/10 transition-colors space-y-2">
                   <p className="font-bold text-foreground">Question {q.num || i + 1}:</p>
-                  <p className="text-muted-foreground mt-1 leading-relaxed text-sm">{q.text}</p>
-                  <div className="mt-3 p-3 bg-emerald-500/5 border border-emerald-100 rounded-lg text-emerald-800">
-                    <p className="font-bold text-[10px] uppercase tracking-wider text-emerald-700">Correct Answer / Guideline:</p>
-                    <p className="mt-0.5 text-xs font-semibold">{q.answer}</p>
+                  <p className="text-foreground leading-relaxed text-sm">{q.text}</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                    {(q.options || ['Option A', 'Option B', 'Option C', 'Option D']).map((opt: string, optIdx: number) => {
+                      const OPTION_KEYS = ['A', 'B', 'C', 'D'];
+                      const isCorrect = q.correct === opt || q.correct_option === OPTION_KEYS[optIdx];
+                      return (
+                        <div key={optIdx} className={`p-2.5 rounded-lg border text-xs flex items-center justify-between ${
+                          isCorrect ? 'bg-emerald-500/10 border-emerald-300 text-emerald-800 font-bold' : 'bg-muted/30 border-border/60 text-muted-foreground'
+                        }`}>
+                          <span>{opt}</span>
+                          {isCorrect && <span className="text-emerald-600">✓ Correct</span>}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               ))}
@@ -810,6 +736,13 @@ export default function AdminDashboard() {
   const [examsList, setExamsList] = useState(INITIAL_EXAMS);
   const [previewExam, setPreviewExam] = useState<any>(null);
 
+  // Manage exams drill-down state
+  const [selectedExamClass, setSelectedExamClass] = useState<string | null>(null);   // 'SS1' | 'SS2' | 'SS3'
+  const [selectedExamStream, setSelectedExamStream] = useState<string | null>(null); // 'Science' | 'Art'
+  const [openExamClassDropdown, setOpenExamClassDropdown] = useState<string | null>(null); // dropdown toggle
+  const [selectedExamType, setSelectedExamType] = useState<string | null>(null);    // 'Test' | 'Exam' | 'All'
+  const [examRepoFilter, setExamRepoFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+
   // Manage subjects drill-down state
   const [selectedSubjectClass, setSelectedSubjectClass] = useState<string | null>(null);
   const [selectedSubjectStream, setSelectedSubjectStream] = useState<string | null>(null);
@@ -829,6 +762,11 @@ export default function AdminDashboard() {
       setSelectedSubjectClass(null); setSelectedSubjectStream(null); setOpenSubjectClassDropdown(null);
       setSelectedSubjectPreview(null);
       setShowSubjectsActionsDropdown(false);
+    }
+    if (activeSection !== 'exams') {
+      setSelectedExamClass(null); setSelectedExamStream(null);
+      setOpenExamClassDropdown(null); setSelectedExamType(null);
+      setExamRepoFilter('all');
     }
   }, [activeSection]);
   React.useEffect(() => {
@@ -935,10 +873,10 @@ export default function AdminDashboard() {
     if (activeSection === 'overview' || activeSection === 'analytics') return (
       <div className="space-y-6">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <MetricCard label="Total Registered Users" value={`${usersList.length}`} sub="4 Roles Active" icon={Users} color="bg-primary/10 text-primary" trend="up" />
-          <MetricCard label="Active Courses" value={`${coursesList.length}`} sub="Montessori Secondary" icon={BookOpen} color="bg-emerald-500/10 text-emerald-600" trend="up" />
-          <MetricCard label="Monthly Revenue" value="₦4.85M" sub="87.4% Collection Rate" icon={DollarSign} color="bg-amber-500/10 text-amber-600" trend="up" />
-          <MetricCard label="System Uptime" value="99.98%" sub="All APIs Healthy" icon={Server} color="bg-blue-500/10 text-blue-600" trend="up" />
+          <MetricCard label="Total Registered Users" value={`${usersList.length}`} sub={`${usersList.length} Active Accounts`} icon={Users} color="bg-primary/10 text-primary" trend="neutral" />
+          <MetricCard label="Active Courses" value={`${coursesList.length}`} sub="Registered Courses" icon={BookOpen} color="bg-emerald-500/10 text-emerald-600" trend="neutral" />
+          <MetricCard label="Monthly Revenue" value="₦0.00" sub="0% Collection Rate" icon={DollarSign} color="bg-amber-500/10 text-amber-600" trend="neutral" />
+          <MetricCard label="System Status" value="Online" sub="All Systems Operational" icon={Server} color="bg-blue-500/10 text-blue-600" trend="up" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -949,10 +887,10 @@ export default function AdminDashboard() {
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> All Online
               </span>
             </div>
-            <SystemHealthBar label="Server CPU Load" value={18} unit="%" color="text-emerald-600" />
-            <SystemHealthBar label="Memory Usage" value={51} unit="%" color="text-blue-600" />
-            <SystemHealthBar label="API Latency" value={42} unit="ms" max={200} color="text-emerald-600" />
-            <SystemHealthBar label="Error Rate" value={0.02} unit="%" max={5} color="text-emerald-600" />
+            <SystemHealthBar label="Server CPU Load" value={0} unit="%" color="text-emerald-600" />
+            <SystemHealthBar label="Memory Usage" value={0} unit="%" color="text-blue-600" />
+            <SystemHealthBar label="API Latency" value={0} unit="ms" max={200} color="text-emerald-600" />
+            <SystemHealthBar label="Error Rate" value={0} unit="%" max={5} color="text-emerald-600" />
           </div>
 
           <div className="lg:col-span-2 bg-card rounded-2xl border border-border p-6 shadow-sm">
@@ -960,11 +898,11 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-emerald-500/5 border border-emerald-200 rounded-xl p-4">
                 <p className="text-xs text-muted-foreground">Today's Revenue</p>
-                <p className="text-2xl font-serif font-bold text-emerald-700 mt-1">₦125,000</p>
+                <p className="text-2xl font-serif font-bold text-emerald-700 mt-1">₦0.00</p>
               </div>
               <div className="bg-blue-500/5 border border-blue-200 rounded-xl p-4">
                 <p className="text-xs text-muted-foreground">Monthly Collection</p>
-                <p className="text-2xl font-serif font-bold text-blue-700 mt-1">₦4,850,000</p>
+                <p className="text-2xl font-serif font-bold text-blue-700 mt-1">₦0.00</p>
               </div>
             </div>
           </div>
@@ -1685,111 +1623,452 @@ export default function AdminDashboard() {
       };
 
       const handleApprove = (id: number) => {
+        updateExamStatus(id, 'APPROVED');
         setExamsList(prev => prev.map(e => e.id === id ? { ...e, status: 'Approved' } : e));
       };
 
       const handleReject = (id: number) => {
+        updateExamStatus(id, 'REJECTED', 'Returned by Administrator');
         setExamsList(prev => prev.map(e => e.id === id ? { ...e, status: 'Rejected' } : e));
       };
 
       const handleCancel = (id: number) => {
+        updateExamStatus(id, 'REJECTED', 'Cancelled by Administrator');
         setExamsList(prev => prev.map(e => e.id === id ? { ...e, status: 'Cancelled' } : e));
       };
-
-      const examSearch = userSearch;
-
-      const visibleExams = examsList.filter(e => {
-        const q = examSearch.toLowerCase();
-        const matchSearch = !q || e.title.toLowerCase().includes(q) || e.subject.toLowerCase().includes(q) || e.class.toLowerCase().includes(q);
-        const matchStatus = examFilterStatus === 'All' || e.status === examFilterStatus;
-        return matchSearch && matchStatus;
-      });
 
       const counts = {
         total:     examsList.length,
         pending:   examsList.filter(e => e.status === 'Pending Approval').length,
         approved:  examsList.filter(e => e.status === 'Approved').length,
+        rejected:  examsList.filter(e => e.status === 'Rejected').length,
         ongoing:   examsList.filter(e => e.status === 'Ongoing').length,
-        completed: examsList.filter(e => e.status === 'Completed').length,
       };
+
+      // Helper to render exam card grid
+      const renderExamCardsGrid = (exams: typeof examsList) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {exams.length > 0 ? exams.map(exam => (
+            <div key={exam.id} className="bg-card rounded-2xl border border-border shadow-sm p-5 space-y-4 hover:shadow-md transition-all">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                      {exam.type || 'Exam'}
+                    </span>
+                    <span className="text-xs text-muted-foreground font-semibold">{exam.subject}</span>
+                  </div>
+                  <h3 className="font-serif font-bold text-foreground text-base leading-snug">{exam.title}</h3>
+                </div>
+                <span className={`shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full border ${statusColor(exam.status as ExamStatus)}`}>
+                  {exam.status}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-xs border-t border-border/50 pt-3">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Calendar className="w-3.5 h-3.5 shrink-0 text-primary" />
+                  <span>{exam.date} · {exam.time}</span>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Clock className="w-3.5 h-3.5 shrink-0 text-primary" />
+                  <span>{exam.duration} ({exam.questionsCount || 30} Qs)</span>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <MapPin className="w-3.5 h-3.5 shrink-0 text-primary" />
+                  <span>{exam.venue}</span>
+                </div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Users className="w-3.5 h-3.5 shrink-0 text-primary" />
+                  <span>{exam.totalCandidates} Candidates</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-2">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">{exam.class}</span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                  exam.stream === 'Science' ? 'bg-secondary/10 text-secondary' : 'bg-muted text-muted-foreground'
+                }`}>{exam.stream}</span>
+                <span className="text-[10px] text-muted-foreground ml-auto">Invigilator: <strong className="text-foreground">{exam.invigilator}</strong></span>
+              </div>
+
+              <div className="flex gap-2 pt-3 border-t border-border items-center">
+                <button
+                  onClick={() => setPreviewExam(exam)}
+                  className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl border border-border hover:bg-muted/40 transition-colors text-foreground"
+                >
+                  <FileText className="w-3.5 h-3.5" /> Preview
+                </button>
+
+                {exam.status === 'Pending Approval' && (
+                  <>
+                    <button
+                      onClick={() => handleApprove(exam.id)}
+                      className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm"
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Approve
+                    </button>
+                    <button
+                      onClick={() => handleReject(exam.id)}
+                      className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 transition-colors"
+                    >
+                      <Ban className="w-3.5 h-3.5" /> Reject
+                    </button>
+                  </>
+                )}
+
+                {exam.status === 'Approved' && (
+                  <span className="text-xs font-bold text-emerald-600 flex items-center gap-1 ml-auto">
+                    <CheckCircle2 className="w-4 h-4" /> Approved for CBT
+                  </span>
+                )}
+                {exam.status === 'Rejected' && (
+                  <button
+                    onClick={() => handleApprove(exam.id)}
+                    className="text-xs font-bold text-rose-600 hover:underline ml-auto"
+                  >
+                    Re-Approve
+                  </button>
+                )}
+              </div>
+            </div>
+          )) : (
+            <div className="col-span-2 py-16 text-center bg-card rounded-2xl border border-border">
+              <ClipboardList className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+              <p className="text-sm font-semibold text-foreground">No assessments found.</p>
+            </div>
+          )}
+        </div>
+      );
+
+      // STEP 1: CLASS SELECTION CARDS (SS1, SS2, SS3)
+      if (!selectedExamClass || !selectedExamStream) {
+        return (
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-serif font-bold text-foreground">Manage Exams & Tests</h2>
+                <p className="text-xs text-muted-foreground mt-1">Select a class card (SS1–SS3), then choose Art or Science stream to manage tests and exams.</p>
+              </div>
+
+              {/* Status Repository Filter Badges */}
+              <div className="flex gap-2 flex-wrap text-xs font-bold">
+                <button
+                  onClick={() => { setExamRepoFilter('all'); }}
+                  className={`px-3.5 py-2 rounded-xl border transition-colors ${examRepoFilter === 'all' ? 'bg-primary text-white border-primary' : 'bg-card text-muted-foreground border-border hover:bg-muted/40'}`}
+                >
+                  All ({counts.total})
+                </button>
+                <button
+                  onClick={() => { setExamRepoFilter('pending'); }}
+                  className={`px-3.5 py-2 rounded-xl border transition-colors ${examRepoFilter === 'pending' ? 'bg-amber-600 text-white border-amber-600' : 'bg-amber-500/10 text-amber-700 border-amber-200 hover:bg-amber-500/20'}`}
+                >
+                  ⏳ Pending ({counts.pending})
+                </button>
+                <button
+                  onClick={() => { setExamRepoFilter('approved'); }}
+                  className={`px-3.5 py-2 rounded-xl border transition-colors ${examRepoFilter === 'approved' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-emerald-500/10 text-emerald-700 border-emerald-200 hover:bg-emerald-500/20'}`}
+                >
+                  ✅ Approved ({counts.approved})
+                </button>
+                <button
+                  onClick={() => { setExamRepoFilter('rejected'); }}
+                  className={`px-3.5 py-2 rounded-xl border transition-colors ${examRepoFilter === 'rejected' ? 'bg-rose-600 text-white border-rose-600' : 'bg-rose-500/10 text-rose-700 border-rose-200 hover:bg-rose-500/20'}`}
+                >
+                  ❌ Rejected ({counts.rejected})
+                </button>
+              </div>
+            </div>
+
+            {/* Direct Status Repository View (When a filter repository is selected) */}
+            {examRepoFilter !== 'all' && (
+              <div className="space-y-4 border-t border-border pt-4">
+                <div className="flex items-center justify-between bg-card p-4 rounded-2xl border border-border shadow-xs">
+                  <h3 className="font-serif font-bold text-sm text-foreground uppercase tracking-wider">
+                    {examRepoFilter === 'pending' && '⏳ Pending Approval Repository'}
+                    {examRepoFilter === 'approved' && '✅ Approved Exams & Tests Repository'}
+                    {examRepoFilter === 'rejected' && '❌ Rejected Exams & Tests Repository'}
+                  </h3>
+                  <button onClick={() => setExamRepoFilter('all')} className="text-xs font-bold text-primary hover:underline">
+                    Back to Class Drilldown
+                  </button>
+                </div>
+                {renderExamCardsGrid(examsList.filter(e => {
+                  if (examRepoFilter === 'pending') return e.status === 'Pending Approval';
+                  if (examRepoFilter === 'approved') return e.status === 'Approved';
+                  if (examRepoFilter === 'rejected') return e.status === 'Rejected';
+                  return true;
+                }))}
+              </div>
+            )}
+
+            {/* 3 Class Cards: SS1, SS2, SS3 */}
+            {examRepoFilter === 'all' && (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                  {SS_CLASSES.map(cls => {
+                    const sciExams = examsList.filter(e => e.class === cls.key && e.stream === 'Science');
+                    const artExams = examsList.filter(e => e.class === cls.key && e.stream === 'Art');
+                    const totalCount = sciExams.length + artExams.length;
+
+                    return (
+                      <div key={cls.key} className="relative">
+                        <button
+                          onClick={() => setOpenExamClassDropdown(prev => prev === cls.key ? null : cls.key)}
+                          className={`group w-full text-left rounded-2xl border-2 p-6 shadow-sm transition-all duration-200 hover:shadow-md hover:scale-[1.02] ${cls.color} ${openExamClassDropdown === cls.key ? 'ring-2 ring-primary/40' : ''}`}
+                        >
+                          <div className="flex items-start justify-between mb-4">
+                            <div className={`p-3 rounded-2xl ${cls.iconBg}`}>
+                              <ClipboardList className="w-6 h-6" />
+                            </div>
+                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${cls.iconBg}`}>
+                              {totalCount} Tests / Exams
+                            </span>
+                          </div>
+                          <h3 className="font-serif font-bold text-xl text-foreground mb-1">{cls.label}</h3>
+                          <div className="flex gap-4 text-xs mt-2">
+                            <span className="text-muted-foreground">Science: <strong className={cls.accent}>{sciExams.length}</strong></span>
+                            <span className="text-muted-foreground">Art: <strong className={cls.accent}>{artExams.length}</strong></span>
+                          </div>
+                          <div className={`flex items-center gap-1.5 text-xs font-bold mt-3 ${cls.accent}`}>
+                            <span>Select Stream</span>
+                            <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${openExamClassDropdown === cls.key ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                        </button>
+
+                        {/* Stream dropdown menu: Science or Art */}
+                        {openExamClassDropdown === cls.key && (
+                          <div className="absolute left-0 right-0 mt-2 bg-card border border-border rounded-2xl shadow-2xl z-40 py-2">
+                            <p className="px-4 pt-1 pb-2 text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Choose Stream</p>
+                            <button
+                              onClick={() => { setSelectedExamClass(cls.key); setSelectedExamStream('Science'); setOpenExamClassDropdown(null); }}
+                              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-foreground hover:bg-primary/5 hover:text-primary transition-colors text-left"
+                            >
+                              <span className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                                <FlaskConical className="w-4 h-4" />
+                              </span>
+                              Science Stream
+                              <span className="ml-auto text-xs text-muted-foreground">{sciExams.length} available</span>
+                            </button>
+                            <button
+                              onClick={() => { setSelectedExamClass(cls.key); setSelectedExamStream('Art'); setOpenExamClassDropdown(null); }}
+                              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-foreground hover:bg-secondary/5 hover:text-secondary transition-colors text-left"
+                            >
+                              <span className="w-8 h-8 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary">
+                                <Palette className="w-4 h-4" />
+                              </span>
+                              Art Stream
+                              <span className="ml-auto text-xs text-muted-foreground">{artExams.length} available</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Status Repositories Cards Box */}
+                <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
+                  <h3 className="font-serif font-bold text-lg text-foreground">Examination Repositories & Status</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                    <div onClick={() => setExamRepoFilter('pending')} className="p-4 rounded-xl border border-amber-200 bg-amber-500/5 cursor-pointer hover:border-amber-400 transition-all space-y-1">
+                      <div className="flex items-center justify-between text-amber-700 font-bold text-xs">
+                        <span>Pending Approval</span>
+                        <Clock className="w-4 h-4" />
+                      </div>
+                      <p className="text-2xl font-serif font-bold text-amber-800">{counts.pending}</p>
+                      <p className="text-[10px] text-amber-600">Click to review pending exams</p>
+                    </div>
+
+                    <div onClick={() => setExamRepoFilter('approved')} className="p-4 rounded-xl border border-emerald-200 bg-emerald-500/5 cursor-pointer hover:border-emerald-400 transition-all space-y-1">
+                      <div className="flex items-center justify-between text-emerald-700 font-bold text-xs">
+                        <span>Approved Exams & Tests</span>
+                        <CheckCircle2 className="w-4 h-4" />
+                      </div>
+                      <p className="text-2xl font-serif font-bold text-emerald-800">{counts.approved}</p>
+                      <p className="text-[10px] text-emerald-600">Click to view published exams</p>
+                    </div>
+
+                    <div onClick={() => setExamRepoFilter('rejected')} className="p-4 rounded-xl border border-rose-200 bg-rose-500/5 cursor-pointer hover:border-rose-400 transition-all space-y-1">
+                      <div className="flex items-center justify-between text-rose-700 font-bold text-xs">
+                        <span>Rejected Exams</span>
+                        <Ban className="w-4 h-4" />
+                      </div>
+                      <p className="text-2xl font-serif font-bold text-rose-800">{counts.rejected}</p>
+                      <p className="text-[10px] text-rose-600">Click to view rejected exams</p>
+                    </div>
+
+                    <div onClick={() => setExamRepoFilter('all')} className="p-4 rounded-xl border border-border bg-muted/20 cursor-pointer hover:border-primary/40 transition-all space-y-1">
+                      <div className="flex items-center justify-between text-foreground font-bold text-xs">
+                        <span>Total Assessments</span>
+                        <ClipboardList className="w-4 h-4 text-primary" />
+                      </div>
+                      <p className="text-2xl font-serif font-bold text-foreground">{counts.total}</p>
+                      <p className="text-[10px] text-muted-foreground">All tests & terminal exams</p>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        );
+      }
+
+      // STEP 2: ASSESSMENT TYPE SELECTION (Test vs Exam request)
+      if (selectedExamClass && selectedExamStream && !selectedExamType) {
+        const clsLabel = SS_CLASSES.find(c => c.key === selectedExamClass)?.label || selectedExamClass;
+        const matchingExams = examsList.filter(e => e.class === selectedExamClass && e.stream === selectedExamStream);
+        const testCount = matchingExams.filter(e => e.type === 'Test').length;
+        const examCount = matchingExams.filter(e => e.type === 'Exam').length;
+
+        return (
+          <div className="space-y-6">
+            {/* Breadcrumbs */}
+            <div className="flex items-center gap-2 text-sm">
+              <button onClick={() => { setSelectedExamClass(null); setSelectedExamStream(null); }}
+                className="text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors font-medium">
+                <ChevronLeft className="w-4 h-4" /> Manage Exams
+              </button>
+              <span className="text-muted-foreground">/</span>
+              <span className="text-foreground font-semibold">{clsLabel} ({selectedExamStream} Stream)</span>
+            </div>
+
+            {/* Header */}
+            <div>
+              <h2 className="text-xl font-serif font-bold text-foreground">Select Assessment Type</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Select Continuous Assessment (Test) or Terminal Examination (Exam) for {clsLabel} {selectedExamStream}.</p>
+            </div>
+
+            {/* Options Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              <button
+                onClick={() => setSelectedExamType('Test')}
+                className="group text-left bg-card rounded-2xl border-2 border-border p-6 shadow-sm hover:border-primary hover:shadow-md hover:scale-[1.02] transition-all space-y-3"
+              >
+                <div className="p-3 rounded-2xl bg-primary/10 text-primary w-fit">
+                  <FileText className="w-6 h-6" />
+                </div>
+                <h3 className="font-serif font-bold text-lg text-foreground group-hover:text-primary transition-colors">Continuous Assessment (Test)</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">Weekly & mid-term C.A. tests, timed quizzes, and practical assignments.</p>
+                <div className="flex items-center justify-between pt-2 border-t border-border/50 text-xs">
+                  <span className="font-bold text-primary">{testCount} Tests Available</span>
+                  <ArrowUpRight className="w-4 h-4 text-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                </div>
+              </button>
+
+              <button
+                onClick={() => setSelectedExamType('Exam')}
+                className="group text-left bg-card rounded-2xl border-2 border-border p-6 shadow-sm hover:border-emerald-500 hover:shadow-md hover:scale-[1.02] transition-all space-y-3"
+              >
+                <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-600 w-fit">
+                  <GraduationCap className="w-6 h-6" />
+                </div>
+                <h3 className="font-serif font-bold text-lg text-foreground group-hover:text-emerald-600 transition-colors">Terminal Examination (Exam)</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">End of term CBT terminal exams and comprehensive WAEC mock evaluations.</p>
+                <div className="flex items-center justify-between pt-2 border-t border-border/50 text-xs">
+                  <span className="font-bold text-emerald-600">{examCount} Exams Available</span>
+                  <ArrowUpRight className="w-4 h-4 text-emerald-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                </div>
+              </button>
+
+              <button
+                onClick={() => setSelectedExamType('All')}
+                className="group text-left bg-card rounded-2xl border-2 border-border p-6 shadow-sm hover:border-purple-500 hover:shadow-md hover:scale-[1.02] transition-all space-y-3"
+              >
+                <div className="p-3 rounded-2xl bg-purple-500/10 text-purple-600 w-fit">
+                  <ClipboardList className="w-6 h-6" />
+                </div>
+                <h3 className="font-serif font-bold text-lg text-foreground group-hover:text-purple-600 transition-colors">View All Assessments</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">Browse complete list of tests, quizzes, and terminal examinations.</p>
+                <div className="flex items-center justify-between pt-2 border-t border-border/50 text-xs">
+                  <span className="font-bold text-purple-600">{matchingExams.length} Total</span>
+                  <ArrowUpRight className="w-4 h-4 text-purple-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                </div>
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      // STEP 3: AVAILABLE EXAMS / TESTS LISTING & ACTIONS
+      const clsLabel = SS_CLASSES.find(c => c.key === selectedExamClass)?.label || selectedExamClass;
+      const filteredExamsList = examsList.filter(e => {
+        const matchClass = !selectedExamClass || e.class === selectedExamClass;
+        const matchStream = !selectedExamStream || e.stream === selectedExamStream;
+        const matchType = !selectedExamType || selectedExamType === 'All' || e.type === selectedExamType;
+        const q = userSearch.toLowerCase();
+        const matchSearch = !q || e.title.toLowerCase().includes(q) || e.subject.toLowerCase().includes(q);
+        const matchStatus = examFilterStatus === 'All' || e.status === examFilterStatus;
+        return matchClass && matchStream && matchType && matchSearch && matchStatus;
+      });
 
       return (
         <div className="space-y-6">
-          {/* Page Header */}
+          {/* Breadcrumbs */}
+          <div className="flex items-center gap-2 text-sm flex-wrap">
+            <button onClick={() => { setSelectedExamClass(null); setSelectedExamStream(null); setSelectedExamType(null); }}
+              className="text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
+              <ChevronLeft className="w-4 h-4" /> Manage Exams
+            </button>
+            <span className="text-muted-foreground">/</span>
+            <button onClick={() => setSelectedExamType(null)} className="text-muted-foreground hover:text-foreground transition-colors">
+              {clsLabel} ({selectedExamStream})
+            </button>
+            <span className="text-muted-foreground">/</span>
+            <span className="text-foreground font-semibold">Available {selectedExamType === 'Test' ? 'C.A. Tests' : selectedExamType === 'Exam' ? 'Terminal Exams' : 'Assessments'}</span>
+          </div>
+
+          {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 className="text-xl font-serif font-bold text-foreground">Manage Exams</h2>
-              <p className="text-xs text-muted-foreground mt-1">Oversee, approve, and schedule senior secondary examinations.</p>
+              <h2 className="text-xl font-serif font-bold text-foreground">{clsLabel} {selectedExamStream} — {selectedExamType} List</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">{filteredExamsList.length} assessment(s) available.</p>
             </div>
-            <button
-              onClick={() => {
-                const newId = examsList.length + 1;
-                setExamsList(prev => [
-                  ...prev,
-                  {
-                    id: newId,
-                    title: 'New Custom SS Examination',
-                    subject: 'General Science',
-                    class: 'SS2',
-                    stream: 'Science',
-                    date: '2026-08-15',
-                    time: '09:00',
-                    duration: '2.5hrs',
-                    venue: 'Hall C',
-                    status: 'Pending Approval',
-                    invigilator: 'Mr. Okonkwo Paul',
-                    totalCandidates: 6
-                  }
-                ]);
-              }}
-              className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors whitespace-nowrap"
-            >
-              <Plus className="w-4 h-4" /> Request New Exam
-            </button>
+
+            <div className="flex gap-2 items-center">
+              <button
+                onClick={() => {
+                  const newId = examsList.length + 1;
+                  setExamsList(prev => [
+                    ...prev,
+                    {
+                      id: newId,
+                      title: `New ${selectedExamClass} ${selectedExamStream} ${selectedExamType || 'Exam'}`,
+                      type: selectedExamType === 'Test' ? 'Test' : 'Exam',
+                      subject: selectedExamStream === 'Science' ? 'Physics' : 'Government',
+                      class: selectedExamClass || 'SS1',
+                      stream: selectedExamStream || 'Science',
+                      date: '2026-08-25',
+                      time: '09:00',
+                      duration: '1.5 hrs',
+                      questionsCount: 30,
+                      venue: 'CBT Hall A',
+                      status: 'Pending Approval',
+                      invigilator: 'Mrs. Okafor Chioma',
+                      totalCandidates: 20
+                    }
+                  ]);
+                }}
+                className="flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors whitespace-nowrap"
+              >
+                <Plus className="w-4 h-4" /> Request New {selectedExamType || 'Assessment'}
+              </button>
+            </div>
           </div>
 
-          {/* Pending Approval Warning Alert */}
-          {counts.pending > 0 && (
-            <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-2xl p-4 flex items-start gap-3 shadow-sm">
-              <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-              <div>
-                <h4 className="font-bold text-sm">Action Required: Pending Approvals</h4>
-                <p className="text-xs text-amber-700 mt-0.5">There are {counts.pending} exam schedules waiting for your review. Please approve or reject them below.</p>
-              </div>
-            </div>
-          )}
-
-          {/* Summary Metric Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-            {[
-              { label: 'Total Exams',   value: counts.total,     icon: ClipboardList, color: 'bg-muted/40 text-muted-foreground' },
-              { label: 'Pending Appr.', value: counts.pending,   icon: Clock,         color: 'bg-amber-500/10 text-amber-600' },
-              { label: 'Approved',      value: counts.approved,  icon: CheckCircle2,  color: 'bg-emerald-500/10 text-emerald-600' },
-              { label: 'Ongoing',       value: counts.ongoing,   icon: RefreshCw,     color: 'bg-secondary/10 text-secondary' },
-              { label: 'Completed',     value: counts.completed, icon: CheckCircle2,  color: 'bg-muted text-muted-foreground' },
-            ].map(({ label, value, icon: Icon, color }) => (
-              <div key={label} className="bg-card rounded-2xl border border-border p-5 shadow-sm flex items-center gap-4">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${color}`}>
-                  <Icon className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-2xl font-serif font-bold text-foreground">{value}</p>
-                  <p className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wide">{label}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Filter + Search Toolbar */}
+          {/* Filter & Search Bar */}
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <input type="text" value={userSearch} onChange={e => setUserSearch(e.target.value)}
-                placeholder="Search by exam title, subject or class..."
+                placeholder="Search by title, subject..."
                 className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-muted/20 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
             </div>
             <div className="flex gap-2 flex-wrap">
-              {['All', 'Pending Approval', 'Approved', 'Ongoing', 'Completed', 'Cancelled', 'Rejected'].map(s => (
+              {['All', 'Pending Approval', 'Approved', 'Rejected'].map(s => (
                 <button key={s} onClick={() => setExamFilterStatus(s)}
                   className={`px-3 py-2 rounded-xl text-xs font-bold border transition-colors ${
                     examFilterStatus === s
@@ -1803,153 +2082,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Exam Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {visibleExams.length > 0 ? visibleExams.map(exam => (
-              <div key={exam.id} className="bg-card rounded-2xl border border-border shadow-sm p-5 space-y-4 hover:shadow-md transition-shadow">
-                {/* Card header */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-serif font-bold text-foreground text-sm leading-snug">{exam.title}</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">{exam.subject}</p>
-                  </div>
-                  <span className={`shrink-0 text-[10px] font-bold px-2.5 py-1 rounded-full border ${statusColor(exam.status as ExamStatus)}`}>
-                    {exam.status}
-                  </span>
-                </div>
-
-                {/* Details grid */}
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Calendar className="w-3.5 h-3.5 shrink-0" />
-                    <span>{exam.date} · {exam.time}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Clock className="w-3.5 h-3.5 shrink-0" />
-                    <span>{exam.duration}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <MapPin className="w-3.5 h-3.5 shrink-0" />
-                    <span>{exam.venue}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Users className="w-3.5 h-3.5 shrink-0" />
-                    <span>{exam.totalCandidates} Candidates</span>
-                  </div>
-                </div>
-
-                {/* Class & Stream tags */}
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">{exam.class}</span>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                    exam.stream === 'Science' ? 'bg-secondary/10 text-secondary' : 'bg-muted text-muted-foreground'
-                  }`}>{exam.stream}</span>
-                  <span className="text-[10px] text-muted-foreground ml-auto">Invigilator: <strong className="text-foreground">{exam.invigilator}</strong></span>
-                </div>
-
-                {/* Action buttons */}
-                <div className="flex gap-2 pt-2 border-t border-border">
-                  {exam.status === 'Pending Approval' ? (
-                    <>
-                      <button
-                        onClick={() => handleApprove(exam.id)}
-                        className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm"
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Approve Exam
-                      </button>
-                      <button
-                        onClick={() => handleReject(exam.id)}
-                        className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 transition-colors"
-                      >
-                        <Ban className="w-3.5 h-3.5" /> Reject
-                      </button>
-                      <button
-                        onClick={() => setPreviewExam(exam)}
-                        className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border border-border hover:bg-muted/40 transition-colors text-foreground ml-auto"
-                      >
-                        <FileText className="w-3.5 h-3.5" /> Preview
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => setPreviewExam(exam)}
-                        className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border border-border hover:bg-muted/40 transition-colors text-foreground"
-                      >
-                        <FileText className="w-3.5 h-3.5" /> Preview Exam
-                      </button>
-                      {exam.status === 'Approved' && (
-                        <>
-                          <button className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl border border-border hover:bg-muted/40 transition-colors text-foreground">
-                            <Settings className="w-3.5 h-3.5" /> Edit
-                          </button>
-                          <button
-                            onClick={() => handleCancel(exam.id)}
-                            className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-rose-500/10 text-rose-600 border border-rose-200 hover:bg-rose-500/20 transition-colors ml-auto"
-                          >
-                            <Ban className="w-3.5 h-3.5" /> Cancel
-                          </button>
-                        </>
-                      )}
-                      {exam.status === 'Completed' && (
-                        <button className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-secondary/10 text-secondary border border-secondary/20 hover:bg-secondary/20 transition-colors">
-                          <BarChart2 className="w-3.5 h-3.5" /> Results
-                        </button>
-                      )}
-                    </>
-                  )}
-                </div>
-              </div>
-            )) : (
-              <div className="col-span-2 py-16 text-center bg-card rounded-2xl border border-border">
-                <ClipboardList className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">No exams match your search or filter.</p>
-              </div>
-            )}
-          </div>
-
-          {/* Upcoming Exam Schedule Table */}
-          <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
-            <div className="p-5 border-b border-border flex items-center justify-between">
-              <h3 className="font-serif font-bold text-foreground">Upcoming Exam Schedule</h3>
-              <button className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl border border-border hover:bg-muted/40 transition-colors">
-                <Download className="w-3.5 h-3.5" /> Export PDF
-              </button>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left">
-                <thead className="bg-muted/30 text-muted-foreground uppercase text-[10px] tracking-wider">
-                  <tr>
-                    <th className="py-3 px-4">Exam Title</th>
-                    <th className="py-3 px-4">Class · Stream</th>
-                    <th className="py-3 px-4">Date & Time</th>
-                    <th className="py-3 px-4">Venue</th>
-                    <th className="py-3 px-4">Candidates</th>
-                    <th className="py-3 px-4">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {examsList.filter(e => e.status === 'Approved' || e.status === 'Ongoing' || e.status === 'Pending Approval').map(e => (
-                    <tr key={e.id} className="hover:bg-muted/10 transition-colors">
-                      <td className="py-3 px-4">
-                        <p className="font-semibold text-foreground">{e.title}</p>
-                        <p className="text-muted-foreground text-[10px]">{e.subject}</p>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="font-bold text-primary">{e.class}</span>
-                        <span className="text-muted-foreground"> · {e.stream}</span>
-                      </td>
-                      <td className="py-3 px-4 text-muted-foreground">{e.date}<br />{e.time}</td>
-                      <td className="py-3 px-4 text-muted-foreground">{e.venue}</td>
-                      <td className="py-3 px-4 font-bold text-foreground">{e.totalCandidates}</td>
-                      <td className="py-3 px-4">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusColor(e.status as ExamStatus)}`}>{e.status}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          {renderExamCardsGrid(filteredExamsList)}
         </div>
       );
     }

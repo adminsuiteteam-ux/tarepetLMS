@@ -13,16 +13,16 @@ import {
   DollarSign, Check, ChevronDown,
 } from 'lucide-react';
 
-// ── Data Definitions ──────────────────────────────────────────
+// ── Data Definitions (SS1 Science) ────────────────────────────
 const CHILDREN = [
   {
     id: 1,
     name: 'Emeka Amadi',
-    grade: 'JSS1',
+    grade: 'SS1 Science',
     house: 'Blue House (Eagle)',
     houseColor: 'hsl(var(--primary))',
     gpa: '3.85',
-    rank: 3,
+    rank: 2,
     classSize: 24,
     attendance: '98%',
     absences: 1,
@@ -32,40 +32,40 @@ const CHILDREN = [
   {
     id: 2,
     name: 'Nneka Amadi',
-    grade: 'Primary 5',
+    grade: 'SS1 Science',
     house: 'Purple House (Phoenix)',
     houseColor: 'hsl(var(--secondary))',
     gpa: '3.92',
     rank: 1,
-    classSize: 20,
+    classSize: 24,
     attendance: '100%',
     absences: 0,
-    teacher: 'Mr. Amadi Ebi',
+    teacher: 'Mr. Okonkwo Paul',
     avatar: 'N',
   },
 ];
 
 const SUBJECTS_EMEKA = [
-  { code: 'MTH-101', name: 'Montessori Applied Mathematics', teacher: 'Mrs. Okafor Chioma', score: 88, grade: 'A', trend: 'up' },
-  { code: 'BOT-102', name: 'Practical Agronomy & Field Botany', teacher: 'Mr. Amadi Ebi', score: 81, grade: 'B+', trend: 'up' },
-  { code: 'ENG-103', name: 'Language Arts & Creative Writing', teacher: 'Mrs. Dada Kemi', score: 92, grade: 'A+', trend: 'up' },
-  { code: 'SCI-104', name: 'Integrated Science & Environment', teacher: 'Mr. Okonkwo Paul', score: 85, grade: 'A', trend: 'neutral' },
+  { code: 'MTH-101', name: 'SS1 Senior Secondary Mathematics I', teacher: 'Mrs. Okafor Chioma', score: 95, grade: 'A+', trend: 'up' },
+  { code: 'PHY-101', name: 'SS1 Senior Secondary Physics I', teacher: 'Mr. Okonkwo Paul', score: 85, grade: 'A', trend: 'up' },
+  { code: 'CHM-101', name: 'SS1 Senior Secondary Chemistry I', teacher: 'Mrs. Okafor Chioma', score: 87, grade: 'A', trend: 'up' },
+  { code: 'BIO-101', name: 'SS1 Senior Secondary Biology I', teacher: 'Mr. Okonkwo Paul', score: 92, grade: 'A+', trend: 'up' },
+  { code: 'AGR-101', name: 'SS1 Senior Secondary Agricultural Science I', teacher: 'Mrs. Okafor Chioma', score: 81, grade: 'B+', trend: 'neutral' },
 ];
 
 const MONTESSORI_SKILLS = [
   { area: 'Practical Life Competencies', mastery: 'Exemplary', score: 94, color: 'hsl(var(--secondary))' },
-  { area: 'Mathematical Understanding', mastery: 'Exemplary', score: 88, color: 'hsl(var(--primary))' },
-  { area: 'Language Acquisition', mastery: 'Exemplary', score: 92, color: 'hsl(var(--secondary))' },
-  { area: 'Cultural Studies', mastery: 'Proficient', score: 81, color: 'hsl(var(--primary))' },
-  { area: 'Sensorial Development', mastery: 'Proficient', score: 77, color: 'hsl(var(--secondary))' },
-  { area: 'Social & Emotional Growth', mastery: 'Exemplary', score: 90, color: 'hsl(var(--primary))' },
+  { area: 'Mathematical Understanding', mastery: 'Exemplary', score: 95, color: 'hsl(var(--primary))' },
+  { area: 'Physical Science Application', mastery: 'Exemplary', score: 88, color: 'hsl(var(--secondary))' },
+  { area: 'Chemical & Biological Inquiry', mastery: 'Exemplary', score: 90, color: 'hsl(var(--primary))' },
+  { area: 'Sensorial & Field Observations', mastery: 'Proficient', score: 82, color: 'hsl(var(--secondary))' },
+  { area: 'Social & Leadership Growth', mastery: 'Exemplary', score: 92, color: 'hsl(var(--primary))' },
 ];
 
 const TEACHERS = [
-  { name: 'Mrs. Okafor Chioma', subject: 'MTH-101', online: true, role: 'Class Teacher' },
-  { name: 'Mr. Amadi Ebi', subject: 'BOT-102', online: false, role: 'Agronomy Instructor' },
-  { name: 'Mrs. Dada Kemi', subject: 'ENG-103', online: true, role: 'Language Arts Lead' },
-  { name: 'Mr. Okonkwo Paul', subject: 'SCI-104', online: false, role: 'Integrated Science' },
+  { name: 'Mrs. Okafor Chioma', subject: 'MTH-101 / CHM-101 / AGR-101', online: true, role: 'Senior Science Teacher' },
+  { name: 'Mr. Okonkwo Paul', subject: 'PHY-101 / BIO-101', online: true, role: 'Senior Physics & Biology Instructor' },
+  { name: 'Mrs. Dada Kemi', subject: 'ENG-101', online: true, role: 'Language Arts Instructor' },
 ];
 
 const INVOICES = [
