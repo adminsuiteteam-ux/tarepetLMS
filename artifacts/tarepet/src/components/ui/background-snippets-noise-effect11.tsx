@@ -14,7 +14,7 @@ export const Noise: React.FC<NoiseProps> = ({
   patternScaleX = 1,
   patternScaleY = 1,
   patternRefreshInterval = 2,
-  patternAlpha = 15,
+  patternAlpha = 8,
 }) => {
   const grainRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -69,7 +69,7 @@ export const Noise: React.FC<NoiseProps> = ({
   return (
     <canvas
       ref={grainRef}
-      className="pointer-events-none absolute inset-0 w-full h-full opacity-50 z-0"
+      className="pointer-events-none absolute inset-0 w-full h-full opacity-30 -z-10"
       style={{ imageRendering: "pixelated" }}
     />
   );
@@ -84,11 +84,11 @@ export default function Component({
   return (
     <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
       {variant === "dark" && (
-        <div className="absolute inset-0 bg-[#0f1a12]">
+        <div className="absolute inset-0 bg-[#0d1610]">
           {/* Brand Crimson Spotlight */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_600px_at_50%_200px,rgba(196,30,58,0.25),transparent)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_650px_at_50%_200px,rgba(196,30,58,0.30),transparent)]" />
           {/* Brand Forest Green Glow */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_500px_at_80%_600px,rgba(45,122,70,0.20),transparent)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_550px_at_80%_600px,rgba(45,122,70,0.25),transparent)]" />
         </div>
       )}
 
@@ -106,7 +106,7 @@ export default function Component({
       )}
 
       {/* Grain overlay */}
-      <Noise patternRefreshInterval={2} patternAlpha={14} />
+      <Noise patternRefreshInterval={2} patternAlpha={8} />
     </div>
   );
 }

@@ -215,26 +215,26 @@ export default function Home() {
       </section>
 
       {/* School Highlights — GlareCard Section with Noise Background */}
-      <section className="py-24 overflow-hidden relative">
+      <section className="py-24 overflow-hidden relative bg-[#0b140d] text-white">
         <BackgroundNoiseEffect variant="dark" />
         <div className="container mx-auto px-4 md:px-6 relative z-10">
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <motion.p
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false }}
               transition={{ duration: 0.5 }}
-              className="text-xs font-bold tracking-widest uppercase mb-3"
-              style={{ color: "#e57a8a" }}
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/25 border border-primary/50 text-white text-xs font-bold uppercase tracking-wider mb-4 shadow-sm"
             >
-              The Tare Pet Experience
-            </motion.p>
+              <Sparkles className="w-4 h-4 text-white" />
+              <span>The Tare Pet Experience</span>
+            </motion.div>
             <motion.h3
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-4xl md:text-5xl font-serif font-bold text-white mb-6"
+              className="text-4xl md:text-6xl font-serif font-bold text-white mb-6 tracking-tight drop-shadow-md"
             >
               Where Excellence Meets Wonder
             </motion.h3>
@@ -243,7 +243,7 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-slate-300 text-lg"
+              className="text-white/90 text-lg font-medium leading-relaxed max-w-2xl mx-auto"
             >
               Hover over each card to experience our school's story come alive.
             </motion.p>
@@ -258,16 +258,16 @@ export default function Home() {
               transition={{ duration: 0.7 }}
             >
               <GlareCard className="flex flex-col items-center justify-center gap-5 p-8">
-                <div className="w-16 h-16 rounded-full flex items-center justify-center border" style={{ background: "rgba(196,30,58,0.2)", borderColor: "rgba(196,30,58,0.4)" }}>
-                  <Sparkles className="w-8 h-8" style={{ color: "#e57a8a" }} />
+                <div className="w-16 h-16 rounded-full flex items-center justify-center border" style={{ background: "rgba(196,30,58,0.3)", borderColor: "rgba(255,255,255,0.4)" }}>
+                  <Sparkles className="w-8 h-8 text-white" />
                 </div>
                 <div className="text-center">
                   <p className="font-bold text-white text-xl font-serif mb-2">Award-Winning</p>
-                  <p className="text-slate-300 text-sm leading-relaxed">
+                  <p className="text-white/80 text-sm leading-relaxed">
                     Recognised as one of Bayelsa's leading Montessori institutions with over a decade of educational excellence.
                   </p>
                 </div>
-                <div className="text-xs font-bold tracking-widest uppercase" style={{ color: "#e57a8a" }}>Est. 2010 · Yenagoa</div>
+                <div className="text-xs font-bold tracking-widest uppercase text-white bg-primary/40 px-3 py-1 rounded-full border border-primary/50">Est. 2010 · Yenagoa</div>
               </GlareCard>
             </motion.div>
 
@@ -284,11 +284,11 @@ export default function Home() {
                   src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?q=80&w=2832&auto=format&fit=crop"
                   alt="Students in Montessori classroom"
                 />
-                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(15,26,18,0.95) 0%, rgba(15,26,18,0.4) 50%, transparent 100%)" }} />
+                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(11,20,13,0.95) 0%, rgba(11,20,13,0.4) 50%, transparent 100%)" }} />
                 <div className="relative z-10 absolute bottom-0 left-0 right-0 p-7">
-                  <div className="w-8 h-1 rounded-full mb-3" style={{ background: "#C41E3A" }} />
+                  <div className="w-8 h-1 rounded-full mb-3 bg-white" />
                   <p className="font-bold text-white text-lg font-serif mb-1">Vibrant Campus Life</p>
-                  <p className="text-slate-300 text-sm">
+                  <p className="text-white/90 text-sm font-medium">
                     A safe, inspiring environment where every child thrives and every day is an adventure in learning.
                   </p>
                 </div>
@@ -303,41 +303,43 @@ export default function Home() {
               transition={{ duration: 0.7, delay: 0.3 }}
             >
               <GlareCard className="flex flex-col items-start justify-end py-8 px-7 gap-3">
-                <div className="w-14 h-14 rounded-full flex items-center justify-center border mb-2" style={{ background: "rgba(45,122,70,0.2)", borderColor: "rgba(45,122,70,0.4)" }}>
-                  <GraduationCap className="w-7 h-7" style={{ color: "#6bcf8f" }} />
+                <div className="w-14 h-14 rounded-full flex items-center justify-center border mb-2" style={{ background: "rgba(45,122,70,0.4)", borderColor: "rgba(255,255,255,0.4)" }}>
+                  <GraduationCap className="w-7 h-7 text-white" />
                 </div>
                 <p className="font-bold text-white text-xl font-serif">100% Transition Rate</p>
-                <p className="font-normal text-sm text-slate-300 leading-relaxed">
+                <p className="font-normal text-sm text-white/80 leading-relaxed">
                   Every graduating student from Tare Pet transitions successfully to their chosen secondary school or university.
                 </p>
-                <Link href="/admissions" className="inline-flex items-center text-sm font-semibold transition-colors group mt-1" style={{ color: "#6bcf8f" }}>
+                <Link href="/admissions" className="inline-flex items-center text-sm font-bold text-white hover:underline transition-colors group mt-1">
                   Apply Today <ArrowRight className="ml-1 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </GlareCard>
             </motion.div>
           </div>
 
-          {/* Stats row */}
+          {/* High Visibility Stats Cards */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: false }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-8 mt-20 pt-16"
-            style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}
+            className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-20 pt-10"
           >
             {[
-              { value: "15+", label: "Years of Excellence", icon: <Globe className="w-5 h-5" />, color: "#e57a8a" },
-              { value: "500+", label: "Students Enrolled", icon: <Users className="w-5 h-5" />, color: "#6bcf8f" },
-              { value: "40+", label: "Qualified Educators", icon: <GraduationCap className="w-5 h-5" />, color: "#e57a8a" },
-              { value: "100%", label: "Parent Satisfaction", icon: <Heart className="w-5 h-5" />, color: "#6bcf8f" },
+              { value: "15+", label: "Years of Excellence", icon: <Globe className="w-6 h-6 text-white" /> },
+              { value: "500+", label: "Students Enrolled", icon: <Users className="w-6 h-6 text-white" /> },
+              { value: "40+", label: "Qualified Educators", icon: <GraduationCap className="w-6 h-6 text-white" /> },
+              { value: "100%", label: "Parent Satisfaction", icon: <Heart className="w-6 h-6 text-white" /> },
             ].map((stat, i) => (
-              <div key={i} className="text-center group">
-                <div className="flex items-center justify-center gap-2 mb-2 transition-transform duration-300 group-hover:scale-125" style={{ color: stat.color }}>
+              <div 
+                key={i} 
+                className="text-center glass-card bg-white/10 border border-white/20 p-6 rounded-3xl shadow-xl backdrop-blur-md hover:bg-white/20 transition-all duration-300 group hover:-translate-y-1"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center mx-auto mb-3 border border-white/20 group-hover:scale-110 transition-transform">
                   {stat.icon}
                 </div>
-                <p className="text-4xl font-serif font-bold text-white mb-1 group-hover:text-primary transition-colors">{stat.value}</p>
-                <p className="text-slate-400 text-sm">{stat.label}</p>
+                <p className="text-4xl md:text-5xl font-serif font-black text-white mb-2 drop-shadow-md tracking-tight">{stat.value}</p>
+                <p className="text-white/90 font-bold text-sm tracking-wide">{stat.label}</p>
               </div>
             ))}
           </motion.div>
