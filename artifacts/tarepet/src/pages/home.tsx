@@ -1,31 +1,48 @@
 import { PageTransition } from "@/components/layout/Layout";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { ArrowRight, BookOpen, Heart, Users, CheckCircle2, Quote, Sparkles, GraduationCap, Globe, Play } from "lucide-react";
+import { useRef, useEffect } from "react";
+import { ArrowRight, BookOpen, Heart, Users, CheckCircle2, Quote, Sparkles, GraduationCap, Globe } from "lucide-react";
 import heroImg from "@assets/generated_images/hero.jpg";
 import philosophyImg from "@assets/generated_images/programs.jpg";
 import { GlareCard } from "@/components/ui/glare-card";
 
 export default function Home() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = true;
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.log("Video autoplay initialized with fallback:", err);
+        });
+      }
+    }
+  }, []);
+
   return (
     <PageTransition>
-      {/* Hero Section with Video Background */}
-      <section className="relative min-h-[92vh] flex items-center pt-10 pb-20 overflow-hidden">
+      {/* Hero Section with Video Background — Full coverage from top-0 (No white space) */}
+      <section className="relative min-h-[95vh] flex items-center pt-28 md:pt-36 pb-20 overflow-hidden">
         <div className="absolute inset-0 z-0">
           <video
+            ref={videoRef}
             autoPlay
             loop
             muted
             playsInline
+            preload="auto"
             poster={heroImg}
             className="w-full h-full object-cover scale-105"
           >
             <source
-              src="https://cdn.coverr.co/videos/coverr-children-playing-and-learning-5536/1080p.mp4"
+              src="https://assets.mixkit.co/videos/preview/mixkit-children-in-a-classroom-setting-42774-large.mp4"
               type="video/mp4"
             />
             <source
-              src="https://assets.mixkit.co/videos/preview/mixkit-children-in-a-classroom-setting-42774-large.mp4"
+              src="https://cdn.coverr.co/videos/coverr-children-playing-and-learning-5536/1080p.mp4"
               type="video/mp4"
             />
           </video>

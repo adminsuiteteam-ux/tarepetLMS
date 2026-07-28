@@ -11,7 +11,7 @@ export function Layout({ children }: LayoutProps) {
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background selection:bg-primary selection:text-white">
       <Navbar />
-      <main className="flex-1 pt-[84px] md:pt-[98px] flex flex-col relative overflow-hidden">
+      <main className="flex-1 flex flex-col relative overflow-hidden">
         {children}
       </main>
       <Footer />
