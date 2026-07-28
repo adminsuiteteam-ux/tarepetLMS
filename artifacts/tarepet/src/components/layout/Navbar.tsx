@@ -1,9 +1,8 @@
 import { Link, useLocation } from "wouter";
-import { Menu, X } from "lucide-react";
+import { ArrowRight, Sparkles, LogIn } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import tarepetLogo from "@assets/tarepet__1784835204178.png";
-import { Button } from "@/components/ui/button";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
@@ -19,6 +18,7 @@ export function Navbar() {
   const [location] = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [hoveredPath, setHoveredPath] = useState<string | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -28,143 +28,237 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Close mobile menu on navigation
+  // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location]);
 
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [mobileMenuOpen]);
+
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? "bg-white/95 backdrop-blur-md shadow-sm py-3" : "bg-white py-5"
-      }`}
-    >
-      <div className="container mx-auto px-4 md:px-6">
+    <header className="fixed top-3 md:top-5 left-1/2 -translate-x-1/2 w-[94%] max-w-6xl z-50 transition-all duration-300">
+      <div
+        className={`w-full rounded-full transition-all duration-500 ${
+          isScrolled
+            ? "glass-pill bg-white/85 shadow-2xl py-2.5 px-4 md:px-6 border-white/80"
+            : "glass-pill bg-white/70 shadow-lg py-3 px-4 md:px-6 border-white/60"
+        }`}
+      >
         <div className="flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3 group">
-            <img 
-              src={tarepetLogo} 
-              alt="Tarepet Montessori School Logo" 
-              className="w-12 h-12 md:w-14 md:h-14 object-contain transition-transform group-hover:scale-105"
-            />
+          {/* Logo with Glass Hover Glow */}
+          <Link href="/" className="flex items-center gap-2.5 md:gap-3 group">
+            <div className="relative flex items-center justify-center">
+              <div className="absolute inset-0 bg-primary/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <img
+                src={tarepetLogo}
+                alt="Tarepet Montessori School Logo"
+                className="w-10 h-10 md:w-12 md:h-12 object-contain relative z-10 transition-transform duration-300 group-hover:scale-105"
+              />
+            </div>
             <div className="flex flex-col">
-              <span className="font-serif font-bold text-2xl md:text-[28px] text-primary leading-none tracking-tight">
+              <span className="font-serif font-bold text-xl md:text-2xl text-primary leading-none tracking-tight">
                 Tarepet
               </span>
-              <span className="font-sans text-[11px] md:text-[13px] uppercase tracking-[0.15em] text-secondary font-medium mt-1">
+              <span className="font-sans text-[10px] md:text-[11px] uppercase tracking-[0.18em] text-secondary font-semibold mt-0.5">
                 montessori school
               </span>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-6">
-            <ul className="flex items-center gap-6">
-              {NAV_LINKS.map((link) => (
-                <li key={link.href}>
-                  <Link 
-                    href={link.href}
-                    className={`font-sans text-sm font-medium transition-colors hover:text-primary ${
-                      location === link.href ? "text-primary" : "text-foreground/80"
-                    }`}
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
+          <nav className="hidden md:flex items-center gap-1">
+            <ul className="flex items-center gap-1 bg-white/40 p-1.5 rounded-full border border-white/50 backdrop-blur-md">
+              {NAV_LINKS.map((link) => {
+                const isActive = location === link.href;
+                return (
+                  <li key={link.href} className="relative">
+                    <Link
+                      href={link.href}
+                      onMouseEnter={() => setHoveredPath(link.href)}
+                      onMouseLeave={() => setHoveredPath(null)}
+                      className={`relative z-10 px-4 py-2 rounded-full font-sans text-xs font-semibold tracking-wide transition-colors duration-300 flex items-center gap-1 ${
+                        isActive
+                          ? "text-primary font-bold"
+                          : "text-foreground/80 hover:text-foreground"
+                      }`}
+                    >
+                      {link.label}
+                    </Link>
+
+                    {/* Active Link Glass Pill */}
+                    {isActive && (
+                      <motion.div
+                        layoutId="activePill"
+                        className="absolute inset-0 bg-white/90 border border-primary/20 rounded-full shadow-sm -z-0"
+                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      />
+                    )}
+
+                    {/* Hover Link Glass Glow */}
+                    {hoveredPath === link.href && !isActive && (
+                      <motion.div
+                        layoutId="hoverPill"
+                        className="absolute inset-0 bg-white/50 rounded-full -z-0"
+                        transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                      />
+                    )}
+                  </li>
+                );
+              })}
             </ul>
-            <Link 
-              href="/sign-in" 
-              className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6 py-2 shadow-sm"
+
+            <Link
+              href="/sign-in"
+              className="ml-3 relative group inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white bg-gradient-to-r from-primary via-primary/95 to-primary/90 shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all duration-300 hover:scale-105 active:scale-95"
             >
-              Portal Login
+              <LogIn className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+              <span>Portal Login</span>
+              <span className="absolute inset-0 rounded-full border border-white/30 pointer-events-none" />
             </Link>
           </nav>
 
-          {/* Mobile Menu Toggle */}
-          <button 
-            className="md:hidden p-2 text-foreground"
+          {/* Animated Hamburger Button */}
+          <button
+            className="md:hidden relative z-50 w-11 h-11 rounded-full bg-white/80 backdrop-blur-md border border-white/80 shadow-md flex items-center justify-center focus:outline-none hover:bg-white transition-all active:scale-95"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
           >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            <div className="w-5 h-4 flex flex-col justify-between items-center relative">
+              <motion.span
+                animate={mobileMenuOpen ? { rotate: 45, y: 7 } : { rotate: 0, y: 0 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="w-5 h-0.5 bg-foreground rounded-full transform origin-center"
+              />
+              <motion.span
+                animate={mobileMenuOpen ? { opacity: 0, x: -10 } : { opacity: 1, x: 0 }}
+                transition={{ duration: 0.2 }}
+                className="w-5 h-0.5 bg-primary rounded-full"
+              />
+              <motion.span
+                animate={mobileMenuOpen ? { rotate: -45, y: -9 } : { rotate: 0, y: 0 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="w-5 h-0.5 bg-foreground rounded-full transform origin-center"
+              />
+            </div>
           </button>
         </div>
       </div>
 
-      {/* Mobile Navigation — slides in from the left */}
+      {/* Full-Screen Glass Overlay Mobile Navigation */}
       <AnimatePresence>
         {mobileMenuOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              key="backdrop"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className="md:hidden fixed inset-0 bg-black/40 z-40"
-              onClick={() => setMobileMenuOpen(false)}
-            />
+          <motion.div
+            key="mobile-overlay"
+            initial={{ opacity: 0, backdropFilter: "blur(0px)" }}
+            animate={{ opacity: 1, backdropFilter: "blur(24px)" }}
+            exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
+            transition={{ duration: 0.35, ease: "easeInOut" }}
+            className="fixed inset-0 top-0 left-0 w-screen h-screen z-40 glass-overlay flex flex-col justify-between p-6 pt-24 md:hidden overflow-hidden"
+          >
+            {/* Ambient Background Glass Glow Spheres */}
+            <div className="absolute top-10 right-10 w-72 h-72 rounded-full bg-primary/15 blur-3xl pointer-events-none animate-pulse" />
+            <div className="absolute bottom-10 left-10 w-72 h-72 rounded-full bg-secondary/15 blur-3xl pointer-events-none animate-pulse" />
 
-            {/* Drawer */}
+            {/* Header Badge in Mobile Overlay */}
             <motion.div
-              key="drawer"
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "tween", duration: 0.3, ease: "easeInOut" }}
-              className="md:hidden fixed top-0 left-0 bottom-0 w-72 bg-white z-50 flex flex-col shadow-2xl"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/70 border border-white/80 shadow-sm text-xs font-semibold text-primary self-start"
             >
-              {/* Drawer header */}
-              <div className="flex items-center justify-between px-5 py-5 border-b border-border">
-                <Link href="/" className="flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
-                  <img src={tarepetLogo} alt="Tarepet Logo" className="w-9 h-9 object-contain" />
-                  <div className="flex flex-col">
-                    <span className="font-serif font-bold text-lg text-primary leading-none">Tarepet</span>
-                    <span className="font-sans text-[10px] uppercase tracking-[0.12em] text-secondary font-medium mt-0.5">montessori school</span>
-                  </div>
-                </Link>
-                <button
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="p-1.5 rounded-md text-foreground/60 hover:text-foreground hover:bg-muted transition-colors"
-                  aria-label="Close menu"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+              <Sparkles className="w-3.5 h-3.5 text-primary" />
+              <span>Navigation Menu</span>
+            </motion.div>
 
-              {/* Nav links */}
-              <nav className="flex-1 overflow-y-auto px-4 py-6">
-                <ul className="flex flex-col gap-1">
-                  {NAV_LINKS.map((link) => (
-                    <li key={link.href}>
+            {/* Nav links with staggered text animations */}
+            <nav className="my-auto py-6">
+              <motion.ul
+                initial="closed"
+                animate="open"
+                exit="closed"
+                variants={{
+                  open: {
+                    transition: { staggerChildren: 0.07, delayChildren: 0.1 },
+                  },
+                  closed: {
+                    transition: { staggerChildren: 0.04, staggerDirection: -1 },
+                  },
+                }}
+                className="flex flex-col gap-3"
+              >
+                {NAV_LINKS.map((link, idx) => {
+                  const isActive = location === link.href;
+                  return (
+                    <motion.li
+                      key={link.href}
+                      variants={{
+                        open: {
+                          opacity: 1,
+                          y: 0,
+                          rotateX: 0,
+                          transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] },
+                        },
+                        closed: {
+                          opacity: 0,
+                          y: 35,
+                          rotateX: 20,
+                          transition: { duration: 0.25 },
+                        },
+                      }}
+                    >
                       <Link
                         href={link.href}
-                        className={`flex items-center px-3 py-3 rounded-lg font-sans text-base font-medium transition-colors ${
-                          location === link.href
-                            ? "bg-primary/10 text-primary"
-                            : "text-foreground hover:bg-muted hover:text-primary"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={`group flex items-center justify-between p-3.5 rounded-2xl transition-all duration-300 ${
+                          isActive
+                            ? "bg-white/85 border border-primary/30 shadow-md shadow-primary/5 text-primary font-bold"
+                            : "hover:bg-white/60 text-foreground/80 hover:text-foreground"
                         }`}
                       >
-                        {link.label}
+                        <div className="flex items-center gap-4">
+                          <span className="font-sans text-xs font-bold tracking-widest text-primary/60">
+                            0{idx + 1}
+                          </span>
+                          <span className="font-serif text-2xl md:text-3xl font-bold tracking-tight transition-transform duration-300 group-hover:translate-x-1">
+                            {link.label}
+                          </span>
+                        </div>
+                        <ArrowRight className="w-5 h-5 text-primary/40 group-hover:text-primary group-hover:translate-x-1.5 transition-all duration-300" />
                       </Link>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
+                    </motion.li>
+                  );
+                })}
+              </motion.ul>
+            </nav>
 
-              {/* Bottom CTAs */}
-              <div className="px-4 pb-6 pt-3 border-t border-border flex flex-col gap-3">
-                <Link
-                  href="/sign-in"
-                  className="flex w-full items-center justify-center rounded-md text-sm font-medium bg-primary text-white hover:bg-primary/90 h-11 px-6 transition-colors shadow-sm"
-                >
-                  Portal Login
-                </Link>
-              </div>
+            {/* Bottom Actions inside Overlay */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 15 }}
+              transition={{ delay: 0.4, duration: 0.3 }}
+              className="pt-4 border-t border-white/40 flex flex-col gap-3 relative z-10"
+            >
+              <Link
+                href="/sign-in"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full flex items-center justify-center gap-2 rounded-full py-3.5 px-6 font-sans text-sm font-bold uppercase tracking-wider text-white bg-gradient-to-r from-primary to-primary/90 shadow-xl shadow-primary/25 active:scale-95 transition-transform"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Portal Login</span>
+              </Link>
             </motion.div>
-          </>
+          </motion.div>
         )}
       </AnimatePresence>
     </header>
