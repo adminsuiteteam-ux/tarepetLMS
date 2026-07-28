@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 
 import { getStoredExams, updateExamStatus, getStoredSubmissions, subscribeToCBTStore } from '@/lib/cbt-store';
+import { RealTimeSyncStatus } from '@/components/cbt/RealTimeSyncStatus';
 
 // ─── Initial Seed Data (SS1 Science Teacher) ─────────────────
 const TEACHER_CLASSES: any[] = [];
@@ -110,6 +111,8 @@ export default function TeacherDashboard() {
     // =========================================================
     if (activeSection === 'overview') return (
       <div className="space-y-6">
+        <RealTimeSyncStatus title="Teacher CBT Builder & Live LMS Engine" />
+        
         {/* Welcome Header */}
         <div className="bg-gradient-to-r from-emerald-700 via-emerald-800 to-teal-900 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
           <p className="text-xs font-bold uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full inline-block mb-3">Teacher Management Portal</p>

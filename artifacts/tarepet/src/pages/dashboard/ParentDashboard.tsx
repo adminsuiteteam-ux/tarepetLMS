@@ -12,6 +12,8 @@ import {
   Video, Phone, User, Users, ChevronRight, Lock, Bell,
   DollarSign, Check, ChevronDown,
 } from 'lucide-react';
+import { getStoredExams, getStoredSubmissions, subscribeToCBTStore } from '@/lib/cbt-store';
+import { RealTimeSyncStatus } from '@/components/cbt/RealTimeSyncStatus';
 
 // ── Data Definitions (SS1 Science) ────────────────────────────
 const CHILDREN = [
@@ -121,6 +123,8 @@ export default function ParentDashboard() {
     // 1. OVERVIEW & MULTI-CHILD
     if (activeSection === 'overview') return (
       <div className="space-y-6">
+        <RealTimeSyncStatus title="Parent LMS & CBT Real-Time Portal" />
+
         {/* Child Selector Tabs */}
         <div className="flex items-center gap-3 bg-card p-2 rounded-2xl border border-border">
           <span className="text-xs font-bold uppercase text-muted-foreground ml-2">{t('Select Child:')}</span>

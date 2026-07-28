@@ -1,5 +1,5 @@
-// Central Real-Time CBT Store for Tarepet Montessori School
-// Manages real-time sync across Teacher, Admin, and Student portals via LocalStorage
+// Central Real-Time CBT & LMS Engine for Tare Pet Montessori School
+// Manages real-time sync across Teacher, Admin, Student, and Parent portals via BroadcastChannel & LocalStorage
 
 export interface CBTQuestion {
   id: number;
@@ -10,6 +10,7 @@ export interface CBTQuestion {
   option_d: string;
   correct_option: string;
   points: number;
+  explanation?: string;
 }
 
 export interface CBTExam {
@@ -20,9 +21,9 @@ export interface CBTExam {
   course_code: string;
   course_name: string;
   class: string;           // e.g. 'SS1'
-  stream: string;          // e.g. 'Science'
+  stream: string;          // e.g. 'Science', 'Arts', 'Commercial'
   assessment_type: 'TEST' | 'EXAM';
-  term: string;            // e.g. 'Term 2'
+  term: string;            // e.g. '2ND_TERM'
   duration_minutes: number;
   questions_count: number;
   questions_per_page: number;
@@ -50,6 +51,16 @@ export interface CBTSubmission {
   submitted_at: string;
   answers: Record<number, string>;
   gradebook_synced: boolean;
+}
+
+export interface LMSActivity {
+  id: string;
+  timestamp: string;
+  type: 'EXAM_CREATED' | 'EXAM_APPROVED' | 'EXAM_ACTIVATED' | 'SUBMISSION_RECEIVED' | 'EXAM_REJECTED';
+  title: string;
+  detail: string;
+  user: string;
+  icon?: string;
 }
 
 export const SENIOR_COURSES = [
@@ -106,6 +117,7 @@ const INITIAL_SS1_SCIENCE_EXAMS: CBTExam[] = [
         option_d: 'x = 0 or x = 5',
         correct_option: 'B',
         points: 5,
+        explanation: 'Factoring x^2 - 5x + 6 gives (x - 2)(x - 3) = 0, so x = 2 or x = 3.',
       },
       {
         id: 2,
@@ -116,6 +128,7 @@ const INITIAL_SS1_SCIENCE_EXAMS: CBTExam[] = [
         option_d: '100',
         correct_option: 'B',
         points: 5,
+        explanation: '10^3 = 1000, therefore log10(1000) = 3.',
       },
       {
         id: 3,
@@ -126,13 +139,67 @@ const INITIAL_SS1_SCIENCE_EXAMS: CBTExam[] = [
         option_d: '2^1',
         correct_option: 'B',
         points: 5,
+        explanation: 'Using index addition rule: 2^(4 + 3) = 2^7 = 128.',
       },
     ],
     created_at: new Date().toISOString(),
   },
   {
     id: 102,
-    title: 'SS1 Art English Language Continuous Assessment Test',
+    title: 'SS1 Physics Continuous Assessment Test',
+    description: 'Evaluation on Motion, Velocity, Acceleration, and Newton Laws of Motion.',
+    instructions: 'Choose the correct answer for each question. All questions carry equal marks.',
+    course_code: 'PHY-101',
+    course_name: 'Physics',
+    class: 'SS1',
+    stream: 'Science',
+    assessment_type: 'TEST',
+    term: '2ND_TERM',
+    duration_minutes: 20,
+    questions_count: 3,
+    questions_per_page: 2,
+    teacher_name: 'Engr. Emeka David',
+    status: 'ACTIVE',
+    questions: [
+      {
+        id: 1,
+        question_text: 'What is the SI unit of Force?',
+        option_a: 'Joule',
+        option_b: 'Watt',
+        option_c: 'Newton',
+        option_d: 'Pascal',
+        correct_option: 'C',
+        points: 5,
+        explanation: 'Force is measured in Newtons (N) in SI units, where 1 N = 1 kg·m/s².',
+      },
+      {
+        id: 2,
+        question_text: 'According to Newton’s First Law of Motion, an object will remain at rest unless acted upon by:',
+        option_a: 'A gravitational field',
+        option_b: 'An external unbalanced force',
+        option_c: 'A magnetic field',
+        option_d: 'Internal friction',
+        correct_option: 'B',
+        points: 5,
+        explanation: 'Law of Inertia: An object stays at rest or in uniform motion unless acted upon by an external net force.',
+      },
+      {
+        id: 3,
+        question_text: 'Calculate the acceleration of a car that speeds up from rest to 20 m/s in 5 seconds.',
+        option_a: '2 m/s²',
+        option_b: '4 m/s²',
+        option_c: '5 m/s²',
+        option_d: '100 m/s²',
+        correct_option: 'B',
+        points: 5,
+        explanation: 'a = (v - u) / t = (20 - 0) / 5 = 4 m/s².',
+      },
+    ],
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 103,
+    title: 'SS1 English Language Grammar Test',
     description: 'Grammar, vocabulary, and sentence structure continuous assessment test.',
     instructions: 'Choose the option that best completes each sentence.',
     course_code: 'ENG-101',
@@ -156,6 +223,7 @@ const INITIAL_SS1_SCIENCE_EXAMS: CBTExam[] = [
         option_d: 'flying',
         correct_option: 'C',
         points: 5,
+        explanation: '"Student" is a person and functions as the subject noun.',
       },
       {
         id: 2,
@@ -166,25 +234,92 @@ const INITIAL_SS1_SCIENCE_EXAMS: CBTExam[] = [
         option_d: 'Brave',
         correct_option: 'A',
         points: 5,
+        explanation: 'The opposite of generous is stingy or ungenerous.',
       },
     ],
     created_at: new Date().toISOString(),
   },
 ];
-const INITIAL_SUBMISSIONS: CBTSubmission[] = [];
+
+const INITIAL_SUBMISSIONS: CBTSubmission[] = [
+  {
+    id: 1001,
+    exam_id: 101,
+    exam_title: 'SS1 Science Mathematics Continuous Assessment Test',
+    course_code: 'MTH-101',
+    student_name: 'Emeka Amadi',
+    student_email: 'emeka.amadi@tarepet.edu.ng',
+    student_id: 'TMS-2024-101',
+    class: 'SS1',
+    stream: 'Science',
+    score: 15,
+    total_possible: 15,
+    percentage: 100,
+    submitted_at: new Date(Date.now() - 3600000).toISOString(),
+    answers: { 1: 'B', 2: 'B', 3: 'B' },
+    gradebook_synced: true,
+  }
+];
+
+const INITIAL_ACTIVITIES: LMSActivity[] = [
+  {
+    id: 'act-1',
+    timestamp: new Date(Date.now() - 1800000).toISOString(),
+    type: 'EXAM_ACTIVATED',
+    title: 'SS1 Science Mathematics CA Test Activated',
+    detail: 'Teacher Mr. Okonkwo Paul activated the Mathematics CBT test for SS1 Science.',
+    user: 'Mr. Okonkwo Paul',
+  },
+  {
+    id: 'act-2',
+    timestamp: new Date(Date.now() - 3600000).toISOString(),
+    type: 'SUBMISSION_RECEIVED',
+    title: 'Emeka Amadi Submitted CBT Test',
+    detail: 'Score: 15/15 (100%) in Mathematics (MTH-101). Gradebook auto-synced.',
+    user: 'Emeka Amadi',
+  }
+];
 
 const STORAGE_KEYS = {
-  EXAMS: 'tarepet_cbt_exams_v1',
-  SUBMISSIONS: 'tarepet_cbt_submissions_v1',
+  EXAMS: 'tarepet_cbt_exams_v2',
+  SUBMISSIONS: 'tarepet_cbt_submissions_v2',
+  ACTIVITIES: 'tarepet_lms_activities_v2',
 };
+
+// Real-time BroadcastChannel instance
+let broadcastChannel: BroadcastChannel | null = null;
+
+if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+  try {
+    broadcastChannel = new BroadcastChannel('tarepet_realtime_cbt_channel');
+  } catch (e) {
+    console.warn('BroadcastChannel error:', e);
+  }
+}
+
+// Broadcast Realtime Update to All Open Tabs
+function broadcastRealtimeEvent() {
+  if (typeof window === 'undefined') return;
+  
+  window.dispatchEvent(new Event('cbt_store_updated'));
+
+  if (broadcastChannel) {
+    try {
+      broadcastChannel.postMessage({ type: 'CBT_STORE_MUTATED', timestamp: Date.now() });
+    } catch (e) {
+      // fallback
+    }
+  }
+}
 
 // Clear All App LocalStorage & Cache
 export function clearCBTStoreCache() {
   if (typeof window === 'undefined') return;
   localStorage.removeItem(STORAGE_KEYS.EXAMS);
   localStorage.removeItem(STORAGE_KEYS.SUBMISSIONS);
+  localStorage.removeItem(STORAGE_KEYS.ACTIVITIES);
   localStorage.clear();
-  window.dispatchEvent(new Event('cbt_store_updated'));
+  broadcastRealtimeEvent();
 }
 
 // Initialize Storage
@@ -193,12 +328,16 @@ export function initCBTStore() {
 
   const rawExams = localStorage.getItem(STORAGE_KEYS.EXAMS);
   const rawSubmissions = localStorage.getItem(STORAGE_KEYS.SUBMISSIONS);
+  const rawActivities = localStorage.getItem(STORAGE_KEYS.ACTIVITIES);
 
   if (!rawExams || rawExams === '[]') {
     localStorage.setItem(STORAGE_KEYS.EXAMS, JSON.stringify(INITIAL_SS1_SCIENCE_EXAMS));
   }
   if (!rawSubmissions) {
     localStorage.setItem(STORAGE_KEYS.SUBMISSIONS, JSON.stringify(INITIAL_SUBMISSIONS));
+  }
+  if (!rawActivities) {
+    localStorage.setItem(STORAGE_KEYS.ACTIVITIES, JSON.stringify(INITIAL_ACTIVITIES));
   }
 }
 
@@ -217,7 +356,39 @@ export function getStoredExams(): CBTExam[] {
 export function saveStoredExams(exams: CBTExam[]) {
   if (typeof window === 'undefined') return;
   localStorage.setItem(STORAGE_KEYS.EXAMS, JSON.stringify(exams));
-  window.dispatchEvent(new Event('cbt_store_updated'));
+  broadcastRealtimeEvent();
+}
+
+// Log Realtime LMS Activity
+export function addRealtimeActivity(type: LMSActivity['type'], title: string, detail: string, user: string) {
+  if (typeof window === 'undefined') return;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.ACTIVITIES);
+    const list: LMSActivity[] = raw ? JSON.parse(raw) : INITIAL_ACTIVITIES;
+    const newAct: LMSActivity = {
+      id: `act-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      type,
+      title,
+      detail,
+      user,
+    };
+    list.unshift(newAct);
+    localStorage.setItem(STORAGE_KEYS.ACTIVITIES, JSON.stringify(list.slice(0, 30)));
+    broadcastRealtimeEvent();
+  } catch (e) {
+    // silence
+  }
+}
+
+export function getRealtimeActivities(): LMSActivity[] {
+  initCBTStore();
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.ACTIVITIES);
+    return raw ? JSON.parse(raw) : INITIAL_ACTIVITIES;
+  } catch (e) {
+    return INITIAL_ACTIVITIES;
+  }
 }
 
 // Create or Update Exam
@@ -237,11 +408,11 @@ export function saveCBTExam(examData: Partial<CBTExam> & { title: string; course
     class: examData.class || 'SS1',
     stream: examData.stream || 'Science',
     assessment_type: examData.assessment_type || 'TEST',
-    term: examData.term || 'Term 2',
+    term: examData.term || '2ND_TERM',
     duration_minutes: examData.duration_minutes || 45,
     questions_count: examData.questions ? examData.questions.length : (examData.questions_count || 0),
     questions_per_page: examData.questions_per_page || 2,
-    teacher_name: examData.teacher_name || 'Mrs. Okafor Chioma',
+    teacher_name: examData.teacher_name || 'Mr. Okonkwo Paul',
     status: examData.status || 'PENDING',
     questions: examData.questions || [],
     created_at: examData.created_at || new Date().toISOString(),
@@ -254,6 +425,7 @@ export function saveCBTExam(examData: Partial<CBTExam> & { title: string; course
   }
 
   saveStoredExams(exams);
+  addRealtimeActivity('EXAM_CREATED', `CBT Exam Created: ${newExam.title}`, `Subject: ${newExam.course_name} (${newExam.class} ${newExam.stream})`, newExam.teacher_name);
   return newExam;
 }
 
@@ -266,9 +438,12 @@ export function updateExamStatus(examId: number, status: CBTExam['status'], reas
   exam.status = status;
   if (status === 'ACTIVE') {
     exam.activated_at = new Date().toISOString();
-  }
-  if (status === 'REJECTED' && reason) {
+    addRealtimeActivity('EXAM_ACTIVATED', `Exam Activated for Students: ${exam.title}`, `Now live for ${exam.class} ${exam.stream} students.`, exam.teacher_name);
+  } else if (status === 'APPROVED') {
+    addRealtimeActivity('EXAM_APPROVED', `Admin Approved CBT Exam: ${exam.title}`, `Approved for ${exam.course_name} by Admin Suite.`, 'School Principal / Admin');
+  } else if (status === 'REJECTED') {
     exam.rejection_reason = reason;
+    addRealtimeActivity('EXAM_REJECTED', `Exam Returned for Revision: ${exam.title}`, `Reason: ${reason || 'Revision needed'}`, 'School Principal / Admin');
   }
 
   saveStoredExams(exams);
@@ -306,13 +481,14 @@ export function submitStudentCBTAttempt(
   });
 
   const percentage = total_possible > 0 ? Math.round((score / total_possible) * 100) : 100;
+  const sName = studentInfo.name || 'Emeka Amadi';
 
   const newSub: CBTSubmission = {
     id: Date.now(),
     exam_id: exam.id,
     exam_title: exam.title,
     course_code: exam.course_code,
-    student_name: studentInfo.name || 'Emeka Amadi',
+    student_name: sName,
     student_email: studentInfo.email || 'emeka.amadi@tarepet.edu.ng',
     student_id: studentInfo.student_id || 'TMS-2024-101',
     class: exam.class || 'SS1',
@@ -328,18 +504,48 @@ export function submitStudentCBTAttempt(
   const submissions = getStoredSubmissions();
   submissions.unshift(newSub);
   localStorage.setItem(STORAGE_KEYS.SUBMISSIONS, JSON.stringify(submissions));
-  window.dispatchEvent(new Event('cbt_store_updated'));
+  
+  addRealtimeActivity(
+    'SUBMISSION_RECEIVED',
+    `CBT Submission: ${sName}`,
+    `Scored ${score}/${total_possible} (${percentage}%) in ${exam.course_name}. Gradebook auto-synced.`,
+    sName
+  );
 
+  broadcastRealtimeEvent();
   return newSub;
 }
 
-// Event Hook Listener helper
+// Event Hook Listener helper (Listens to LocalStorage & BroadcastChannel)
 export function subscribeToCBTStore(callback: () => void) {
   if (typeof window === 'undefined') return () => {};
+
+  const handleBcMessage = (event: MessageEvent) => {
+    if (event.data && event.data.type === 'CBT_STORE_MUTATED') {
+      callback();
+    }
+  };
+
   window.addEventListener('cbt_store_updated', callback);
   window.addEventListener('storage', callback);
+
+  if (broadcastChannel) {
+    try {
+      broadcastChannel.addEventListener('message', handleBcMessage);
+    } catch (e) {
+      // silence
+    }
+  }
+
   return () => {
     window.removeEventListener('cbt_store_updated', callback);
     window.removeEventListener('storage', callback);
+    if (broadcastChannel) {
+      try {
+        broadcastChannel.removeEventListener('message', handleBcMessage);
+      } catch (e) {
+        // silence
+      }
+    }
   };
 }

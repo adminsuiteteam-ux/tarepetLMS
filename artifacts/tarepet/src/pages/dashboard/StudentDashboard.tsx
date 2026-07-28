@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 
 import { getStoredExams, getStoredSubmissions, subscribeToCBTStore } from '@/lib/cbt-store';
+import { RealTimeSyncStatus } from '@/components/cbt/RealTimeSyncStatus';
 
 // ─── Initial Seed Data (SS1 Science) ─────────────────────────
 const MY_COURSES: any[] = [];
@@ -140,6 +141,8 @@ export default function StudentDashboard() {
     // =========================================================
     if (activeSection === 'overview') return (
       <div className="space-y-6">
+        <RealTimeSyncStatus title="Student CBT & LMS Real-Time Engine" />
+        
         {/* Welcome Banner */}
         <div className="bg-gradient-to-r from-rose-800 via-red-900 to-rose-950 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
           <div className="flex flex-wrap items-center justify-between gap-2 mb-3">

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { PortalLayout } from '@/components/layout/PortalLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore } from '@/lib/cbt-store';
+import { RealTimeSyncStatus } from '@/components/cbt/RealTimeSyncStatus';
 import {
   Users, BookOpen, Server, CheckCircle2,
   Plus, FileText, Download, Upload, Search,
