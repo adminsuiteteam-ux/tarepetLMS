@@ -126,7 +126,7 @@ export default function SignIn() {
             />
             <div className="flex flex-col">
               <span className="font-serif font-bold text-3xl text-white leading-none tracking-tight">
-                Tarepet
+                Tare Pet
               </span>
               <span className="font-sans text-sm uppercase tracking-[0.2em] text-white/80 font-medium mt-1">
                 montessori school
@@ -180,7 +180,7 @@ export default function SignIn() {
             />
             <div className="flex flex-col">
               <span className="font-serif font-bold text-2xl text-primary leading-none tracking-tight">
-                Tarepet
+                Tare Pet
               </span>
               <span className="font-sans text-xs uppercase tracking-[0.15em] text-secondary font-medium mt-1">
                 montessori school

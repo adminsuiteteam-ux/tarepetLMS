@@ -18,7 +18,7 @@ export function Footer() {
               />
               <div className="flex flex-col">
                 <span className="font-serif font-bold text-xl text-white leading-none tracking-tight">
-                  Tarepet
+                  Tare Pet
                 </span>
                 <span className="font-sans text-[10px] uppercase tracking-[0.15em] text-white/90 font-medium mt-1">
                   montessori school
@@ -105,7 +105,7 @@ export function Footer() {
 
         <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-secondary-foreground/60">
-            &copy; {new Date().getFullYear()} Tarepet Montessori School. All rights reserved.
+            &copy; {new Date().getFullYear()} Tare Pet Montessori School. All rights reserved.
           </p>
           <div className="flex gap-6 text-sm text-secondary-foreground/60">
             <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>

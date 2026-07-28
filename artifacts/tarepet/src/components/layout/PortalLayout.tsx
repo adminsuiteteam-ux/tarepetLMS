@@ -98,9 +98,9 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
     <div className="flex flex-col h-full">
       {/* Brand */}
       <div className="p-5 border-b border-border flex items-center gap-3 shrink-0">
-        <img src={tarepetLogo} alt="Tarepet Logo" className="w-10 h-10 object-contain" />
-        <div>
-          <h2 className="font-serif font-bold text-base text-foreground leading-tight">{t('common.app_name', 'Tarepet LMS')}</h2>
+        <img src={tarepetLogo} alt="Tare Pet Logo" className="w-10 h-10 object-contain" />
+        <div className="flex flex-col">
+          <h2 className="font-serif font-bold text-base text-foreground leading-tight">{t('common.app_name', 'Tare Pet LMS')}</h2>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{t('common.portal_system', 'Portal System')}</p>
         </div>
       </div>
