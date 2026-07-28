@@ -1,18 +1,10 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Lock, Mail, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, AlertCircle } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import tarepetLogo from "@assets/tarepet__1784835204178.png";
 import { useAuth } from "@/context/AuthContext";
 import { authClient } from "@/lib/api-auth";
-
-// Demo accounts for instant one-click login
-const DEMO_ACCOUNTS = [
-  { role: "Admin",   email: "admin@tarepet.edu.ng",   password: "AdminPassword123!",   color: "bg-rose-600",    label: "Super Admin" },
-  { role: "Teacher", email: "teacher@tarepet.edu.ng", password: "TeacherPassword123!", color: "bg-emerald-600", label: "Class Teacher" },
-  { role: "Student", email: "student@tarepet.edu.ng", password: "StudentPassword123!", color: "bg-blue-600",    label: "SS1 Science Student" },
-  { role: "Parent",  email: "parent@tarepet.edu.ng",  password: "ParentPassword123!",  color: "bg-amber-600",  label: "Guardian" },
-];
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
@@ -77,26 +69,6 @@ export default function SignIn() {
     // Use fake tokens for demo mode
     login("demo-access-token", "demo-refresh-token", demoUser);
     setLocation("/dashboard");
-  };
-
-  const oneClickDemoLogin = async (demo: typeof DEMO_ACCOUNTS[0]) => {
-    setError(null);
-    setIsLoading(true);
-    try {
-      // Try real backend first
-      const res = await authClient.post("/auth/login/", {
-        email: demo.email,
-        password: demo.password,
-      });
-      const { access, refresh, user } = res.data;
-      login(access, refresh, user);
-      setLocation("/dashboard");
-    } catch {
-      // Backend unreachable — use demo mode (fills user instantly)
-      handleDemoLogin(demo.email);
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   return (
@@ -289,49 +261,6 @@ export default function SignIn() {
               )}
             </button>
           </form>
-
-          {/* Demo Accounts Section */}
-          <div className="mt-8 pt-6 border-t border-border">
-            <p className="text-xs text-muted-foreground text-center mb-3 flex items-center justify-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-              One-click demo login — no setup needed
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              {DEMO_ACCOUNTS.map((demo) => (
-                <button
-                  key={demo.role}
-                  type="button"
-                  disabled={isLoading}
-                  onClick={() => oneClickDemoLogin(demo)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-border hover:border-primary/50 hover:bg-primary/5 transition-all text-left group disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <div className={`w-7 h-7 rounded-lg ${demo.color} flex items-center justify-center text-white text-[10px] font-bold shrink-0`}>
-                    {demo.role[0]}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">{demo.role}</p>
-                    <p className="text-[10px] text-muted-foreground">{demo.label}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-            <p className="text-[10px] text-muted-foreground text-center mt-3 opacity-70">
-              Clicks auto-login · Uses real backend if running
-            </p>
-          </div>
-
-          {/* Request Access Link */}
-          <div className="text-center mt-6">
-            <p className="text-sm text-muted-foreground mb-3">
-              New to Tarepet?
-            </p>
-            <Link 
-              href="/admissions" 
-              className="inline-flex items-center justify-center text-secondary hover:text-secondary/90 font-medium text-sm hover:underline transition-colors"
-            >
-              Request Portal Access
-            </Link>
-          </div>
 
           {/* Footer Note */}
           <p className="text-xs text-muted-foreground text-center mt-8 border-t border-border pt-8">
