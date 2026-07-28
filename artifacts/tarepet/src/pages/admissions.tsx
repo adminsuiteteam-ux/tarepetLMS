@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle2, FileText, Calendar, GraduationCap } from "lucide-react";
+import { CheckCircle2, FileText, Calendar, GraduationCap, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
 
 const inquirySchema = z.object({
   name: z.string().min(2, "Parent/Guardian name is required"),
@@ -33,7 +34,6 @@ export default function Admissions() {
   });
 
   function onSubmit(values: z.infer<typeof inquirySchema>) {
-    // This is client-side only as requested
     console.log(values);
     toast({
       title: "Inquiry Sent Successfully",
@@ -45,29 +45,57 @@ export default function Admissions() {
   return (
     <PageTransition>
       {/* Header */}
-      <section className="bg-primary py-20 md:py-24 text-white">
-        <div className="container mx-auto px-4 md:px-6">
+      <section className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 py-28 md:py-36 text-white relative overflow-hidden">
+        <div className="absolute inset-0 glass-shimmer pointer-events-none opacity-25" />
+        <div className="container mx-auto px-4 md:px-6 relative z-10">
           <div className="max-w-3xl">
-            <h1 className="text-4xl md:text-6xl font-serif font-bold mb-6">Admissions</h1>
-            <p className="text-lg md:text-xl text-white/90">
-              Join the Tarepet family. We seek students and families who share our commitment to academic excellence and character development.
-            </p>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="inline-flex items-center gap-2 px-4 py-1 rounded-full glass-button text-white text-xs font-semibold uppercase tracking-wider mb-6"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Enrollment 2025/2026</span>
+            </motion.div>
+            <motion.h1 
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="text-4xl md:text-6xl font-serif font-bold mb-6 tracking-tight"
+            >
+              Admissions
+            </motion.h1>
+            <motion.p 
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="text-lg md:text-xl text-white/90 font-sans leading-relaxed"
+            >
+              Join the Tare Pet family. We seek students and families who share our commitment to academic excellence and character development.
+            </motion.p>
           </div>
         </div>
       </section>
 
-      <section className="py-20 bg-background">
+      <section className="py-24 bg-background relative overflow-hidden">
         <div className="container mx-auto px-4 md:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-24">
             
-            {/* Process Info (Left Col) */}
-            <div className="lg:col-span-7">
+            {/* Process Info (Left Col — Slide from Left) */}
+            <motion.div 
+              initial={{ opacity: 0, x: -70 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: false, margin: "-40px" }}
+              transition={{ duration: 0.65 }}
+              className="lg:col-span-7"
+            >
               <h2 className="text-3xl font-serif font-bold text-foreground mb-8">Admission Process</h2>
               
-              <div className="space-y-12">
-                <div className="flex gap-6">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 shadow-sm border border-primary/20">
-                    <FileText className="w-5 h-5" />
+              <div className="space-y-10">
+                <div className="flex gap-6 p-6 rounded-2xl glass-card border border-white/80 shadow-sm hover:shadow-md transition-all">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/15 text-primary flex items-center justify-center shrink-0 shadow-sm border border-primary/20">
+                    <FileText className="w-6 h-6" />
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-foreground mb-2">1. Application Form</h3>
@@ -77,9 +105,9 @@ export default function Admissions() {
                   </div>
                 </div>
 
-                <div className="flex gap-6">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 shadow-sm border border-primary/20">
-                    <Calendar className="w-5 h-5" />
+                <div className="flex gap-6 p-6 rounded-2xl glass-card border border-white/80 shadow-sm hover:shadow-md transition-all">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/15 text-primary flex items-center justify-center shrink-0 shadow-sm border border-primary/20">
+                    <Calendar className="w-6 h-6" />
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-foreground mb-2">2. Assessment & Interview</h3>
@@ -89,9 +117,9 @@ export default function Admissions() {
                   </div>
                 </div>
 
-                <div className="flex gap-6">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 shadow-sm border border-primary/20">
-                    <GraduationCap className="w-5 h-5" />
+                <div className="flex gap-6 p-6 rounded-2xl glass-card border border-white/80 shadow-sm hover:shadow-md transition-all">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/15 text-primary flex items-center justify-center shrink-0 shadow-sm border border-primary/20">
+                    <GraduationCap className="w-6 h-6" />
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-foreground mb-2">3. Offer & Acceptance</h3>
@@ -102,7 +130,7 @@ export default function Admissions() {
                 </div>
               </div>
 
-              <div className="mt-16 bg-muted p-8 rounded-2xl border border-border">
+              <div className="mt-16 glass-card p-8 rounded-3xl border border-white/80 shadow-lg">
                 <h3 className="text-2xl font-serif font-bold text-foreground mb-6">Required Documents</h3>
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {[
@@ -120,13 +148,19 @@ export default function Admissions() {
                   ))}
                 </ul>
               </div>
-            </div>
+            </motion.div>
 
-            {/* Inquiry Form (Right Col) */}
-            <div className="lg:col-span-5">
-              <div className="bg-card p-8 rounded-2xl shadow-xl border border-border sticky top-32">
+            {/* Inquiry Form (Right Col — Slide from Right) */}
+            <motion.div 
+              initial={{ opacity: 0, x: 70 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: false, margin: "-40px" }}
+              transition={{ duration: 0.65, delay: 0.15 }}
+              className="lg:col-span-5"
+            >
+              <div className="glass-card p-8 rounded-3xl shadow-2xl border border-white/80 sticky top-32">
                 <h3 className="text-2xl font-serif font-bold text-foreground mb-2">Make an Inquiry</h3>
-                <p className="text-muted-foreground text-sm mb-8">
+                <p className="text-muted-foreground text-sm mb-8 leading-relaxed">
                   Fill out this form and our admissions team will get back to you with next steps.
                 </p>
 
@@ -137,9 +171,9 @@ export default function Admissions() {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Parent / Guardian Name</FormLabel>
+                          <FormLabel className="font-semibold text-foreground">Parent / Guardian Name</FormLabel>
                           <FormControl>
-                            <Input placeholder="Mrs. Jane Doe" {...field} className="bg-background" />
+                            <Input placeholder="Mrs. Jane Doe" {...field} className="bg-white/80 border-white/80 rounded-xl focus:ring-primary h-11" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -152,9 +186,9 @@ export default function Admissions() {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Email Address</FormLabel>
+                            <FormLabel className="font-semibold text-foreground">Email Address</FormLabel>
                             <FormControl>
-                              <Input placeholder="jane@example.com" {...field} className="bg-background" />
+                              <Input placeholder="jane@example.com" {...field} className="bg-white/80 border-white/80 rounded-xl focus:ring-primary h-11" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -165,9 +199,9 @@ export default function Admissions() {
                         name="phone"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Phone Number</FormLabel>
+                            <FormLabel className="font-semibold text-foreground">Phone Number</FormLabel>
                             <FormControl>
-                              <Input placeholder="0800 000 0000" {...field} className="bg-background" />
+                              <Input placeholder="0800 000 0000" {...field} className="bg-white/80 border-white/80 rounded-xl focus:ring-primary h-11" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -180,10 +214,10 @@ export default function Admissions() {
                       name="childAge"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Child's Age Range</FormLabel>
+                          <FormLabel className="font-semibold text-foreground">Child's Age Range</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                              <SelectTrigger className="bg-background">
+                              <SelectTrigger className="bg-white/80 border-white/80 rounded-xl h-11">
                                 <SelectValue placeholder="Select an age range" />
                               </SelectTrigger>
                             </FormControl>
@@ -204,11 +238,11 @@ export default function Admissions() {
                       name="message"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Message / Questions</FormLabel>
+                          <FormLabel className="font-semibold text-foreground">Message / Questions</FormLabel>
                           <FormControl>
                             <Textarea 
                               placeholder="Tell us what you'd like to know..." 
-                              className="min-h-[120px] bg-background resize-none"
+                              className="min-h-[120px] bg-white/80 border-white/80 rounded-xl resize-none"
                               {...field} 
                             />
                           </FormControl>
@@ -217,28 +251,35 @@ export default function Admissions() {
                       )}
                     />
 
-                    <Button type="submit" className="w-full h-12 text-base font-bold" data-testid="button-submit-inquiry">
+                    <Button type="submit" className="w-full h-12 rounded-full font-bold uppercase tracking-wider text-white bg-gradient-to-r from-primary to-primary/90 shadow-xl hover:scale-105 active:scale-95 transition-all" data-testid="button-submit-inquiry">
                       Submit Inquiry
                     </Button>
                   </form>
                 </Form>
               </div>
-            </div>
+            </motion.div>
 
           </div>
         </div>
       </section>
 
       {/* Virtual Tour CTA */}
-      <section className="py-20 bg-secondary text-white text-center">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-serif font-bold mb-6">Experience Tarepet</h2>
-          <p className="text-white/80 max-w-2xl mx-auto mb-10 text-lg">
-            Can't make it to Kpansia-Epje right now? Take a glimpse into our classrooms, laboratories, and play areas.
-          </p>
-          <Button variant="outline" className="h-14 px-8 text-base bg-transparent text-white border-white hover:bg-white hover:text-secondary font-bold">
-            Take Virtual Tour
-          </Button>
+      <section className="py-20 bg-secondary text-white text-center relative overflow-hidden">
+        <div className="container mx-auto px-4 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: false }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className="text-3xl md:text-4xl font-serif font-bold mb-6">Experience Tare Pet</h2>
+            <p className="text-white/80 max-w-2xl mx-auto mb-10 text-lg">
+              Can't make it to Kpansia-Epje right now? Take a glimpse into our classrooms, laboratories, and play areas.
+            </p>
+            <Button variant="outline" className="h-14 px-8 rounded-full text-base bg-transparent text-white border-white hover:bg-white hover:text-secondary font-bold hover:scale-105 active:scale-95 transition-all">
+              Take Virtual Tour
+            </Button>
+          </motion.div>
         </div>
       </section>
     </PageTransition>

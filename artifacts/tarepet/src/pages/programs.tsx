@@ -1,31 +1,59 @@
 import { PageTransition } from "@/components/layout/Layout";
 import { Link } from "wouter";
+import { motion } from "framer-motion";
 import programsImg from "@assets/generated_images/programs.jpg";
-import { BookOpen, Activity, Target, Palette, MoveRight } from "lucide-react";
+import { BookOpen, Activity, Target, Palette, MoveRight, Sparkles } from "lucide-react";
 
 export default function Programs() {
   return (
     <PageTransition>
       {/* Header */}
-      <section className="bg-primary py-20 md:py-32 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
+      <section className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 py-28 md:py-36 text-white relative overflow-hidden">
+        <div className="absolute inset-0 glass-shimmer pointer-events-none opacity-25" />
         <div className="container mx-auto px-4 md:px-6 text-center relative z-10">
-          <h1 className="text-4xl md:text-6xl font-serif font-bold mb-6 text-white">Academic Programs</h1>
-          <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="inline-flex items-center gap-2 px-4 py-1 rounded-full glass-button text-white text-xs font-semibold uppercase tracking-wider mb-6"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Excellence in Learning</span>
+          </motion.div>
+          <motion.h1 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="text-4xl md:text-6xl font-serif font-bold mb-6 tracking-tight"
+          >
+            Academic Programs
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto font-sans leading-relaxed"
+          >
             A comprehensive, continuous educational pathway from early childhood through secondary graduation.
-          </p>
+          </motion.p>
         </div>
       </section>
 
       {/* Main Academics */}
-      <section className="py-24 bg-background">
+      <section className="py-24 bg-background relative overflow-hidden">
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex flex-col gap-24">
             
-            {/* Early Years / Nursery */}
+            {/* Early Years / Nursery — Slide from Left */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-              <div className="order-2 lg:order-1">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/10 text-secondary text-sm font-bold mb-6 uppercase tracking-wider">
+              <motion.div 
+                initial={{ opacity: 0, x: -70 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: false, margin: "-40px" }}
+                transition={{ duration: 0.65 }}
+                className="order-2 lg:order-1"
+              >
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary/15 text-secondary text-xs font-bold mb-6 uppercase tracking-wider">
                   Ages 2 - 5
                 </div>
                 <h2 className="text-3xl md:text-4xl font-serif font-bold text-foreground mb-6">Nursery & Early Years</h2>
@@ -46,29 +74,44 @@ export default function Programs() {
                     <span>Foundation for reading, writing, and arithmetic.</span>
                   </li>
                 </ul>
-              </div>
-              <div className="order-1 lg:order-2 bg-muted rounded-2xl aspect-[4/3] flex items-center justify-center p-8 text-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-secondary/5"></div>
-                <div className="relative z-10 text-secondary/30">
-                  <BookOpen className="w-32 h-32 mx-auto mb-4" />
-                  <span className="font-serif italic text-xl">Early Years Learning</span>
+              </motion.div>
+              <motion.div 
+                initial={{ opacity: 0, x: 70 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: false, margin: "-40px" }}
+                transition={{ duration: 0.65, delay: 0.15 }}
+                className="order-1 lg:order-2 glass-card rounded-3xl aspect-[4/3] flex items-center justify-center p-8 text-center relative overflow-hidden border border-white/80 shadow-xl group"
+              >
+                <div className="relative z-10 text-secondary/40 group-hover:scale-105 transition-transform duration-500">
+                  <BookOpen className="w-28 h-28 mx-auto mb-4" />
+                  <span className="font-serif italic text-2xl text-foreground font-bold">Early Years Learning</span>
                 </div>
-              </div>
+              </motion.div>
             </div>
 
             <hr className="border-border" />
 
-            {/* Primary */}
+            {/* Primary — Slide from Right */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-              <div className="bg-muted rounded-2xl aspect-[4/3] flex items-center justify-center p-8 text-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-primary/5"></div>
-                <div className="relative z-10 text-primary/30">
-                  <Activity className="w-32 h-32 mx-auto mb-4" />
-                  <span className="font-serif italic text-xl">Primary Education</span>
+              <motion.div 
+                initial={{ opacity: 0, x: -70 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: false, margin: "-40px" }}
+                transition={{ duration: 0.65 }}
+                className="glass-card rounded-3xl aspect-[4/3] flex items-center justify-center p-8 text-center relative overflow-hidden border border-white/80 shadow-xl group"
+              >
+                <div className="relative z-10 text-primary/40 group-hover:scale-105 transition-transform duration-500">
+                  <Activity className="w-28 h-28 mx-auto mb-4" />
+                  <span className="font-serif italic text-2xl text-foreground font-bold">Primary Education</span>
                 </div>
-              </div>
-              <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-bold mb-6 uppercase tracking-wider">
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, x: 70 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: false, margin: "-40px" }}
+                transition={{ duration: 0.65, delay: 0.15 }}
+              >
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/15 text-primary text-xs font-bold mb-6 uppercase tracking-wider">
                   Ages 6 - 11
                 </div>
                 <h2 className="text-3xl md:text-4xl font-serif font-bold text-foreground mb-6">Primary School</h2>
@@ -89,15 +132,21 @@ export default function Programs() {
                     <span>Transitioning from concrete materials to abstract thinking.</span>
                   </li>
                 </ul>
-              </div>
+              </motion.div>
             </div>
 
             <hr className="border-border" />
 
-            {/* Secondary */}
+            {/* Secondary — Slide from Left */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-              <div className="order-2 lg:order-1">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/10 text-secondary text-sm font-bold mb-6 uppercase tracking-wider">
+              <motion.div 
+                initial={{ opacity: 0, x: -70 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: false, margin: "-40px" }}
+                transition={{ duration: 0.65 }}
+                className="order-2 lg:order-1"
+              >
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary/15 text-secondary text-xs font-bold mb-6 uppercase tracking-wider">
                   Ages 11 - 17
                 </div>
                 <h2 className="text-3xl md:text-4xl font-serif font-bold text-foreground mb-6">Junior & Senior Secondary</h2>
@@ -118,17 +167,23 @@ export default function Programs() {
                     <span>Intensive exam preparation and career counseling.</span>
                   </li>
                 </ul>
-                <Link href="/admissions" className="inline-flex items-center text-primary font-bold hover:gap-2 transition-all">
-                  Apply for Secondary <MoveRight className="ml-2 w-5 h-5" />
+                <Link href="/admissions" className="inline-flex items-center text-primary font-bold hover:gap-3 transition-all group">
+                  Apply for Secondary <MoveRight className="ml-2 w-5 h-5 group-hover:translate-x-1.5 transition-transform" />
                 </Link>
-              </div>
-              <div className="order-1 lg:order-2 rounded-2xl overflow-hidden shadow-2xl h-full min-h-[400px]">
+              </motion.div>
+              <motion.div 
+                initial={{ opacity: 0, x: 70 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: false, margin: "-40px" }}
+                transition={{ duration: 0.65, delay: 0.15 }}
+                className="order-1 lg:order-2 rounded-3xl overflow-hidden shadow-2xl h-full min-h-[400px] border-8 border-white/60 group"
+              >
                 <img 
                   src={programsImg} 
                   alt="Secondary School Students in Classroom" 
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 />
-              </div>
+              </motion.div>
             </div>
 
           </div>
@@ -136,12 +191,18 @@ export default function Programs() {
       </section>
 
       {/* Extracurriculars */}
-      <section className="py-24 bg-card border-t border-border">
+      <section className="py-24 bg-muted/40 border-t border-border relative overflow-hidden">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="text-center max-w-3xl mx-auto mb-16">
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: false }}
+            transition={{ duration: 0.6 }}
+            className="text-center max-w-3xl mx-auto mb-16"
+          >
             <h2 className="text-4xl font-serif font-bold text-foreground mb-6">Beyond the Classroom</h2>
-            <p className="text-muted-foreground text-lg">Education at Tarepet extends far beyond academics. We cultivate well-rounded individuals through diverse activities.</p>
-          </div>
+            <p className="text-muted-foreground text-lg">Education at Tare Pet extends far beyond academics. We cultivate well-rounded individuals through diverse activities.</p>
+          </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
@@ -150,25 +211,40 @@ export default function Programs() {
               { icon: BookOpen, title: "Literary & Debating", desc: "Public speaking, poetry, and debate clubs to build confidence." },
               { icon: Target, title: "STEM Club", desc: "Coding, robotics, and hands-on science experiments." }
             ].map((item, i) => (
-              <div key={i} className="p-8 bg-muted rounded-xl text-center hover-elevate border border-transparent hover:border-border transition-colors">
-                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm text-primary">
-                  <item.icon className="w-6 h-6" />
+              <motion.div 
+                key={i} 
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: false, margin: "-40px" }}
+                transition={{ duration: 0.6, delay: i * 0.12 }}
+                whileHover={{ y: -6, scale: 1.03 }}
+                className="p-8 glass-card rounded-2xl text-center border border-white/80 shadow-sm hover:shadow-xl transition-all group"
+              >
+                <div className="w-14 h-14 bg-white/90 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-md text-primary group-hover:scale-110 transition-transform">
+                  <item.icon className="w-7 h-7" />
                 </div>
-                <h3 className="text-lg font-bold text-foreground mb-3">{item.title}</h3>
+                <h3 className="text-lg font-bold text-foreground mb-3 group-hover:text-primary transition-colors">{item.title}</h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">{item.desc}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
       {/* CTA */}
-      <section className="py-20 bg-secondary text-center text-white">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-serif font-bold mb-6">Ready to see our programs in action?</h2>
-          <Link href="/contact" className="inline-flex items-center justify-center rounded-md text-base font-medium bg-white text-secondary hover:bg-white/90 h-12 px-8 py-2">
-            Schedule a Campus Tour
-          </Link>
+      <section className="py-20 bg-secondary text-center text-white relative overflow-hidden">
+        <div className="container mx-auto px-4 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: false }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className="text-3xl md:text-4xl font-serif font-bold mb-6">Ready to see our programs in action?</h2>
+            <Link href="/contact" className="inline-flex items-center justify-center rounded-full text-base font-semibold glass-button text-white hover:bg-white/20 h-14 px-8 py-3 hover:scale-105 active:scale-95 transition-all">
+              Schedule a Campus Tour
+            </Link>
+          </motion.div>
         </div>
       </section>
     </PageTransition>

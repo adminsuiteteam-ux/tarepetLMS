@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { MapPin, Phone, Mail, Clock } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
 
 const contactSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -40,162 +41,189 @@ export default function Contact() {
 
   return (
     <PageTransition>
-      <section className="bg-card border-b border-border py-16 md:py-24">
-        <div className="container mx-auto px-4 md:px-6 text-center max-w-3xl">
-          <h1 className="text-4xl md:text-5xl font-serif font-bold text-foreground mb-6">Contact Us</h1>
-          <p className="text-lg text-muted-foreground">
+      {/* Header */}
+      <section className="bg-gradient-to-br from-secondary via-secondary/95 to-secondary/90 py-28 md:py-36 text-white text-center relative overflow-hidden">
+        <div className="absolute inset-0 glass-shimmer pointer-events-none opacity-20" />
+        <div className="container mx-auto px-4 md:px-6 relative z-10 max-w-3xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="inline-flex items-center gap-2 px-4 py-1 rounded-full glass-button text-white text-xs font-semibold uppercase tracking-wider mb-6"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Reach Out To Us</span>
+          </motion.div>
+          <motion.h1 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="text-4xl md:text-6xl font-serif font-bold text-white mb-6 tracking-tight"
+          >
+            Contact Us
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-lg md:text-xl text-white/90 font-sans leading-relaxed"
+          >
             Have questions about our programs, admissions, or anything else? We're here to help.
-          </p>
+          </motion.p>
         </div>
       </section>
 
-      <section className="py-20 bg-background">
+      <section className="py-24 bg-background relative overflow-hidden">
         <div className="container mx-auto px-4 md:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 max-w-6xl mx-auto">
             
-            {/* Contact Details */}
-            <div>
-              <h2 className="text-2xl font-serif font-bold text-foreground mb-8">Get in Touch</h2>
+            {/* Contact Details — Slide from Left */}
+            <motion.div
+              initial={{ opacity: 0, x: -70 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: false, margin: "-40px" }}
+              transition={{ duration: 0.65 }}
+            >
+              <h2 className="text-3xl font-serif font-bold text-foreground mb-8">Get in Touch</h2>
               
-              <div className="space-y-8 mb-12">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-secondary/10 text-secondary rounded-full flex items-center justify-center shrink-0">
+              <div className="space-y-6 mb-12">
+                <div className="flex items-start gap-4 p-6 glass-card rounded-2xl border border-white/80 shadow-sm hover:shadow-md transition-all">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/15 text-primary flex items-center justify-center shrink-0">
                     <MapPin className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-foreground text-lg mb-1">Our Campus</h3>
-                    <p className="text-muted-foreground leading-relaxed">
-                      Tarepet Montessori School<br />
-                      Murpiry L. & Sec. Sch.<br />
-                      Kpansia-Epje, Yenagoa<br />
-                      Bayelsa State, Nigeria
+                    <h3 className="font-bold text-foreground mb-1 text-lg">Our Location</h3>
+                    <p className="text-muted-foreground text-sm leading-relaxed">
+                      Tare Pet Montessori School<br />
+                      Murpiry L. & Sec. Sch., Kpansia-Epje<br />
+                      Yenagoa, Bayelsa State, Nigeria
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-secondary/10 text-secondary rounded-full flex items-center justify-center shrink-0">
+                <div className="flex items-start gap-4 p-6 glass-card rounded-2xl border border-white/80 shadow-sm hover:shadow-md transition-all">
+                  <div className="w-12 h-12 rounded-2xl bg-secondary/15 text-secondary flex items-center justify-center shrink-0">
                     <Phone className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-foreground text-lg mb-1">Phone</h3>
-                    <p className="text-muted-foreground">
+                    <h3 className="font-bold text-foreground mb-1 text-lg">Phone Number</h3>
+                    <p className="text-muted-foreground text-sm">
                       +234 (0) 800 000 0000<br />
-                      +234 (0) 800 000 0001
+                      +234 (0) 800 111 2222
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-secondary/10 text-secondary rounded-full flex items-center justify-center shrink-0">
+                <div className="flex items-start gap-4 p-6 glass-card rounded-2xl border border-white/80 shadow-sm hover:shadow-md transition-all">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/15 text-primary flex items-center justify-center shrink-0">
                     <Mail className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-foreground text-lg mb-1">Email</h3>
-                    <p className="text-muted-foreground">
+                    <h3 className="font-bold text-foreground mb-1 text-lg">Email Address</h3>
+                    <p className="text-muted-foreground text-sm">
                       info@tarepetmontessori.com<br />
                       admissions@tarepetmontessori.com
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-secondary/10 text-secondary rounded-full flex items-center justify-center shrink-0">
+                <div className="flex items-start gap-4 p-6 glass-card rounded-2xl border border-white/80 shadow-sm hover:shadow-md transition-all">
+                  <div className="w-12 h-12 rounded-2xl bg-secondary/15 text-secondary flex items-center justify-center shrink-0">
                     <Clock className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-foreground text-lg mb-1">Office Hours</h3>
-                    <p className="text-muted-foreground">
-                      Monday - Friday: 7:30 AM - 4:00 PM<br />
-                      Saturday & Sunday: Closed
+                    <h3 className="font-bold text-foreground mb-1 text-lg">School Hours</h3>
+                    <p className="text-muted-foreground text-sm leading-relaxed">
+                      Monday – Friday: 7:30 AM – 3:30 PM<br />
+                      Saturday – Sunday: Closed
                     </p>
                   </div>
                 </div>
               </div>
+            </motion.div>
 
-              {/* Map Placeholder */}
-              <div className="w-full h-[300px] bg-muted rounded-xl border border-border flex items-center justify-center overflow-hidden relative group">
-                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cartographer.png')] opacity-10"></div>
-                <div className="text-center relative z-10">
-                  <MapPin className="w-10 h-10 text-primary mx-auto mb-2 opacity-50" />
-                  <p className="text-muted-foreground font-medium">Map Placeholder</p>
-                  <p className="text-xs text-muted-foreground/70">Kpansia-Epje, Yenagoa</p>
-                </div>
+            {/* Contact Form — Slide from Right */}
+            <motion.div
+              initial={{ opacity: 0, x: 70 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: false, margin: "-40px" }}
+              transition={{ duration: 0.65, delay: 0.15 }}
+            >
+              <div className="glass-card p-10 rounded-3xl shadow-2xl border border-white/80">
+                <h2 className="text-3xl font-serif font-bold text-foreground mb-2">Send a Message</h2>
+                <p className="text-muted-foreground text-sm mb-8 leading-relaxed">
+                  We welcome your inquiries. Please fill out the form below and we will respond promptly.
+                </p>
+
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-semibold text-foreground">Your Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="John Doe" {...field} className="bg-white/80 border-white/80 rounded-xl h-11" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-semibold text-foreground">Email Address</FormLabel>
+                          <FormControl>
+                            <Input placeholder="john@example.com" {...field} className="bg-white/80 border-white/80 rounded-xl h-11" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="subject"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-semibold text-foreground">Subject</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Inquiry about Nursery Admissions" {...field} className="bg-white/80 border-white/80 rounded-xl h-11" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="message"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-semibold text-foreground">Message</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="How can we help you?" 
+                              className="min-h-[140px] bg-white/80 border-white/80 rounded-xl resize-none"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <Button type="submit" className="w-full h-12 rounded-full font-bold uppercase tracking-wider text-white bg-gradient-to-r from-primary to-primary/90 shadow-xl hover:scale-105 active:scale-95 transition-all">
+                      Send Message
+                    </Button>
+                  </form>
+                </Form>
               </div>
-            </div>
-
-            {/* Contact Form */}
-            <div className="bg-card p-8 md:p-10 rounded-2xl shadow-xl border border-border">
-              <h2 className="text-2xl font-serif font-bold text-foreground mb-6">Send a Message</h2>
-              
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Your Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="John Doe" {...field} className="bg-background" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email Address</FormLabel>
-                        <FormControl>
-                          <Input placeholder="john@example.com" {...field} className="bg-background" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="subject"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Subject</FormLabel>
-                        <FormControl>
-                          <Input placeholder="How can we help?" {...field} className="bg-background" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="message"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Message</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="Write your message here..." 
-                            className="min-h-[150px] bg-background resize-none"
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <Button type="submit" className="w-full h-12 text-base font-bold" data-testid="button-submit-contact">
-                    Send Message
-                  </Button>
-                </form>
-              </Form>
-            </div>
+            </motion.div>
 
           </div>
         </div>

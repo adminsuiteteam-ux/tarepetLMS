@@ -1,7 +1,7 @@
 import { PageTransition } from "@/components/layout/Layout";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar, User, ArrowRight } from "lucide-react";
+import { Calendar, User, ArrowRight, Sparkles } from "lucide-react";
 import { Link } from "wouter";
 
 const CATEGORIES = ["All", "Classroom Life", "Projects", "Reflections", "Staff Notes", "Achievements"];
@@ -15,7 +15,8 @@ const JOURNAL_ENTRIES = [
     date: "February 10, 2025",
     category: "Classroom Life",
     excerpt: "Watching the nursery children pour water from pitcher to glass with such intense concentration reminds me why we do this work. Independence blooms in the smallest moments.",
-    colorClass: "bg-primary/10",
+    colorClass: "bg-primary/15",
+    side: -70,
   },
   {
     id: 2,
@@ -25,7 +26,8 @@ const JOURNAL_ENTRIES = [
     date: "February 8, 2025",
     category: "Projects",
     excerpt: "Our class planted native Bayelsa vegetables behind the science lab. We measured soil pH, researched companion planting, and designed an irrigation plan. It's more than gardening—it's real science.",
-    colorClass: "bg-secondary/10",
+    colorClass: "bg-secondary/15",
+    side: 0,
   },
   {
     id: 3,
@@ -35,7 +37,8 @@ const JOURNAL_ENTRIES = [
     date: "February 5, 2025",
     category: "Staff Notes",
     excerpt: "A primary 5 student showed me a shortcut for multiplying two-digit numbers I'd never seen. These children are capable of extraordinary thinking when we give them space.",
-    colorClass: "bg-muted",
+    colorClass: "bg-primary/10",
+    side: 70,
   },
   {
     id: 4,
@@ -46,6 +49,7 @@ const JOURNAL_ENTRIES = [
     category: "Reflections",
     excerpt: "We made chin-chin in class today and had to halve the recipe. Suddenly fractions made sense! Why didn't anyone tell me cooking was just math you can eat?",
     colorClass: "bg-primary/20",
+    side: -70,
   },
   {
     id: 5,
@@ -56,6 +60,7 @@ const JOURNAL_ENTRIES = [
     category: "Achievements",
     excerpt: "Three of our students won medals at the regional fair with their water filtration project. They designed it, tested it, and presented it with confidence. I just pointed them toward resources.",
     colorClass: "bg-secondary/20",
+    side: 0,
   },
   {
     id: 6,
@@ -65,99 +70,67 @@ const JOURNAL_ENTRIES = [
     date: "January 25, 2025",
     category: "Reflections",
     excerpt: "I used to think asking questions meant I was slow. But here, teachers celebrate questions. Now I know asking is how you get smarter, not proof you're not smart enough.",
-    colorClass: "bg-muted-foreground/10",
-  },
-  {
-    id: 7,
-    title: "The Montessori Materials Work",
-    author: "Mrs. Blessing Igodo",
-    role: "Nursery Coordinator",
-    date: "January 20, 2025",
-    category: "Staff Notes",
-    excerpt: "A three-year-old spent forty minutes with the pink tower today. No interruptions, no distractions—just pure focus. This is what happens when we respect the child's natural rhythm.",
-    colorClass: "bg-primary/15",
-  },
-  {
-    id: 8,
-    title: "Writing Our Community History",
-    author: "Victory Okoko",
-    role: "Primary 6 Student",
-    date: "January 15, 2025",
-    category: "Projects",
-    excerpt: "Our group interviewed elders in Kpansia about life before the oil boom. We recorded stories, took photographs, and made a booklet. History isn't just textbooks anymore.",
-    colorClass: "bg-secondary/15",
-  },
-  {
-    id: 9,
-    title: "First Day Jitters Turned Joy",
-    author: "Ms. Ebitimi George",
-    role: "Admissions Counselor",
-    date: "January 10, 2025",
-    category: "Classroom Life",
-    excerpt: "A new nursery student arrived crying this morning. By afternoon, she was showing a friend how to water the plants. The prepared environment does the heavy lifting—we just guide.",
-    colorClass: "bg-primary/10",
-  },
-  {
-    id: 10,
-    title: "Competing with Kindness",
-    author: "Godspower Amaju",
-    role: "SSS1 Student",
-    date: "January 5, 2025",
-    category: "Achievements",
-    excerpt: "We won the inter-school debate, but what I'm proudest of is how we helped the opposing team fix their microphone before the round. Competition doesn't have to kill compassion.",
     colorClass: "bg-secondary/10",
+    side: 70,
   },
 ];
 
 export default function Journal() {
   const [activeCategory, setActiveCategory] = useState("All");
 
-  const filteredEntries = JOURNAL_ENTRIES.filter(entry => {
-    return activeCategory === "All" || entry.category === activeCategory;
-  });
-
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.08
-      }
-    }
-  };
-
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 }
-  };
+  const filteredEntries = activeCategory === "All"
+    ? JOURNAL_ENTRIES
+    : JOURNAL_ENTRIES.filter(e => e.category === activeCategory);
 
   return (
     <PageTransition>
       {/* Header */}
-      <section className="bg-muted py-16 md:py-24 border-b border-border">
-        <div className="container mx-auto px-4 md:px-6">
+      <section className="bg-gradient-to-br from-secondary via-secondary/95 to-secondary/90 py-28 md:py-36 text-white relative overflow-hidden">
+        <div className="absolute inset-0 glass-shimmer pointer-events-none opacity-20" />
+        <div className="container mx-auto px-4 md:px-6 relative z-10">
           <div className="max-w-3xl">
-            <h1 className="text-4xl md:text-5xl font-serif font-bold text-foreground mb-6">School Journal</h1>
-            <p className="text-lg text-muted-foreground">
-              A window into daily school life—reflections, discoveries, and moments from our students and staff. These are the real stories of learning at Tarepet.
-            </p>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="inline-flex items-center gap-2 px-4 py-1 rounded-full glass-button text-white text-xs font-semibold uppercase tracking-wider mb-6"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Stories of Learning</span>
+            </motion.div>
+            <motion.h1 
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="text-4xl md:text-6xl font-serif font-bold text-white mb-6 tracking-tight"
+            >
+              School Journal
+            </motion.h1>
+            <motion.p 
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="text-lg md:text-xl text-white/90 font-sans leading-relaxed"
+            >
+              A window into daily school life—reflections, discoveries, and moments from our students and staff. These are the real stories of learning at Tare Pet.
+            </motion.p>
           </div>
         </div>
       </section>
 
-      <section className="py-16 bg-background min-h-[50vh]">
+      <section className="py-24 bg-background min-h-[50vh] relative overflow-hidden">
         <div className="container mx-auto px-4 md:px-6">
           
           {/* Categories */}
-          <div className="flex flex-wrap gap-3 mb-12">
+          <div className="flex flex-wrap gap-3 mb-14">
             {CATEGORIES.map(category => (
               <button
                 key={category}
                 onClick={() => setActiveCategory(category)}
-                className={`px-5 py-2 rounded-full text-sm font-medium transition-colors ${
+                className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${
                   activeCategory === category 
-                    ? "bg-primary text-white" 
-                    : "bg-muted text-foreground hover:bg-muted-foreground/10"
+                    ? "bg-gradient-to-r from-primary to-primary/90 text-white shadow-lg shadow-primary/20 scale-105" 
+                    : "glass-button text-foreground hover:bg-white"
                 }`}
               >
                 {category}
@@ -165,29 +138,28 @@ export default function Journal() {
             ))}
           </div>
 
-          {/* Grid */}
-          <motion.div 
-            variants={container}
-            initial="hidden"
-            animate="show"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-          >
-            {filteredEntries.map(entry => (
+          {/* Grid with Left/Right Sliding Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredEntries.map((entry, idx) => (
               <motion.article 
                 key={entry.id} 
-                variants={item}
-                className="bg-card rounded-2xl border border-border overflow-hidden flex flex-col group hover:shadow-xl transition-all hover:-translate-y-1"
+                initial={{ opacity: 0, x: entry.side, y: entry.side === 0 ? 50 : 0 }}
+                whileInView={{ opacity: 1, x: 0, y: 0 }}
+                viewport={{ once: false, margin: "-40px" }}
+                transition={{ duration: 0.65, delay: idx * 0.1 }}
+                whileHover={{ y: -8, scale: 1.02 }}
+                className="glass-card rounded-3xl border border-white/80 overflow-hidden flex flex-col group shadow-md hover:shadow-2xl transition-all duration-300"
               >
-                <div className={`h-32 ${entry.colorClass} relative overflow-hidden flex items-center justify-center`}>
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-black/5 backdrop-blur-[1px]"></div>
+                <div className={`h-36 ${entry.colorClass} relative overflow-hidden flex items-center justify-center`}>
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-black/5 backdrop-blur-[1px]" />
                 </div>
-                <div className="p-6 flex-1 flex flex-col">
+                <div className="p-8 flex-1 flex flex-col">
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-xs font-bold uppercase tracking-wider text-secondary">
+                    <span className="text-xs font-bold uppercase tracking-wider text-secondary bg-secondary/10 px-3 py-1 rounded-full">
                       {entry.category}
                     </span>
                     <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Calendar className="w-3 h-3" /> {entry.date}
+                      <Calendar className="w-3.5 h-3.5" /> {entry.date}
                     </span>
                   </div>
                   <h2 className="text-xl font-serif font-bold text-foreground mb-3 leading-snug group-hover:text-primary transition-colors">
@@ -195,7 +167,7 @@ export default function Journal() {
                   </h2>
                   <div className="flex items-center gap-2 mb-4 text-sm text-muted-foreground">
                     <User className="w-4 h-4" />
-                    <span className="font-medium text-foreground">{entry.author}</span>
+                    <span className="font-semibold text-foreground">{entry.author}</span>
                     <span>·</span>
                     <span>{entry.role}</span>
                   </div>
@@ -204,35 +176,41 @@ export default function Journal() {
                   </p>
                   <Link 
                     href={`/journal/${entry.id}`} 
-                    className="inline-flex items-center text-sm font-bold text-foreground group-hover:text-primary transition-colors mt-auto"
+                    className="inline-flex items-center text-sm font-bold text-primary group-hover:translate-x-1.5 transition-all mt-auto"
                   >
-                    Continue reading <ArrowRight className="ml-1 w-4 h-4" />
+                    Continue reading <ArrowRight className="ml-1.5 w-4 h-4" />
                   </Link>
                 </div>
               </motion.article>
             ))}
-          </motion.div>
+          </div>
 
         </div>
       </section>
 
       {/* CTA Banner */}
-      <section className="py-16 bg-secondary text-white">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="max-w-3xl mx-auto text-center">
+      <section className="py-20 bg-secondary text-white text-center relative overflow-hidden">
+        <div className="container mx-auto px-4 md:px-6 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: false }}
+            transition={{ duration: 0.6 }}
+            className="max-w-3xl mx-auto"
+          >
             <h2 className="text-3xl md:text-4xl font-serif font-bold mb-4">
               Share Your Story
             </h2>
-            <p className="text-white/90 text-lg mb-8">
+            <p className="text-white/90 text-lg mb-8 leading-relaxed">
               Students and staff are invited to submit journal entries about their experiences, projects, and reflections. Your voice matters here.
             </p>
             <Link 
               href="/contact" 
-              className="inline-flex items-center justify-center rounded-md text-base font-medium bg-white text-secondary hover:bg-white/90 h-14 px-8 py-3 transition-colors"
+              className="inline-flex items-center justify-center rounded-full text-base font-semibold glass-button text-white hover:bg-white/20 h-14 px-8 py-3 hover:scale-105 active:scale-95 transition-all"
             >
               Submit Your Entry
             </Link>
-          </div>
+          </motion.div>
         </div>
       </section>
     </PageTransition>
