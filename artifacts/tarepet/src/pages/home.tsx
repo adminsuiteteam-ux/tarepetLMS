@@ -6,6 +6,7 @@ import { ArrowRight, BookOpen, Heart, Users, CheckCircle2, Quote, Sparkles, Grad
 import heroImg from "@assets/generated_images/hero.jpg";
 import philosophyImg from "@assets/generated_images/programs.jpg";
 import { GlareCard } from "@/components/ui/glare-card";
+import BackgroundNoiseEffect from "@/components/ui/background-snippets-noise-effect11";
 
 export default function Home() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -213,12 +214,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* School Highlights — GlareCard Section */}
-      <section className="py-24 overflow-hidden relative" style={{ background: "linear-gradient(135deg, #0f1a12 0%, #1a0a08 50%, #0f1a12 100%)" }}>
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl opacity-20" style={{ background: "radial-gradient(circle, #C41E3A 0%, transparent 70%)" }} />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl opacity-15" style={{ background: "radial-gradient(circle, #2D7A46 0%, transparent 70%)" }} />
-        </div>
+      {/* School Highlights — GlareCard Section with Noise Background */}
+      <section className="py-24 overflow-hidden relative">
+        <BackgroundNoiseEffect variant="dark" />
         <div className="container mx-auto px-4 md:px-6 relative z-10">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <motion.p
