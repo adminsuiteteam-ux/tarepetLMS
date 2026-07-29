@@ -14,6 +14,11 @@ const NAV_LINKS = [
   { href: "/contact", label: "Contact" },
 ];
 
+const MOBILE_NAV_LINKS = [
+  ...NAV_LINKS,
+  { href: "/sign-in", label: "Portal Login", isPortal: true },
+];
+
 export function Navbar() {
   const [location] = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
@@ -127,16 +132,8 @@ export function Navbar() {
             </Link>
           </nav>
 
-          {/* Mobile Right Controls: Portal Shortcut & Animated Hamburger */}
+          {/* Animated Hamburger Button for Mobile */}
           <div className="md:hidden flex items-center gap-2 relative z-[110]">
-            <Link
-              href="/sign-in"
-              className="flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold uppercase tracking-wider text-white bg-gradient-to-r from-primary to-primary/90 shadow-md shadow-primary/20 active:scale-95 transition-transform"
-            >
-              <LogIn className="w-3.5 h-3.5" />
-              <span>Portal</span>
-            </Link>
-
             <button
               className="w-10 h-10 rounded-full bg-white/85 backdrop-blur-md border border-white/90 shadow-md flex items-center justify-center focus:outline-none hover:bg-white transition-all active:scale-95"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -173,7 +170,7 @@ export function Navbar() {
             animate={{ opacity: 1, backdropFilter: "blur(28px)" }}
             exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
             transition={{ duration: 0.35, ease: "easeInOut" }}
-            className="fixed inset-0 w-full h-[100dvh] z-[105] glass-overlay flex flex-col justify-between p-5 pt-6 pb-12 md:hidden overflow-y-auto"
+            className="fixed inset-0 w-full h-[100dvh] z-[105] glass-overlay flex flex-col justify-between p-5 pt-6 pb-8 md:hidden overflow-y-auto"
           >
             {/* Ambient Background Glass Glow Spheres */}
             <div className="absolute top-10 right-10 w-72 h-72 rounded-full bg-primary/15 blur-3xl pointer-events-none animate-pulse" />
@@ -199,8 +196,8 @@ export function Navbar() {
               </button>
             </div>
 
-            {/* Nav links with staggered text animations */}
-            <nav className="my-auto py-3 relative z-10 overflow-y-auto max-h-[calc(100dvh-180px)]">
+            {/* Nav links with staggered text animations & Portal Login inside list */}
+            <nav className="my-auto py-3 relative z-10 overflow-y-auto max-h-[calc(100dvh-120px)]">
               <motion.ul
                 initial="closed"
                 animate="open"
@@ -213,10 +210,46 @@ export function Navbar() {
                     transition: { staggerChildren: 0.03, staggerDirection: -1 },
                   },
                 }}
-                className="flex flex-col gap-1.5"
+                className="flex flex-col gap-2"
               >
-                {NAV_LINKS.map((link, idx) => {
+                {MOBILE_NAV_LINKS.map((link, idx) => {
                   const isActive = location === link.href;
+                  
+                  if (link.isPortal) {
+                    return (
+                      <motion.li
+                        key="portal-item"
+                        variants={{
+                          open: {
+                            opacity: 1,
+                            y: 0,
+                            transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] },
+                          },
+                          closed: {
+                            opacity: 0,
+                            y: 20,
+                            transition: { duration: 0.2 },
+                          },
+                        }}
+                        className="mt-3 pt-3 border-t border-white/40"
+                      >
+                        <Link
+                          href="/sign-in"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center justify-between p-3.5 px-5 rounded-2xl bg-gradient-to-r from-primary via-primary/95 to-primary/90 text-white font-bold shadow-xl shadow-primary/25 active:scale-95 transition-all hover:scale-[1.02] group"
+                        >
+                          <div className="flex items-center gap-3">
+                            <LogIn className="w-5 h-5 text-white" />
+                            <span className="font-serif text-xl font-bold tracking-tight">
+                              Portal Login
+                            </span>
+                          </div>
+                          <ArrowRight className="w-5 h-5 text-white/90 group-hover:translate-x-1 transition-transform" />
+                        </Link>
+                      </motion.li>
+                    );
+                  }
+
                   return (
                     <motion.li
                       key={link.href}
@@ -260,23 +293,6 @@ export function Navbar() {
               </motion.ul>
             </nav>
 
-            {/* Bottom Actions inside Overlay — Prominently padded above screen edge */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 15 }}
-              transition={{ delay: 0.25, duration: 0.3 }}
-              className="pt-3 pb-6 border-t border-white/40 flex flex-col gap-2 relative z-10 shrink-0 mb-2"
-            >
-              <Link
-                href="/sign-in"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full flex items-center justify-center gap-2 rounded-full py-3.5 px-6 font-sans text-sm font-bold uppercase tracking-wider text-white bg-gradient-to-r from-primary to-primary/90 shadow-2xl shadow-primary/30 active:scale-95 transition-all hover:scale-[1.02]"
-              >
-                <LogIn className="w-4 h-4" />
-                <span>Portal Login</span>
-              </Link>
-            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
