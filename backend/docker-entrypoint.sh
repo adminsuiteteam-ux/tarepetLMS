@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-echo "==> Running database migrations on Xata..."
+echo "==> Running database migrations on Layerbase PostgreSQL..."
 python manage.py migrate --no-input
 
 echo "==> Collecting static files..."

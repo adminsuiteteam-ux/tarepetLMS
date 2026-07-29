@@ -67,15 +67,15 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Database Configuration (Xata PostgreSQL Serverless)
+# Database Configuration (Layerbase PostgreSQL Serverless)
 _db_config = env.db(
     'DATABASE_URL',
     default=f"sqlite:///{os.path.join(BASE_DIR, 'db.sqlite3')}"
 )
-# Xata serverless keepalive settings - prevents dropped connections
+# Layerbase serverless keepalive & pool settings
 if _db_config.get('ENGINE') != 'django.db.backends.sqlite3':
     _db_config.update({
-        'CONN_MAX_AGE': 0,  # short-lived connections for serverless
+        'CONN_MAX_AGE': 600,  # maintain connection pool for Layerbase
         'OPTIONS': {
             'sslmode': 'require',
             'keepalives': 1,
