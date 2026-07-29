@@ -1,12 +1,38 @@
 import { PageTransition } from "@/components/layout/Layout";
 import { Link } from "wouter";
-import { motion } from "framer-motion";
-import { useRef, useEffect } from "react";
+import { motion, useInView, animate } from "framer-motion";
+import { useRef, useEffect, useState } from "react";
 import { ArrowRight, BookOpen, Heart, Users, CheckCircle2, Quote, Sparkles, GraduationCap, Globe, Building2, HeartHandshake } from "lucide-react";
 import heroImg from "@assets/generated_images/hero.jpg";
 import philosophyImg from "@assets/generated_images/programs.jpg";
 import { GlareCard } from "@/components/ui/glare-card";
 import BackgroundNoiseEffect from "@/components/ui/background-snippets-noise-effect11";
+
+function Counter({ target, suffix = "", duration = 2 }: { target: number; suffix?: string; duration?: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const isInView = useInView(ref, { once: false, amount: 0.3 });
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (isInView) {
+      const controls = animate(0, target, {
+        duration,
+        ease: "easeOut",
+        onUpdate(value) {
+          setCount(Math.floor(value));
+        },
+      });
+      return () => {
+        controls.stop();
+      };
+    } else {
+      setCount(0);
+      return undefined;
+    }
+  }, [isInView, target, duration]);
+
+  return <span ref={ref}>{count}{suffix}</span>;
+}
 
 export default function Home() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -366,29 +392,27 @@ export default function Home() {
             </motion.div>
           </div>
 
-          {/* High Visibility Stats Cards */}
+          {/* High Visibility Auto Counting Stats Text (No Card Containers) */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: false }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-20 pt-10"
+            className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 mt-16 pt-10 border-t border-white/15"
           >
             {[
-              { value: "15+", label: "Years of Excellence", icon: <Globe className="w-6 h-6 text-white" /> },
-              { value: "500+", label: "Students Enrolled", icon: <Users className="w-6 h-6 text-white" /> },
-              { value: "40+", label: "Qualified Educators", icon: <GraduationCap className="w-6 h-6 text-white" /> },
-              { value: "100%", label: "Parent Satisfaction", icon: <Heart className="w-6 h-6 text-white" /> },
+              { target: 15, suffix: "+", label: "Years of Excellence" },
+              { target: 500, suffix: "+", label: "Students Enrolled" },
+              { target: 40, suffix: "+", label: "Qualified Educators" },
+              { target: 100, suffix: "%", label: "Parent Satisfaction" },
             ].map((stat, i) => (
-              <div 
-                key={i} 
-                className="text-center glass-card bg-white/10 border border-white/20 p-6 rounded-3xl shadow-xl backdrop-blur-md hover:bg-white/20 transition-all duration-300 group hover:-translate-y-1"
-              >
-                <div className="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center mx-auto mb-3 border border-white/20 group-hover:scale-110 transition-transform">
-                  {stat.icon}
-                </div>
-                <p className="text-4xl md:text-5xl font-serif font-black text-white mb-2 drop-shadow-md tracking-tight">{stat.value}</p>
-                <p className="text-white/90 font-bold text-sm tracking-wide">{stat.label}</p>
+              <div key={i} className="text-center py-4">
+                <p className="text-5xl md:text-6xl font-serif font-black text-white mb-2 tracking-tight drop-shadow-lg">
+                  <Counter target={stat.target} suffix={stat.suffix} />
+                </p>
+                <p className="text-white/90 font-bold text-base md:text-lg tracking-wide">
+                  {stat.label}
+                </p>
               </div>
             ))}
           </motion.div>
