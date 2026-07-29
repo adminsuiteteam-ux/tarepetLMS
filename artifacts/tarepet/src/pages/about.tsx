@@ -7,35 +7,58 @@ export default function About() {
   return (
     <PageTransition>
       {/* Hero Header */}
-      <section className="bg-gradient-to-br from-secondary via-secondary/95 to-secondary/90 text-white pt-28 pb-20 md:pt-36 md:pb-28 relative overflow-hidden">
+      <section className="bg-gradient-to-br from-[#123922] via-[#0f2e1d] to-[#091f13] text-white pt-32 pb-24 md:pt-40 md:pb-32 relative overflow-hidden border-b border-white/10">
+        {/* Background Ambient Glow & Glass Shimmer */}
         <div className="absolute inset-0 glass-shimmer pointer-events-none opacity-20" />
-        <div className="absolute -top-20 -right-20 w-96 h-96 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="container mx-auto px-4 md:px-6 text-center relative z-10">
+        <div className="absolute top-10 right-10 w-96 h-96 bg-primary/25 rounded-full blur-3xl pointer-events-none animate-pulse" />
+        <div className="absolute bottom-10 left-10 w-96 h-96 bg-secondary/35 rounded-full blur-3xl pointer-events-none animate-pulse" />
+
+        <div className="container mx-auto px-4 md:px-6 text-center relative z-10 max-w-4xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-button text-white text-xs font-semibold uppercase tracking-wider mb-6"
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-button text-white text-xs font-semibold uppercase tracking-wider mb-6 shadow-lg border border-white/20"
           >
-            <Sparkles className="w-3.5 h-3.5 text-primary" />
+            <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
             <span>Discover Our Legacy</span>
           </motion.div>
+
           <motion.h1 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-4xl md:text-6xl font-serif font-bold mb-6 tracking-tight"
+            className="text-4xl sm:text-5xl md:text-6xl font-serif font-bold text-white mb-6 tracking-tight drop-shadow-md leading-[1.15]"
           >
-            About Tare Pet
+            About Tare Pet <span className="text-primary italic font-light">Montessori School</span>
           </motion.h1>
+
           <motion.p 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto font-sans leading-relaxed"
+            className="text-lg md:text-xl text-white/90 max-w-3xl mx-auto font-sans leading-relaxed font-normal mb-10"
           >
-            A premium educational institution dedicated to shaping confident, independent, and socially responsible leaders in Bayelsa State.
+            A premier educational institution in Yenagoa, Bayelsa State — dedicated to shaping confident, independent, and ethical leaders through child-centered discovery and academic excellence.
           </motion.p>
+
+          {/* Quick Highlight Pills Bar */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="flex flex-wrap items-center justify-center gap-3 md:gap-4 text-xs md:text-sm font-sans"
+          >
+            <span className="px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
+              🏆 Established 2010
+            </span>
+            <span className="px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
+              🌱 Montessori & Erdkinder Method
+            </span>
+            <span className="px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
+              📍 Kpansia-Epje, Yenagoa
+            </span>
+          </motion.div>
         </div>
       </section>
 

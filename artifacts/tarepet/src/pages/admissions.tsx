@@ -44,37 +44,58 @@ export default function Admissions() {
 
   return (
     <PageTransition>
-      {/* Header */}
-      <section className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 py-28 md:py-36 text-white relative overflow-hidden">
-        <div className="absolute inset-0 glass-shimmer pointer-events-none opacity-25" />
-        <div className="container mx-auto px-4 md:px-6 relative z-10">
-          <div className="max-w-3xl">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-4 py-1 rounded-full glass-button text-white text-xs font-semibold uppercase tracking-wider mb-6"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Enrollment 2025/2026</span>
-            </motion.div>
-            <motion.h1 
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-4xl md:text-6xl font-serif font-bold mb-6 tracking-tight"
-            >
-              Admissions
-            </motion.h1>
-            <motion.p 
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-lg md:text-xl text-white/90 font-sans leading-relaxed"
-            >
-              Join the Tare Pet family. We seek students and families who share our commitment to academic excellence and character development.
-            </motion.p>
-          </div>
+      {/* Hero Header */}
+      <section className="bg-gradient-to-br from-[#133e25] via-primary/95 to-[#0b2416] text-white pt-32 pb-24 md:pt-40 md:pb-32 relative overflow-hidden border-b border-white/10">
+        <div className="absolute inset-0 glass-shimmer pointer-events-none opacity-20" />
+        <div className="absolute top-10 right-10 w-96 h-96 bg-primary/25 rounded-full blur-3xl pointer-events-none animate-pulse" />
+        <div className="absolute bottom-10 left-10 w-96 h-96 bg-secondary/35 rounded-full blur-3xl pointer-events-none animate-pulse" />
+
+        <div className="container mx-auto px-4 md:px-6 relative z-10 max-w-4xl text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-button text-white text-xs font-semibold uppercase tracking-wider mb-6 shadow-lg border border-white/20"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
+            <span>Enrollment Open 2025 / 2026</span>
+          </motion.div>
+
+          <motion.h1 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="text-4xl sm:text-5xl md:text-6xl font-serif font-bold text-white mb-6 tracking-tight drop-shadow-md leading-[1.15]"
+          >
+            Begin Your Child's Journey to <span className="text-primary italic font-light">Excellence</span>
+          </motion.h1>
+
+          <motion.p 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-lg md:text-xl text-white/90 max-w-3xl mx-auto font-sans leading-relaxed font-normal mb-10"
+          >
+            We welcome pupils and students dedicated to character development, curiosity, and academic leadership. Secure your child's place today.
+          </motion.p>
+
+          {/* Quick Highlight Badges */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="flex flex-wrap items-center justify-center gap-3 md:gap-4 text-xs md:text-sm font-sans"
+          >
+            <span className="px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
+              📝 Simple 3-Step Process
+            </span>
+            <span className="px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
+              🎓 Entrance Assessment
+            </span>
+            <span className="px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
+              🏫 Schedule Campus Visit
+            </span>
+          </motion.div>
         </div>
       </section>
 

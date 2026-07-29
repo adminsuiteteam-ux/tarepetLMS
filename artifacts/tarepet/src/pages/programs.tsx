@@ -7,35 +7,54 @@ import { BookOpen, Activity, Target, Palette, MoveRight, Sparkles, Building2, He
 export default function Programs() {
   return (
     <PageTransition>
-      {/* Header */}
-      <section className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 py-28 md:py-36 text-white relative overflow-hidden">
-        <div className="absolute inset-0 glass-shimmer pointer-events-none opacity-25" />
-        <div className="container mx-auto px-4 md:px-6 text-center relative z-10">
+      {/* Hero Header */}
+      <section className="bg-gradient-to-br from-[#8b152b] via-primary/95 to-[#123922] text-white pt-32 pb-24 md:pt-40 md:pb-32 relative overflow-hidden border-b border-white/10">
+        <div className="absolute inset-0 glass-shimmer pointer-events-none opacity-20" />
+        <div className="absolute top-10 left-10 w-96 h-96 bg-primary/30 rounded-full blur-3xl pointer-events-none animate-pulse" />
+        <div className="absolute bottom-10 right-10 w-96 h-96 bg-secondary/35 rounded-full blur-3xl pointer-events-none animate-pulse" />
+
+        <div className="container mx-auto px-4 md:px-6 text-center relative z-10 max-w-4xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-4 py-1 rounded-full glass-button text-white text-xs font-semibold uppercase tracking-wider mb-6"
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-button text-white text-xs font-semibold uppercase tracking-wider mb-6 shadow-lg border border-white/20"
           >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Excellence in Learning</span>
+            <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
+            <span>Academic Pathways & Specializations</span>
           </motion.div>
+
           <motion.h1 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-4xl md:text-6xl font-serif font-bold mb-6 tracking-tight"
+            className="text-4xl sm:text-5xl md:text-6xl font-serif font-bold text-white mb-6 tracking-tight drop-shadow-md leading-[1.15]"
           >
-            Academic & School Programs
+            Programs Designed for <span className="text-white/90 italic font-light">Every Stage</span>
           </motion.h1>
+
           <motion.p 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-lg md:text-xl text-white/90 max-w-3xl mx-auto font-sans leading-relaxed"
+            className="text-lg md:text-xl text-white/90 max-w-3xl mx-auto font-sans leading-relaxed font-normal mb-10"
           >
-            A comprehensive educational pathway featuring Nursery, Primary, Junior & Senior Secondary, Boarding Facilities, and Special Needs Education.
+            Explore our continuous educational pathway: Nursery, Primary, Junior & Senior Secondary, Boarding Facilities, and Special Needs Education.
           </motion.p>
+
+          {/* Interactive Program Category Badges */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="flex flex-wrap items-center justify-center gap-2.5 md:gap-3 text-xs font-sans"
+          >
+            {['Nursery', 'Primary', 'Secondary', 'Boarding', 'Special Needs'].map((prog, idx) => (
+              <span key={idx} className="px-3.5 py-1.5 rounded-full glass-card bg-white/15 border border-white/25 text-white font-bold shadow-sm hover:bg-white/30 transition-all">
+                {prog}
+              </span>
+            ))}
+          </motion.div>
         </div>
       </section>
 

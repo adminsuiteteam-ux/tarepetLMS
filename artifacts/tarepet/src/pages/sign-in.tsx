@@ -90,7 +90,7 @@ export default function SignIn() {
         </div>
 
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-8">
+          <div className="flex items-center gap-3.5 mb-8">
             <img 
               src={tarepetLogo} 
               alt="Tarepet Montessori School Logo" 
@@ -100,7 +100,7 @@ export default function SignIn() {
               <span className="font-serif font-bold text-3xl text-white leading-none tracking-tight">
                 Tare Pet
               </span>
-              <span className="font-sans text-sm uppercase tracking-[0.2em] text-white/80 font-medium mt-1">
+              <span className="font-sans text-xs uppercase tracking-[0.2em] text-white/80 font-semibold mt-1">
                 montessori school
               </span>
             </div>
@@ -111,12 +111,53 @@ export default function SignIn() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <h1 className="text-4xl md:text-5xl font-serif font-bold mb-6 leading-tight">
-              Welcome back.
+            <h1 className="text-4xl md:text-5xl font-serif font-bold mb-6 leading-tight drop-shadow-sm">
+              Welcome to the <span className="text-primary italic font-light">School Portal</span>
             </h1>
-            <p className="text-xl text-white/90 leading-relaxed max-w-md">
-              Your child's journey continues here. Access grades, attendance, announcements, and stay connected with our community.
+            <p className="text-lg text-white/90 leading-relaxed max-w-md font-sans mb-8">
+              Access grades, attendance records, CBT exam portal, fee statements, and school announcements for parents, students, and staff.
             </p>
+
+            {/* Quick Demo Role Shortcut Buttons */}
+            <div className="space-y-3">
+              <p className="text-xs uppercase tracking-widest text-white/70 font-semibold font-sans mb-2">
+                Quick Demo Portal Login:
+              </p>
+              <div className="grid grid-cols-2 gap-2.5 max-w-sm">
+                <button
+                  type="button"
+                  onClick={() => handleDemoLogin("admin@tarepet.edu.ng")}
+                  className="px-3.5 py-2.5 rounded-xl glass-button text-white text-xs font-bold uppercase tracking-wider text-left hover:bg-white/20 transition-all flex items-center justify-between"
+                >
+                  <span>👑 Admin</span>
+                  <span>→</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDemoLogin("teacher@tarepet.edu.ng")}
+                  className="px-3.5 py-2.5 rounded-xl glass-button text-white text-xs font-bold uppercase tracking-wider text-left hover:bg-white/20 transition-all flex items-center justify-between"
+                >
+                  <span>👩‍🏫 Teacher</span>
+                  <span>→</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDemoLogin("student@tarepet.edu.ng")}
+                  className="px-3.5 py-2.5 rounded-xl glass-button text-white text-xs font-bold uppercase tracking-wider text-left hover:bg-white/20 transition-all flex items-center justify-between"
+                >
+                  <span>🎓 Student</span>
+                  <span>→</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDemoLogin("parent@tarepet.edu.ng")}
+                  className="px-3.5 py-2.5 rounded-xl glass-button text-white text-xs font-bold uppercase tracking-wider text-left hover:bg-white/20 transition-all flex items-center justify-between"
+                >
+                  <span>👨‍👩‍👧 Parent</span>
+                  <span>→</span>
+                </button>
+              </div>
+            </div>
           </motion.div>
         </div>
 

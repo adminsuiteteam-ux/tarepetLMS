@@ -84,37 +84,40 @@ export default function Journal() {
 
   return (
     <PageTransition>
-      {/* Header */}
-      <section className="bg-gradient-to-br from-secondary via-secondary/95 to-secondary/90 py-28 md:py-36 text-white relative overflow-hidden">
+      {/* Hero Header */}
+      <section className="bg-gradient-to-br from-[#0f2e1d] via-[#16422a] to-[#091f13] text-white pt-32 pb-24 md:pt-40 md:pb-32 relative overflow-hidden border-b border-white/10">
         <div className="absolute inset-0 glass-shimmer pointer-events-none opacity-20" />
-        <div className="container mx-auto px-4 md:px-6 relative z-10">
-          <div className="max-w-3xl">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-4 py-1 rounded-full glass-button text-white text-xs font-semibold uppercase tracking-wider mb-6"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Stories of Learning</span>
-            </motion.div>
-            <motion.h1 
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-4xl md:text-6xl font-serif font-bold text-white mb-6 tracking-tight"
-            >
-              School Journal
-            </motion.h1>
-            <motion.p 
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-lg md:text-xl text-white/90 font-sans leading-relaxed"
-            >
-              A window into daily school life—reflections, discoveries, and moments from our students and staff. These are the real stories of learning at Tare Pet.
-            </motion.p>
-          </div>
+        <div className="absolute top-10 right-10 w-96 h-96 bg-primary/25 rounded-full blur-3xl pointer-events-none animate-pulse" />
+        <div className="absolute bottom-10 left-10 w-96 h-96 bg-secondary/35 rounded-full blur-3xl pointer-events-none animate-pulse" />
+
+        <div className="container mx-auto px-4 md:px-6 text-center relative z-10 max-w-4xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-button text-white text-xs font-semibold uppercase tracking-wider mb-6 shadow-lg border border-white/20"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
+            <span>Stories of Discovery & Growth</span>
+          </motion.div>
+
+          <motion.h1 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="text-4xl sm:text-5xl md:text-6xl font-serif font-bold text-white mb-6 tracking-tight drop-shadow-md leading-[1.15]"
+          >
+            Tare Pet <span className="text-primary italic font-light">School Journal</span> & News
+          </motion.h1>
+
+          <motion.p 
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-lg md:text-xl text-white/90 max-w-3xl mx-auto font-sans leading-relaxed font-normal"
+          >
+            A window into daily campus life — reflections, student projects, teacher insights, and academic milestones from our school community in Yenagoa.
+          </motion.p>
         </div>
       </section>
 
