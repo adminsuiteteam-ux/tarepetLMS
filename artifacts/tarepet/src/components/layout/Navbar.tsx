@@ -4,7 +4,13 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import tarepetLogo from "@assets/tarepet__1784835204178.png";
 
-const NAV_LINKS = [
+interface NavLinkItem {
+  href: string;
+  label: string;
+  isPortal?: boolean;
+}
+
+const NAV_LINKS: NavLinkItem[] = [
   { href: "/", label: "Home" },
   { href: "/about", label: "About" },
   { href: "/programs", label: "Programs" },
@@ -14,7 +20,7 @@ const NAV_LINKS = [
   { href: "/contact", label: "Contact" },
 ];
 
-const MOBILE_NAV_LINKS = [
+const MOBILE_NAV_LINKS: NavLinkItem[] = [
   ...NAV_LINKS,
   { href: "/sign-in", label: "Portal Login", isPortal: true },
 ];
