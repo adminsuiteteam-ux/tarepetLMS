@@ -127,30 +127,40 @@ export function Navbar() {
             </Link>
           </nav>
 
-          {/* Animated Hamburger Button for Mobile */}
-          <button
-            className="md:hidden relative z-[110] w-10 h-10 rounded-full bg-white/85 backdrop-blur-md border border-white/90 shadow-md flex items-center justify-center focus:outline-none hover:bg-white transition-all active:scale-95"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            <div className="w-4.5 h-3.5 flex flex-col justify-between items-center relative">
-              <motion.span
-                animate={mobileMenuOpen ? { rotate: 45, y: 6 } : { rotate: 0, y: 0 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className="w-4.5 h-0.5 bg-foreground rounded-full transform origin-center"
-              />
-              <motion.span
-                animate={mobileMenuOpen ? { opacity: 0, x: -10 } : { opacity: 1, x: 0 }}
-                transition={{ duration: 0.2 }}
-                className="w-4.5 h-0.5 bg-primary rounded-full"
-              />
-              <motion.span
-                animate={mobileMenuOpen ? { rotate: -45, y: -8 } : { rotate: 0, y: 0 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                className="w-4.5 h-0.5 bg-foreground rounded-full transform origin-center"
-              />
-            </div>
-          </button>
+          {/* Mobile Right Controls: Portal Shortcut & Animated Hamburger */}
+          <div className="md:hidden flex items-center gap-2 relative z-[110]">
+            <Link
+              href="/sign-in"
+              className="flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold uppercase tracking-wider text-white bg-gradient-to-r from-primary to-primary/90 shadow-md shadow-primary/20 active:scale-95 transition-transform"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Portal</span>
+            </Link>
+
+            <button
+              className="w-10 h-10 rounded-full bg-white/85 backdrop-blur-md border border-white/90 shadow-md flex items-center justify-center focus:outline-none hover:bg-white transition-all active:scale-95"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              <div className="w-4.5 h-3.5 flex flex-col justify-between items-center relative">
+                <motion.span
+                  animate={mobileMenuOpen ? { rotate: 45, y: 6 } : { rotate: 0, y: 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="w-4.5 h-0.5 bg-foreground rounded-full transform origin-center"
+                />
+                <motion.span
+                  animate={mobileMenuOpen ? { opacity: 0, x: -10 } : { opacity: 1, x: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="w-4.5 h-0.5 bg-primary rounded-full"
+                />
+                <motion.span
+                  animate={mobileMenuOpen ? { rotate: -45, y: -8 } : { rotate: 0, y: 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="w-4.5 h-0.5 bg-foreground rounded-full transform origin-center"
+                />
+              </div>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -163,18 +173,18 @@ export function Navbar() {
             animate={{ opacity: 1, backdropFilter: "blur(28px)" }}
             exit={{ opacity: 0, backdropFilter: "blur(0px)" }}
             transition={{ duration: 0.35, ease: "easeInOut" }}
-            className="fixed inset-0 top-0 left-0 w-screen h-screen z-[105] glass-overlay flex flex-col justify-between p-6 pt-6 md:hidden overflow-y-auto"
+            className="fixed inset-0 w-full h-[100dvh] z-[105] glass-overlay flex flex-col justify-between p-5 pt-6 pb-12 md:hidden overflow-y-auto"
           >
             {/* Ambient Background Glass Glow Spheres */}
             <div className="absolute top-10 right-10 w-72 h-72 rounded-full bg-primary/15 blur-3xl pointer-events-none animate-pulse" />
             <div className="absolute bottom-10 left-10 w-72 h-72 rounded-full bg-secondary/15 blur-3xl pointer-events-none animate-pulse" />
 
             {/* Mobile Overlay Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-white/40 relative z-10">
+            <div className="flex items-center justify-between pb-3 border-b border-white/40 relative z-10 shrink-0">
               <Link href="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2.5">
-                <img src={tarepetLogo} alt="Tare Pet Logo" className="w-9 h-9 object-contain" />
+                <img src={tarepetLogo} alt="Tare Pet Logo" className="w-8 h-8 object-contain" />
                 <div className="flex flex-col">
-                  <span className="font-serif font-bold text-xl text-primary leading-none">Tare Pet</span>
+                  <span className="font-serif font-bold text-lg text-primary leading-none">Tare Pet</span>
                   <span className="font-sans text-[9px] uppercase tracking-[0.16em] text-secondary font-semibold mt-0.5">
                     montessori school
                   </span>
@@ -190,20 +200,20 @@ export function Navbar() {
             </div>
 
             {/* Nav links with staggered text animations */}
-            <nav className="my-auto py-6 relative z-10">
+            <nav className="my-auto py-3 relative z-10 overflow-y-auto max-h-[calc(100dvh-180px)]">
               <motion.ul
                 initial="closed"
                 animate="open"
                 exit="closed"
                 variants={{
                   open: {
-                    transition: { staggerChildren: 0.07, delayChildren: 0.1 },
+                    transition: { staggerChildren: 0.05, delayChildren: 0.08 },
                   },
                   closed: {
-                    transition: { staggerChildren: 0.04, staggerDirection: -1 },
+                    transition: { staggerChildren: 0.03, staggerDirection: -1 },
                   },
                 }}
-                className="flex flex-col gap-2.5"
+                className="flex flex-col gap-1.5"
               >
                 {NAV_LINKS.map((link, idx) => {
                   const isActive = location === link.href;
@@ -215,34 +225,34 @@ export function Navbar() {
                           opacity: 1,
                           y: 0,
                           rotateX: 0,
-                          transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] },
+                          transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] },
                         },
                         closed: {
                           opacity: 0,
-                          y: 30,
+                          y: 20,
                           rotateX: 20,
-                          transition: { duration: 0.25 },
+                          transition: { duration: 0.2 },
                         },
                       }}
                     >
                       <Link
                         href={link.href}
                         onClick={() => setMobileMenuOpen(false)}
-                        className={`group flex items-center justify-between p-3.5 rounded-2xl transition-all duration-300 ${
+                        className={`group flex items-center justify-between p-2.5 px-3.5 rounded-xl transition-all duration-300 ${
                           isActive
                             ? "bg-white/90 border border-primary/30 shadow-md shadow-primary/5 text-primary font-bold"
                             : "hover:bg-white/60 text-foreground/85 hover:text-foreground"
                         }`}
                       >
-                        <div className="flex items-center gap-4">
-                          <span className="font-sans text-xs font-bold tracking-widest text-primary/60">
+                        <div className="flex items-center gap-3">
+                          <span className="font-sans text-[11px] font-bold tracking-widest text-primary/60">
                             0{idx + 1}
                           </span>
-                          <span className="font-serif text-2xl font-bold tracking-tight transition-transform duration-300 group-hover:translate-x-1">
+                          <span className="font-serif text-xl font-bold tracking-tight transition-transform duration-300 group-hover:translate-x-1">
                             {link.label}
                           </span>
                         </div>
-                        <ArrowRight className="w-5 h-5 text-primary/40 group-hover:text-primary group-hover:translate-x-1.5 transition-all duration-300" />
+                        <ArrowRight className="w-4 h-4 text-primary/40 group-hover:text-primary group-hover:translate-x-1 transition-all duration-300" />
                       </Link>
                     </motion.li>
                   );
@@ -250,18 +260,18 @@ export function Navbar() {
               </motion.ul>
             </nav>
 
-            {/* Bottom Actions inside Overlay */}
+            {/* Bottom Actions inside Overlay — Prominently padded above screen edge */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 15 }}
-              transition={{ delay: 0.35, duration: 0.3 }}
-              className="pt-4 border-t border-white/40 flex flex-col gap-3 relative z-10"
+              transition={{ delay: 0.25, duration: 0.3 }}
+              className="pt-3 pb-6 border-t border-white/40 flex flex-col gap-2 relative z-10 shrink-0 mb-2"
             >
               <Link
                 href="/sign-in"
                 onClick={() => setMobileMenuOpen(false)}
-                className="w-full flex items-center justify-center gap-2 rounded-full py-3.5 px-6 font-sans text-sm font-bold uppercase tracking-wider text-white bg-gradient-to-r from-primary to-primary/90 shadow-xl shadow-primary/25 active:scale-95 transition-transform"
+                className="w-full flex items-center justify-center gap-2 rounded-full py-3.5 px-6 font-sans text-sm font-bold uppercase tracking-wider text-white bg-gradient-to-r from-primary to-primary/90 shadow-2xl shadow-primary/30 active:scale-95 transition-all hover:scale-[1.02]"
               >
                 <LogIn className="w-4 h-4" />
                 <span>Portal Login</span>
