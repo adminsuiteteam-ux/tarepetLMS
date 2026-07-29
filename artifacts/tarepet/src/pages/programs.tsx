@@ -9,7 +9,18 @@ export default function Programs() {
     <PageTransition>
       {/* Hero Header */}
       <section className="bg-gradient-to-br from-[#8b152b] via-primary/95 to-[#123922] text-white pt-32 pb-24 md:pt-40 md:pb-32 relative overflow-hidden border-b border-white/10">
-        <div className="absolute inset-0 glass-shimmer pointer-events-none opacity-20" />
+        {/* Background Image Layer */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src={programsImg}
+            alt="Tare Pet Academic Programs"
+            className="w-full h-full object-cover opacity-20 scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#8b152b]/90 via-[#123922]/90 to-[#0b2416]/95 mix-blend-multiply" />
+        </div>
+
+        {/* Background Ambient Glow & Glass Shimmer */}
+        <div className="absolute inset-0 glass-shimmer pointer-events-none opacity-20 z-0" />
         <div className="absolute top-10 left-10 w-96 h-96 bg-primary/30 rounded-full blur-3xl pointer-events-none animate-pulse" />
         <div className="absolute bottom-10 right-10 w-96 h-96 bg-secondary/35 rounded-full blur-3xl pointer-events-none animate-pulse" />
 

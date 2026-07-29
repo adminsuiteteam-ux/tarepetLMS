@@ -8,8 +8,18 @@ export default function About() {
     <PageTransition>
       {/* Hero Header */}
       <section className="bg-gradient-to-br from-[#123922] via-[#0f2e1d] to-[#091f13] text-white pt-32 pb-24 md:pt-40 md:pb-32 relative overflow-hidden border-b border-white/10">
+        {/* Background Image Layer */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src={aboutImg}
+            alt="Tare Pet Campus"
+            className="w-full h-full object-cover opacity-20 scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#123922]/90 via-[#0f2e1d]/85 to-[#091f13]/90 mix-blend-multiply" />
+        </div>
+
         {/* Background Ambient Glow & Glass Shimmer */}
-        <div className="absolute inset-0 glass-shimmer pointer-events-none opacity-20" />
+        <div className="absolute inset-0 glass-shimmer pointer-events-none opacity-20 z-0" />
         <div className="absolute top-10 right-10 w-96 h-96 bg-primary/25 rounded-full blur-3xl pointer-events-none animate-pulse" />
         <div className="absolute bottom-10 left-10 w-96 h-96 bg-secondary/35 rounded-full blur-3xl pointer-events-none animate-pulse" />
 

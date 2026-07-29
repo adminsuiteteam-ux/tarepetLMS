@@ -46,7 +46,18 @@ export default function Admissions() {
     <PageTransition>
       {/* Hero Header */}
       <section className="bg-gradient-to-br from-[#133e25] via-primary/95 to-[#0b2416] text-white pt-32 pb-24 md:pt-40 md:pb-32 relative overflow-hidden border-b border-white/10">
-        <div className="absolute inset-0 glass-shimmer pointer-events-none opacity-20" />
+        {/* Background Image Layer */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=2000&auto=format&fit=crop"
+            alt="Admissions & Learning"
+            className="w-full h-full object-cover opacity-20 scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#133e25]/92 via-[#8b152b]/85 to-[#0b2416]/92 mix-blend-multiply" />
+        </div>
+
+        {/* Background Ambient Glow & Glass Shimmer */}
+        <div className="absolute inset-0 glass-shimmer pointer-events-none opacity-20 z-0" />
         <div className="absolute top-10 right-10 w-96 h-96 bg-primary/25 rounded-full blur-3xl pointer-events-none animate-pulse" />
         <div className="absolute bottom-10 left-10 w-96 h-96 bg-secondary/35 rounded-full blur-3xl pointer-events-none animate-pulse" />
 

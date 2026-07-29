@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Eye, EyeOff, Lock, Mail, AlertCircle } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import tarepetLogo from "@assets/tarepet__1784835204178.png";
+import heroImg from "@assets/generated_images/hero.jpg";
 import { useAuth } from "@/context/AuthContext";
 import { authClient } from "@/lib/api-auth";
 
@@ -75,8 +76,18 @@ export default function SignIn() {
     <div className="min-h-[100dvh] flex bg-background">
       {/* Left Panel - Brand Identity */}
       <div className="hidden lg:flex lg:w-1/2 bg-secondary text-white p-16 flex-col justify-between relative overflow-hidden">
+        {/* Background Image Layer */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src={heroImg}
+            alt="Tare Pet Montessori School"
+            className="w-full h-full object-cover opacity-25 scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-secondary/95 via-[#123922]/90 to-secondary/95 mix-blend-multiply" />
+        </div>
+
         {/* Decorative Pattern */}
-        <div className="absolute inset-0 opacity-5">
+        <div className="absolute inset-0 opacity-5 z-0">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
           <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
