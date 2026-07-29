@@ -2,7 +2,7 @@ import { PageTransition } from "@/components/layout/Layout";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import programsImg from "@assets/generated_images/programs.jpg";
-import { BookOpen, Activity, Target, Palette, MoveRight, Sparkles } from "lucide-react";
+import { BookOpen, Activity, Target, Palette, MoveRight, Sparkles, Building2, HeartHandshake, ShieldCheck, Award } from "lucide-react";
 
 export default function Programs() {
   return (
@@ -26,15 +26,15 @@ export default function Programs() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-4xl md:text-6xl font-serif font-bold mb-6 tracking-tight"
           >
-            Academic Programs
+            Academic & School Programs
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto font-sans leading-relaxed"
+            className="text-lg md:text-xl text-white/90 max-w-3xl mx-auto font-sans leading-relaxed"
           >
-            A comprehensive, continuous educational pathway from early childhood through secondary graduation.
+            A comprehensive educational pathway featuring Nursery, Primary, Junior & Senior Secondary, Boarding Facilities, and Special Needs Education.
           </motion.p>
         </div>
       </section>
@@ -44,7 +44,7 @@ export default function Programs() {
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex flex-col gap-24">
             
-            {/* Early Years / Nursery — Slide from Left */}
+            {/* 1. Early Years / Nursery */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
               <motion.div 
                 initial={{ opacity: 0, x: -70 }}
@@ -83,15 +83,15 @@ export default function Programs() {
                 className="order-1 lg:order-2 glass-card rounded-3xl aspect-[4/3] flex items-center justify-center p-8 text-center relative overflow-hidden border border-white/80 shadow-xl group"
               >
                 <div className="relative z-10 text-secondary/40 group-hover:scale-105 transition-transform duration-500">
-                  <BookOpen className="w-28 h-28 mx-auto mb-4" />
-                  <span className="font-serif italic text-2xl text-foreground font-bold">Early Years Learning</span>
+                  <BookOpen className="w-28 h-28 mx-auto mb-4 text-secondary" />
+                  <span className="font-serif italic text-2xl text-foreground font-bold">Nursery Program</span>
                 </div>
               </motion.div>
             </div>
 
             <hr className="border-border" />
 
-            {/* Primary — Slide from Right */}
+            {/* 2. Primary */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
               <motion.div 
                 initial={{ opacity: 0, x: -70 }}
@@ -101,7 +101,7 @@ export default function Programs() {
                 className="glass-card rounded-3xl aspect-[4/3] flex items-center justify-center p-8 text-center relative overflow-hidden border border-white/80 shadow-xl group"
               >
                 <div className="relative z-10 text-primary/40 group-hover:scale-105 transition-transform duration-500">
-                  <Activity className="w-28 h-28 mx-auto mb-4" />
+                  <Activity className="w-28 h-28 mx-auto mb-4 text-primary" />
                   <span className="font-serif italic text-2xl text-foreground font-bold">Primary Education</span>
                 </div>
               </motion.div>
@@ -137,7 +137,7 @@ export default function Programs() {
 
             <hr className="border-border" />
 
-            {/* Secondary — Slide from Left */}
+            {/* 3. Secondary (Junior & Senior) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
               <motion.div 
                 initial={{ opacity: 0, x: -70 }}
@@ -151,7 +151,7 @@ export default function Programs() {
                 </div>
                 <h2 className="text-3xl md:text-4xl font-serif font-bold text-foreground mb-6">Junior & Senior Secondary</h2>
                 <p className="text-muted-foreground text-lg mb-6 leading-relaxed">
-                  Preparing young adults for higher education and life. We combine rigorous academic preparation (WAEC, NECO) with the Erdkinder philosophy — giving adolescents real-world responsibilities and leadership opportunities.
+                  Preparing young adults for higher education and life. We combine rigorous academic preparation (WAEC, NECO, JAMB) with real-world responsibilities, career pathways, and leadership opportunities.
                 </p>
                 <ul className="space-y-4 mb-8">
                   <li className="flex gap-3 text-muted-foreground">
@@ -164,7 +164,7 @@ export default function Programs() {
                   </li>
                   <li className="flex gap-3 text-muted-foreground">
                     <Target className="w-6 h-6 text-primary shrink-0" />
-                    <span>Intensive exam preparation and career counseling.</span>
+                    <span>Intensive exam preparation and career guidance.</span>
                   </li>
                 </ul>
                 <Link href="/admissions" className="inline-flex items-center text-primary font-bold hover:gap-3 transition-all group">
@@ -183,6 +183,102 @@ export default function Programs() {
                   alt="Secondary School Students in Classroom" 
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 />
+              </motion.div>
+            </div>
+
+            <hr className="border-border" />
+
+            {/* 4. Boarding School */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+              <motion.div 
+                initial={{ opacity: 0, x: -70 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: false, margin: "-40px" }}
+                transition={{ duration: 0.65 }}
+                className="glass-card rounded-3xl aspect-[4/3] flex items-center justify-center p-8 text-center relative overflow-hidden border border-white/80 shadow-xl group bg-gradient-to-br from-secondary/10 to-primary/5"
+              >
+                <div className="relative z-10 group-hover:scale-105 transition-transform duration-500">
+                  <Building2 className="w-28 h-28 mx-auto mb-4 text-secondary" />
+                  <span className="font-serif italic text-2xl text-foreground font-bold">Boarding House</span>
+                </div>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, x: 70 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: false, margin: "-40px" }}
+                transition={{ duration: 0.65, delay: 0.15 }}
+              >
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-secondary/15 text-secondary text-xs font-bold mb-6 uppercase tracking-wider">
+                  Full & Weekly Residence
+                </div>
+                <h2 className="text-3xl md:text-4xl font-serif font-bold text-foreground mb-6">Boarding School</h2>
+                <p className="text-muted-foreground text-lg mb-6 leading-relaxed">
+                  Our modern boarding facility provides a safe, nurturing home-away-from-home for students. We foster discipline, fellowship, structured evening prep, and round-the-clock pastoral care.
+                </p>
+                <ul className="space-y-4 mb-8">
+                  <li className="flex gap-3 text-muted-foreground">
+                    <ShieldCheck className="w-6 h-6 text-primary shrink-0" />
+                    <span>24/7 Security, medical oversight, and dedicated house parents.</span>
+                  </li>
+                  <li className="flex gap-3 text-muted-foreground">
+                    <BookOpen className="w-6 h-6 text-primary shrink-0" />
+                    <span>Structured evening study sessions and academic tutoring.</span>
+                  </li>
+                  <li className="flex gap-3 text-muted-foreground">
+                    <Award className="w-6 h-6 text-primary shrink-0" />
+                    <span>Nutritious balanced meals and weekend recreation activities.</span>
+                  </li>
+                </ul>
+              </motion.div>
+            </div>
+
+            <hr className="border-border" />
+
+            {/* 5. Special School & Inclusive Education */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+              <motion.div 
+                initial={{ opacity: 0, x: -70 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: false, margin: "-40px" }}
+                transition={{ duration: 0.65 }}
+                className="order-2 lg:order-1"
+              >
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/15 text-primary text-xs font-bold mb-6 uppercase tracking-wider">
+                  Inclusive Learning
+                </div>
+                <h2 className="text-3xl md:text-4xl font-serif font-bold text-foreground mb-6">Special School & Inclusive Program</h2>
+                <p className="text-muted-foreground text-lg mb-6 leading-relaxed">
+                  We believe every child possesses unique talents and deserves specialized attention. Our Special Education unit provides individualized learning plans, sensory integration, and dedicated Montessori specialists to ensure every learner thrives.
+                </p>
+                <ul className="space-y-4 mb-8">
+                  <li className="flex gap-3 text-muted-foreground">
+                    <HeartHandshake className="w-6 h-6 text-primary shrink-0" />
+                    <span>Tailored Individualized Education Plans (IEPs).</span>
+                  </li>
+                  <li className="flex gap-3 text-muted-foreground">
+                    <Target className="w-6 h-6 text-primary shrink-0" />
+                    <span>Specialized Montessori sensory & developmental tools.</span>
+                  </li>
+                  <li className="flex gap-3 text-muted-foreground">
+                    <Sparkles className="w-6 h-6 text-primary shrink-0" />
+                    <span>Compassionate, certified special education educators.</span>
+                  </li>
+                </ul>
+                <Link href="/contact" className="inline-flex items-center text-primary font-bold hover:gap-3 transition-all group">
+                  Inquire About Special Education <MoveRight className="ml-2 w-5 h-5 group-hover:translate-x-1.5 transition-transform" />
+                </Link>
+              </motion.div>
+              <motion.div 
+                initial={{ opacity: 0, x: 70 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: false, margin: "-40px" }}
+                transition={{ duration: 0.65, delay: 0.15 }}
+                className="order-1 lg:order-2 glass-card rounded-3xl aspect-[4/3] flex items-center justify-center p-8 text-center relative overflow-hidden border border-white/80 shadow-xl group bg-gradient-to-br from-primary/10 to-secondary/10"
+              >
+                <div className="relative z-10 group-hover:scale-105 transition-transform duration-500">
+                  <HeartHandshake className="w-28 h-28 mx-auto mb-4 text-primary" />
+                  <span className="font-serif italic text-2xl text-foreground font-bold">Special School Program</span>
+                </div>
               </motion.div>
             </div>
 
@@ -250,3 +346,4 @@ export default function Programs() {
     </PageTransition>
   );
 }
+

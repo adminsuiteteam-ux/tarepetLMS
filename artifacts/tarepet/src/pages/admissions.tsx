@@ -222,10 +222,12 @@ export default function Admissions() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="2-5">2 - 5 years (Nursery)</SelectItem>
-                              <SelectItem value="6-11">6 - 11 years (Primary)</SelectItem>
-                              <SelectItem value="12-14">12 - 14 years (Junior Secondary)</SelectItem>
-                              <SelectItem value="15-17">15 - 17 years (Senior Secondary)</SelectItem>
+                              <SelectItem value="nursery">Nursery School (Ages 2 - 5)</SelectItem>
+                              <SelectItem value="primary">Primary School (Ages 6 - 11)</SelectItem>
+                              <SelectItem value="junior-secondary">Junior Secondary School</SelectItem>
+                              <SelectItem value="senior-secondary">Senior Secondary School</SelectItem>
+                              <SelectItem value="boarding">Boarding School Residence</SelectItem>
+                              <SelectItem value="special-school">Special Needs & Inclusive School</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />

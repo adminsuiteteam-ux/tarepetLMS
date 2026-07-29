@@ -2,7 +2,7 @@ import { PageTransition } from "@/components/layout/Layout";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { useRef, useEffect } from "react";
-import { ArrowRight, BookOpen, Heart, Users, CheckCircle2, Quote, Sparkles, GraduationCap, Globe } from "lucide-react";
+import { ArrowRight, BookOpen, Heart, Users, CheckCircle2, Quote, Sparkles, GraduationCap, Globe, Building2, HeartHandshake } from "lucide-react";
 import heroImg from "@assets/generated_images/hero.jpg";
 import philosophyImg from "@assets/generated_images/programs.jpg";
 import { GlareCard } from "@/components/ui/glare-card";
@@ -82,7 +82,7 @@ export default function Home() {
               transition={{ delay: 0.4, duration: 0.6 }}
               className="text-lg md:text-xl text-white/90 mb-10 max-w-2xl font-sans leading-relaxed font-normal"
             >
-              Tare Pet Montessori School provides a premium, holistic education in Yenagoa. We empower students to discover their potential through guided independence and rich academics.
+              Tare Pet Montessori School provides a premium, holistic education in Yenagoa. Offering Nursery, Primary, Junior & Senior Secondary, Boarding, and Special Education.
             </motion.p>
             
             <motion.div 
@@ -136,7 +136,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Programs Preview with Alternating Left & Right Slide-In Cards */}
+      {/* Programs Preview section with 5 School Programs */}
       <section className="py-24 bg-background relative overflow-hidden">
         <div className="container mx-auto px-4 md:px-6">
           <motion.div 
@@ -150,66 +150,115 @@ export default function Home() {
               Academic Journey
             </h2>
             <h3 className="text-4xl md:text-5xl font-serif font-bold text-foreground mb-6">Programs for Every Stage</h3>
-            <p className="text-muted-foreground text-lg">From their first steps to secondary school graduation, we provide a seamless, enriching educational pathway.</p>
+            <p className="text-muted-foreground text-lg">Nursery, Primary, Junior & Senior Secondary, Boarding Facilities, and Special Education.</p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Program 1 — Slide in from Left */}
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            {/* Program 1: Nursery */}
             <motion.div 
-              initial={{ opacity: 0, x: -70 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: false, margin: "-50px" }}
-              transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
-              whileHover={{ y: -8, scale: 1.02 }}
-              className="glass-card rounded-3xl p-8 border border-white/80 shadow-md hover:shadow-2xl hover:border-primary/40 group relative overflow-hidden transition-all duration-500"
-            >
-              <div className="w-14 h-14 bg-secondary/15 rounded-2xl flex items-center justify-center mb-6 text-secondary group-hover:bg-secondary group-hover:text-white transition-all duration-300 shadow-sm group-hover:scale-110">
-                <Heart className="w-7 h-7" />
-              </div>
-              <h4 className="text-2xl font-serif font-bold mb-3 text-foreground group-hover:text-primary transition-colors">Nursery</h4>
-              <p className="text-muted-foreground mb-6 line-clamp-3 leading-relaxed">A nurturing environment where our youngest learners build a foundation of curiosity, independence, and basic skills through the Montessori method.</p>
-              <Link href="/programs" className="inline-flex items-center text-primary font-semibold hover:underline group-hover:translate-x-1.5 transition-transform duration-300">
-                Explore Nursery <ArrowRight className="ml-1.5 w-4 h-4" />
-              </Link>
-            </motion.div>
-
-            {/* Program 2 — Slide in from Bottom/Float Up */}
-            <motion.div 
-              initial={{ opacity: 0, y: 70 }}
+              initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false, margin: "-50px" }}
-              transition={{ duration: 0.65, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+              viewport={{ once: false, margin: "-30px" }}
+              transition={{ duration: 0.5 }}
               whileHover={{ y: -8, scale: 1.02 }}
-              className="glass-card rounded-3xl p-8 border border-white/80 shadow-md hover:shadow-2xl hover:border-primary/40 group relative overflow-hidden transition-all duration-500"
+              className="glass-card rounded-3xl p-6 border border-white/80 shadow-md hover:shadow-2xl hover:border-primary/40 group relative flex flex-col justify-between transition-all duration-500"
             >
-              <div className="w-14 h-14 bg-primary/15 rounded-2xl flex items-center justify-center mb-6 text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300 shadow-sm group-hover:scale-110">
-                <BookOpen className="w-7 h-7" />
+              <div>
+                <div className="w-12 h-12 bg-secondary/15 rounded-2xl flex items-center justify-center mb-5 text-secondary group-hover:bg-secondary group-hover:text-white transition-all duration-300 shadow-sm group-hover:scale-110">
+                  <Heart className="w-6 h-6" />
+                </div>
+                <h4 className="text-xl font-serif font-bold mb-2 text-foreground group-hover:text-primary transition-colors">Nursery</h4>
+                <p className="text-muted-foreground text-xs leading-relaxed mb-4">Early childhood Montessori learning fostering curiosity and independence.</p>
               </div>
-              <h4 className="text-2xl font-serif font-bold mb-3 text-foreground group-hover:text-primary transition-colors">Primary</h4>
-              <p className="text-muted-foreground mb-6 line-clamp-3 leading-relaxed">Fostering critical thinking and a deeper understanding of the world. Students engage in structured learning while maintaining their creative freedom.</p>
-              <Link href="/programs" className="inline-flex items-center text-primary font-semibold hover:underline group-hover:translate-x-1.5 transition-transform duration-300">
-                Explore Primary <ArrowRight className="ml-1.5 w-4 h-4" />
+              <Link href="/programs" className="inline-flex items-center text-xs text-primary font-bold hover:underline group-hover:translate-x-1 transition-transform">
+                Learn More <ArrowRight className="ml-1 w-3.5 h-3.5" />
               </Link>
             </motion.div>
 
-            {/* Program 3 — Slide in from Right */}
+            {/* Program 2: Primary */}
             <motion.div 
-              initial={{ opacity: 0, x: 70 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: false, margin: "-50px" }}
-              transition={{ duration: 0.65, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false, margin: "-30px" }}
+              transition={{ duration: 0.5, delay: 0.1 }}
               whileHover={{ y: -8, scale: 1.02 }}
-              className="glass-card rounded-3xl p-8 border border-white/80 shadow-md hover:shadow-2xl hover:border-primary/40 group relative overflow-hidden transition-all duration-500"
+              className="glass-card rounded-3xl p-6 border border-white/80 shadow-md hover:shadow-2xl hover:border-primary/40 group relative flex flex-col justify-between transition-all duration-500"
             >
-              <div className="w-14 h-14 bg-secondary/15 rounded-2xl flex items-center justify-center mb-6 text-secondary group-hover:bg-secondary group-hover:text-white transition-all duration-300 shadow-sm group-hover:scale-110">
-                <Users className="w-7 h-7" />
+              <div>
+                <div className="w-12 h-12 bg-primary/15 rounded-2xl flex items-center justify-center mb-5 text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300 shadow-sm group-hover:scale-110">
+                  <BookOpen className="w-6 h-6" />
+                </div>
+                <h4 className="text-xl font-serif font-bold mb-2 text-foreground group-hover:text-primary transition-colors">Primary</h4>
+                <p className="text-muted-foreground text-xs leading-relaxed mb-4">Structured cosmic education building critical reasoning and moral values.</p>
               </div>
-              <h4 className="text-2xl font-serif font-bold mb-3 text-foreground group-hover:text-primary transition-colors">Secondary</h4>
-              <p className="text-muted-foreground mb-6 line-clamp-3 leading-relaxed">Junior and Senior Secondary programs designed to prepare students for leadership, academic excellence, and success in higher education.</p>
-              <Link href="/programs" className="inline-flex items-center text-primary font-semibold hover:underline group-hover:translate-x-1.5 transition-transform duration-300">
-                Explore Secondary <ArrowRight className="ml-1.5 w-4 h-4" />
+              <Link href="/programs" className="inline-flex items-center text-xs text-primary font-bold hover:underline group-hover:translate-x-1 transition-transform">
+                Learn More <ArrowRight className="ml-1 w-3.5 h-3.5" />
               </Link>
             </motion.div>
+
+            {/* Program 3: Secondary */}
+            <motion.div 
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false, margin: "-30px" }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              whileHover={{ y: -8, scale: 1.02 }}
+              className="glass-card rounded-3xl p-6 border border-white/80 shadow-md hover:shadow-2xl hover:border-primary/40 group relative flex flex-col justify-between transition-all duration-500"
+            >
+              <div>
+                <div className="w-12 h-12 bg-secondary/15 rounded-2xl flex items-center justify-center mb-5 text-secondary group-hover:bg-secondary group-hover:text-white transition-all duration-300 shadow-sm group-hover:scale-110">
+                  <Users className="w-6 h-6" />
+                </div>
+                <h4 className="text-xl font-serif font-bold mb-2 text-foreground group-hover:text-primary transition-colors">Secondary</h4>
+                <p className="text-muted-foreground text-xs leading-relaxed mb-4">Junior & Senior Secondary excellence preparing students for WAEC/NECO/JAMB & leadership.</p>
+              </div>
+              <Link href="/programs" className="inline-flex items-center text-xs text-primary font-bold hover:underline group-hover:translate-x-1 transition-transform">
+                Learn More <ArrowRight className="ml-1 w-3.5 h-3.5" />
+              </Link>
+            </motion.div>
+
+            {/* Program 4: Boarding School */}
+            <motion.div 
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false, margin: "-30px" }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              whileHover={{ y: -8, scale: 1.02 }}
+              className="glass-card rounded-3xl p-6 border border-white/80 shadow-md hover:shadow-2xl hover:border-primary/40 group relative flex flex-col justify-between transition-all duration-500"
+            >
+              <div>
+                <div className="w-12 h-12 bg-primary/15 rounded-2xl flex items-center justify-center mb-5 text-primary group-hover:bg-primary group-hover:text-white transition-all duration-300 shadow-sm group-hover:scale-110">
+                  <Building2 className="w-6 h-6" />
+                </div>
+                <h4 className="text-xl font-serif font-bold mb-2 text-foreground group-hover:text-primary transition-colors">Boarding</h4>
+                <p className="text-muted-foreground text-xs leading-relaxed mb-4">Secure residential boarding facilities with 24/7 care and study sessions.</p>
+              </div>
+              <Link href="/programs" className="inline-flex items-center text-xs text-primary font-bold hover:underline group-hover:translate-x-1 transition-transform">
+                Learn More <ArrowRight className="ml-1 w-3.5 h-3.5" />
+              </Link>
+            </motion.div>
+
+            {/* Program 5: Special School */}
+            <motion.div 
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false, margin: "-30px" }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              whileHover={{ y: -8, scale: 1.02 }}
+              className="glass-card rounded-3xl p-6 border border-white/80 shadow-md hover:shadow-2xl hover:border-primary/40 group relative flex flex-col justify-between transition-all duration-500"
+            >
+              <div>
+                <div className="w-12 h-12 bg-secondary/15 rounded-2xl flex items-center justify-center mb-5 text-secondary group-hover:bg-secondary group-hover:text-white transition-all duration-300 shadow-sm group-hover:scale-110">
+                  <HeartHandshake className="w-6 h-6" />
+                </div>
+                <h4 className="text-xl font-serif font-bold mb-2 text-foreground group-hover:text-primary transition-colors">Special Needs</h4>
+                <p className="text-muted-foreground text-xs leading-relaxed mb-4">Dedicated inclusive special education unit tailored for individual growth.</p>
+              </div>
+              <Link href="/programs" className="inline-flex items-center text-xs text-primary font-bold hover:underline group-hover:translate-x-1 transition-transform">
+                Learn More <ArrowRight className="ml-1 w-3.5 h-3.5" />
+              </Link>
+            </motion.div>
+
           </div>
         </div>
       </section>
