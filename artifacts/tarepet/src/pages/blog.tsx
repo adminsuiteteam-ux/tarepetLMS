@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Calendar, ChevronRight, Sparkles } from "lucide-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import blogHeroImg from "@assets/classroom_hero.jpg";
+import blogHeroImg from "@assets/journal_hero.jpg";
 
 const CATEGORIES = ["All", "Montessori Method", "School Events", "Student Achievements", "Sports", "Parenting"];
 

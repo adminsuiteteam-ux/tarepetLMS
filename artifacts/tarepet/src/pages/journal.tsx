@@ -3,6 +3,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Calendar, User, ArrowRight, Sparkles } from "lucide-react";
 import { Link } from "wouter";
+import journalImg from "@assets/journal_hero.jpg";
 
 const CATEGORIES = ["All", "Classroom Life", "Projects", "Reflections", "Staff Notes", "Achievements"];
 
@@ -89,9 +90,9 @@ export default function Journal() {
         {/* Background Image Layer */}
         <div className="absolute inset-0 z-0">
           <img
-            src="https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=2000&auto=format&fit=crop"
-            alt="School Journal & Reading"
-            className="w-full h-full object-cover opacity-95 scale-105 brightness-100"
+            src={journalImg}
+            alt="Tare Pet Montessori School Library & Student Reading"
+            className="w-full h-full object-cover object-center opacity-95 scale-105 brightness-100"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/35 to-black/20" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40" />
