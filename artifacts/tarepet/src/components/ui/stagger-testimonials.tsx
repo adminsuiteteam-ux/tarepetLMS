@@ -9,45 +9,63 @@ const SQRT_5000 = Math.sqrt(5000);
 export const testimonials = [
   {
     tempId: 0,
-    testimonial: "The transformation in my daughter's confidence since joining Tare Pet is remarkable. She doesn't just memorize; she truly understands.",
-    by: "Mrs. Oweikeme, Primary Parent",
+    testimonial: "The transformation in my daughter's confidence since joining Tare Pet Montessori is remarkable. She doesn't just memorize; she truly understands every concept.",
+    by: "Mrs. Oweikeme Kpandia, Primary Parent",
     imgSrc: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=300&auto=format&fit=crop"
   },
   {
     tempId: 1,
-    testimonial: "Finding a true Montessori school in Yenagoa was a blessing. The teachers are incredibly dedicated and the environment is just beautiful.",
-    by: "Mr. Amadi, Nursery Parent",
+    testimonial: "Finding a genuine Montessori environment in Yenagoa was a blessing. The teachers at Tare Pet are incredibly dedicated and the hands-on materials make learning fun.",
+    by: "Mr. Tariye Amadi, Nursery Parent",
     imgSrc: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=300&auto=format&fit=crop"
   },
   {
     tempId: 2,
-    testimonial: "My son transitioned to the secondary section flawlessly. The leadership skills they teach are exactly what teenagers need today.",
-    by: "Dr. Ebi, Secondary Parent",
+    testimonial: "My son transitioned to the Senior Secondary section flawlessly. The leadership training, WAEC prep, and moral values taught here are second to none.",
+    by: "Dr. Ebiere Alagoa, Secondary Parent",
     imgSrc: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300&auto=format&fit=crop"
   },
   {
     tempId: 3,
-    testimonial: "The boarding facilities are top-notch with around-the-clock security and structured evening study sessions. I sleep with peace of mind.",
-    by: "Mrs. Preye, Boarding Parent",
+    testimonial: "The residential boarding facilities at Kpansia-Epje are top-notch. With 24/7 care, structured evening prep, and tight security, I sleep with complete peace of mind.",
+    by: "Mrs. Preye Ogbonna, Boarding Parent",
     imgSrc: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=300&auto=format&fit=crop"
   },
   {
     tempId: 4,
-    testimonial: "Tare Pet Montessori isn't just a school—it's a nurturing family. My twins look forward to going to school every single morning!",
-    by: "Engr. Tarila, JSS Parent",
+    testimonial: "Tare Pet Montessori isn't just a school—it's a warm, nurturing family. My twins look forward to going to school in Kpansia every single morning!",
+    by: "Engr. Tarila Ebimobowei, JSS Parent",
     imgSrc: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?q=80&w=300&auto=format&fit=crop"
   },
   {
     tempId: 5,
-    testimonial: "Their special needs unit provided individualized attention that transformed my child's speech and socialization skills. God bless Tare Pet!",
-    by: "Mrs. Bodisere, Special Education Parent",
+    testimonial: "Their dedicated special needs unit provided individualized attention that transformed my child's speech and socialization skills. God bless Tare Pet School!",
+    by: "Mrs. Bodisere Okoro, Special Needs Unit Parent",
     imgSrc: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=300&auto=format&fit=crop"
   },
   {
     tempId: 6,
-    testimonial: "Their WAEC and NECO preparation is exceptional. My eldest son passed all subjects with distinction and gained university admission smoothly.",
-    by: "Chief Douye, Alumni Parent",
+    testimonial: "Their WAEC, NECO, and JAMB preparation is exceptional. My eldest son passed all subjects with distinction and gained admission into his first-choice university.",
+    by: "Chief Douye Timipre, Alumni Parent",
     imgSrc: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?q=80&w=300&auto=format&fit=crop"
+  },
+  {
+    tempId: 7,
+    testimonial: "The cosmic education approach connects science, math, and character. My kids excel academically while staying rooted in sound moral discipline.",
+    by: "Pastor Ayebatonye Adebayo, Primary Parent",
+    imgSrc: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=300&auto=format&fit=crop"
+  },
+  {
+    tempId: 8,
+    testimonial: "As a working mother, seeing the daily progress photos and teacher feedback on the Tare Pet Portal gives me immense joy. Highly recommended!",
+    by: "Barr. (Mrs.) Yemi Igoni, Nursery Parent",
+    imgSrc: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=300&auto=format&fit=crop"
+  },
+  {
+    tempId: 9,
+    testimonial: "The Practical Life and Erdkinder programs teach our young teenagers real-world responsibility, teamwork, and financial literacy. Truly outstanding!",
+    by: "Mr. Kemebradikumo Danjuma, JSS Parent",
+    imgSrc: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=300&auto=format&fit=crop"
   }
 ];
 
