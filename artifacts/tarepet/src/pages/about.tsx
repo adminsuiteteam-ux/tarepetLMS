@@ -1,6 +1,7 @@
 import { PageTransition } from "@/components/layout/Layout";
 import { motion } from "framer-motion";
 import aboutImg from "@assets/generated_images/about.jpg";
+import vicePrincipalImg from "@assets/vice_principal.jpg";
 import { CheckCircle, Award, Target, Eye, Sparkles } from "lucide-react";
 
 export default function About() {
@@ -216,7 +217,7 @@ export default function About() {
               { name: "Chief (Mrs) Victoria Ebunomiye Kpotoge", role: "Proprietress / Founder", initials: "VK" },
               { name: "Mrs. Chwerdu Erebeli", role: "School Administrator", initials: "CE" },
               { name: "Mr. Ofem Ekpa", role: "Principal", initials: "OE" },
-              { name: "Mrs. Stella Nosa-Apohan", role: "Vice Principal", initials: "SN" },
+              { name: "Mrs. Stella Nosa-Apohan", role: "Vice Principal", initials: "SN", image: vicePrincipalImg },
               { name: "Ms. Akidei Afayero", role: "Head Teacher", initials: "AA" },
               { name: "Mrs. Tina Mabu", role: "Nursery Head", initials: "TM" }
             ].map((leader, i) => (
@@ -227,12 +228,23 @@ export default function About() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
                 whileHover={{ y: -8, scale: 1.02 }}
-                className="glass-card rounded-2xl border border-white/80 overflow-hidden text-center shadow-md hover:shadow-2xl transition-all duration-300"
+                className="glass-card rounded-2xl border border-white/80 overflow-hidden text-center shadow-md hover:shadow-2xl transition-all duration-300 flex flex-col group"
               >
-                <div className="h-44 bg-gradient-to-br from-primary/15 via-secondary/15 to-primary/10 flex items-center justify-center">
-                  <span className="text-4xl font-serif text-primary font-bold">{leader.initials}</span>
-                </div>
-                <div className="p-6">
+                {leader.image ? (
+                  <div className="h-64 overflow-hidden relative">
+                    <img 
+                      src={leader.image} 
+                      alt={leader.name} 
+                      className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                  </div>
+                ) : (
+                  <div className="h-64 bg-gradient-to-br from-primary/15 via-secondary/15 to-primary/10 flex items-center justify-center">
+                    <span className="text-4xl font-serif text-primary font-bold">{leader.initials}</span>
+                  </div>
+                )}
+                <div className="p-6 flex-1 flex flex-col justify-center">
                   <h3 className="text-lg font-bold text-foreground mb-1 leading-snug">{leader.name}</h3>
                   <p className="text-primary font-semibold text-xs uppercase tracking-wider">{leader.role}</p>
                 </div>
