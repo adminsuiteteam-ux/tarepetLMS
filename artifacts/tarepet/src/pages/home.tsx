@@ -5,6 +5,7 @@ import { useRef, useEffect, useState } from "react";
 import { ArrowRight, BookOpen, Heart, Users, CheckCircle2, Quote, Sparkles, GraduationCap, Globe, Building2, HeartHandshake } from "lucide-react";
 import heroImg from "@assets/classroom_hero.jpg";
 import philosophyImg from "@assets/school_building.jpg";
+import vibrantCampusImg from "@assets/vibrant_campus.jpg";
 import { GlareCard } from "@/components/ui/glare-card";
 import BackgroundNoiseEffect from "@/components/ui/background-snippets-noise-effect11";
 import { StaggerTestimonials } from "@/components/ui/stagger-testimonials";
@@ -339,8 +340,8 @@ export default function Home() {
               <GlareCard className="flex flex-col items-center justify-center relative overflow-hidden">
                 <img
                   className="h-full w-full absolute inset-0 object-cover opacity-80"
-                  src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?q=80&w=2832&auto=format&fit=crop"
-                  alt="Students in Montessori classroom"
+                  src={vibrantCampusImg}
+                  alt="Tare Pet Montessori Classroom with Students and Teacher"
                 />
                 <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(11,20,13,0.95) 0%, rgba(11,20,13,0.4) 50%, transparent 100%)" }} />
                 <div className="relative z-10 absolute bottom-0 left-0 right-0 p-7">
