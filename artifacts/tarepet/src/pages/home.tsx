@@ -144,7 +144,7 @@ export default function Home() {
             <motion.h2 
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false }}
+              viewport={{ once: true }}
               transition={{ duration: 0.6 }}
               className="text-3xl md:text-4xl font-serif text-white text-center md:text-left"
             >
@@ -153,7 +153,7 @@ export default function Home() {
             <motion.p 
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false }}
+              viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.15 }}
               className="text-white/90 max-w-xl text-center md:text-right text-lg font-sans"
             >
@@ -169,7 +169,7 @@ export default function Home() {
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false }}
+            viewport={{ once: true }}
             transition={{ duration: 0.6 }}
             className="text-center max-w-3xl mx-auto mb-16"
           >
@@ -298,7 +298,7 @@ export default function Home() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false }}
+              viewport={{ once: true }}
               transition={{ duration: 0.5 }}
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/25 border border-primary/50 text-white text-xs font-bold uppercase tracking-wider mb-4 shadow-sm"
             >
@@ -308,7 +308,7 @@ export default function Home() {
             <motion.h3
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false }}
+              viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.1 }}
               className="text-4xl md:text-6xl font-serif font-bold text-white mb-6 tracking-tight drop-shadow-md"
             >
@@ -317,7 +317,7 @@ export default function Home() {
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false }}
+              viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.2 }}
               className="text-white/90 text-lg font-medium leading-relaxed max-w-2xl mx-auto"
             >
@@ -397,7 +397,7 @@ export default function Home() {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false }}
+            viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 mt-16 pt-10 border-t border-white/15"
           >
@@ -430,7 +430,7 @@ export default function Home() {
             <motion.div
               initial={{ opacity: 0, x: -70 }}
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: false }}
+              viewport={{ once: true }}
               transition={{ duration: 0.7 }}
             >
               <h2 className="text-xs font-bold tracking-widest text-primary-foreground/80 uppercase mb-3 px-3 py-1 rounded-full bg-white/10 inline-block">
@@ -472,7 +472,7 @@ export default function Home() {
             <motion.div 
               initial={{ opacity: 0, x: 70 }}
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: false }}
+              viewport={{ once: true }}
               transition={{ duration: 0.7, delay: 0.2 }}
               className="relative"
             >
@@ -499,7 +499,7 @@ export default function Home() {
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false }}
+            viewport={{ once: true }}
             transition={{ duration: 0.6 }}
             className="text-center max-w-3xl mx-auto mb-10"
           >
@@ -517,7 +517,7 @@ export default function Home() {
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: false }}
+            viewport={{ once: true }}
             transition={{ duration: 0.6 }}
             className="max-w-3xl mx-auto glass-card p-12 rounded-3xl border border-white/80 shadow-2xl relative"
           >

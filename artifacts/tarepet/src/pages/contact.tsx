@@ -112,7 +112,7 @@ export default function Contact() {
             <motion.div
               initial={{ opacity: 0, x: -70 }}
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: false, margin: "-40px" }}
+              viewport={{ once: true, margin: "-40px" }}
               transition={{ duration: 0.65 }}
             >
               <h2 className="text-3xl font-serif font-bold text-foreground mb-8">Get in Touch</h2>
@@ -177,7 +177,7 @@ export default function Contact() {
             <motion.div
               initial={{ opacity: 0, x: 70 }}
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: false, margin: "-40px" }}
+              viewport={{ once: true, margin: "-40px" }}
               transition={{ duration: 0.65, delay: 0.15 }}
             >
               <div className="glass-card p-10 rounded-3xl shadow-2xl border border-white/80">

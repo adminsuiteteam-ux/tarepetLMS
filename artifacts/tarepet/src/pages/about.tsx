@@ -122,7 +122,7 @@ export default function About() {
             <motion.div 
               initial={{ opacity: 0, x: -70 }}
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: false }}
+              viewport={{ once: true }}
               transition={{ duration: 0.7 }}
               className="rounded-3xl overflow-hidden shadow-2xl relative h-[500px] border-8 border-white/60 group"
             >
@@ -137,7 +137,7 @@ export default function About() {
             <motion.div
               initial={{ opacity: 0, x: 70 }}
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: false }}
+              viewport={{ once: true }}
               transition={{ duration: 0.7, delay: 0.15 }}
             >
               <h2 className="text-xs font-bold tracking-widest text-primary uppercase mb-3 px-3 py-1 rounded-full bg-primary/10 inline-block">
@@ -180,7 +180,7 @@ export default function About() {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false }}
+            viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
             <h2 className="text-4xl font-serif font-bold text-foreground mb-8">Our History</h2>
@@ -200,7 +200,7 @@ export default function About() {
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false }}
+            viewport={{ once: true }}
             transition={{ duration: 0.6 }}
             className="text-center max-w-3xl mx-auto mb-16"
           >

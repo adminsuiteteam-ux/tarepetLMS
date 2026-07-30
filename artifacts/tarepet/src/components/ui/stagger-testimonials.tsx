@@ -118,6 +118,8 @@ const TestimonialCard: React.FC<TestimonialCardProps> = ({
       <img
         src={testimonial.imgSrc}
         alt={`${testimonial.by.split(',')[0]}`}
+        loading="lazy"
+        decoding="async"
         className="mb-4 h-14 w-14 rounded-full border-2 border-white/80 object-cover object-top shadow-md"
       />
       <h3 className={cn(
@@ -172,12 +174,16 @@ export const StaggerTestimonials: React.FC = () => {
   return (
     <div
       className="relative w-full overflow-hidden bg-transparent py-10"
-      style={{ height: 520 }}
+      style={{ height: 500 }}
     >
       {testimonialsList.map((testimonial, index) => {
         const position = testimonialsList.length % 2
           ? index - Math.floor(testimonialsList.length / 2)
           : index - testimonialsList.length / 2;
+
+        // Performance Optimization: Only render cards that are visible in range [-2, 2]
+        if (Math.abs(position) > 2) return null;
+
         return (
           <TestimonialCard
             key={testimonial.tempId}
