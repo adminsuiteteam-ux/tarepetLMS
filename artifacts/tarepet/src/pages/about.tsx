@@ -1,6 +1,6 @@
 import { PageTransition } from "@/components/layout/Layout";
 import { motion } from "framer-motion";
-import aboutImg from "@assets/generated_images/about.jpg";
+import aboutImg from "@assets/school_building.jpg";
 import vicePrincipalImg from "@assets/vice_principal.jpg";
 import headMistressImg from "@assets/head_mistress.jpg";
 import nurseryHeadImg from "@assets/nursery_head.jpg";

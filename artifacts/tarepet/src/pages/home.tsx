@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { motion, useInView, animate } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 import { ArrowRight, BookOpen, Heart, Users, CheckCircle2, Quote, Sparkles, GraduationCap, Globe, Building2, HeartHandshake } from "lucide-react";
-import heroImg from "@assets/generated_images/hero.jpg";
+import heroImg from "@assets/school_building.jpg";
 import philosophyImg from "@assets/generated_images/programs.jpg";
 import { GlareCard } from "@/components/ui/glare-card";
 import BackgroundNoiseEffect from "@/components/ui/background-snippets-noise-effect11";

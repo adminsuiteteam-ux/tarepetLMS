@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Eye, EyeOff, Lock, Mail, AlertCircle } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import tarepetLogo from "@assets/tarepet__1784835204178.png";
-import heroImg from "@assets/generated_images/hero.jpg";
+import heroImg from "@assets/school_building.jpg";
 import { useAuth } from "@/context/AuthContext";
 import { authClient } from "@/lib/api-auth";
 
