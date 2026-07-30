@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { MapPin, Phone, Mail, Clock, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
+import contactImg from "@assets/contact_hero.png";
 
 const contactSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -46,9 +47,9 @@ export default function Contact() {
         {/* Background Image Layer */}
         <div className="absolute inset-0 z-0">
           <img
-            src="https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=2000&auto=format&fit=crop"
-            alt="Tare Pet School Reception & Campus"
-            className="w-full h-full object-cover opacity-95 scale-105 brightness-100"
+            src={contactImg}
+            alt="Tare Pet Montessori School Contact & Information Desk"
+            className="w-full h-full object-cover object-center opacity-95 scale-105 brightness-100"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/35 to-black/20" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40" />
