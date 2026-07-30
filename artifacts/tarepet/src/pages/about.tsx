@@ -231,11 +231,12 @@ export default function About() {
                 className="glass-card rounded-2xl border border-white/80 overflow-hidden text-center shadow-md hover:shadow-2xl transition-all duration-300 flex flex-col group"
               >
                 {leader.image ? (
-                  <div className="h-64 overflow-hidden relative">
+                  <div className="h-72 overflow-hidden relative">
                     <img 
                       src={leader.image} 
                       alt={leader.name} 
-                      className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                      style={{ objectPosition: "center 65%" }}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
                   </div>
