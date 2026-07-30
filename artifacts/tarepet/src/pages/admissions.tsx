@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle2, FileText, Calendar, GraduationCap, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
+import admissionsImg from "@assets/admissions_hero.jpg";
 
 const inquirySchema = z.object({
   name: z.string().min(2, "Parent/Guardian name is required"),
@@ -49,9 +50,9 @@ export default function Admissions() {
         {/* Background Image Layer */}
         <div className="absolute inset-0 z-0">
           <img
-            src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=2000&auto=format&fit=crop"
-            alt="Admissions & Learning"
-            className="w-full h-full object-cover opacity-95 scale-105 brightness-100"
+            src={admissionsImg}
+            alt="Tare Pet Montessori Classroom & Learning Environment"
+            className="w-full h-full object-cover object-center opacity-95 scale-105 brightness-100"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/35 to-black/20" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40" />
