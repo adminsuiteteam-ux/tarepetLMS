@@ -340,10 +340,10 @@ export default function Home() {
                 <div className="text-center">
                   <p className="font-bold text-white text-xl font-serif mb-2">Award-Winning</p>
                   <p className="text-white/80 text-sm leading-relaxed">
-                    Recognised as one of Bayelsa's leading Montessori institutions with over a decade of educational excellence.
+                    Recognised as one of Bayelsa's leading Montessori institutions with over two decades of educational excellence.
                   </p>
                 </div>
-                <div className="text-xs font-bold tracking-widest uppercase text-white bg-primary/40 px-3 py-1 rounded-full border border-primary/50">Est. 2010 · Yenagoa</div>
+                <div className="text-xs font-bold tracking-widest uppercase text-white bg-primary/40 px-3 py-1 rounded-full border border-primary/50">Est. 2002 · Yenagoa</div>
               </GlareCard>
             </motion.div>
 
