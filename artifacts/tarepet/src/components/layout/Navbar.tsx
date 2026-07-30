@@ -15,7 +15,7 @@ const NAV_LINKS: NavLinkItem[] = [
   { href: "/about", label: "About" },
   { href: "/programs", label: "Programs" },
   { href: "/admissions", label: "Admissions" },
-  { href: "/journal", label: "Journal" },
+  { href: "/gallery", label: "Gallery" },
   { href: "/events", label: "Events" },
   { href: "/contact", label: "Contact" },
 ];

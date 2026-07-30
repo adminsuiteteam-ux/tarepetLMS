@@ -8,7 +8,7 @@ export function Footer() {
     { label: "About Us", href: "/about" },
     { label: "Our Programs", href: "/programs" },
     { label: "Admissions", href: "/admissions" },
-    { label: "Journal & News", href: "/journal" },
+    { label: "School Gallery", href: "/gallery" },
     { label: "School Events", href: "/events" },
     { label: "Contact Us", href: "/contact" },
   ];

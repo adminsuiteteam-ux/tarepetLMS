@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
-import { Route, Switch, Router as WouterRouter } from 'wouter';
+import { Route, Switch, Redirect, Router as WouterRouter } from 'wouter';
 import { Layout } from '@/components/layout/Layout';
 import { AnimatePresence } from 'framer-motion';
 import { AuthProvider } from '@/context/AuthContext';
@@ -14,7 +14,7 @@ import Programs from '@/pages/programs';
 import Admissions from '@/pages/admissions';
 import Blog from '@/pages/blog';
 import Contact from '@/pages/contact';
-import Journal from '@/pages/journal';
+import Gallery from '@/pages/gallery';
 import Events from '@/pages/events';
 import SignIn from '@/pages/sign-in';
 import DashboardRedirect from '@/pages/dashboard/DashboardRedirect';
@@ -66,8 +66,11 @@ function Router() {
       <Route path="/blog">
         <PublicRoute component={Blog} />
       </Route>
+      <Route path="/gallery">
+        <PublicRoute component={Gallery} />
+      </Route>
       <Route path="/journal">
-        <PublicRoute component={Journal} />
+        <Redirect to="/gallery" />
       </Route>
       <Route path="/events">
         <PublicRoute component={Events} />
