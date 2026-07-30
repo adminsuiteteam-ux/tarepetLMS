@@ -316,7 +316,7 @@ export default function Programs() {
         </div>
       </section>
 
-      {/* Extracurriculars */}
+      {/* Extracurricular Clubs & Sports */}
       <section className="py-24 bg-muted/40 border-t border-border relative overflow-hidden">
         <div className="container mx-auto px-4 md:px-6">
           <motion.div 
@@ -326,33 +326,67 @@ export default function Programs() {
             transition={{ duration: 0.6 }}
             className="text-center max-w-3xl mx-auto mb-16"
           >
-            <h2 className="text-4xl font-serif font-bold text-foreground mb-6">Beyond the Classroom</h2>
-            <p className="text-muted-foreground text-lg">Education at Tare Pet extends far beyond academics. We cultivate well-rounded individuals through diverse activities.</p>
+            <h2 className="text-4xl font-serif font-bold text-foreground mb-6">Clubs, Societies & Sports</h2>
+            <p className="text-muted-foreground text-lg">Education at Tare Pet extends far beyond the classroom. We cultivate talent, teamwork, and physical fitness.</p>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { icon: Palette, title: "Creative Arts", desc: "Painting, sculpture, and craft to express inner creativity." },
-              { icon: Activity, title: "Sports & Athletics", desc: "Physical education, team sports, and athletic competitions." },
-              { icon: BookOpen, title: "Literary & Debating", desc: "Public speaking, poetry, and debate clubs to build confidence." },
-              { icon: Target, title: "STEM Club", desc: "Coding, robotics, and hands-on science experiments." }
-            ].map((item, i) => (
-              <motion.div 
-                key={i} 
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: false, margin: "-40px" }}
-                transition={{ duration: 0.6, delay: i * 0.12 }}
-                whileHover={{ y: -6, scale: 1.03 }}
-                className="p-8 glass-card rounded-2xl text-center border border-white/80 shadow-sm hover:shadow-xl transition-all group"
-              >
-                <div className="w-14 h-14 bg-white/90 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-md text-primary group-hover:scale-110 transition-transform">
-                  <item.icon className="w-7 h-7" />
-                </div>
-                <h3 className="text-lg font-bold text-foreground mb-3 group-hover:text-primary transition-colors">{item.title}</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">{item.desc}</p>
-              </motion.div>
-            ))}
+          {/* Clubs & Societies */}
+          <div className="mb-16">
+            <h3 className="text-2xl font-serif font-bold text-foreground mb-8 text-center">Clubs & Extracurricular Societies</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+              {[
+                { name: "Spelling Bee", icon: "🐝" },
+                { name: "JET Club", icon: "🚀" },
+                { name: "Maths Club", icon: "📐" },
+                { name: "Chef & Culinary", icon: "🍳" },
+                { name: "Drama & Debate", icon: "🎭" },
+                { name: "Press Club", icon: "📰" },
+              ].map((club, i) => (
+                <motion.div 
+                  key={i} 
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: i * 0.08 }}
+                  whileHover={{ y: -5, scale: 1.05 }}
+                  className="p-5 glass-card rounded-2xl text-center border border-white/80 shadow-sm hover:shadow-lg transition-all"
+                >
+                  <span className="text-3xl block mb-2">{club.icon}</span>
+                  <p className="font-bold text-foreground text-sm">{club.name}</p>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Sports Activities */}
+          <div>
+            <h3 className="text-2xl font-serif font-bold text-foreground mb-8 text-center">Sports & Athletic Activities</h3>
+            <div className="flex flex-wrap items-center justify-center gap-3 max-w-4xl mx-auto">
+              {[
+                "Football ⚽",
+                "Basketball 🏀",
+                "Volleyball 🏐",
+                "Netball ⛹️‍♀️",
+                "Badminton 🏸",
+                "Table Tennis 🏓",
+                "High Jump 🏃‍♂️",
+                "Long Jump 🏃‍♀️",
+                "Javelin 🎯",
+                "Shot Put 🏋️",
+                "Discus 🥏",
+              ].map((sport, i) => (
+                <motion.span 
+                  key={i}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.3, delay: i * 0.05 }}
+                  className="px-5 py-2.5 rounded-full glass-card border border-white/80 text-foreground font-semibold text-sm shadow-sm hover:bg-primary hover:text-white transition-all cursor-default"
+                >
+                  {sport}
+                </motion.span>
+              ))}
+            </div>
           </div>
         </div>
       </section>

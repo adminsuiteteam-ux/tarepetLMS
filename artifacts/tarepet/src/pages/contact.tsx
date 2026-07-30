@@ -95,10 +95,10 @@ export default function Contact() {
             className="flex flex-wrap items-center justify-center gap-3 md:gap-4 text-xs md:text-sm font-sans"
           >
             <span className="px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
-              📍 Murpiry L. & Sec. Sch., Kpansia-Epje, Yenagoa
+              📍 47 Chief John Obi Str., Kpansia, Yenagoa
             </span>
             <span className="px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
-              📞 +234 (0) 800 000 0000
+              📞 0803 789 0628 / 0703 830 2292
             </span>
           </motion.div>
         </div>
@@ -123,10 +123,10 @@ export default function Contact() {
                     <MapPin className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-foreground mb-1 text-lg">Our Location</h3>
+                    <h3 className="font-bold text-foreground mb-1 text-lg">Our Physical Address</h3>
                     <p className="text-muted-foreground text-sm leading-relaxed">
                       Tare Pet Montessori School<br />
-                      Murpiry L. & Sec. Sch., Kpansia-Epje<br />
+                      47 Chief John Obi Str., Nuxtin, Kpansia<br />
                       Yenagoa, Bayelsa State, Nigeria
                     </p>
                   </div>
@@ -137,10 +137,10 @@ export default function Contact() {
                     <Phone className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-foreground mb-1 text-lg">Phone Number</h3>
+                    <h3 className="font-bold text-foreground mb-1 text-lg">Official Phone Numbers</h3>
                     <p className="text-muted-foreground text-sm">
-                      +234 (0) 800 000 0000<br />
-                      +234 (0) 800 111 2222
+                      0803 789 0628<br />
+                      0703 830 2292
                     </p>
                   </div>
                 </div>
@@ -150,10 +150,10 @@ export default function Contact() {
                     <Mail className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-foreground mb-1 text-lg">Email Address</h3>
+                    <h3 className="font-bold text-foreground mb-1 text-lg">Official Email Addresses</h3>
                     <p className="text-muted-foreground text-sm">
-                      info@tarepetmontessori.com<br />
-                      admissions@tarepetmontessori.com
+                      tarepetmontessori@gmail.com<br />
+                      tarepetm@gmail.com
                     </p>
                   </div>
                 </div>
@@ -163,9 +163,9 @@ export default function Contact() {
                     <Clock className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-foreground mb-1 text-lg">School Hours</h3>
+                    <h3 className="font-bold text-foreground mb-1 text-lg">Office Working Hours</h3>
                     <p className="text-muted-foreground text-sm leading-relaxed">
-                      Monday – Friday: 7:30 AM – 3:30 PM<br />
+                      Monday – Friday: 7:30 AM – 3:00 PM<br />
                       Saturday – Sunday: Closed
                     </p>
                   </div>

@@ -16,18 +16,18 @@ export function Footer() {
   const contactInfo = [
     {
       icon: <MapPin size={18} className="text-primary shrink-0" />,
-      text: "Murpiry L. & Sec. Sch., Kpansia-Epje, Yenagoa, Bayelsa State",
+      text: "47 Chief John Obi Str., Nuxtin, Kpansia, Yenagoa, Bayelsa State",
       href: null,
     },
     {
       icon: <Phone size={18} className="text-primary shrink-0" />,
-      text: "+234 (0) 800 000 0000",
-      href: "tel:+2348000000000",
+      text: "0803 789 0628 / 0703 830 2292",
+      href: "tel:+2348037890628",
     },
     {
       icon: <Mail size={18} className="text-primary shrink-0" />,
-      text: "info@tarepetmontessori.com",
-      href: "mailto:info@tarepetmontessori.com",
+      text: "tarepetmontessori@gmail.com",
+      href: "mailto:tarepetmontessori@gmail.com",
     },
   ];
 
@@ -61,10 +61,10 @@ export function Footer() {
               </div>
             </Link>
             <p className="text-white/80 text-sm leading-relaxed font-sans">
-              A premium Montessori institution dedicated to nurturing young minds, fostering independence, and inspiring a lifelong love for learning in Yenagoa.
+              Est. October 1, 2002 · A premier Montessori institution in Yenagoa dedicated to raising creative, God-fearing leaders.
             </p>
             <p className="font-serif italic text-base text-white/90">
-              "Not to Knowledge is Power"
+              "Knowledge is Power"
             </p>
           </div>
 

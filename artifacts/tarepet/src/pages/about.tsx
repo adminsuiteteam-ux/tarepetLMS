@@ -60,13 +60,13 @@ export default function About() {
             className="flex flex-wrap items-center justify-center gap-3 md:gap-4 text-xs md:text-sm font-sans"
           >
             <span className="px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
-              🏆 Established 2010
+              🏆 Established October 1, 2002
             </span>
             <span className="px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
               🌱 Montessori & Erdkinder Method
             </span>
             <span className="px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
-              📍 Kpansia-Epje, Yenagoa
+              📍 47 Chief John Obi Str., Kpansia, Yenagoa
             </span>
           </motion.div>
         </div>
@@ -80,7 +80,7 @@ export default function About() {
             <motion.div 
               initial={{ opacity: 0, x: -70 }}
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: false, margin: "-40px" }}
+              viewport={{ once: true, margin: "-40px" }}
               transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
               whileHover={{ y: -8, scale: 1.02 }}
               className="glass-card p-10 rounded-3xl border border-white/80 border-t-4 border-t-primary shadow-lg hover:shadow-2xl transition-all duration-300 group"
@@ -89,16 +89,19 @@ export default function About() {
                 <Target className="w-7 h-7" />
               </div>
               <h2 className="text-3xl font-serif font-bold text-foreground mb-4 group-hover:text-primary transition-colors">Our Mission</h2>
-              <p className="text-muted-foreground leading-relaxed text-lg">
-                To provide a holistic, child-centered education that empowers students to discover their innate potential, cultivate a lifelong passion for learning, and develop the character needed to thrive in a dynamic world.
+              <p className="text-muted-foreground leading-relaxed text-lg mb-3">
+                To enhance creativity, teamwork, leadership skills and love among students.
               </p>
+              <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full font-mono">
+                1 Corinthians 15:4-5
+              </span>
             </motion.div>
 
             {/* Vision — Slide from Right */}
             <motion.div 
               initial={{ opacity: 0, x: 70 }}
               whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: false, margin: "-40px" }}
+              viewport={{ once: true, margin: "-40px" }}
               transition={{ duration: 0.65, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
               whileHover={{ y: -8, scale: 1.02 }}
               className="glass-card p-10 rounded-3xl border border-white/80 border-t-4 border-t-secondary shadow-lg hover:shadow-2xl transition-all duration-300 group"
@@ -108,7 +111,7 @@ export default function About() {
               </div>
               <h2 className="text-3xl font-serif font-bold text-foreground mb-4 group-hover:text-secondary transition-colors">Our Vision</h2>
               <p className="text-muted-foreground leading-relaxed text-lg">
-                To be the foremost institution of academic excellence and character development in West Africa, raising a generation of thinkers, creators, and leaders grounded in the Montessori philosophy.
+                To raise a generation of children who will love the Lord, walk in godly wisdom, and lead in academic and societal excellence.
               </p>
             </motion.div>
           </div>
@@ -185,10 +188,10 @@ export default function About() {
           >
             <h2 className="text-4xl font-serif font-bold text-foreground mb-8">Our History</h2>
             <p className="text-muted-foreground text-lg leading-relaxed mb-6">
-              Located strategically at Kpansia-Epje, Yenagoa (Murpiry L. & Sec. Sch.), Tare Pet Montessori School was established with a bold mandate: to redefine the standard of early childhood and secondary education in Bayelsa State.
+              Founded on <strong>October 1, 2002</strong>, and located at 47 Chief John Obi Str., Nuxtin, Kpansia, Yenagoa, Tare Pet Montessori School was established with a bold mandate: to raise a generation of creative, disciplined, and God-fearing leaders in Bayelsa State.
             </p>
             <p className="text-muted-foreground text-lg leading-relaxed">
-              From our modest beginnings, we have grown into a premier institution, recognized for our uncompromising academic standards, our dedicated staff, and the remarkable character of our alumni. We remain anchored to our roots while constantly innovating for the future.
+              Spanning over two decades of educational excellence, we offer complete academic continuity from Creche, Advance Nursery, Nursery 1 & 2, Basic 1-6 (Primary), up to Junior and Senior Secondary (JS1-SS3), residential boarding, and special needs education.
             </p>
           </motion.div>
         </div>
@@ -204,31 +207,34 @@ export default function About() {
             transition={{ duration: 0.6 }}
             className="text-center max-w-3xl mx-auto mb-16"
           >
-            <h2 className="text-4xl font-serif font-bold text-foreground mb-6">Our Leadership</h2>
-            <p className="text-muted-foreground text-lg">Guided by experienced educators passionate about child development.</p>
+            <h2 className="text-4xl font-serif font-bold text-foreground mb-6">School Management & Leadership</h2>
+            <p className="text-muted-foreground text-lg">Guided by experienced educational leaders passionate about child development.</p>
           </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {[
-              { name: "Mrs. Taripreye E.", role: "Proprietress / Founder", initials: "TE", side: -70 },
-              { name: "Mr. Ayebatari D.", role: "Head of School", initials: "AD", side: 0 },
-              { name: "Dr. (Mrs) Preye K.", role: "Montessori Directress", initials: "PK", side: 70 }
+              { name: "Chief (Mrs) Victoria Ebunomiye Kpotoge", role: "Proprietress / Founder", initials: "VK" },
+              { name: "Mrs. Chwerdu Erebeli", role: "School Administrator", initials: "CE" },
+              { name: "Mr. Ofem Ekpa", role: "Principal", initials: "OE" },
+              { name: "Mrs. Stella Nosa-Apohan", role: "Vice Principal", initials: "SN" },
+              { name: "Ms. Akidei Afayero", role: "Head Teacher", initials: "AA" },
+              { name: "Mrs. Tina Mabu", role: "Nursery Head", initials: "TM" }
             ].map((leader, i) => (
               <motion.div 
                 key={i} 
-                initial={{ opacity: 0, x: leader.side, y: leader.side === 0 ? 50 : 0 }}
-                whileInView={{ opacity: 1, x: 0, y: 0 }}
-                viewport={{ once: false, margin: "-40px" }}
-                transition={{ duration: 0.65, delay: i * 0.15 }}
-                whileHover={{ y: -8, scale: 1.03 }}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                whileHover={{ y: -8, scale: 1.02 }}
                 className="glass-card rounded-2xl border border-white/80 overflow-hidden text-center shadow-md hover:shadow-2xl transition-all duration-300"
               >
-                <div className="h-48 bg-gradient-to-br from-primary/10 via-secondary/10 to-primary/5 flex items-center justify-center">
-                  <span className="text-5xl font-serif text-primary/40 font-bold">{leader.initials}</span>
+                <div className="h-44 bg-gradient-to-br from-primary/15 via-secondary/15 to-primary/10 flex items-center justify-center">
+                  <span className="text-4xl font-serif text-primary font-bold">{leader.initials}</span>
                 </div>
                 <div className="p-6">
-                  <h3 className="text-xl font-bold text-foreground mb-1">{leader.name}</h3>
-                  <p className="text-primary font-semibold text-sm">{leader.role}</p>
+                  <h3 className="text-lg font-bold text-foreground mb-1 leading-snug">{leader.name}</h3>
+                  <p className="text-primary font-semibold text-xs uppercase tracking-wider">{leader.role}</p>
                 </div>
               </motion.div>
             ))}
