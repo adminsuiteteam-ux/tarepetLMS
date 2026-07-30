@@ -4,6 +4,7 @@ import aboutImg from "@assets/generated_images/about.jpg";
 import vicePrincipalImg from "@assets/vice_principal.jpg";
 import headMistressImg from "@assets/head_mistress.jpg";
 import nurseryHeadImg from "@assets/nursery_head.jpg";
+import proprietressImg from "@assets/proprietress.jpg";
 import { CheckCircle, Award, Target, Eye, Sparkles } from "lucide-react";
 
 export default function About() {
@@ -216,7 +217,7 @@ export default function About() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {[
-              { name: "Chief (Mrs) Victoria Ebunomiye Kpotoge", role: "Proprietress / Founder", initials: "VK" },
+              { name: "Chief (Mrs) Victoria Ebunomiye Kpotoge", role: "Proprietress / Founder", initials: "VK", image: proprietressImg, imagePos: "center 20%" },
               { name: "Mrs. Chwerdu Erebeli", role: "School Administrator", initials: "CE" },
               { name: "Mr. Ofem Ekpa", role: "Principal", initials: "OE" },
               { name: "Mrs. Stella Nosa-Apohan", role: "Vice Principal", initials: "SN", image: vicePrincipalImg, imagePos: "center top" },
