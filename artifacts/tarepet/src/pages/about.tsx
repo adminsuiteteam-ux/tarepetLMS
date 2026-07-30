@@ -2,6 +2,7 @@ import { PageTransition } from "@/components/layout/Layout";
 import { motion } from "framer-motion";
 import aboutImg from "@assets/generated_images/about.jpg";
 import vicePrincipalImg from "@assets/vice_principal.jpg";
+import headMistressImg from "@assets/head_mistress.jpg";
 import { CheckCircle, Award, Target, Eye, Sparkles } from "lucide-react";
 
 export default function About() {
@@ -217,8 +218,8 @@ export default function About() {
               { name: "Chief (Mrs) Victoria Ebunomiye Kpotoge", role: "Proprietress / Founder", initials: "VK" },
               { name: "Mrs. Chwerdu Erebeli", role: "School Administrator", initials: "CE" },
               { name: "Mr. Ofem Ekpa", role: "Principal", initials: "OE" },
-              { name: "Mrs. Stella Nosa-Apohan", role: "Vice Principal", initials: "SN", image: vicePrincipalImg },
-              { name: "Ms. Akidei Afayero", role: "Head Teacher", initials: "AA" },
+              { name: "Mrs. Stella Nosa-Apohan", role: "Vice Principal", initials: "SN", image: vicePrincipalImg, imagePos: "center top" },
+              { name: "Ms. Akidei Afayero", role: "Head Mistress", initials: "AA", image: headMistressImg, imagePos: "center top" },
               { name: "Mrs. Tina Mabu", role: "Nursery Head", initials: "TM" }
             ].map((leader, i) => (
               <motion.div 
@@ -235,7 +236,7 @@ export default function About() {
                     <img 
                       src={leader.image} 
                       alt={leader.name} 
-                      style={{ objectPosition: "center top" }}
+                      style={{ objectPosition: leader.imagePos || "center top" }}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
