@@ -11,21 +11,20 @@ export default function About() {
   return (
     <PageTransition>
       {/* Hero Header */}
-      <section className="bg-gradient-to-br from-[#123922] via-[#0f2e1d] to-[#091f13] text-white pt-32 pb-24 md:pt-40 md:pb-32 relative overflow-hidden border-b border-white/10">
+      <section className="bg-slate-950 text-white pt-32 pb-24 md:pt-40 md:pb-32 relative overflow-hidden border-b border-white/10">
         {/* Background Image Layer */}
         <div className="absolute inset-0 z-0">
           <img
             src={aboutImg}
-            alt="Tare Pet Campus"
-            className="w-full h-full object-cover opacity-20 scale-105"
+            alt="Tare Pet Campus Building"
+            className="w-full h-full object-cover opacity-95 scale-105 brightness-100"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#123922]/90 via-[#0f2e1d]/85 to-[#091f13]/90 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/35 to-black/20" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40" />
         </div>
 
-        {/* Background Ambient Glow & Glass Shimmer */}
-        <div className="absolute inset-0 glass-shimmer pointer-events-none opacity-20 z-0" />
-        <div className="absolute top-10 right-10 w-96 h-96 bg-primary/25 rounded-full blur-3xl pointer-events-none animate-pulse" />
-        <div className="absolute bottom-10 left-10 w-96 h-96 bg-secondary/35 rounded-full blur-3xl pointer-events-none animate-pulse" />
+        {/* Subtle Ambient Glass Shimmer */}
+        <div className="absolute inset-0 glass-shimmer pointer-events-none opacity-10 z-0" />
 
         <div className="container mx-auto px-4 md:px-6 text-center relative z-10 max-w-4xl">
           <motion.div
@@ -135,10 +134,9 @@ export default function About() {
             >
               <img 
                 src={aboutImg} 
-                alt="Tare Pet School Building Exterior" 
+                alt="Tare Pet Montessori School Citadel of Praise Building Exterior" 
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />
-              <div className="absolute inset-0 bg-primary/10 mix-blend-overlay" />
             </motion.div>
             
             <motion.div

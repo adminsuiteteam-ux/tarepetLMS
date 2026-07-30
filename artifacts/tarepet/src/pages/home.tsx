@@ -3,8 +3,8 @@ import { Link } from "wouter";
 import { motion, useInView, animate } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 import { ArrowRight, BookOpen, Heart, Users, CheckCircle2, Quote, Sparkles, GraduationCap, Globe, Building2, HeartHandshake } from "lucide-react";
-import heroImg from "@assets/school_building.jpg";
-import philosophyImg from "@assets/generated_images/programs.jpg";
+import heroImg from "@assets/classroom_hero.jpg";
+import philosophyImg from "@assets/school_building.jpg";
 import { GlareCard } from "@/components/ui/glare-card";
 import BackgroundNoiseEffect from "@/components/ui/background-snippets-noise-effect11";
 import { StaggerTestimonials } from "@/components/ui/stagger-testimonials";
@@ -52,35 +52,17 @@ export default function Home() {
 
   return (
     <PageTransition>
-      {/* Hero Section with Video Background — Full coverage from top-0 (No white space) */}
+      {/* Hero Section with Background Image */}
       <section className="relative min-h-[95vh] flex items-center pt-28 md:pt-36 pb-20 overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <video
-            ref={videoRef}
-            autoPlay
-            loop
-            muted
-            playsInline
-            preload="auto"
-            poster={heroImg}
-            className="w-full h-full object-cover scale-105"
-          >
-            <source
-              src="https://assets.mixkit.co/videos/preview/mixkit-children-in-a-classroom-setting-42774-large.mp4"
-              type="video/mp4"
-            />
-            <source
-              src="https://cdn.coverr.co/videos/coverr-children-playing-and-learning-5536/1080p.mp4"
-              type="video/mp4"
-            />
-          </video>
-          <div className="absolute inset-0 bg-gradient-to-r from-secondary/95 via-secondary/80 to-secondary/50 mix-blend-multiply" />
-          <div className="absolute inset-0 bg-black/45 backdrop-blur-[2px]" />
+          <img
+            src={heroImg}
+            alt="Tare Pet Montessori School Citadel of Praise Campus Building"
+            className="w-full h-full object-cover object-center scale-105 opacity-95 brightness-100"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-black/20" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-black/25" />
         </div>
-
-        {/* Ambient Floating Glass Spheres */}
-        <div className="absolute top-20 right-10 w-96 h-96 bg-primary/25 rounded-full blur-3xl pointer-events-none animate-pulse" />
-        <div className="absolute bottom-10 left-10 w-96 h-96 bg-secondary/35 rounded-full blur-3xl pointer-events-none animate-pulse" />
         
         <div className="container mx-auto px-4 md:px-6 relative z-10">
           <div className="max-w-3xl">

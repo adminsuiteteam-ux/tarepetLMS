@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Calendar, ChevronRight, Sparkles } from "lucide-react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
+import blogHeroImg from "@assets/classroom_hero.jpg";
 
 const CATEGORIES = ["All", "Montessori Method", "School Events", "Student Achievements", "Sports", "Parenting"];
 
@@ -78,8 +79,18 @@ export default function Blog() {
   return (
     <PageTransition>
       {/* Header */}
-      <section className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 py-28 md:py-36 text-white relative overflow-hidden">
-        <div className="absolute inset-0 glass-shimmer pointer-events-none opacity-25" />
+      <section className="bg-slate-950 py-28 md:py-36 text-white relative overflow-hidden border-b border-white/10">
+        {/* Background Image Layer */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src={blogHeroImg}
+            alt="Tare Pet Blog & Insights"
+            className="w-full h-full object-cover opacity-95 scale-105 brightness-100"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/35 to-black/20" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40" />
+        </div>
+        <div className="absolute inset-0 glass-shimmer pointer-events-none opacity-10 z-0" />
         <div className="container mx-auto px-4 md:px-6 relative z-10">
           <div className="max-w-3xl">
             <motion.div

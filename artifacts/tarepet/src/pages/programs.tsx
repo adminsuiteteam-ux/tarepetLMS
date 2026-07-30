@@ -1,28 +1,28 @@
 import { PageTransition } from "@/components/layout/Layout";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import programsImg from "@assets/generated_images/programs.jpg";
-import { BookOpen, Activity, Target, Palette, MoveRight, Sparkles, Building2, HeartHandshake, ShieldCheck, Award } from "lucide-react";
+import programsImg from "@assets/programs_hero.jpg";
+import { BookOpen, Activity, Target, Palette, MoveRight, Sparkles, Building2, HeartHandshake, ShieldCheck, Award, SpellCheck, Rocket, Calculator, Utensils, Theater, Newspaper, Trophy, CircleDot, Globe, Zap, Flame, TrendingUp, ArrowRightCircle, Crosshair, Dumbbell, Disc } from "lucide-react";
+import { FaFutbol, FaBasketball, FaVolleyball, FaTableTennisPaddleBall, FaPersonRunning, FaBullseye, FaWeightHanging, FaCompactDisc } from "react-icons/fa6";
 
 export default function Programs() {
   return (
     <PageTransition>
       {/* Hero Header */}
-      <section className="bg-gradient-to-br from-[#8b152b] via-primary/95 to-[#123922] text-white pt-32 pb-24 md:pt-40 md:pb-32 relative overflow-hidden border-b border-white/10">
+      <section className="bg-slate-950 text-white pt-32 pb-24 md:pt-40 md:pb-32 relative overflow-hidden border-b border-white/10">
         {/* Background Image Layer */}
         <div className="absolute inset-0 z-0">
           <img
             src={programsImg}
-            alt="Tare Pet Academic Programs"
-            className="w-full h-full object-cover opacity-20 scale-105"
+            alt="Tare Pet Montessori Science & Academic Programs"
+            className="w-full h-full object-cover object-center opacity-95 scale-105 brightness-100"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#8b152b]/90 via-[#123922]/90 to-[#0b2416]/95 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/35 to-black/20" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40" />
         </div>
 
-        {/* Background Ambient Glow & Glass Shimmer */}
-        <div className="absolute inset-0 glass-shimmer pointer-events-none opacity-20 z-0" />
-        <div className="absolute top-10 left-10 w-96 h-96 bg-primary/30 rounded-full blur-3xl pointer-events-none animate-pulse" />
-        <div className="absolute bottom-10 right-10 w-96 h-96 bg-secondary/35 rounded-full blur-3xl pointer-events-none animate-pulse" />
+        {/* Subtle Ambient Glass Shimmer */}
+        <div className="absolute inset-0 glass-shimmer pointer-events-none opacity-10 z-0" />
 
         <div className="container mx-auto px-4 md:px-6 text-center relative z-10 max-w-4xl">
           <motion.div
@@ -335,12 +335,12 @@ export default function Programs() {
             <h3 className="text-2xl font-serif font-bold text-foreground mb-8 text-center">Clubs & Extracurricular Societies</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
               {[
-                { name: "Spelling Bee", icon: "🐝" },
-                { name: "JET Club", icon: "🚀" },
-                { name: "Maths Club", icon: "📐" },
-                { name: "Chef & Culinary", icon: "🍳" },
-                { name: "Drama & Debate", icon: "🎭" },
-                { name: "Press Club", icon: "📰" },
+                { name: "Spelling Bee", Icon: SpellCheck },
+                { name: "JET Club", Icon: Rocket },
+                { name: "Maths Club", Icon: Calculator },
+                { name: "Chef & Culinary", Icon: Utensils },
+                { name: "Drama & Debate", Icon: Theater },
+                { name: "Press Club", Icon: Newspaper },
               ].map((club, i) => (
                 <motion.div 
                   key={i} 
@@ -349,9 +349,11 @@ export default function Programs() {
                   viewport={{ once: true }}
                   transition={{ duration: 0.4, delay: i * 0.08 }}
                   whileHover={{ y: -5, scale: 1.05 }}
-                  className="p-5 glass-card rounded-2xl text-center border border-white/80 shadow-sm hover:shadow-lg transition-all"
+                  className="p-5 glass-card rounded-2xl text-center border border-white/80 shadow-sm hover:shadow-lg transition-all flex flex-col items-center justify-center group"
                 >
-                  <span className="text-3xl block mb-2">{club.icon}</span>
+                  <div className="p-3 rounded-xl bg-primary/10 text-primary mb-3 group-hover:bg-primary group-hover:text-white transition-colors">
+                    <club.Icon className="w-7 h-7" />
+                  </div>
                   <p className="font-bold text-foreground text-sm">{club.name}</p>
                 </motion.div>
               ))}
@@ -363,17 +365,17 @@ export default function Programs() {
             <h3 className="text-2xl font-serif font-bold text-foreground mb-8 text-center">Sports & Athletic Activities</h3>
             <div className="flex flex-wrap items-center justify-center gap-3 max-w-4xl mx-auto">
               {[
-                "Football ⚽",
-                "Basketball 🏀",
-                "Volleyball 🏐",
-                "Netball ⛹️‍♀️",
-                "Badminton 🏸",
-                "Table Tennis 🏓",
-                "High Jump 🏃‍♂️",
-                "Long Jump 🏃‍♀️",
-                "Javelin 🎯",
-                "Shot Put 🏋️",
-                "Discus 🥏",
+                { name: "Football", Icon: FaFutbol },
+                { name: "Basketball", Icon: FaBasketball },
+                { name: "Volleyball", Icon: FaVolleyball },
+                { name: "Netball", Icon: FaBasketball },
+                { name: "Badminton", Icon: Zap },
+                { name: "Table Tennis", Icon: FaTableTennisPaddleBall },
+                { name: "High Jump", Icon: FaPersonRunning },
+                { name: "Long Jump", Icon: FaPersonRunning },
+                { name: "Javelin", Icon: FaBullseye },
+                { name: "Shot Put", Icon: FaWeightHanging },
+                { name: "Discus", Icon: FaCompactDisc },
               ].map((sport, i) => (
                 <motion.span 
                   key={i}
@@ -381,9 +383,10 @@ export default function Programs() {
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.3, delay: i * 0.05 }}
-                  className="px-5 py-2.5 rounded-full glass-card border border-white/80 text-foreground font-semibold text-sm shadow-sm hover:bg-primary hover:text-white transition-all cursor-default"
+                  className="px-4 py-2.5 rounded-full glass-card border border-white/80 text-foreground font-semibold text-sm shadow-sm hover:bg-primary hover:text-white transition-all cursor-default flex items-center gap-2 group"
                 >
-                  {sport}
+                  <sport.Icon className="w-4 h-4 text-primary group-hover:text-white transition-colors" />
+                  <span>{sport.name}</span>
                 </motion.span>
               ))}
             </div>

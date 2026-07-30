@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Eye, EyeOff, Lock, Mail, AlertCircle } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import tarepetLogo from "@assets/tarepet__1784835204178.png";
-import heroImg from "@assets/school_building.jpg";
+import heroImg from "@assets/classroom_hero.jpg";
 import { useAuth } from "@/context/AuthContext";
 import { authClient } from "@/lib/api-auth";
 
@@ -81,9 +81,9 @@ export default function SignIn() {
           <img
             src={heroImg}
             alt="Tare Pet Montessori School"
-            className="w-full h-full object-cover opacity-25 scale-105"
+            className="w-full h-full object-cover opacity-80 scale-105 brightness-[0.9]"
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-secondary/95 via-[#123922]/90 to-secondary/95 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-950/85 via-slate-950/65 to-slate-950/85" />
         </div>
 
         {/* Decorative Pattern */}

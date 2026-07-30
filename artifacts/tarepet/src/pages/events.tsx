@@ -2,6 +2,7 @@ import { PageTransition } from "@/components/layout/Layout";
 import { motion } from "framer-motion";
 import { Calendar, Clock, MapPin, Sparkles } from "lucide-react";
 import { Link } from "wouter";
+import eventsImg from "@assets/events_hero.jpg";
 
 const UPCOMING_EVENTS = [
   {
@@ -70,21 +71,20 @@ export default function Events() {
   return (
     <PageTransition>
       {/* Hero Header */}
-      <section className="bg-gradient-to-br from-[#8b152b] via-primary/95 to-[#123922] text-white pt-32 pb-24 md:pt-40 md:pb-32 relative overflow-hidden border-b border-white/10">
+      <section className="bg-slate-950 text-white pt-32 pb-24 md:pt-40 md:pb-32 relative overflow-hidden border-b border-white/10">
         {/* Background Image Layer */}
         <div className="absolute inset-0 z-0">
           <img
-            src="https://images.unsplash.com/photo-1511578314322-379afb476865?q=80&w=2000&auto=format&fit=crop"
-            alt="School Events & Celebrations"
-            className="w-full h-full object-cover opacity-20 scale-105"
+            src={eventsImg}
+            alt="Tare Pet Montessori School Inter-House Sports & Events"
+            className="w-full h-full object-cover object-center opacity-95 scale-105 brightness-100"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#8b152b]/92 via-primary/90 to-[#123922]/92 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/35 to-black/20" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40" />
         </div>
 
-        {/* Background Ambient Glow & Glass Shimmer */}
-        <div className="absolute inset-0 glass-shimmer pointer-events-none opacity-20 z-0" />
-        <div className="absolute top-10 left-10 w-96 h-96 bg-primary/30 rounded-full blur-3xl pointer-events-none animate-pulse" />
-        <div className="absolute bottom-10 right-10 w-96 h-96 bg-secondary/35 rounded-full blur-3xl pointer-events-none animate-pulse" />
+        {/* Subtle Ambient Glass Shimmer */}
+        <div className="absolute inset-0 glass-shimmer pointer-events-none opacity-10 z-0" />
 
         <div className="container mx-auto px-4 md:px-6 text-center relative z-10 max-w-4xl">
           <motion.div
