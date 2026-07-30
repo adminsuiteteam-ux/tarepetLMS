@@ -7,6 +7,7 @@ import heroImg from "@assets/generated_images/hero.jpg";
 import philosophyImg from "@assets/generated_images/programs.jpg";
 import { GlareCard } from "@/components/ui/glare-card";
 import BackgroundNoiseEffect from "@/components/ui/background-snippets-noise-effect11";
+import { StaggerTestimonials } from "@/components/ui/stagger-testimonials";
 
 function Counter({ target, suffix = "", duration = 2 }: { target: number; suffix?: string; duration?: number }) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -492,7 +493,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Testimonials with Alternating Left & Right Slide-In */}
+      {/* Parent Voices Section with Interactive Stagger Testimonials */}
       <section className="py-24 bg-muted/40 relative overflow-hidden">
         <div className="container mx-auto px-4 md:px-6">
           <motion.div 
@@ -500,43 +501,13 @@ export default function Home() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: false }}
             transition={{ duration: 0.6 }}
-            className="text-center max-w-3xl mx-auto mb-16"
+            className="text-center max-w-3xl mx-auto mb-10"
           >
-            <h2 className="text-4xl font-serif font-bold text-foreground mb-6">Parent Voices</h2>
+            <h2 className="text-4xl font-serif font-bold text-foreground mb-4">Parent Voices</h2>
             <p className="text-muted-foreground text-lg">Hear from the families who have entrusted us with their children's education.</p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              { quote: "The transformation in my daughter's confidence since joining Tare Pet is remarkable. She doesn't just memorize; she truly understands.", author: "Mrs. Oweikeme", role: "Primary Parent", side: -70 },
-              { quote: "Finding a true Montessori school in Yenagoa was a blessing. The teachers are incredibly dedicated and the environment is just beautiful.", author: "Mr. Amadi", role: "Nursery Parent", side: 0 },
-              { quote: "My son transitioned to the secondary section flawlessly. The leadership skills they teach are exactly what teenagers need today.", author: "Dr. Ebi", role: "Secondary Parent", side: 70 }
-            ].map((test, i) => (
-              <motion.div 
-                key={i} 
-                initial={{ opacity: 0, x: test.side, y: test.side === 0 ? 50 : 0 }}
-                whileInView={{ opacity: 1, x: 0, y: 0 }}
-                viewport={{ once: false, margin: "-40px" }}
-                transition={{ duration: 0.65, delay: i * 0.15 }}
-                whileHover={{ y: -6, scale: 1.02 }}
-                className="glass-card p-8 rounded-2xl shadow-sm hover:shadow-xl relative border border-white/80 group transition-all duration-300"
-              >
-                <Quote className="absolute top-6 right-6 w-10 h-10 text-primary/15 group-hover:text-primary/30 transition-colors" />
-                <div className="flex gap-1 mb-6 text-primary">
-                  {[1,2,3,4,5].map(star => (
-                    <svg key={star} className="w-4 h-4 fill-current" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  ))}
-                </div>
-                <p className="text-muted-foreground italic mb-6 leading-relaxed">"{test.quote}"</p>
-                <div>
-                  <p className="font-bold text-foreground group-hover:text-primary transition-colors">{test.author}</p>
-                  <p className="text-xs text-primary font-semibold uppercase tracking-wider mt-0.5">{test.role}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+          <StaggerTestimonials />
         </div>
       </section>
 
