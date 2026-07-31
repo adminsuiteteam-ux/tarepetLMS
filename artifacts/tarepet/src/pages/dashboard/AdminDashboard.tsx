@@ -901,181 +901,79 @@ export default function AdminDashboard() {
   const renderSection = () => {
     // 1. OVERVIEW & SCHOOL EXECUTIVE ANALYTICS
     if (activeSection === 'overview' || activeSection === 'analytics') {
-      const pendingApprovalCount = examsList.filter(e => e.status === 'Pending Approval' || e.status === 'PENDING').length;
+      const ss1Count = MOCK_SS_STUDENTS.filter(s => s.grade === 'SS1').length || 185;
+      const ss2Count = MOCK_SS_STUDENTS.filter(s => s.grade === 'SS2').length || 172;
+      const ss3Count = MOCK_SS_STUDENTS.filter(s => s.grade === 'SS3').length || 163;
+      const totalStudents = ss1Count + ss2Count + ss3Count;
+
+      const teachingStaffCount = usersList.filter(u => u.role === 'TEACHER').length || 34;
+      const nonTeachingStaffCount = usersList.filter(u => u.role === 'STAFF' || u.role === 'PARENT').length || 18;
 
       return (
         <div className="space-y-6">
-          <RealTimeSyncStatus title="Tare Pet Montessori — Executive School Command Center" />
-
-          {/* Top Executive Metrics */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <MetricCard 
-              label="Student Enrollment" 
-              value="520" 
-              sub="503/520 Present Today (96.7%)" 
-              icon={GraduationCap} 
-              color="bg-primary/10 text-primary" 
-              trend="up" 
-            />
-            <MetricCard 
-              label="Staff & Educators" 
-              value="42" 
-              sub="42/42 Active on Duty" 
-              icon={Users} 
-              color="bg-emerald-500/10 text-emerald-600" 
-              trend="neutral" 
-            />
-            <MetricCard 
-              label="CBT Academic Pass Rate" 
-              value="94.5%" 
-              sub="Mid-Term & CA Examinations" 
-              icon={Award} 
-              color="bg-blue-500/10 text-blue-600" 
-              trend="up" 
-            />
-            <MetricCard 
-              label="Tuition Fee Revenue" 
-              value="₦18.5M" 
-              sub="92.5% Term Fees Cleared" 
-              icon={DollarSign} 
-              color="bg-amber-500/10 text-amber-600" 
-              trend="up" 
-            />
+          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
+            <h2 className="font-serif font-bold text-xl text-foreground mb-1">Executive Summary Overview</h2>
+            <p className="text-xs text-muted-foreground">Official headcount for students (SS1 – SS3), teaching staff, and non-teaching personnel.</p>
           </div>
 
-          {/* Core School Head Command Modules */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            {/* Module 1: CBT Approvals & Academic Leadership */}
-            <div className="lg:col-span-1 bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h2 className="font-serif font-bold text-lg text-foreground">CBT & Exam Control</h2>
-                  {pendingApprovalCount > 0 ? (
-                    <span className="bg-amber-500/10 text-amber-600 border border-amber-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
-                      {pendingApprovalCount} Pending Approval
-                    </span>
-                  ) : (
-                    <span className="bg-emerald-500/10 text-emerald-600 border border-emerald-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
-                      All Approved
-                    </span>
-                  )}
-                </div>
-
-                <p className="text-xs text-muted-foreground leading-relaxed mb-3">
-                  Review, validate questions, and approve online CBT continuous assessment tests submitted by teaching staff.
-                </p>
-
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border text-xs">
-                    <div>
-                      <p className="font-bold text-foreground">SS1 Mathematics CA Test</p>
-                      <p className="text-muted-foreground text-[10px]">Mr. Okonkwo Paul · 3 Questions</p>
-                    </div>
-                    <span className="bg-emerald-500/10 text-emerald-600 text-[10px] font-bold px-2 py-0.5 rounded-full">ACTIVE</span>
-                  </div>
-
-                  <div className="flex items-center justify-between p-3 rounded-xl bg-muted/30 border border-border text-xs">
-                    <div>
-                      <p className="font-bold text-foreground">SS1 Physics Terminal Test</p>
-                      <p className="text-muted-foreground text-[10px]">Engr. Emeka David · 3 Questions</p>
-                    </div>
-                    <span className="bg-emerald-500/10 text-emerald-600 text-[10px] font-bold px-2 py-0.5 rounded-full">ACTIVE</span>
-                  </div>
-                </div>
-              </div>
-
-              <Link href="/dashboard/cbt-approval" className="block mt-4">
-                <button className="w-full bg-primary text-white py-2.5 rounded-xl font-bold text-xs hover:bg-primary/90 transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer">
-                  <CheckCircle2 className="w-4 h-4" /> Open Principal CBT Approval Queue
-                </button>
-              </Link>
-            </div>
-
-            {/* Module 2: School Fee & Revenue Collection Overview */}
-            <div className="lg:col-span-2 bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Card 1: Total Students (SS1 to SS3) */}
+            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="font-serif font-bold text-lg text-foreground">Financial & Fee Operations Summary</h2>
-                  <p className="text-xs text-muted-foreground">Term 2 2026 Tuition, CBT Technology & Montessori Practical Kit Levy Progress</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Students (SS1 – SS3)</p>
+                  <h3 className="text-4xl font-serif font-bold text-primary mt-1">{totalStudents}</h3>
                 </div>
-                <span className="text-xs font-bold text-emerald-600 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-200">
-                  ₦18,500,000 / ₦20,000,000 Target
-                </span>
+                <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <GraduationCap className="w-6 h-6" />
+                </div>
               </div>
 
-              <div className="space-y-4">
-                <SystemHealthBar label="Tuition Fee Clearance (520 Students)" value={92.5} unit="%" color="text-emerald-600" />
-                <SystemHealthBar label="CBT Examination & Tech Levy" value={98} unit="%" color="text-blue-600" />
-                <SystemHealthBar label="Montessori Practical Life Kit Levy" value={95} unit="%" color="text-emerald-600" />
-                <SystemHealthBar label="Facility & Development Levy" value={89} unit="%" color="text-amber-600" />
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-2 border-t border-border">
-                <div className="bg-emerald-500/5 border border-emerald-200/60 rounded-xl p-3.5">
-                  <p className="text-[11px] text-muted-foreground font-semibold">Total Revenue Collected</p>
-                  <p className="text-xl font-serif font-bold text-emerald-700 mt-0.5">₦18,500,000</p>
+              <div className="pt-3 border-t border-border space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-muted-foreground font-medium">SS 1 Students:</span>
+                  <span className="font-bold text-foreground">{ss1Count}</span>
                 </div>
-                <div className="bg-amber-500/5 border border-amber-200/60 rounded-xl p-3.5">
-                  <p className="text-[11px] text-muted-foreground font-semibold">Outstanding Balance</p>
-                  <p className="text-xl font-serif font-bold text-amber-700 mt-0.5">₦1,500,000</p>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-muted-foreground font-medium">SS 2 Students:</span>
+                  <span className="font-bold text-foreground">{ss2Count}</span>
                 </div>
-                <div className="col-span-2 sm:col-span-1 bg-blue-500/5 border border-blue-200/60 rounded-xl p-3.5">
-                  <p className="text-[11px] text-muted-foreground font-semibold">Parent Accounts Cleared</p>
-                  <p className="text-xl font-serif font-bold text-blue-700 mt-0.5">481 / 520</p>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-muted-foreground font-medium">SS 3 Students:</span>
+                  <span className="font-bold text-foreground">{ss3Count}</span>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Module 3: School House System Standings & Academic Class Leaders */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-serif font-bold text-base text-foreground">Montessori House Points Standings</h3>
-                <span className="text-xs text-muted-foreground font-semibold">Inter-House Championship</span>
+            {/* Card 2: Total Teaching Staff */}
+            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm flex flex-col justify-between space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Teaching Staff</p>
+                  <h3 className="text-4xl font-serif font-bold text-emerald-600 mt-1">{teachingStaffCount}</h3>
+                </div>
+                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                  <Users className="w-6 h-6" />
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                {MOCK_HOUSES.map((h, i) => (
-                  <div key={i} className="p-4 rounded-xl border border-border bg-muted/20 flex flex-col justify-between">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="w-3 h-3 rounded-full" style={{ backgroundColor: h.color }} />
-                      <span className="text-xs font-bold text-foreground">{h.points} Pts</span>
-                    </div>
-                    <p className="font-bold text-foreground text-sm">{h.name}</p>
-                    <p className="text-[10px] text-muted-foreground italic mt-0.5">"{h.motto}"</p>
-                  </div>
-                ))}
+              <div className="pt-3 border-t border-border">
+                <p className="text-xs text-muted-foreground font-medium">Active subject teachers and Montessori educators assigned across senior classes.</p>
               </div>
             </div>
 
-            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-serif font-bold text-base text-foreground">Academic Class Performance Leaders</h3>
-                <span className="text-xs text-emerald-600 font-bold">2nd Term 2026</span>
+            {/* Card 3: Total Non-Teaching Staff */}
+            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm flex flex-col justify-between space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Non-Teaching Staff</p>
+                  <h3 className="text-4xl font-serif font-bold text-blue-600 mt-1">{nonTeachingStaffCount}</h3>
+                </div>
+                <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
+                  <Briefcase className="w-6 h-6" />
+                </div>
               </div>
-              <div className="space-y-3">
-                {[
-                  { rank: 1, class: 'SS1 Science Stream', gpa: '3.85 Avg GPA', passRate: '98% CBT Pass', teacher: 'Mr. Okonkwo Paul' },
-                  { rank: 2, class: 'JSS3 Alpha Class', gpa: '3.78 Avg GPA', passRate: '96% CBT Pass', teacher: 'Mrs. Okafor Chioma' },
-                  { rank: 3, class: 'SS2 Commercial Stream', gpa: '3.65 Avg GPA', passRate: '94% CBT Pass', teacher: 'Dr. Grace Bassey' },
-                ].map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3 rounded-xl border border-border bg-muted/20 text-xs">
-                    <div className="flex items-center gap-3">
-                      <span className="w-7 h-7 rounded-lg bg-primary/10 text-primary font-bold flex items-center justify-center text-xs">
-                        #{item.rank}
-                      </span>
-                      <div>
-                        <p className="font-bold text-foreground">{item.class}</p>
-                        <p className="text-muted-foreground text-[10px]">Head: {item.teacher}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-emerald-600">{item.gpa}</p>
-                      <p className="text-muted-foreground text-[10px]">{item.passRate}</p>
-                    </div>
-                  </div>
-                ))}
+              <div className="pt-3 border-t border-border">
+                <p className="text-xs text-muted-foreground font-medium">Administrative personnel, IT technical support, security, and maintenance team.</p>
               </div>
             </div>
           </div>
