@@ -42,6 +42,7 @@
 
   --font-sans: Arial, 'Helvetica Neue', Helvetica, sans-serif;
   --font-serif: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+  --font-poppins: 'Poppins', Arial, sans-serif;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

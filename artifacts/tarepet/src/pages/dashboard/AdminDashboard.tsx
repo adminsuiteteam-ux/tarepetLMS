@@ -15,7 +15,11 @@ import {
   Mail, Phone, MapPin, Calendar, Shield, GraduationCap, Award,
   Briefcase, UserCog, BookMarked, MessageSquare, KeyRound,
   BadgeCheck, Ban, RotateCcw, FileDown, Send, FlaskConical, Palette,
+  School, CalendarCheck, Megaphone, UserPlus, FileSpreadsheet, TrendingUp, Sparkles, ChevronRight, Eye, Layers, ShieldCheck,
 } from 'lucide-react';
+import {
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, LineChart, Line, CartesianGrid,
+} from 'recharts';
 import {
   FaChalkboardUser, FaBriefcase, FaUserShield, FaUserGraduate,
   FaPen, FaTrash, FaIdCard, FaEnvelope, FaLock, FaCalendarCheck,
@@ -901,79 +905,239 @@ export default function AdminDashboard() {
   const renderSection = () => {
     // 1. OVERVIEW & SCHOOL EXECUTIVE ANALYTICS
     if (activeSection === 'overview' || activeSection === 'analytics') {
-      const ss1Count = MOCK_SS_STUDENTS.filter(s => s.grade === 'SS1').length;
-      const ss2Count = MOCK_SS_STUDENTS.filter(s => s.grade === 'SS2').length;
-      const ss3Count = MOCK_SS_STUDENTS.filter(s => s.grade === 'SS3').length;
-      const totalStudents = ss1Count + ss2Count + ss3Count;
+      const classPerformanceData = [
+        { class: 'JS 1', score: 78 },
+        { class: 'JS 2', score: 82 },
+        { class: 'JS 3', score: 85 },
+        { class: 'SS 1', score: 88 },
+        { class: 'SS 2', score: 84 },
+        { class: 'SS 3', score: 91 },
+      ];
 
-      const teachingStaffCount = usersList.filter(u => u.role === 'TEACHER').length;
-      const nonTeachingStaffCount = usersList.filter(u => u.role === 'STAFF' || u.role === 'PARENT').length;
+      const weeklyAttendanceData = [
+        { day: 'Mon', attendance: 95 },
+        { day: 'Tue', attendance: 98 },
+        { day: 'Wed', attendance: 94 },
+        { day: 'Thu', attendance: 96 },
+        { day: 'Fri', attendance: 97 },
+      ];
+
+      const quickActionButtons = [
+        { label: 'Add Student', icon: UserPlus, color: 'bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border-blue-200', action: () => { setActiveSection('users'); setUserSubPage('STUDENT'); } },
+        { label: 'Add Teacher', icon: GraduationCap, color: 'bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-emerald-200', action: () => { setActiveSection('users'); setUserSubPage('TEACHER'); } },
+        { label: 'Create Announcement', icon: Megaphone, color: 'bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border-amber-200', action: () => setActiveSection('announcements') },
+        { label: 'Upload Results', icon: FileSpreadsheet, color: 'bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border-purple-200', action: () => setActiveSection('results') },
+        { label: 'View Attendance', icon: CalendarCheck, color: 'bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 border-rose-200', action: () => setActiveSection('attendance') },
+        { label: 'Generate Reports', icon: BarChart2, color: 'bg-cyan-500/10 text-cyan-600 hover:bg-cyan-500/20 border-cyan-200', action: () => setActiveSection('reports') },
+      ];
+
+      const recentActivities = [
+        { text: 'New student registered', detail: 'John Doe enrolled in SS1 Science', time: '10 mins ago', icon: UserPlus, color: 'text-blue-500 bg-blue-500/10' },
+        { text: 'Teacher submitted results', detail: 'Mathematics Second Term Continuous Assessment', time: '45 mins ago', icon: FileText, color: 'text-emerald-500 bg-emerald-500/10' },
+        { text: 'Attendance updated', detail: 'SS2 Class Attendance marked at 98% presence', time: '2 hours ago', icon: CalendarCheck, color: 'text-amber-500 bg-amber-500/10' },
+        { text: 'New announcement published', detail: 'Mid-Term Exam Timetable released to parents', time: '4 hours ago', icon: Megaphone, color: 'text-rose-500 bg-rose-500/10' },
+      ];
+
+      const upcomingEvents = [
+        { title: 'Mid-Term Examination', date: 'Oct 15 - Oct 20, 2026', scope: 'All Classes', badgeColor: 'bg-rose-500/10 text-rose-600 border-rose-200' },
+        { title: 'Parents Meeting', date: 'Oct 24, 2026', scope: 'School Auditorium', badgeColor: 'bg-blue-500/10 text-blue-600 border-blue-200' },
+        { title: 'Sports Competition', date: 'Nov 05, 2026', scope: 'Main Sports Field', badgeColor: 'bg-emerald-500/10 text-emerald-600 border-emerald-200' },
+      ];
 
       return (
-        <div className="space-y-6">
-          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-            <h2 className="font-serif font-bold text-xl text-foreground mb-1">Executive Summary Overview</h2>
-            <p className="text-xs text-muted-foreground">Official headcount for students (SS1 – SS3), teaching staff, and non-teaching personnel.</p>
+        <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
+          {/* Header Banner */}
+          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h2 className="font-bold text-xl text-foreground mb-1">Principal Dashboard Overview</h2>
+              <p className="text-xs text-muted-foreground">Welcome back, Principal. Here is your real-time school performance summary.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5" /> 2025/2026 Academic Session
+              </span>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Card 1: Total Students (SS1 to SS3) */}
+          {/* 4 Overview Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {/* Card 1: Total Students */}
+            <div className="bg-card p-5 rounded-2xl border border-border shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Students</p>
+                <h3 className="text-3xl font-bold text-foreground">385</h3>
+                <p className="text-[11px] text-emerald-600 font-medium flex items-center gap-1">
+                  <TrendingUp className="w-3 h-3" /> +12% from last term
+                </p>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
+                <Users className="w-6 h-6" />
+              </div>
+            </div>
+
+            {/* Card 2: Teachers */}
+            <div className="bg-card p-5 rounded-2xl border border-border shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Teachers</p>
+                <h3 className="text-3xl font-bold text-foreground">28</h3>
+                <p className="text-[11px] text-muted-foreground font-medium">Full-time faculty</p>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+                <GraduationCap className="w-6 h-6" />
+              </div>
+            </div>
+
+            {/* Card 3: Classes */}
+            <div className="bg-card p-5 rounded-2xl border border-border shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Classes</p>
+                <h3 className="text-3xl font-bold text-foreground">12</h3>
+                <p className="text-[11px] text-muted-foreground font-medium">Junior & Senior arms</p>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center shrink-0">
+                <School className="w-6 h-6" />
+              </div>
+            </div>
+
+            {/* Card 4: Attendance Today */}
+            <div className="bg-card p-5 rounded-2xl border border-border shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Attendance Today</p>
+                <h3 className="text-3xl font-bold text-emerald-600">96%</h3>
+                <p className="text-[11px] text-muted-foreground font-medium">Daily average</p>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
+                <CalendarCheck className="w-6 h-6" />
+              </div>
+            </div>
+          </div>
+
+          {/* Charts Row (Bar + Line) */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Bar Chart: Class Performance */}
             <div className="bg-card p-6 rounded-2xl border border-border shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Students (SS1 – SS3)</p>
-                  <h3 className="text-4xl font-serif font-bold text-primary mt-1">{totalStudents}</h3>
+                  <h3 className="font-bold text-base text-foreground">Class Performance (%)</h3>
+                  <p className="text-xs text-muted-foreground">Average academic score across all class levels</p>
                 </div>
-                <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                  <GraduationCap className="w-6 h-6" />
-                </div>
+                <span className="p-2 rounded-xl bg-muted text-muted-foreground">
+                  <BarChart2 className="w-4 h-4" />
+                </span>
               </div>
-
-              <div className="pt-3 border-t border-border space-y-2">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-muted-foreground font-medium">SS 1 Students:</span>
-                  <span className="font-bold text-foreground">{ss1Count}</span>
-                </div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-muted-foreground font-medium">SS 2 Students:</span>
-                  <span className="font-bold text-foreground">{ss2Count}</span>
-                </div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-muted-foreground font-medium">SS 3 Students:</span>
-                  <span className="font-bold text-foreground">{ss3Count}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Card 2: Total Teaching Staff */}
-            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm flex flex-col justify-between space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Teaching Staff</p>
-                  <h3 className="text-4xl font-serif font-bold text-emerald-600 mt-1">{teachingStaffCount}</h3>
-                </div>
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
-                  <Users className="w-6 h-6" />
-                </div>
-              </div>
-              <div className="pt-3 border-t border-border">
-                <p className="text-xs text-muted-foreground font-medium">Active subject teachers and Montessori educators assigned across senior classes.</p>
+              <div className="h-64 w-full pt-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={classPerformanceData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                    <XAxis dataKey="class" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
+                    <YAxis tickLine={false} axisLine={false} domain={[0, 100]} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', fontSize: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                      formatter={(val: any) => [`${val}%`, 'Average Score']}
+                    />
+                    <Bar dataKey="score" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} barSize={36} />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </div>
 
-            {/* Card 3: Total Non-Teaching Staff */}
-            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm flex flex-col justify-between space-y-4">
+            {/* Line Chart: Weekly Attendance */}
+            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Total Non-Teaching Staff</p>
-                  <h3 className="text-4xl font-serif font-bold text-blue-600 mt-1">{nonTeachingStaffCount}</h3>
+                  <h3 className="font-bold text-base text-foreground">Weekly Attendance (%)</h3>
+                  <p className="text-xs text-muted-foreground">Student presence tracking for the current week</p>
                 </div>
-                <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
-                  <Briefcase className="w-6 h-6" />
-                </div>
+                <span className="p-2 rounded-xl bg-muted text-muted-foreground">
+                  <Calendar className="w-4 h-4" />
+                </span>
               </div>
-              <div className="pt-3 border-t border-border">
-                <p className="text-xs text-muted-foreground font-medium">Administrative personnel, IT technical support, security, and maintenance team.</p>
+              <div className="h-64 w-full pt-2">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={weeklyAttendanceData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                    <XAxis dataKey="day" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
+                    <YAxis tickLine={false} axisLine={false} domain={[80, 100]} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', fontSize: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                      formatter={(val: any) => [`${val}%`, 'Attendance']}
+                    />
+                    <Line type="monotone" dataKey="attendance" stroke="#10B981" strokeWidth={3} dot={{ r: 5, fill: '#10B981', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Grid: Quick Actions, Recent Activities & Upcoming Events */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Column 1: Quick Actions */}
+            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm space-y-4">
+              <h3 className="font-bold text-base text-foreground">Quick Actions</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {quickActionButtons.map((btn, idx) => {
+                  const Icon = btn.icon;
+                  return (
+                    <button
+                      key={idx}
+                      onClick={btn.action}
+                      className={`flex flex-col items-center justify-center p-4 rounded-xl border text-center transition-all duration-200 space-y-2 ${btn.color}`}
+                    >
+                      <Icon className="w-5 h-5" />
+                      <span className="text-xs font-semibold leading-tight">{btn.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Column 2: Recent Activities */}
+            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-base text-foreground">Recent Activities</h3>
+                <span className="text-xs text-muted-foreground">Today</span>
+              </div>
+              <div className="space-y-3">
+                {recentActivities.map((act, idx) => {
+                  const Icon = act.icon;
+                  return (
+                    <div key={idx} className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-muted/40 transition-colors">
+                      <div className={`p-2 rounded-xl shrink-0 ${act.color}`}>
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-foreground truncate">{act.text}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">{act.detail}</p>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground whitespace-nowrap">{act.time}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Column 3: Upcoming Events */}
+            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-base text-foreground">Upcoming Events</h3>
+                <button onClick={() => setActiveSection('calendar')} className="text-xs font-semibold text-primary hover:underline flex items-center gap-1">
+                  View All <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <div className="space-y-3">
+                {upcomingEvents.map((evt, idx) => (
+                  <div key={idx} className="p-3.5 rounded-xl border border-border bg-muted/20 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-bold text-foreground">{evt.title}</h4>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${evt.badgeColor}`}>
+                        {evt.scope}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-primary" /> {evt.date}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -2655,6 +2819,55 @@ export default function AdminDashboard() {
         </div>
       );
     }
+
+    const renderModuleHeader = (title: string, desc: string, icon: React.ElementType) => {
+      const Icon = icon;
+      return (
+        <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
+          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <Icon className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="font-bold text-xl text-foreground mb-1">{title} Module</h2>
+                <p className="text-xs text-muted-foreground">{desc}</p>
+              </div>
+            </div>
+            <button className="bg-primary text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-1.5">
+              <Plus className="w-4 h-4" /> Add {title.replace(/s$/, '')}
+            </button>
+          </div>
+
+          <div className="bg-card rounded-2xl border border-border p-12 text-center shadow-sm space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto text-muted-foreground">
+              <Icon className="w-8 h-8 text-primary" />
+            </div>
+            <h3 className="font-bold text-lg text-foreground">{title} Management System</h3>
+            <p className="text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
+              This module provides operational control for {title.toLowerCase()}. View records, manage assignments, export custom reports, and synchronize real-time updates across the school LMS.
+            </p>
+            <div className="pt-2 flex justify-center gap-3">
+              <button className="px-4 py-2 text-xs font-bold bg-primary text-white rounded-xl shadow-xs hover:bg-primary/90 transition-all">
+                View All {title}
+              </button>
+              <button className="px-4 py-2 text-xs font-bold bg-muted text-foreground rounded-xl border border-border hover:bg-accent transition-all">
+                Export Data
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    if (activeSection === 'teachers') return renderModuleHeader('Teachers', 'View teachers, add faculty members, assign subject loads and track attendance.', GraduationCap);
+    if (activeSection === 'classes') return renderModuleHeader('Classes', 'Manage junior & senior classes, assign form teachers, and monitor rosters.', School);
+    if (activeSection === 'subjects') return renderModuleHeader('Subjects', 'Manage school curriculum subjects, assign teachers, and review syllabi.', BookOpen);
+    if (activeSection === 'results') return renderModuleHeader('Results', 'View student grades, approve examination results, and print terminal report cards.', FileText);
+    if (activeSection === 'attendance') return renderModuleHeader('Attendance', 'Track daily student and teacher presence, log leave requests, and view trends.', CalendarCheck);
+    if (activeSection === 'announcements') return renderModuleHeader('Announcements', 'Publish announcements to parents, teachers, and students.', Megaphone);
+    if (activeSection === 'calendar') return renderModuleHeader('School Calendar', 'View academic session terms, exam schedules, and official school holidays.', Calendar);
+    if (activeSection === 'reports') return renderModuleHeader('Reports', 'Generate comprehensive academic, attendance, teacher, and student analytical reports.', BarChart2);
 
     return null;
   };

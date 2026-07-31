@@ -8,7 +8,8 @@ import {
   Calendar, LogOut, Bell, Menu, X, UserCheck, ShieldAlert,
   FileText, MessageSquare, BarChart2, Building2, Settings,
   Briefcase, PenLine, Star, Library, ClipboardList, Trophy,
-  CreditCard, HeartHandshake, School, Shield,
+  CreditCard, HeartHandshake, School, Shield, Search,
+  Megaphone, CalendarCheck, ChevronRight,
 } from 'lucide-react';
 
 export interface NavSection {
@@ -27,12 +28,17 @@ interface PortalLayoutProps {
 
 const ROLE_NAV: Record<string, NavSection[]> = {
   ADMIN: [
-    { id: 'overview',   label: 'Dashboard Overview', icon: LayoutDashboard },
-    { id: 'users',      label: 'Manage Users',        icon: Users },
-    { id: 'exams',      label: 'Manage Exams',        icon: ClipboardList },
-    { id: 'courses',    label: 'All Courses',          icon: BookOpen },
-    { id: 'operations', label: 'School Operations',   icon: Building2 },
-    { id: 'settings',   label: 'System Settings',      icon: Settings },
+    { id: 'overview',       label: 'Dashboard',        icon: LayoutDashboard },
+    { id: 'users',          label: 'Students',          icon: Users },
+    { id: 'teachers',       label: 'Teachers',          icon: GraduationCap },
+    { id: 'classes',        label: 'Classes',           icon: School },
+    { id: 'subjects',       label: 'Subjects',          icon: BookOpen },
+    { id: 'results',        label: 'Results',           icon: FileText },
+    { id: 'attendance',     label: 'Attendance',        icon: CalendarCheck },
+    { id: 'announcements',  label: 'Announcements',     icon: Megaphone },
+    { id: 'calendar',       label: 'School Calendar',   icon: Calendar },
+    { id: 'reports',        label: 'Reports',           icon: BarChart2 },
+    { id: 'settings',       label: 'Settings',          icon: Settings },
   ],
   TEACHER: [
     { id: 'overview',  label: 'Overview',           icon: LayoutDashboard },
@@ -90,17 +96,18 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
   const { t } = useTranslation();
   const { user, logout } = useAuth();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
 
   const roleColor = getRoleColor(user?.role);
   const navItems = getRoleNav(user?.role);
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" style={{ fontFamily: 'var(--font-poppins)' }}>
       {/* Brand */}
       <div className="p-5 border-b border-border flex items-center gap-3 shrink-0">
-        <img src={tarepetLogo} alt="Tare Pet Logo" className="w-10 h-10 object-contain" />
+        <img src={tarepetLogo} alt="Tare Pet Logo" className="w-10 h-10 object-contain rounded-xl" />
         <div className="flex flex-col">
-          <h2 className="font-serif font-bold text-base text-foreground leading-tight">{t('common.app_name', 'Tare Pet LMS')}</h2>
+          <h2 className="font-bold text-base text-foreground leading-tight">{t('common.app_name', 'Tare Pet LMS')}</h2>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{t('common.portal_system', 'Portal System')}</p>
         </div>
       </div>
@@ -136,6 +143,7 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
                   {item.badge}
                 </span>
               )}
+              {isActive && <ChevronRight className="w-3 h-3 ml-auto opacity-70" />}
             </button>
           );
         })}
@@ -168,7 +176,7 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
   );
 
   return (
-    <div className="min-h-screen flex bg-muted/20 relative">
+    <div className="min-h-screen flex bg-muted/20 relative" style={{ fontFamily: 'var(--font-poppins)' }}>
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex w-64 flex-col bg-card border-r border-border sticky top-0 h-screen shrink-0">
         <SidebarContent />
@@ -193,31 +201,62 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
       {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Header */}
-        <header className="sticky top-0 z-30 bg-card border-b border-border px-5 py-3.5 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+        <header className="sticky top-0 z-30 bg-card border-b border-border px-5 py-3 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
             <button
               onClick={() => setMobileSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-lg text-muted-foreground hover:bg-accent transition-colors"
+              className="lg:hidden p-2 rounded-lg text-muted-foreground hover:bg-accent transition-colors shrink-0"
             >
               <Menu className="w-5 h-5" />
             </button>
-            {/* Breadcrumb */}
-            <div>
-              <h1 className="text-xl font-serif font-bold text-foreground leading-tight">{title}</h1>
-              <p className="text-xs text-muted-foreground">
+
+            {/* School Name / Breadcrumb */}
+            <div className="hidden sm:block shrink-0">
+              <h1 className="text-base font-bold text-foreground leading-tight">{title}</h1>
+              <p className="text-[11px] text-muted-foreground">
                 {navItems.find(n => n.id === activeSection)?.label ?? 'Dashboard'}
               </p>
             </div>
+
+            {/* Search Bar */}
+            <div className="flex-1 max-w-xs ml-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Search students, teachers..."
+                  value={searchValue}
+                  onChange={e => setSearchValue(e.target.value)}
+                  className="w-full pl-8 pr-3 py-2 text-xs bg-muted/50 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 text-foreground placeholder:text-muted-foreground"
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <button className="relative p-2 rounded-full text-muted-foreground hover:bg-accent transition-colors">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-primary" />
+          {/* Right actions */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Messages */}
+            <button className="relative p-2 rounded-xl text-muted-foreground hover:bg-accent transition-colors">
+              <MessageSquare className="w-5 h-5" />
+              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500" />
             </button>
-            <Link href="/" className="text-xs font-medium text-primary hover:underline hidden sm:inline-block">
-              ← Public Site
-            </Link>
+
+            {/* Notifications */}
+            <button className="relative p-2 rounded-xl text-muted-foreground hover:bg-accent transition-colors">
+              <Bell className="w-5 h-5" />
+              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-primary" />
+            </button>
+
+            {/* Profile */}
+            <div className="flex items-center gap-2 pl-2 border-l border-border">
+              <div className="w-8 h-8 rounded-full bg-primary text-white font-bold flex items-center justify-center text-sm">
+                {user?.first_name?.[0] ?? 'P'}
+              </div>
+              <div className="hidden sm:block">
+                <p className="text-xs font-bold text-foreground leading-tight">{user?.first_name ?? 'Principal'} {user?.last_name ?? ''}</p>
+                <p className="text-[10px] text-muted-foreground">Administrator</p>
+              </div>
+            </div>
           </div>
         </header>
 
@@ -229,3 +268,4 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
     </div>
   );
 };
+
