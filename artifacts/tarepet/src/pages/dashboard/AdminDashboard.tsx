@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from '@/i18n';
 import { Link } from 'wouter';
 import { PortalLayout } from '@/components/layout/PortalLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -149,64 +150,67 @@ const RoleBadge = ({ role }: { role: string }) => {
 };
 
 
-// ── Modals ───────────────────────────────────────────────────
-const StudentIDModal = ({ student, onClose }: { student: any; onClose: () => void }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-    <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-lg">
-      <div className="p-6 border-b border-border flex items-center justify-between">
-        <h3 className="font-serif font-bold text-xl text-foreground">Student ID Card Generator</h3>
-        <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-1">✕</button>
-      </div>
-      <div className="p-6">
-        <div className="border-4 border-primary rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-primary/5 to-secondary/5 mb-4">
-          <div className="bg-gradient-to-r from-primary to-secondary p-4 flex items-center justify-between">
-            <div className="text-white">
-              <p className="text-xs font-bold uppercase tracking-widest opacity-80">Tarepet Montessori School</p>
-              <p className="text-xs opacity-70">Yenagoa, Bayelsa State</p>
-            </div>
-            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-              <span className="text-primary font-bold text-xs">TMS</span>
-            </div>
-          </div>
-          <div className="p-5 flex gap-5 items-center">
-            <div className="w-20 h-24 rounded-xl bg-muted/50 border-2 border-border flex items-center justify-center shrink-0">
-              <div className="text-center">
-                <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto">
-                  <span className="text-2xl font-serif font-bold text-primary">{student.name[0]}</span>
-                </div>
-              </div>
-            </div>
-            <div className="flex-1">
-              <h4 className="font-serif font-bold text-foreground text-lg leading-tight">{student.name}</h4>
-              <p className="text-xs text-muted-foreground font-medium mt-1">Junior Secondary 1</p>
-              <p className="text-xs text-muted-foreground">Blue House (Eagle)</p>
-              <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                <div>
-                  <span className="text-muted-foreground">Student ID</span>
-                  <p className="font-bold text-foreground">TMS-2026-003</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Valid Until</span>
-                  <p className="font-bold text-foreground">July 2027</p>
-                </div>
-              </div>
-            </div>
-          </div>
+const StudentIDModal = ({ student, onClose }: { student: any; onClose: () => void }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-lg">
+        <div className="p-6 border-b border-border flex items-center justify-between">
+          <h3 className="font-serif font-bold text-xl text-foreground">{t('idCard.title')}</h3>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-1">✕</button>
         </div>
-        <div className="flex gap-3">
-          <button className="flex-1 flex items-center justify-center gap-2 bg-primary text-white py-2.5 rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors">
-            <Printer className="w-4 h-4" /> Print ID Card
-          </button>
-          <button className="flex-1 flex items-center justify-center gap-2 border border-border py-2.5 rounded-xl text-sm font-medium hover:bg-accent transition-colors">
-            <Download className="w-4 h-4" /> Download PDF
-          </button>
+        <div className="p-6">
+          <div className="border-4 border-primary rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-primary/5 to-secondary/5 mb-4">
+            <div className="bg-gradient-to-r from-primary to-secondary p-4 flex items-center justify-between">
+              <div className="text-white">
+                <p className="text-xs font-bold uppercase tracking-widest opacity-80">{t('idCard.schoolName')}</p>
+                <p className="text-xs opacity-70">{t('idCard.location')}</p>
+              </div>
+              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
+                <span className="text-primary font-bold text-xs">{t('idCard.abbr')}</span>
+              </div>
+            </div>
+            <div className="p-5 flex gap-5 items-center">
+              <div className="w-20 h-24 rounded-xl bg-muted/50 border-2 border-border flex items-center justify-center shrink-0">
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto">
+                    <span className="text-2xl font-serif font-bold text-primary">{student.name[0]}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex-1">
+                <h4 className="font-serif font-bold text-foreground text-lg leading-tight">{student.name}</h4>
+                <p className="text-xs text-muted-foreground font-medium mt-1">{student.grade || t('idCard.class')}</p>
+                <p className="text-xs text-muted-foreground">{student.house || t('idCard.house')}</p>
+                <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-muted-foreground">{t('idCard.studentId')}</span>
+                    <p className="font-bold text-foreground">{student.admissionNo || t('idCard.sampleId')}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">{t('idCard.validUntil')}</span>
+                    <p className="font-bold text-foreground">{t('idCard.validDate')}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <button className="flex-1 flex items-center justify-center gap-2 bg-primary text-white py-2.5 rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors">
+              <Printer className="w-4 h-4" /> Print ID Card
+            </button>
+            <button className="flex-1 flex items-center justify-center gap-2 border border-border py-2.5 rounded-xl text-sm font-medium hover:bg-accent transition-colors">
+              <Download className="w-4 h-4" /> Download PDF
+            </button>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const BulkImportModal = ({ onClose }: { onClose: () => void }) => {
+  const { t } = useTranslation();
   const [step, setStep] = useState<'upload' | 'preview' | 'done'>('upload');
   const [rows] = useState([
     { email: 'chidi.nwosu@example.com', first_name: 'Chidi', last_name: 'Nwosu', role: 'STUDENT', grade_level: 'JSS2' },
@@ -218,7 +222,7 @@ const BulkImportModal = ({ onClose }: { onClose: () => void }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-2xl">
         <div className="p-6 border-b border-border flex items-center justify-between">
-          <h3 className="font-serif font-bold text-xl text-foreground">Bulk User Import (CSV)</h3>
+          <h3 className="font-serif font-bold text-xl text-foreground">{t('bulkImport.title')}</h3>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-1">✕</button>
         </div>
         <div className="p-6 space-y-4">
@@ -226,11 +230,11 @@ const BulkImportModal = ({ onClose }: { onClose: () => void }) => {
             <>
               <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary/50 transition-colors cursor-pointer bg-muted/20">
                 <Upload className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-                <p className="font-semibold text-foreground">Drop CSV file here or click to browse</p>
-                <p className="text-xs text-muted-foreground mt-1">Required columns: email, first_name, last_name, role</p>
+                <p className="font-semibold text-foreground">{t('bulkImport.dropHint')}</p>
+                <p className="text-xs text-muted-foreground mt-1">{t('bulkImport.requiredCols')}</p>
               </div>
               <button onClick={() => setStep('preview')} className="w-full bg-primary text-white py-3 rounded-xl font-medium hover:bg-primary/90 transition-colors">
-                Load Sample Preview
+                {t('bulkImport.loadPreview')}
               </button>
             </>
           )}
@@ -268,7 +272,7 @@ const BulkImportModal = ({ onClose }: { onClose: () => void }) => {
                   ✓ Import {rows.length} Users
                 </button>
                 <button onClick={() => setStep('upload')} className="border border-border px-4 py-3 rounded-xl text-sm hover:bg-accent transition-colors">
-                  Back
+                  {t('bulkImport.back')}
                 </button>
               </div>
             </>
@@ -277,10 +281,10 @@ const BulkImportModal = ({ onClose }: { onClose: () => void }) => {
           {step === 'done' && (
             <div className="text-center py-6">
               <CheckCircle2 className="w-16 h-16 text-emerald-500 mx-auto mb-4" />
-              <h4 className="font-serif font-bold text-xl text-foreground mb-2">Import Successful!</h4>
+              <h4 className="font-serif font-bold text-xl text-foreground mb-2">{t('bulkImport.importSuccess')}</h4>
               <p className="text-muted-foreground text-sm">3 users created · 0 skipped · 0 errors</p>
               <button onClick={onClose} className="mt-6 bg-primary text-white px-8 py-2.5 rounded-xl font-medium hover:bg-primary/90 transition-colors">
-                Done
+                {t('bulkImport.done')}
               </button>
             </div>
           )}
@@ -291,6 +295,7 @@ const BulkImportModal = ({ onClose }: { onClose: () => void }) => {
 };
 
 const AwardPointsModal = ({ house, onClose }: { house: any; onClose: () => void }) => {
+  const { t } = useTranslation();
   const [pts, setPts] = useState('10');
   const [reason, setReason] = useState('');
   const [done, setDone] = useState(false);
@@ -299,25 +304,25 @@ const AwardPointsModal = ({ house, onClose }: { house: any; onClose: () => void 
       <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-md p-6">
         {!done ? (
           <>
-            <h3 className="font-serif font-bold text-xl text-foreground mb-1">Award House Points</h3>
-            <p className="text-sm text-muted-foreground mb-5">Awarding points to <strong>{house.name}</strong></p>
+            <h3 className="font-serif font-bold text-xl text-foreground mb-1">{t('housePoints.title')}</h3>
+            <p className="text-sm text-muted-foreground mb-5">{t('housePoints.awardingTo')}<strong>{house.name}</strong></p>
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">Points to Award</label>
+                <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('housePoints.pointsLabel')}</label>
                 <input type="number" value={pts} onChange={e => setPts(e.target.value)} min="1" max="100"
                   className="w-full border border-border rounded-xl px-4 py-3 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary text-lg font-bold" />
               </div>
               <div>
-                <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">Reason / Achievement</label>
+                <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('housePoints.reasonLabel')}</label>
                 <input type="text" value={reason} onChange={e => setReason(e.target.value)}
                   placeholder="e.g. Won inter-house debate competition"
                   className="w-full border border-border rounded-xl px-4 py-3 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary text-sm" />
               </div>
               <div className="flex gap-3 pt-2">
                 <button onClick={() => setDone(true)} className="flex-1 bg-primary text-white py-3 rounded-xl font-medium hover:bg-primary/90 transition-colors">
-                  Award +{pts} Points
+                  {t('housePoints.awardBtn')}{pts} Points
                 </button>
-                <button onClick={onClose} className="border border-border px-4 py-3 rounded-xl text-sm hover:bg-accent transition-colors">Cancel</button>
+                <button onClick={onClose} className="border border-border px-4 py-3 rounded-xl text-sm hover:bg-accent transition-colors">{t('housePoints.cancel')}</button>
               </div>
             </div>
           </>
@@ -326,7 +331,7 @@ const AwardPointsModal = ({ house, onClose }: { house: any; onClose: () => void 
             <div className="text-5xl mb-4">🏆</div>
             <h4 className="font-serif font-bold text-xl text-foreground">{pts} Points Awarded!</h4>
             <p className="text-muted-foreground text-sm mt-1">{house.name} now has {house.points + parseInt(pts)} total points.</p>
-            <button onClick={onClose} className="mt-5 bg-primary text-white px-8 py-2.5 rounded-xl font-medium hover:bg-primary/90 transition-colors">Done</button>
+            <button onClick={onClose} className="mt-5 bg-primary text-white px-8 py-2.5 rounded-xl font-medium hover:bg-primary/90 transition-colors">{t('housePoints.done')}</button>
           </div>
         )}
       </div>
@@ -335,6 +340,7 @@ const AwardPointsModal = ({ house, onClose }: { house: any; onClose: () => void 
 };
 
 const ExamPreviewModal = ({ exam, onClose }: { exam: any; onClose: () => void }) => {
+  const { t } = useTranslation();
   // Objective Multiple Choice Questions (A, B, C, D)
   const questions = exam.questions || [
     {
@@ -381,7 +387,7 @@ const ExamPreviewModal = ({ exam, onClose }: { exam: any; onClose: () => void })
               {exam.class} · {exam.stream} · Objective CBT
             </span>
             <h3 className="font-serif font-bold text-xl text-foreground mt-2">{exam.title}</h3>
-            <p className="text-xs text-muted-foreground mt-1">Subject: <span className="text-foreground font-semibold">{exam.subject}</span></p>
+            <p className="text-xs text-muted-foreground mt-1">{t('examPreview.subject')}<span className="text-foreground font-semibold">{exam.subject}</span></p>
           </div>
           <button onClick={onClose} className="p-2 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
             <X className="w-5 h-5" />
@@ -393,19 +399,19 @@ const ExamPreviewModal = ({ exam, onClose }: { exam: any; onClose: () => void })
           {/* Metadata Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-muted/10 p-4 rounded-2xl border border-border/50">
             <div>
-              <p className="text-muted-foreground font-semibold uppercase tracking-wider text-[9px]">Date & Time</p>
+              <p className="text-muted-foreground font-semibold uppercase tracking-wider text-[9px]">{t('examPreview.date')}& Time</p>
               <p className="text-sm font-bold text-foreground mt-0.5">{exam.date}<br />{exam.time}</p>
             </div>
             <div>
-              <p className="text-muted-foreground font-semibold uppercase tracking-wider text-[9px]">Duration</p>
+              <p className="text-muted-foreground font-semibold uppercase tracking-wider text-[9px]">{t('examPreview.duration')}</p>
               <p className="text-sm font-bold text-foreground mt-0.5">{exam.duration}</p>
             </div>
             <div>
-              <p className="text-muted-foreground font-semibold uppercase tracking-wider text-[9px]">Venue</p>
+              <p className="text-muted-foreground font-semibold uppercase tracking-wider text-[9px]">{t('examPreview.venue')}</p>
               <p className="text-sm font-bold text-foreground mt-0.5">{exam.venue}</p>
             </div>
             <div>
-              <p className="text-muted-foreground font-semibold uppercase tracking-wider text-[9px]">Teacher / Invigilator</p>
+              <p className="text-muted-foreground font-semibold uppercase tracking-wider text-[9px]">{t('examPreview.teacher')}</p>
               <p className="text-sm font-bold text-foreground mt-0.5">{exam.invigilator || 'Not Assigned'}</p>
             </div>
           </div>
@@ -425,23 +431,23 @@ const ExamPreviewModal = ({ exam, onClose }: { exam: any; onClose: () => void })
           {/* Objective Questions Preview */}
           <div className="space-y-4">
             <h4 className="font-serif font-bold text-sm text-foreground flex items-center gap-1.5">
-              <FileText className="w-4 h-4 text-primary" /> Objective CBT Questions & Answer Key
+              <FileText className="w-4 h-4 text-primary" /> {t('examPreview.objectiveTitle')}
             </h4>
             <div className="space-y-3">
               {questions.map((q: any, i: number) => (
                 <div key={i} className="p-4 border border-border rounded-xl bg-card hover:bg-muted/10 transition-colors space-y-2">
-                  <p className="font-bold text-foreground">Question {q.num || i + 1}:</p>
+                  <p className="font-bold text-foreground">{t('examPreview.question')}{q.num || i + 1}:</p>
                   <p className="text-foreground leading-relaxed text-sm">{q.text}</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                     {(q.options || ['Option A', 'Option B', 'Option C', 'Option D']).map((opt: string, optIdx: number) => {
-                      const OPTION_KEYS = ['A', 'B', 'C', 'D'];
-                      const isCorrect = q.correct === opt || q.correct_option === OPTION_KEYS[optIdx];
+                      const OPTION_KEYS = new Map([[0, 'A'], [1, 'B'], [2, 'C'], [3, 'D']]);
+                      const isCorrect = q.correct === opt || q.correct_option === OPTION_KEYS.get(optIdx);
                       return (
                         <div key={optIdx} className={`p-2.5 rounded-lg border text-xs flex items-center justify-between ${
                           isCorrect ? 'bg-emerald-500/10 border-emerald-300 text-emerald-800 font-bold' : 'bg-muted/30 border-border/60 text-muted-foreground'
                         }`}>
                           <span>{opt}</span>
-                          {isCorrect && <span className="text-emerald-600">✓ Correct</span>}
+                          {isCorrect && <span className="text-emerald-600">{t('examPreview.correct')}</span>}
                         </div>
                       );
                     })}
@@ -455,7 +461,7 @@ const ExamPreviewModal = ({ exam, onClose }: { exam: any; onClose: () => void })
         {/* Footer */}
         <div className="p-4 border-t border-border flex justify-end bg-muted/10 rounded-b-3xl">
           <button onClick={onClose} className="bg-primary text-white px-6 py-2 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors">
-            Close Preview
+            {t('examPreview.closePreview')}
           </button>
         </div>
       </div>
@@ -465,6 +471,7 @@ const ExamPreviewModal = ({ exam, onClose }: { exam: any; onClose: () => void })
 
 
 const CreateSubjectModal = ({ onClose, onCreated, defaultClass, defaultStream }: { onClose: () => void; onCreated: (sub: any) => void; defaultClass?: string; defaultStream?: string }) => {
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     code: 'BIO-201',
     title: 'Advanced Biology II',
@@ -484,52 +491,52 @@ const CreateSubjectModal = ({ onClose, onCreated, defaultClass, defaultStream }:
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-md p-6 animate-in fade-in zoom-in duration-150">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="font-serif font-bold text-xl text-foreground">Add New Subject</h3>
+          <h3 className="font-serif font-bold text-xl text-foreground">{t('addSubject.title')}</h3>
           <button onClick={onClose} className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground">
             <X className="w-5 h-5" />
           </button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
           <div>
-            <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Subject Code</label>
+            <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('addSubject.codeLabel')}</label>
             <input type="text" value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} required
               className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
           <div>
-            <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Subject Name</label>
+            <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('addSubject.nameLabel')}</label>
             <input type="text" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required
               className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
           <div>
-            <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Instructor / Teacher</label>
+            <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('addSubject.instructorLabel')}</label>
             <input type="text" value={form.teacher} onChange={e => setForm({ ...form, teacher: e.target.value })} required
               className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Class Level</label>
+              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('addSubject.classLevel')}</label>
               <select value={form.grade} onChange={e => setForm({ ...form, grade: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                <option value="SS1">SS 1</option>
-                <option value="SS2">SS 2</option>
-                <option value="SS3">SS 3</option>
+                <option value="SS1">{t('addSubject.ss1')}</option>
+                <option value="SS2">{t('addSubject.ss2')}</option>
+                <option value="SS3">{t('addSubject.ss3')}</option>
               </select>
             </div>
             <div>
-              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Stream</label>
+              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('addSubject.stream')}</label>
               <select value={form.stream} onChange={e => setForm({ ...form, stream: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                <option value="Science">Science</option>
-                <option value="Art">Art</option>
+                <option value="Science">{t('addSubject.science')}</option>
+                <option value="Art">{t('addSubject.art')}</option>
               </select>
             </div>
           </div>
           <div className="flex gap-3 pt-3">
             <button type="submit" className="flex-1 bg-primary text-white py-2.5 rounded-xl font-bold hover:bg-primary/90 transition-colors">
-              Add Subject
+              {t('addSubject.addBtn')}
             </button>
             <button type="button" onClick={onClose} className="border border-border px-5 py-2.5 rounded-xl hover:bg-accent transition-colors">
-              Cancel
+              {t('addSubject.cancel')}
             </button>
           </div>
         </form>
@@ -540,42 +547,43 @@ const CreateSubjectModal = ({ onClose, onCreated, defaultClass, defaultStream }:
 
 
 const AddUserModal = ({ onClose }: { onClose: () => void }) => {
+  const { t } = useTranslation();
   const [form, setForm] = useState({ name: '', email: '', role: 'STUDENT', status: 'Active' });
   const [created, setCreated] = useState(false);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-md p-6">
-        <h3 className="font-serif font-bold text-xl text-foreground mb-4">Create New User</h3>
+        <h3 className="font-serif font-bold text-xl text-foreground mb-4">{t('createUser.title')}</h3>
         {!created ? (
           <div className="space-y-3">
             <div>
-              <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">Full Name</label>
+              <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createUser.fullName')}</label>
               <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. Dr. Ngozi Eze" className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary" />
             </div>
             <div>
-              <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">Email Address</label>
+              <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createUser.email')}</label>
               <input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="e.g. ngozi.eze@tarepet.edu.ng" className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary" />
             </div>
             <div>
-              <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">Role</label>
+              <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createUser.role')}</label>
               <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary">
-                <option value="STUDENT">Student</option>
-                <option value="TEACHER">Teacher</option>
-                <option value="PARENT">Parent</option>
-                <option value="ADMIN">Admin</option>
+                <option value="STUDENT">{t('createUser.student')}</option>
+                <option value="TEACHER">{t('createUser.teacher')}</option>
+                <option value="PARENT">{t('createUser.parent')}</option>
+                <option value="ADMIN">{t('createUser.admin')}</option>
               </select>
             </div>
             <div className="flex gap-3 pt-2">
-              <button onClick={() => setCreated(true)} className="flex-1 bg-primary text-white py-2.5 rounded-xl font-bold text-xs hover:bg-primary/90 transition-colors">Create User</button>
-              <button onClick={onClose} className="border border-border px-4 py-2.5 rounded-xl text-xs hover:bg-accent transition-colors">Cancel</button>
+              <button onClick={() => setCreated(true)} className="flex-1 bg-primary text-white py-2.5 rounded-xl font-bold text-xs hover:bg-primary/90 transition-colors">{t('createUser.createBtn')}</button>
+              <button onClick={onClose} className="border border-border px-4 py-2.5 rounded-xl text-xs hover:bg-accent transition-colors">{t('createUser.cancel')}</button>
             </div>
           </div>
         ) : (
           <div className="text-center py-6 space-y-2">
             <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto" />
-            <h4 className="font-serif font-bold text-foreground text-lg">User Created!</h4>
-            <p className="text-xs text-muted-foreground">Credentials & login instructions sent to {form.email}.</p>
-            <button onClick={onClose} className="bg-primary text-white px-6 py-2 rounded-xl text-xs font-bold mt-2">Done</button>
+            <h4 className="font-serif font-bold text-foreground text-lg">{t('createUser.created')}</h4>
+            <p className="text-xs text-muted-foreground">{t('createUser.credentials')} & login instructions sent to {form.email}.</p>
+            <button onClick={onClose} className="bg-primary text-white px-6 py-2 rounded-xl text-xs font-bold mt-2">{t('createUser.done')}</button>
           </div>
         )}
       </div>
@@ -592,6 +600,7 @@ const CreateUserForTypeModal = ({
   onClose: () => void;
   onCreated: (user: any) => void;
 }) => {
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -616,33 +625,33 @@ const CreateUserForTypeModal = ({
         {!created ? (
           <>
             <div className="mb-5">
-              <h3 className="font-serif font-bold text-xl text-foreground">Create New {typeLabel.replace(/s$/, '')} Account</h3>
-              <p className="text-xs text-muted-foreground mt-1">Fill in the details below. A welcome email with login credentials will be sent automatically.</p>
+              <h3 className="font-serif font-bold text-xl text-foreground">{t('createStaff.createNew')}{typeLabel.replace(/s$/, '')} Account</h3>
+              <p className="text-xs text-muted-foreground mt-1">{t('createStaff.fillDetails')}</p>
             </div>
 
             <div className="space-y-4">
               {/* Common Fields */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="col-span-2">
-                  <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">Full Name <span className="text-rose-500">*</span></label>
+                  <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createStaff.fullName')}<span className="text-rose-500">*</span></label>
                   <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
                     placeholder="e.g. Mrs. Ngozi Okafor"
                     className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary" />
                 </div>
                 <div className="col-span-2">
-                  <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">Email Address <span className="text-rose-500">*</span></label>
+                  <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createStaff.email')}<span className="text-rose-500">*</span></label>
                   <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })}
                     placeholder="e.g. ngozi@tarepet.edu.ng"
                     className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary" />
                 </div>
                 <div>
-                  <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">Phone Number</label>
+                  <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createStaff.phone')}</label>
                   <input type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })}
                     placeholder="+234 801 234 5678"
                     className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary" />
                 </div>
                 <div>
-                  <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">Date of Birth</label>
+                  <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createStaff.dob')}</label>
                   <input type="date" value={form.dob} onChange={e => setForm({ ...form, dob: e.target.value })}
                     className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary" />
                 </div>
@@ -651,7 +660,7 @@ const CreateUserForTypeModal = ({
               {/* Role-specific fields */}
               {defaultRole === 'TEACHER' && (
                 <div>
-                  <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">Subject(s) Taught</label>
+                  <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createStaff.subjectsTaught')}</label>
                   <input value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })}
                     placeholder="e.g. Montessori Mathematics, Agronomy"
                     className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary" />
@@ -660,19 +669,19 @@ const CreateUserForTypeModal = ({
               {defaultRole === 'STAFF' && (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">Department</label>
+                    <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createStaff.department')}</label>
                     <select value={form.department} onChange={e => setForm({ ...form, department: e.target.value })}
                       className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary">
-                      <option value="">Select...</option>
-                      <option>Administration</option>
-                      <option>Library</option>
-                      <option>Security</option>
-                      <option>Kitchen & Nutrition</option>
-                      <option>Maintenance</option>
+                      <option value="">{t('createStaff.selectDept')}</option>
+                      <option>{t('createStaff.administration')}</option>
+                      <option>{t('createStaff.library')}</option>
+                      <option>{t('createStaff.security')}</option>
+                      <option>{t('createStaff.kitchen')}</option>
+                      <option>{t('createStaff.maintenance')}</option>
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">Staff ID</label>
+                    <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createStaff.staffId')}</label>
                     <input value={form.staffId} onChange={e => setForm({ ...form, staffId: e.target.value })}
                       placeholder="e.g. STF-2026-001"
                       className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary" />
@@ -681,37 +690,37 @@ const CreateUserForTypeModal = ({
               )}
               {defaultRole === 'ADMIN' && (
                 <div>
-                  <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">Administrative Role</label>
+                  <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createStaff.adminRole')}</label>
                   <select value={form.department} onChange={e => setForm({ ...form, department: e.target.value })}
                     className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary">
-                    <option value="">Select...</option>
-                    <option>Principal</option>
-                    <option>Vice Principal (Academics)</option>
-                    <option>Head of Department</option>
-                    <option>Platform Administrator</option>
-                    <option>Registrar</option>
+                    <option value="">{t('createStaff.selectRole')}</option>
+                    <option>{t('createStaff.principal')}</option>
+                    <option>{t('createStaff.vicePrincipal')}</option>
+                    <option>{t('createStaff.hod')}</option>
+                    <option>{t('createStaff.platformAdmin')}</option>
+                    <option>{t('createStaff.registrar')}</option>
                   </select>
                 </div>
               )}
               {defaultRole === 'STUDENT' && (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">Grade Level</label>
+                    <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createStaff.gradeLevel')}</label>
                     <select value={form.grade} onChange={e => setForm({ ...form, grade: e.target.value })}
                       className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary">
-                      <option value="">Select grade...</option>
-                      <option>JSS1</option><option>JSS2</option><option>JSS3</option>
-                      <option>SHS1</option><option>SHS2</option><option>SHS3</option>
+                      <option value="">{t('createStaff.selectGrade')}</option>
+                      <option>{t('createStaff.jss1')}</option><option>JSS2</option><option>JSS3</option>
+                      <option>{t('createStaff.shs1')}</option><option>SHS2</option><option>SHS3</option>
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">House Assignment</label>
+                    <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createStaff.houseAssignment')}</label>
                     <select className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary">
-                      <option>Auto-assign</option>
-                      <option>Blue House (Eagle)</option>
-                      <option>Purple House (Phoenix)</option>
-                      <option>Green House (Jaguar)</option>
-                      <option>Red House (Falcon)</option>
+                      <option>{t('createStaff.autoAssign')}</option>
+                      <option>{t('createStaff.blueHouse')}</option>
+                      <option>{t('createStaff.purpleHouse')}</option>
+                      <option>{t('createStaff.greenHouse')}</option>
+                      <option>{t('createStaff.redHouse')}</option>
                     </select>
                   </div>
                 </div>
@@ -723,10 +732,10 @@ const CreateUserForTypeModal = ({
 
               <div className="flex gap-3 pt-1">
                 <button onClick={handleSubmit} className="flex-1 bg-primary text-white py-3 rounded-xl font-bold text-sm hover:bg-primary/90 transition-colors">
-                  Create Account
+                  {t('createStaff.createAccount')}
                 </button>
                 <button onClick={onClose} className="border border-border px-5 py-3 rounded-xl text-sm hover:bg-accent transition-colors">
-                  Cancel
+                  {t('createStaff.cancel')}
                 </button>
               </div>
             </div>
@@ -734,13 +743,13 @@ const CreateUserForTypeModal = ({
         ) : (
           <div className="text-center py-8 space-y-3">
             <CheckCircle2 className="w-16 h-16 text-emerald-500 mx-auto" />
-            <h4 className="font-serif font-bold text-foreground text-xl">Account Created!</h4>
+            <h4 className="font-serif font-bold text-foreground text-xl">{t('createStaff.accountCreated')}</h4>
             <p className="text-sm text-muted-foreground">
               <strong>{form.name}</strong> has been added to {typeLabel}.<br />
               Login credentials have been sent to <strong>{form.email}</strong>.
             </p>
             <button onClick={onClose} className="bg-primary text-white px-8 py-2.5 rounded-xl text-sm font-bold hover:bg-primary/90 transition-colors mt-2">
-              Done
+              {t('createStaff.done')}
             </button>
           </div>
         )}
@@ -751,6 +760,7 @@ const CreateUserForTypeModal = ({
 
 // ── Main Component ───────────────────────────────────────────
 export default function AdminDashboard() {
+  const { t } = useTranslation();
   const [activeSection, setActiveSection] = useState('overview');
   const [userSubPage, setUserSubPage] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<any>(null);
@@ -991,8 +1001,8 @@ export default function AdminDashboard() {
           {/* Header Banner */}
           <div className="bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h2 className="font-bold text-xl text-foreground mb-1">Principal Dashboard Overview</h2>
-              <p className="text-xs text-muted-foreground">Welcome back, Principal. Here is your real-time school performance summary.</p>
+              <h2 className="font-bold text-xl text-foreground mb-1">{t('dashboard.title')}</h2>
+              <p className="text-xs text-muted-foreground">{t('dashboard.welcome')}</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center gap-1.5">
