@@ -1393,7 +1393,7 @@ export default function AdminDashboard() {
                       <td className="py-4 px-4 text-muted-foreground">{s.house}</td>
                       <td className="py-4 px-4">
                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'
+s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'
                         }`}>{s.status}</span>
                       </td>
                       <td className="py-4 px-4 text-right">
@@ -1417,327 +1417,134 @@ export default function AdminDashboard() {
         );
       }
 
-      // ── LEVEL 3: Individual Profile Page ──────────────────────
-      if (userSubPage && activeType && selectedUser) {
+      // ── LEVEL 3: Individual Student Profile Page ──────────────────────
+      if (selectedUser) {
         const u = selectedUser;
-        const isTeacher = u.role === 'TEACHER';
-        const isStudent = u.role === 'STUDENT';
-        const isAdmin   = u.role === 'ADMIN';
-        const isStaff   = u.role === 'PARENT'; // non-teaching staff mapped to PARENT
 
         return (
           <div className="space-y-6">
             {/* Breadcrumb back */}
             <div className="flex items-center gap-2 text-sm flex-wrap">
-              <button onClick={() => { setUserSubPage(null); setSelectedUser(null); setSelectedClass(null); setSelectedStream(null); }}
-                className="text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
-                <ChevronLeft className="w-4 h-4" /> Manage Users
+              <button onClick={() => setSelectedUser(null)}
+                className="text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors font-medium">
+                <ChevronLeft className="w-4 h-4" /> Back to Roster
               </button>
               <span className="text-muted-foreground">/</span>
-              {/* For students: show class → stream breadcrumb; for others: show type label */}
-              {isStudent && selectedClass && selectedStream ? (
-                <>
-                  <button onClick={() => { setSelectedClass(null); setSelectedStream(null); setSelectedUser(null); }}
-                    className="text-muted-foreground hover:text-foreground transition-colors">Students</button>
-                  <span className="text-muted-foreground">/</span>
-                  <button onClick={() => setSelectedUser(null)}
-                    className="text-muted-foreground hover:text-foreground transition-colors">
-                    {selectedClass} · {selectedStream}
-                  </button>
-                </>
-              ) : (
-                <button onClick={() => setSelectedUser(null)}
-                  className="text-muted-foreground hover:text-foreground transition-colors">
-                  {activeType.label}
-                </button>
-              )}
-              <span className="text-muted-foreground">/</span>
-              <span className="text-foreground font-semibold">{u.name}</span>
+              <span className="text-foreground font-semibold">Student Profile — {u.name}</span>
             </div>
 
-            {/* Profile Hero */}
-            <div className="bg-card rounded-2xl border border-border shadow-sm">
-              <div className="h-24 bg-gradient-to-r from-primary/80 to-secondary/80 rounded-t-2xl" />
-              <div className="px-6 pb-6">
-                <div className="flex flex-col sm:flex-row sm:items-end gap-4 -mt-10 mb-5">
-                  <div className={`w-20 h-20 rounded-2xl border-4 border-card font-bold text-2xl flex items-center justify-center shrink-0 shadow-md ${activeType.badgeColor}`}>
-                    {u.name[0]}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="text-xl font-serif font-bold text-foreground">{u.name}</h2>
-                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
-                        u.status === 'Active'
-                          ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200'
-                          : 'bg-rose-500/10 text-rose-600 border-rose-200'
-                      }`}>{u.status}</span>
-                    </div>
-                    <p className={`text-xs font-semibold mt-0.5 ${activeType.accentColor}`}>
-                      {isTeacher ? 'Teaching Staff' : isStudent ? `Student · ${u.grade}` : isAdmin ? (u.adminRole ?? 'Administrator') : (u.department ?? 'Non-Teaching Staff')}
-                    </p>
-                  </div>
-                  {/* Actions dropdown — top-right of profile header */}
-                  <div className="relative">
-                    <button
-                      onClick={() => setShowActionsDropdown(prev => !prev)}
-                      className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors select-none"
-                    >
-                      Actions
-                      <svg
-                        className={`w-3.5 h-3.5 transition-transform duration-200 ${showActionsDropdown ? 'rotate-180' : ''}`}
-                        viewBox="0 0 20 20" fill="currentColor"
-                      >
-                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
-                    </button>
+            {/* Profile Specification Card (Exact Match to User Reference Image) */}
+            <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
+              {/* Header Actions Bar */}
+              <div className="flex items-center justify-between pb-4 border-b border-border flex-wrap gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
+                  <h3 className="font-serif font-bold text-lg text-foreground">Official Student Profile & Credentials</h3>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => setIdCardUser(u)} className="px-4 py-2 bg-primary/10 text-primary border border-primary/20 rounded-xl text-xs font-bold hover:bg-primary/20 transition-colors flex items-center gap-2">
+                    <FaIdCard className="w-4 h-4" /> Generate Student ID Card
+                  </button>
+                </div>
+              </div>
 
-                    {showActionsDropdown && (
-                      <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-2xl shadow-2xl z-50 py-2">
-                        {/* Universal */}
-                        <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors text-left">
-                          <FaEnvelope className="w-3.5 h-3.5 text-primary" /> Send Message
-                        </button>
-                        <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors text-left">
-                          <FaKey className="w-3.5 h-3.5 text-muted-foreground" /> Reset Password
-                        </button>
-                        <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors text-left">
-                          <FaDownload className="w-3.5 h-3.5 text-muted-foreground" /> Export Profile
-                        </button>
-
-                        {/* Teacher-specific */}
-                        {isTeacher && (
-                          <>
-                            <div className="my-1 border-t border-border" />
-                            <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors text-left">
-                              <FaChartBar className="w-3.5 h-3.5 text-muted-foreground" /> View Performance
-                            </button>
-                            <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors text-left">
-                              <FaClipboardList className="w-3.5 h-3.5 text-muted-foreground" /> View Attendance Record
-                            </button>
-                            <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors text-left">
-                              <FaFileLines className="w-3.5 h-3.5 text-muted-foreground" /> Lesson Plans
-                            </button>
-                          </>
-                        )}
-
-                        {/* Student-specific */}
-                        {isStudent && (
-                          <>
-                            <div className="my-1 border-t border-border" />
-                            <button onClick={() => { setIdCardUser(u); setShowActionsDropdown(false); }}
-                              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors text-left">
-                              <FaIdCard className="w-3.5 h-3.5 text-muted-foreground" /> Generate ID Card
-                            </button>
-                            <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors text-left">
-                              <FaChartBar className="w-3.5 h-3.5 text-muted-foreground" /> View Academic Report
-                            </button>
-                            <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors text-left">
-                              <FaUserCheck className="w-3.5 h-3.5 text-muted-foreground" /> Attendance History
-                            </button>
-                            <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors text-left">
-                              <FaMoneyBillWave className="w-3.5 h-3.5 text-muted-foreground" /> Fee Statement
-                            </button>
-                          </>
-                        )}
-
-                        {/* Staff-specific */}
-                        {isStaff && (
-                          <>
-                            <div className="my-1 border-t border-border" />
-                            <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors text-left">
-                              <FaMoneyBillWave className="w-3.5 h-3.5 text-muted-foreground" /> View Payslip
-                            </button>
-                            <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors text-left">
-                              <FaCalendarCheck className="w-3.5 h-3.5 text-muted-foreground" /> Attendance Log
-                            </button>
-                            <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors text-left">
-                              <FaPrint className="w-3.5 h-3.5 text-muted-foreground" /> Print Staff Card
-                            </button>
-                          </>
-                        )}
-
-                        {/* Admin-specific */}
-                        {isAdmin && (
-                          <>
-                            <div className="my-1 border-t border-border" />
-                            <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors text-left">
-                              <FaMoneyBillWave className="w-3.5 h-3.5 text-muted-foreground" /> View Payslip
-                            </button>
-                            <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors text-left">
-                              <FaBan className="w-3.5 h-3.5 text-rose-500" /> Suspend Account
-                            </button>
-                          </>
-                        )}
-
-                        {/* Edit + Delete */}
-                        <div className="my-1 border-t border-border" />
-                        <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors text-left">
-                          <FaPen className="w-3.5 h-3.5 text-muted-foreground" /> Edit Profile
-                        </button>
-                        <button className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-rose-600 hover:bg-rose-500/10 transition-colors text-left">
-                          <FaTrash className="w-3.5 h-3.5" /> Delete Account
-                        </button>
+              {/* 3-Column Specification Layout */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start pt-2">
+                {/* Column 1: Student Photo */}
+                <div className="md:col-span-3 flex flex-col items-center">
+                  <div className="w-44 h-52 rounded-xl border-2 border-border shadow-md overflow-hidden bg-muted/20 flex items-center justify-center">
+                    {u.profileImage ? (
+                      <img src={u.profileImage} alt={u.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center text-4xl font-serif font-bold text-primary">
+                        {u.name[0]}
                       </div>
                     )}
+                  </div>
+                  <span className="mt-3 px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 uppercase tracking-wider">
+                    Status: {u.status || 'Active'}
+                  </span>
+                </div>
+
+                {/* Column 2: Personal Identifiers */}
+                <div className="md:col-span-4 space-y-3.5 text-xs leading-relaxed">
+                  <div>
+                    <span className="text-muted-foreground font-medium">Student ID: </span>
+                    <strong className="text-foreground font-mono font-bold text-sm bg-primary/10 text-primary px-2.5 py-0.5 rounded border border-primary/20">
+                      {u.admissionNo || generateAdmissionNumber(u.grade || 'JSS1', u.stream)}
+                    </strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium">Name: </span>
+                    <strong className="text-foreground font-bold text-sm uppercase">{u.name}</strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium">Gender: </span>
+                    <strong className="text-foreground font-bold">{u.gender || 'Male'}</strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium">Marital Status: </span>
+                    <strong className="text-foreground font-bold">Single</strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium">Date of Birth: </span>
+                    <strong className="text-foreground font-bold">{u.dob || '2004-10-22'}</strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium">Phone Number: </span>
+                    <strong className="text-foreground font-bold">{u.phone || 'Not Available'}</strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium">State of Origin: </span>
+                    <strong className="text-foreground font-bold">Bayelsa</strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium">L.G.A : </span>
+                    <strong className="text-foreground font-bold">Ekeremor</strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium">Email: </span>
+                    <strong className="text-foreground font-bold underline">{u.email}</strong>
                   </div>
                 </div>
 
-                {/* Core Info Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                  <div className="flex items-start gap-3">
-                    <span className="p-2 rounded-lg bg-muted/30 text-muted-foreground mt-0.5">
-                      <FaEnvelope className="w-3.5 h-3.5" />
-                    </span>
-                    <div>
-                      <p className="text-[10px] uppercase font-bold text-muted-foreground">Email</p>
-                      <p className="text-sm font-semibold text-foreground">{u.email}</p>
-                    </div>
+                {/* Column 3: Academic & Guardian Information */}
+                <div className="md:col-span-5 space-y-3.5 text-xs leading-relaxed border-t md:border-t-0 md:border-l border-border pt-4 md:pt-0 md:pl-6">
+                  <div>
+                    <span className="text-muted-foreground font-medium">Address: </span>
+                    <strong className="text-foreground font-bold">{u.address || 'Azikoro village, Yenagoa, Bayelsa State'}</strong>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <span className="p-2 rounded-lg bg-muted/30 text-muted-foreground mt-0.5">
-                      <FaPhone className="w-3.5 h-3.5" />
-                    </span>
-                    <div>
-                      <p className="text-[10px] uppercase font-bold text-muted-foreground">Phone</p>
-                      <p className="text-sm font-semibold text-foreground">{u.phone ?? '—'}</p>
-                    </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium">Faculty : </span>
+                    <strong className="text-foreground font-bold">
+                      {u.grade && u.grade.startsWith('SS') ? (u.stream === 'Art' ? 'Humanities & Social Sciences' : 'Basic and Applied Sciences') : 'Junior Secondary Education'}
+                    </strong>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <span className="p-2 rounded-lg bg-muted/30 text-muted-foreground mt-0.5">
-                      <FaLocationDot className="w-3.5 h-3.5" />
-                    </span>
-                    <div>
-                      <p className="text-[10px] uppercase font-bold text-muted-foreground">Location</p>
-                      <p className="text-sm font-semibold text-foreground">{u.location ?? '—'}</p>
-                    </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium">Department : </span>
+                    <strong className="text-foreground font-bold">
+                      {u.grade ? `${u.grade} ${u.stream ? `(${u.stream} Stream)` : ''}` : 'General Curriculum'}
+                    </strong>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <span className="p-2 rounded-lg bg-muted/30 text-muted-foreground mt-0.5">
-                      <FaCalendarCheck className="w-3.5 h-3.5" />
-                    </span>
-                    <div>
-                      <p className="text-[10px] uppercase font-bold text-muted-foreground">Date Joined</p>
-                      <p className="text-sm font-semibold text-foreground">{u.joined}</p>
-                    </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium">Programme: </span>
+                    <strong className="text-foreground font-bold">
+                      {u.grade && u.grade.startsWith('SS') ? 'Senior Secondary Certificate (SSCE)' : 'Basic Education Certificate (BECE)'}
+                    </strong>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <span className="p-2 rounded-lg bg-muted/30 text-muted-foreground mt-0.5">
-                      <FaClipboardList className="w-3.5 h-3.5" />
-                    </span>
-                    <div>
-                      <p className="text-[10px] uppercase font-bold text-muted-foreground">Last Login</p>
-                      <p className="text-sm font-semibold text-foreground">{u.lastLogin}</p>
-                    </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium">Parent Name: </span>
+                    <strong className="text-foreground font-bold">{u.parentName || 'Ayaebi Dimaro'}</strong>
                   </div>
-                  {/* Salary — for staff and teachers */}
-                  {(isTeacher || isStaff || isAdmin) && u.salary && (
-                    <div className="flex items-start gap-3">
-                      <span className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 mt-0.5">
-                        <FaMoneyBillWave className="w-3.5 h-3.5" />
-                      </span>
-                      <div>
-                        <p className="text-[10px] uppercase font-bold text-muted-foreground">Salary</p>
-                        <p className="text-sm font-bold text-emerald-600">{u.salary}</p>
-                      </div>
-                    </div>
-                  )}
+                  <div>
+                    <span className="text-muted-foreground font-medium">Status: </span>
+                    <strong className="text-emerald-600 font-bold">Active</strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium">Study Mode: </span>
+                    <strong className="text-foreground font-bold">Full Time</strong>
+                  </div>
                 </div>
-
-                {/* ── Role-specific detail blocks ── */}
-                {isTeacher && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                    <div className="bg-emerald-500/5 border border-emerald-100 rounded-xl p-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <FaBookOpen className="w-4 h-4 text-emerald-600" />
-                        <h4 className="text-xs font-bold uppercase text-emerald-700">Subjects Taught</h4>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {(u.subjects ?? []).map((s: string) => (
-                          <span key={s} className="text-[11px] bg-emerald-500/10 text-emerald-700 font-semibold px-2.5 py-1 rounded-lg">{s}</span>
-                        ))}
-                        {!u.subjects?.length && <p className="text-xs text-muted-foreground">No subjects assigned</p>}
-                      </div>
-                    </div>
-                    <div className="bg-emerald-500/5 border border-emerald-100 rounded-xl p-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <FaChalkboard className="w-4 h-4 text-emerald-600" />
-                        <h4 className="text-xs font-bold uppercase text-emerald-700">Classes Assigned</h4>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {(u.classes ?? []).map((c: string) => (
-                          <span key={c} className="text-[11px] bg-emerald-500/10 text-emerald-700 font-semibold px-2.5 py-1 rounded-lg">{c}</span>
-                        ))}
-                        {!u.classes?.length && <p className="text-xs text-muted-foreground">No classes assigned</p>}
-                      </div>
-                    </div>
-                    {u.qualification && (
-                      <div className="col-span-full bg-muted/20 border border-border rounded-xl p-4 flex items-start gap-3">
-                        <FaGraduationCap className="w-4 h-4 text-muted-foreground mt-0.5" />
-                        <div>
-                          <p className="text-[10px] uppercase font-bold text-muted-foreground">Qualification</p>
-                          <p className="text-sm text-foreground font-medium">{u.qualification}</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {isStudent && (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                    <div className="bg-purple-500/5 border border-purple-100 rounded-xl p-4">
-                      <p className="text-[10px] uppercase font-bold text-purple-600 mb-1">Student ID</p>
-                      <p className="text-sm font-bold text-foreground">{u.studentId ?? '—'}</p>
-                    </div>
-                    <div className="bg-purple-500/5 border border-purple-100 rounded-xl p-4">
-                      <p className="text-[10px] uppercase font-bold text-purple-600 mb-1">Grade Level</p>
-                      <p className="text-sm font-bold text-foreground">{u.grade ?? '—'}</p>
-                    </div>
-                    <div className="bg-purple-500/5 border border-purple-100 rounded-xl p-4">
-                      <p className="text-[10px] uppercase font-bold text-purple-600 mb-1">House</p>
-                      <p className="text-sm font-bold text-foreground">{u.house ?? '—'}</p>
-                    </div>
-                    {u.dob && (
-                      <div className="bg-purple-500/5 border border-purple-100 rounded-xl p-4">
-                        <p className="text-[10px] uppercase font-bold text-purple-600 mb-1">Date of Birth</p>
-                        <p className="text-sm font-bold text-foreground">{u.dob}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {isStaff && u.department && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                    <div className="bg-blue-500/5 border border-blue-100 rounded-xl p-4">
-                      <p className="text-[10px] uppercase font-bold text-blue-600 mb-1">Department</p>
-                      <p className="text-sm font-bold text-foreground">{u.department}</p>
-                    </div>
-                    {u.staffId && (
-                      <div className="bg-blue-500/5 border border-blue-100 rounded-xl p-4">
-                        <p className="text-[10px] uppercase font-bold text-blue-600 mb-1">Staff ID</p>
-                        <p className="text-sm font-bold text-foreground">{u.staffId}</p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {isAdmin && (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                    <div className="bg-rose-500/5 border border-rose-100 rounded-xl p-4">
-                      <p className="text-[10px] uppercase font-bold text-rose-600 mb-1">Administrative Designation</p>
-                      <p className="text-sm font-bold text-foreground">{u.adminRole ?? u.department ?? 'Platform Administrator'}</p>
-                    </div>
-                    <div className="bg-rose-500/5 border border-rose-100 rounded-xl p-4">
-                      <p className="text-[10px] uppercase font-bold text-rose-600 mb-1">Access Scope</p>
-                      <p className="text-sm font-bold text-foreground">Super Admin (Full Access)</p>
-                    </div>
-                    <div className="bg-rose-500/5 border border-rose-100 rounded-xl p-4">
-                      <p className="text-[10px] uppercase font-bold text-rose-600 mb-1">System Audit Status</p>
-                      <p className="text-sm font-bold text-emerald-600">2FA Verified 🟢</p>
-                    </div>
-                  </div>
-                )}
-
-
               </div>
             </div>
           </div>
