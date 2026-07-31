@@ -9,7 +9,7 @@ import {
   Plus, FileText, Download, Upload, Search,
   Activity, DollarSign, CreditCard,
   AlertCircle, BarChart2, Settings,
-  ChevronLeft, RefreshCw, Lock, Clock, X,
+  ChevronLeft, ChevronDown, RefreshCw, Lock, Clock, X,
   ClipboardList, Printer, QrCode,
   ArrowUpRight, ArrowDownRight, Building2,
   Mail, Phone, MapPin, Calendar, Shield, GraduationCap, Award,
@@ -33,16 +33,16 @@ interface TabProps { id: string; label: string; icon: React.ReactNode; badge?: n
 
 const MOCK_USERS: any[] = [];
 const MOCK_STUDENTS: any[] = [
-  { id: 1, name: 'Chidi Nwosu', admissionNo: 'TMS/JS1/4092', email: 'chidi.nwosu@example.com', grade: 'JSS1', stream: 'General', house: 'Blue House (Eagle)', status: 'ACTIVE', dob: '2012-05-14', gender: 'Male', address: '12 Swali Road, Yenagoa', parentName: 'Chief Nwosu', parentPhone: '08031112233' },
-  { id: 2, name: 'Amaka Okafor', admissionNo: 'TMS/JS1/8193', email: 'amaka.okafor@example.com', grade: 'JSS1', stream: 'General', house: 'Purple House (Phoenix)', status: 'ACTIVE', dob: '2012-09-20', gender: 'Female', address: '45 Mbiama Yenagoa Road', parentName: 'Dr. Okafor', parentPhone: '08032223344' },
-  { id: 3, name: 'Kemebradikumo Danjuma', admissionNo: 'TMS/JS2/5102', email: 'keme.d@example.com', grade: 'JSS2', stream: 'General', house: 'Green House (Jaguar)', status: 'ACTIVE', dob: '2011-03-11', gender: 'Male', address: '8 Isaac Boro Expressway', parentName: 'Engr. Danjuma', parentPhone: '08033334455' },
-  { id: 4, name: 'Tari Ebimobowei', admissionNo: 'TMS/JS3/3029', email: 'tari.e@example.com', grade: 'JSS3', stream: 'General', house: 'Red House (Falcon)', status: 'ACTIVE', dob: '2010-11-05', gender: 'Female', address: '22 Amarata Street', parentName: 'Mr. Ebimobowei', parentPhone: '08034445566' },
-  { id: 5, name: 'Emmanuel Adebayo', admissionNo: 'TMS/SS1/SCI/7281', email: 'emmanuel.adebayo@example.com', grade: 'SS1', stream: 'Science', house: 'Blue House (Eagle)', status: 'ACTIVE', dob: '2009-07-19', gender: 'Male', address: '15 Kpansia Market Road', parentName: 'Pastor Adebayo', parentPhone: '08035556677' },
-  { id: 6, name: 'Fatima Abubakar', admissionNo: 'TMS/SS1/ART/9104', email: 'fatima.abubakar@example.com', grade: 'SS1', stream: 'Art', house: 'Purple House (Phoenix)', status: 'ACTIVE', dob: '2009-01-30', gender: 'Female', address: '3 Tombia Link Road', parentName: 'Alhaji Abubakar', parentPhone: '08036667788' },
-  { id: 7, name: 'Buchi Nnamdi', admissionNo: 'TMS/SS2/SCI/6291', email: 'buchi.n@example.com', grade: 'SS2', stream: 'Science', house: 'Green House (Jaguar)', status: 'ACTIVE', dob: '2008-08-12', gender: 'Male', address: '7 Obele Estate', parentName: 'Chief Nnamdi', parentPhone: '08037778899' },
-  { id: 8, name: 'Aisha Bello', admissionNo: 'TMS/SS2/ART/4810', email: 'aisha.b@example.com', grade: 'SS2', stream: 'Art', house: 'Red House (Falcon)', status: 'ACTIVE', dob: '2008-04-25', gender: 'Female', address: '19 Etegwe Close', parentName: 'Mallam Bello', parentPhone: '08038889900' },
-  { id: 9, name: 'Zainab Mohammed', admissionNo: 'TMS/SS3/SCI/8391', email: 'zainab.m@example.com', grade: 'SS3', stream: 'Science', house: 'Blue House (Eagle)', status: 'ACTIVE', dob: '2007-12-02', gender: 'Female', address: '30 Azikoro Road', parentName: 'Dr. Mohammed', parentPhone: '08039990011' },
-  { id: 10, name: 'David Danjuma', admissionNo: 'TMS/SS3/ART/2749', email: 'david.d@example.com', grade: 'SS3', stream: 'Art', house: 'Purple House (Phoenix)', status: 'ACTIVE', dob: '2007-06-18', gender: 'Male', address: '11 Ovom Street', parentName: 'Engr. Danjuma', parentPhone: '08030001122' },
+  { id: 1, name: 'Chidi Nwosu', admissionNo: 'TMS/JS1/4092', email: 'chidi.nwosu@tarepet.com', grade: 'JSS1', stream: 'General', house: 'Blue House (Eagle)', status: 'ACTIVE', dob: '2012-05-14', gender: 'Male', country: 'Nigeria', stateOfOrigin: 'Anambra', lga: 'Nnewi South', address: '12 Swali Road, Yenagoa', parentName: 'Chief Nwosu', parentPhone: '08031112233' },
+  { id: 2, name: 'Amaka Okafor', admissionNo: 'TMS/JS1/8193', email: 'amaka.okafor@tarepet.com', grade: 'JSS1', stream: 'General', house: 'Purple House (Phoenix)', status: 'ACTIVE', dob: '2012-09-20', gender: 'Female', country: 'Nigeria', stateOfOrigin: 'Enugu', lga: 'Nsukka', address: '45 Mbiama Yenagoa Road', parentName: 'Dr. Okafor', parentPhone: '08032223344' },
+  { id: 3, name: 'Kemebradikumo Danjuma', admissionNo: 'TMS/JS2/5102', email: 'kemebradikumo.danjuma@tarepet.com', grade: 'JSS2', stream: 'General', house: 'Green House (Jaguar)', status: 'ACTIVE', dob: '2011-03-11', gender: 'Male', country: 'Nigeria', stateOfOrigin: 'Bayelsa', lga: 'Southern Ijaw', address: '8 Isaac Boro Expressway', parentName: 'Engr. Danjuma', parentPhone: '08033334455' },
+  { id: 4, name: 'Tari Ebimobowei', admissionNo: 'TMS/JS3/3029', email: 'tari.ebimobowei@tarepet.com', grade: 'JSS3', stream: 'General', house: 'Red House (Falcon)', status: 'ACTIVE', dob: '2010-11-05', gender: 'Female', country: 'Nigeria', stateOfOrigin: 'Bayelsa', lga: 'Ekeremor', address: '22 Amarata Street', parentName: 'Mr. Ebimobowei', parentPhone: '08034445566' },
+  { id: 5, name: 'Emmanuel Adebayo', admissionNo: 'TMS/SS1/SCI/7281', email: 'emmanuel.adebayo@tarepet.com', grade: 'SS1', stream: 'Science', house: 'Blue House (Eagle)', status: 'ACTIVE', dob: '2009-07-19', gender: 'Male', country: 'Nigeria', stateOfOrigin: 'Oyo', lga: 'Ibadan North', address: '15 Kpansia Market Road', parentName: 'Pastor Adebayo', parentPhone: '08035556677' },
+  { id: 6, name: 'Fatima Abubakar', admissionNo: 'TMS/SS1/ART/9104', email: 'fatima.abubakar@tarepet.com', grade: 'SS1', stream: 'Art', house: 'Purple House (Phoenix)', status: 'ACTIVE', dob: '2009-01-30', gender: 'Female', country: 'Nigeria', stateOfOrigin: 'Kano', lga: 'Kano Municipal', address: '3 Tombia Link Road', parentName: 'Alhaji Abubakar', parentPhone: '08036667788' },
+  { id: 7, name: 'Buchi Nnamdi', admissionNo: 'TMS/SS2/SCI/6291', email: 'buchi.nnamdi@tarepet.com', grade: 'SS2', stream: 'Science', house: 'Green House (Jaguar)', status: 'ACTIVE', dob: '2008-08-12', gender: 'Male', country: 'Nigeria', stateOfOrigin: 'Abia', lga: 'Umuahia North', address: '7 Obele Estate', parentName: 'Chief Nnamdi', parentPhone: '08037778899' },
+  { id: 8, name: 'Aisha Bello', admissionNo: 'TMS/SS2/ART/4810', email: 'aisha.bello@tarepet.com', grade: 'SS2', stream: 'Art', house: 'Red House (Falcon)', status: 'ACTIVE', dob: '2008-04-25', gender: 'Female', country: 'Nigeria', stateOfOrigin: 'Kaduna', lga: 'Zaria', address: '19 Etegwe Close', parentName: 'Mallam Bello', parentPhone: '08038889900' },
+  { id: 9, name: 'Zainab Mohammed', admissionNo: 'TMS/SS3/SCI/8391', email: 'zainab.mohammed@tarepet.com', grade: 'SS3', stream: 'Science', house: 'Blue House (Eagle)', status: 'ACTIVE', dob: '2007-12-02', gender: 'Female', country: 'Nigeria', stateOfOrigin: 'Sokoto', lga: 'Sokoto North', address: '30 Azikoro Road', parentName: 'Dr. Mohammed', parentPhone: '08039990011' },
+  { id: 10, name: 'David Danjuma', admissionNo: 'TMS/SS3/ART/2749', email: 'david.danjuma@tarepet.com', grade: 'SS3', stream: 'Art', house: 'Purple House (Phoenix)', status: 'ACTIVE', dob: '2007-06-18', gender: 'Male', country: 'Nigeria', stateOfOrigin: 'Bayelsa', lga: 'Yenagoa', address: '11 Ovom Street', parentName: 'Engr. Danjuma', parentPhone: '08030001122' },
 ];
 const MOCK_SS_STUDENTS = MOCK_STUDENTS;
 const MOCK_SUBJECTS: any[] = [
@@ -770,6 +770,9 @@ export default function AdminDashboard() {
     gender: 'Male',
     grade: 'JSS1',
     stream: 'General',
+    country: 'Nigeria',
+    stateOfOrigin: 'Bayelsa',
+    lga: 'Yenagoa',
     address: '',
     phone: '',
     parentName: '',
@@ -1206,7 +1209,7 @@ export default function AdminDashboard() {
                 onClick={() => {
                   setWizardStep(1);
                   setNewStudentForm({
-                    name: '', dob: '', gender: 'Male', grade: 'JSS1', stream: 'General', address: '', phone: '', parentName: '', parentPhone: '', profileImage: ''
+                    name: '', dob: '', gender: 'Male', grade: 'JSS1', stream: 'General', country: 'Nigeria', stateOfOrigin: 'Bayelsa', lga: 'Yenagoa', address: '', phone: '', parentName: '', parentPhone: '', profileImage: ''
                   });
                   setShowAddStudentModal(true);
                 }}
@@ -1341,7 +1344,7 @@ export default function AdminDashboard() {
                   onClick={() => {
                     setWizardStep(1);
                     setNewStudentForm({
-                      name: '', dob: '', gender: 'Male', grade: cls.key, stream: selectedStream || 'General', address: '', phone: '', parentName: '', parentPhone: '', profileImage: ''
+                      name: '', dob: '', gender: 'Male', grade: cls.key, stream: selectedStream || 'General', country: 'Nigeria', stateOfOrigin: 'Bayelsa', lga: 'Yenagoa', address: '', phone: '', parentName: '', parentPhone: '', profileImage: ''
                     });
                     setShowAddStudentModal(true);
                   }}
@@ -1441,10 +1444,27 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                   <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
                   <h3 className="font-serif font-bold text-lg text-foreground">Official Student Profile & Credentials</h3>
                 </div>
-                <div className="flex items-center gap-3">
-                  <button onClick={() => setIdCardUser(u)} className="px-4 py-2 bg-primary/10 text-primary border border-primary/20 rounded-xl text-xs font-bold hover:bg-primary/20 transition-colors flex items-center gap-2">
-                    <FaIdCard className="w-4 h-4" /> Generate Student ID Card
+                <div className="relative">
+                  <button
+                    onClick={() => setShowActionsDropdown(prev => !prev)}
+                    className="px-4 py-2 bg-primary text-primary-foreground rounded-xl text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-2 shadow-sm"
+                  >
+                    Actions
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showActionsDropdown ? 'rotate-180' : ''}`} />
                   </button>
+                  {showActionsDropdown && (
+                    <div className="absolute right-0 mt-2 w-52 bg-card border border-border rounded-xl shadow-2xl z-50 py-1.5 text-xs">
+                      <button onClick={() => { setIdCardUser(u); setShowActionsDropdown(false); }} className="w-full text-left px-4 py-2 hover:bg-muted/50 flex items-center gap-2 font-medium">
+                        <FaIdCard className="w-3.5 h-3.5 text-primary" /> Generate Student ID Card
+                      </button>
+                      <button onClick={() => setShowActionsDropdown(false)} className="w-full text-left px-4 py-2 hover:bg-muted/50 flex items-center gap-2 font-medium">
+                        <FaEnvelope className="w-3.5 h-3.5 text-muted-foreground" /> Send Message
+                      </button>
+                      <button onClick={() => setShowActionsDropdown(false)} className="w-full text-left px-4 py-2 hover:bg-muted/50 flex items-center gap-2 font-medium">
+                        <FaKey className="w-3.5 h-3.5 text-muted-foreground" /> Reset Password
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1495,12 +1515,16 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                     <strong className="text-foreground font-bold">{u.phone || 'Not Available'}</strong>
                   </div>
                   <div>
+                    <span className="text-muted-foreground font-medium">Country: </span>
+                    <strong className="text-foreground font-bold">{u.country || 'Nigeria'}</strong>
+                  </div>
+                  <div>
                     <span className="text-muted-foreground font-medium">State of Origin: </span>
-                    <strong className="text-foreground font-bold">Bayelsa</strong>
+                    <strong className="text-foreground font-bold">{u.stateOfOrigin || 'Bayelsa'}</strong>
                   </div>
                   <div>
                     <span className="text-muted-foreground font-medium">L.G.A : </span>
-                    <strong className="text-foreground font-bold">Ekeremor</strong>
+                    <strong className="text-foreground font-bold">{u.lga || 'Yenagoa'}</strong>
                   </div>
                   <div>
                     <span className="text-muted-foreground font-medium">Email: </span>
@@ -1515,15 +1539,9 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                     <strong className="text-foreground font-bold">{u.address || 'Azikoro village, Yenagoa, Bayelsa State'}</strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">Faculty : </span>
+                    <span className="text-muted-foreground font-medium">Class: </span>
                     <strong className="text-foreground font-bold">
-                      {u.grade && u.grade.startsWith('SS') ? (u.stream === 'Art' ? 'Humanities & Social Sciences' : 'Basic and Applied Sciences') : 'Junior Secondary Education'}
-                    </strong>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground font-medium">Department : </span>
-                    <strong className="text-foreground font-bold">
-                      {u.grade ? `${u.grade} ${u.stream ? `(${u.stream} Stream)` : ''}` : 'General Curriculum'}
+                      {u.grade ? `${u.grade} ${u.stream ? `(${u.stream} Stream)` : ''}` : 'JSS 1'}
                     </strong>
                   </div>
                   <div>
@@ -2854,51 +2872,92 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                   </div>
                 )}
 
-                {/* Slide 3: Location & Guardian Contacts */}
+                {/* Slide 3: Origin, Location & Guardian Contacts */}
                 {wizardStep === 3 && (
-                  <div className="space-y-4">
-                    <h4 className="text-sm font-bold text-foreground">Location & Emergency Contacts</h4>
+                  <div className="space-y-3.5">
+                    <h4 className="text-sm font-bold text-foreground">Origin, Location & Emergency Contacts</h4>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold mb-1 text-foreground">Country *</label>
+                        <input type="text" value={newStudentForm.country}
+                          onChange={e => setNewStudentForm({ ...newStudentForm, country: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-border bg-background text-xs focus:ring-2 focus:ring-primary focus:outline-none" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold mb-1 text-foreground">State of Origin *</label>
+                        <input type="text" placeholder="e.g. Bayelsa" value={newStudentForm.stateOfOrigin}
+                          onChange={e => setNewStudentForm({ ...newStudentForm, stateOfOrigin: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-border bg-background text-xs focus:ring-2 focus:ring-primary focus:outline-none" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold mb-1 text-foreground">L.G.A *</label>
+                        <input type="text" placeholder="e.g. Yenagoa" value={newStudentForm.lga}
+                          onChange={e => setNewStudentForm({ ...newStudentForm, lga: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl border border-border bg-background text-xs focus:ring-2 focus:ring-primary focus:outline-none" />
+                      </div>
+                    </div>
                     <div>
                       <label className="block text-xs font-semibold mb-1 text-foreground">Residential Location / Address *</label>
-                      <input type="text" placeholder="e.g. 14 Airport Road, Yenagoa" value={newStudentForm.address}
+                      <input type="text" placeholder="e.g. Azikoro village, Yenagoa" value={newStudentForm.address}
                         onChange={e => setNewStudentForm({ ...newStudentForm, address: e.target.value })}
-                        className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-background text-xs focus:ring-2 focus:ring-primary focus:outline-none" />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs font-semibold mb-1 text-foreground">Parent/Guardian Name *</label>
-                        <input type="text" placeholder="e.g. Chief Amadi" value={newStudentForm.parentName}
+                        <input type="text" placeholder="e.g. Ayaebi Dimaro" value={newStudentForm.parentName}
                           onChange={e => setNewStudentForm({ ...newStudentForm, parentName: e.target.value })}
-                          className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                          className="w-full px-3 py-2 rounded-xl border border-border bg-background text-xs focus:ring-2 focus:ring-primary focus:outline-none" />
                       </div>
                       <div>
                         <label className="block text-xs font-semibold mb-1 text-foreground">Parent Phone Number *</label>
                         <input type="tel" placeholder="e.g. 08031234567" value={newStudentForm.parentPhone}
                           onChange={e => setNewStudentForm({ ...newStudentForm, parentPhone: e.target.value })}
-                          className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                          className="w-full px-3 py-2 rounded-xl border border-border bg-background text-xs focus:ring-2 focus:ring-primary focus:outline-none" />
                       </div>
                     </div>
                   </div>
                 )}
 
-                {/* Slide 4: Profile Image Upload (Cloudinary Integration) */}
+                {/* Slide 4: Student Profile Picture Local Upload */}
                 {wizardStep === 4 && (
                   <div className="space-y-4">
-                    <h4 className="text-sm font-bold text-foreground">Student Profile Picture (Cloudinary)</h4>
+                    <h4 className="text-sm font-bold text-foreground">Student Profile Picture</h4>
                     <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-2xl bg-muted/20 text-center">
-                      <div className="w-20 h-20 rounded-full border-2 border-primary bg-primary/10 flex items-center justify-center overflow-hidden mb-3 shadow-inner">
+                      <div className="w-24 h-24 rounded-2xl border-2 border-primary bg-primary/10 flex items-center justify-center overflow-hidden mb-3 shadow-inner">
                         {newStudentForm.profileImage ? (
                           <img src={newStudentForm.profileImage} alt="Profile Preview" className="w-full h-full object-cover" />
                         ) : (
-                          <GraduationCap className="w-8 h-8 text-primary" />
+                          <GraduationCap className="w-10 h-10 text-primary" />
                         )}
                       </div>
-                      <p className="text-xs font-bold text-foreground mb-1">Save Profile Image to Cloudinary</p>
-                      <p className="text-[11px] text-muted-foreground mb-3">Paste Cloudinary image URL or uploaded asset link</p>
-                      <input type="text" placeholder="https://res.cloudinary.com/demo/image/upload/sample.jpg"
-                        value={newStudentForm.profileImage}
-                        onChange={e => setNewStudentForm({ ...newStudentForm, profileImage: e.target.value })}
-                        className="w-full px-4 py-2 border border-border rounded-xl bg-background text-xs text-center focus:ring-2 focus:ring-primary focus:outline-none font-mono" />
+                      <p className="text-xs font-bold text-foreground mb-1">Upload Student Photograph</p>
+                      <p className="text-[11px] text-muted-foreground mb-4">Select a photo file from your local computer or device</p>
+
+                      <input
+                        type="file"
+                        id="studentPhotoLocalInput"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              setNewStudentForm(prev => ({ ...prev, profileImage: reader.result as string }));
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => document.getElementById('studentPhotoLocalInput')?.click()}
+                        className="px-4 py-2 bg-primary text-primary-foreground text-xs font-bold rounded-xl hover:opacity-90 transition-opacity flex items-center gap-2 shadow-sm"
+                      >
+                        <Upload className="w-4 h-4" /> Add Photo from File
+                      </button>
                     </div>
                   </div>
                 )}
@@ -2916,6 +2975,17 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                         <span className="text-xs font-semibold text-foreground">Admission Number:</span>
                         <span className="text-sm font-mono font-bold text-primary bg-primary/10 px-3 py-1 rounded-lg border border-primary/30">
                           {generateAdmissionNumber(newStudentForm.grade, newStudentForm.stream)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between pt-1">
+                        <span className="text-xs font-semibold text-foreground">Generated Email:</span>
+                        <span className="text-xs font-bold text-foreground underline">
+                          {(() => {
+                            const parts = newStudentForm.name.trim().toLowerCase().split(/\s+/);
+                            const fn = parts[0] || 'student';
+                            const sn = parts.slice(1).join('') || 'tarepet';
+                            return `${fn}.${sn}@tarepet.com`;
+                          })()}
                         </span>
                       </div>
                       <div className="flex items-center justify-between pt-1">
@@ -2952,17 +3022,25 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                   <button
                     onClick={() => {
                       const generatedId = generateAdmissionNumber(newStudentForm.grade, newStudentForm.stream);
+                      const parts = newStudentForm.name.trim().toLowerCase().split(/\s+/);
+                      const fn = parts[0] || 'student';
+                      const sn = parts.slice(1).join('') || 'tarepet';
+                      const autoEmail = `${fn}.${sn}@tarepet.com`;
+
                       const createdStudent = {
                         id: studentsList.length + 1,
                         name: newStudentForm.name,
                         admissionNo: generatedId,
-                        email: `${newStudentForm.name.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+                        email: autoEmail,
                         grade: newStudentForm.grade,
                         stream: newStudentForm.stream,
                         house: 'Blue House (Eagle)',
                         status: 'ACTIVE',
                         dob: newStudentForm.dob,
                         gender: newStudentForm.gender,
+                        country: newStudentForm.country || 'Nigeria',
+                        stateOfOrigin: newStudentForm.stateOfOrigin || 'Bayelsa',
+                        lga: newStudentForm.lga || 'Yenagoa',
                         address: newStudentForm.address,
                         parentName: newStudentForm.parentName,
                         parentPhone: newStudentForm.parentPhone,
