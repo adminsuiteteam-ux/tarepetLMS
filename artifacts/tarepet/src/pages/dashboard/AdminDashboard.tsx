@@ -1453,16 +1453,45 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                     <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showActionsDropdown ? 'rotate-180' : ''}`} />
                   </button>
                   {showActionsDropdown && (
-                    <div className="absolute right-0 mt-2 w-52 bg-card border border-border rounded-xl shadow-2xl z-50 py-1.5 text-xs">
-                      <button onClick={() => { setIdCardUser(u); setShowActionsDropdown(false); }} className="w-full text-left px-4 py-2 hover:bg-muted/50 flex items-center gap-2 font-medium">
-                        <FaIdCard className="w-3.5 h-3.5 text-primary" /> Generate Student ID Card
-                      </button>
-                      <button onClick={() => setShowActionsDropdown(false)} className="w-full text-left px-4 py-2 hover:bg-muted/50 flex items-center gap-2 font-medium">
-                        <FaEnvelope className="w-3.5 h-3.5 text-muted-foreground" /> Send Message
-                      </button>
-                      <button onClick={() => setShowActionsDropdown(false)} className="w-full text-left px-4 py-2 hover:bg-muted/50 flex items-center gap-2 font-medium">
-                        <FaKey className="w-3.5 h-3.5 text-muted-foreground" /> Reset Password
-                      </button>
+                    <div className="absolute right-0 mt-2 w-52 bg-card border border-border rounded-xl shadow-2xl z-50 py-1.5 text-xs divide-y divide-border">
+                      <div className="py-1">
+                        <button onClick={() => { setIdCardUser(u); setShowActionsDropdown(false); }} className="w-full text-left px-4 py-2 hover:bg-muted/50 flex items-center gap-2 font-medium">
+                          <FaIdCard className="w-3.5 h-3.5 text-primary" /> Generate Student ID Card
+                        </button>
+                        <button onClick={() => {
+                          setNewStudentForm({
+                            name: u.name || '',
+                            dob: u.dob || '',
+                            gender: u.gender || 'Male',
+                            grade: u.grade || 'JSS1',
+                            stream: u.stream || 'General',
+                            country: u.country || 'Nigeria',
+                            stateOfOrigin: u.stateOfOrigin || 'Bayelsa',
+                            lga: u.lga || 'Yenagoa',
+                            address: u.address || '',
+                            phone: u.phone || '',
+                            parentName: u.parentName || '',
+                            parentPhone: u.parentPhone || '',
+                            profileImage: u.profileImage || '',
+                          });
+                          setWizardStep(1);
+                          setShowAddStudentModal(true);
+                          setShowActionsDropdown(false);
+                        }} className="w-full text-left px-4 py-2 hover:bg-muted/50 flex items-center gap-2 font-medium">
+                          <FaPen className="w-3.5 h-3.5 text-muted-foreground" /> Edit Profile
+                        </button>
+                      </div>
+                      <div className="py-1">
+                        <button onClick={() => {
+                          if (confirm(`Are you sure you want to delete student "${u.name}"?`)) {
+                            setStudentsList(prev => prev.filter(s => s.id !== u.id));
+                            setSelectedUser(null);
+                          }
+                          setShowActionsDropdown(false);
+                        }} className="w-full text-left px-4 py-2 hover:bg-rose-500/10 text-rose-600 flex items-center gap-2 font-medium">
+                          <FaTrash className="w-3.5 h-3.5 text-rose-500" /> Delete Student
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
