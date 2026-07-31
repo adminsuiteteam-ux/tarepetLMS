@@ -1189,7 +1189,7 @@ export default function AdminDashboard() {
 
 
       // ── LEVEL S1: Student class picker (JSS1 - SS3) ─────────
-      if (userSubPage === 'STUDENT' && !selectedClass && !selectedUser) {
+      if ((!userSubPage || userSubPage === 'STUDENT') && !selectedClass && !selectedUser) {
         return (
           <div className="space-y-6">
             {/* Header */}
@@ -1855,71 +1855,6 @@ export default function AdminDashboard() {
         );
       }
 
-      // ── LEVEL 1: Category overview cards ──────────────────────
-      return (
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-xl font-serif font-bold text-foreground">Manage Users</h2>
-            <p className="text-xs text-muted-foreground mt-1">Select a user category to view, manage, or create users.</p>
-          </div>
-
-          {/* Summary Bar */}
-          <div className="bg-card rounded-2xl border border-border p-5 shadow-sm">
-            <div className="flex flex-wrap gap-8 items-center">
-              <div className="text-center">
-                <p className="text-3xl font-serif font-bold text-foreground">{usersList.length}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Total Registered</p>
-              </div>
-              <div className="h-10 w-px bg-border hidden sm:block" />
-              {USER_TYPES.map(t => {
-                const TIcon = t.Icon;
-                return (
-                  <div key={t.key} className="text-center">
-                    <p className={`text-2xl font-serif font-bold ${t.accentColor}`}>{t.count}</p>
-                    <div className={`flex items-center gap-1 justify-center mt-0.5 text-[10px] font-semibold ${t.accentColor}`}>
-                      <TIcon className="w-3 h-3" />
-                      <span className="text-muted-foreground">{t.label}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Category Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {USER_TYPES.map(type => {
-              const CIcon = type.Icon;
-              return (
-                <button key={type.key}
-                  onClick={() => {
-                    setUserSubPage(type.key);
-                    setUserSearch('');
-                    setSelectedClass(null);
-                    setSelectedStream(null);
-                    setOpenClassDropdown(null);
-                  }}
-                  className={`group text-left rounded-2xl border-2 p-6 shadow-sm transition-all duration-200 hover:shadow-md hover:scale-[1.02] active:scale-100 ${type.color}`}>
-                  <div className="flex items-start justify-between mb-5">
-                    <div className={`p-3 rounded-2xl ${type.iconBg}`}>
-                      <CIcon className="w-7 h-7" />
-                    </div>
-                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${type.badgeColor}`}>
-                      {type.count} {type.count === 1 ? 'Member' : 'Members'}
-                    </span>
-                  </div>
-                  <h3 className="font-serif font-bold text-xl text-foreground mb-1.5">{type.label}</h3>
-                  <p className="text-xs text-muted-foreground leading-relaxed mb-4">{type.description}</p>
-                  <div className={`flex items-center gap-1.5 text-xs font-bold ${type.accentColor}`}>
-                    <span>Manage {type.label}</span>
-                    <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      );
     }
 
     // 3-EX. MANAGE EXAMS
