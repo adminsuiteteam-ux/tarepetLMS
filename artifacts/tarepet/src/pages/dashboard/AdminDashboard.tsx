@@ -816,7 +816,9 @@ export default function AdminDashboard() {
   }, []);
 
   React.useEffect(() => {
-    if (activeSection !== 'users') {
+    if (activeSection === 'users') {
+      setUserSubPage('STUDENT');
+    } else {
       setUserSubPage(null); setSelectedUser(null);
       setSelectedClass(null); setSelectedStream(null); setOpenClassDropdown(null);
     }
@@ -920,18 +922,6 @@ export default function AdminDashboard() {
       badgeColor: 'bg-rose-500/10 text-rose-600',
       count: usersList.filter(u => u.role === 'ADMIN').length,
       formRole: 'ADMIN',
-    },
-    {
-      key: 'STUDENT',
-      label: 'Students',
-      description: 'All enrolled students across JSS1–JSS3 and SHS1–SHS3 Montessori programmes.',
-      Icon: FaUserGraduate,
-      color: 'border-purple-200 bg-purple-500/5',
-      iconBg: 'bg-purple-500/10 text-purple-600',
-      accentColor: 'text-purple-600',
-      badgeColor: 'bg-purple-500/10 text-purple-600',
-      count: usersList.filter(u => u.role === 'STUDENT').length,
-      formRole: 'STUDENT',
     },
   ];
 
@@ -1188,13 +1178,8 @@ export default function AdminDashboard() {
       if (userSubPage === 'STUDENT' && !selectedClass && !selectedUser) {
         return (
           <div className="space-y-6">
-            {/* Breadcrumb */}
+            {/* Header */}
             <div className="flex items-center gap-2 text-sm">
-              <button onClick={() => { setUserSubPage(null); setUserSearch(''); }}
-                className="text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
-                <ChevronLeft className="w-4 h-4" /> Manage Users
-              </button>
-              <span className="text-muted-foreground">/</span>
               <span className="text-foreground font-semibold">Students — Select Class</span>
             </div>
 
@@ -1309,13 +1294,10 @@ export default function AdminDashboard() {
           <div className="space-y-5">
             {/* Breadcrumb */}
             <div className="flex items-center gap-2 text-sm flex-wrap">
-              <button onClick={() => { setUserSubPage(null); setUserSearch(''); }}
-                className="text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
-                <ChevronLeft className="w-4 h-4" /> Manage Users
-              </button>
-              <span className="text-muted-foreground">/</span>
               <button onClick={() => { setSelectedClass(null); setSelectedStream(null); }}
-                className="text-muted-foreground hover:text-foreground transition-colors">Students</button>
+                className="text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
+                <ChevronLeft className="w-4 h-4" /> Students — Select Class
+              </button>
               <span className="text-muted-foreground">/</span>
               <span className="text-foreground font-semibold">{cls.label} {selectedStream ? `(${selectedStream})` : ''}</span>
             </div>
