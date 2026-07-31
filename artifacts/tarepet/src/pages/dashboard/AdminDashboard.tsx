@@ -901,13 +901,13 @@ export default function AdminDashboard() {
   const renderSection = () => {
     // 1. OVERVIEW & SCHOOL EXECUTIVE ANALYTICS
     if (activeSection === 'overview' || activeSection === 'analytics') {
-      const ss1Count = MOCK_SS_STUDENTS.filter(s => s.grade === 'SS1').length || 185;
-      const ss2Count = MOCK_SS_STUDENTS.filter(s => s.grade === 'SS2').length || 172;
-      const ss3Count = MOCK_SS_STUDENTS.filter(s => s.grade === 'SS3').length || 163;
+      const ss1Count = MOCK_SS_STUDENTS.filter(s => s.grade === 'SS1').length;
+      const ss2Count = MOCK_SS_STUDENTS.filter(s => s.grade === 'SS2').length;
+      const ss3Count = MOCK_SS_STUDENTS.filter(s => s.grade === 'SS3').length;
       const totalStudents = ss1Count + ss2Count + ss3Count;
 
-      const teachingStaffCount = usersList.filter(u => u.role === 'TEACHER').length || 34;
-      const nonTeachingStaffCount = usersList.filter(u => u.role === 'STAFF' || u.role === 'PARENT').length || 18;
+      const teachingStaffCount = usersList.filter(u => u.role === 'TEACHER').length;
+      const nonTeachingStaffCount = usersList.filter(u => u.role === 'STAFF' || u.role === 'PARENT').length;
 
       return (
         <div className="space-y-6">
