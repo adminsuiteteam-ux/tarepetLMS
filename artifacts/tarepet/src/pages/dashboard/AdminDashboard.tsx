@@ -923,25 +923,25 @@ export default function AdminDashboard() {
       ];
 
       const quickActionButtons = [
-        { label: 'Add Student', icon: UserPlus, color: 'bg-blue-500/10 text-blue-600 hover:bg-blue-500/20 border-blue-200', action: () => { setActiveSection('users'); setUserSubPage('STUDENT'); } },
-        { label: 'Add Teacher', icon: GraduationCap, color: 'bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-emerald-200', action: () => { setActiveSection('users'); setUserSubPage('TEACHER'); } },
-        { label: 'Create Announcement', icon: Megaphone, color: 'bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 border-amber-200', action: () => setActiveSection('announcements') },
-        { label: 'Upload Results', icon: FileSpreadsheet, color: 'bg-purple-500/10 text-purple-600 hover:bg-purple-500/20 border-purple-200', action: () => setActiveSection('results') },
-        { label: 'View Attendance', icon: CalendarCheck, color: 'bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 border-rose-200', action: () => setActiveSection('attendance') },
-        { label: 'Generate Reports', icon: BarChart2, color: 'bg-cyan-500/10 text-cyan-600 hover:bg-cyan-500/20 border-cyan-200', action: () => setActiveSection('reports') },
+        { label: 'Add Student', icon: UserPlus, color: 'bg-primary/10 text-primary hover:bg-primary/20 border-primary/20', action: () => { setActiveSection('users'); setUserSubPage('STUDENT'); } },
+        { label: 'Add Teacher', icon: GraduationCap, color: 'bg-secondary/10 text-secondary hover:bg-secondary/20 border-secondary/20', action: () => { setActiveSection('users'); setUserSubPage('TEACHER'); } },
+        { label: 'Create Announcement', icon: Megaphone, color: 'bg-primary/10 text-primary hover:bg-primary/20 border-primary/20', action: () => setActiveSection('announcements') },
+        { label: 'Upload Results', icon: FileSpreadsheet, color: 'bg-secondary/10 text-secondary hover:bg-secondary/20 border-secondary/20', action: () => setActiveSection('results') },
+        { label: 'View Attendance', icon: CalendarCheck, color: 'bg-primary/10 text-primary hover:bg-primary/20 border-primary/20', action: () => setActiveSection('attendance') },
+        { label: 'Generate Reports', icon: BarChart2, color: 'bg-secondary/10 text-secondary hover:bg-secondary/20 border-secondary/20', action: () => setActiveSection('reports') },
       ];
 
       const recentActivities = [
-        { text: 'New student registered', detail: 'John Doe enrolled in SS1 Science', time: '10 mins ago', icon: UserPlus, color: 'text-blue-500 bg-blue-500/10' },
-        { text: 'Teacher submitted results', detail: 'Mathematics Second Term Continuous Assessment', time: '45 mins ago', icon: FileText, color: 'text-emerald-500 bg-emerald-500/10' },
-        { text: 'Attendance updated', detail: 'SS2 Class Attendance marked at 98% presence', time: '2 hours ago', icon: CalendarCheck, color: 'text-amber-500 bg-amber-500/10' },
-        { text: 'New announcement published', detail: 'Mid-Term Exam Timetable released to parents', time: '4 hours ago', icon: Megaphone, color: 'text-rose-500 bg-rose-500/10' },
+        { text: 'New student registered', detail: 'John Doe enrolled in SS1 Science', time: '10 mins ago', icon: UserPlus, color: 'text-primary bg-primary/10' },
+        { text: 'Teacher submitted results', detail: 'Mathematics Second Term Continuous Assessment', time: '45 mins ago', icon: FileText, color: 'text-secondary bg-secondary/10' },
+        { text: 'Attendance updated', detail: 'SS2 Class Attendance marked at 98% presence', time: '2 hours ago', icon: CalendarCheck, color: 'text-amber-600 bg-amber-500/10' },
+        { text: 'New announcement published', detail: 'Mid-Term Exam Timetable released to parents', time: '4 hours ago', icon: Megaphone, color: 'text-primary bg-primary/10' },
       ];
 
       const upcomingEvents = [
-        { title: 'Mid-Term Examination', date: 'Oct 15 - Oct 20, 2026', scope: 'All Classes', badgeColor: 'bg-rose-500/10 text-rose-600 border-rose-200' },
-        { title: 'Parents Meeting', date: 'Oct 24, 2026', scope: 'School Auditorium', badgeColor: 'bg-blue-500/10 text-blue-600 border-blue-200' },
-        { title: 'Sports Competition', date: 'Nov 05, 2026', scope: 'Main Sports Field', badgeColor: 'bg-emerald-500/10 text-emerald-600 border-emerald-200' },
+        { title: 'Mid-Term Examination', date: 'Oct 15 - Oct 20, 2026', scope: 'All Classes', badgeColor: 'bg-primary/10 text-primary border-primary/20' },
+        { title: 'Parents Meeting', date: 'Oct 24, 2026', scope: 'School Auditorium', badgeColor: 'bg-secondary/10 text-secondary border-secondary/20' },
+        { title: 'Sports Competition', date: 'Nov 05, 2026', scope: 'Main Sports Field', badgeColor: 'bg-amber-500/10 text-amber-600 border-amber-200' },
       ];
 
       return (
@@ -966,11 +966,11 @@ export default function AdminDashboard() {
               <div className="space-y-1">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Students</p>
                 <h3 className="text-3xl font-bold text-foreground">385</h3>
-                <p className="text-[11px] text-emerald-600 font-medium flex items-center gap-1">
+                <p className="text-[11px] text-secondary font-medium flex items-center gap-1">
                   <TrendingUp className="w-3 h-3" /> +12% from last term
                 </p>
               </div>
-              <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
                 <Users className="w-6 h-6" />
               </div>
             </div>
@@ -982,7 +982,7 @@ export default function AdminDashboard() {
                 <h3 className="text-3xl font-bold text-foreground">28</h3>
                 <p className="text-[11px] text-muted-foreground font-medium">Full-time faculty</p>
               </div>
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+              <div className="w-12 h-12 rounded-2xl bg-secondary/10 text-secondary flex items-center justify-center shrink-0">
                 <GraduationCap className="w-6 h-6" />
               </div>
             </div>
@@ -994,7 +994,7 @@ export default function AdminDashboard() {
                 <h3 className="text-3xl font-bold text-foreground">12</h3>
                 <p className="text-[11px] text-muted-foreground font-medium">Junior & Senior arms</p>
               </div>
-              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center shrink-0">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
                 <School className="w-6 h-6" />
               </div>
             </div>
@@ -1003,10 +1003,10 @@ export default function AdminDashboard() {
             <div className="bg-card p-5 rounded-2xl border border-border shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
               <div className="space-y-1">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Attendance Today</p>
-                <h3 className="text-3xl font-bold text-emerald-600">96%</h3>
+                <h3 className="text-3xl font-bold text-secondary">96%</h3>
                 <p className="text-[11px] text-muted-foreground font-medium">Daily average</p>
               </div>
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
+              <div className="w-12 h-12 rounded-2xl bg-secondary/10 text-secondary flex items-center justify-center shrink-0">
                 <CalendarCheck className="w-6 h-6" />
               </div>
             </div>
@@ -1062,7 +1062,7 @@ export default function AdminDashboard() {
                       contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', fontSize: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                       formatter={(val: any) => [`${val}%`, 'Attendance']}
                     />
-                    <Line type="monotone" dataKey="attendance" stroke="#10B981" strokeWidth={3} dot={{ r: 5, fill: '#10B981', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7 }} />
+                    <Line type="monotone" dataKey="attendance" stroke="#0F8A3D" strokeWidth={3} dot={{ r: 5, fill: '#0F8A3D', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7 }} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>

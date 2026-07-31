@@ -51,52 +51,55 @@
 }
 
 :root {
-  /* Cream background #FDF9F5 */
-  --background: 30 50% 98%;
-  /* Dark text #1A1A1A */
-  --foreground: 0 0% 10%;
+  /* Light Gray background #F4F4F4 */
+  --background: 0 0% 96%;
+  /* Charcoal text #2D2D2D */
+  --foreground: 0 0% 18%;
 
-  /* White cards */
+  /* White cards #FFFFFF */
   --card: 0 0% 100%;
-  --card-foreground: 0 0% 10%;
-  --card-border: 30 20% 90%;
+  --card-foreground: 0 0% 18%;
+  --card-border: 0 0% 88%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 10%;
-  --popover-border: 30 20% 90%;
+  --popover-foreground: 0 0% 18%;
+  --popover-border: 0 0% 88%;
 
-  /* Deep crimson red #C41E3A */
-  --primary: 350 73% 45%;
+  /* Primary Red #C8102E (200, 16, 46) */
+  --primary: 350 85% 42%;
   --primary-foreground: 0 0% 100%;
 
-  /* Forest green #2D7A46 */
-  --secondary: 139 46% 33%;
+  /* Primary Green #0F8A3D (15, 138, 61) */
+  --secondary: 142 80% 30%;
   --secondary-foreground: 0 0% 100%;
 
-  /* Soft beige for muted backgrounds */
-  --muted: 30 30% 95%;
+  /* Light Gray for muted elements #F4F4F4 */
+  --muted: 0 0% 93%;
   --muted-foreground: 0 0% 40%;
 
-  /* Forest green for accent but slightly lighter maybe? Or use primary with lower opacity */
-  --accent: 139 46% 33%;
+  /* Accent Green #0F8A3D */
+  --accent: 142 80% 30%;
   --accent-foreground: 0 0% 100%;
 
-  --destructive: 0 84% 60%;
+  /* Dark Red #9B0F25 for destructive */
+  --destructive: 350 82% 33%;
   --destructive-foreground: 0 0% 100%;
 
-  --border: 30 20% 90%;
-  --input: 30 20% 90%;
-  --ring: 350 73% 45%;
+  /* Gold Accent #D4AF37 */
+  --gold: 46 65% 52%;
 
-  --radius: 0.5rem;
-  
+  --border: 0 0% 88%;
+  --input: 0 0% 88%;
+  --ring: 350 85% 42%;
+
+  --radius: 0.75rem;
+
   --button-outline: rgba(0, 0, 0, 0.1);
   --badge-outline: rgba(0, 0, 0, 0.05);
   --opaque-button-border-intensity: -8;
   --elevate-1: rgba(0, 0, 0, 0.03);
   --elevate-2: rgba(0, 0, 0, 0.08);
 
-  /* Fallback for older browsers */
   --primary-border: hsl(var(--primary));
   --secondary-border: hsl(var(--secondary));
   --muted-border: hsl(var(--muted));
@@ -105,36 +108,52 @@
 }
 
 .dark {
-  /* Enforce light mode aesthetic, we don't need dark mode for this site per requirements unless requested.
-     We map dark mode to the same light variables to prevent system-level interference breaking the design.
-  */
-  --background: 30 50% 98%;
-  --foreground: 0 0% 10%;
-  --card: 0 0% 100%;
-  --card-foreground: 0 0% 10%;
-  --card-border: 30 20% 90%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 10%;
-  --popover-border: 30 20% 90%;
-  --primary: 350 73% 45%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 139 46% 33%;
-  --secondary-foreground: 0 0% 100%;
-  --muted: 30 30% 95%;
-  --muted-foreground: 0 0% 40%;
-  --accent: 139 46% 33%;
-  --accent-foreground: 0 0% 100%;
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 100%;
-  --border: 30 20% 90%;
-  --input: 30 20% 90%;
-  --ring: 350 73% 45%;
+  /* Dark Charcoal background #121212 */
+  --background: 0 0% 8%;
+  /* Pure White text #FFFFFF */
+  --foreground: 0 0% 98%;
 
-  --button-outline: rgba(0, 0, 0, 0.1);
-  --badge-outline: rgba(0, 0, 0, 0.05);
+  /* Dark card background #1E1E1E */
+  --card: 0 0% 12%;
+  --card-foreground: 0 0% 98%;
+  --card-border: 0 0% 20%;
+
+  --popover: 0 0% 12%;
+  --popover-foreground: 0 0% 98%;
+  --popover-border: 0 0% 20%;
+
+  /* Primary Red #C8102E */
+  --primary: 350 85% 48%;
+  --primary-foreground: 0 0% 100%;
+
+  /* Primary Green #0F8A3D */
+  --secondary: 142 80% 36%;
+  --secondary-foreground: 0 0% 100%;
+
+  /* Dark muted background #262626 */
+  --muted: 0 0% 16%;
+  --muted-foreground: 0 0% 68%;
+
+  /* Accent Green */
+  --accent: 142 80% 36%;
+  --accent-foreground: 0 0% 100%;
+
+  /* Dark Red #9B0F25 */
+  --destructive: 350 82% 40%;
+  --destructive-foreground: 0 0% 100%;
+
+  /* Gold Accent */
+  --gold: 46 65% 55%;
+
+  --border: 0 0% 20%;
+  --input: 0 0% 20%;
+  --ring: 350 85% 48%;
+
+  --button-outline: rgba(255, 255, 255, 0.1);
+  --badge-outline: rgba(255, 255, 255, 0.05);
   --opaque-button-border-intensity: 9;
-  --elevate-1: rgba(0, 0, 0, 0.04);
-  --elevate-2: rgba(0, 0, 0, 0.09);
+  --elevate-1: rgba(0, 0, 0, 0.2);
+  --elevate-2: rgba(0, 0, 0, 0.4);
 }
 
 @layer base {

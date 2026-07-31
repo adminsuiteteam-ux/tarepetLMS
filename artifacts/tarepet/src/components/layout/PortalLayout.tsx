@@ -9,7 +9,7 @@ import {
   FileText, MessageSquare, BarChart2, Building2, Settings,
   Briefcase, PenLine, Star, Library, ClipboardList, Trophy,
   CreditCard, HeartHandshake, School, Shield, Search,
-  Megaphone, CalendarCheck, ChevronRight,
+  Megaphone, CalendarCheck, ChevronRight, Sun, Moon,
 } from 'lucide-react';
 
 export interface NavSection {
@@ -97,6 +97,33 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
   const { user, logout } = useAuth();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return document.documentElement.classList.contains('dark') ||
+        localStorage.getItem('theme') === 'dark';
+    }
+    return false;
+  });
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(prev => {
+      const next = !prev;
+      if (next) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      }
+      return next;
+    });
+  };
+
+  React.useEffect(() => {
+    if (localStorage.getItem('theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
 
   const roleColor = getRoleColor(user?.role);
   const navItems = getRoleNav(user?.role);
@@ -245,6 +272,15 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
             <button className="relative p-2 rounded-xl text-muted-foreground hover:bg-accent transition-colors">
               <Bell className="w-5 h-5" />
               <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-primary" />
+            </button>
+
+            {/* Dark Mode Toggle */}
+            <button
+              onClick={toggleDarkMode}
+              title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              className="p-2 rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            >
+              {isDarkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5" />}
             </button>
 
             {/* Profile */}
