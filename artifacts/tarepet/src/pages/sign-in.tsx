@@ -49,13 +49,13 @@ export default function SignIn() {
     let firstName = "Demo";
     let lastName = "User";
 
-    if (demoEmail.includes("admin")) {
+    if (demoEmail.toLowerCase().includes("admin")) {
       role = "ADMIN"; firstName = "Admin"; lastName = "Tarepet";
-    } else if (demoEmail.includes("teacher")) {
+    } else if (demoEmail.toLowerCase().includes("teacher")) {
       role = "TEACHER"; firstName = "Mrs. Okafor"; lastName = "(Teacher)";
-    } else if (demoEmail.includes("student")) {
-      role = "STUDENT"; firstName = "Emeka"; lastName = "Obi";
-    } else if (demoEmail.includes("parent")) {
+    } else if (demoEmail.toUpperCase().startsWith("TMS/") || demoEmail.toLowerCase().includes("student")) {
+      role = "STUDENT"; firstName = "Student"; lastName = demoEmail.toUpperCase().startsWith("TMS/") ? demoEmail.toUpperCase() : "Obi";
+    } else if (demoEmail.toLowerCase().includes("parent")) {
       role = "PARENT"; firstName = "Mr. Amadi"; lastName = "(Parent)";
     }
 

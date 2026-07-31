@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'wouter';
 import { PortalLayout } from '@/components/layout/PortalLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore } from '@/lib/cbt-store';
+import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber } from '@/lib/cbt-store';
 
 import {
   Users, BookOpen, Server, CheckCircle2,
@@ -33,16 +33,16 @@ interface TabProps { id: string; label: string; icon: React.ReactNode; badge?: n
 
 const MOCK_USERS: any[] = [];
 const MOCK_STUDENTS: any[] = [
-  { id: 1, name: 'Chidi Nwosu', email: 'chidi.nwosu@example.com', grade: 'JSS1', stream: 'General', house: 'Blue House (Eagle)', status: 'ACTIVE' },
-  { id: 2, name: 'Amaka Okafor', email: 'amaka.okafor@example.com', grade: 'JSS1', stream: 'General', house: 'Purple House (Phoenix)', status: 'ACTIVE' },
-  { id: 3, name: 'Kemebradikumo Danjuma', email: 'keme.d@example.com', grade: 'JSS2', stream: 'General', house: 'Green House (Jaguar)', status: 'ACTIVE' },
-  { id: 4, name: 'Tari Ebimobowei', email: 'tari.e@example.com', grade: 'JSS3', stream: 'General', house: 'Red House (Falcon)', status: 'ACTIVE' },
-  { id: 5, name: 'Emmanuel Adebayo', email: 'emmanuel.adebayo@example.com', grade: 'SS1', stream: 'Science', house: 'Blue House (Eagle)', status: 'ACTIVE' },
-  { id: 6, name: 'Fatima Abubakar', email: 'fatima.abubakar@example.com', grade: 'SS1', stream: 'Art', house: 'Purple House (Phoenix)', status: 'ACTIVE' },
-  { id: 7, name: 'Buchi Nnamdi', email: 'buchi.n@example.com', grade: 'SS2', stream: 'Science', house: 'Green House (Jaguar)', status: 'ACTIVE' },
-  { id: 8, name: 'Aisha Bello', email: 'aisha.b@example.com', grade: 'SS2', stream: 'Art', house: 'Red House (Falcon)', status: 'ACTIVE' },
-  { id: 9, name: 'Zainab Mohammed', email: 'zainab.m@example.com', grade: 'SS3', stream: 'Science', house: 'Blue House (Eagle)', status: 'ACTIVE' },
-  { id: 10, name: 'David Danjuma', email: 'david.d@example.com', grade: 'SS3', stream: 'Art', house: 'Purple House (Phoenix)', status: 'ACTIVE' },
+  { id: 1, name: 'Chidi Nwosu', admissionNo: 'TMS/JS1/4092', email: 'chidi.nwosu@example.com', grade: 'JSS1', stream: 'General', house: 'Blue House (Eagle)', status: 'ACTIVE', dob: '2012-05-14', gender: 'Male', address: '12 Swali Road, Yenagoa', parentName: 'Chief Nwosu', parentPhone: '08031112233' },
+  { id: 2, name: 'Amaka Okafor', admissionNo: 'TMS/JS1/8193', email: 'amaka.okafor@example.com', grade: 'JSS1', stream: 'General', house: 'Purple House (Phoenix)', status: 'ACTIVE', dob: '2012-09-20', gender: 'Female', address: '45 Mbiama Yenagoa Road', parentName: 'Dr. Okafor', parentPhone: '08032223344' },
+  { id: 3, name: 'Kemebradikumo Danjuma', admissionNo: 'TMS/JS2/5102', email: 'keme.d@example.com', grade: 'JSS2', stream: 'General', house: 'Green House (Jaguar)', status: 'ACTIVE', dob: '2011-03-11', gender: 'Male', address: '8 Isaac Boro Expressway', parentName: 'Engr. Danjuma', parentPhone: '08033334455' },
+  { id: 4, name: 'Tari Ebimobowei', admissionNo: 'TMS/JS3/3029', email: 'tari.e@example.com', grade: 'JSS3', stream: 'General', house: 'Red House (Falcon)', status: 'ACTIVE', dob: '2010-11-05', gender: 'Female', address: '22 Amarata Street', parentName: 'Mr. Ebimobowei', parentPhone: '08034445566' },
+  { id: 5, name: 'Emmanuel Adebayo', admissionNo: 'TMS/SS1/SCI/7281', email: 'emmanuel.adebayo@example.com', grade: 'SS1', stream: 'Science', house: 'Blue House (Eagle)', status: 'ACTIVE', dob: '2009-07-19', gender: 'Male', address: '15 Kpansia Market Road', parentName: 'Pastor Adebayo', parentPhone: '08035556677' },
+  { id: 6, name: 'Fatima Abubakar', admissionNo: 'TMS/SS1/ART/9104', email: 'fatima.abubakar@example.com', grade: 'SS1', stream: 'Art', house: 'Purple House (Phoenix)', status: 'ACTIVE', dob: '2009-01-30', gender: 'Female', address: '3 Tombia Link Road', parentName: 'Alhaji Abubakar', parentPhone: '08036667788' },
+  { id: 7, name: 'Buchi Nnamdi', admissionNo: 'TMS/SS2/SCI/6291', email: 'buchi.n@example.com', grade: 'SS2', stream: 'Science', house: 'Green House (Jaguar)', status: 'ACTIVE', dob: '2008-08-12', gender: 'Male', address: '7 Obele Estate', parentName: 'Chief Nnamdi', parentPhone: '08037778899' },
+  { id: 8, name: 'Aisha Bello', admissionNo: 'TMS/SS2/ART/4810', email: 'aisha.b@example.com', grade: 'SS2', stream: 'Art', house: 'Red House (Falcon)', status: 'ACTIVE', dob: '2008-04-25', gender: 'Female', address: '19 Etegwe Close', parentName: 'Mallam Bello', parentPhone: '08038889900' },
+  { id: 9, name: 'Zainab Mohammed', admissionNo: 'TMS/SS3/SCI/8391', email: 'zainab.m@example.com', grade: 'SS3', stream: 'Science', house: 'Blue House (Eagle)', status: 'ACTIVE', dob: '2007-12-02', gender: 'Female', address: '30 Azikoro Road', parentName: 'Dr. Mohammed', parentPhone: '08039990011' },
+  { id: 10, name: 'David Danjuma', admissionNo: 'TMS/SS3/ART/2749', email: 'david.d@example.com', grade: 'SS3', stream: 'Art', house: 'Purple House (Phoenix)', status: 'ACTIVE', dob: '2007-06-18', gender: 'Male', address: '11 Ovom Street', parentName: 'Engr. Danjuma', parentPhone: '08030001122' },
 ];
 const MOCK_SS_STUDENTS = MOCK_STUDENTS;
 const MOCK_SUBJECTS: any[] = [
@@ -761,7 +761,21 @@ export default function AdminDashboard() {
   const [awardHouse, setAwardHouse] = useState<any>(null);
   const [auditSearch, setAuditSearch] = useState('');
   const [usersList, setUsersList] = useState(MOCK_USERS);
-  const [coursesList, setCoursesList] = useState(MOCK_SUBJECTS);
+  const [studentsList, setStudentsList] = useState(MOCK_STUDENTS);
+  const [showAddStudentModal, setShowAddStudentModal] = useState(false);
+  const [wizardStep, setWizardStep] = useState(1);
+  const [newStudentForm, setNewStudentForm] = useState({
+    name: '',
+    dob: '',
+    gender: 'Male',
+    grade: 'JSS1',
+    stream: 'General',
+    address: '',
+    phone: '',
+    parentName: '',
+    parentPhone: '',
+    profileImage: '',
+  });
   const [showActionsDropdown, setShowActionsDropdown] = useState(false);
   // Student class drill-down
   const [selectedClass, setSelectedClass] = useState<string | null>(null);   // 'SS1' | 'SS2' | 'SS3'
@@ -850,30 +864,30 @@ export default function AdminDashboard() {
     });
 
   // SS student filter by class + stream
-  const filteredSSStudents = MOCK_SS_STUDENTS.filter(s => {
+  const filteredSSStudents = studentsList.filter(s => {
     const q = userSearch.toLowerCase();
     const matchClass  = !selectedClass  || s.grade  === selectedClass;
     const matchStream = !selectedStream || s.stream === selectedStream;
-    const matchSearch = !q || s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q);
+    const matchSearch = !q || s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q) || (s.admissionNo && s.admissionNo.toLowerCase().includes(q));
     return matchClass && matchStream && matchSearch;
   });
 
   const STUDENT_CLASSES = [
     { label: 'JSS 1', key: 'JSS1', hasStreams: false, color: 'border-blue-500/30 bg-blue-500/5', iconBg: 'bg-blue-500/10 text-blue-600', accent: 'text-blue-600',
-      totalCount: MOCK_STUDENTS.filter(s => s.grade === 'JSS1').length },
+      totalCount: studentsList.filter(s => s.grade === 'JSS1').length },
     { label: 'JSS 2', key: 'JSS2', hasStreams: false, color: 'border-indigo-500/30 bg-indigo-500/5', iconBg: 'bg-indigo-500/10 text-indigo-600', accent: 'text-indigo-600',
-      totalCount: MOCK_STUDENTS.filter(s => s.grade === 'JSS2').length },
+      totalCount: studentsList.filter(s => s.grade === 'JSS2').length },
     { label: 'JSS 3', key: 'JSS3', hasStreams: false, color: 'border-teal-500/30 bg-teal-500/5', iconBg: 'bg-teal-500/10 text-teal-600', accent: 'text-teal-600',
-      totalCount: MOCK_STUDENTS.filter(s => s.grade === 'JSS3').length },
+      totalCount: studentsList.filter(s => s.grade === 'JSS3').length },
     { label: 'SS 1', key: 'SS1', hasStreams: true, color: 'border-primary/30 bg-primary/5', iconBg: 'bg-primary/10 text-primary', accent: 'text-primary',
-      sciCount: MOCK_STUDENTS.filter(s => s.grade === 'SS1' && s.stream === 'Science').length,
-      artCount: MOCK_STUDENTS.filter(s => s.grade === 'SS1' && s.stream === 'Art').length },
+      sciCount: studentsList.filter(s => s.grade === 'SS1' && s.stream === 'Science').length,
+      artCount: studentsList.filter(s => s.grade === 'SS1' && s.stream === 'Art').length },
     { label: 'SS 2', key: 'SS2', hasStreams: true, color: 'border-secondary/30 bg-secondary/5', iconBg: 'bg-secondary/10 text-secondary', accent: 'text-secondary',
-      sciCount: MOCK_STUDENTS.filter(s => s.grade === 'SS2' && s.stream === 'Science').length,
-      artCount: MOCK_STUDENTS.filter(s => s.grade === 'SS2' && s.stream === 'Art').length },
+      sciCount: studentsList.filter(s => s.grade === 'SS2' && s.stream === 'Science').length,
+      artCount: studentsList.filter(s => s.grade === 'SS2' && s.stream === 'Art').length },
     { label: 'SS 3', key: 'SS3', hasStreams: true, color: 'border-amber-500/30 bg-amber-500/5', iconBg: 'bg-amber-500/10 text-amber-600', accent: 'text-amber-600',
-      sciCount: MOCK_STUDENTS.filter(s => s.grade === 'SS3' && s.stream === 'Science').length,
-      artCount: MOCK_STUDENTS.filter(s => s.grade === 'SS3' && s.stream === 'Art').length },
+      sciCount: studentsList.filter(s => s.grade === 'SS3' && s.stream === 'Science').length,
+      artCount: studentsList.filter(s => s.grade === 'SS3' && s.stream === 'Art').length },
   ];
   const SS_CLASSES = STUDENT_CLASSES;
 
@@ -1183,15 +1197,29 @@ export default function AdminDashboard() {
               <span className="text-foreground font-semibold">Students — Select Class</span>
             </div>
 
-            <div>
-              <h2 className="text-xl font-serif font-bold text-foreground">Junior & Senior Secondary Students</h2>
-              <p className="text-xs text-muted-foreground mt-1">Select a JSS class directly or choose an SS class stream (Science/Art) to view student rosters.</p>
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+              <div>
+                <h2 className="text-xl font-serif font-bold text-foreground">Junior & Senior Secondary Students</h2>
+                <p className="text-xs text-muted-foreground mt-1">Select a JSS class directly or choose an SS class stream (Science/Art) to view student rosters.</p>
+              </div>
+              <button
+                onClick={() => {
+                  setWizardStep(1);
+                  setNewStudentForm({
+                    name: '', dob: '', gender: 'Male', grade: 'JSS1', stream: 'General', address: '', phone: '', parentName: '', parentPhone: '', profileImage: ''
+                  });
+                  setShowAddStudentModal(true);
+                }}
+                className="px-4 py-2.5 bg-primary text-primary-foreground font-bold rounded-xl text-xs flex items-center gap-2 shadow-sm hover:opacity-90 transition-opacity"
+              >
+                <UserPlus className="w-4 h-4" /> Add Student
+              </button>
             </div>
 
             {/* Summary bar */}
             <div className="bg-card border border-border rounded-2xl p-4 shadow-sm flex flex-wrap gap-6 items-center">
               <div className="text-center">
-                <p className="text-2xl font-serif font-bold text-foreground">{MOCK_STUDENTS.length}</p>
+                <p className="text-2xl font-serif font-bold text-foreground">{studentsList.length}</p>
                 <p className="text-[10px] text-muted-foreground">Total Students</p>
               </div>
               {STUDENT_CLASSES.map(c => {
@@ -1308,11 +1336,25 @@ export default function AdminDashboard() {
                 <h2 className="text-xl font-serif font-bold text-foreground">{cls.label} {selectedStream ? `— ${selectedStream}` : 'Student Roster'}</h2>
                 <p className="text-xs text-muted-foreground mt-0.5">{filteredSSStudents.length} students found</p>
               </div>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <input type="text" value={userSearch} onChange={e => setUserSearch(e.target.value)}
-                  placeholder="Search students..."
-                  className="pl-10 pr-4 py-2.5 border border-border rounded-xl bg-muted/20 text-sm focus:outline-none focus:ring-2 focus:ring-primary w-64" />
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => {
+                    setWizardStep(1);
+                    setNewStudentForm({
+                      name: '', dob: '', gender: 'Male', grade: cls.key, stream: selectedStream || 'General', address: '', phone: '', parentName: '', parentPhone: '', profileImage: ''
+                    });
+                    setShowAddStudentModal(true);
+                  }}
+                  className="px-3.5 py-2 bg-primary text-primary-foreground font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-sm hover:opacity-90 transition-opacity shrink-0"
+                >
+                  <UserPlus className="w-4 h-4" /> Add Student
+                </button>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                  <input type="text" value={userSearch} onChange={e => setUserSearch(e.target.value)}
+                    placeholder="Search students..."
+                    className="pl-10 pr-4 py-2.5 border border-border rounded-xl bg-muted/20 text-sm focus:outline-none focus:ring-2 focus:ring-primary w-64" />
+                </div>
               </div>
             </div>
 
@@ -1322,10 +1364,11 @@ export default function AdminDashboard() {
                 <thead className="bg-muted/30 text-muted-foreground uppercase text-[10px] tracking-wider">
                   <tr>
                     <th className="py-3 px-4">Full Name</th>
-                    <th className="py-3 px-4">Student ID</th>
+                    <th className="py-3 px-4">Admission No.</th>
+                    <th className="py-3 px-4">Class & Stream</th>
                     <th className="py-3 px-4">House</th>
                     <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4 text-right">Click to View</th>
+                    <th className="py-3 px-4 text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -1336,7 +1379,9 @@ export default function AdminDashboard() {
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
                           <div className={`w-9 h-9 rounded-xl font-bold text-sm flex items-center justify-center shrink-0 ${cls.iconBg}`}>
-                            {s.name[0]}
+                            {s.profileImage ? (
+                              <img src={s.profileImage} alt={s.name} className="w-full h-full object-cover rounded-xl" />
+                            ) : s.name[0]}
                           </div>
                           <div>
                             <p className="font-bold text-foreground group-hover:text-primary transition-colors">{s.name}</p>
@@ -2960,6 +3005,237 @@ export default function AdminDashboard() {
               setShowCreateSubjectModal(false);
             }}
           />
+        )}
+        {showAddStudentModal && (
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex items-center justify-center p-4" style={{ fontFamily: 'var(--font-poppins)' }}>
+            <div className="bg-card border border-border rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+              {/* Header */}
+              <div className="p-5 border-b border-border flex items-center justify-between bg-muted/20">
+                <div>
+                  <h3 className="font-serif font-bold text-lg text-foreground flex items-center gap-2">
+                    <UserPlus className="w-5 h-5 text-primary" /> Register New Student
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">Step {wizardStep} of 5 — Progressive Enrollment Wizard</p>
+                </div>
+                <button onClick={() => setShowAddStudentModal(false)} className="p-2 rounded-xl text-muted-foreground hover:bg-muted/50 transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Progress Line */}
+              <div className="w-full bg-muted/40 h-1.5 flex">
+                <div className="bg-primary h-full transition-all duration-300" style={{ width: `${(wizardStep / 5) * 100}%` }} />
+              </div>
+
+              {/* Steps Pill Header */}
+              <div className="px-6 pt-3 pb-2 border-b border-border/40 flex justify-between text-[11px] font-bold text-muted-foreground">
+                <span className={wizardStep >= 1 ? 'text-primary' : ''}>1. Personal</span>
+                <span className={wizardStep >= 2 ? 'text-primary' : ''}>2. Class</span>
+                <span className={wizardStep >= 3 ? 'text-primary' : ''}>3. Address</span>
+                <span className={wizardStep >= 4 ? 'text-primary' : ''}>4. Photo</span>
+                <span className={wizardStep >= 5 ? 'text-primary' : ''}>5. Admission No</span>
+              </div>
+
+              {/* Slide Body */}
+              <div className="p-6 overflow-y-auto space-y-4 flex-1">
+                {/* Slide 1: Basic Information */}
+                {wizardStep === 1 && (
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-bold text-foreground">Personal Identification</h4>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1 text-foreground">Full Student Name *</label>
+                      <input type="text" placeholder="e.g. Kelechi Amadi" value={newStudentForm.name}
+                        onChange={e => setNewStudentForm({ ...newStudentForm, name: e.target.value })}
+                        className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold mb-1 text-foreground">Date of Birth (DOB) *</label>
+                        <input type="date" value={newStudentForm.dob}
+                          onChange={e => setNewStudentForm({ ...newStudentForm, dob: e.target.value })}
+                          className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold mb-1 text-foreground">Gender *</label>
+                        <select value={newStudentForm.gender}
+                          onChange={e => setNewStudentForm({ ...newStudentForm, gender: e.target.value })}
+                          className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none">
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Slide 2: Class & Stream Assignment */}
+                {wizardStep === 2 && (
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-bold text-foreground">Academic Level & Stream</h4>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1 text-foreground">Target Class *</label>
+                      <select value={newStudentForm.grade}
+                        onChange={e => {
+                          const val = e.target.value;
+                          const isJSS = val.startsWith('JSS');
+                          setNewStudentForm({
+                            ...newStudentForm,
+                            grade: val,
+                            stream: isJSS ? 'General' : 'Science',
+                          });
+                        }}
+                        className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none">
+                        <option value="JSS1">JSS 1</option>
+                        <option value="JSS2">JSS 2</option>
+                        <option value="JSS3">JSS 3</option>
+                        <option value="SS1">SS 1</option>
+                        <option value="SS2">SS 2</option>
+                        <option value="SS3">SS 3</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold mb-1 text-foreground">Stream Assignment *</label>
+                      {newStudentForm.grade.startsWith('JSS') ? (
+                        <div className="p-3.5 rounded-xl bg-muted/40 border border-border text-xs text-muted-foreground font-medium">
+                          General Curriculum (No Art/Science stream distinction for JSS1–JSS3)
+                        </div>
+                      ) : (
+                        <select value={newStudentForm.stream}
+                          onChange={e => setNewStudentForm({ ...newStudentForm, stream: e.target.value })}
+                          className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none">
+                          <option value="Science">Science (SCI)</option>
+                          <option value="Art">Art (ART)</option>
+                        </select>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Slide 3: Location & Guardian Contacts */}
+                {wizardStep === 3 && (
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-bold text-foreground">Location & Emergency Contacts</h4>
+                    <div>
+                      <label className="block text-xs font-semibold mb-1 text-foreground">Residential Location / Address *</label>
+                      <input type="text" placeholder="e.g. 14 Airport Road, Yenagoa" value={newStudentForm.address}
+                        onChange={e => setNewStudentForm({ ...newStudentForm, address: e.target.value })}
+                        className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold mb-1 text-foreground">Parent/Guardian Name *</label>
+                        <input type="text" placeholder="e.g. Chief Amadi" value={newStudentForm.parentName}
+                          onChange={e => setNewStudentForm({ ...newStudentForm, parentName: e.target.value })}
+                          className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold mb-1 text-foreground">Parent Phone Number *</label>
+                        <input type="tel" placeholder="e.g. 08031234567" value={newStudentForm.parentPhone}
+                          onChange={e => setNewStudentForm({ ...newStudentForm, parentPhone: e.target.value })}
+                          className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Slide 4: Profile Image Upload (Cloudinary Integration) */}
+                {wizardStep === 4 && (
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-bold text-foreground">Student Profile Picture (Cloudinary)</h4>
+                    <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-2xl bg-muted/20 text-center">
+                      <div className="w-20 h-20 rounded-full border-2 border-primary bg-primary/10 flex items-center justify-center overflow-hidden mb-3 shadow-inner">
+                        {newStudentForm.profileImage ? (
+                          <img src={newStudentForm.profileImage} alt="Profile Preview" className="w-full h-full object-cover" />
+                        ) : (
+                          <GraduationCap className="w-8 h-8 text-primary" />
+                        )}
+                      </div>
+                      <p className="text-xs font-bold text-foreground mb-1">Save Profile Image to Cloudinary</p>
+                      <p className="text-[11px] text-muted-foreground mb-3">Paste Cloudinary image URL or uploaded asset link</p>
+                      <input type="text" placeholder="https://res.cloudinary.com/demo/image/upload/sample.jpg"
+                        value={newStudentForm.profileImage}
+                        onChange={e => setNewStudentForm({ ...newStudentForm, profileImage: e.target.value })}
+                        className="w-full px-4 py-2 border border-border rounded-xl bg-background text-xs text-center focus:ring-2 focus:ring-primary focus:outline-none font-mono" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Slide 5: Generated Admission Number & Credentials Summary */}
+                {wizardStep === 5 && (
+                  <div className="space-y-4 text-center py-2">
+                    <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-500/20">
+                      <CheckCircle2 className="w-6 h-6" />
+                    </div>
+                    <h4 className="text-base font-serif font-bold text-foreground">Ready to Enroll Student</h4>
+                    <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20 text-left space-y-2">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Generated Portal Login Credentials</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-foreground">Admission Number:</span>
+                        <span className="text-sm font-mono font-bold text-primary bg-primary/10 px-3 py-1 rounded-lg border border-primary/30">
+                          {generateAdmissionNumber(newStudentForm.grade, newStudentForm.stream)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between pt-1">
+                        <span className="text-xs font-semibold text-foreground">Assigned Class:</span>
+                        <span className="text-xs font-bold text-foreground">
+                          {newStudentForm.grade} {newStudentForm.grade.startsWith('SS') ? `(${newStudentForm.stream})` : ''}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      This Admission Number will serve as the student's primary credential to sign into the portal.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer Controls */}
+              <div className="p-5 border-t border-border bg-muted/20 flex items-center justify-between">
+                {wizardStep > 1 ? (
+                  <button onClick={() => setWizardStep(prev => prev - 1)}
+                    className="px-4 py-2 rounded-xl border border-border text-xs font-semibold hover:bg-muted transition-colors">
+                    Back
+                  </button>
+                ) : <div />}
+
+                {wizardStep < 5 ? (
+                  <button
+                    disabled={wizardStep === 1 && !newStudentForm.name}
+                    onClick={() => setWizardStep(prev => prev + 1)}
+                    className="px-5 py-2 bg-primary text-primary-foreground text-xs font-bold rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity">
+                    Next Step
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      const generatedId = generateAdmissionNumber(newStudentForm.grade, newStudentForm.stream);
+                      const createdStudent = {
+                        id: studentsList.length + 1,
+                        name: newStudentForm.name,
+                        admissionNo: generatedId,
+                        email: `${newStudentForm.name.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+                        grade: newStudentForm.grade,
+                        stream: newStudentForm.stream,
+                        house: 'Blue House (Eagle)',
+                        status: 'ACTIVE',
+                        dob: newStudentForm.dob,
+                        gender: newStudentForm.gender,
+                        address: newStudentForm.address,
+                        parentName: newStudentForm.parentName,
+                        parentPhone: newStudentForm.parentPhone,
+                        profileImage: newStudentForm.profileImage,
+                      };
+                      setStudentsList([createdStudent, ...studentsList]);
+                      setShowAddStudentModal(false);
+                    }}
+                    className="px-6 py-2.5 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 transition-colors shadow-md flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4" /> Save & Register Student
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
         )}
         {renderSection()}
       </PortalLayout>

@@ -113,6 +113,22 @@ export function getCoursesForClass(className: string, stream?: string | null) {
   return SENIOR_COURSES.filter(c => c.stream === stream || (stream === 'Art' && c.stream === 'Arts'));
 }
 
+export function generateAdmissionNumber(className: string, stream?: string | null): string {
+  let classCode = className.trim().toUpperCase();
+  if (classCode.startsWith('JSS')) {
+    classCode = classCode.replace('JSS', 'JS');
+  }
+
+  const randomDigits = Math.floor(1000 + Math.random() * 9000).toString();
+
+  if (classCode.startsWith('SS')) {
+    const streamCode = (stream && stream.toLowerCase().includes('art')) ? 'ART' : 'SCI';
+    return `TMS/${classCode}/${streamCode}/${randomDigits}`;
+  }
+
+  return `TMS/${classCode}/${randomDigits}`;
+}
+
 export const SS1_SCIENCE_COURSES = SENIOR_COURSES.filter(c => c.stream === 'Science');
 
 const INITIAL_SS1_SCIENCE_EXAMS: CBTExam[] = [
