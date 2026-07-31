@@ -85,10 +85,15 @@ function Router() {
 }
 
 function getRouterBase() {
-  // Vite injects BASE_URL from the BASE_PATH env var at build time.
-  // Strip trailing slash for wouter compatibility: '/tarepetLMS/' -> '/tarepetLMS'
   const base = import.meta.env.BASE_URL || '/';
-  return base === '/' ? '' : base.replace(/\/$/, '');
+  if (base === '/' || base === './' || base === '.') {
+    const pathname = window.location.pathname;
+    if (pathname.includes('/tarepetwebapp')) {
+      return '/tarepetwebapp';
+    }
+    return '';
+  }
+  return base.replace(/\/$/, '');
 }
 
 function App() {
