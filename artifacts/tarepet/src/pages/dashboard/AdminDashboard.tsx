@@ -709,8 +709,8 @@ const CreateUserForTypeModal = ({
                     <select value={form.grade} onChange={e => setForm({ ...form, grade: e.target.value })}
                       className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary">
                       <option value="">{t('createStaff.selectGrade')}</option>
-                      <option>{t('createStaff.jss1')}</option><option>JSS2</option><option>JSS3</option>
-                      <option>{t('createStaff.shs1')}</option><option>SHS2</option><option>SHS3</option>
+                      <option>{t('createStaff.jss1')}</option><option>{t('createStaff.jss2')}</option><option>{t('createStaff.jss3')}</option>
+                      <option>{t('createStaff.shs1')}</option><option>{t('createStaff.shs2')}</option><option>{t('createStaff.shs3')}</option>
                     </select>
                   </div>
                   <div>
@@ -1016,7 +1016,7 @@ export default function AdminDashboard() {
             {/* Card 1: Total Students */}
             <div className="bg-card p-5 rounded-2xl border border-border shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Students</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('dashboard.totalStudents')}</p>
                 <h3 className="text-3xl font-bold text-foreground">385</h3>
                 <p className="text-[11px] text-secondary font-medium flex items-center gap-1">
                   <TrendingUp className="w-3 h-3" /> +12% from last term
@@ -1030,9 +1030,9 @@ export default function AdminDashboard() {
             {/* Card 2: Teachers */}
             <div className="bg-card p-5 rounded-2xl border border-border shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Teachers</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('dashboard.teachers')}</p>
                 <h3 className="text-3xl font-bold text-foreground">28</h3>
-                <p className="text-[11px] text-muted-foreground font-medium">Full-time faculty</p>
+                <p className="text-[11px] text-muted-foreground font-medium">{t('dashboard.fullTimeFaculty')}</p>
               </div>
               <div className="w-12 h-12 rounded-2xl bg-secondary/10 text-secondary flex items-center justify-center shrink-0">
                 <GraduationCap className="w-6 h-6" />
@@ -1042,9 +1042,9 @@ export default function AdminDashboard() {
             {/* Card 3: Classes */}
             <div className="bg-card p-5 rounded-2xl border border-border shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Classes</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('dashboard.classes')}</p>
                 <h3 className="text-3xl font-bold text-foreground">12</h3>
-                <p className="text-[11px] text-muted-foreground font-medium">Junior & Senior arms</p>
+                <p className="text-[11px] text-muted-foreground font-medium">{t('dashboard.junior')}</p>
               </div>
               <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
                 <School className="w-6 h-6" />
@@ -1054,9 +1054,9 @@ export default function AdminDashboard() {
             {/* Card 4: Attendance Today */}
             <div className="bg-card p-5 rounded-2xl border border-border shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Attendance Today</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('dashboard.attendanceToday')}</p>
                 <h3 className="text-3xl font-bold text-secondary">96%</h3>
-                <p className="text-[11px] text-muted-foreground font-medium">Daily average</p>
+                <p className="text-[11px] text-muted-foreground font-medium">{t('dashboard.dailyAverage')}</p>
               </div>
               <div className="w-12 h-12 rounded-2xl bg-secondary/10 text-secondary flex items-center justify-center shrink-0">
                 <CalendarCheck className="w-6 h-6" />
@@ -1070,8 +1070,8 @@ export default function AdminDashboard() {
             <div className="bg-card p-6 rounded-2xl border border-border shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-bold text-base text-foreground">Class Performance (%)</h3>
-                  <p className="text-xs text-muted-foreground">Average academic score across all class levels</p>
+                  <h3 className="font-bold text-base text-foreground">{t('dashboard.classPerformance')}</h3>
+                  <p className="text-xs text-muted-foreground">{t('dashboard.classPerformanceDesc')}</p>
                 </div>
                 <span className="p-2 rounded-xl bg-muted text-muted-foreground">
                   <BarChart2 className="w-4 h-4" />
@@ -1097,8 +1097,8 @@ export default function AdminDashboard() {
             <div className="bg-card p-6 rounded-2xl border border-border shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-bold text-base text-foreground">Weekly Attendance (%)</h3>
-                  <p className="text-xs text-muted-foreground">Student presence tracking for the current week</p>
+                  <h3 className="font-bold text-base text-foreground">{t('dashboard.weeklyAttendance')}</h3>
+                  <p className="text-xs text-muted-foreground">{t('dashboard.weeklyAttendanceDesc')}</p>
                 </div>
                 <span className="p-2 rounded-xl bg-muted text-muted-foreground">
                   <Calendar className="w-4 h-4" />
@@ -1125,7 +1125,7 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Column 1: Quick Actions */}
             <div className="bg-card p-6 rounded-2xl border border-border shadow-sm space-y-4">
-              <h3 className="font-bold text-base text-foreground">Quick Actions</h3>
+              <h3 className="font-bold text-base text-foreground">{t('dashboard.quickActions')}</h3>
               <div className="grid grid-cols-2 gap-3">
                 {quickActionButtons.map((btn, idx) => {
                   const Icon = btn.icon;
@@ -1146,8 +1146,8 @@ export default function AdminDashboard() {
             {/* Column 2: Recent Activities */}
             <div className="bg-card p-6 rounded-2xl border border-border shadow-sm space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-base text-foreground">Recent Activities</h3>
-                <span className="text-xs text-muted-foreground">Today</span>
+                <h3 className="font-bold text-base text-foreground">{t('dashboard.recentActivities')}</h3>
+                <span className="text-xs text-muted-foreground">{t('dashboard.today')}</span>
               </div>
               <div className="space-y-3">
                 {recentActivities.map((act, idx) => {
@@ -1171,7 +1171,7 @@ export default function AdminDashboard() {
             {/* Column 3: Upcoming Events */}
             <div className="bg-card p-6 rounded-2xl border border-border shadow-sm space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-base text-foreground">Upcoming Events</h3>
+                <h3 className="font-bold text-base text-foreground">{t('dashboard.upcomingEvents')}</h3>
                 <button onClick={() => setActiveSection('calendar')} className="text-xs font-semibold text-primary hover:underline flex items-center gap-1">
                   View All <ChevronRight className="w-3.5 h-3.5" />
                 </button>
@@ -1207,13 +1207,13 @@ export default function AdminDashboard() {
           <div className="space-y-6">
             {/* Header */}
             <div className="flex items-center gap-2 text-sm">
-              <span className="text-foreground font-semibold">Students — Select Class</span>
+              <span className="text-foreground font-semibold">{t('students.selectClass')}</span>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
               <div>
-                <h2 className="text-xl font-serif font-bold text-foreground">Junior & Senior Secondary Students</h2>
-                <p className="text-xs text-muted-foreground mt-1">Select a JSS class directly or choose an SS class stream (Science/Art) to view student rosters.</p>
+                <h2 className="text-xl font-serif font-bold text-foreground">{t('students.juniorSenior')}</h2>
+                <p className="text-xs text-muted-foreground mt-1">{t('students.selectInstruction')}</p>
               </div>
               <button
                 onClick={() => {
@@ -1225,7 +1225,7 @@ export default function AdminDashboard() {
                 }}
                 className="px-4 py-2.5 bg-primary text-primary-foreground font-bold rounded-xl text-xs flex items-center gap-2 shadow-sm hover:opacity-90 transition-opacity"
               >
-                <UserPlus className="w-4 h-4" /> Add Student
+                <UserPlus className="w-4 h-4" /> {t('students.addStudent')}
               </button>
             </div>
 
@@ -1233,7 +1233,7 @@ export default function AdminDashboard() {
             <div className="bg-card border border-border rounded-2xl p-4 shadow-sm flex flex-wrap gap-6 items-center">
               <div className="text-center">
                 <p className="text-2xl font-serif font-bold text-foreground">{studentsList.length}</p>
-                <p className="text-[10px] text-muted-foreground">Total Students</p>
+                <p className="text-[10px] text-muted-foreground">{t('students.totalStudents')}</p>
               </div>
               {STUDENT_CLASSES.map(c => {
                 const count = c.hasStreams ? (c.sciCount! + c.artCount!) : c.totalCount!;
@@ -1270,20 +1270,20 @@ export default function AdminDashboard() {
                           <GraduationCap className="w-6 h-6" />
                         </div>
                         <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${cls.iconBg}`}>
-                          {totalStudents} Students
+                          {totalStudents} {t('students.title')}
                         </span>
                       </div>
                       <h3 className="font-serif font-bold text-xl text-foreground mb-1">{cls.label}</h3>
                       {cls.hasStreams ? (
                         <div className="flex gap-4 text-xs mt-2">
-                          <span className="text-muted-foreground">Science: <strong className={cls.accent}>{cls.sciCount}</strong></span>
-                          <span className="text-muted-foreground">Art: <strong className={cls.accent}>{cls.artCount}</strong></span>
+                          <span className="text-muted-foreground">{t('students.scienceLabel')}<strong className={cls.accent}>{cls.sciCount}</strong></span>
+                          <span className="text-muted-foreground">{t('students.artLabel')}<strong className={cls.accent}>{cls.artCount}</strong></span>
                         </div>
                       ) : (
-                        <p className="text-xs text-muted-foreground mt-2 font-medium">General Curriculum (No Stream)</p>
+                        <p className="text-xs text-muted-foreground mt-2 font-medium">{t('students.generalCurriculum')}</p>
                       )}
                       <div className={`flex items-center gap-1.5 text-xs font-bold mt-3 ${cls.accent}`}>
-                        <span>{cls.hasStreams ? 'Select Stream' : 'View Roster'}</span>
+                        <span>{cls.hasStreams ? t('students.chooseStream') : t('students.viewProfile')}</span>
                         {cls.hasStreams ? (
                           <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${openClassDropdown === cls.key ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -1297,7 +1297,7 @@ export default function AdminDashboard() {
                     {/* Stream Dropdown for SS classes */}
                     {cls.hasStreams && openClassDropdown === cls.key && (
                       <div className="absolute left-0 right-0 mt-2 bg-card border border-border rounded-2xl shadow-2xl z-40 py-2">
-                        <p className="px-4 pt-1 pb-2 text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Choose stream</p>
+                        <p className="px-4 pt-1 pb-2 text-[10px] uppercase font-bold text-muted-foreground tracking-wider">{t('students.chooseStream')}</p>
                         <button
                           onClick={() => { setSelectedClass(cls.key); setSelectedStream('Science'); setOpenClassDropdown(null); }}
                           className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-foreground hover:bg-primary/5 hover:text-primary transition-colors text-left"
@@ -1305,8 +1305,8 @@ export default function AdminDashboard() {
                           <span className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                             <FlaskConical className="w-4 h-4" />
                           </span>
-                          Science
-                          <span className="ml-auto text-xs text-muted-foreground">{cls.sciCount} students</span>
+                          {t('addSubject.science')}
+                          <span className="ml-auto text-xs text-muted-foreground">{cls.sciCount} {t('students.title').toLowerCase()}</span>
                         </button>
                         <button
                           onClick={() => { setSelectedClass(cls.key); setSelectedStream('Art'); setOpenClassDropdown(null); }}
@@ -1315,8 +1315,8 @@ export default function AdminDashboard() {
                           <span className="w-8 h-8 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary">
                             <Palette className="w-4 h-4" />
                           </span>
-                          Art
-                          <span className="ml-auto text-xs text-muted-foreground">{cls.artCount} students</span>
+                          {t('addSubject.art')}
+                          <span className="ml-auto text-xs text-muted-foreground">{cls.artCount} {t('students.title').toLowerCase()}</span>
                         </button>
                       </div>
                     )}
@@ -1337,7 +1337,7 @@ export default function AdminDashboard() {
             <div className="flex items-center gap-2 text-sm flex-wrap">
               <button onClick={() => { setSelectedClass(null); setSelectedStream(null); }}
                 className="text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
-                <ChevronLeft className="w-4 h-4" /> Students — Select Class
+                <ChevronLeft className="w-4 h-4" /> {t('students.selectClass')}
               </button>
               <span className="text-muted-foreground">/</span>
               <span className="text-foreground font-semibold">{cls.label} {selectedStream ? `(${selectedStream})` : ''}</span>
@@ -1360,7 +1360,7 @@ export default function AdminDashboard() {
                   }}
                   className="px-3.5 py-2 bg-primary text-primary-foreground font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-sm hover:opacity-90 transition-opacity shrink-0"
                 >
-                  <UserPlus className="w-4 h-4" /> Add Student
+                  <UserPlus className="w-4 h-4" /> {t('students.addStudent')}
                 </button>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -1376,12 +1376,12 @@ export default function AdminDashboard() {
               <table className="w-full text-xs text-left">
                 <thead className="bg-muted/30 text-muted-foreground uppercase text-[10px] tracking-wider">
                   <tr>
-                    <th className="py-3 px-4">Full Name</th>
-                    <th className="py-3 px-4">Admission No.</th>
-                    <th className="py-3 px-4">Class & Stream</th>
-                    <th className="py-3 px-4">House</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4 text-right">Action</th>
+                    <th className="py-3 px-4">{t('students.fullNameCol')}</th>
+                    <th className="py-3 px-4">{t('students.admissionNoCol')}</th>
+                    <th className="py-3 px-4">{t('students.classStreamCol')}</th>
+                    <th className="py-3 px-4">{t('students.houseCol')}</th>
+                    <th className="py-3 px-4">{t('students.statusCol')}</th>
+                    <th className="py-3 px-4 text-right">{t('students.actionCol')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -1411,7 +1411,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                       </td>
                       <td className="py-4 px-4 text-right">
                         <span className="text-[10px] text-primary font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-end gap-1">
-                          View Profile <ArrowUpRight className="w-3 h-3" />
+                          {t('students.viewProfile')} <ArrowUpRight className="w-3 h-3" />
                         </span>
                       </td>
                     </tr>
@@ -1419,7 +1419,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                     <tr>
                       <td colSpan={5} className="py-12 text-center text-muted-foreground">
                         <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                        <p className="text-xs">No students found.</p>
+                        <p className="text-xs">{t('students.noStudents')}</p>
                       </td>
                     </tr>
                   )}
@@ -1440,10 +1440,10 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
             <div className="flex items-center gap-2 text-sm flex-wrap">
               <button onClick={() => setSelectedUser(null)}
                 className="text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors font-medium">
-                <ChevronLeft className="w-4 h-4" /> Back to Roster
+                <ChevronLeft className="w-4 h-4" /> {t('students.backToClasses')}
               </button>
               <span className="text-muted-foreground">/</span>
-              <span className="text-foreground font-semibold">Student Profile — {u.name}</span>
+              <span className="text-foreground font-semibold">{t('studentProfile.breadcrumb')}{u.name}</span>
             </div>
 
             {/* Profile Specification Card (Exact Match to User Reference Image) */}
@@ -1452,21 +1452,21 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
               <div className="flex items-center justify-between pb-4 border-b border-border flex-wrap gap-3">
                 <div className="flex items-center gap-3">
                   <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
-                  <h3 className="font-serif font-bold text-lg text-foreground">Official Student Profile & Credentials</h3>
+                  <h3 className="font-serif font-bold text-lg text-foreground">{t('studentProfile.cardTitle')}</h3>
                 </div>
                 <div className="relative">
                   <button
                     onClick={() => setShowActionsDropdown(prev => !prev)}
                     className="px-4 py-2 bg-primary text-primary-foreground rounded-xl text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-2 shadow-sm"
                   >
-                    Actions
+                    {t('studentProfile.actions')}
                     <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showActionsDropdown ? 'rotate-180' : ''}`} />
                   </button>
                   {showActionsDropdown && (
                     <div className="absolute right-0 mt-2 w-52 bg-card border border-border rounded-xl shadow-2xl z-50 py-1.5 text-xs divide-y divide-border">
                       <div className="py-1">
                         <button onClick={() => { setIdCardUser(u); setShowActionsDropdown(false); }} className="w-full text-left px-4 py-2 hover:bg-muted/50 flex items-center gap-2 font-medium">
-                          <FaIdCard className="w-3.5 h-3.5 text-primary" /> Generate Student ID Card
+                          <FaIdCard className="w-3.5 h-3.5 text-primary" /> {t('studentProfile.generateIdCard')}
                         </button>
                         <button onClick={() => {
                           setNewStudentForm({
@@ -1488,7 +1488,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                           setShowAddStudentModal(true);
                           setShowActionsDropdown(false);
                         }} className="w-full text-left px-4 py-2 hover:bg-muted/50 flex items-center gap-2 font-medium">
-                          <FaPen className="w-3.5 h-3.5 text-muted-foreground" /> Edit Profile
+                          <FaPen className="w-3.5 h-3.5 text-muted-foreground" /> {t('studentProfile.editProfile')}
                         </button>
                       </div>
                       <div className="py-1">
@@ -1499,7 +1499,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                           }
                           setShowActionsDropdown(false);
                         }} className="w-full text-left px-4 py-2 hover:bg-rose-500/10 text-rose-600 flex items-center gap-2 font-medium">
-                          <FaTrash className="w-3.5 h-3.5 text-rose-500" /> Delete Student
+                          <FaTrash className="w-3.5 h-3.5 text-rose-500" /> {t('studentProfile.deleteStudent')}
                         </button>
                       </div>
                     </div>
@@ -1528,45 +1528,45 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                 {/* Column 2: Personal Identifiers */}
                 <div className="md:col-span-4 space-y-3.5 text-xs leading-relaxed">
                   <div>
-                    <span className="text-muted-foreground font-medium">Student ID: </span>
+                    <span className="text-muted-foreground font-medium">{t('studentProfile.studentIdLabel')}</span>
                     <strong className="text-foreground font-mono font-bold text-sm bg-primary/10 text-primary px-2.5 py-0.5 rounded border border-primary/20">
                       {u.admissionNo || generateAdmissionNumber(u.grade || 'JSS1', u.stream)}
                     </strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">Name: </span>
+                    <span className="text-muted-foreground font-medium">{t('studentProfile.nameLabel')}</span>
                     <strong className="text-foreground font-bold text-sm uppercase">{u.name}</strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">Gender: </span>
+                    <span className="text-muted-foreground font-medium">{t('studentProfile.genderLabel')}</span>
                     <strong className="text-foreground font-bold">{u.gender || 'Male'}</strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">Marital Status: </span>
-                    <strong className="text-foreground font-bold">Single</strong>
+                    <span className="text-muted-foreground font-medium">{t('studentProfile.maritalStatus')}</span>
+                    <strong className="text-foreground font-bold">{t('studentProfile.single')}</strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">Date of Birth: </span>
+                    <span className="text-muted-foreground font-medium">{t('studentProfile.dobLabel')}</span>
                     <strong className="text-foreground font-bold">{u.dob || '2004-10-22'}</strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">Phone Number: </span>
+                    <span className="text-muted-foreground font-medium">{t('studentProfile.phoneLabel')}</span>
                     <strong className="text-foreground font-bold">{u.phone || 'Not Available'}</strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">Country: </span>
+                    <span className="text-muted-foreground font-medium">{t('studentProfile.countryLabel')}</span>
                     <strong className="text-foreground font-bold">{u.country || 'Nigeria'}</strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">State of Origin: </span>
+                    <span className="text-muted-foreground font-medium">{t('studentProfile.stateLabel')}</span>
                     <strong className="text-foreground font-bold">{u.stateOfOrigin || 'Bayelsa'}</strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">L.G.A : </span>
+                    <span className="text-muted-foreground font-medium">{t('studentProfile.lgaLabel')}</span>
                     <strong className="text-foreground font-bold">{u.lga || 'Yenagoa'}</strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">Email: </span>
+                    <span className="text-muted-foreground font-medium">{t('studentProfile.emailLabel')}</span>
                     <strong className="text-foreground font-bold underline">{u.email}</strong>
                   </div>
                 </div>
@@ -1574,32 +1574,32 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                 {/* Column 3: Academic & Guardian Information */}
                 <div className="md:col-span-5 space-y-3.5 text-xs leading-relaxed border-t md:border-t-0 md:border-l border-border pt-4 md:pt-0 md:pl-6">
                   <div>
-                    <span className="text-muted-foreground font-medium">Address: </span>
+                    <span className="text-muted-foreground font-medium">{t('studentProfile.addressLabel')}</span>
                     <strong className="text-foreground font-bold">{u.address || 'Azikoro village, Yenagoa, Bayelsa State'}</strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">Class: </span>
+                    <span className="text-muted-foreground font-medium">{t('studentProfile.classLabel')}</span>
                     <strong className="text-foreground font-bold">
                       {u.grade ? `${u.grade} ${u.stream ? `(${u.stream} Stream)` : ''}` : 'JSS 1'}
                     </strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">Programme: </span>
+                    <span className="text-muted-foreground font-medium">{t('studentProfile.programmeLabel')}</span>
                     <strong className="text-foreground font-bold">
                       {u.grade && u.grade.startsWith('SS') ? 'Senior Secondary Certificate (SSCE)' : 'Basic Education Certificate (BECE)'}
                     </strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">Parent Name: </span>
+                    <span className="text-muted-foreground font-medium">{t('studentProfile.parentNameLabel')}</span>
                     <strong className="text-foreground font-bold">{u.parentName || 'Ayaebi Dimaro'}</strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">Status: </span>
-                    <strong className="text-emerald-600 font-bold">Active</strong>
+                    <span className="text-muted-foreground font-medium">{t('studentProfile.statusLabel')}</span>
+                    <strong className="text-emerald-600 font-bold">{t('studentProfile.active')}</strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">Study Mode: </span>
-                    <strong className="text-foreground font-bold">Full Time</strong>
+                    <span className="text-muted-foreground font-medium">{t('studentProfile.studyModeLabel')}</span>
+                    <strong className="text-foreground font-bold">{t('studentProfile.fullTime')}</strong>
                   </div>
                 </div>
               </div>
@@ -1618,7 +1618,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
             <div className="flex items-center gap-3">
               <button onClick={() => { setUserSubPage(null); setUserSearch(''); }}
                 className="p-2 rounded-xl border border-border hover:bg-accent transition-colors text-muted-foreground hover:text-foreground flex items-center gap-1.5 text-sm font-medium">
-                <ChevronLeft className="w-4 h-4" /> Back
+                <ChevronLeft className="w-4 h-4" /> {t('common.back')}
               </button>
               <div className="flex items-center gap-2.5">
                 <div className={`p-2 rounded-xl ${activeType.iconBg}`}>
@@ -1654,11 +1654,11 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
               <table className="w-full text-xs text-left">
                 <thead className="bg-muted/30 text-muted-foreground uppercase text-[10px] tracking-wider">
                   <tr>
-                    <th className="py-3 px-4">Full Name</th>
-                    <th className="py-3 px-4">Email</th>
-                    <th className="py-3 px-4">Date Joined</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4 text-right text-[10px]">Click to View</th>
+                    <th className="py-3 px-4">{t('userList.fullName')}</th>
+                    <th className="py-3 px-4">{t('userList.email')}</th>
+                    <th className="py-3 px-4">{t('userList.dateJoined')}</th>
+                    <th className="py-3 px-4">{t('userList.status')}</th>
+                    <th className="py-3 px-4 text-right text-[10px]">{t('userList.clickToView')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -1688,7 +1688,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                       </td>
                       <td className="py-4 px-4 text-right">
                         <span className="text-[10px] text-primary font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-end gap-1">
-                          View Profile <ArrowUpRight className="w-3 h-3" />
+                          {t('userList.viewProfile')} <ArrowUpRight className="w-3 h-3" />
                         </span>
                       </td>
                     </tr>
@@ -1804,7 +1804,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                   exam.stream === 'Science' ? 'bg-secondary/10 text-secondary' : 'bg-muted text-muted-foreground'
                 }`}>{exam.stream}</span>
-                <span className="text-[10px] text-muted-foreground ml-auto">Invigilator: <strong className="text-foreground">{exam.invigilator}</strong></span>
+                <span className="text-[10px] text-muted-foreground ml-auto">{t('exams.invigilator')}<strong className="text-foreground">{exam.invigilator}</strong></span>
               </div>
 
               <div className="flex gap-2 pt-3 border-t border-border items-center">
@@ -1812,7 +1812,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                   onClick={() => setPreviewExam(exam)}
                   className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl border border-border hover:bg-muted/40 transition-colors text-foreground"
                 >
-                  <FileText className="w-3.5 h-3.5" /> Preview
+                  <FileText className="w-3.5 h-3.5" /> {t('exams.preview')}
                 </button>
 
                 {exam.status === 'Pending Approval' && (
@@ -1821,13 +1821,13 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                       onClick={() => handleApprove(exam.id)}
                       className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm"
                     >
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Approve
+                      <CheckCircle2 className="w-3.5 h-3.5" /> {t('exams.approve')}
                     </button>
                     <button
                       onClick={() => handleReject(exam.id)}
                       className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 transition-colors"
                     >
-                      <Ban className="w-3.5 h-3.5" /> Reject
+                      <Ban className="w-3.5 h-3.5" /> {t('exams.reject')}
                     </button>
                   </>
                 )}
@@ -1842,7 +1842,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                     onClick={() => handleApprove(exam.id)}
                     className="text-xs font-bold text-rose-600 hover:underline ml-auto"
                   >
-                    Re-Approve
+                    {t('exams.reApprove')}
                   </button>
                 )}
               </div>
@@ -1850,7 +1850,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
           )) : (
             <div className="col-span-2 py-16 text-center bg-card rounded-2xl border border-border">
               <ClipboardList className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-              <p className="text-sm font-semibold text-foreground">No assessments found.</p>
+              <p className="text-sm font-semibold text-foreground">{t('exams.noExams')}</p>
             </div>
           )}
         </div>
@@ -1863,8 +1863,8 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl font-serif font-bold text-foreground">Manage Exams & Tests</h2>
-                <p className="text-xs text-muted-foreground mt-1">Select a class card (SS1–SS3), then choose Art or Science stream to manage tests and exams.</p>
+                <h2 className="text-xl font-serif font-bold text-foreground">{t('exams.manageExams')}</h2>
+                <p className="text-xs text-muted-foreground mt-1">{t('exams.selectCardDesc')}</p>
               </div>
 
               {/* Status Repository Filter Badges */}
@@ -1906,7 +1906,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                     {examRepoFilter === 'rejected' && '❌ Rejected Exams & Tests Repository'}
                   </h3>
                   <button onClick={() => setExamRepoFilter('all')} className="text-xs font-bold text-primary hover:underline">
-                    Back to Class Drilldown
+                    {t('exams.backToDrilldown')}
                   </button>
                 </div>
                 {renderExamCardsGrid(examsList.filter(e => {
@@ -2008,38 +2008,38 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                     <div onClick={() => setExamRepoFilter('pending')} className="p-4 rounded-xl border border-amber-200 bg-amber-500/5 cursor-pointer hover:border-amber-400 transition-all space-y-1">
                       <div className="flex items-center justify-between text-amber-700 font-bold text-xs">
-                        <span>Pending Approval</span>
+                        <span>{t('exams.pendingApproval')}</span>
                         <Clock className="w-4 h-4" />
                       </div>
                       <p className="text-2xl font-serif font-bold text-amber-800">{counts.pending}</p>
-                      <p className="text-[10px] text-amber-600">Click to review pending exams</p>
+                      <p className="text-[10px] text-amber-600">{t('exams.pendingDesc')}</p>
                     </div>
 
                     <div onClick={() => setExamRepoFilter('approved')} className="p-4 rounded-xl border border-emerald-200 bg-emerald-500/5 cursor-pointer hover:border-emerald-400 transition-all space-y-1">
                       <div className="flex items-center justify-between text-emerald-700 font-bold text-xs">
-                        <span>Approved Exams & Tests</span>
+                        <span>{t('exams.approvedExams')}</span>
                         <CheckCircle2 className="w-4 h-4" />
                       </div>
                       <p className="text-2xl font-serif font-bold text-emerald-800">{counts.approved}</p>
-                      <p className="text-[10px] text-emerald-600">Click to view published exams</p>
+                      <p className="text-[10px] text-emerald-600">{t('exams.approvedDesc')}</p>
                     </div>
 
                     <div onClick={() => setExamRepoFilter('rejected')} className="p-4 rounded-xl border border-rose-200 bg-rose-500/5 cursor-pointer hover:border-rose-400 transition-all space-y-1">
                       <div className="flex items-center justify-between text-rose-700 font-bold text-xs">
-                        <span>Rejected Exams</span>
+                        <span>{t('exams.rejectedExams')}</span>
                         <Ban className="w-4 h-4" />
                       </div>
                       <p className="text-2xl font-serif font-bold text-rose-800">{counts.rejected}</p>
-                      <p className="text-[10px] text-rose-600">Click to view rejected exams</p>
+                      <p className="text-[10px] text-rose-600">{t('exams.rejectedDesc')}</p>
                     </div>
 
                     <div onClick={() => setExamRepoFilter('all')} className="p-4 rounded-xl border border-border bg-muted/20 cursor-pointer hover:border-primary/40 transition-all space-y-1">
                       <div className="flex items-center justify-between text-foreground font-bold text-xs">
-                        <span>Total Assessments</span>
+                        <span>{t('exams.totalAssessments')}</span>
                         <ClipboardList className="w-4 h-4 text-primary" />
                       </div>
                       <p className="text-2xl font-serif font-bold text-foreground">{counts.total}</p>
-                      <p className="text-[10px] text-muted-foreground">All tests & terminal exams</p>
+                      <p className="text-[10px] text-muted-foreground">{t('exams.allTests')}</p>
                     </div>
                   </div>
                 </div>
@@ -2070,8 +2070,8 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
 
             {/* Header */}
             <div>
-              <h2 className="text-xl font-serif font-bold text-foreground">Select Assessment Type</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">Select Continuous Assessment (Test) or Terminal Examination (Exam) for {clsLabel} {selectedExamStream}.</p>
+              <h2 className="text-xl font-serif font-bold text-foreground">{t('exams.selectTypeTitle')}</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">{t('exams.selectTypeDesc')}{clsLabel} {selectedExamStream}.</p>
             </div>
 
             {/* Options Cards */}
@@ -2083,8 +2083,8 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                 <div className="p-3 rounded-2xl bg-primary/10 text-primary w-fit">
                   <FileText className="w-6 h-6" />
                 </div>
-                <h3 className="font-serif font-bold text-lg text-foreground group-hover:text-primary transition-colors">Continuous Assessment (Test)</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">Weekly & mid-term C.A. tests, timed quizzes, and practical assignments.</p>
+                <h3 className="font-serif font-bold text-lg text-foreground group-hover:text-primary transition-colors">{t('exams.caTitle')}</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">{t('exams.caDesc')}</p>
                 <div className="flex items-center justify-between pt-2 border-t border-border/50 text-xs">
                   <span className="font-bold text-primary">{testCount} Tests Available</span>
                   <ArrowUpRight className="w-4 h-4 text-primary group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
@@ -2098,8 +2098,8 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                 <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-600 w-fit">
                   <GraduationCap className="w-6 h-6" />
                 </div>
-                <h3 className="font-serif font-bold text-lg text-foreground group-hover:text-emerald-600 transition-colors">Terminal Examination (Exam)</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">End of term CBT terminal exams and comprehensive WAEC mock evaluations.</p>
+                <h3 className="font-serif font-bold text-lg text-foreground group-hover:text-emerald-600 transition-colors">{t('exams.terminalTitle')}</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">{t('exams.terminalDesc')}</p>
                 <div className="flex items-center justify-between pt-2 border-t border-border/50 text-xs">
                   <span className="font-bold text-emerald-600">{examCount} Exams Available</span>
                   <ArrowUpRight className="w-4 h-4 text-emerald-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
@@ -2113,8 +2113,8 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                 <div className="p-3 rounded-2xl bg-purple-500/10 text-purple-600 w-fit">
                   <ClipboardList className="w-6 h-6" />
                 </div>
-                <h3 className="font-serif font-bold text-lg text-foreground group-hover:text-purple-600 transition-colors">View All Assessments</h3>
-                <p className="text-xs text-muted-foreground leading-relaxed">Browse complete list of tests, quizzes, and terminal examinations.</p>
+                <h3 className="font-serif font-bold text-lg text-foreground group-hover:text-purple-600 transition-colors">{t('exams.viewAll')}</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">{t('exams.browseDesc')}</p>
                 <div className="flex items-center justify-between pt-2 border-t border-border/50 text-xs">
                   <span className="font-bold text-purple-600">{matchingExams.length} Total</span>
                   <ArrowUpRight className="w-4 h-4 text-purple-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
@@ -2207,8 +2207,8 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl font-serif font-bold text-foreground">Manage Subjects</h2>
-                <p className="text-xs text-muted-foreground mt-1">Select a class card to view its subjects.</p>
+                <h2 className="text-xl font-serif font-bold text-foreground">{t('subjects.title')}</h2>
+                <p className="text-xs text-muted-foreground mt-1">{t('subjects.selectClassCard')}</p>
               </div>
               
               {/* Subjects Actions Dropdown */}
@@ -2491,7 +2491,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
             )) : (
               <div className="col-span-2 py-12 text-center text-muted-foreground bg-card border border-border rounded-2xl">
                 <BookOpen className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                <p className="text-xs">No subjects found.</p>
+                <p className="text-xs">{t('subjects.noSubjects')}</p>
               </div>
             )}
           </div>
@@ -2502,11 +2502,11 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
     // 4. SCHOOL OPERATIONS
     if (activeSection === 'operations') return (
       <div className="space-y-5">
-        <h2 className="text-xl font-serif font-bold text-foreground">School Operations</h2>
+        <h2 className="text-xl font-serif font-bold text-foreground">{t('operations.title')}</h2>
         <div className="bg-card rounded-2xl border border-border p-5 shadow-sm space-y-3">
-          <p className="text-xs text-muted-foreground">Manage term schedules, academic years, and school facilities.</p>
+          <p className="text-xs text-muted-foreground">{t('operations.subtitle')}</p>
           <div className="grid grid-cols-2 gap-3 text-xs">
-            <div className="p-3 border border-border rounded-xl bg-muted/10"><p className="font-bold text-foreground">Current Term</p><p className="text-muted-foreground">Term 2 · 2025/2026</p></div>
+            <div className="p-3 border border-border rounded-xl bg-muted/10"><p className="font-bold text-foreground">{t('operations.currentTerm')}</p><p className="text-muted-foreground">Term 2 · 2025/2026</p></div>
             <div className="p-3 border border-border rounded-xl bg-muted/10"><p className="font-bold text-foreground">Total Classrooms</p><p className="text-muted-foreground">12 Active Spaces</p></div>
           </div>
         </div>
