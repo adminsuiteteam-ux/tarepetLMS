@@ -7,6 +7,7 @@ import {
   FileText, AlertTriangle, Eye, Users, FlaskConical, Palette, ClipboardList
 } from 'lucide-react';
 import { Link } from 'wouter';
+import { useTranslation } from '@/lib/i18n';
 
 interface ExamForm {
   title: string;
@@ -75,12 +76,47 @@ const STATUS_STYLES: Record<string, string> = {
   REJECTED: 'bg-red-100 text-red-700',
 };
 
-import { getStoredExams, saveCBTExam, updateExamStatus, getStoredSubmissions, subscribeToCBTStore, SENIOR_COURSES } from '@/lib/cbt-store';
+const getStatusBadgeStyle = (status: string) => {
+  switch (status) {
+    case 'DRAFT': return STATUS_STYLES.DRAFT;
+    case 'PENDING': return STATUS_STYLES.PENDING;
+    case 'APPROVED': return STATUS_STYLES.APPROVED;
+    case 'REJECTED': return STATUS_STYLES.REJECTED;
+    default: return 'bg-slate-100 text-slate-600';
+  }
+};
+
+import { getStoredExams, saveCBTExam, updateExamStatus, getStoredSubmissions, subscribeToCBTStore, SENIOR_COURSES, JUNIOR_COURSES, getCoursesForClass } from '@/lib/cbt-store';
 
 const SS_CLASSES = [
   {
+    key: 'JSS1',
+    label: 'JSS1 (Junior Secondary 1)',
+    hasStreams: false,
+    color: 'bg-sky-50/50 border-sky-200 hover:border-sky-400',
+    iconBg: 'bg-sky-100 text-sky-700',
+    accent: 'text-sky-700',
+  },
+  {
+    key: 'JSS2',
+    label: 'JSS2 (Junior Secondary 2)',
+    hasStreams: false,
+    color: 'bg-indigo-50/50 border-indigo-200 hover:border-indigo-400',
+    iconBg: 'bg-indigo-100 text-indigo-700',
+    accent: 'text-indigo-700',
+  },
+  {
+    key: 'JSS3',
+    label: 'JSS3 (Junior Secondary 3)',
+    hasStreams: false,
+    color: 'bg-teal-50/50 border-teal-200 hover:border-teal-400',
+    iconBg: 'bg-teal-100 text-teal-700',
+    accent: 'text-teal-700',
+  },
+  {
     key: 'SS1',
     label: 'SS1 (Senior Secondary 1)',
+    hasStreams: true,
     color: 'bg-blue-50/50 border-blue-200 hover:border-blue-400',
     iconBg: 'bg-blue-100 text-blue-700',
     accent: 'text-blue-700',
@@ -88,6 +124,7 @@ const SS_CLASSES = [
   {
     key: 'SS2',
     label: 'SS2 (Senior Secondary 2)',
+    hasStreams: true,
     color: 'bg-purple-50/50 border-purple-200 hover:border-purple-400',
     iconBg: 'bg-purple-100 text-purple-700',
     accent: 'text-purple-700',
@@ -95,6 +132,7 @@ const SS_CLASSES = [
   {
     key: 'SS3',
     label: 'SS3 (Senior Secondary 3)',
+    hasStreams: true,
     color: 'bg-emerald-50/50 border-emerald-200 hover:border-emerald-400',
     iconBg: 'bg-emerald-100 text-emerald-700',
     accent: 'text-emerald-700',
@@ -102,6 +140,7 @@ const SS_CLASSES = [
 ];
 
 export default function CBTBuilder() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [view, setView] = useState<View>('list');
   const [openClassDropdown, setOpenClassDropdown] = useState<string | null>(null);
@@ -118,10 +157,10 @@ export default function CBTBuilder() {
     assessment_type: 'TEST', term: '2ND_TERM', duration_minutes: 45, questions_per_page: 2,
   });
 
-  const availableCourses = SENIOR_COURSES.filter(c => c.stream === form.stream);
+  const availableCourses = getCoursesForClass(form.class, form.stream);
 
   const handleStreamChange = (newStream: string) => {
-    const streamCourses = SENIOR_COURSES.filter(c => c.stream === newStream);
+    const streamCourses = getCoursesForClass(form.class, newStream);
     setForm(prev => ({
       ...prev,
       stream: newStream,
@@ -267,27 +306,27 @@ export default function CBTBuilder() {
                 <button className="p-2 rounded-lg bg-white shadow hover:bg-slate-50 transition"><ChevronLeft className="w-5 h-5" /></button>
               </Link>
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-slate-900">CBT Exam Builder</h1>
-                <p className="text-slate-500 text-sm">Select target class & department to set exams or tests for students</p>
+                <h1 className="text-2xl md:text-3xl font-bold text-slate-900">{t("CBT Exam Builder")}</h1>
+                <p className="text-slate-500 text-sm">{t("Select target class & department to set exams or tests for students")}</p>
               </div>
             </div>
             <button
               onClick={() => setView('create')}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition shadow-lg"
             >
-              <Plus className="w-4 h-4" /> New Exam
+              <Plus className="w-4 h-4" /> {t("New Exam")}
             </button>
           </div>
 
-          {/* Class Selection Cards with Dropdowns (SS1, SS2, SS3 — Science & Art only) */}
+          {/* Class Selection Cards with Dropdowns */}
           <div className="mb-8 space-y-4">
             <div>
               <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-emerald-600" />
-                Select Target Class & Department Stream
+                {t("Select Target Class & Department Stream")}
               </h2>
               <p className="text-slate-500 text-xs mt-0.5">
-                Click a class card below to drop down Science or Art stream options to configure tests or exams.
+                {t("Click a class card below to drop down Science or Art stream options to configure tests or exams.")}
               </p>
             </div>
 
@@ -295,12 +334,28 @@ export default function CBTBuilder() {
               {SS_CLASSES.map(cls => {
                 const sciExams = exams.filter(e => e.class === cls.key && (e.stream === 'Science' || e.stream === 'STEM'));
                 const artExams = exams.filter(e => e.class === cls.key && (e.stream === 'Arts' || e.stream === 'Art' || e.stream === 'Humanities'));
-                const totalCount = sciExams.length + artExams.length;
+                const genExams = exams.filter(e => e.class === cls.key);
+                const totalCount = cls.hasStreams ? (sciExams.length + artExams.length) : genExams.length;
 
                 return (
                   <div key={cls.key} className="relative">
                     <button
-                      onClick={() => setOpenClassDropdown(prev => prev === cls.key ? null : cls.key)}
+                      onClick={() => {
+                        if (!cls.hasStreams) {
+                          const juniorCourses = getCoursesForClass(cls.key);
+                          setForm(prev => ({
+                            ...prev,
+                            class: cls.key,
+                            stream: 'General',
+                            course: juniorCourses[0]?.code || 'MTH-001',
+                            title: `${cls.key} Continuous Assessment`,
+                          }));
+                          setOpenClassDropdown(null);
+                          setView('create');
+                        } else {
+                          setOpenClassDropdown(prev => prev === cls.key ? null : cls.key);
+                        }
+                      }}
                       className={`group w-full text-left rounded-2xl border-2 p-6 shadow-sm transition-all duration-200 hover:shadow-md hover:scale-[1.02] cursor-pointer ${cls.color} ${openClassDropdown === cls.key ? 'ring-2 ring-emerald-400' : ''}`}
                     >
                       <div className="flex items-start justify-between mb-4">
@@ -312,22 +367,30 @@ export default function CBTBuilder() {
                         </span>
                       </div>
                       <h3 className="font-serif font-bold text-xl text-slate-900 mb-1">{cls.label}</h3>
-                      <div className="flex gap-4 text-xs mt-2">
-                        <span className="text-slate-500">Science: <strong className={cls.accent}>{sciExams.length}</strong></span>
-                        <span className="text-slate-500">Art: <strong className={cls.accent}>{artExams.length}</strong></span>
-                      </div>
+                      {cls.hasStreams ? (
+                        <div className="flex gap-4 text-xs mt-2">
+                          <span className="text-slate-500">{t("Science:")} <strong className={cls.accent}>{sciExams.length}</strong></span>
+                          <span className="text-slate-500">{t("Art:")} <strong className={cls.accent}>{artExams.length}</strong></span>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-500 mt-2 font-medium">{t("General Curriculum")}</p>
+                      )}
                       <div className={`flex items-center gap-1.5 text-xs font-bold mt-3 ${cls.accent}`}>
-                        <span>Select Stream</span>
-                        <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${openClassDropdown === cls.key ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                        </svg>
+                        <span>{cls.hasStreams ? t("Select Stream") : t("Configure Exam")}</span>
+                        {cls.hasStreams ? (
+                          <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${openClassDropdown === cls.key ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        ) : (
+                          <Plus className="w-3.5 h-3.5" />
+                        )}
                       </div>
                     </button>
 
-                    {/* Stream dropdown menu: Science or Art only */}
-                    {openClassDropdown === cls.key && (
+                    {/* Stream dropdown menu for SS classes */}
+                    {cls.hasStreams && openClassDropdown === cls.key && (
                       <div className="absolute left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-2xl z-40 py-2">
-                        <p className="px-4 pt-1 pb-2 text-[10px] uppercase font-bold text-slate-400 tracking-wider">Choose Stream</p>
+                        <p className="px-4 pt-1 pb-2 text-[10px] uppercase font-bold text-slate-400 tracking-wider">{t("Choose Stream")}</p>
                         <button
                           onClick={() => {
                             const streamCourses = SENIOR_COURSES.filter(c => c.stream === 'Science');
@@ -381,15 +444,15 @@ export default function CBTBuilder() {
 
           {/* Existing Exams Section Header */}
           <div className="mb-4">
-            <h2 className="text-lg font-bold text-slate-900">Configured CBT Exams ({exams.length})</h2>
-            <p className="text-slate-500 text-xs">Existing tests and examinations saved in system</p>
+            <h2 className="text-lg font-bold text-slate-900">{t("Configured CBT Exams")} ({exams.length})</h2>
+            <p className="text-slate-500 text-xs">{t("Existing tests and examinations saved in system")}</p>
           </div>
 
           {exams.length === 0 ? (
             <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
               <FileText className="w-16 h-16 mx-auto text-slate-300 mb-4" />
-              <h3 className="text-xl font-semibold text-slate-700 mb-2">No Exams Created Yet</h3>
-              <p className="text-slate-400 mb-4">Click "New Exam" to create your first CBT exam.</p>
+              <h3 className="text-xl font-semibold text-slate-700 mb-2">{t("No Exams Created Yet")}</h3>
+              <p className="text-slate-400 mb-4">{t("Click \"New Exam\" to create your first CBT exam.")}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -398,17 +461,17 @@ export default function CBTBuilder() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${STATUS_STYLES[exam.status] || ''}`}>
-                          {exam.status === 'APPROVED' ? 'Approved by Admin' : exam.status === 'PUBLISHED' ? '🚀 Live for Students' : exam.status}
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${getStatusBadgeStyle(exam.status)}`}>
+                          {exam.status === 'APPROVED' ? t("Approved by Admin") : exam.status === 'PUBLISHED' ? t("🚀 Live for Students") : exam.status}
                         </span>
                         <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                          {exam.class || 'SS1'} {exam.stream || 'Science'} • {exam.assessment_type === 'TEST' ? 'C.A. Test' : 'Final Exam'}
+                          {exam.class || 'SS1'} {exam.stream || 'Science'} • {exam.assessment_type === 'TEST' ? t("C.A. Test") : t("Final Exam")}
                         </span>
                       </div>
                       <h3 className="text-lg font-bold text-slate-900">{exam.title}</h3>
                       <p className="text-sm text-slate-500">{exam.course_name || exam.course_code} • {exam.duration_minutes} mins • {exam.questions_count || (exam.questions ? exam.questions.length : 0)} questions</p>
                       {exam.rejection_reason && (
-                        <p className="text-xs text-red-500 mt-2 flex items-center gap-1"><AlertTriangle className="w-3.5 h-3.5" /> Rejection Note: {exam.rejection_reason}</p>
+                        <p className="text-xs text-red-500 mt-2 flex items-center gap-1"><AlertTriangle className="w-3.5 h-3.5" /> {t("Rejection Note:")} {exam.rejection_reason}</p>
                       )}
                     </div>
                     <div className="flex gap-2 flex-wrap items-center">
@@ -417,7 +480,7 @@ export default function CBTBuilder() {
                           onClick={() => { setSelectedExamId(exam.id); fetchQuestions(exam.id); setView('questions'); }}
                           className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-600 hover:bg-blue-100 transition"
                         >
-                          Edit Questions
+                          {t("Edit Questions")}
                         </button>
                       )}
                       {exam.status === 'APPROVED' && (
@@ -454,11 +517,11 @@ export default function CBTBuilder() {
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center gap-3 mb-8">
             <button onClick={() => setView('list')} className="p-2 rounded-lg bg-white shadow hover:bg-slate-50 transition"><ChevronLeft className="w-5 h-5" /></button>
-            <h1 className="text-2xl font-bold text-slate-900">Create New CBT Exam</h1>
+            <h1 className="text-2xl font-bold text-slate-900">{t("Create New CBT Exam")}</h1>
           </div>
           <div className="bg-white rounded-2xl shadow-lg p-6 space-y-4">
             <div>
-              <label className={labelClass}>Exam Title</label>
+              <label className={labelClass}>{t("Exam Title")}</label>
               <input
                 className={inputClass}
                 value={form.title}
@@ -470,27 +533,48 @@ export default function CBTBuilder() {
             {/* Target Class & Stream / Department Row */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className={labelClass}>Target Class</label>
+                <label className={labelClass}>{t("Target Class")}</label>
                 <select
                   className={inputClass}
                   value={form.class}
-                  onChange={e => setForm({...form, class: e.target.value})}
+                  onChange={e => {
+                    const newClass = e.target.value;
+                    const isJunior = newClass.startsWith('JSS');
+                    const newStream = isJunior ? 'General' : 'Science';
+                    const courses = getCoursesForClass(newClass, newStream);
+                    setForm({
+                      ...form,
+                      class: newClass,
+                      stream: newStream,
+                      course: courses[0]?.code || '',
+                    });
+                  }}
                 >
-                  <option value="SS1">SS1 (Senior Secondary 1)</option>
-                  <option value="SS2">SS2 (Senior Secondary 2)</option>
-                  <option value="SS3">SS3 (Senior Secondary 3)</option>
+                  <option value="JSS1">{t("JSS1 (Junior Secondary 1)")}</option>
+                  <option value="JSS2">{t("JSS2 (Junior Secondary 2)")}</option>
+                  <option value="JSS3">{t("JSS3 (Junior Secondary 3)")}</option>
+                  <option value="SS1">{t("SS1 (Senior Secondary 1)")}</option>
+                  <option value="SS2">{t("SS2 (Senior Secondary 2)")}</option>
+                  <option value="SS3">{t("SS3 (Senior Secondary 3)")}</option>
                 </select>
               </div>
 
               <div>
-                <label className={labelClass}>Department / Stream</label>
+                <label className={labelClass}>{t("Department / Stream")}</label>
                 <select
                   className={inputClass}
                   value={form.stream}
+                  disabled={form.class.startsWith('JSS')}
                   onChange={e => handleStreamChange(e.target.value)}
                 >
-                  <option value="Science">Science Department</option>
-                  <option value="Arts">Art Department</option>
+                  {form.class.startsWith('JSS') ? (
+                    <option value="General">{t("General Curriculum (No Stream)")}</option>
+                  ) : (
+                    <>
+                      <option value="Science">{t("Science Department")}</option>
+                      <option value="Arts">{t("Art Department")}</option>
+                    </>
+                  )}
                 </select>
               </div>
             </div>
@@ -498,7 +582,7 @@ export default function CBTBuilder() {
             {/* Course & Assessment Type Row */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className={labelClass}>Subject / Course</label>
+                <label className={labelClass}>{t("Subject / Course")}</label>
                 <select
                   className={inputClass}
                   value={form.course}
@@ -513,32 +597,32 @@ export default function CBTBuilder() {
               </div>
 
               <div>
-                <label className={labelClass}>Assessment Type</label>
+                <label className={labelClass}>{t("Assessment Type")}</label>
                 <select
                   className={inputClass}
                   value={form.assessment_type}
                   onChange={e => setForm({...form, assessment_type: e.target.value})}
                 >
-                  <option value="TEST">Continuous Assessment Test</option>
-                  <option value="EXAM">Term Final Examination</option>
+                  <option value="TEST">{t("Continuous Assessment Test")}</option>
+                  <option value="EXAM">{t("Term Final Examination")}</option>
                 </select>
               </div>
             </div>
 
             <div className="grid grid-cols-3 gap-4">
               <div>
-                <label className={labelClass}>Term</label>
+                <label className={labelClass}>{t("Term")}</label>
                 <select className={inputClass} value={form.term} onChange={e => setForm({...form, term: e.target.value})}>
-                  <option value="1ST_TERM">1st Term</option>
-                  <option value="2ND_TERM">2nd Term</option>
-                  <option value="3RD_TERM">3rd Term</option>
+                  <option value="1ST_TERM">{t("1st Term")}</option>
+                  <option value="2ND_TERM">{t("2nd Term")}</option>
+                  <option value="3RD_TERM">{t("3rd Term")}</option>
                 </select>
               </div>
-              <div><label className={labelClass}>Duration (mins)</label><input type="number" className={inputClass} value={form.duration_minutes} onChange={e => setForm({...form, duration_minutes: parseInt(e.target.value) || 30})} min={5} max={180} /></div>
-              <div><label className={labelClass}>Questions/Page</label><input type="number" className={inputClass} value={form.questions_per_page} onChange={e => setForm({...form, questions_per_page: parseInt(e.target.value) || 1})} min={1} max={10} /></div>
+              <div><label className={labelClass}>{t("Duration (mins)")}</label><input type="number" className={inputClass} value={form.duration_minutes} onChange={e => setForm({...form, duration_minutes: parseInt(e.target.value) || 30})} min={5} max={180} /></div>
+              <div><label className={labelClass}>{t("Questions/Page")}</label><input type="number" className={inputClass} value={form.questions_per_page} onChange={e => setForm({...form, questions_per_page: parseInt(e.target.value) || 1})} min={1} max={10} /></div>
             </div>
-            <div><label className={labelClass}>Instructions (optional)</label><textarea className={inputClass} rows={3} value={form.instructions} onChange={e => setForm({...form, instructions: e.target.value})} placeholder="Instructions for students before starting..." /></div>
-            <div><label className={labelClass}>Description (optional)</label><textarea className={inputClass} rows={2} value={form.description} onChange={e => setForm({...form, description: e.target.value})} /></div>
+            <div><label className={labelClass}>{t("Instructions (optional)")}</label><textarea className={inputClass} rows={3} value={form.instructions} onChange={e => setForm({...form, instructions: e.target.value})} placeholder="Instructions for students before starting..." /></div>
+            <div><label className={labelClass}>{t("Description (optional)")}</label><textarea className={inputClass} rows={2} value={form.description} onChange={e => setForm({...form, description: e.target.value})} /></div>
             <button
               onClick={handleCreateExam}
               disabled={!form.title || !form.course || loading}
@@ -561,7 +645,7 @@ export default function CBTBuilder() {
             <div className="flex items-center gap-3">
               <button onClick={() => setView('list')} className="p-2 rounded-lg bg-white shadow hover:bg-slate-50 transition"><ChevronLeft className="w-5 h-5" /></button>
               <div>
-                <h1 className="text-xl font-bold text-slate-900">Add Questions</h1>
+                <h1 className="text-xl font-bold text-slate-900">{t("Add Questions")}</h1>
                 <p className="text-sm text-slate-500">{questions.length} question(s) added so far</p>
               </div>
             </div>
@@ -587,7 +671,7 @@ export default function CBTBuilder() {
                       <div className="grid grid-cols-2 gap-1.5 text-xs">
                         {['A', 'B', 'C', 'D'].map(opt => (
                           <span key={opt} className={`px-2 py-1 rounded-lg ${q.correct_option === opt ? 'bg-green-100 text-green-700 font-semibold' : 'bg-slate-50 text-slate-500'}`}>
-                            {opt}. {q[`option_${opt.toLowerCase()}`]}
+                            {opt}. {opt === 'A' ? q.option_a : opt === 'B' ? q.option_b : opt === 'C' ? q.option_c : q.option_d}
                           </span>
                         ))}
                       </div>
@@ -598,31 +682,31 @@ export default function CBTBuilder() {
             </div>
           )}
 
-          {/* New Question Form */}
+            {/* New Question Form */}
           <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-dashed border-emerald-200">
-            <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><Plus className="w-5 h-5 text-emerald-600" /> Add Question #{questions.length + 1}</h3>
+            <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><Plus className="w-5 h-5 text-emerald-600" /> {t("Add Question")} #{questions.length + 1}</h3>
             <div className="space-y-3">
-              <div><label className={labelClass}>Question Text</label><textarea className={inputClass} rows={2} value={newQuestion.question_text} onChange={e => setNewQuestion({...newQuestion, question_text: e.target.value})} placeholder="Enter the question..." /></div>
+              <div><label className={labelClass}>{t("Question Text")}</label><textarea className={inputClass} rows={2} value={newQuestion.question_text} onChange={e => setNewQuestion({...newQuestion, question_text: e.target.value})} placeholder="Enter the question..." /></div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className={labelClass}>Option A</label><input className={inputClass} value={newQuestion.option_a} onChange={e => setNewQuestion({...newQuestion, option_a: e.target.value})} /></div>
-                <div><label className={labelClass}>Option B</label><input className={inputClass} value={newQuestion.option_b} onChange={e => setNewQuestion({...newQuestion, option_b: e.target.value})} /></div>
-                <div><label className={labelClass}>Option C</label><input className={inputClass} value={newQuestion.option_c} onChange={e => setNewQuestion({...newQuestion, option_c: e.target.value})} /></div>
-                <div><label className={labelClass}>Option D</label><input className={inputClass} value={newQuestion.option_d} onChange={e => setNewQuestion({...newQuestion, option_d: e.target.value})} /></div>
+                <div><label className={labelClass}>{t("Option A")}</label><input className={inputClass} value={newQuestion.option_a} onChange={e => setNewQuestion({...newQuestion, option_a: e.target.value})} /></div>
+                <div><label className={labelClass}>{t("Option B")}</label><input className={inputClass} value={newQuestion.option_b} onChange={e => setNewQuestion({...newQuestion, option_b: e.target.value})} /></div>
+                <div><label className={labelClass}>{t("Option C")}</label><input className={inputClass} value={newQuestion.option_c} onChange={e => setNewQuestion({...newQuestion, option_c: e.target.value})} /></div>
+                <div><label className={labelClass}>{t("Option D")}</label><input className={inputClass} value={newQuestion.option_d} onChange={e => setNewQuestion({...newQuestion, option_d: e.target.value})} /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className={labelClass}>Correct Answer</label>
+                <div><label className={labelClass}>{t("Correct Answer")}</label>
                   <select className={inputClass} value={newQuestion.correct_option} onChange={e => setNewQuestion({...newQuestion, correct_option: e.target.value})}>
                     <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
                   </select>
                 </div>
-                <div><label className={labelClass}>Points</label><input type="number" className={inputClass} value={newQuestion.points} onChange={e => setNewQuestion({...newQuestion, points: parseFloat(e.target.value) || 1})} min={0.5} step={0.5} /></div>
+                <div><label className={labelClass}>{t("Points")}</label><input type="number" className={inputClass} value={newQuestion.points} onChange={e => setNewQuestion({...newQuestion, points: parseFloat(e.target.value) || 1})} min={0.5} step={0.5} /></div>
               </div>
               <button
                 onClick={handleAddQuestion}
                 disabled={!newQuestion.question_text || !newQuestion.option_a || !newQuestion.option_b}
                 className="w-full h-11 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                <Plus className="w-4 h-4" /> Add Question
+                <Plus className="w-4 h-4" /> {t("Add Question")}
               </button>
             </div>
           </div>
@@ -639,7 +723,7 @@ export default function CBTBuilder() {
           <div className="flex items-center gap-3 mb-8">
             <button onClick={() => setView('list')} className="p-2 rounded-lg bg-white shadow hover:bg-slate-50 transition"><ChevronLeft className="w-5 h-5" /></button>
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">Student Results</h1>
+              <h1 className="text-2xl font-bold text-slate-900">{t("Student Results")}</h1>
               <p className="text-slate-500 text-sm">{attempts.length} submission(s)</p>
             </div>
           </div>
@@ -647,8 +731,8 @@ export default function CBTBuilder() {
           {attempts.length === 0 ? (
             <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
               <Users className="w-16 h-16 mx-auto text-slate-300 mb-4" />
-              <h3 className="text-xl font-semibold text-slate-700">No Submissions Yet</h3>
-              <p className="text-slate-400">Students haven't taken this exam yet.</p>
+              <h3 className="text-xl font-semibold text-slate-700">{t("No Submissions Yet")}</h3>
+              <p className="text-slate-400">{t("Students haven't taken this exam yet.")}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -656,7 +740,7 @@ export default function CBTBuilder() {
                 <div key={a.id} className="bg-white rounded-2xl shadow-lg border border-slate-100 p-5 flex items-center justify-between">
                   <div>
                     <h4 className="font-bold text-slate-900">{a.student_name}</h4>
-                    <p className="text-sm text-slate-500">Score: {a.score}/{a.total_possible} ({a.percentage}%) {a.auto_submitted && '⏱ Auto-submitted'}</p>
+                    <p className="text-sm text-slate-500">{t("Score:")} {a.score}/{a.total_possible} ({a.percentage}%) {a.auto_submitted && '⏱ Auto-submitted'}</p>
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -696,7 +780,7 @@ export default function CBTBuilder() {
             <button onClick={() => setView('attempts')} className="p-2 rounded-lg bg-white shadow hover:bg-slate-50 transition"><ChevronLeft className="w-5 h-5" /></button>
             <div>
               <h1 className="text-xl font-bold text-slate-900">{attempt.student_name}'s Submission</h1>
-              <p className="text-slate-500 text-sm">Score: {attempt.score}/{attempt.total_possible} ({attempt.percentage}%)</p>
+              <p className="text-slate-500 text-sm">{t("Score:")} {attempt.score}/{attempt.total_possible} ({attempt.percentage}%)</p>
             </div>
           </div>
           <div className="space-y-3">
@@ -709,7 +793,7 @@ export default function CBTBuilder() {
                     const isSelected = a.selected_option === opt;
                     return (
                       <span key={opt} className={`px-2 py-1 rounded-lg ${isCorrect ? 'bg-green-100 text-green-700 font-bold' : isSelected && !isCorrect ? 'bg-red-100 text-red-600 line-through' : 'bg-slate-50 text-slate-500'}`}>
-                        {opt}. {a[`option_${opt.toLowerCase()}`]} {isCorrect && '✓'} {isSelected && !isCorrect && '✗'}
+                        {opt}. {opt === 'A' ? a.option_a : opt === 'B' ? a.option_b : opt === 'C' ? a.option_c : a.option_d} {isCorrect && '✓'} {isSelected && !isCorrect && '✗'}
                       </span>
                     );
                   })}

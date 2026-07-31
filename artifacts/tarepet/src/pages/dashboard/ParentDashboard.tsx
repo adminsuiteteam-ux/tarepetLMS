@@ -34,7 +34,7 @@ const CHILDREN = [
   {
     id: 2,
     name: 'Nneka Amadi',
-    grade: 'SS1 Science',
+    grade: 'JSS2 General',
     house: 'Purple House (Phoenix)',
     houseColor: 'hsl(var(--secondary))',
     gpa: '3.92',

@@ -63,6 +63,19 @@ export interface LMSActivity {
   icon?: string;
 }
 
+export const JUNIOR_COURSES = [
+  { id: 101, code: 'MTH-001', name: 'Junior Mathematics', stream: 'General', category: 'General' },
+  { id: 102, code: 'ENG-001', name: 'English Language', stream: 'General', category: 'General' },
+  { id: 103, code: 'BSC-001', name: 'Basic Science', stream: 'General', category: 'General' },
+  { id: 104, code: 'BTC-001', name: 'Basic Technology', stream: 'General', category: 'General' },
+  { id: 105, code: 'CIV-001', name: 'Civic Education', stream: 'General', category: 'General' },
+  { id: 106, code: 'SOC-001', name: 'Social Studies', stream: 'General', category: 'General' },
+  { id: 107, code: 'AGR-001', name: 'Agricultural Science', stream: 'General', category: 'General' },
+  { id: 108, code: 'ICT-001', name: 'Computer Studies / ICT', stream: 'General', category: 'General' },
+  { id: 109, code: 'BUS-001', name: 'Business Studies', stream: 'General', category: 'General' },
+  { id: 110, code: 'CCA-001', name: 'Cultural & Creative Arts', stream: 'General', category: 'General' },
+];
+
 export const SENIOR_COURSES = [
   // Science Stream
   { id: 1, code: 'MTH-101', name: 'Mathematics', stream: 'Science', category: 'STEM' },
@@ -88,9 +101,105 @@ export const SENIOR_COURSES = [
   { id: 17, code: 'OFF-101', name: 'Office Practice', stream: 'Commercial', category: 'Business' },
 ];
 
+export const ALL_COURSES = [...JUNIOR_COURSES, ...SENIOR_COURSES];
+
+export function getCoursesForClass(className: string, stream?: string | null) {
+  if (className.startsWith('JSS')) {
+    return JUNIOR_COURSES;
+  }
+  if (!stream || stream === 'General') {
+    return SENIOR_COURSES;
+  }
+  return SENIOR_COURSES.filter(c => c.stream === stream || (stream === 'Art' && c.stream === 'Arts'));
+}
+
 export const SS1_SCIENCE_COURSES = SENIOR_COURSES.filter(c => c.stream === 'Science');
 
 const INITIAL_SS1_SCIENCE_EXAMS: CBTExam[] = [
+  {
+    id: 99,
+    title: 'JSS1 Basic Science Continuous Assessment',
+    description: 'Evaluation of fundamental living organisms, matter, and simple machines.',
+    instructions: 'Select the best answer for each question.',
+    course_code: 'BSC-001',
+    course_name: 'Basic Science',
+    class: 'JSS1',
+    stream: 'General',
+    assessment_type: 'TEST',
+    term: '2ND_TERM',
+    duration_minutes: 15,
+    questions_count: 2,
+    questions_per_page: 2,
+    teacher_name: 'Mrs. Okafor Chioma',
+    status: 'ACTIVE',
+    questions: [
+      {
+        id: 1,
+        question_text: 'Which of the following is a characteristic of living things?',
+        option_a: 'Respiration',
+        option_b: 'Rusting',
+        option_c: 'Melting',
+        option_d: 'Evaporation',
+        correct_option: 'A',
+        points: 5,
+        explanation: 'Respiration is one of the essential life processes of all living organisms.',
+      },
+      {
+        id: 2,
+        question_text: 'The standard SI unit for measuring mass is:',
+        option_a: 'Metre',
+        option_b: 'Kilogram',
+        option_c: 'Second',
+        option_d: 'Ampere',
+        correct_option: 'B',
+        points: 5,
+        explanation: 'Kilogram (kg) is the standard SI unit of mass.',
+      },
+    ],
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 100,
+    title: 'JSS2 Mathematics Mid-Term Assessment',
+    description: 'Algebraic expressions, simple equations, and angles in polygons.',
+    instructions: 'Solve each question carefully.',
+    course_code: 'MTH-001',
+    course_name: 'Junior Mathematics',
+    class: 'JSS2',
+    stream: 'General',
+    assessment_type: 'TEST',
+    term: '2ND_TERM',
+    duration_minutes: 20,
+    questions_count: 2,
+    questions_per_page: 2,
+    teacher_name: 'Mr. Okonkwo Paul',
+    status: 'ACTIVE',
+    questions: [
+      {
+        id: 1,
+        question_text: 'Solve for y: 3y + 5 = 20',
+        option_a: 'y = 3',
+        option_b: 'y = 5',
+        option_c: 'y = 15',
+        option_d: 'y = 25',
+        correct_option: 'B',
+        points: 5,
+        explanation: '3y = 20 - 5 = 15 => y = 5.',
+      },
+      {
+        id: 2,
+        question_text: 'What is the sum of angles in a triangle?',
+        option_a: '90°',
+        option_b: '180°',
+        option_c: '270°',
+        option_d: '360°',
+        correct_option: 'B',
+        points: 5,
+        explanation: 'The interior angles of any triangle always add up to 180 degrees.',
+      },
+    ],
+    created_at: new Date().toISOString(),
+  },
   {
     id: 101,
     title: 'SS1 Science Mathematics Continuous Assessment Test',

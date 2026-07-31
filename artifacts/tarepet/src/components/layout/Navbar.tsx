@@ -3,6 +3,7 @@ import { ArrowRight, Sparkles, LogIn, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import tarepetLogo from "@assets/tarepet__1784835204178.png";
+import { useTranslation } from "@/lib/i18n";
 
 interface NavLinkItem {
   href: string;
@@ -26,6 +27,7 @@ const MOBILE_NAV_LINKS: NavLinkItem[] = [
 ];
 
 export function Navbar() {
+  const { t } = useTranslation();
   const [location] = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -78,10 +80,10 @@ export function Navbar() {
             </div>
             <div className="flex flex-col">
               <span className="font-serif font-bold text-xl md:text-2xl text-primary leading-none tracking-tight">
-                Tare Pet
+                {t("Tare Pet")}
               </span>
               <span className="font-sans text-[9px] md:text-[11px] uppercase tracking-[0.18em] text-secondary font-semibold mt-0.5">
-                montessori school
+                {t("montessori school")}
               </span>
             </div>
           </Link>
@@ -103,7 +105,7 @@ export function Navbar() {
                           : "text-foreground/80 hover:text-foreground"
                       }`}
                     >
-                      {link.label}
+                      {t(link.label)}
                     </Link>
 
                     {/* Active Link Glass Pill */}
@@ -133,7 +135,7 @@ export function Navbar() {
               className="ml-3 relative group inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-white bg-gradient-to-r from-primary via-primary/95 to-primary/90 shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all duration-300 hover:scale-105 active:scale-95"
             >
               <LogIn className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
-              <span>Portal Login</span>
+              <span>{t("Portal Login")}</span>
               <span className="absolute inset-0 rounded-full border border-white/30 pointer-events-none" />
             </Link>
           </nav>
@@ -187,9 +189,9 @@ export function Navbar() {
               <Link href="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2.5">
                 <img src={tarepetLogo} alt="Tare Pet Logo" className="w-8 h-8 object-contain" />
                 <div className="flex flex-col">
-                  <span className="font-serif font-bold text-lg text-primary leading-none">Tare Pet</span>
+                  <span className="font-serif font-bold text-lg text-primary leading-none">{t("Tare Pet")}</span>
                   <span className="font-sans text-[9px] uppercase tracking-[0.16em] text-secondary font-semibold mt-0.5">
-                    montessori school
+                    {t("montessori school")}
                   </span>
                 </div>
               </Link>
@@ -247,7 +249,7 @@ export function Navbar() {
                           <div className="flex items-center gap-3">
                             <LogIn className="w-5 h-5 text-white" />
                             <span className="font-serif text-xl font-bold tracking-tight">
-                              Portal Login
+                              {t("Portal Login")}
                             </span>
                           </div>
                           <ArrowRight className="w-5 h-5 text-white/90 group-hover:translate-x-1 transition-transform" />
@@ -288,7 +290,7 @@ export function Navbar() {
                             0{idx + 1}
                           </span>
                           <span className="font-serif text-xl font-bold tracking-tight transition-transform duration-300 group-hover:translate-x-1">
-                            {link.label}
+                            {t(link.label)}
                           </span>
                         </div>
                         <ArrowRight className="w-4 h-4 text-primary/40 group-hover:text-primary group-hover:translate-x-1 transition-all duration-300" />

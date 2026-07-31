@@ -14,6 +14,7 @@ import {
 
 import { getStoredExams, updateExamStatus, getStoredSubmissions, subscribeToCBTStore } from '@/lib/cbt-store';
 import { RealTimeSyncStatus } from '@/components/cbt/RealTimeSyncStatus';
+import { useTranslation } from '@/lib/i18n';
 
 // ─── Initial Seed Data (SS1 Science Teacher) ─────────────────
 const TEACHER_CLASSES: any[] = [];
@@ -25,6 +26,7 @@ const MONTESSORI_OBSERVATIONS: any[] = [];
 const TIMETABLE: any[] = [];
 
 export default function TeacherDashboard() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [activeSection, setActiveSection] = useState('overview');
 
@@ -318,7 +320,7 @@ export default function TeacherDashboard() {
                         key={st}
                         onClick={() => setAttendanceState(prev => ({ ...prev, [s.id]: st }))}
                         className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${
-                          attendanceState[s.id] === st
+                          (Object.prototype.hasOwnProperty.call(attendanceState, s.id) ? attendanceState[s.id] : 'present') === st
                             ? st === 'present' ? 'bg-emerald-600 text-white' : st === 'late' ? 'bg-amber-500 text-white' : 'bg-rose-600 text-white'
                             : 'bg-muted text-muted-foreground hover:bg-accent'
                         }`}
@@ -405,7 +407,7 @@ export default function TeacherDashboard() {
             <div className="flex flex-col sm:flex-row gap-3 pt-1">
               {/* Class Tabs */}
               <div className="flex gap-1.5 bg-muted/40 p-1 rounded-xl border border-border">
-                {['ALL', 'SS1', 'SS2', 'SS3'].map(cls => (
+                {['ALL', 'JSS1', 'JSS2', 'JSS3', 'SS1', 'SS2', 'SS3'].map(cls => (
                   <button
                     key={cls}
                     onClick={() => setSelectedExamClass(cls)}
@@ -650,7 +652,7 @@ export default function TeacherDashboard() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {roster.map(s => {
-                    const sc = gradebookScores[s.id] || { ca1: 0, ca2: 0, midterm: 0, exam: 0 };
+                    const sc = (Object.prototype.hasOwnProperty.call(gradebookScores, s.id) ? gradebookScores[s.id] : null) || { ca1: 0, ca2: 0, midterm: 0, exam: 0 };
                     const total = sc.ca1 + sc.ca2 + sc.midterm + sc.exam;
                     const letter = total >= 90 ? 'A+' : total >= 80 ? 'A' : total >= 70 ? 'B' : total >= 60 ? 'C' : total >= 50 ? 'D' : 'F';
                     return (

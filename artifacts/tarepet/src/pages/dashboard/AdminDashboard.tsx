@@ -31,10 +31,38 @@ import {
 // ── Types ────────────────────────────────────────────────────
 interface TabProps { id: string; label: string; icon: React.ReactNode; badge?: number }
 
-// ── Mock Data ────────────────────────────────────────────────
 const MOCK_USERS: any[] = [];
-const MOCK_SS_STUDENTS: any[] = [];
-const MOCK_SUBJECTS: any[] = [];
+const MOCK_STUDENTS: any[] = [
+  { id: 1, name: 'Chidi Nwosu', email: 'chidi.nwosu@example.com', grade: 'JSS1', stream: 'General', house: 'Blue House (Eagle)', status: 'ACTIVE' },
+  { id: 2, name: 'Amaka Okafor', email: 'amaka.okafor@example.com', grade: 'JSS1', stream: 'General', house: 'Purple House (Phoenix)', status: 'ACTIVE' },
+  { id: 3, name: 'Kemebradikumo Danjuma', email: 'keme.d@example.com', grade: 'JSS2', stream: 'General', house: 'Green House (Jaguar)', status: 'ACTIVE' },
+  { id: 4, name: 'Tari Ebimobowei', email: 'tari.e@example.com', grade: 'JSS3', stream: 'General', house: 'Red House (Falcon)', status: 'ACTIVE' },
+  { id: 5, name: 'Emmanuel Adebayo', email: 'emmanuel.adebayo@example.com', grade: 'SS1', stream: 'Science', house: 'Blue House (Eagle)', status: 'ACTIVE' },
+  { id: 6, name: 'Fatima Abubakar', email: 'fatima.abubakar@example.com', grade: 'SS1', stream: 'Art', house: 'Purple House (Phoenix)', status: 'ACTIVE' },
+  { id: 7, name: 'Buchi Nnamdi', email: 'buchi.n@example.com', grade: 'SS2', stream: 'Science', house: 'Green House (Jaguar)', status: 'ACTIVE' },
+  { id: 8, name: 'Aisha Bello', email: 'aisha.b@example.com', grade: 'SS2', stream: 'Art', house: 'Red House (Falcon)', status: 'ACTIVE' },
+  { id: 9, name: 'Zainab Mohammed', email: 'zainab.m@example.com', grade: 'SS3', stream: 'Science', house: 'Blue House (Eagle)', status: 'ACTIVE' },
+  { id: 10, name: 'David Danjuma', email: 'david.d@example.com', grade: 'SS3', stream: 'Art', house: 'Purple House (Phoenix)', status: 'ACTIVE' },
+];
+const MOCK_SS_STUDENTS = MOCK_STUDENTS;
+const MOCK_SUBJECTS: any[] = [
+  { id: 1, code: 'MTH-001', title: 'Junior Mathematics', grade: 'JSS1', stream: 'General', teacher: 'Mr. Okonkwo Paul', studentsCount: 42 },
+  { id: 2, code: 'ENG-001', title: 'English Language', grade: 'JSS1', stream: 'General', teacher: 'Mrs. Okafor Chioma', studentsCount: 42 },
+  { id: 3, code: 'BSC-001', title: 'Basic Science', grade: 'JSS1', stream: 'General', teacher: 'Mrs. Okafor Chioma', studentsCount: 42 },
+  { id: 4, code: 'BTC-001', title: 'Basic Technology', grade: 'JSS2', stream: 'General', teacher: 'Engr. Emeka David', studentsCount: 38 },
+  { id: 5, code: 'CIV-001', title: 'Civic Education', grade: 'JSS2', stream: 'General', teacher: 'Dr. Grace Bassey', studentsCount: 38 },
+  { id: 6, code: 'SOC-001', title: 'Social Studies', grade: 'JSS3', stream: 'General', teacher: 'Dr. Grace Bassey', studentsCount: 40 },
+  { id: 7, code: 'ICT-001', title: 'Computer Studies / ICT', grade: 'JSS3', stream: 'General', teacher: 'Engr. Emeka David', studentsCount: 40 },
+  { id: 11, code: 'MTH-101', title: 'Senior Mathematics', grade: 'SS1', stream: 'Science', teacher: 'Mr. Okonkwo Paul', studentsCount: 35 },
+  { id: 12, code: 'PHY-101', title: 'Physics I', grade: 'SS1', stream: 'Science', teacher: 'Engr. Emeka David', studentsCount: 35 },
+  { id: 13, code: 'CHM-101', title: 'Chemistry I', grade: 'SS1', stream: 'Science', teacher: 'Mrs. Okafor Chioma', studentsCount: 35 },
+  { id: 14, code: 'ENG-101', title: 'English Language', grade: 'SS1', stream: 'Art', teacher: 'Dr. Grace Bassey', studentsCount: 28 },
+  { id: 15, code: 'LIT-101', title: 'Literature in English', grade: 'SS1', stream: 'Art', teacher: 'Dr. Grace Bassey', studentsCount: 28 },
+  { id: 16, code: 'MTH-201', title: 'Senior Mathematics II', grade: 'SS2', stream: 'Science', teacher: 'Mr. Okonkwo Paul', studentsCount: 32 },
+  { id: 17, code: 'GOV-201', title: 'Government II', grade: 'SS2', stream: 'Art', teacher: 'Dr. Grace Bassey', studentsCount: 25 },
+  { id: 18, code: 'MTH-301', title: 'Senior Mathematics III', grade: 'SS3', stream: 'Science', teacher: 'Mr. Okonkwo Paul', studentsCount: 30 },
+  { id: 19, code: 'HIS-301', title: 'History III', grade: 'SS3', stream: 'Art', teacher: 'Dr. Grace Bassey', studentsCount: 22 },
+];
 
 const MOCK_HOUSES = [
   { name: 'Blue House (Eagle)', color: '#3B82F6', motto: 'Wisdom & Integrity', points: 520, students: 0, head: 'Mrs. Okafor Chioma' },
@@ -828,17 +856,24 @@ export default function AdminDashboard() {
     return matchClass && matchStream && matchSearch;
   });
 
-  const SS_CLASSES = [
-    { label: 'SS 1', key: 'SS1', color: 'border-primary/30 bg-primary/5', iconBg: 'bg-primary/10 text-primary', accent: 'text-primary',
-      sciCount: MOCK_SS_STUDENTS.filter(s => s.grade === 'SS1' && s.stream === 'Science').length,
-      artCount: MOCK_SS_STUDENTS.filter(s => s.grade === 'SS1' && s.stream === 'Art').length },
-    { label: 'SS 2', key: 'SS2', color: 'border-secondary/30 bg-secondary/5', iconBg: 'bg-secondary/10 text-secondary', accent: 'text-secondary',
-      sciCount: MOCK_SS_STUDENTS.filter(s => s.grade === 'SS2' && s.stream === 'Science').length,
-      artCount: MOCK_SS_STUDENTS.filter(s => s.grade === 'SS2' && s.stream === 'Art').length },
-    { label: 'SS 3', key: 'SS3', color: 'border-muted-foreground/20 bg-muted/20', iconBg: 'bg-muted text-muted-foreground', accent: 'text-muted-foreground',
-      sciCount: MOCK_SS_STUDENTS.filter(s => s.grade === 'SS3' && s.stream === 'Science').length,
-      artCount: MOCK_SS_STUDENTS.filter(s => s.grade === 'SS3' && s.stream === 'Art').length },
+  const STUDENT_CLASSES = [
+    { label: 'JSS 1', key: 'JSS1', hasStreams: false, color: 'border-blue-500/30 bg-blue-500/5', iconBg: 'bg-blue-500/10 text-blue-600', accent: 'text-blue-600',
+      totalCount: MOCK_STUDENTS.filter(s => s.grade === 'JSS1').length },
+    { label: 'JSS 2', key: 'JSS2', hasStreams: false, color: 'border-indigo-500/30 bg-indigo-500/5', iconBg: 'bg-indigo-500/10 text-indigo-600', accent: 'text-indigo-600',
+      totalCount: MOCK_STUDENTS.filter(s => s.grade === 'JSS2').length },
+    { label: 'JSS 3', key: 'JSS3', hasStreams: false, color: 'border-teal-500/30 bg-teal-500/5', iconBg: 'bg-teal-500/10 text-teal-600', accent: 'text-teal-600',
+      totalCount: MOCK_STUDENTS.filter(s => s.grade === 'JSS3').length },
+    { label: 'SS 1', key: 'SS1', hasStreams: true, color: 'border-primary/30 bg-primary/5', iconBg: 'bg-primary/10 text-primary', accent: 'text-primary',
+      sciCount: MOCK_STUDENTS.filter(s => s.grade === 'SS1' && s.stream === 'Science').length,
+      artCount: MOCK_STUDENTS.filter(s => s.grade === 'SS1' && s.stream === 'Art').length },
+    { label: 'SS 2', key: 'SS2', hasStreams: true, color: 'border-secondary/30 bg-secondary/5', iconBg: 'bg-secondary/10 text-secondary', accent: 'text-secondary',
+      sciCount: MOCK_STUDENTS.filter(s => s.grade === 'SS2' && s.stream === 'Science').length,
+      artCount: MOCK_STUDENTS.filter(s => s.grade === 'SS2' && s.stream === 'Art').length },
+    { label: 'SS 3', key: 'SS3', hasStreams: true, color: 'border-amber-500/30 bg-amber-500/5', iconBg: 'bg-amber-500/10 text-amber-600', accent: 'text-amber-600',
+      sciCount: MOCK_STUDENTS.filter(s => s.grade === 'SS3' && s.stream === 'Science').length,
+      artCount: MOCK_STUDENTS.filter(s => s.grade === 'SS3' && s.stream === 'Art').length },
   ];
+  const SS_CLASSES = STUDENT_CLASSES;
 
   const filteredLogs = MOCK_AUDIT_LOGS.filter(l =>
     l.user.toLowerCase().includes(auditSearch.toLowerCase()) ||
@@ -1149,7 +1184,7 @@ export default function AdminDashboard() {
     if (activeSection === 'users') {
 
 
-      // ── LEVEL S1: Student class picker (SS1 / SS2 / SS3) ─────────
+      // ── LEVEL S1: Student class picker (JSS1 - SS3) ─────────
       if (userSubPage === 'STUDENT' && !selectedClass && !selectedUser) {
         return (
           <div className="space-y-6">
@@ -1164,90 +1199,112 @@ export default function AdminDashboard() {
             </div>
 
             <div>
-              <h2 className="text-xl font-serif font-bold text-foreground">Senior Secondary Students</h2>
-              <p className="text-xs text-muted-foreground mt-1">Click a class card, then choose a stream to view its student roster.</p>
+              <h2 className="text-xl font-serif font-bold text-foreground">Junior & Senior Secondary Students</h2>
+              <p className="text-xs text-muted-foreground mt-1">Select a JSS class directly or choose an SS class stream (Science/Art) to view student rosters.</p>
             </div>
 
             {/* Summary bar */}
             <div className="bg-card border border-border rounded-2xl p-4 shadow-sm flex flex-wrap gap-6 items-center">
               <div className="text-center">
-                <p className="text-2xl font-serif font-bold text-foreground">{MOCK_SS_STUDENTS.length}</p>
+                <p className="text-2xl font-serif font-bold text-foreground">{MOCK_STUDENTS.length}</p>
                 <p className="text-[10px] text-muted-foreground">Total Students</p>
               </div>
-              {SS_CLASSES.map(c => (
-                <div key={c.key} className="text-center">
-                  <p className={`text-xl font-serif font-bold ${c.accent}`}>{c.sciCount + c.artCount}</p>
-                  <p className="text-[10px] text-muted-foreground">{c.label}</p>
-                </div>
-              ))}
+              {STUDENT_CLASSES.map(c => {
+                const count = c.hasStreams ? (c.sciCount! + c.artCount!) : c.totalCount!;
+                return (
+                  <div key={c.key} className="text-center">
+                    <p className={`text-xl font-serif font-bold ${c.accent}`}>{count}</p>
+                    <p className="text-[10px] text-muted-foreground">{c.label}</p>
+                  </div>
+                );
+              })}
             </div>
 
             {/* Class Cards grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-              {SS_CLASSES.map(cls => (
-                <div key={cls.key} className="relative">
-                  {/* Card */}
-                  <button
-                    onClick={() => setOpenClassDropdown(prev => prev === cls.key ? null : cls.key)}
-                    className={`group w-full text-left rounded-2xl border-2 p-6 shadow-sm transition-all duration-200 hover:shadow-md hover:scale-[1.02] active:scale-100 ${cls.color} ${openClassDropdown === cls.key ? 'ring-2 ring-primary/40' : ''}`}
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className={`p-3 rounded-2xl ${cls.iconBg}`}>
-                        <GraduationCap className="w-6 h-6" />
+              {STUDENT_CLASSES.map(cls => {
+                const totalStudents = cls.hasStreams ? (cls.sciCount! + cls.artCount!) : cls.totalCount!;
+                return (
+                  <div key={cls.key} className="relative">
+                    {/* Card */}
+                    <button
+                      onClick={() => {
+                        if (!cls.hasStreams) {
+                          setSelectedClass(cls.key);
+                          setSelectedStream(null);
+                          setOpenClassDropdown(null);
+                        } else {
+                          setOpenClassDropdown(prev => prev === cls.key ? null : cls.key);
+                        }
+                      }}
+                      className={`group w-full text-left rounded-2xl border-2 p-6 shadow-sm transition-all duration-200 hover:shadow-md hover:scale-[1.02] active:scale-100 ${cls.color} ${openClassDropdown === cls.key ? 'ring-2 ring-primary/40' : ''}`}
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className={`p-3 rounded-2xl ${cls.iconBg}`}>
+                          <GraduationCap className="w-6 h-6" />
+                        </div>
+                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${cls.iconBg}`}>
+                          {totalStudents} Students
+                        </span>
                       </div>
-                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${cls.iconBg}`}>
-                        {cls.sciCount + cls.artCount} Students
-                      </span>
-                    </div>
-                    <h3 className="font-serif font-bold text-xl text-foreground mb-1">{cls.label}</h3>
-                    <div className="flex gap-4 text-xs mt-2">
-                      <span className="text-muted-foreground">Science: <strong className={cls.accent}>{cls.sciCount}</strong></span>
-                      <span className="text-muted-foreground">Art: <strong className={cls.accent}>{cls.artCount}</strong></span>
-                    </div>
-                    <div className={`flex items-center gap-1.5 text-xs font-bold mt-3 ${cls.accent}`}>
-                      <span>Select Stream</span>
-                      <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${openClassDropdown === cls.key ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                  </button>
+                      <h3 className="font-serif font-bold text-xl text-foreground mb-1">{cls.label}</h3>
+                      {cls.hasStreams ? (
+                        <div className="flex gap-4 text-xs mt-2">
+                          <span className="text-muted-foreground">Science: <strong className={cls.accent}>{cls.sciCount}</strong></span>
+                          <span className="text-muted-foreground">Art: <strong className={cls.accent}>{cls.artCount}</strong></span>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground mt-2 font-medium">General Curriculum (No Stream)</p>
+                      )}
+                      <div className={`flex items-center gap-1.5 text-xs font-bold mt-3 ${cls.accent}`}>
+                        <span>{cls.hasStreams ? 'Select Stream' : 'View Roster'}</span>
+                        {cls.hasStreams ? (
+                          <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${openClassDropdown === cls.key ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        ) : (
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        )}
+                      </div>
+                    </button>
 
-                  {/* Stream Dropdown */}
-                  {openClassDropdown === cls.key && (
-                    <div className="absolute left-0 right-0 mt-2 bg-card border border-border rounded-2xl shadow-2xl z-40 py-2">
-                      <p className="px-4 pt-1 pb-2 text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Choose stream</p>
-                      <button
-                        onClick={() => { setSelectedClass(cls.key); setSelectedStream('Science'); setOpenClassDropdown(null); }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-foreground hover:bg-primary/5 hover:text-primary transition-colors text-left"
-                      >
-                        <span className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                          <FlaskConical className="w-4 h-4" />
-                        </span>
-                        Science
-                        <span className="ml-auto text-xs text-muted-foreground">{cls.sciCount} students</span>
-                      </button>
-                      <button
-                        onClick={() => { setSelectedClass(cls.key); setSelectedStream('Art'); setOpenClassDropdown(null); }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-foreground hover:bg-secondary/5 hover:text-secondary transition-colors text-left"
-                      >
-                        <span className="w-8 h-8 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary">
-                          <Palette className="w-4 h-4" />
-                        </span>
-                        Art
-                        <span className="ml-auto text-xs text-muted-foreground">{cls.artCount} students</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
+                    {/* Stream Dropdown for SS classes */}
+                    {cls.hasStreams && openClassDropdown === cls.key && (
+                      <div className="absolute left-0 right-0 mt-2 bg-card border border-border rounded-2xl shadow-2xl z-40 py-2">
+                        <p className="px-4 pt-1 pb-2 text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Choose stream</p>
+                        <button
+                          onClick={() => { setSelectedClass(cls.key); setSelectedStream('Science'); setOpenClassDropdown(null); }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-foreground hover:bg-primary/5 hover:text-primary transition-colors text-left"
+                        >
+                          <span className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                            <FlaskConical className="w-4 h-4" />
+                          </span>
+                          Science
+                          <span className="ml-auto text-xs text-muted-foreground">{cls.sciCount} students</span>
+                        </button>
+                        <button
+                          onClick={() => { setSelectedClass(cls.key); setSelectedStream('Art'); setOpenClassDropdown(null); }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-foreground hover:bg-secondary/5 hover:text-secondary transition-colors text-left"
+                        >
+                          <span className="w-8 h-8 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary">
+                            <Palette className="w-4 h-4" />
+                          </span>
+                          Art
+                          <span className="ml-auto text-xs text-muted-foreground">{cls.artCount} students</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         );
       }
 
-      // ── LEVEL S2: Stream-filtered student list ─────────────────
-      if (userSubPage === 'STUDENT' && selectedClass && selectedStream && !selectedUser) {
-        const cls = SS_CLASSES.find(c => c.key === selectedClass)!;
+      // ── LEVEL S2: Class student roster view ─────────────────
+      if (userSubPage === 'STUDENT' && selectedClass && (!STUDENT_CLASSES.find(c => c.key === selectedClass)?.hasStreams || selectedStream) && !selectedUser) {
+        const cls = STUDENT_CLASSES.find(c => c.key === selectedClass)!;
         return (
           <div className="space-y-5">
             {/* Breadcrumb */}
@@ -1260,16 +1317,13 @@ export default function AdminDashboard() {
               <button onClick={() => { setSelectedClass(null); setSelectedStream(null); }}
                 className="text-muted-foreground hover:text-foreground transition-colors">Students</button>
               <span className="text-muted-foreground">/</span>
-              <button onClick={() => { setSelectedStream(null); setSelectedClass(null); setOpenClassDropdown(cls.key); }}
-                className="text-muted-foreground hover:text-foreground transition-colors">{cls.label}</button>
-              <span className="text-muted-foreground">/</span>
-              <span className="text-foreground font-semibold">{selectedStream}</span>
+              <span className="text-foreground font-semibold">{cls.label} {selectedStream ? `(${selectedStream})` : ''}</span>
             </div>
 
             {/* Header + toolbar */}
             <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
               <div>
-                <h2 className="text-xl font-serif font-bold text-foreground">{cls.label} — {selectedStream}</h2>
+                <h2 className="text-xl font-serif font-bold text-foreground">{cls.label} {selectedStream ? `— ${selectedStream}` : 'Student Roster'}</h2>
                 <p className="text-xs text-muted-foreground mt-0.5">{filteredSSStudents.length} students found</p>
               </div>
               <div className="relative">
@@ -2042,15 +2096,24 @@ export default function AdminDashboard() {
             {examRepoFilter === 'all' && (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                  {SS_CLASSES.map(cls => {
-                    const sciExams = examsList.filter(e => e.class === cls.key && e.stream === 'Science');
-                    const artExams = examsList.filter(e => e.class === cls.key && e.stream === 'Art');
-                    const totalCount = sciExams.length + artExams.length;
+                  {STUDENT_CLASSES.map(cls => {
+                    const sciExams = examsList.filter(e => e.class === cls.key && (e.stream === 'Science' || e.stream === 'STEM'));
+                    const artExams = examsList.filter(e => e.class === cls.key && (e.stream === 'Arts' || e.stream === 'Art'));
+                    const genExams = examsList.filter(e => e.class === cls.key);
+                    const totalCount = cls.hasStreams ? (sciExams.length + artExams.length) : genExams.length;
 
                     return (
                       <div key={cls.key} className="relative">
                         <button
-                          onClick={() => setOpenExamClassDropdown(prev => prev === cls.key ? null : cls.key)}
+                          onClick={() => {
+                            if (!cls.hasStreams) {
+                              setSelectedExamClass(cls.key);
+                              setSelectedExamStream('General');
+                              setOpenExamClassDropdown(null);
+                            } else {
+                              setOpenExamClassDropdown(prev => prev === cls.key ? null : cls.key);
+                            }
+                          }}
                           className={`group w-full text-left rounded-2xl border-2 p-6 shadow-sm transition-all duration-200 hover:shadow-md hover:scale-[1.02] ${cls.color} ${openExamClassDropdown === cls.key ? 'ring-2 ring-primary/40' : ''}`}
                         >
                           <div className="flex items-start justify-between mb-4">
@@ -2062,20 +2125,28 @@ export default function AdminDashboard() {
                             </span>
                           </div>
                           <h3 className="font-serif font-bold text-xl text-foreground mb-1">{cls.label}</h3>
-                          <div className="flex gap-4 text-xs mt-2">
-                            <span className="text-muted-foreground">Science: <strong className={cls.accent}>{sciExams.length}</strong></span>
-                            <span className="text-muted-foreground">Art: <strong className={cls.accent}>{artExams.length}</strong></span>
-                          </div>
+                          {cls.hasStreams ? (
+                            <div className="flex gap-4 text-xs mt-2">
+                              <span className="text-muted-foreground">Science: <strong className={cls.accent}>{sciExams.length}</strong></span>
+                              <span className="text-muted-foreground">Art: <strong className={cls.accent}>{artExams.length}</strong></span>
+                            </div>
+                          ) : (
+                            <p className="text-xs text-muted-foreground mt-2 font-medium">General Curriculum</p>
+                          )}
                           <div className={`flex items-center gap-1.5 text-xs font-bold mt-3 ${cls.accent}`}>
-                            <span>Select Stream</span>
-                            <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${openExamClassDropdown === cls.key ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                            </svg>
+                            <span>{cls.hasStreams ? 'Select Stream' : 'View Assessments'}</span>
+                            {cls.hasStreams ? (
+                              <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${openExamClassDropdown === cls.key ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                              </svg>
+                            ) : (
+                              <ChevronRight className="w-3.5 h-3.5" />
+                            )}
                           </div>
                         </button>
 
                         {/* Stream dropdown menu: Science or Art */}
-                        {openExamClassDropdown === cls.key && (
+                        {cls.hasStreams && openExamClassDropdown === cls.key && (
                           <div className="absolute left-0 right-0 mt-2 bg-card border border-border rounded-2xl shadow-2xl z-40 py-2">
                             <p className="px-4 pt-1 pb-2 text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Choose Stream</p>
                             <button
@@ -2294,16 +2365,16 @@ export default function AdminDashboard() {
 
     // 3. MANAGE SUBJECTS
     if (activeSection === 'courses') {
-      const cls = selectedSubjectClass ? SS_CLASSES.find(c => c.key === selectedSubjectClass) : null;
+      const cls = selectedSubjectClass ? STUDENT_CLASSES.find(c => c.key === selectedSubjectClass) : null;
       const filteredSubjects = subjectsListState.filter(s => {
         const q = userSearch.toLowerCase();
         const matchClass = !selectedSubjectClass || s.grade === selectedSubjectClass;
-        const matchStream = !selectedSubjectStream || s.stream === selectedSubjectStream;
+        const matchStream = !selectedSubjectStream || !cls?.hasStreams || s.stream === selectedSubjectStream;
         const matchSearch = !q || s.title.toLowerCase().includes(q) || s.code.toLowerCase().includes(q);
         return matchClass && matchStream && matchSearch;
       });
 
-      // Level 1: select class (SS1-SS3)
+      // Level 1: select class (JSS1-SS3)
       if (!selectedSubjectClass) {
         return (
           <div className="space-y-6">
@@ -2311,7 +2382,7 @@ export default function AdminDashboard() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h2 className="text-xl font-serif font-bold text-foreground">Manage Subjects</h2>
-                <p className="text-xs text-muted-foreground mt-1">Select a class card, then choose a stream to view its subjects.</p>
+                <p className="text-xs text-muted-foreground mt-1">Select a class card to view its subjects.</p>
               </div>
               
               {/* Subjects Actions Dropdown */}
@@ -2347,14 +2418,24 @@ export default function AdminDashboard() {
 
             {/* Class Cards grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-              {SS_CLASSES.map(cls => {
+              {STUDENT_CLASSES.map(cls => {
                 const sciCount = subjectsListState.filter(s => s.grade === cls.key && s.stream === 'Science').length;
                 const artCount = subjectsListState.filter(s => s.grade === cls.key && s.stream === 'Art').length;
+                const genCount = subjectsListState.filter(s => s.grade === cls.key).length;
+                const totalCount = cls.hasStreams ? (sciCount + artCount) : genCount;
 
                 return (
                   <div key={cls.key} className="relative">
                     <button
-                      onClick={() => setOpenSubjectClassDropdown(prev => prev === cls.key ? null : cls.key)}
+                      onClick={() => {
+                        if (!cls.hasStreams) {
+                          setSelectedSubjectClass(cls.key);
+                          setSelectedSubjectStream('General');
+                          setOpenSubjectClassDropdown(null);
+                        } else {
+                          setOpenSubjectClassDropdown(prev => prev === cls.key ? null : cls.key);
+                        }
+                      }}
                       className={`group w-full text-left rounded-2xl border-2 p-6 shadow-sm transition-all duration-200 hover:shadow-md hover:scale-[1.02] active:scale-100 ${cls.color} ${openSubjectClassDropdown === cls.key ? 'ring-2 ring-primary/40' : ''}`}
                     >
                       <div className="flex items-start justify-between mb-4">
@@ -2362,24 +2443,32 @@ export default function AdminDashboard() {
                           <BookOpen className="w-6 h-6" />
                         </div>
                         <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${cls.iconBg}`}>
-                          {sciCount + artCount} Subjects
+                          {totalCount} Subjects
                         </span>
                       </div>
                       <h3 className="font-serif font-bold text-xl text-foreground mb-1">{cls.label}</h3>
-                      <div className="flex gap-4 text-xs mt-2">
-                        <span className="text-muted-foreground">Science: <strong className={cls.accent}>{sciCount}</strong></span>
-                        <span className="text-muted-foreground">Art: <strong className={cls.accent}>{artCount}</strong></span>
-                      </div>
+                      {cls.hasStreams ? (
+                        <div className="flex gap-4 text-xs mt-2">
+                          <span className="text-muted-foreground">Science: <strong className={cls.accent}>{sciCount}</strong></span>
+                          <span className="text-muted-foreground">Art: <strong className={cls.accent}>{artCount}</strong></span>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground mt-2 font-medium">General Curriculum</p>
+                      )}
                       <div className={`flex items-center gap-1.5 text-xs font-bold mt-3 ${cls.accent}`}>
-                        <span>Select Stream</span>
-                        <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${openSubjectClassDropdown === cls.key ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                        </svg>
+                        <span>{cls.hasStreams ? 'Select Stream' : 'View Subjects'}</span>
+                        {cls.hasStreams ? (
+                          <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${openSubjectClassDropdown === cls.key ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        ) : (
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        )}
                       </div>
                     </button>
 
-                    {/* Stream dropdown */}
-                    {openSubjectClassDropdown === cls.key && (
+                    {/* Stream dropdown for SS classes */}
+                    {cls.hasStreams && openSubjectClassDropdown === cls.key && (
                       <div className="absolute left-0 right-0 mt-2 bg-card border border-border rounded-2xl shadow-2xl z-40 py-2">
                         <p className="px-4 pt-1 pb-2 text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Choose stream</p>
                         <button
