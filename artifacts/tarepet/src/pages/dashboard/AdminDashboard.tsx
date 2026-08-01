@@ -17,7 +17,7 @@ import {
   Mail, Phone, MapPin, Calendar, Shield, GraduationCap, Award,
   Briefcase, UserCog, BookMarked, MessageSquare, KeyRound,
   BadgeCheck, Ban, RotateCcw, FileDown, Send, FlaskConical, Palette,
-  School, CalendarCheck, Megaphone, UserPlus, FileSpreadsheet, TrendingUp, Sparkles, ChevronRight, Eye, Layers, ShieldCheck,
+  School, CalendarCheck, Megaphone, UserPlus, FileSpreadsheet, TrendingUp, Sparkles, ChevronRight, Eye, Layers, ShieldCheck, Bell,
 } from 'lucide-react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, LineChart, Line, CartesianGrid,
@@ -1868,7 +1868,7 @@ export default function AdminDashboard() {
   const [selectedSubjectPreview, setSelectedSubjectPreview] = useState<any>(null);
   const [subjectFilterTab, setSubjectFilterTab] = useState<'ALL' | 'JUNIOR' | 'SENIOR' | 'SCIENCE' | 'ART'>('ALL');
   const [subjectSearch, setSubjectSearch] = useState('');
-  const [settingsTab, setSettingsTab] = useState<'general' | 'academic' | 'security' | 'database'>('general');
+  const [settingsTab, setSettingsTab] = useState<'general' | 'academic' | 'notify' | 'access' | 'fees' | 'portal'>('general');
 
   // Teacher management state
   const [teachersList, setTeachersList] = useState(MOCK_TEACHERS);
@@ -3693,20 +3693,42 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
 
     // 7. SYSTEM SETTINGS
     if (activeSection === 'settings') {
+      const [settingsSaved, setSettingsSaved] = React.useState(false);
+      const triggerSave = () => {
+        setSettingsSaved(true);
+        setTimeout(() => setSettingsSaved(false), 2500);
+      };
+
       return (
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-xl font-serif font-bold text-foreground">{t('settings.title')}</h2>
-            <p className="text-xs text-muted-foreground mt-1">{t('settings.subtitle')}</p>
+        <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
+
+          {/* Header */}
+          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <Settings className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="font-bold text-xl text-foreground mb-1">School Administration Settings</h2>
+                <p className="text-xs text-muted-foreground">Manage school profile, academic calendar, grading policies, access control, fees, and portal appearance.</p>
+              </div>
+            </div>
+            {settingsSaved && (
+              <div className="flex items-center gap-2 text-emerald-600 bg-emerald-500/10 border border-emerald-200 px-4 py-2 rounded-xl text-xs font-bold">
+                <CheckCircle2 className="w-4 h-4" /> Settings saved successfully!
+              </div>
+            )}
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex border-b border-border gap-2 overflow-x-auto pb-px text-xs font-bold">
+          <div className="flex border-b border-border gap-1 overflow-x-auto pb-px text-xs font-bold">
             {[
-              { id: 'general',  label: 'General Info',     icon: Building2 },
-              { id: 'academic', label: 'Academic & Terms', icon: GraduationCap },
-              { id: 'security', label: 'Security Rules',   icon: Shield },
-              { id: 'database', label: 'Database & API',   icon: Server },
+              { id: 'general',   label: 'School Profile',    icon: Building2 },
+              { id: 'academic',  label: 'Academic & Grading', icon: GraduationCap },
+              { id: 'notify',    label: 'Notifications',      icon: Bell },
+              { id: 'access',    label: 'Staff & Access',     icon: Users },
+              { id: 'fees',      label: 'Fees & Finance',     icon: CreditCard },
+              { id: 'portal',    label: 'Portal Appearance',  icon: Palette },
             ].map(tab => {
               const TabIcon = tab.icon;
               return (
@@ -3719,148 +3741,517 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                       : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/20 rounded-t-xl'
                   }`}
                 >
-                  <TabIcon className="w-4 h-4" />
+                  <TabIcon className="w-3.5 h-3.5" />
                   {tab.label}
                 </button>
               );
             })}
           </div>
 
-          {/* Tab 1: General Info */}
+          {/* ── TAB 1: School Profile ── */}
           {settingsTab === 'general' && (
-            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-6">
-              <h3 className="font-serif font-bold text-base text-foreground">{t('settings.schoolIdentity')}</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('settings.schoolName')}</label>
-                  <input type="text" defaultValue="Tarepet Montessori School" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+            <div className="space-y-5">
+              {/* School Identity */}
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
+                <div className="flex items-center gap-3 pb-3 border-b border-border">
+                  <Building2 className="w-5 h-5 text-primary" />
+                  <h3 className="font-serif font-bold text-base text-foreground">School Identity</h3>
                 </div>
-                <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('settings.schoolMotto')}</label>
-                  <input type="text" defaultValue="Excellence Through Observation & Character" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('settings.officialEmail')}</label>
-                  <input type="email" defaultValue="info@tarepet.edu.ng" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('settings.portalAddress')}</label>
-                  <input type="text" defaultValue="https://portal.tarepet.edu.ng" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">School Full Name</label>
+                    <input type="text" defaultValue="Tare Pet Montessori School" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">School Short Name / Abbrev.</label>
+                    <input type="text" defaultValue="TPMS" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">School Motto</label>
+                    <input type="text" defaultValue="Excellence Through Observation & Character" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Official Email Address</label>
+                    <input type="email" defaultValue="info@tarepet.edu.ng" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">School Phone Number</label>
+                    <input type="tel" defaultValue="+234 803 123 4567" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">School Physical Address</label>
+                    <input type="text" defaultValue="12 Kpansia-Epje Road, Yenagoa, Bayelsa State, Nigeria" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Registration / Ministry Number</label>
+                    <input type="text" defaultValue="EDU/BY/SCH/2009/0421" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">School Type</label>
+                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
+                      <option>Private (Co-educational)</option>
+                      <option>Private (Boys Only)</option>
+                      <option>Private (Girls Only)</option>
+                      <option>Government / Public</option>
+                    </select>
+                  </div>
                 </div>
               </div>
-              <div className="pt-2 flex justify-end">
-                <button onClick={() => alert('General settings updated successfully!')} className="bg-primary text-white text-xs font-bold px-5 py-2.5 rounded-xl hover:bg-primary/90 transition-colors">
-                  {t('settings.saveGeneral')}
+
+              {/* Leadership */}
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
+                <div className="flex items-center gap-3 pb-3 border-b border-border">
+                  <Award className="w-5 h-5 text-primary" />
+                  <h3 className="font-serif font-bold text-base text-foreground">School Leadership</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5 text-xs">
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Proprietress / Founder</label>
+                    <input type="text" defaultValue="Mrs. Tare Pet" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Principal / Head Teacher</label>
+                    <input type="text" defaultValue="Dr. T. Montessori" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Vice Principal (Academics)</label>
+                    <input type="text" defaultValue="Mr. James Eze" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <button onClick={triggerSave} className="bg-primary text-white text-xs font-bold px-6 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" /> Save School Profile
                 </button>
               </div>
             </div>
           )}
 
-          {/* Tab 2: Academic & Terms */}
+          {/* ── TAB 2: Academic & Grading ── */}
           {settingsTab === 'academic' && (
-            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-6">
-              <h3 className="font-serif font-bold text-base text-foreground">{t('settings.currentCalendar')}</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('settings.currentSession')}</label>
-                  <select defaultValue="2025/2026" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                    <option value="2024/2025">2024/2025</option>
-                    <option value="2025/2026">2025/2026 (Active)</option>
-                    <option value="2026/2027">2026/2027</option>
-                  </select>
+            <div className="space-y-5">
+              {/* Active Session & Term */}
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
+                <div className="flex items-center gap-3 pb-3 border-b border-border">
+                  <CalendarCheck className="w-5 h-5 text-primary" />
+                  <h3 className="font-serif font-bold text-base text-foreground">Active Academic Session & Term</h3>
                 </div>
-                <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('settings.currentTerm')}</label>
-                  <select defaultValue="Term 2" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                    <option value="Term 1">{t('settings.firstTerm')}</option>
-                    <option value="Term 2">{t('settings.secondTermActive')}</option>
-                    <option value="Term 3">{t('settings.thirdTerm')}</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('settings.passMark')}</label>
-                  <input type="text" defaultValue="50%" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5 text-xs">
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Academic Session</label>
+                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
+                      <option>2023/2024</option>
+                      <option>2024/2025</option>
+                      <option selected>2025/2026 (Active)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Current Term</label>
+                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
+                      <option>1st Term (Sept – Dec)</option>
+                      <option selected>2nd Term (Jan – Apr) — Active</option>
+                      <option>3rd Term (May – Jul)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Minimum Pass Mark (%)</label>
+                    <input type="number" defaultValue="50" min="0" max="100" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Term Start Date</label>
+                    <input type="date" defaultValue="2026-01-12" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Term End Date</label>
+                    <input type="date" defaultValue="2026-04-04" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">School Days Per Week</label>
+                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
+                      <option>5 Days (Mon – Fri)</option>
+                      <option>6 Days (Mon – Sat)</option>
+                    </select>
+                  </div>
                 </div>
               </div>
-              <div className="space-y-3 pt-2">
-                <h4 className="font-bold text-xs text-foreground uppercase tracking-wider text-[10px]">{t('settings.gradingScale')}</h4>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                  <div className="p-3 border border-border rounded-xl bg-emerald-500/5 border-emerald-200"><p className="font-bold text-emerald-700">{t('settings.gradeA')}</p><p className="text-muted-foreground text-[10px]">75% - 100%</p></div>
-                  <div className="p-3 border border-border rounded-xl bg-blue-500/5 border-blue-200"><p className="font-bold text-blue-700">{t('settings.gradeB')}</p><p className="text-muted-foreground text-[10px]">65% - 74%</p></div>
-                  <div className="p-3 border border-border rounded-xl bg-amber-500/5 border-amber-200"><p className="font-bold text-amber-700">{t('settings.gradeC')}</p><p className="text-muted-foreground text-[10px]">50% - 64%</p></div>
-                  <div className="p-3 border border-border rounded-xl bg-rose-500/5 border-rose-200"><p className="font-bold text-rose-700">{t('settings.gradeF')}</p><p className="text-muted-foreground text-[10px]">0% - 49%</p></div>
+
+              {/* Score Breakdown */}
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
+                <div className="flex items-center gap-3 pb-3 border-b border-border">
+                  <BarChart2 className="w-5 h-5 text-primary" />
+                  <h3 className="font-serif font-bold text-base text-foreground">Assessment Score Breakdown</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5 text-xs">
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">CA 1 Weight (%)</label>
+                    <input type="number" defaultValue="15" min="0" max="100" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">CA 2 Weight (%)</label>
+                    <input type="number" defaultValue="15" min="0" max="100" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Examination Weight (%)</label>
+                    <input type="number" defaultValue="70" min="0" max="100" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                  </div>
                 </div>
               </div>
-              <div className="pt-2 flex justify-end">
-                <button onClick={() => alert('Academic calendar settings updated!')} className="bg-primary text-white text-xs font-bold px-5 py-2.5 rounded-xl hover:bg-primary/90 transition-colors">
-                  {t('settings.saveAcademic')}
+
+              {/* Grading Scale */}
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
+                <div className="flex items-center gap-3 pb-3 border-b border-border">
+                  <Award className="w-5 h-5 text-primary" />
+                  <h3 className="font-serif font-bold text-base text-foreground">Grading Scale</h3>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                  {[
+                    { grade: 'A — Distinction',  range: '75% – 100%', color: 'emerald' },
+                    { grade: 'B — Very Good',     range: '65% – 74%',  color: 'blue' },
+                    { grade: 'C — Credit',        range: '55% – 64%',  color: 'violet' },
+                    { grade: 'D — Pass',          range: '50% – 54%',  color: 'amber' },
+                    { grade: 'E — Below Pass',    range: '40% – 49%',  color: 'orange' },
+                    { grade: 'F — Fail',          range: '0% – 39%',   color: 'rose' },
+                  ].map(g => (
+                    <div key={g.grade} className={`p-3 rounded-xl border bg-${g.color}-500/5 border-${g.color}-200`}>
+                      <p className={`font-bold text-${g.color}-700 text-[11px]`}>{g.grade}</p>
+                      <p className="text-muted-foreground text-[10px] mt-0.5">{g.range}</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[10px] text-muted-foreground">Contact the principal to request a grading scale adjustment.</p>
+              </div>
+
+              <div className="flex justify-end">
+                <button onClick={triggerSave} className="bg-primary text-white text-xs font-bold px-6 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" /> Save Academic Settings
                 </button>
               </div>
             </div>
           )}
 
-          {/* Tab 3: Security Rules */}
-          {settingsTab === 'security' && (
-            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-6">
-              <h3 className="font-serif font-bold text-base text-foreground">{t('settings.authPolicies')}</h3>
-              <div className="space-y-4 text-xs">
-                <div className="flex items-center justify-between p-4 border border-border rounded-xl bg-muted/10">
-                  <div>
-                    <p className="font-bold text-foreground">{t('settings.jwtRotation')}</p>
-                    <p className="text-muted-foreground text-[11px]">{t('settings.jwtDesc')}</p>
-                  </div>
-                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-200">{t('settings.enforced')}</span>
+          {/* ── TAB 3: Notifications ── */}
+          {settingsTab === 'notify' && (
+            <div className="space-y-5">
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
+                <div className="flex items-center gap-3 pb-3 border-b border-border">
+                  <Bell className="w-5 h-5 text-primary" />
+                  <h3 className="font-serif font-bold text-base text-foreground">Parent & Student Notification Settings</h3>
                 </div>
-
-                <div className="flex items-center justify-between p-4 border border-border rounded-xl bg-muted/10">
-                  <div>
-                    <p className="font-bold text-foreground">{t('settings.admin2fa')}</p>
-                    <p className="text-muted-foreground text-[11px]">{t('settings.admin2faDesc')}</p>
-                  </div>
-                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-200">{t('settings.active')}</span>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border border-border rounded-xl bg-muted/10">
-                  <div>
-                    <p className="font-bold text-foreground">{t('settings.maxLoginThrottling')}</p>
-                    <p className="text-muted-foreground text-[11px]">{t('settings.maxLoginDesc')}</p>
-                  </div>
-                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">5 Attempts</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Tab 4: Database & API */}
-          {settingsTab === 'database' && (
-            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-6">
-              <h3 className="font-serif font-bold text-base text-foreground">{t('settings.dbHealth')}</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                <div className="p-4 border border-border rounded-xl bg-muted/10 space-y-1">
-                  <p className="text-muted-foreground font-semibold uppercase text-[10px]">{t('settings.dbConnection')}</p>
-                  <p className="text-sm font-bold text-emerald-600 flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" /> PostgreSQL (Production Ready)
-                  </p>
-                  <p className="text-[10px] text-muted-foreground mt-1">{t('settings.dbHostInfo')}</p>
-                </div>
-                <div className="p-4 border border-border rounded-xl bg-muted/10 space-y-1">
-                  <p className="text-muted-foreground font-semibold uppercase text-[10px]">{t('settings.autoBackups')}</p>
-                  <p className="text-sm font-bold text-foreground">{t('settings.backupSchedule')}</p>
-                  <p className="text-[10px] text-muted-foreground mt-1">{t('settings.retentionPolicy')}</p>
+                <div className="space-y-3 text-xs">
+                  {[
+                    { label: 'Send result notifications to parents via SMS', desc: 'Parents receive an SMS when terminal results are published.', enabled: true },
+                    { label: 'Send attendance alerts to parents', desc: 'Parents are notified when their ward is marked absent.', enabled: true },
+                    { label: 'Fee payment reminder notifications', desc: 'Auto-remind parents of unpaid term fees 7 days before due date.', enabled: true },
+                    { label: 'School event & holiday announcements', desc: 'Broadcast term events, PTA notices, and holiday calendars.', enabled: false },
+                    { label: 'CBT exam schedule notifications', desc: 'Notify students of upcoming computer-based tests.', enabled: true },
+                    { label: 'Staff payroll notifications', desc: 'Notify staff when monthly salary slips are available.', enabled: false },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center justify-between p-4 border border-border rounded-xl bg-muted/10 gap-4">
+                      <div className="flex-1">
+                        <p className="font-bold text-foreground">{item.label}</p>
+                        <p className="text-muted-foreground text-[11px] mt-0.5">{item.desc}</p>
+                      </div>
+                      <div className={`relative w-11 h-6 rounded-full cursor-pointer transition-colors ${item.enabled ? 'bg-emerald-500' : 'bg-muted'}`}>
+                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${item.enabled ? 'left-6' : 'left-1'}`} />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              <div className="pt-2 flex justify-between items-center border-t border-border">
-                <span className="text-xs text-muted-foreground font-mono">{t('settings.apiVersion')}</span>
-                <button onClick={() => alert('Database backup initiated. Snapshot queued!')} className="bg-secondary text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-secondary/90 transition-colors flex items-center gap-1.5">
-                  <Download className="w-4 h-4" /> Trigger Manual Backup
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
+                <div className="flex items-center gap-3 pb-3 border-b border-border">
+                  <MessageSquare className="w-5 h-5 text-primary" />
+                  <h3 className="font-serif font-bold text-base text-foreground">SMS & Communication Gateway</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">SMS Provider</label>
+                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
+                      <option>Termii (Nigeria)</option>
+                      <option>Bulksmsnigeria.com</option>
+                      <option>Infobip</option>
+                      <option>Twilio</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Sender Name (SMS Label)</label>
+                    <input type="text" defaultValue="TPMS-School" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Email Notification Address</label>
+                    <input type="email" defaultValue="notifications@tarepet.edu.ng" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">SMS Units Balance</label>
+                    <div className="w-full border border-emerald-200 rounded-xl px-4 py-2.5 bg-emerald-500/5 text-emerald-700 font-bold flex items-center gap-2">
+                      <span className="w-2 h-2 bg-emerald-500 rounded-full" />
+                      4,820 Units Remaining
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <button onClick={triggerSave} className="bg-primary text-white text-xs font-bold px-6 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" /> Save Notification Settings
                 </button>
               </div>
             </div>
           )}
+
+          {/* ── TAB 4: Staff & Access Control ── */}
+          {settingsTab === 'access' && (
+            <div className="space-y-5">
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
+                <div className="flex items-center gap-3 pb-3 border-b border-border">
+                  <Shield className="w-5 h-5 text-primary" />
+                  <h3 className="font-serif font-bold text-base text-foreground">Staff Role & Access Management</h3>
+                </div>
+                <div className="space-y-3 text-xs">
+                  {[
+                    { role: 'Principal / Administrator', desc: 'Full access to all modules, settings, finance, and reports.', users: 2, badge: 'Full Access', color: 'primary' },
+                    { role: 'Vice Principal (Academics)', desc: 'Access to timetables, results, attendance, and subjects.', users: 1, badge: 'Academic Access', color: 'emerald' },
+                    { role: 'Subject Teacher', desc: 'Mark attendance, input scores, manage CBT exams for assigned classes.', users: 18, badge: 'Class Access', color: 'blue' },
+                    { role: 'Form Teacher', desc: 'View and manage class roster, attendance, and student remarks.', users: 9, badge: 'Class Access', color: 'blue' },
+                    { role: 'Bursar / Finance Officer', desc: 'Manage fee records, payment tracking, and financial reports.', users: 1, badge: 'Finance Access', color: 'amber' },
+                    { role: 'Librarian', desc: 'Manage library records, book loans, and student reading logs.', users: 1, badge: 'Library Access', color: 'violet' },
+                  ].map((r, i) => (
+                    <div key={i} className="flex items-center justify-between p-4 border border-border rounded-xl bg-muted/10 gap-4 flex-wrap">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-bold text-foreground">{r.role}</p>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full bg-${r.color}/10 text-${r.color} border border-${r.color}/20`}>{r.badge}</span>
+                        </div>
+                        <p className="text-muted-foreground text-[11px]">{r.desc}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="font-bold text-foreground">{r.users}</p>
+                        <p className="text-[10px] text-muted-foreground">Staff</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
+                <div className="flex items-center gap-3 pb-3 border-b border-border">
+                  <Lock className="w-5 h-5 text-primary" />
+                  <h3 className="font-serif font-bold text-base text-foreground">Login & Account Security Policies</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Password Minimum Length</label>
+                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
+                      <option>6 Characters</option>
+                      <option selected>8 Characters (Recommended)</option>
+                      <option>12 Characters</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Failed Login Lockout</label>
+                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
+                      <option>3 Attempts</option>
+                      <option selected>5 Attempts</option>
+                      <option>10 Attempts</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Session Timeout (Inactivity)</label>
+                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
+                      <option>15 Minutes</option>
+                      <option selected>30 Minutes</option>
+                      <option>1 Hour</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Require Password Reset Every</label>
+                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
+                      <option>Every Term</option>
+                      <option selected>Every 6 Months</option>
+                      <option>Annually</option>
+                      <option>Never</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <button onClick={triggerSave} className="bg-primary text-white text-xs font-bold px-6 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" /> Save Access Settings
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── TAB 5: Fees & Finance ── */}
+          {settingsTab === 'fees' && (
+            <div className="space-y-5">
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
+                <div className="flex items-center gap-3 pb-3 border-b border-border">
+                  <CreditCard className="w-5 h-5 text-primary" />
+                  <h3 className="font-serif font-bold text-base text-foreground">Term Fee Structure ({new Date().getFullYear()}/{new Date().getFullYear() + 1})</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-muted/40 text-muted-foreground uppercase text-[10px] tracking-wider">
+                      <tr>
+                        <th className="py-3 px-4">Class Level</th>
+                        <th className="py-3 px-4 text-right">Tuition Fee</th>
+                        <th className="py-3 px-4 text-right">Development Levy</th>
+                        <th className="py-3 px-4 text-right">Total Per Term</th>
+                        <th className="py-3 px-4 text-center">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {[
+                        { level: 'JSS 1', tuition: '₦45,000', dev: '₦8,000', total: '₦53,000' },
+                        { level: 'JSS 2', tuition: '₦45,000', dev: '₦8,000', total: '₦53,000' },
+                        { level: 'JSS 3', tuition: '₦47,000', dev: '₦8,000', total: '₦55,000' },
+                        { level: 'SS 1',  tuition: '₦55,000', dev: '₦10,000', total: '₦65,000' },
+                        { level: 'SS 2',  tuition: '₦55,000', dev: '₦10,000', total: '₦65,000' },
+                        { level: 'SS 3',  tuition: '₦60,000', dev: '₦10,000', total: '₦70,000' },
+                      ].map((row, i) => (
+                        <tr key={i} className="hover:bg-muted/10">
+                          <td className="py-3 px-4 font-bold text-foreground">{row.level}</td>
+                          <td className="py-3 px-4 text-right font-mono text-muted-foreground">{row.tuition}</td>
+                          <td className="py-3 px-4 text-right font-mono text-muted-foreground">{row.dev}</td>
+                          <td className="py-3 px-4 text-right font-mono font-bold text-primary">{row.total}</td>
+                          <td className="py-3 px-4 text-center">
+                            <span className="text-[10px] font-bold px-2.5 py-1 bg-emerald-500/10 text-emerald-600 rounded-full border border-emerald-200">Active</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
+                <div className="flex items-center gap-3 pb-3 border-b border-border">
+                  <TrendingUp className="w-5 h-5 text-primary" />
+                  <h3 className="font-serif font-bold text-base text-foreground">Payment & Finance Settings</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Accepted Payment Methods</label>
+                    <div className="space-y-2">
+                      {['Bank Transfer (GT Bank, UBA, First Bank)', 'Cash (at School Bursar)', 'Online Payment (Flutterwave)'].map(m => (
+                        <label key={m} className="flex items-center gap-2.5 p-3 border border-border rounded-xl cursor-pointer hover:bg-muted/10">
+                          <input type="checkbox" defaultChecked className="accent-primary w-3.5 h-3.5" />
+                          <span className="text-foreground">{m}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Fee Due Date (Per Term)</label>
+                      <input type="date" defaultValue="2026-02-01" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Late Payment Penalty</label>
+                      <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
+                        <option>No Penalty</option>
+                        <option selected>₦2,000 flat fee after due date</option>
+                        <option>5% of outstanding balance</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Scholarship / Discount Slots</label>
+                      <input type="number" defaultValue="10" min="0" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <button onClick={triggerSave} className="bg-primary text-white text-xs font-bold px-6 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" /> Save Finance Settings
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── TAB 6: Portal Appearance ── */}
+          {settingsTab === 'portal' && (
+            <div className="space-y-5">
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
+                <div className="flex items-center gap-3 pb-3 border-b border-border">
+                  <Palette className="w-5 h-5 text-primary" />
+                  <h3 className="font-serif font-bold text-base text-foreground">Portal Theme & Branding</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Portal Language</label>
+                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
+                      <option selected>English (Nigeria)</option>
+                      <option>Yoruba</option>
+                      <option>Igbo</option>
+                      <option>Hausa</option>
+                      <option>French</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Default Interface Theme</label>
+                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
+                      <option selected>System Default (Auto)</option>
+                      <option>Light Mode</option>
+                      <option>Dark Mode</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Date Format</label>
+                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
+                      <option selected>DD/MM/YYYY (Nigerian Standard)</option>
+                      <option>MM/DD/YYYY (US)</option>
+                      <option>YYYY-MM-DD (ISO)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Currency Display</label>
+                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
+                      <option selected>₦ Nigerian Naira (NGN)</option>
+                      <option>$ US Dollar (USD)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
+                <div className="flex items-center gap-3 pb-3 border-b border-border">
+                  <FileText className="w-5 h-5 text-primary" />
+                  <h3 className="font-serif font-bold text-base text-foreground">Report Card Footer & Stamp</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Report Card Footer Text</label>
+                    <input type="text" defaultValue="Issued by the Registrar — Tare Pet Montessori School, Yenagoa" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Principal Signature Label</label>
+                    <input type="text" defaultValue="Dr. T. Montessori — School Principal" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Promotional Tagline (appears on letters and notices)</label>
+                    <input type="text" defaultValue="Developing Tomorrow's Leaders Through Excellence, Values & Innovation" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <button onClick={triggerSave} className="bg-primary text-white text-xs font-bold px-6 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" /> Save Appearance Settings
+                </button>
+              </div>
+            </div>
+          )}
+
         </div>
       );
     }
+
 
     const renderModuleHeader = (title: string, desc: string, icon: React.ElementType) => {
       const Icon = icon;
