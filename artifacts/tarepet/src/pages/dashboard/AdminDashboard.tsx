@@ -1815,7 +1815,13 @@ const CreateUserForTypeModal = ({
 // ── Main Component ───────────────────────────────────────────
 export default function AdminDashboard() {
   const { t } = useTranslation();
-  const [activeSection, setActiveSection] = useState('overview');
+  const [activeSection, setActiveSectionState] = useState(() => {
+    return sessionStorage.getItem('admin_active_section') || 'overview';
+  });
+  const setActiveSection = (section: string) => {
+    sessionStorage.setItem('admin_active_section', section);
+    setActiveSectionState(section);
+  };
   const [userSubPage, setUserSubPage] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [userSearch, setUserSearch] = useState('');
