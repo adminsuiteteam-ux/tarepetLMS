@@ -262,6 +262,334 @@ const MOCK_CLASSES = [
   { id: 'SS3-ART', code: 'SS3', title: 'SS 3 Art Stream (Exam Class)', division: 'Senior', stream: 'Art', formTeacher: 'Dr. Grace Bassey', staffId: 'TMS/TCH/2019/008', enrolled: 22, capacity: 35, room: 'Block B, Room 302', classMonitor: 'David Danjuma', subjectsCount: 8 },
 ];
 
+const TIMETABLE_PERIODS = [
+  { time: '08:00 - 08:30', isBreak: true, label: 'Devotion & Assembly' },
+  { time: '08:30 - 09:15', isBreak: false, slot: 0, label: 'Period 1' },
+  { time: '09:15 - 10:00', isBreak: false, slot: 1, label: 'Period 2' },
+  { time: '10:00 - 10:45', isBreak: false, slot: 2, label: 'Period 3' },
+  { time: '10:45 - 11:15', isBreak: true, label: 'Short Break / Snack' },
+  { time: '11:15 - 12:00', isBreak: false, slot: 3, label: 'Period 4' },
+  { time: '12:00 - 12:45', isBreak: false, slot: 4, label: 'Period 5' },
+  { time: '12:45 - 01:30', isBreak: false, slot: 5, label: 'Period 6' },
+  { time: '01:30 - 02:00', isBreak: true, label: 'Lunch Break & Games' },
+  { time: '02:00 - 02:45', isBreak: false, slot: 6, label: 'Period 7 / CBT Drill' },
+];
+
+const MOCK_CLASS_TIMETABLES: Record<string, any> = {
+  JSS1: {
+    title: 'JSS 1 Master Timetable',
+    formTeacher: 'Mrs. Okafor Chioma',
+    room: 'Block A, Room 101',
+    schedule: {
+      Monday: [
+        { subject: 'Junior Mathematics', code: 'MTH-001', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'English Language', code: 'ENG-001', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Basic Science', code: 'BSC-001', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Agricultural Science', code: 'AGR-001', teacher: 'Mr. James Eze' },
+        { subject: 'Civic Education', code: 'CIV-001', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Basic Technology', code: 'BTC-001', teacher: 'Engr. Emeka David' },
+        { subject: 'Computer Studies', code: 'ICT-001', teacher: 'Engr. Emeka David' },
+      ],
+      Tuesday: [
+        { subject: 'English Language', code: 'ENG-001', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Junior Mathematics', code: 'MTH-001', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'Basic Technology', code: 'BTC-001', teacher: 'Engr. Emeka David' },
+        { subject: 'Basic Science', code: 'BSC-001', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Social Studies', code: 'SOC-001', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Business Studies', code: 'BUS-001', teacher: 'Ms. Adaobi Nwosu' },
+        { subject: 'Cultural & Creative Arts', code: 'CCA-001', teacher: 'Ms. Adaobi Nwosu' },
+      ],
+      Wednesday: [
+        { subject: 'Basic Science', code: 'BSC-001', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Junior Mathematics', code: 'MTH-001', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'English Language', code: 'ENG-001', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Computer Studies', code: 'ICT-001', teacher: 'Engr. Emeka David' },
+        { subject: 'Agricultural Science', code: 'AGR-001', teacher: 'Mr. James Eze' },
+        { subject: 'Civic Education', code: 'CIV-001', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Physical Education', code: 'PHE-001', teacher: 'Mr. Bello' },
+      ],
+      Thursday: [
+        { subject: 'Junior Mathematics', code: 'MTH-001', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'Basic Science', code: 'BSC-001', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Social Studies', code: 'SOC-001', teacher: 'Dr. Grace Bassey' },
+        { subject: 'English Language', code: 'ENG-001', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Basic Technology', code: 'BTC-001', teacher: 'Engr. Emeka David' },
+        { subject: 'French Language', code: 'FRN-001', teacher: 'Ms. Adaobi Nwosu' },
+        { subject: 'CBT Practice Lab', code: 'CBT-001', teacher: 'Engr. Emeka David' },
+      ],
+      Friday: [
+        { subject: 'English Language', code: 'ENG-001', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Junior Mathematics', code: 'MTH-001', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'Business Studies', code: 'BUS-001', teacher: 'Ms. Adaobi Nwosu' },
+        { subject: 'Civic Education', code: 'CIV-001', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Clubs & Societies', code: 'ACT-001', teacher: 'Form Teachers' },
+        { subject: 'Sports & Games', code: 'PE-001', teacher: 'House Captains' },
+        { subject: 'Weekly Assembly', code: 'REV-001', teacher: 'Principal' },
+      ],
+    }
+  },
+  JSS2: {
+    title: 'JSS 2 Master Timetable',
+    formTeacher: 'Engr. Emeka David',
+    room: 'Block A, Room 102',
+    schedule: {
+      Monday: [
+        { subject: 'Basic Technology', code: 'BTC-001', teacher: 'Engr. Emeka David' },
+        { subject: 'Junior Mathematics', code: 'MTH-001', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'English Language', code: 'ENG-001', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Basic Science', code: 'BSC-001', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Civic Education', code: 'CIV-001', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Business Studies', code: 'BUS-001', teacher: 'Ms. Adaobi Nwosu' },
+        { subject: 'ICT Computer Lab', code: 'ICT-001', teacher: 'Engr. Emeka David' },
+      ],
+      Tuesday: [
+        { subject: 'Junior Mathematics', code: 'MTH-001', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'Basic Science', code: 'BSC-001', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'English Language', code: 'ENG-001', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Basic Technology', code: 'BTC-001', teacher: 'Engr. Emeka David' },
+        { subject: 'Social Studies', code: 'SOC-001', teacher: 'Dr. Grace Bassey' },
+        { subject: 'French Language', code: 'FRN-002', teacher: 'Ms. Adaobi Nwosu' },
+        { subject: 'Cultural & Creative Arts', code: 'CCA-001', teacher: 'Ms. Adaobi Nwosu' },
+      ],
+      Wednesday: [
+        { subject: 'English Language', code: 'ENG-001', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Junior Mathematics', code: 'MTH-001', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'Civic Education', code: 'CIV-001', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Basic Science', code: 'BSC-001', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Agricultural Science', code: 'AGR-001', teacher: 'Mr. James Eze' },
+        { subject: 'Computer Studies', code: 'ICT-001', teacher: 'Engr. Emeka David' },
+        { subject: 'Physical Education', code: 'PHE-001', teacher: 'Mr. Bello' },
+      ],
+      Thursday: [
+        { subject: 'Basic Science', code: 'BSC-001', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Junior Mathematics', code: 'MTH-001', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'Basic Technology', code: 'BTC-001', teacher: 'Engr. Emeka David' },
+        { subject: 'English Language', code: 'ENG-001', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Business Studies', code: 'BUS-001', teacher: 'Ms. Adaobi Nwosu' },
+        { subject: 'Social Studies', code: 'SOC-001', teacher: 'Dr. Grace Bassey' },
+        { subject: 'CBT Practice Lab', code: 'CBT-001', teacher: 'Engr. Emeka David' },
+      ],
+      Friday: [
+        { subject: 'Junior Mathematics', code: 'MTH-001', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'English Language', code: 'ENG-001', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Civic Education', code: 'CIV-001', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Agricultural Science', code: 'AGR-001', teacher: 'Mr. James Eze' },
+        { subject: 'Clubs & Societies', code: 'ACT-001', teacher: 'Form Teachers' },
+        { subject: 'Sports & Games', code: 'PE-001', teacher: 'House Captains' },
+        { subject: 'Weekly Assembly', code: 'REV-001', teacher: 'Principal' },
+      ],
+    }
+  },
+  JSS3: {
+    title: 'JSS 3 Master Timetable (BECE Target)',
+    formTeacher: 'Ms. Adaobi Nwosu',
+    room: 'Block A, Room 103',
+    schedule: {
+      Monday: [
+        { subject: 'Social Studies', code: 'SOC-001', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Computer Studies / ICT', code: 'ICT-001', teacher: 'Engr. Emeka David' },
+        { subject: 'Junior Mathematics', code: 'MTH-001', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'English Language', code: 'ENG-001', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Basic Science', code: 'BSC-001', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Basic Technology', code: 'BTC-001', teacher: 'Engr. Emeka David' },
+        { subject: 'Cultural & Creative Arts', code: 'CCA-001', teacher: 'Ms. Adaobi Nwosu' },
+      ],
+      Tuesday: [
+        { subject: 'Junior Mathematics', code: 'MTH-001', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'English Language', code: 'ENG-001', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Basic Science', code: 'BSC-001', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Civic Education', code: 'CIV-001', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Computer Studies', code: 'ICT-001', teacher: 'Engr. Emeka David' },
+        { subject: 'Business Studies', code: 'BUS-001', teacher: 'Ms. Adaobi Nwosu' },
+        { subject: 'BECE Mock Prep', code: 'MCK-001', teacher: 'Subject Faculty' },
+      ],
+      Wednesday: [
+        { subject: 'English Language', code: 'ENG-001', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Basic Technology', code: 'BTC-001', teacher: 'Engr. Emeka David' },
+        { subject: 'Junior Mathematics', code: 'MTH-001', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'Social Studies', code: 'SOC-001', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Agricultural Science', code: 'AGR-001', teacher: 'Mr. James Eze' },
+        { subject: 'Civic Education', code: 'CIV-001', teacher: 'Dr. Grace Bassey' },
+        { subject: 'BECE Mock Lab', code: 'CBT-001', teacher: 'Engr. Emeka David' },
+      ],
+      Thursday: [
+        { subject: 'Basic Science', code: 'BSC-001', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Junior Mathematics', code: 'MTH-001', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'English Language', code: 'ENG-001', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Basic Technology', code: 'BTC-001', teacher: 'Engr. Emeka David' },
+        { subject: 'Cultural & Creative Arts', code: 'CCA-001', teacher: 'Ms. Adaobi Nwosu' },
+        { subject: 'Business Studies', code: 'BUS-001', teacher: 'Ms. Adaobi Nwosu' },
+        { subject: 'CBT Revision', code: 'REV-003', teacher: 'BECE Team' },
+      ],
+      Friday: [
+        { subject: 'Junior Mathematics', code: 'MTH-001', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'English Language', code: 'ENG-001', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Social Studies', code: 'SOC-001', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Civic Education', code: 'CIV-001', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Clubs & Societies', code: 'ACT-001', teacher: 'Form Teachers' },
+        { subject: 'Sports & Games', code: 'PE-001', teacher: 'House Captains' },
+        { subject: 'Assembly', code: 'REV-001', teacher: 'Principal' },
+      ],
+    }
+  },
+  SS1: {
+    title: 'SS 1 Master Timetable',
+    formTeacher: 'Mr. Okonkwo Paul',
+    room: 'Block B, Lab 201',
+    schedule: {
+      Monday: [
+        { subject: 'Senior Mathematics', code: 'MTH-101', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'Physics I / Literature', code: 'PHY-101', teacher: 'Engr. Emeka / Dr. Bassey' },
+        { subject: 'Chemistry I / Government', code: 'CHM-101', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Senior English Language', code: 'ENG-101', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Biology I / Economics', code: 'BIO-101', teacher: 'Mr. James Eze' },
+        { subject: 'Civic Education', code: 'CIV-101', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Computer Lab', code: 'ICT-101', teacher: 'Engr. Emeka David' },
+      ],
+      Tuesday: [
+        { subject: 'Senior English Language', code: 'ENG-101', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Senior Mathematics', code: 'MTH-101', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'Physics Practical', code: 'PHY-101', teacher: 'Engr. Emeka David' },
+        { subject: 'Chemistry Practical', code: 'CHM-101', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Agricultural Science', code: 'AGR-101', teacher: 'Mr. James Eze' },
+        { subject: 'CRS / Studies', code: 'CRS-101', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Financial Accounting', code: 'ACC-101', teacher: 'Ms. Adaobi Nwosu' },
+      ],
+      Wednesday: [
+        { subject: 'Biology I', code: 'BIO-101', teacher: 'Mr. James Eze' },
+        { subject: 'Senior Mathematics', code: 'MTH-101', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'Senior English Language', code: 'ENG-101', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Chemistry I', code: 'CHM-101', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Physics I', code: 'PHY-101', teacher: 'Engr. Emeka David' },
+        { subject: 'Economics I', code: 'ECO-101', teacher: 'Ms. Adaobi Nwosu' },
+        { subject: 'Civic Education', code: 'CIV-101', teacher: 'Dr. Grace Bassey' },
+      ],
+      Thursday: [
+        { subject: 'Senior Mathematics', code: 'MTH-101', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'Physics I', code: 'PHY-101', teacher: 'Engr. Emeka David' },
+        { subject: 'Senior English Language', code: 'ENG-101', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Literature in English', code: 'LIT-101', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Biology Practical', code: 'BIO-101', teacher: 'Mr. James Eze' },
+        { subject: 'Further Mathematics', code: 'FMTH-101', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'CBT Exam Practice', code: 'CBT-101', teacher: 'CBT Team' },
+      ],
+      Friday: [
+        { subject: 'Senior English Language', code: 'ENG-101', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Senior Mathematics', code: 'MTH-101', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'Agricultural Science', code: 'AGR-101', teacher: 'Mr. James Eze' },
+        { subject: 'Economics I', code: 'ECO-101', teacher: 'Ms. Adaobi Nwosu' },
+        { subject: 'Clubs & Societies', code: 'ACT-001', teacher: 'Form Teachers' },
+        { subject: 'Sports & Games', code: 'PE-001', teacher: 'House Captains' },
+        { subject: 'Weekly Assembly', code: 'REV-001', teacher: 'Principal' },
+      ],
+    }
+  },
+  SS2: {
+    title: 'SS 2 Master Timetable',
+    formTeacher: 'Engr. Emeka David',
+    room: 'Block B, Lab 204',
+    schedule: {
+      Monday: [
+        { subject: 'Senior Mathematics II', code: 'MTH-201', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'Physics II', code: 'PHY-201', teacher: 'Engr. Emeka David' },
+        { subject: 'Government II / Chemistry', code: 'GOV-201', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Senior English Language', code: 'ENG-101', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Further Mathematics II', code: 'FMTH-201', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'Commerce II / Biology', code: 'COM-201', teacher: 'Ms. Adaobi Nwosu' },
+        { subject: 'ICT Practical Lab', code: 'ICT-201', teacher: 'Engr. Emeka David' },
+      ],
+      Tuesday: [
+        { subject: 'Physics Practical II', code: 'PHY-201', teacher: 'Engr. Emeka David' },
+        { subject: 'Chemistry II', code: 'CHM-201', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Senior Mathematics II', code: 'MTH-201', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'Senior English Language', code: 'ENG-101', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Literature in English', code: 'LIT-201', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Financial Accounting', code: 'ACC-201', teacher: 'Ms. Adaobi Nwosu' },
+        { subject: 'Agricultural Science', code: 'AGR-201', teacher: 'Mr. James Eze' },
+      ],
+      Wednesday: [
+        { subject: 'Senior English Language', code: 'ENG-101', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Senior Mathematics II', code: 'MTH-201', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'Chemistry Practical', code: 'CHM-201', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Physics II', code: 'PHY-201', teacher: 'Engr. Emeka David' },
+        { subject: 'Government II', code: 'GOV-201', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Economics II', code: 'ECO-201', teacher: 'Ms. Adaobi Nwosu' },
+        { subject: 'Civic Education', code: 'CIV-201', teacher: 'Dr. Grace Bassey' },
+      ],
+      Thursday: [
+        { subject: 'Senior Mathematics II', code: 'MTH-201', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'Further Mathematics II', code: 'FMTH-201', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'Senior English Language', code: 'ENG-101', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Biology II', code: 'BIO-201', teacher: 'Mr. James Eze' },
+        { subject: 'Commerce II', code: 'COM-201', teacher: 'Ms. Adaobi Nwosu' },
+        { subject: 'Geography II', code: 'GEO-201', teacher: 'Mr. James Eze' },
+        { subject: 'CBT Mock Lab', code: 'CBT-201', teacher: 'CBT Team' },
+      ],
+      Friday: [
+        { subject: 'Senior Mathematics II', code: 'MTH-201', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'Senior English Language', code: 'ENG-101', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Economics II', code: 'ECO-201', teacher: 'Ms. Adaobi Nwosu' },
+        { subject: 'Civic Education', code: 'CIV-201', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Clubs & Societies', code: 'ACT-001', teacher: 'Form Teachers' },
+        { subject: 'Sports & Games', code: 'PE-001', teacher: 'House Captains' },
+        { subject: 'Weekly Assembly', code: 'REV-001', teacher: 'Principal' },
+      ],
+    }
+  },
+  SS3: {
+    title: 'SS 3 Master Timetable (WAEC / NECO / JAMB Final Year)',
+    formTeacher: 'Mr. James Eze',
+    room: 'Block B, Lab 301',
+    schedule: {
+      Monday: [
+        { subject: 'Senior Mathematics III', code: 'MTH-301', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'Physics III / History III', code: 'PHY-301', teacher: 'Engr. Emeka / Dr. Bassey' },
+        { subject: 'Chemistry III / Government', code: 'CHM-301', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Senior English III', code: 'ENG-301', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Biology III / Commerce', code: 'BIO-301', teacher: 'Mr. James Eze' },
+        { subject: 'WAEC Past Questions Lab', code: 'WAC-301', teacher: 'WAEC Faculty' },
+        { subject: 'JAMB CBT Drill', code: 'JMB-301', teacher: 'CBT Team' },
+      ],
+      Tuesday: [
+        { subject: 'Senior English III', code: 'ENG-301', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Senior Mathematics III', code: 'MTH-301', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'Physics Practical III', code: 'PHY-301', teacher: 'Engr. Emeka David' },
+        { subject: 'Chemistry Practical III', code: 'CHM-301', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'Further Mathematics III', code: 'FMTH-301', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'Literature in English', code: 'LIT-301', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Economics III', code: 'ECO-301', teacher: 'Ms. Adaobi Nwosu' },
+      ],
+      Wednesday: [
+        { subject: 'Senior Mathematics III', code: 'MTH-301', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'Biology Practical III', code: 'BIO-301', teacher: 'Mr. James Eze' },
+        { subject: 'Senior English III', code: 'ENG-301', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Government III / Physics', code: 'GOV-301', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Agricultural Science', code: 'AGR-301', teacher: 'Mr. James Eze' },
+        { subject: 'JAMB Mock Drill', code: 'JMB-302', teacher: 'CBT Team' },
+        { subject: 'Civic Education III', code: 'CIV-301', teacher: 'Dr. Grace Bassey' },
+      ],
+      Thursday: [
+        { subject: 'Senior English III', code: 'ENG-301', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Senior Mathematics III', code: 'MTH-301', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'Chemistry III', code: 'CHM-301', teacher: 'Mrs. Okafor Chioma' },
+        { subject: 'History III / Literature', code: 'HIS-301', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Further Mathematics III', code: 'FMTH-301', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'Financial Accounting III', code: 'ACC-301', teacher: 'Ms. Adaobi Nwosu' },
+        { subject: 'WAEC CBT Practice', code: 'WAC-302', teacher: 'CBT Team' },
+      ],
+      Friday: [
+        { subject: 'Senior Mathematics III', code: 'MTH-301', teacher: 'Mr. Okonkwo Paul' },
+        { subject: 'Senior English III', code: 'ENG-301', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Economics III', code: 'ECO-301', teacher: 'Ms. Adaobi Nwosu' },
+        { subject: 'Civic Education III', code: 'CIV-301', teacher: 'Dr. Grace Bassey' },
+        { subject: 'Final Year Counseling', code: 'CNS-301', teacher: 'Guidance Counselor' },
+        { subject: 'Sports & Games', code: 'PE-001', teacher: 'House Captains' },
+        { subject: 'Weekly Assembly', code: 'REV-001', teacher: 'Principal' },
+      ],
+    }
+  },
+};
+
 const MOCK_LEAVE_LOGS = [
   { id: 1, applicant: 'Mrs. Okafor Chioma', role: 'Teacher', type: 'Medical Leave', duration: '2 Days (Aug 3 - Aug 4)', status: 'APPROVED', reason: 'Hospital appointment' },
   { id: 2, applicant: 'Chidi Nwosu', role: 'Student (JSS1)', type: 'Casual Leave', duration: '1 Day (Aug 1)', status: 'PENDING', reason: 'Family engagement' },
@@ -1562,6 +1890,49 @@ export default function AdminDashboard() {
   const [classFilterTab, setClassFilterTab] = useState<'ALL' | 'JUNIOR' | 'SCIENCE' | 'ART' | 'COMMERCIAL'>('ALL');
   const [classSearch, setClassSearch] = useState('');
   const [selectedClassRosterModal, setSelectedClassRosterModal] = useState<any>(null);
+
+  // Class Timetables state (JSS1 - SS3)
+  const [timetablesState, setTimetablesState] = useState<Record<string, any>>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('tarepet_class_timetables');
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return MOCK_CLASS_TIMETABLES;
+  });
+  const [selectedTimetableClassKey, setSelectedTimetableClassKey] = useState<string>('JSS1');
+  const [selectedTimetableDay, setSelectedTimetableDay] = useState<string>('All');
+  const [showAddSlotModal, setShowAddSlotModal] = useState(false);
+  const [editingSlotData, setEditingSlotData] = useState<{ day: string; index: number; slot: any } | null>(null);
+  const [deletingSlotData, setDeletingSlotData] = useState<{ day: string; index: number; slot: any } | null>(null);
+  const [showClearTimetableConfirm, setShowClearTimetableConfirm] = useState(false);
+  const [slotForm, setSlotForm] = useState({
+    day: 'Monday',
+    time: '08:30 - 09:15',
+    subject: '',
+    code: '',
+    teacher: '',
+    room: '',
+  });
+
+  const saveTimetables = (newTimetables: Record<string, any>) => {
+    setTimetablesState(newTimetables);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('tarepet_class_timetables', JSON.stringify(newTimetables));
+      } catch (e) {}
+    }
+  };
+
+  // Results & Report Card state
+  const [resultsSelectedClass, setResultsSelectedClass] = useState<string | null>(null); // 'JSS1' | 'JSS2' | 'JSS3' | 'SS1' | 'SS2' | 'SS3'
+  const [resultsSelectedStudent, setResultsSelectedStudent] = useState<any | null>(null);
+  const [resultsYear, setResultsYear] = useState('2025/2026');
+  const [resultsTerm, setResultsTerm] = useState('2nd Term');
+  const [resultsSectionStream, setResultsSectionStream] = useState('General');
+  const [isResultGenerated, setIsResultGenerated] = useState(false);
+
 
   // Attendance management state
   const [attendanceClassFilter, setAttendanceClassFilter] = useState('JSS1');
@@ -3979,39 +4350,125 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
       );
     }
     if (activeSection === 'classes') {
-      const filteredClasses = MOCK_CLASSES.filter(c => {
-        const q = classSearch.toLowerCase();
-        const matchSearch = !q || c.title.toLowerCase().includes(q) || c.formTeacher.toLowerCase().includes(q) || c.room.toLowerCase().includes(q) || c.classMonitor.toLowerCase().includes(q);
+      const activeClassData = MOCK_CLASSES.find(c => c.code === selectedTimetableClassKey || c.id === selectedTimetableClassKey) || MOCK_CLASSES[0];
+      const activeTimetable = timetablesState[selectedTimetableClassKey] || timetablesState[activeClassData.code] || MOCK_CLASS_TIMETABLES.JSS1;
+      
+      const daysList = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
-        let matchFilter = true;
-        if (classFilterTab === 'JUNIOR') matchFilter = c.division === 'Junior';
-        else if (classFilterTab === 'SCIENCE') matchFilter = c.stream === 'Science';
-        else if (classFilterTab === 'ART') matchFilter = c.stream === 'Art';
-        else if (classFilterTab === 'COMMERCIAL') matchFilter = c.stream === 'Commercial';
+      const handleSaveSlot = (e: React.FormEvent) => {
+        e.preventDefault();
+        const currentTt = timetablesState[selectedTimetableClassKey] || timetablesState[activeClassData.code] || { ...MOCK_CLASS_TIMETABLES.JSS1, schedule: { Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [] } };
+        const updatedSchedule = { ...currentTt.schedule };
+        
+        const targetDay = slotForm.day;
+        if (!updatedSchedule[targetDay]) updatedSchedule[targetDay] = [];
 
-        return matchSearch && matchFilter;
-      });
+        if (editingSlotData) {
+          const daySlots = [...updatedSchedule[editingSlotData.day]];
+          daySlots[editingSlotData.index] = {
+            subject: slotForm.subject,
+            code: slotForm.code,
+            teacher: slotForm.teacher,
+            room: slotForm.room || activeClassData.room,
+            time: slotForm.time,
+          };
+          updatedSchedule[editingSlotData.day] = daySlots;
+        } else {
+          updatedSchedule[targetDay] = [
+            ...updatedSchedule[targetDay],
+            {
+              subject: slotForm.subject,
+              code: slotForm.code,
+              teacher: slotForm.teacher,
+              room: slotForm.room || activeClassData.room,
+              time: slotForm.time,
+            }
+          ];
+        }
 
-      const CLASS_FILTERS: { key: 'ALL' | 'JUNIOR' | 'SCIENCE' | 'ART' | 'COMMERCIAL'; label: string; icon: React.ElementType }[] = [
-        { key: 'ALL',        label: 'All Classes',        icon: School },
-        { key: 'JUNIOR',     label: 'Junior (JSS1 - JSS3)',icon: BookMarked },
-        { key: 'SCIENCE',    label: 'Senior Science',      icon: FlaskConical },
-        { key: 'ART',        label: 'Senior Art',          icon: Palette },
-        { key: 'COMMERCIAL', label: 'Senior Commercial',   icon: Briefcase },
-      ];
+        const updatedTtState = {
+          ...timetablesState,
+          [selectedTimetableClassKey]: {
+            ...currentTt,
+            schedule: updatedSchedule
+          }
+        };
+
+        saveTimetables(updatedTtState);
+        setShowAddSlotModal(false);
+        setEditingSlotData(null);
+        setSlotForm({ day: 'Monday', time: '08:30 - 09:15', subject: '', code: '', teacher: '', room: '' });
+      };
+
+      const handleDeleteSlotConfirmed = () => {
+        if (!deletingSlotData) return;
+        const currentTt = timetablesState[selectedTimetableClassKey] || timetablesState[activeClassData.code];
+        if (!currentTt) return;
+
+        const updatedSchedule = { ...currentTt.schedule };
+        const daySlots = [...(updatedSchedule[deletingSlotData.day] || [])];
+        daySlots.splice(deletingSlotData.index, 1);
+        updatedSchedule[deletingSlotData.day] = daySlots;
+
+        const updatedTtState = {
+          ...timetablesState,
+          [selectedTimetableClassKey]: {
+            ...currentTt,
+            schedule: updatedSchedule
+          }
+        };
+
+        saveTimetables(updatedTtState);
+        setDeletingSlotData(null);
+      };
+
+      const handleClearTimetableConfirmed = () => {
+        const currentTt = timetablesState[selectedTimetableClassKey] || timetablesState[activeClassData.code];
+        if (!currentTt) return;
+
+        const emptySchedule = { Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [] };
+        const updatedTtState = {
+          ...timetablesState,
+          [selectedTimetableClassKey]: {
+            ...currentTt,
+            schedule: emptySchedule
+          }
+        };
+
+        saveTimetables(updatedTtState);
+        setShowClearTimetableConfirm(false);
+      };
 
       return (
         <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
           {/* Header Banner */}
           <div className="bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
-                <School className="w-6 h-6" />
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <Clock className="w-6 h-6" />
               </div>
               <div>
-                <h2 className="font-bold text-xl text-foreground mb-1">Classroom Roster & Stream Management</h2>
-                <p className="text-xs text-muted-foreground">Overview of all active classrooms, assigned Form Teachers, student capacities, and room allocations.</p>
+                <h2 className="font-bold text-xl text-foreground mb-1">Classroom & Student Timetable Management</h2>
+                <p className="text-xs text-muted-foreground">Comprehensive master timetable scheduling hub for JSS 1 through SS 3 students. Create, edit, delete, and manage subject slots.</p>
               </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => {
+                  setSlotForm({ day: selectedTimetableDay === 'All' ? 'Monday' : selectedTimetableDay, time: '08:30 - 09:15', subject: '', code: '', teacher: '', room: activeClassData.room });
+                  setEditingSlotData(null);
+                  setShowAddSlotModal(true);
+                }}
+                className="bg-primary text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2 shadow-sm"
+              >
+                <Plus className="w-4 h-4" /> Add Timetable Slot
+              </button>
+              <button
+                onClick={() => setSelectedClassRosterModal(activeClassData)}
+                className="bg-card border border-border text-foreground text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-muted transition-colors flex items-center gap-2"
+              >
+                <Users className="w-4 h-4 text-emerald-600" /> Class Roster
+              </button>
             </div>
           </div>
 
@@ -4019,9 +4476,9 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total Classrooms</p>
-                <h3 className="text-2xl font-serif font-bold text-foreground mt-1">{MOCK_CLASSES.length}</h3>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Active physical spaces</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Class Level</p>
+                <h3 className="text-xl font-serif font-bold text-foreground mt-1">{activeClassData.title}</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">{activeClassData.division} Secondary ({activeClassData.stream})</p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
                 <School className="w-5 h-5" />
@@ -4030,32 +4487,32 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
 
             <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Junior Classes</p>
-                <h3 className="text-2xl font-serif font-bold text-emerald-600 mt-1">{MOCK_CLASSES.filter(c => c.division === 'Junior').length}</h3>
-                <p className="text-[11px] text-emerald-600 mt-0.5">JSS1 — JSS3 streams</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Form Teacher</p>
+                <h3 className="text-base font-bold text-foreground mt-1 truncate max-w-[150px]">{activeClassData.formTeacher}</h3>
+                <p className="text-[11px] text-emerald-600 font-semibold mt-0.5">{activeClassData.room}</p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
-                <BookMarked className="w-5 h-5" />
-              </div>
-            </div>
-
-            <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Form Teachers</p>
-                <h3 className="text-2xl font-serif font-bold text-primary mt-1">{MOCK_CLASSES.filter(c => c.formTeacher).length}</h3>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Assigned register holders</p>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
                 <GraduationCap className="w-5 h-5" />
               </div>
             </div>
 
             <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Avg Utilization</p>
-                <h3 className="text-2xl font-serif font-bold text-amber-600 mt-1">
-                  {Math.round(MOCK_CLASSES.reduce((acc, curr) => acc + (curr.enrolled / curr.capacity), 0) / MOCK_CLASSES.length * 100)}%
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Weekly Period Slots</p>
+                <h3 className="text-2xl font-serif font-bold text-primary mt-1">
+                  {Object.values(activeTimetable.schedule || {}).reduce((acc: number, curr: any) => acc + (Array.isArray(curr) ? curr.length : 0), 0)} Slots
                 </h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Across 5 academic days</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                <BookOpen className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Enrolled Students</p>
+                <h3 className="text-2xl font-serif font-bold text-amber-600 mt-1">{activeClassData.enrolled} / {activeClassData.capacity}</h3>
                 <p className="text-[11px] text-muted-foreground mt-0.5">Capacity occupancy</p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
@@ -4064,101 +4521,342 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
             </div>
           </div>
 
-          {/* Search & Filter Bar */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <input
-                type="text"
-                value={classSearch}
-                onChange={e => setClassSearch(e.target.value)}
-                placeholder="Search class by title, room, form teacher..."
-                className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-muted/20 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0">
-              {CLASS_FILTERS.map(f => {
-                const Icon = f.icon;
-                const isActive = classFilterTab === f.key;
+          {/* Class Selectors (JSS1 to SS3) */}
+          <div className="bg-card p-4 rounded-2xl border border-border shadow-sm space-y-3">
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Select Class Timetable (JSS1 — SS3):</p>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { key: 'JSS1', label: 'JSS 1 General', badge: 'Junior' },
+                { key: 'JSS2', label: 'JSS 2 General', badge: 'Junior' },
+                { key: 'JSS3', label: 'JSS 3 General', badge: 'Junior' },
+                { key: 'SS1', label: 'SS 1 Science', badge: 'Science' },
+                { key: 'SS1-ART', label: 'SS 1 Art', badge: 'Art' },
+                { key: 'SS1-COM', label: 'SS 1 Commercial', badge: 'Commercial' },
+                { key: 'SS2', label: 'SS 2 Science', badge: 'Science' },
+                { key: 'SS2-ART', label: 'SS 2 Art', badge: 'Art' },
+                { key: 'SS3', label: 'SS 3 Science', badge: 'Science' },
+                { key: 'SS3-ART', label: 'SS 3 Art', badge: 'Art' },
+              ].map(item => {
+                const isActive = selectedTimetableClassKey === item.key;
                 return (
                   <button
-                    key={f.key}
-                    onClick={() => setClassFilterTab(f.key)}
-                    className={`px-3.5 py-2 rounded-xl text-xs font-bold border whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+                    key={item.key}
+                    onClick={() => setSelectedTimetableClassKey(item.key)}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold border transition-all flex items-center gap-2 ${
                       isActive
-                        ? 'bg-primary text-white border-primary shadow-sm'
-                        : 'bg-card border-border text-muted-foreground hover:bg-muted/40'
+                        ? 'bg-primary text-white border-primary shadow-md scale-[1.02]'
+                        : 'bg-muted/30 border-border text-foreground hover:bg-muted/70'
                     }`}
                   >
-                    <Icon className="w-3.5 h-3.5" />
-                    {f.label}
+                    <span>{item.label}</span>
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded-md font-medium ${
+                      isActive ? 'bg-white/20 text-white' : 'bg-muted text-muted-foreground'
+                    }`}>
+                      {item.badge}
+                    </span>
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Class Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filteredClasses.map(cls => (
-              <div key={cls.id} className="bg-card rounded-2xl border border-border p-5 shadow-sm space-y-4 hover:border-primary/40 transition-colors">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <span className={`inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
-                      cls.division === 'Junior' ? 'bg-blue-500/10 text-blue-600 border-blue-200' : 'bg-emerald-500/10 text-emerald-600 border-emerald-200'
-                    }`}>
-                      {cls.division} Secondary ({cls.stream})
-                    </span>
-                    <h3 className="font-serif font-bold text-lg text-foreground mt-1">{cls.title}</h3>
-                  </div>
-                  <span className="text-xs font-mono font-bold text-muted-foreground bg-muted px-2.5 py-1 rounded-lg">
-                    {cls.room}
-                  </span>
-                </div>
-
-                <div className="space-y-2 pt-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground font-medium">Form Teacher:</span>
-                    <span className="font-bold text-foreground flex items-center gap-1">
-                      <GraduationCap className="w-3.5 h-3.5 text-emerald-600" />
-                      {cls.formTeacher}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground font-medium">Class Captain:</span>
-                    <span className="font-semibold text-foreground">{cls.classMonitor}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-muted-foreground font-medium">Subjects Taught:</span>
-                    <span className="font-bold text-primary">{cls.subjectsCount} Subjects</span>
-                  </div>
-                </div>
-
-                {/* Capacity Progress */}
-                <div className="space-y-1 pt-2 border-t border-border/50">
-                  <div className="flex justify-between text-[11px]">
-                    <span className="text-muted-foreground font-medium">Enrolled Capacity</span>
-                    <span className="font-bold text-foreground">{cls.enrolled} / {cls.capacity} Students</span>
-                  </div>
-                  <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all ${
-                        (cls.enrolled / cls.capacity) > 0.9 ? 'bg-amber-500' : 'bg-emerald-500'
-                      }`}
-                      style={{ width: `${(cls.enrolled / cls.capacity) * 100}%` }}
-                    />
-                  </div>
-                </div>
-
+          {/* Day Selector & Action Bar */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
+            <div className="flex gap-1.5 overflow-x-auto w-full sm:w-auto">
+              {['All', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map(day => (
                 <button
-                  onClick={() => setSelectedClassRosterModal(cls)}
-                  className="w-full py-2.5 rounded-xl border border-border bg-muted/20 text-xs font-bold text-foreground hover:bg-primary hover:text-white hover:border-primary transition-colors flex items-center justify-center gap-2"
+                  key={day}
+                  onClick={() => setSelectedTimetableDay(day)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition-colors ${
+                    selectedTimetableDay === day
+                      ? 'bg-secondary text-white border-secondary shadow-sm'
+                      : 'bg-muted/20 border-border text-muted-foreground hover:bg-muted/60'
+                  }`}
                 >
-                  <Users className="w-3.5 h-3.5" /> View Class Roster & Schedule
+                  {day === 'All' ? 'Full Week Schedule' : day}
                 </button>
-              </div>
-            ))}
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+              <button
+                onClick={() => setShowClearTimetableConfirm(true)}
+                className="px-3 py-2 rounded-xl border border-rose-200 bg-rose-500/10 text-rose-600 text-xs font-bold hover:bg-rose-500/20 transition-colors flex items-center gap-1.5"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Clear Timetable
+              </button>
+            </div>
           </div>
+
+          {/* Timetable Schedule Cards & Grid */}
+          <div className="space-y-6">
+            {daysList
+              .filter(day => selectedTimetableDay === 'All' || selectedTimetableDay === day)
+              .map(day => {
+                const daySlots = (activeTimetable.schedule && activeTimetable.schedule[day]) || [];
+                return (
+                  <div key={day} className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden space-y-0">
+                    <div className="bg-muted/40 px-5 py-3.5 border-b border-border flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-primary" />
+                        <h3 className="font-bold text-sm text-foreground">{day} Schedule</h3>
+                        <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full border border-primary/20">
+                          {daySlots.length} Period Slots
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setSlotForm({ day, time: '08:30 - 09:15', subject: '', code: '', teacher: '', room: activeClassData.room });
+                          setEditingSlotData(null);
+                          setShowAddSlotModal(true);
+                        }}
+                        className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Add Slot to {day}
+                      </button>
+                    </div>
+
+                    <div className="p-5">
+                      {daySlots.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {daySlots.map((slot: any, idx: number) => (
+                            <div key={idx} className="bg-muted/20 hover:bg-muted/40 transition-all border border-border/80 rounded-xl p-4 space-y-3 relative group">
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 bg-primary/10 text-primary rounded-md border border-primary/20">
+                                    {slot.code || 'SUB-001'}
+                                  </span>
+                                  <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                                    <Clock className="w-3 h-3 text-emerald-600" />
+                                    {slot.time || TIMETABLE_PERIODS[idx]?.time || '08:30 - 09:15'}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                                  <button
+                                    onClick={() => {
+                                      setSlotForm({
+                                        day,
+                                        time: slot.time || TIMETABLE_PERIODS[idx]?.time || '08:30 - 09:15',
+                                        subject: slot.subject || '',
+                                        code: slot.code || '',
+                                        teacher: slot.teacher || '',
+                                        room: slot.room || activeClassData.room,
+                                      });
+                                      setEditingSlotData({ day, index: idx, slot });
+                                      setShowAddSlotModal(true);
+                                    }}
+                                    className="p-1 hover:bg-primary/10 rounded-lg text-primary transition-colors"
+                                    title="Edit Slot"
+                                  >
+                                    <Pencil className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    onClick={() => setDeletingSlotData({ day, index: idx, slot })}
+                                    className="p-1 hover:bg-rose-500/10 rounded-lg text-rose-600 transition-colors"
+                                    title="Delete Slot"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div>
+                                <h4 className="font-bold text-sm text-foreground">{slot.subject}</h4>
+                                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                                  <GraduationCap className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                  {slot.teacher}
+                                </p>
+                              </div>
+
+                              <div className="pt-2 border-t border-border/50 flex items-center justify-between text-[11px]">
+                                <span className="text-muted-foreground">Room: <strong className="text-foreground">{slot.room || activeClassData.room}</strong></span>
+                                <span className="text-emerald-600 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-200">
+                                  Scheduled
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="py-8 text-center text-muted-foreground space-y-2">
+                          <Clock className="w-8 h-8 mx-auto opacity-30 text-primary" />
+                          <p className="text-xs font-semibold">No timetable period slots added for {day} yet.</p>
+                          <button
+                            onClick={() => {
+                              setSlotForm({ day, time: '08:30 - 09:15', subject: '', code: '', teacher: '', room: activeClassData.room });
+                              setEditingSlotData(null);
+                              setShowAddSlotModal(true);
+                            }}
+                            className="text-xs text-primary font-bold hover:underline"
+                          >
+                            + Add First Slot for {day}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+          </div>
+
+          {/* Add / Edit Timetable Slot Modal */}
+          {showAddSlotModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+              <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-lg p-6 space-y-5">
+                <div className="flex items-center justify-between pb-3 border-b border-border">
+                  <div>
+                    <h3 className="font-bold text-lg text-foreground">
+                      {editingSlotData ? 'Edit Timetable Slot' : 'Add New Timetable Slot'}
+                    </h3>
+                    <p className="text-xs text-muted-foreground">Class: <strong className="text-foreground">{activeClassData.title}</strong></p>
+                  </div>
+                  <button onClick={() => { setShowAddSlotModal(false); setEditingSlotData(null); }} className="p-1 rounded-lg hover:bg-muted text-muted-foreground">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleSaveSlot} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-bold text-foreground mb-1 block">Day of Week</label>
+                      <select
+                        value={slotForm.day}
+                        onChange={e => setSlotForm({ ...slotForm, day: e.target.value })}
+                        className="w-full px-3 py-2 border border-border rounded-xl bg-card text-xs font-semibold"
+                      >
+                        {daysList.map(d => (
+                          <option key={d} value={d}>{d}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-foreground mb-1 block">Time Period</label>
+                      <select
+                        value={slotForm.time}
+                        onChange={e => setSlotForm({ ...slotForm, time: e.target.value })}
+                        className="w-full px-3 py-2 border border-border rounded-xl bg-card text-xs font-semibold"
+                      >
+                        {TIMETABLE_PERIODS.map((p, idx) => (
+                          <option key={idx} value={p.time}>{p.label} ({p.time})</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="col-span-2">
+                      <label className="text-xs font-bold text-foreground mb-1 block">Subject Title</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Junior Mathematics"
+                        value={slotForm.subject}
+                        onChange={e => setSlotForm({ ...slotForm, subject: e.target.value })}
+                        className="w-full px-3 py-2 border border-border rounded-xl bg-muted/20 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-foreground mb-1 block">Code</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. MTH-001"
+                        value={slotForm.code}
+                        onChange={e => setSlotForm({ ...slotForm, code: e.target.value })}
+                        className="w-full px-3 py-2 border border-border rounded-xl bg-muted/20 text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-bold text-foreground mb-1 block">Assigned Educator</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Mr. Okonkwo Paul"
+                        value={slotForm.teacher}
+                        onChange={e => setSlotForm({ ...slotForm, teacher: e.target.value })}
+                        className="w-full px-3 py-2 border border-border rounded-xl bg-muted/20 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-foreground mb-1 block">Room / Venue</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Block A, Room 101"
+                        value={slotForm.room}
+                        onChange={e => setSlotForm({ ...slotForm, room: e.target.value })}
+                        className="w-full px-3 py-2 border border-border rounded-xl bg-muted/20 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-3 flex justify-end gap-2 border-t border-border">
+                    <button
+                      type="button"
+                      onClick={() => { setShowAddSlotModal(false); setEditingSlotData(null); }}
+                      className="px-4 py-2 border border-border rounded-xl text-xs font-bold hover:bg-muted text-muted-foreground"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-5 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors"
+                    >
+                      {editingSlotData ? 'Save Changes' : 'Create Slot'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Delete Slot Confirmation Modal */}
+          {deletingSlotData && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+              <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-md p-6 space-y-4">
+                <div className="flex items-center gap-3 text-rose-600">
+                  <AlertCircle className="w-6 h-6" />
+                  <h3 className="font-bold text-lg text-foreground">Confirm Slot Deletion</h3>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Are you sure you want to remove <strong>{deletingSlotData.slot?.subject}</strong> ({deletingSlotData.slot?.code}) scheduled for <strong>{deletingSlotData.day}</strong> from the master timetable?
+                </p>
+                <div className="pt-2 flex justify-end gap-2 border-t border-border">
+                  <button onClick={() => setDeletingSlotData(null)} className="px-4 py-2 border border-border rounded-xl text-xs font-bold hover:bg-muted">
+                    Cancel
+                  </button>
+                  <button onClick={handleDeleteSlotConfirmed} className="px-5 py-2 bg-rose-600 text-white rounded-xl text-xs font-bold hover:bg-rose-700">
+                    Delete Slot
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Clear Timetable Confirmation Modal */}
+          {showClearTimetableConfirm && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+              <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-md p-6 space-y-4">
+                <div className="flex items-center gap-3 text-rose-600">
+                  <Trash2 className="w-6 h-6" />
+                  <h3 className="font-bold text-lg text-foreground">Clear Entire Timetable</h3>
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Are you sure you want to clear all period slots for <strong>{activeClassData.title}</strong>? This action cannot be undone.
+                </p>
+                <div className="pt-2 flex justify-end gap-2 border-t border-border">
+                  <button onClick={() => setShowClearTimetableConfirm(false)} className="px-4 py-2 border border-border rounded-xl text-xs font-bold hover:bg-muted">
+                    Cancel
+                  </button>
+                  <button onClick={handleClearTimetableConfirmed} className="px-5 py-2 bg-rose-600 text-white rounded-xl text-xs font-bold hover:bg-rose-700">
+                    Clear Timetable
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Class Roster Modal */}
           {selectedClassRosterModal && (
@@ -4189,7 +4887,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                          {MOCK_STUDENTS.filter(s => s.grade === selectedClassRosterModal.code).map(std => (
+                          {MOCK_STUDENTS.filter(s => s.grade === selectedClassRosterModal.code || s.grade === selectedClassRosterModal.id.split('-')[0]).map(std => (
                             <tr key={std.id} className="hover:bg-muted/30">
                               <td className="py-2.5 px-3 font-mono font-bold text-primary">{std.admissionNo}</td>
                               <td className="py-2.5 px-3 font-bold text-foreground">{std.name}</td>
@@ -4422,7 +5120,415 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
         </div>
       );
     }
-    if (activeSection === 'results') return renderModuleHeader('Results', 'View student grades, approve examination results, and print terminal report cards.', FileText);
+    if (activeSection === 'results') {
+      const SIX_CLASSES = [
+        { code: 'JSS1', title: 'JSS 1', fullTitle: 'Junior Secondary 1', division: 'Junior', count: MOCK_STUDENTS.filter(s => s.grade === 'JSS1').length, formTeacher: 'Mrs. Okafor Chioma', room: 'Block A, Room 101' },
+        { code: 'JSS2', title: 'JSS 2', fullTitle: 'Junior Secondary 2', division: 'Junior', count: MOCK_STUDENTS.filter(s => s.grade === 'JSS2').length, formTeacher: 'Engr. Emeka David', room: 'Block A, Room 102' },
+        { code: 'JSS3', title: 'JSS 3', fullTitle: 'Junior Secondary 3', division: 'Junior', count: MOCK_STUDENTS.filter(s => s.grade === 'JSS3').length, formTeacher: 'Ms. Adaobi Nwosu', room: 'Block A, Room 103' },
+        { code: 'SS1', title: 'SS 1', fullTitle: 'Senior Secondary 1', division: 'Senior', count: MOCK_STUDENTS.filter(s => s.grade === 'SS1').length, formTeacher: 'Mr. Okonkwo Paul', room: 'Block B, Lab 201' },
+        { code: 'SS2', title: 'SS 2', fullTitle: 'Senior Secondary 2', division: 'Senior', count: MOCK_STUDENTS.filter(s => s.grade === 'SS2').length, formTeacher: 'Dr. Grace Bassey', room: 'Block B, Lab 204' },
+        { code: 'SS3', title: 'SS 3', fullTitle: 'Senior Secondary 3', division: 'Senior', count: MOCK_STUDENTS.filter(s => s.grade === 'SS3').length, formTeacher: 'Mr. James Eze', room: 'Block B, Lab 301' },
+      ];
+
+      // Step 1: 6 Main Classes Grid View
+      if (!resultsSelectedClass) {
+        return (
+          <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
+            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+                  <FileText className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="font-bold text-xl text-foreground mb-1">Student Results & Report Card Center</h2>
+                  <p className="text-xs text-muted-foreground">Select a class to view student rosters, manage academic scores, and generate terminal report cards.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {SIX_CLASSES.map(cls => (
+                <div
+                  key={cls.code}
+                  onClick={() => setResultsSelectedClass(cls.code)}
+                  className="bg-card rounded-2xl border border-border p-6 shadow-sm hover:shadow-md hover:border-primary transition-all cursor-pointer space-y-4 group"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+                      {cls.division} Secondary
+                    </span>
+                    <span className="text-xs font-mono font-bold text-muted-foreground bg-muted px-2.5 py-1 rounded-lg">
+                      {cls.room}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h3 className="font-serif font-bold text-2xl text-foreground group-hover:text-primary transition-colors">{cls.title}</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">{cls.fullTitle}</p>
+                  </div>
+
+                  <div className="pt-2 border-t border-border space-y-2 text-xs">
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Form Teacher:</span>
+                      <strong className="text-foreground">{cls.formTeacher}</strong>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Enrolled Students:</span>
+                      <strong className="text-emerald-600 font-bold">{cls.count} Students</strong>
+                    </div>
+                  </div>
+
+                  <button className="w-full py-2.5 rounded-xl bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-2">
+                    View Student Roster & Results <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+
+      const currentClassObj = SIX_CLASSES.find(c => c.code === resultsSelectedClass);
+      const classStudents = MOCK_STUDENTS.filter(s => s.grade === resultsSelectedClass);
+
+      // Step 2: Student Roster Table for Selected Class
+      if (!resultsSelectedStudent) {
+        return (
+          <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
+            <div className="flex items-center justify-between bg-card p-4 rounded-2xl border border-border shadow-sm">
+              <button
+                onClick={() => setResultsSelectedClass(null)}
+                className="px-3.5 py-2 rounded-xl bg-muted text-foreground text-xs font-bold hover:bg-muted/80 transition-colors flex items-center gap-1.5"
+              >
+                <ChevronLeft className="w-4 h-4" /> All 6 Classes
+              </button>
+              <div className="text-center sm:text-right">
+                <h3 className="font-serif font-bold text-lg text-foreground">{currentClassObj?.fullTitle} Roster</h3>
+                <p className="text-xs text-muted-foreground">Form Teacher: <strong>{currentClassObj?.formTeacher}</strong> · {currentClassObj?.room}</p>
+              </div>
+            </div>
+
+            <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden space-y-4 p-5">
+              <div className="flex justify-between items-center pb-2 border-b border-border">
+                <h4 className="font-bold text-sm text-foreground">Select a student to generate result:</h4>
+                <span className="text-xs font-bold text-emerald-600 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-200">
+                  {classStudents.length} Students Enrolled
+                </span>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-muted/40 text-muted-foreground uppercase text-[10px] tracking-wider">
+                    <tr>
+                      <th className="py-3 px-4">Admission No</th>
+                      <th className="py-3 px-4">Student Name</th>
+                      <th className="py-3 px-4">Gender</th>
+                      <th className="py-3 px-4">Stream / House</th>
+                      <th className="py-3 px-4">Parent Phone</th>
+                      <th className="py-3 px-4 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {classStudents.map(std => (
+                      <tr
+                        key={std.id}
+                        onClick={() => {
+                          setResultsSelectedStudent(std);
+                          setResultsSectionStream(std.stream || 'General');
+                          setIsResultGenerated(false);
+                        }}
+                        className="hover:bg-primary/5 transition-colors cursor-pointer group"
+                      >
+                        <td className="py-3.5 px-4 font-mono font-bold text-primary">{std.admissionNo}</td>
+                        <td className="py-3.5 px-4 font-bold text-foreground text-sm group-hover:text-primary transition-colors">{std.name}</td>
+                        <td className="py-3.5 px-4">{std.gender}</td>
+                        <td className="py-3.5 px-4 text-muted-foreground">{std.stream} ({std.house})</td>
+                        <td className="py-3.5 px-4 text-muted-foreground">{std.parentPhone}</td>
+                        <td className="py-3.5 px-4 text-right">
+                          <span className="px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 font-bold text-[11px] border border-emerald-200 group-hover:bg-emerald-600 group-hover:text-white transition-all inline-flex items-center gap-1">
+                            Check Result <ArrowUpRight className="w-3.5 h-3.5" />
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // Step 3: Result Checker Form (Year, Term, Stream)
+      if (!isResultGenerated) {
+        return (
+          <div className="space-y-6 max-w-2xl mx-auto" style={{ fontFamily: 'var(--font-poppins)' }}>
+            <button
+              onClick={() => setResultsSelectedStudent(null)}
+              className="px-3.5 py-2 rounded-xl bg-muted text-foreground text-xs font-bold hover:bg-muted/80 transition-colors flex items-center gap-1.5"
+            >
+              <ChevronLeft className="w-4 h-4" /> Back to {resultsSelectedClass} Roster
+            </button>
+
+            <div className="bg-card rounded-2xl border border-border shadow-xl p-6 sm:p-8 space-y-6">
+              <div className="text-center space-y-2 pb-4 border-b border-border">
+                <div className="w-14 h-14 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mx-auto mb-2">
+                  <FileText className="w-7 h-7" />
+                </div>
+                <h3 className="font-serif font-bold text-2xl text-foreground">Result Generator Form</h3>
+                <p className="text-xs text-muted-foreground">Select session, term, and stream section to compute and display official terminal report card.</p>
+              </div>
+
+              {/* Student Card Summary */}
+              <div className="bg-muted/30 rounded-2xl p-4 border border-border flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-base text-foreground">{resultsSelectedStudent.name}</h4>
+                  <p className="text-xs text-muted-foreground">Admission No: <strong className="text-primary font-mono">{resultsSelectedStudent.admissionNo}</strong></p>
+                </div>
+                <span className="text-xs font-bold px-3 py-1 bg-emerald-500/10 text-emerald-600 rounded-full border border-emerald-200">
+                  {resultsSelectedStudent.grade}
+                </span>
+              </div>
+
+              {/* Form Fields */}
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-bold text-foreground mb-1 block">Academic Session / Year</label>
+                  <select
+                    value={resultsYear}
+                    onChange={e => setResultsYear(e.target.value)}
+                    className="w-full px-4 py-3 border border-border rounded-xl bg-card text-sm font-semibold focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="2025/2026">2025/2026 Academic Session</option>
+                    <option value="2024/2025">2024/2025 Academic Session</option>
+                    <option value="2023/2024">2023/2024 Academic Session</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-foreground mb-1 block">Academic Term</label>
+                  <select
+                    value={resultsTerm}
+                    onChange={e => setResultsTerm(e.target.value)}
+                    className="w-full px-4 py-3 border border-border rounded-xl bg-card text-sm font-semibold focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="1st Term">1st Term (Sept - Dec)</option>
+                    <option value="2nd Term">2nd Term (Jan - April)</option>
+                    <option value="3rd Term">3rd Term (May - July)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-foreground mb-1 block">Stream Section</label>
+                  <select
+                    value={resultsSectionStream}
+                    onChange={e => setResultsSectionStream(e.target.value)}
+                    className="w-full px-4 py-3 border border-border rounded-xl bg-card text-sm font-semibold focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="General">General Stream (JSS)</option>
+                    <option value="Science">Science Stream (SS)</option>
+                    <option value="Art">Art & Humanities Stream (SS)</option>
+                    <option value="Commercial">Commercial Stream (SS)</option>
+                  </select>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setIsResultGenerated(true)}
+                className="w-full py-3.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary/90 transition-all flex items-center justify-center gap-2 shadow-md"
+              >
+                <Sparkles className="w-4 h-4" /> Generate Student Result Sheet
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      // Step 4: Official Generated Terminal Report Card
+      const mockResultSubjects = resultsSelectedClass.startsWith('JSS')
+        ? [
+            { code: 'MTH-001', subject: 'Junior Mathematics', ca1: 14, ca2: 13, exam: 55, total: 82, grade: 'A', remark: 'Distinction' },
+            { code: 'ENG-001', subject: 'English Language', ca1: 12, ca2: 14, exam: 52, total: 78, grade: 'A', remark: 'Distinction' },
+            { code: 'BSC-001', subject: 'Basic Science', ca1: 15, ca2: 12, exam: 58, total: 85, grade: 'A', remark: 'Distinction' },
+            { code: 'BTC-001', subject: 'Basic Technology', ca1: 11, ca2: 13, exam: 50, total: 74, grade: 'B', remark: 'Very Good' },
+            { code: 'CIV-001', subject: 'Civic Education', ca1: 14, ca2: 14, exam: 56, total: 84, grade: 'A', remark: 'Distinction' },
+            { code: 'SOC-001', subject: 'Social Studies', ca1: 13, ca2: 12, exam: 48, total: 73, grade: 'B', remark: 'Very Good' },
+            { code: 'ICT-001', subject: 'Computer Studies / ICT', ca1: 15, ca2: 15, exam: 57, total: 87, grade: 'A', remark: 'Distinction' },
+            { code: 'AGR-001', subject: 'Agricultural Science', ca1: 12, ca2: 13, exam: 50, total: 75, grade: 'A', remark: 'Distinction' },
+          ]
+        : [
+            { code: 'MTH-101', subject: 'Senior Mathematics', ca1: 14, ca2: 14, exam: 57, total: 85, grade: 'A', remark: 'Distinction' },
+            { code: 'ENG-101', subject: 'Senior English Language', ca1: 13, ca2: 13, exam: 54, total: 80, grade: 'A', remark: 'Distinction' },
+            { code: 'PHY-101', subject: 'Physics I', ca1: 15, ca2: 14, exam: 58, total: 87, grade: 'A', remark: 'Distinction' },
+            { code: 'CHM-101', subject: 'Chemistry I', ca1: 12, ca2: 13, exam: 52, total: 77, grade: 'A', remark: 'Distinction' },
+            { code: 'BIO-101', subject: 'Biology I', ca1: 14, ca2: 12, exam: 55, total: 81, grade: 'A', remark: 'Distinction' },
+            { code: 'ECO-101', subject: 'Economics I', ca1: 13, ca2: 14, exam: 50, total: 77, grade: 'A', remark: 'Distinction' },
+            { code: 'CIV-101', subject: 'Civic Education', ca1: 15, ca2: 15, exam: 58, total: 88, grade: 'A', remark: 'Distinction' },
+            { code: 'ICT-101', subject: 'Computer Science', ca1: 14, ca2: 14, exam: 56, total: 84, grade: 'A', remark: 'Distinction' },
+          ];
+
+      const grandTotal = mockResultSubjects.reduce((acc, curr) => acc + curr.total, 0);
+      const overallAvg = (grandTotal / mockResultSubjects.length).toFixed(1);
+
+      return (
+        <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
+          <div className="flex flex-wrap items-center justify-between gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm print:hidden">
+            <button
+              onClick={() => setIsResultGenerated(false)}
+              className="px-3.5 py-2 rounded-xl bg-muted text-foreground text-xs font-bold hover:bg-muted/80 transition-colors flex items-center gap-1.5"
+            >
+              <ChevronLeft className="w-4 h-4" /> Change Session / Term
+            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => window.print()}
+                className="px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors flex items-center gap-2 shadow-sm"
+              >
+                <Printer className="w-4 h-4" /> Print Official Report Card
+              </button>
+            </div>
+          </div>
+
+          {/* Official Printable Report Card Document */}
+          <div className="bg-card rounded-2xl border border-border shadow-2xl p-6 sm:p-10 space-y-6 text-foreground print:border-none print:shadow-none">
+            {/* Header Banner */}
+            <div className="text-center border-b-2 border-primary/30 pb-6 space-y-2">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-1">
+                <GraduationCap className="w-9 h-9" />
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-serif font-extrabold uppercase tracking-wide text-foreground">
+                Tare Pet Montessori School
+              </h1>
+              <p className="text-xs font-medium text-muted-foreground">12 Kpansia-Epje Road, Yenagoa, Bayelsa State, Nigeria · Tel: +234 803 123 4567</p>
+              <p className="text-xs font-bold text-primary uppercase tracking-widest pt-1">
+                OFFICIAL TERMINAL ACADEMIC REPORT CARD ({resultsYear} — {resultsTerm})
+              </p>
+            </div>
+
+            {/* Student Profile Info Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-muted/20 p-4 rounded-xl border border-border text-xs">
+              <div>
+                <p className="text-muted-foreground uppercase text-[10px] font-bold">Student Name</p>
+                <p className="font-bold text-foreground text-sm">{resultsSelectedStudent.name}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground uppercase text-[10px] font-bold">Admission Number</p>
+                <p className="font-mono font-bold text-primary">{resultsSelectedStudent.admissionNo}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground uppercase text-[10px] font-bold">Class & Stream</p>
+                <p className="font-bold text-foreground">{resultsSelectedClass} ({resultsSectionStream})</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground uppercase text-[10px] font-bold">House</p>
+                <p className="font-bold text-emerald-600">{resultsSelectedStudent.house}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground uppercase text-[10px] font-bold">Class Position</p>
+                <p className="font-bold text-foreground">1st out of {classStudents.length * 14}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground uppercase text-[10px] font-bold">Attendance</p>
+                <p className="font-bold text-foreground">58 / 60 Days</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground uppercase text-[10px] font-bold">Overall Percentage</p>
+                <p className="font-bold text-primary">{overallAvg}%</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground uppercase text-[10px] font-bold">Term Result Status</p>
+                <p className="font-bold text-emerald-600">PASSED (PROMOTED)</p>
+              </div>
+            </div>
+
+            {/* Subject Performance Breakdown Table */}
+            <div className="space-y-2">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-primary">Academic Subject Performance Breakdown</h4>
+              <div className="border border-border rounded-xl overflow-hidden">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-muted/40 text-muted-foreground uppercase text-[10px]">
+                    <tr>
+                      <th className="py-3 px-3">Subject Code & Name</th>
+                      <th className="py-3 px-2 text-center">CA1 (15%)</th>
+                      <th className="py-3 px-2 text-center">CA2 (15%)</th>
+                      <th className="py-3 px-2 text-center">Exam (70%)</th>
+                      <th className="py-3 px-2 text-center font-bold text-foreground">Total (100%)</th>
+                      <th className="py-3 px-2 text-center">Grade</th>
+                      <th className="py-3 px-3">Teacher Remark</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {mockResultSubjects.map((sub, idx) => (
+                      <tr key={idx} className="hover:bg-muted/20">
+                        <td className="py-2.5 px-3 font-bold text-foreground">
+                          <span className="font-mono text-primary mr-1.5 text-[11px]">{sub.code}</span>
+                          {sub.subject}
+                        </td>
+                        <td className="py-2.5 px-2 text-center">{sub.ca1}</td>
+                        <td className="py-2.5 px-2 text-center">{sub.ca2}</td>
+                        <td className="py-2.5 px-2 text-center">{sub.exam}</td>
+                        <td className="py-2.5 px-2 text-center font-bold text-primary text-sm">{sub.total}</td>
+                        <td className="py-2.5 px-2 text-center">
+                          <span className="font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 border border-emerald-200">
+                            {sub.grade}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3 text-muted-foreground">{sub.remark}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Performance Metrics Box */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-muted/30 p-4 rounded-xl border border-border text-center">
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase font-bold">Total Score</p>
+                <p className="text-xl font-serif font-bold text-foreground mt-0.5">{grandTotal} / {mockResultSubjects.length * 100}</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase font-bold">Average Score</p>
+                <p className="text-xl font-serif font-bold text-primary mt-0.5">{overallAvg}%</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase font-bold">Class Average</p>
+                <p className="text-xl font-serif font-bold text-foreground mt-0.5">74.5%</p>
+              </div>
+              <div>
+                <p className="text-[10px] text-muted-foreground uppercase font-bold">GPA Grade</p>
+                <p className="text-xl font-serif font-bold text-emerald-600 mt-0.5">3.85 / 4.0</p>
+              </div>
+            </div>
+
+            {/* Signatures & Remarks */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-border">
+              <div className="bg-muted/20 p-4 rounded-xl border border-border space-y-2">
+                <p className="text-xs font-bold text-foreground uppercase tracking-wider">Form Teacher's Comment:</p>
+                <p className="text-xs text-muted-foreground italic leading-relaxed">
+                  "{resultsSelectedStudent.name} has shown outstanding brilliance, disciplined work ethics, and leadership qualities throughout the {resultsTerm}."
+                </p>
+                <div className="pt-3 flex items-center justify-between text-[11px] text-muted-foreground">
+                  <span>Teacher: <strong>Mrs. Okafor Chioma</strong></span>
+                  <span className="font-serif italic font-bold text-primary">Signature Attached</span>
+                </div>
+              </div>
+
+              <div className="bg-muted/20 p-4 rounded-xl border border-border space-y-2">
+                <p className="text-xs font-bold text-foreground uppercase tracking-wider">Principal's Official Recommendation:</p>
+                <p className="text-xs text-muted-foreground italic leading-relaxed">
+                  "An exemplary academic performance. Approved for promotion to the next academic level with distinction."
+                </p>
+                <div className="pt-3 flex items-center justify-between text-[11px] text-muted-foreground">
+                  <span>Principal: <strong>Dr. T. Montessori</strong></span>
+                  <span className="font-serif italic font-bold text-emerald-600">Official Seal Stamp</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
     if (activeSection === 'attendance') {
       const isRecordPresent = (id: number) => (attendanceMap[id] || 'PRESENT') === 'PRESENT';
       const isRecordAbsent  = (id: number) => attendanceMap[id] === 'ABSENT';
