@@ -439,6 +439,373 @@ const TeacherIDCardModal = ({ teacher, onClose }: { teacher: any; onClose: () =>
   );
 };
 
+const WIZARD_STEPS = [
+  { step: 1, label: 'Personal Info',   icon: 'user' },
+  { step: 2, label: 'Academic Info',   icon: 'book' },
+  { step: 3, label: 'Teaching Load',   icon: 'clipboard' },
+  { step: 4, label: 'Employment',      icon: 'briefcase' },
+  { step: 5, label: 'Review & Save',   icon: 'check' },
+];
+
+const DEPT_OPTIONS = ['Mathematics & STEM', 'Sciences', 'Humanities & Arts', 'Vocational & Technology', 'Languages'];
+const GRADE_OPTIONS = ['JSS1', 'JSS2', 'JSS3', 'SS1 Science', 'SS1 Art', 'SS2 Science', 'SS2 Art', 'SS3 Science', 'SS3 Art'];
+
+const EMPTY_TEACHER_FORM = {
+  // Step 1 — Personal Info
+  name: '', gender: '', dob: '', phone: '', email: '', address: '',
+  // Step 2 — Academic Info
+  department: '', specialization: '', qualification: '', profileImage: '',
+  // Step 3 — Teaching Load
+  formTeacherOf: '', subjectsAssigned: [{ code: '', name: '', grade: 'JSS1' }],
+  // Step 4 — Employment
+  staffId: '', joined: '', status: 'Active', salary: '', salaryGrade: '', bankName: '', accountNumber: '',
+};
+
+const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSave: (t: any) => void }) => {
+  const [step, setStep] = useState(1);
+  const [form, setForm] = useState({ ...EMPTY_TEACHER_FORM });
+
+  const setF = (key: string, val: any) => setForm(prev => ({ ...prev, [key]: val }));
+
+  const addSubject = () => setForm(prev => ({
+    ...prev,
+    subjectsAssigned: [...prev.subjectsAssigned, { code: '', name: '', grade: 'JSS1' }],
+  }));
+  const removeSubject = (i: number) => setForm(prev => ({
+    ...prev,
+    subjectsAssigned: prev.subjectsAssigned.filter((_: any, idx: number) => idx !== i),
+  }));
+  const updateSubject = (i: number, key: string, val: string) => setForm(prev => ({
+    ...prev,
+    subjectsAssigned: prev.subjectsAssigned.map((s: any, idx: number) => idx === i ? { ...s, [key]: val } : s),
+  }));
+
+  const handleSave = () => {
+    const serial = String(Math.floor(100 + Math.random() * 900)).padStart(3, '0');
+    const created = {
+      id: Date.now(),
+      staffId: form.staffId || `TMS/TCH/${new Date().getFullYear()}/${serial}`,
+      name: form.name,
+      email: form.email,
+      phone: form.phone,
+      gender: form.gender,
+      department: form.department,
+      specialization: form.specialization,
+      qualification: form.qualification,
+      status: form.status,
+      joined: form.joined || new Date().toISOString().split('T')[0],
+      formTeacherOf: form.formTeacherOf || 'None',
+      subjectsAssigned: form.subjectsAssigned.filter((s: any) => s.name),
+      classesCount: form.subjectsAssigned.filter((s: any) => s.name).length,
+      studentsCount: 0,
+      address: form.address,
+      dob: form.dob,
+      cbtExamsCount: 0,
+      attendanceRate: '100%',
+      profileImage: form.profileImage || '',
+      salary: form.salary,
+      salaryGrade: form.salaryGrade,
+      bankName: form.bankName,
+      accountNumber: form.accountNumber,
+    };
+    onSave(created);
+  };
+
+  const inputCls = 'w-full border border-border rounded-xl px-4 py-2.5 text-xs text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary';
+  const labelCls = 'text-[10px] font-bold uppercase text-muted-foreground block mb-1';
+
+  const StepIcon = ({ s }: { s: number }) => {
+    const icons: Record<number, React.ReactNode> = {
+      1: <Users className="w-4 h-4" />,
+      2: <BookOpen className="w-4 h-4" />,
+      3: <ClipboardList className="w-4 h-4" />,
+      4: <Briefcase className="w-4 h-4" />,
+      5: <CheckCircle2 className="w-4 h-4" />,
+    };
+    return <>{icons[s]}</>;
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+      <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-2xl flex flex-col max-h-[92vh]">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-border shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+              <GraduationCap className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="font-bold text-base text-foreground">Register New Teacher</h3>
+              <p className="text-[10px] text-muted-foreground">Step {step} of {WIZARD_STEPS.length} — {WIZARD_STEPS[step - 1].label}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Step Progress Bar */}
+        <div className="px-6 pt-4 pb-2 shrink-0">
+          <div className="flex items-center gap-1">
+            {WIZARD_STEPS.map((s, i) => (
+              <React.Fragment key={s.step}>
+                <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
+                  step === s.step ? 'bg-primary text-white' :
+                  step > s.step ? 'bg-emerald-500/10 text-emerald-600' :
+                  'bg-muted/40 text-muted-foreground'
+                }`}>
+                  <StepIcon s={s.step} />
+                  <span className="hidden sm:inline">{s.label}</span>
+                </div>
+                {i < WIZARD_STEPS.length - 1 && (
+                  <div className={`flex-1 h-0.5 rounded-full transition-all ${step > s.step ? 'bg-emerald-500' : 'bg-border'}`} />
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+        </div>
+
+        {/* Form Body */}
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+
+          {/* STEP 1 — Personal Info */}
+          {step === 1 && (
+            <div className="space-y-3">
+              <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-2">Personal Information</p>
+              <div>
+                <label className={labelCls}>Full Name & Title (e.g. Mr. John Doe)</label>
+                <input className={inputCls} value={form.name} onChange={e => setF('name', e.target.value)} placeholder="e.g. Mr. Okonkwo Paul" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelCls}>Gender</label>
+                  <select className={inputCls} value={form.gender} onChange={e => setF('gender', e.target.value)}>
+                    <option value="">Select gender</option>
+                    <option>Male</option>
+                    <option>Female</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={labelCls}>Date of Birth</label>
+                  <input type="date" className={inputCls} value={form.dob} onChange={e => setF('dob', e.target.value)} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelCls}>Phone Number</label>
+                  <input className={inputCls} value={form.phone} onChange={e => setF('phone', e.target.value)} placeholder="+234 800 000 0000" />
+                </div>
+                <div>
+                  <label className={labelCls}>Email Address</label>
+                  <input type="email" className={inputCls} value={form.email} onChange={e => setF('email', e.target.value)} placeholder="name@tarepet.edu.ng" />
+                </div>
+              </div>
+              <div>
+                <label className={labelCls}>Residential Address</label>
+                <input className={inputCls} value={form.address} onChange={e => setF('address', e.target.value)} placeholder="e.g. 15 Swali Road, Yenagoa, Bayelsa State" />
+              </div>
+              <div>
+                <label className={labelCls}>Profile Image URL (optional)</label>
+                <input className={inputCls} value={form.profileImage} onChange={e => setF('profileImage', e.target.value)} placeholder="https://..." />
+              </div>
+            </div>
+          )}
+
+          {/* STEP 2 — Academic Info */}
+          {step === 2 && (
+            <div className="space-y-3">
+              <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-2">Academic Credentials</p>
+              <div>
+                <label className={labelCls}>Department</label>
+                <select className={inputCls} value={form.department} onChange={e => setF('department', e.target.value)}>
+                  <option value="">Select department</option>
+                  {DEPT_OPTIONS.map(d => <option key={d}>{d}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className={labelCls}>Specialization / Subject Area</label>
+                <input className={inputCls} value={form.specialization} onChange={e => setF('specialization', e.target.value)} placeholder="e.g. Pure & Applied Mathematics, STEM" />
+              </div>
+              <div>
+                <label className={labelCls}>Qualifications & Degrees</label>
+                <input className={inputCls} value={form.qualification} onChange={e => setF('qualification', e.target.value)} placeholder="e.g. B.Sc. Ed (Mathematics), M.Sc. Statistics, Ph.D" />
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3 — Teaching Load */}
+          {step === 3 && (
+            <div className="space-y-3">
+              <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-2">Teaching Load & Assignments</p>
+              <div>
+                <label className={labelCls}>Form Teacher Of (Class Register Holder)</label>
+                <select className={inputCls} value={form.formTeacherOf} onChange={e => setF('formTeacherOf', e.target.value)}>
+                  <option value="">None / Not a Form Teacher</option>
+                  {['JSS1 General', 'JSS2 General', 'JSS3 General', 'SS1 Science', 'SS1 Art', 'SS2 Science', 'SS2 Art', 'SS3 Science', 'SS3 Art'].map(c => <option key={c}>{c}</option>)}
+                </select>
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className={labelCls + ' mb-0'}>Subjects Assigned</label>
+                  <button type="button" onClick={addSubject} className="text-[10px] font-bold text-primary flex items-center gap-1 hover:underline">
+                    <Plus className="w-3 h-3" /> Add Subject
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {form.subjectsAssigned.map((sub: any, i: number) => (
+                    <div key={i} className="grid grid-cols-12 gap-2 items-center">
+                      <input className={inputCls + ' col-span-2'} value={sub.code} onChange={e => updateSubject(i, 'code', e.target.value)} placeholder="Code" />
+                      <input className={inputCls + ' col-span-5'} value={sub.name} onChange={e => updateSubject(i, 'name', e.target.value)} placeholder="Subject Name" />
+                      <select className={inputCls + ' col-span-4'} value={sub.grade} onChange={e => updateSubject(i, 'grade', e.target.value)}>
+                        {GRADE_OPTIONS.map(g => <option key={g}>{g}</option>)}
+                      </select>
+                      <button type="button" onClick={() => removeSubject(i)} className="col-span-1 flex justify-center text-rose-500 hover:text-rose-700">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 4 — Employment & Payroll */}
+          {step === 4 && (
+            <div className="space-y-3">
+              <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-2">Employment & Payroll Details</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelCls}>Staff ID (auto-generated if blank)</label>
+                  <input className={inputCls + ' font-mono'} value={form.staffId} onChange={e => setF('staffId', e.target.value)} placeholder="TMS/TCH/2026/001" />
+                </div>
+                <div>
+                  <label className={labelCls}>Date of Employment</label>
+                  <input type="date" className={inputCls} value={form.joined} onChange={e => setF('joined', e.target.value)} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelCls}>Employment Status</label>
+                  <select className={inputCls} value={form.status} onChange={e => setF('status', e.target.value)}>
+                    <option>Active</option>
+                    <option>On Leave</option>
+                    <option>Inactive</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={labelCls}>Salary Grade Level</label>
+                  <select className={inputCls} value={form.salaryGrade} onChange={e => setF('salaryGrade', e.target.value)}>
+                    <option value="">Select grade</option>
+                    {['GL-07', 'GL-08', 'GL-09', 'GL-10', 'GL-12', 'GL-13', 'GL-14', 'GL-15 (HOD)', 'GL-16 (Principal)'].map(g => <option key={g}>{g}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className={labelCls}>Monthly Gross Salary (₦)</label>
+                <input type="number" className={inputCls} value={form.salary} onChange={e => setF('salary', e.target.value)} placeholder="e.g. 150000" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelCls}>Bank Name</label>
+                  <input className={inputCls} value={form.bankName} onChange={e => setF('bankName', e.target.value)} placeholder="e.g. First Bank, GTBank" />
+                </div>
+                <div>
+                  <label className={labelCls}>Bank Account Number</label>
+                  <input className={inputCls} value={form.accountNumber} onChange={e => setF('accountNumber', e.target.value)} placeholder="10-digit account number" maxLength={10} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 5 — Review & Save */}
+          {step === 5 && (
+            <div className="space-y-4">
+              <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Review Teacher Profile</p>
+              <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-5 space-y-4">
+                {/* Header preview */}
+                <div className="flex items-center gap-4 pb-4 border-b border-border">
+                  <div className="w-14 h-14 rounded-xl bg-emerald-500/10 flex items-center justify-center text-2xl font-bold text-emerald-700 shrink-0">
+                    {form.name?.[0] || '?'}
+                  </div>
+                  <div>
+                    <p className="font-bold text-foreground text-sm">{form.name || '—'}</p>
+                    <p className="text-xs text-muted-foreground">{form.specialization || '—'}</p>
+                    <span className={`mt-1 inline-block text-[10px] font-bold px-2 py-0.5 rounded-full border ${form.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 border-amber-500/20'}`}>{form.status}</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs">
+                  {[
+                    ['Staff ID', form.staffId || `TMS/TCH/${new Date().getFullYear()}/AUTO`],
+                    ['Department', form.department || '—'],
+                    ['Gender', form.gender || '—'],
+                    ['Date of Birth', form.dob || '—'],
+                    ['Email', form.email || '—'],
+                    ['Phone', form.phone || '—'],
+                    ['Qualifications', form.qualification || '—'],
+                    ['Form Teacher Of', form.formTeacherOf || 'None'],
+                    ['Date of Employment', form.joined || '—'],
+                    ['Salary Grade', form.salaryGrade || '—'],
+                    ['Monthly Salary', form.salary ? `₦${Number(form.salary).toLocaleString()}` : '—'],
+                    ['Bank / Account', form.bankName ? `${form.bankName} — ${form.accountNumber}` : '—'],
+                    ['Address', form.address || '—'],
+                  ].map(([k, v]) => (
+                    <div key={k} className="py-1 border-b border-border/40">
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{k}</p>
+                      <p className="font-semibold text-foreground truncate">{v}</p>
+                    </div>
+                  ))}
+                </div>
+                {form.subjectsAssigned.filter((s: any) => s.name).length > 0 && (
+                  <div className="pt-2">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Subjects Assigned ({form.subjectsAssigned.filter((s: any) => s.name).length})</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {form.subjectsAssigned.filter((s: any) => s.name).map((s: any, i: number) => (
+                        <span key={i} className="px-2 py-0.5 rounded-lg bg-primary/10 text-primary text-[10px] font-bold border border-primary/20">
+                          {s.code && `[${s.code}] `}{s.name} — {s.grade}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer Navigation */}
+        <div className="px-6 py-4 border-t border-border flex items-center justify-between shrink-0">
+          {step > 1 ? (
+            <button onClick={() => setStep(s => s - 1)} className="px-4 py-2 border border-border rounded-xl text-xs font-bold hover:bg-muted transition-colors flex items-center gap-1.5">
+              <ChevronLeft className="w-3.5 h-3.5" /> Back
+            </button>
+          ) : <div />}
+          <div className="flex items-center gap-2">
+            {step < 5 ? (
+              <button
+                onClick={() => setStep(s => s + 1)}
+                disabled={step === 1 && !form.name}
+                className="px-5 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors flex items-center gap-1.5 disabled:opacity-50"
+              >
+                Next Step <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            ) : (
+              <button
+                onClick={handleSave}
+                disabled={!form.name || !form.email || !form.department}
+                className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition-colors flex items-center gap-2 disabled:opacity-50 shadow-sm"
+              >
+                <CheckCircle2 className="w-4 h-4" /> Save & Register Teacher
+              </button>
+            )}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+};
+
 const EditTeacherModal = ({ teacher, onClose, onSave }: { teacher: any; onClose: () => void; onSave: (updated: any) => void }) => {
   const [form, setForm] = useState({ ...teacher });
 
@@ -3544,33 +3911,9 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
           </div>
 
           {showAddTeacherModal && (
-            <CreateUserForTypeModal
-              typeLabel="Teachers"
-              defaultRole="TEACHER"
+            <AddTeacherWizardModal
               onClose={() => setShowAddTeacherModal(false)}
-              onCreated={(newTeacher: any) => {
-                const created = {
-                  id: Date.now(),
-                  staffId: `TMS/TCH/2026/${Math.floor(100 + Math.random() * 900)}`,
-                  name: newTeacher.name,
-                  email: newTeacher.email,
-                  phone: newTeacher.phone || '+234 800 000 0000',
-                  gender: 'Male',
-                  department: newTeacher.department || 'Mathematics & STEM',
-                  specialization: newTeacher.subject || 'Montessori Educator',
-                  qualification: 'B.Sc. Ed, Certified Montessori Teacher',
-                  status: 'Active',
-                  joined: new Date().toISOString().split('T')[0],
-                  formTeacherOf: 'Assigned on Request',
-                  subjectsAssigned: newTeacher.subject ? [{ code: 'SUB-01', name: newTeacher.subject, grade: 'SS1' }] : [],
-                  classesCount: 1,
-                  studentsCount: 30,
-                  address: 'Yenagoa, Bayelsa State',
-                  dob: '1990-01-01',
-                  cbtExamsCount: 0,
-                  attendanceRate: '100%',
-                  profileImage: ''
-                };
+              onSave={(created) => {
                 setTeachersList(prev => [created, ...prev]);
                 setShowAddTeacherModal(false);
               }}
