@@ -387,6 +387,7 @@
     "notAvailable": "Not Available",
     "viewAll": "View All",
     "exportData": "Export Data",
-    "status": "Status:"
+    "status": "Status:",
+    "moduleControlDesc": "This module provides operational control for {title}. View records, manage assignments, export custom reports, and synchronize real-time updates across the school LMS."
   }
 }

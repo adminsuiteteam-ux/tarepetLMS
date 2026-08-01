@@ -2760,7 +2760,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
             </div>
             <h3 className="font-bold text-lg text-foreground">{title} Management System</h3>
             <p className="text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
-              {`This module provides operational control for ${title.toLowerCase()}. View records, manage assignments, export custom reports, and synchronize real-time updates across the school LMS.`}
+              {t('common.moduleControlDesc').replace('{title}', title.toLowerCase())}
             </p>
             <div className="pt-2 flex justify-center gap-3">
               <button className="px-4 py-2 text-xs font-bold bg-primary text-white rounded-xl shadow-xs hover:bg-primary/90 transition-all">
