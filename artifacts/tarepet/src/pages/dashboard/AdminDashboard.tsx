@@ -1875,6 +1875,27 @@ export default function AdminDashboard() {
     setTimeout(() => setSettingsSaved(false), 2500);
   };
 
+  // Admin Profile state
+  const [profileTab, setProfileTab] = useState<'info' | 'security' | 'permissions' | 'activity'>('info');
+  const [adminProfileData, setAdminProfileData] = useState({
+    name: 'Dr. T. Montessori',
+    title: 'School Principal & Chief Administrator',
+    id: 'TMS/ADM/2018/001',
+    email: 'admin@tarepet.edu.ng',
+    phone: '+234 803 123 4567',
+    address: '12 Kpansia-Epje Road, Yenagoa, Bayelsa State',
+    dob: '1978-08-15',
+    gender: 'Male',
+    department: 'Executive Governance & Academics',
+    dateJoined: '2018-09-01',
+  });
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+  const [editProfileForm, setEditProfileForm] = useState(adminProfileData);
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ current: '', newPass: '', confirm: '' });
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [profileUpdateSuccess, setProfileUpdateSuccess] = useState(false);
+
   // Teacher management state
   const [teachersList, setTeachersList] = useState(MOCK_TEACHERS);
   const [selectedTeacher, setSelectedTeacher] = useState<any>(null);
@@ -4243,6 +4264,453 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                 <button onClick={triggerSave} className="bg-primary text-white text-xs font-bold px-6 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4" /> Save Appearance Settings
                 </button>
+              </div>
+            </div>
+          )}
+
+        </div>
+      );
+    }
+
+    // 8. ADMIN PROFILE PAGE
+    if (activeSection === 'profile') {
+      return (
+        <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
+
+          {/* Profile Header Banner */}
+          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 text-center sm:text-left">
+              <div className="relative shrink-0">
+                <div className="w-20 h-20 rounded-2xl bg-primary text-white font-bold text-3xl flex items-center justify-center shadow-lg border-2 border-primary/20">
+                  {adminProfileData.name.split(' ').map(n => n[0]).join('')}
+                </div>
+                <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-card" title="Account Active" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                  <h2 className="font-bold text-2xl text-foreground">{adminProfileData.name}</h2>
+                  <span className="px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-600 border border-rose-200 text-[10px] font-extrabold uppercase tracking-wider">
+                    Super Administrator
+                  </span>
+                </div>
+                <p className="text-xs font-semibold text-primary">{adminProfileData.title}</p>
+                <p className="text-xs text-muted-foreground flex items-center justify-center sm:justify-start gap-3 pt-1">
+                  <span className="font-mono font-bold text-foreground">ID: {adminProfileData.id}</span>
+                  <span>·</span>
+                  <span>{adminProfileData.department}</span>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => { setEditProfileForm(adminProfileData); setShowEditProfileModal(true); }}
+                className="px-4 py-2.5 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all flex items-center gap-1.5 shadow-sm"
+              >
+                <Pencil className="w-3.5 h-3.5" /> Edit Profile
+              </button>
+              <button
+                onClick={() => { setPasswordForm({ current: '', newPass: '', confirm: '' }); setPasswordSuccess(false); setShowChangePasswordModal(true); }}
+                className="px-4 py-2.5 bg-muted text-foreground border border-border rounded-xl text-xs font-bold hover:bg-accent transition-all flex items-center gap-1.5"
+              >
+                <Lock className="w-3.5 h-3.5" /> Change Password
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Metrics Bar */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+            <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Admin Status</p>
+                <p className="text-sm font-bold text-emerald-600 mt-1 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4" /> Active & Verified
+                </p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Account Created</p>
+                <p className="text-sm font-bold text-foreground mt-1">{adminProfileData.dateJoined}</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                <Calendar className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">2FA Security</p>
+                <p className="text-sm font-bold text-emerald-600 mt-1">Enabled (Authenticator)</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                <Lock className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Permissions Scope</p>
+                <p className="text-sm font-bold text-primary mt-1">Full System Control</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                <Award className="w-5 h-5" />
+              </div>
+            </div>
+          </div>
+
+          {/* Sub Navigation Tabs */}
+          <div className="flex border-b border-border gap-1 overflow-x-auto pb-px text-xs font-bold">
+            {[
+              { id: 'info', label: 'Personal & Official Info', icon: UserCheck },
+              { id: 'security', label: 'Account Security & Login', icon: Lock },
+              { id: 'permissions', label: 'Access Rights Matrix', icon: Shield },
+              { id: 'activity', label: 'Activity Audit Log', icon: Activity },
+            ].map(tab => {
+              const TabIcon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setProfileTab(tab.id as any)}
+                  className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors whitespace-nowrap ${
+                    profileTab === tab.id
+                      ? 'border-primary text-primary bg-primary/5 rounded-t-xl'
+                      : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/20 rounded-t-xl'
+                  }`}
+                >
+                  <TabIcon className="w-3.5 h-3.5" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Tab 1: Personal & Official Info */}
+          {profileTab === 'info' && (
+            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-6">
+              <div className="flex items-center justify-between pb-3 border-b border-border">
+                <h3 className="font-serif font-bold text-base text-foreground">Administrator Official Record</h3>
+                <span className="text-xs text-muted-foreground font-mono">Last updated: Today</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-xs">
+                <div className="space-y-1 bg-muted/20 p-4 rounded-xl border border-border">
+                  <p className="text-muted-foreground font-bold uppercase text-[10px]">Full Name</p>
+                  <p className="font-bold text-foreground text-sm">{adminProfileData.name}</p>
+                </div>
+
+                <div className="space-y-1 bg-muted/20 p-4 rounded-xl border border-border">
+                  <p className="text-muted-foreground font-bold uppercase text-[10px]">Administrator ID</p>
+                  <p className="font-mono font-bold text-primary text-sm">{adminProfileData.id}</p>
+                </div>
+
+                <div className="space-y-1 bg-muted/20 p-4 rounded-xl border border-border">
+                  <p className="text-muted-foreground font-bold uppercase text-[10px]">Official Title</p>
+                  <p className="font-bold text-foreground text-sm">{adminProfileData.title}</p>
+                </div>
+
+                <div className="space-y-1 bg-muted/20 p-4 rounded-xl border border-border">
+                  <p className="text-muted-foreground font-bold uppercase text-[10px]">Email Address</p>
+                  <p className="font-bold text-foreground text-sm">{adminProfileData.email}</p>
+                </div>
+
+                <div className="space-y-1 bg-muted/20 p-4 rounded-xl border border-border">
+                  <p className="text-muted-foreground font-bold uppercase text-[10px]">Phone Contact</p>
+                  <p className="font-bold text-foreground text-sm">{adminProfileData.phone}</p>
+                </div>
+
+                <div className="space-y-1 bg-muted/20 p-4 rounded-xl border border-border">
+                  <p className="text-muted-foreground font-bold uppercase text-[10px]">Department</p>
+                  <p className="font-bold text-foreground text-sm">{adminProfileData.department}</p>
+                </div>
+
+                <div className="space-y-1 bg-muted/20 p-4 rounded-xl border border-border">
+                  <p className="text-muted-foreground font-bold uppercase text-[10px]">Date of Birth</p>
+                  <p className="font-bold text-foreground text-sm">{adminProfileData.dob}</p>
+                </div>
+
+                <div className="space-y-1 bg-muted/20 p-4 rounded-xl border border-border">
+                  <p className="text-muted-foreground font-bold uppercase text-[10px]">Gender</p>
+                  <p className="font-bold text-foreground text-sm">{adminProfileData.gender}</p>
+                </div>
+
+                <div className="space-y-1 bg-muted/20 p-4 rounded-xl border border-border">
+                  <p className="text-muted-foreground font-bold uppercase text-[10px]">Date Appointed</p>
+                  <p className="font-bold text-foreground text-sm">{adminProfileData.dateJoined}</p>
+                </div>
+
+                <div className="md:col-span-2 lg:col-span-3 space-y-1 bg-muted/20 p-4 rounded-xl border border-border">
+                  <p className="text-muted-foreground font-bold uppercase text-[10px]">Official Address</p>
+                  <p className="font-bold text-foreground text-sm">{adminProfileData.address}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 2: Security & Login */}
+          {profileTab === 'security' && (
+            <div className="space-y-6">
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
+                <h3 className="font-serif font-bold text-base text-foreground pb-3 border-b border-border">Security & Authentication Details</h3>
+
+                <div className="space-y-4 text-xs">
+                  <div className="flex items-center justify-between p-4 border border-border rounded-xl bg-muted/10">
+                    <div>
+                      <p className="font-bold text-foreground">Two-Factor Authentication (2FA)</p>
+                      <p className="text-muted-foreground text-[11px]">Protected via Google Authenticator app for every administrator login.</p>
+                    </div>
+                    <span className="px-3 py-1 bg-emerald-500/10 text-emerald-600 rounded-full font-bold border border-emerald-200">Active</span>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 border border-border rounded-xl bg-muted/10">
+                    <div>
+                      <p className="font-bold text-foreground">Password Management</p>
+                      <p className="text-muted-foreground text-[11px]">Last changed: 14 days ago. Strong 12+ character complexity required.</p>
+                    </div>
+                    <button
+                      onClick={() => { setPasswordForm({ current: '', newPass: '', confirm: '' }); setPasswordSuccess(false); setShowChangePasswordModal(true); }}
+                      className="px-3 py-1.5 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-colors"
+                    >
+                      Update Password
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 border border-border rounded-xl bg-muted/10">
+                    <div>
+                      <p className="font-bold text-foreground">Active Login Session</p>
+                      <p className="text-muted-foreground text-[11px]">Current session on Windows (Chrome) · IP: 127.0.0.1</p>
+                    </div>
+                    <span className="px-3 py-1 bg-blue-500/10 text-blue-600 rounded-full font-bold border border-blue-200">This Device</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 3: Access Rights Matrix */}
+          {profileTab === 'permissions' && (
+            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
+              <h3 className="font-serif font-bold text-base text-foreground pb-3 border-b border-border">Granted Administrative System Privileges</h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                {[
+                  { module: 'Student & Roster Control', desc: 'Create, edit, suspend, and view student records across JSS1-SS3.', granted: true },
+                  { module: 'Teacher & Staff Oversight', desc: 'Assign subject teachers, manage credentials, and view payroll slips.', granted: true },
+                  { module: 'Timetable Management Hub', desc: 'Create, update, slot, and delete weekly period schedules for all classes.', granted: true },
+                  { module: 'Results & Report Card Center', desc: 'Compute student grades, generate terminal report cards, and print seals.', granted: true },
+                  { module: 'System Settings & Config', desc: 'Modify school profile, grading schemas, terms, and portal options.', granted: true },
+                  { module: 'CBT Exam Builder & Oversight', desc: 'Create online question banks, set time limits, and publish live tests.', granted: true },
+                ].map((p, i) => (
+                  <div key={i} className="p-4 border border-border rounded-xl bg-muted/10 space-y-1">
+                    <div className="flex items-center justify-between">
+                      <p className="font-bold text-foreground">{p.module}</p>
+                      <span className="px-2.5 py-0.5 bg-emerald-500/10 text-emerald-600 font-bold rounded-full border border-emerald-200 text-[10px]">Full Access</span>
+                    </div>
+                    <p className="text-muted-foreground text-[11px]">{p.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Tab 4: Activity Audit Log */}
+          {profileTab === 'activity' && (
+            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
+              <h3 className="font-serif font-bold text-base text-foreground pb-3 border-b border-border">Recent Administrator Activity Logs</h3>
+
+              <div className="space-y-3 text-xs">
+                {[
+                  { action: 'Updated School Settings', target: 'Added JSS1-SS3 Timetable Management Hub', time: '10 minutes ago', ip: '127.0.0.1' },
+                  { action: 'Generated Terminal Report Card', target: 'Student Admission No: TMS/JS1/4092 (Chidi Nwosu)', time: '25 minutes ago', ip: '127.0.0.1' },
+                  { action: 'Modified Timetable Slot', target: 'Assigned Basic Science to Block A Room 101', time: '1 hour ago', ip: '127.0.0.1' },
+                  { action: 'Admin Session Authentication', target: 'Signed into Admin Control Center', time: '2 hours ago', ip: '127.0.0.1' },
+                ].map((log, i) => (
+                  <div key={i} className="flex items-center justify-between p-3.5 border border-border rounded-xl bg-muted/10 gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold">
+                        <Activity className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-foreground">{log.action}</p>
+                        <p className="text-muted-foreground text-[11px]">{log.target}</p>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="font-mono text-muted-foreground text-[11px]">{log.time}</p>
+                      <p className="text-[10px] text-muted-foreground">IP: {log.ip}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Edit Profile Modal */}
+          {showEditProfileModal && (
+            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-2xl max-w-xl w-full space-y-5 animate-in fade-in zoom-in duration-200">
+                <div className="flex items-center justify-between pb-3 border-b border-border">
+                  <h3 className="font-serif font-bold text-lg text-foreground">Edit Administrator Profile</h3>
+                  <button onClick={() => setShowEditProfileModal(false)} className="p-1 rounded-lg text-muted-foreground hover:bg-accent">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {profileUpdateSuccess && (
+                  <div className="p-3 bg-emerald-500/10 border border-emerald-200 text-emerald-600 rounded-xl text-xs font-bold">
+                    Profile updated successfully!
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Full Name</label>
+                    <input
+                      type="text"
+                      value={editProfileForm.name}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, name: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Official Title</label>
+                    <input
+                      type="text"
+                      value={editProfileForm.title}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, title: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Email Address</label>
+                    <input
+                      type="email"
+                      value={editProfileForm.email}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, email: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Phone Contact</label>
+                    <input
+                      type="tel"
+                      value={editProfileForm.phone}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, phone: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Official Address</label>
+                    <input
+                      type="text"
+                      value={editProfileForm.address}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, address: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => {
+                      setAdminProfileData(editProfileForm);
+                      setProfileUpdateSuccess(true);
+                      setTimeout(() => {
+                        setProfileUpdateSuccess(false);
+                        setShowEditProfileModal(false);
+                      }, 1200);
+                    }}
+                    className="flex-1 py-3 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all"
+                  >
+                    Save Changes
+                  </button>
+                  <button
+                    onClick={() => setShowEditProfileModal(false)}
+                    className="px-5 py-3 border border-border rounded-xl text-xs font-bold hover:bg-accent transition-all"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Change Password Modal */}
+          {showChangePasswordModal && (
+            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-2xl max-w-md w-full space-y-5 animate-in fade-in zoom-in duration-200">
+                <div className="flex items-center justify-between pb-3 border-b border-border">
+                  <h3 className="font-serif font-bold text-lg text-foreground">Change Password</h3>
+                  <button onClick={() => setShowChangePasswordModal(false)} className="p-1 rounded-lg text-muted-foreground hover:bg-accent">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {passwordSuccess ? (
+                  <div className="p-4 bg-emerald-500/10 border border-emerald-200 text-emerald-600 rounded-xl text-xs font-bold text-center space-y-2">
+                    <CheckCircle2 className="w-8 h-8 mx-auto" />
+                    <p>Password updated successfully!</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4 text-xs">
+                    <div>
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Current Password</label>
+                      <input
+                        type="password"
+                        placeholder="••••••••"
+                        value={passwordForm.current}
+                        onChange={e => setPasswordForm({ ...passwordForm, current: e.target.value })}
+                        className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">New Password</label>
+                      <input
+                        type="password"
+                        placeholder="••••••••"
+                        value={passwordForm.newPass}
+                        onChange={e => setPasswordForm({ ...passwordForm, newPass: e.target.value })}
+                        className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Confirm New Password</label>
+                      <input
+                        type="password"
+                        placeholder="••••••••"
+                        value={passwordForm.confirm}
+                        onChange={e => setPasswordForm({ ...passwordForm, confirm: e.target.value })}
+                        className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+
+                    <div className="flex gap-3 pt-2">
+                      <button
+                        onClick={() => {
+                          if (passwordForm.newPass && passwordForm.newPass === passwordForm.confirm) {
+                            setPasswordSuccess(true);
+                            setTimeout(() => setShowChangePasswordModal(false), 1500);
+                          } else {
+                            alert('Passwords do not match or are empty!');
+                          }
+                        }}
+                        className="flex-1 py-3 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all"
+                      >
+                        Update Password
+                      </button>
+                      <button
+                        onClick={() => setShowChangePasswordModal(false)}
+                        className="px-5 py-3 border border-border rounded-xl text-xs font-bold hover:bg-accent transition-all"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

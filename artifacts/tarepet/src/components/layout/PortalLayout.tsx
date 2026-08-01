@@ -38,6 +38,7 @@ const ROLE_NAV: Record<string, NavSection[]> = {
     { id: 'announcements',  label: 'Announcements',     icon: Megaphone },
     { id: 'calendar',       label: 'School Calendar',   icon: Calendar },
     { id: 'reports',        label: 'Reports',           icon: BarChart2 },
+    { id: 'profile',        label: 'My Profile',        icon: UserCheck },
     { id: 'settings',       label: 'Settings',          icon: Settings },
   ],
   TEACHER: [
