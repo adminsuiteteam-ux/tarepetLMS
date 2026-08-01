@@ -1173,7 +1173,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <h3 className="font-bold text-base text-foreground">{t('dashboard.upcomingEvents')}</h3>
                 <button onClick={() => setActiveSection('calendar')} className="text-xs font-semibold text-primary hover:underline flex items-center gap-1">
-                  View All <ChevronRight className="w-3.5 h-3.5" />
+                  {t('common.viewAll')} <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>
               <div className="space-y-3">
@@ -1521,7 +1521,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                     )}
                   </div>
                   <span className="mt-3 px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 uppercase tracking-wider">
-                    Status: {u.status || 'Active'}
+                    {t('common.status')} {u.status || 'Active'}
                   </span>
                 </div>
 
@@ -1696,7 +1696,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                     <tr>
                       <td colSpan={5} className="py-12 text-center text-muted-foreground">
                         <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                        <p className="text-xs">No {activeType.label.toLowerCase()} found.</p>
+                        <p className="text-xs">{t('userList.noUser')}{activeType.label.toLowerCase()} found.</p>
                       </td>
                     </tr>
                   )}
@@ -1873,7 +1873,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                   onClick={() => { setExamRepoFilter('all'); }}
                   className={`px-3.5 py-2 rounded-xl border transition-colors ${examRepoFilter === 'all' ? 'bg-primary text-white border-primary' : 'bg-card text-muted-foreground border-border hover:bg-muted/40'}`}
                 >
-                  All ({counts.total})
+                  {t('exams.allFilter')}{counts.total})
                 </button>
                 <button
                   onClick={() => { setExamRepoFilter('pending'); }}
@@ -1953,11 +1953,11 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                           <h3 className="font-serif font-bold text-xl text-foreground mb-1">{cls.label}</h3>
                           {cls.hasStreams ? (
                             <div className="flex gap-4 text-xs mt-2">
-                              <span className="text-muted-foreground">Science: <strong className={cls.accent}>{sciExams.length}</strong></span>
-                              <span className="text-muted-foreground">Art: <strong className={cls.accent}>{artExams.length}</strong></span>
+                              <span className="text-muted-foreground">{t('students.scienceLabel')}<strong className={cls.accent}>{sciExams.length}</strong></span>
+                              <span className="text-muted-foreground">{t('students.artLabel')}<strong className={cls.accent}>{artExams.length}</strong></span>
                             </div>
                           ) : (
-                            <p className="text-xs text-muted-foreground mt-2 font-medium">General Curriculum</p>
+                            <p className="text-xs text-muted-foreground mt-2 font-medium">{t('students.generalCurriculum')}</p>
                           )}
                           <div className={`flex items-center gap-1.5 text-xs font-bold mt-3 ${cls.accent}`}>
                             <span>{cls.hasStreams ? 'Select Stream' : 'View Assessments'}</span>
@@ -1974,7 +1974,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                         {/* Stream dropdown menu: Science or Art */}
                         {cls.hasStreams && openExamClassDropdown === cls.key && (
                           <div className="absolute left-0 right-0 mt-2 bg-card border border-border rounded-2xl shadow-2xl z-40 py-2">
-                            <p className="px-4 pt-1 pb-2 text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Choose Stream</p>
+                            <p className="px-4 pt-1 pb-2 text-[10px] uppercase font-bold text-muted-foreground tracking-wider">{t('students.chooseStream')}</p>
                             <button
                               onClick={() => { setSelectedExamClass(cls.key); setSelectedExamStream('Science'); setOpenExamClassDropdown(null); }}
                               className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-foreground hover:bg-primary/5 hover:text-primary transition-colors text-left"
@@ -2004,7 +2004,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
 
                 {/* Status Repositories Cards Box */}
                 <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
-                  <h3 className="font-serif font-bold text-lg text-foreground">Examination Repositories & Status</h3>
+                  <h3 className="font-serif font-bold text-lg text-foreground">{t('exams.examRepos')}</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                     <div onClick={() => setExamRepoFilter('pending')} className="p-4 rounded-xl border border-amber-200 bg-amber-500/5 cursor-pointer hover:border-amber-400 transition-all space-y-1">
                       <div className="flex items-center justify-between text-amber-700 font-bold text-xs">
@@ -2150,7 +2150,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
               {clsLabel} ({selectedExamStream})
             </button>
             <span className="text-muted-foreground">/</span>
-            <span className="text-foreground font-semibold">Available {selectedExamType === 'Test' ? 'C.A. Tests' : selectedExamType === 'Exam' ? 'Terminal Exams' : 'Assessments'}</span>
+            <span className="text-foreground font-semibold">{t('exams.available')}{selectedExamType === 'Test' ? 'C.A. Tests' : selectedExamType === 'Exam' ? 'Terminal Exams' : 'Assessments'}</span>
           </div>
 
           {/* Header */}
@@ -2217,7 +2217,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                   onClick={() => setShowSubjectsActionsDropdown(prev => !prev)}
                   className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors select-none"
                 >
-                  Actions
+                  {t('subjects.actions')}
                   <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${showSubjectsActionsDropdown ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                   </svg>
@@ -2275,11 +2275,11 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                       <h3 className="font-serif font-bold text-xl text-foreground mb-1">{cls.label}</h3>
                       {cls.hasStreams ? (
                         <div className="flex gap-4 text-xs mt-2">
-                          <span className="text-muted-foreground">Science: <strong className={cls.accent}>{sciCount}</strong></span>
-                          <span className="text-muted-foreground">Art: <strong className={cls.accent}>{artCount}</strong></span>
+                          <span className="text-muted-foreground">{t('students.scienceLabel')}<strong className={cls.accent}>{sciCount}</strong></span>
+                          <span className="text-muted-foreground">{t('students.artLabel')}<strong className={cls.accent}>{artCount}</strong></span>
                         </div>
                       ) : (
-                        <p className="text-xs text-muted-foreground mt-2 font-medium">General Curriculum</p>
+                        <p className="text-xs text-muted-foreground mt-2 font-medium">{t('students.generalCurriculum')}</p>
                       )}
                       <div className={`flex items-center gap-1.5 text-xs font-bold mt-3 ${cls.accent}`}>
                         <span>{cls.hasStreams ? 'Select Stream' : 'View Subjects'}</span>
@@ -2296,7 +2296,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                     {/* Stream dropdown for SS classes */}
                     {cls.hasStreams && openSubjectClassDropdown === cls.key && (
                       <div className="absolute left-0 right-0 mt-2 bg-card border border-border rounded-2xl shadow-2xl z-40 py-2">
-                        <p className="px-4 pt-1 pb-2 text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Choose stream</p>
+                        <p className="px-4 pt-1 pb-2 text-[10px] uppercase font-bold text-muted-foreground tracking-wider">{t('students.chooseStream')}</p>
                         <button
                           onClick={() => { setSelectedSubjectClass(cls.key); setSelectedSubjectStream('Science'); setOpenSubjectClassDropdown(null); }}
                           className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-foreground hover:bg-primary/5 hover:text-primary transition-colors text-left"
@@ -2364,7 +2364,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                 <div>
                   <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-lg font-mono">{sub.code}</span>
                   <h2 className="text-xl font-serif font-bold text-foreground mt-2">{sub.title}</h2>
-                  <p className="text-xs text-muted-foreground mt-1">Instructor: <span className="text-foreground font-semibold">{sub.teacher}</span> · Enrolled: <span className="text-foreground font-semibold">{sub.enrolled} Students</span></p>
+                  <p className="text-xs text-muted-foreground mt-1">{t('subjects.instructor')}<span className="text-foreground font-semibold">{sub.teacher}</span> · Enrolled: <span className="text-foreground font-semibold">{sub.enrolled} Students</span></p>
                 </div>
                 <button
                   onClick={() => setSelectedSubjectPreview(null)}
@@ -2381,7 +2381,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                 <h3 className="font-serif font-bold text-lg text-foreground flex items-center gap-2">
                   <ClipboardList className="w-5 h-5 text-primary" /> Scheme of Work (Term 2)
                 </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">Timeline layout of topics and objectives scheduled per week.</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{t('subjects.timelineDesc')}</p>
               </div>
 
               <div className="space-y-3">
@@ -2390,7 +2390,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                     <span className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 font-bold text-xs ${
                       idx < 5 ? 'bg-emerald-500/10 text-emerald-600' : 'bg-primary/10 text-primary'
                     }`}>
-                      Wk {item.week}
+                      {t('subjects.weekPrefix')}{item.week}
                     </span>
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -2441,7 +2441,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                   onClick={() => setShowSubjectsActionsDropdown(prev => !prev)}
                   className="flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors select-none"
                 >
-                  Actions
+                  {t('subjects.actions')}
                   <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${showSubjectsActionsDropdown ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                   </svg>
@@ -2484,7 +2484,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                 </div>
                 <h3 className="font-serif font-bold text-foreground text-base group-hover:text-primary transition-colors">{sub.title}</h3>
                 <div className="flex justify-between items-center pt-2 border-t border-border/50 text-xs w-full">
-                  <p className="text-muted-foreground">Instructor: <strong className="text-foreground">{sub.teacher}</strong></p>
+                  <p className="text-muted-foreground">{t('subjects.instructor')}<strong className="text-foreground">{sub.teacher}</strong></p>
                   <p className="text-muted-foreground"><strong className="text-foreground">{sub.enrolled}</strong> Enrolled</p>
                 </div>
               </button>
@@ -2507,7 +2507,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
           <p className="text-xs text-muted-foreground">{t('operations.subtitle')}</p>
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div className="p-3 border border-border rounded-xl bg-muted/10"><p className="font-bold text-foreground">{t('operations.currentTerm')}</p><p className="text-muted-foreground">Term 2 · 2025/2026</p></div>
-            <div className="p-3 border border-border rounded-xl bg-muted/10"><p className="font-bold text-foreground">Total Classrooms</p><p className="text-muted-foreground">12 Active Spaces</p></div>
+            <div className="p-3 border border-border rounded-xl bg-muted/10"><p className="font-bold text-foreground">{t('operations.totalClassrooms')}</p><p className="text-muted-foreground">12 Active Spaces</p></div>
           </div>
         </div>
       </div>
@@ -2516,7 +2516,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
     // 5. HOUSE POINTS
     if (activeSection === 'houses') return (
       <div className="space-y-5">
-        <h2 className="text-xl font-serif font-bold text-foreground">House System Management</h2>
+        <h2 className="text-xl font-serif font-bold text-foreground">{t('houseSystem.title')}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {MOCK_HOUSES.map((h, i) => (
             <div key={i} className="bg-card rounded-2xl border border-border p-5 shadow-sm flex items-center justify-between">
@@ -2536,16 +2536,16 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
     // 6. AUDIT LOGS
     if (activeSection === 'logs') return (
       <div className="space-y-5">
-        <h2 className="text-xl font-serif font-bold text-foreground">System Audit Logs</h2>
+        <h2 className="text-xl font-serif font-bold text-foreground">{t('auditLogs.title')}</h2>
         <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
           <table className="w-full text-xs text-left">
             <thead className="bg-muted/30 text-muted-foreground uppercase">
               <tr>
-                <th className="py-3 px-4">User</th>
-                <th className="py-3 px-4">Action</th>
-                <th className="py-3 px-4">Target</th>
+                <th className="py-3 px-4">{t('auditLogs.user')}</th>
+                <th className="py-3 px-4">{t('auditLogs.action')}</th>
+                <th className="py-3 px-4">{t('auditLogs.target')}</th>
                 <th className="py-3 px-4">IP</th>
-                <th className="py-3 px-4">Status</th>
+                <th className="py-3 px-4">{t('auditLogs.status')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -2569,8 +2569,8 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
       return (
         <div className="space-y-6">
           <div>
-            <h2 className="text-xl font-serif font-bold text-foreground">System Configuration & Settings</h2>
-            <p className="text-xs text-muted-foreground mt-1">Manage global school parameters, academic calendars, security rules, and system maintenance.</p>
+            <h2 className="text-xl font-serif font-bold text-foreground">{t('settings.title')}</h2>
+            <p className="text-xs text-muted-foreground mt-1">{t('settings.subtitle')}</p>
           </div>
 
           {/* Navigation Tabs */}
@@ -2602,28 +2602,28 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
           {/* Tab 1: General Info */}
           {settingsTab === 'general' && (
             <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-6">
-              <h3 className="font-serif font-bold text-base text-foreground">School Identity & Contact</h3>
+              <h3 className="font-serif font-bold text-base text-foreground">{t('settings.schoolIdentity')}</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">School Name</label>
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('settings.schoolName')}</label>
                   <input type="text" defaultValue="Tarepet Montessori School" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">School Motto</label>
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('settings.schoolMotto')}</label>
                   <input type="text" defaultValue="Excellence Through Observation & Character" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Official Contact Email</label>
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('settings.officialEmail')}</label>
                   <input type="email" defaultValue="info@tarepet.edu.ng" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Portal System Address</label>
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('settings.portalAddress')}</label>
                   <input type="text" defaultValue="https://portal.tarepet.edu.ng" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
                 </div>
               </div>
               <div className="pt-2 flex justify-end">
                 <button onClick={() => alert('General settings updated successfully!')} className="bg-primary text-white text-xs font-bold px-5 py-2.5 rounded-xl hover:bg-primary/90 transition-colors">
-                  Save General Info
+                  {t('settings.saveGeneral')}
                 </button>
               </div>
             </div>
@@ -2632,10 +2632,10 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
           {/* Tab 2: Academic & Terms */}
           {settingsTab === 'academic' && (
             <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-6">
-              <h3 className="font-serif font-bold text-base text-foreground">Current Academic Calendar & Grading</h3>
+              <h3 className="font-serif font-bold text-base text-foreground">{t('settings.currentCalendar')}</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Current Academic Session</label>
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('settings.currentSession')}</label>
                   <select defaultValue="2025/2026" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
                     <option value="2024/2025">2024/2025</option>
                     <option value="2025/2026">2025/2026 (Active)</option>
@@ -2643,30 +2643,30 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Current Term</label>
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('settings.currentTerm')}</label>
                   <select defaultValue="Term 2" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                    <option value="Term 1">First Term</option>
-                    <option value="Term 2">Second Term (Active)</option>
-                    <option value="Term 3">Third Term</option>
+                    <option value="Term 1">{t('settings.firstTerm')}</option>
+                    <option value="Term 2">{t('settings.secondTermActive')}</option>
+                    <option value="Term 3">{t('settings.thirdTerm')}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Pass Mark Threshold</label>
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('settings.passMark')}</label>
                   <input type="text" defaultValue="50%" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
                 </div>
               </div>
               <div className="space-y-3 pt-2">
-                <h4 className="font-bold text-xs text-foreground uppercase tracking-wider text-[10px]">Grading Scale Parameters</h4>
+                <h4 className="font-bold text-xs text-foreground uppercase tracking-wider text-[10px]">{t('settings.gradingScale')}</h4>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                  <div className="p-3 border border-border rounded-xl bg-emerald-500/5 border-emerald-200"><p className="font-bold text-emerald-700">Grade A (Distinction)</p><p className="text-muted-foreground text-[10px]">75% - 100%</p></div>
-                  <div className="p-3 border border-border rounded-xl bg-blue-500/5 border-blue-200"><p className="font-bold text-blue-700">Grade B (Credit)</p><p className="text-muted-foreground text-[10px]">65% - 74%</p></div>
-                  <div className="p-3 border border-border rounded-xl bg-amber-500/5 border-amber-200"><p className="font-bold text-amber-700">Grade C (Pass)</p><p className="text-muted-foreground text-[10px]">50% - 64%</p></div>
-                  <div className="p-3 border border-border rounded-xl bg-rose-500/5 border-rose-200"><p className="font-bold text-rose-700">Grade F (Fail)</p><p className="text-muted-foreground text-[10px]">0% - 49%</p></div>
+                  <div className="p-3 border border-border rounded-xl bg-emerald-500/5 border-emerald-200"><p className="font-bold text-emerald-700">{t('settings.gradeA')}</p><p className="text-muted-foreground text-[10px]">75% - 100%</p></div>
+                  <div className="p-3 border border-border rounded-xl bg-blue-500/5 border-blue-200"><p className="font-bold text-blue-700">{t('settings.gradeB')}</p><p className="text-muted-foreground text-[10px]">65% - 74%</p></div>
+                  <div className="p-3 border border-border rounded-xl bg-amber-500/5 border-amber-200"><p className="font-bold text-amber-700">{t('settings.gradeC')}</p><p className="text-muted-foreground text-[10px]">50% - 64%</p></div>
+                  <div className="p-3 border border-border rounded-xl bg-rose-500/5 border-rose-200"><p className="font-bold text-rose-700">{t('settings.gradeF')}</p><p className="text-muted-foreground text-[10px]">0% - 49%</p></div>
                 </div>
               </div>
               <div className="pt-2 flex justify-end">
                 <button onClick={() => alert('Academic calendar settings updated!')} className="bg-primary text-white text-xs font-bold px-5 py-2.5 rounded-xl hover:bg-primary/90 transition-colors">
-                  Save Academic Settings
+                  {t('settings.saveAcademic')}
                 </button>
               </div>
             </div>
@@ -2679,24 +2679,24 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
               <div className="space-y-4 text-xs">
                 <div className="flex items-center justify-between p-4 border border-border rounded-xl bg-muted/10">
                   <div>
-                    <p className="font-bold text-foreground">JWT Token Refresh Rotation</p>
-                    <p className="text-muted-foreground text-[11px]">Rotates refresh tokens on every access token renewal to prevent replay attacks.</p>
+                    <p className="font-bold text-foreground">{t('settings.jwtRotation')}</p>
+                    <p className="text-muted-foreground text-[11px]">{t('settings.jwtDesc')}</p>
                   </div>
-                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-200">Enforced</span>
+                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-200">{t('settings.enforced')}</span>
                 </div>
 
                 <div className="flex items-center justify-between p-4 border border-border rounded-xl bg-muted/10">
                   <div>
-                    <p className="font-bold text-foreground">Administrator Two-Factor Authentication (2FA)</p>
-                    <p className="text-muted-foreground text-[11px]">Requires TOTP authenticator code for all admin login sessions.</p>
+                    <p className="font-bold text-foreground">{t('settings.admin2fa')}</p>
+                    <p className="text-muted-foreground text-[11px]">{t('settings.admin2faDesc')}</p>
                   </div>
-                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-200">Active</span>
+                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-200">{t('settings.active')}</span>
                 </div>
 
                 <div className="flex items-center justify-between p-4 border border-border rounded-xl bg-muted/10">
                   <div>
-                    <p className="font-bold text-foreground">Max Login Attempt Throttling</p>
-                    <p className="text-muted-foreground text-[11px]">Locks account after 5 consecutive failed login attempts for 15 minutes.</p>
+                    <p className="font-bold text-foreground">{t('settings.maxLoginThrottling')}</p>
+                    <p className="text-muted-foreground text-[11px]">{t('settings.maxLoginDesc')}</p>
                   </div>
                   <span className="text-xs font-bold px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">5 Attempts</span>
                 </div>
@@ -2707,24 +2707,24 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
           {/* Tab 4: Database & API */}
           {settingsTab === 'database' && (
             <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-6">
-              <h3 className="font-serif font-bold text-base text-foreground">Database Health & Infrastructure</h3>
+              <h3 className="font-serif font-bold text-base text-foreground">{t('settings.dbHealth')}</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                 <div className="p-4 border border-border rounded-xl bg-muted/10 space-y-1">
-                  <p className="text-muted-foreground font-semibold uppercase text-[10px]">Database Connection</p>
+                  <p className="text-muted-foreground font-semibold uppercase text-[10px]">{t('settings.dbConnection')}</p>
                   <p className="text-sm font-bold text-emerald-600 flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" /> PostgreSQL (Production Ready)
                   </p>
-                  <p className="text-[10px] text-muted-foreground mt-1">Host: db.internal.tarepet.edu.ng · Port 5432</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">{t('settings.dbHostInfo')}</p>
                 </div>
                 <div className="p-4 border border-border rounded-xl bg-muted/10 space-y-1">
-                  <p className="text-muted-foreground font-semibold uppercase text-[10px]">Automated Backups</p>
-                  <p className="text-sm font-bold text-foreground">Scheduled Daily at 02:00 AM UTC</p>
-                  <p className="text-[10px] text-muted-foreground mt-1">Retention Policy: 30 days stored on encrypted cloud S3</p>
+                  <p className="text-muted-foreground font-semibold uppercase text-[10px]">{t('settings.autoBackups')}</p>
+                  <p className="text-sm font-bold text-foreground">{t('settings.backupSchedule')}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">{t('settings.retentionPolicy')}</p>
                 </div>
               </div>
 
               <div className="pt-2 flex justify-between items-center border-t border-border">
-                <span className="text-xs text-muted-foreground font-mono">System API Version: v1.2.4-stable</span>
+                <span className="text-xs text-muted-foreground font-mono">{t('settings.apiVersion')}</span>
                 <button onClick={() => alert('Database backup initiated. Snapshot queued!')} className="bg-secondary text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-secondary/90 transition-colors flex items-center gap-1.5">
                   <Download className="w-4 h-4" /> Trigger Manual Backup
                 </button>
@@ -2764,10 +2764,10 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
             </p>
             <div className="pt-2 flex justify-center gap-3">
               <button className="px-4 py-2 text-xs font-bold bg-primary text-white rounded-xl shadow-xs hover:bg-primary/90 transition-all">
-                View All {title}
+                {t('common.viewAll')} {title}
               </button>
               <button className="px-4 py-2 text-xs font-bold bg-muted text-foreground rounded-xl border border-border hover:bg-accent transition-all">
-                Export Data
+                {t('common.exportData')}
               </button>
             </div>
           </div>
@@ -2812,9 +2812,9 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
               <div className="p-5 border-b border-border flex items-center justify-between bg-muted/20">
                 <div>
                   <h3 className="font-serif font-bold text-lg text-foreground flex items-center gap-2">
-                    <UserPlus className="w-5 h-5 text-primary" /> Register New Student
+                    <UserPlus className="w-5 h-5 text-primary" /> {t('wizard.registerTitle')}
                   </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">Step {wizardStep} of 5 — Progressive Enrollment Wizard</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{t('addStudentWizard.step')} {wizardStep} {t('addStudentWizard.of')} 5 — Progressive Enrollment Wizard</p>
                 </div>
                 <button onClick={() => setShowAddStudentModal(false)} className="p-2 rounded-xl text-muted-foreground hover:bg-muted/50 transition-colors">
                   <X className="w-5 h-5" />
@@ -2840,27 +2840,27 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                 {/* Slide 1: Basic Information */}
                 {wizardStep === 1 && (
                   <div className="space-y-4">
-                    <h4 className="text-sm font-bold text-foreground">Personal Identification</h4>
+                    <h4 className="text-sm font-bold text-foreground">{t('wizard.personalId')}</h4>
                     <div>
-                      <label className="block text-xs font-semibold mb-1 text-foreground">Full Student Name *</label>
+                      <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.fullName')}</label>
                       <input type="text" placeholder="e.g. Kelechi Amadi" value={newStudentForm.name}
                         onChange={e => setNewStudentForm({ ...newStudentForm, name: e.target.value })}
                         className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none" />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-semibold mb-1 text-foreground">Date of Birth (DOB) *</label>
+                        <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.dob')}</label>
                         <input type="date" value={newStudentForm.dob}
                           onChange={e => setNewStudentForm({ ...newStudentForm, dob: e.target.value })}
                           className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none" />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold mb-1 text-foreground">Gender *</label>
+                        <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.gender')}</label>
                         <select value={newStudentForm.gender}
                           onChange={e => setNewStudentForm({ ...newStudentForm, gender: e.target.value })}
                           className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none">
-                          <option value="Male">Male</option>
-                          <option value="Female">Female</option>
+                          <option value="Male">{t('wizard.male')}</option>
+                          <option value="Female">{t('wizard.female')}</option>
                         </select>
                       </div>
                     </div>
@@ -2870,9 +2870,9 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                 {/* Slide 2: Class & Stream Assignment */}
                 {wizardStep === 2 && (
                   <div className="space-y-4">
-                    <h4 className="text-sm font-bold text-foreground">Academic Level & Stream</h4>
+                    <h4 className="text-sm font-bold text-foreground">{t('wizard.academicLevel')}</h4>
                     <div>
-                      <label className="block text-xs font-semibold mb-1 text-foreground">Target Class *</label>
+                      <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.targetClass')}</label>
                       <select value={newStudentForm.grade}
                         onChange={e => {
                           const val = e.target.value;
@@ -2884,27 +2884,27 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                           });
                         }}
                         className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none">
-                        <option value="JSS1">JSS 1</option>
-                        <option value="JSS2">JSS 2</option>
-                        <option value="JSS3">JSS 3</option>
-                        <option value="SS1">SS 1</option>
-                        <option value="SS2">SS 2</option>
-                        <option value="SS3">SS 3</option>
+                        <option value="JSS1">{t('wizard.jss1')}</option>
+                        <option value="JSS2">{t('wizard.jss2')}</option>
+                        <option value="JSS3">{t('wizard.jss3')}</option>
+                        <option value="SS1">{t('wizard.ss1')}</option>
+                        <option value="SS2">{t('wizard.ss2')}</option>
+                        <option value="SS3">{t('wizard.ss3')}</option>
                       </select>
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold mb-1 text-foreground">Stream Assignment *</label>
+                      <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.streamAssignment')}</label>
                       {newStudentForm.grade.startsWith('JSS') ? (
                         <div className="p-3.5 rounded-xl bg-muted/40 border border-border text-xs text-muted-foreground font-medium">
-                          General Curriculum (No Art/Science stream distinction for JSS1–JSS3)
+                          {t('wizard.jssGeneralNote')}
                         </div>
                       ) : (
                         <select value={newStudentForm.stream}
                           onChange={e => setNewStudentForm({ ...newStudentForm, stream: e.target.value })}
                           className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none">
-                          <option value="Science">Science (SCI)</option>
-                          <option value="Art">Art (ART)</option>
+                          <option value="Science">{t('wizard.sciOption')}</option>
+                          <option value="Art">{t('wizard.artOption')}</option>
                         </select>
                       )}
                     </div>
@@ -2914,16 +2914,16 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                 {/* Slide 3: Origin, Location & Guardian Contacts */}
                 {wizardStep === 3 && (
                   <div className="space-y-3.5">
-                    <h4 className="text-sm font-bold text-foreground">Origin, Location & Emergency Contacts</h4>
+                    <h4 className="text-sm font-bold text-foreground">{t('wizard.originTitle')}</h4>
                     <div className="grid grid-cols-3 gap-3">
                       <div>
-                        <label className="block text-xs font-semibold mb-1 text-foreground">Country *</label>
+                        <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.country')}</label>
                         <input type="text" value={newStudentForm.country}
                           onChange={e => setNewStudentForm({ ...newStudentForm, country: e.target.value })}
                           className="w-full px-3 py-2 rounded-xl border border-border bg-background text-xs focus:ring-2 focus:ring-primary focus:outline-none" />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold mb-1 text-foreground">State of Origin *</label>
+                        <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.stateOfOrigin')}</label>
                         <input type="text" placeholder="e.g. Bayelsa" value={newStudentForm.stateOfOrigin}
                           onChange={e => setNewStudentForm({ ...newStudentForm, stateOfOrigin: e.target.value })}
                           className="w-full px-3 py-2 rounded-xl border border-border bg-background text-xs focus:ring-2 focus:ring-primary focus:outline-none" />
@@ -2936,20 +2936,20 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold mb-1 text-foreground">Residential Location / Address *</label>
+                      <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.address')}</label>
                       <input type="text" placeholder="e.g. Azikoro village, Yenagoa" value={newStudentForm.address}
                         onChange={e => setNewStudentForm({ ...newStudentForm, address: e.target.value })}
                         className="w-full px-3 py-2 rounded-xl border border-border bg-background text-xs focus:ring-2 focus:ring-primary focus:outline-none" />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs font-semibold mb-1 text-foreground">Parent/Guardian Name *</label>
+                        <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.parentName')}</label>
                         <input type="text" placeholder="e.g. Ayaebi Dimaro" value={newStudentForm.parentName}
                           onChange={e => setNewStudentForm({ ...newStudentForm, parentName: e.target.value })}
                           className="w-full px-3 py-2 rounded-xl border border-border bg-background text-xs focus:ring-2 focus:ring-primary focus:outline-none" />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold mb-1 text-foreground">Parent Phone Number *</label>
+                        <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.parentPhone')}</label>
                         <input type="tel" placeholder="e.g. 08031234567" value={newStudentForm.parentPhone}
                           onChange={e => setNewStudentForm({ ...newStudentForm, parentPhone: e.target.value })}
                           className="w-full px-3 py-2 rounded-xl border border-border bg-background text-xs focus:ring-2 focus:ring-primary focus:outline-none" />
@@ -2961,7 +2961,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                 {/* Slide 4: Student Profile Picture Local Upload */}
                 {wizardStep === 4 && (
                   <div className="space-y-4">
-                    <h4 className="text-sm font-bold text-foreground">Student Profile Picture</h4>
+                    <h4 className="text-sm font-bold text-foreground">{t('wizard.photoTitle')}</h4>
                     <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-2xl bg-muted/20 text-center">
                       <div className="w-24 h-24 rounded-2xl border-2 border-primary bg-primary/10 flex items-center justify-center overflow-hidden mb-3 shadow-inner">
                         {newStudentForm.profileImage ? (
@@ -2970,8 +2970,8 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                           <GraduationCap className="w-10 h-10 text-primary" />
                         )}
                       </div>
-                      <p className="text-xs font-bold text-foreground mb-1">Upload Student Photograph</p>
-                      <p className="text-[11px] text-muted-foreground mb-4">Select a photo file from your local computer or device</p>
+                      <p className="text-xs font-bold text-foreground mb-1">{t('wizard.uploadPhoto')}</p>
+                      <p className="text-[11px] text-muted-foreground mb-4">{t('wizard.selectPhotoHint')}</p>
 
                       <input
                         type="file"
@@ -3007,17 +3007,17 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                     <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-500/20">
                       <CheckCircle2 className="w-6 h-6" />
                     </div>
-                    <h4 className="text-base font-serif font-bold text-foreground">Ready to Enroll Student</h4>
+                    <h4 className="text-base font-serif font-bold text-foreground">{t('wizard.readyTitle')}</h4>
                     <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20 text-left space-y-2">
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Generated Portal Login Credentials</p>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">{t('wizard.genCredentials')}</p>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-foreground">Admission Number:</span>
+                        <span className="text-xs font-semibold text-foreground">{t('wizard.admissionNo')}</span>
                         <span className="text-sm font-mono font-bold text-primary bg-primary/10 px-3 py-1 rounded-lg border border-primary/30">
                           {generateAdmissionNumber(newStudentForm.grade, newStudentForm.stream)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between pt-1">
-                        <span className="text-xs font-semibold text-foreground">Generated Email:</span>
+                        <span className="text-xs font-semibold text-foreground">{t('wizard.genEmail')}</span>
                         <span className="text-xs font-bold text-foreground underline">
                           {(() => {
                             const parts = newStudentForm.name.trim().toLowerCase().split(/\s+/);
@@ -3028,14 +3028,14 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                         </span>
                       </div>
                       <div className="flex items-center justify-between pt-1">
-                        <span className="text-xs font-semibold text-foreground">Assigned Class:</span>
+                        <span className="text-xs font-semibold text-foreground">{t('wizard.assignedClass')}</span>
                         <span className="text-xs font-bold text-foreground">
                           {newStudentForm.grade} {newStudentForm.grade.startsWith('SS') ? `(${newStudentForm.stream})` : ''}
                         </span>
                       </div>
                     </div>
                     <p className="text-xs text-muted-foreground leading-relaxed">
-                      This Admission Number will serve as the student's primary credential to sign into the portal.
+                      {t('wizard.admissionNote')}
                     </p>
                   </div>
                 )}
@@ -3046,7 +3046,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                 {wizardStep > 1 ? (
                   <button onClick={() => setWizardStep(prev => prev - 1)}
                     className="px-4 py-2 rounded-xl border border-border text-xs font-semibold hover:bg-muted transition-colors">
-                    Back
+                    {t('wizard.back')}
                   </button>
                 ) : <div />}
 
@@ -3055,7 +3055,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                     disabled={wizardStep === 1 && !newStudentForm.name}
                     onClick={() => setWizardStep(prev => prev + 1)}
                     className="px-5 py-2 bg-primary text-primary-foreground text-xs font-bold rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity">
-                    Next Step
+                    {t('wizard.nextStep')}
                   </button>
                 ) : (
                   <button
