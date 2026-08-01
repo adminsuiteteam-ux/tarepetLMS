@@ -249,6 +249,25 @@ const MOCK_HOUSES = [
   { name: 'Red House (Falcon)', color: '#EF4444', motto: 'Passion & Determination', points: 450, students: 0, head: 'Mr. Bello' },
 ];
 
+const MOCK_CLASSES = [
+  { id: 'JSS1-GEN', code: 'JSS1', title: 'JSS 1 General (Alpha)', division: 'Junior', stream: 'General', formTeacher: 'Mrs. Okafor Chioma', staffId: 'TMS/TCH/2020/014', enrolled: 42, capacity: 45, room: 'Block A, Room 101', classMonitor: 'Chidi Nwosu', subjectsCount: 8 },
+  { id: 'JSS2-GEN', code: 'JSS2', title: 'JSS 2 General (Beta)', division: 'Junior', stream: 'General', formTeacher: 'Engr. Emeka David', staffId: 'TMS/TCH/2022/032', enrolled: 38, capacity: 45, room: 'Block A, Room 102', classMonitor: 'Kemebradikumo Danjuma', subjectsCount: 8 },
+  { id: 'JSS3-GEN', code: 'JSS3', title: 'JSS 3 General (Gamma)', division: 'Junior', stream: 'General', formTeacher: 'Ms. Adaobi Nwosu', staffId: 'TMS/TCH/2023/045', enrolled: 40, capacity: 45, room: 'Block A, Room 103', classMonitor: 'Tari Ebimobowei', subjectsCount: 9 },
+  { id: 'SS1-SCI', code: 'SS1', title: 'SS 1 Science Stream', division: 'Senior', stream: 'Science', formTeacher: 'Mr. Okonkwo Paul', staffId: 'TMS/TCH/2021/001', enrolled: 35, capacity: 40, room: 'Block B, Lab 201', classMonitor: 'Emmanuel Adebayo', subjectsCount: 9 },
+  { id: 'SS1-ART', code: 'SS1', title: 'SS 1 Art & Humanities Stream', division: 'Senior', stream: 'Art', formTeacher: 'Dr. Grace Bassey', staffId: 'TMS/TCH/2019/008', enrolled: 28, capacity: 40, room: 'Block B, Room 202', classMonitor: 'Fatima Abubakar', subjectsCount: 8 },
+  { id: 'SS1-COM', code: 'SS1', title: 'SS 1 Commercial Stream', division: 'Senior', stream: 'Commercial', formTeacher: 'Ms. Adaobi Nwosu', staffId: 'TMS/TCH/2023/045', enrolled: 30, capacity: 40, room: 'Block B, Room 203', classMonitor: 'Chuka Ibru', subjectsCount: 8 },
+  { id: 'SS2-SCI', code: 'SS2', title: 'SS 2 Science Stream', division: 'Senior', stream: 'Science', formTeacher: 'Engr. Emeka David', staffId: 'TMS/TCH/2022/032', enrolled: 32, capacity: 40, room: 'Block B, Lab 204', classMonitor: 'Buchi Nnamdi', subjectsCount: 9 },
+  { id: 'SS2-ART', code: 'SS2', title: 'SS 2 Art & Humanities Stream', division: 'Senior', stream: 'Art', formTeacher: 'Dr. Grace Bassey', staffId: 'TMS/TCH/2019/008', enrolled: 25, capacity: 40, room: 'Block B, Room 205', classMonitor: 'Aisha Bello', subjectsCount: 8 },
+  { id: 'SS3-SCI', code: 'SS3', title: 'SS 3 Science Stream (Exam Class)', division: 'Senior', stream: 'Science', formTeacher: 'Mr. James Eze', staffId: 'TMS/TCH/2018/003', enrolled: 30, capacity: 35, room: 'Block B, Lab 301', classMonitor: 'Zainab Mohammed', subjectsCount: 9 },
+  { id: 'SS3-ART', code: 'SS3', title: 'SS 3 Art Stream (Exam Class)', division: 'Senior', stream: 'Art', formTeacher: 'Dr. Grace Bassey', staffId: 'TMS/TCH/2019/008', enrolled: 22, capacity: 35, room: 'Block B, Room 302', classMonitor: 'David Danjuma', subjectsCount: 8 },
+];
+
+const MOCK_LEAVE_LOGS = [
+  { id: 1, applicant: 'Mrs. Okafor Chioma', role: 'Teacher', type: 'Medical Leave', duration: '2 Days (Aug 3 - Aug 4)', status: 'APPROVED', reason: 'Hospital appointment' },
+  { id: 2, applicant: 'Chidi Nwosu', role: 'Student (JSS1)', type: 'Casual Leave', duration: '1 Day (Aug 1)', status: 'PENDING', reason: 'Family engagement' },
+  { id: 3, applicant: 'Engr. Emeka David', role: 'Teacher', type: 'Official Duty', duration: '1 Day (Aug 5)', status: 'APPROVED', reason: 'WAEC Coordination Conference' },
+];
+
 const MOCK_AUDIT_LOGS = [
   { id: 1, user: 'admin@tarepet.edu.ng', action: 'LOGIN', target: 'Auth System', ip: '127.0.0.1', timestamp: '2026-07-24 07:00:12', status: 'SUCCESS' },
   { id: 2, user: 'admin@tarepet.edu.ng', action: 'BULK_IMPORT', target: 'System Users', ip: '127.0.0.1', timestamp: '2026-07-24 07:02:48', status: 'SUCCESS' },
@@ -1538,6 +1557,19 @@ export default function AdminDashboard() {
   const [showTeacherActionsDropdown, setShowTeacherActionsDropdown] = useState(false);
   const [showEditTeacherModal, setShowEditTeacherModal] = useState(false);
   const [editTeacherForm, setEditTeacherForm] = useState<any>(null);
+
+  // Classes management state
+  const [classFilterTab, setClassFilterTab] = useState<'ALL' | 'JUNIOR' | 'SCIENCE' | 'ART' | 'COMMERCIAL'>('ALL');
+  const [classSearch, setClassSearch] = useState('');
+  const [selectedClassRosterModal, setSelectedClassRosterModal] = useState<any>(null);
+
+  // Attendance management state
+  const [attendanceClassFilter, setAttendanceClassFilter] = useState('JSS1');
+  const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
+  const [attendanceMap, setAttendanceMap] = useState<Record<number, 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED'>>({
+    1: 'PRESENT', 2: 'PRESENT', 3: 'PRESENT', 4: 'ABSENT', 5: 'PRESENT', 6: 'LATE', 7: 'PRESENT', 8: 'PRESENT', 9: 'ABSENT', 10: 'PRESENT'
+  });
+  const [attendanceNoticeAlert, setAttendanceNoticeAlert] = useState(false);
 
   const syncAdminExams = () => {
     const stored = getStoredExams();
@@ -3946,7 +3978,243 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
         </div>
       );
     }
-    if (activeSection === 'classes') return renderModuleHeader('Classes', 'Manage junior & senior classes, assign form teachers, and monitor rosters.', School);
+    if (activeSection === 'classes') {
+      const filteredClasses = MOCK_CLASSES.filter(c => {
+        const q = classSearch.toLowerCase();
+        const matchSearch = !q || c.title.toLowerCase().includes(q) || c.formTeacher.toLowerCase().includes(q) || c.room.toLowerCase().includes(q) || c.classMonitor.toLowerCase().includes(q);
+
+        let matchFilter = true;
+        if (classFilterTab === 'JUNIOR') matchFilter = c.division === 'Junior';
+        else if (classFilterTab === 'SCIENCE') matchFilter = c.stream === 'Science';
+        else if (classFilterTab === 'ART') matchFilter = c.stream === 'Art';
+        else if (classFilterTab === 'COMMERCIAL') matchFilter = c.stream === 'Commercial';
+
+        return matchSearch && matchFilter;
+      });
+
+      const CLASS_FILTERS: { key: 'ALL' | 'JUNIOR' | 'SCIENCE' | 'ART' | 'COMMERCIAL'; label: string; icon: React.ElementType }[] = [
+        { key: 'ALL',        label: 'All Classes',        icon: School },
+        { key: 'JUNIOR',     label: 'Junior (JSS1 - JSS3)',icon: BookMarked },
+        { key: 'SCIENCE',    label: 'Senior Science',      icon: FlaskConical },
+        { key: 'ART',        label: 'Senior Art',          icon: Palette },
+        { key: 'COMMERCIAL', label: 'Senior Commercial',   icon: Briefcase },
+      ];
+
+      return (
+        <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
+          {/* Header Banner */}
+          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
+                <School className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="font-bold text-xl text-foreground mb-1">Classroom Roster & Stream Management</h2>
+                <p className="text-xs text-muted-foreground">Overview of all active classrooms, assigned Form Teachers, student capacities, and room allocations.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Metric Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total Classrooms</p>
+                <h3 className="text-2xl font-serif font-bold text-foreground mt-1">{MOCK_CLASSES.length}</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Active physical spaces</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
+                <School className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Junior Classes</p>
+                <h3 className="text-2xl font-serif font-bold text-emerald-600 mt-1">{MOCK_CLASSES.filter(c => c.division === 'Junior').length}</h3>
+                <p className="text-[11px] text-emerald-600 mt-0.5">JSS1 — JSS3 streams</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                <BookMarked className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Form Teachers</p>
+                <h3 className="text-2xl font-serif font-bold text-primary mt-1">{MOCK_CLASSES.filter(c => c.formTeacher).length}</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Assigned register holders</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                <GraduationCap className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Avg Utilization</p>
+                <h3 className="text-2xl font-serif font-bold text-amber-600 mt-1">
+                  {Math.round(MOCK_CLASSES.reduce((acc, curr) => acc + (curr.enrolled / curr.capacity), 0) / MOCK_CLASSES.length * 100)}%
+                </h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Capacity occupancy</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                <Users className="w-5 h-5" />
+              </div>
+            </div>
+          </div>
+
+          {/* Search & Filter Bar */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <input
+                type="text"
+                value={classSearch}
+                onChange={e => setClassSearch(e.target.value)}
+                placeholder="Search class by title, room, form teacher..."
+                className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-muted/20 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0">
+              {CLASS_FILTERS.map(f => {
+                const Icon = f.icon;
+                const isActive = classFilterTab === f.key;
+                return (
+                  <button
+                    key={f.key}
+                    onClick={() => setClassFilterTab(f.key)}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold border whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+                      isActive
+                        ? 'bg-primary text-white border-primary shadow-sm'
+                        : 'bg-card border-border text-muted-foreground hover:bg-muted/40'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    {f.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Class Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filteredClasses.map(cls => (
+              <div key={cls.id} className="bg-card rounded-2xl border border-border p-5 shadow-sm space-y-4 hover:border-primary/40 transition-colors">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <span className={`inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                      cls.division === 'Junior' ? 'bg-blue-500/10 text-blue-600 border-blue-200' : 'bg-emerald-500/10 text-emerald-600 border-emerald-200'
+                    }`}>
+                      {cls.division} Secondary ({cls.stream})
+                    </span>
+                    <h3 className="font-serif font-bold text-lg text-foreground mt-1">{cls.title}</h3>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-muted-foreground bg-muted px-2.5 py-1 rounded-lg">
+                    {cls.room}
+                  </span>
+                </div>
+
+                <div className="space-y-2 pt-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground font-medium">Form Teacher:</span>
+                    <span className="font-bold text-foreground flex items-center gap-1">
+                      <GraduationCap className="w-3.5 h-3.5 text-emerald-600" />
+                      {cls.formTeacher}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground font-medium">Class Captain:</span>
+                    <span className="font-semibold text-foreground">{cls.classMonitor}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground font-medium">Subjects Taught:</span>
+                    <span className="font-bold text-primary">{cls.subjectsCount} Subjects</span>
+                  </div>
+                </div>
+
+                {/* Capacity Progress */}
+                <div className="space-y-1 pt-2 border-t border-border/50">
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-muted-foreground font-medium">Enrolled Capacity</span>
+                    <span className="font-bold text-foreground">{cls.enrolled} / {cls.capacity} Students</span>
+                  </div>
+                  <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${
+                        (cls.enrolled / cls.capacity) > 0.9 ? 'bg-amber-500' : 'bg-emerald-500'
+                      }`}
+                      style={{ width: `${(cls.enrolled / cls.capacity) * 100}%` }}
+                    />
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setSelectedClassRosterModal(cls)}
+                  className="w-full py-2.5 rounded-xl border border-border bg-muted/20 text-xs font-bold text-foreground hover:bg-primary hover:text-white hover:border-primary transition-colors flex items-center justify-center gap-2"
+                >
+                  <Users className="w-3.5 h-3.5" /> View Class Roster & Schedule
+                </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Class Roster Modal */}
+          {selectedClassRosterModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+              <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col p-6 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-border">
+                  <div>
+                    <h3 className="font-bold text-lg text-foreground">{selectedClassRosterModal.title}</h3>
+                    <p className="text-xs text-muted-foreground">Form Teacher: <strong className="text-foreground">{selectedClassRosterModal.formTeacher}</strong> ({selectedClassRosterModal.staffId}) · {selectedClassRosterModal.room}</p>
+                  </div>
+                  <button onClick={() => setSelectedClassRosterModal(null)} className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto space-y-4">
+                  <div>
+                    <h4 className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-2">Class Roster (Enrolled Students)</h4>
+                    <div className="bg-muted/20 rounded-xl border border-border overflow-hidden">
+                      <table className="w-full text-xs text-left">
+                        <thead className="bg-muted/40 text-muted-foreground uppercase text-[10px]">
+                          <tr>
+                            <th className="py-2.5 px-3">Admission No</th>
+                            <th className="py-2.5 px-3">Student Name</th>
+                            <th className="py-2.5 px-3">Gender</th>
+                            <th className="py-2.5 px-3">House</th>
+                            <th className="py-2.5 px-3 text-right">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                          {MOCK_STUDENTS.filter(s => s.grade === selectedClassRosterModal.code).map(std => (
+                            <tr key={std.id} className="hover:bg-muted/30">
+                              <td className="py-2.5 px-3 font-mono font-bold text-primary">{std.admissionNo}</td>
+                              <td className="py-2.5 px-3 font-bold text-foreground">{std.name}</td>
+                              <td className="py-2.5 px-3">{std.gender}</td>
+                              <td className="py-2.5 px-3 text-muted-foreground">{std.house}</td>
+                              <td className="py-2.5 px-3 text-right font-bold text-emerald-600">Active</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex justify-end border-t border-border">
+                  <button onClick={() => setSelectedClassRosterModal(null)} className="px-5 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90">
+                    Close Roster
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
     if (activeSection === 'subjects') {
       const filteredSubjects = subjectsListState.filter(sub => {
         const q = subjectSearch.toLowerCase();
@@ -4155,7 +4423,227 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
       );
     }
     if (activeSection === 'results') return renderModuleHeader('Results', 'View student grades, approve examination results, and print terminal report cards.', FileText);
-    if (activeSection === 'attendance') return renderModuleHeader('Attendance', 'Track daily student and teacher presence, log leave requests, and view trends.', CalendarCheck);
+    if (activeSection === 'attendance') {
+      const isRecordPresent = (id: number) => (attendanceMap[id] || 'PRESENT') === 'PRESENT';
+      const isRecordAbsent  = (id: number) => attendanceMap[id] === 'ABSENT';
+      const isRecordLate    = (id: number) => attendanceMap[id] === 'LATE';
+
+      const presentCount = MOCK_STUDENTS.filter(s => isRecordPresent(s.id)).length;
+      const absentCount  = MOCK_STUDENTS.filter(s => isRecordAbsent(s.id)).length;
+      const lateCount    = MOCK_STUDENTS.filter(s => isRecordLate(s.id)).length;
+
+      return (
+        <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
+          {/* Header Banner */}
+          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+                <CalendarCheck className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="font-bold text-xl text-foreground mb-1">School-wide Daily Attendance & Presence Register</h2>
+                <p className="text-xs text-muted-foreground">Track morning roll call, monitor staff presence, approve leave requests, and send automated parent notices.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Metric Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Today's Attendance</p>
+                <h3 className="text-2xl font-serif font-bold text-emerald-600 mt-1">96.4%</h3>
+                <p className="text-[11px] text-emerald-600 mt-0.5">High presence rate</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Students Present</p>
+                <h3 className="text-2xl font-serif font-bold text-foreground mt-1">{presentCount}</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">On roll call list</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
+                <Users className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Absentees Today</p>
+                <h3 className="text-2xl font-serif font-bold text-rose-600 mt-1">{absentCount}</h3>
+                <p className="text-[11px] text-rose-600 mt-0.5">Requires parent notification</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-600 flex items-center justify-center">
+                <AlertCircle className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Staff Attendance</p>
+                <h3 className="text-2xl font-serif font-bold text-secondary mt-1">98.5%</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">1 Teacher on leave</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center">
+                <GraduationCap className="w-5 h-5" />
+              </div>
+            </div>
+          </div>
+
+          {/* Roll Call Controls */}
+          <div className="bg-card rounded-2xl border border-border p-5 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-border">
+              <div className="flex items-center gap-3 flex-wrap">
+                <div>
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Select Register Class</label>
+                  <select
+                    value={attendanceClassFilter}
+                    onChange={e => setAttendanceClassFilter(e.target.value)}
+                    className="border border-border rounded-xl px-3.5 py-2 text-xs font-bold bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="JSS1">JSS 1 General</option>
+                    <option value="JSS2">JSS 2 General</option>
+                    <option value="JSS3">JSS 3 General</option>
+                    <option value="SS1">SS 1 Senior</option>
+                    <option value="SS2">SS 2 Senior</option>
+                    <option value="SS3">SS 3 Senior</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Date</label>
+                  <input
+                    type="date"
+                    value={attendanceDate}
+                    onChange={e => setAttendanceDate(e.target.value)}
+                    className="border border-border rounded-xl px-3.5 py-2 text-xs font-bold bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={() => {
+                    const allP: Record<number, 'PRESENT'> = {};
+                    MOCK_STUDENTS.forEach(s => { allP[s.id] = 'PRESENT'; });
+                    setAttendanceMap(allP);
+                  }}
+                  className="px-3.5 py-2 border border-emerald-300 bg-emerald-500/10 text-emerald-600 rounded-xl text-xs font-bold hover:bg-emerald-500/20 transition-colors flex items-center gap-1.5"
+                >
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Mark All Present
+                </button>
+                <button
+                  onClick={() => {
+                    setAttendanceNoticeAlert(true);
+                    setTimeout(() => setAttendanceNoticeAlert(false), 4000);
+                  }}
+                  className="px-3.5 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors flex items-center gap-1.5 shadow-sm"
+                >
+                  <Send className="w-3.5 h-3.5" /> Notify Absentees' Parents
+                </button>
+              </div>
+            </div>
+
+            {attendanceNoticeAlert && (
+              <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                Automated SMS & Email attendance alerts dispatched to parents of absent students!
+              </div>
+            )}
+
+            {/* Daily Roll Call Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-muted/30 text-muted-foreground uppercase text-[10px] tracking-wider">
+                  <tr>
+                    <th className="py-3 px-4">Admission No</th>
+                    <th className="py-3 px-4">Student Name</th>
+                    <th className="py-3 px-4">Gender</th>
+                    <th className="py-3 px-4">Parent Phone</th>
+                    <th className="py-3 px-4 text-center">Status Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {MOCK_STUDENTS.filter(s => s.grade === attendanceClassFilter).map(std => {
+                    const status = attendanceMap[std.id] || 'PRESENT';
+                    return (
+                      <tr key={std.id} className="hover:bg-muted/20">
+                        <td className="py-3 px-4 font-mono font-bold text-primary">{std.admissionNo}</td>
+                        <td className="py-3 px-4 font-bold text-foreground">{std.name}</td>
+                        <td className="py-3 px-4 text-muted-foreground">{std.gender}</td>
+                        <td className="py-3 px-4 font-mono text-muted-foreground">{std.parentPhone}</td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center justify-center gap-1.5">
+                            {(['PRESENT', 'ABSENT', 'LATE', 'EXCUSED'] as const).map(st => (
+                              <button
+                                key={st}
+                                onClick={() => setAttendanceMap(prev => ({ ...prev, [std.id]: st }))}
+                                className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-colors ${
+                                  status === st
+                                    ? st === 'PRESENT' ? 'bg-emerald-600 text-white border-emerald-600' :
+                                      st === 'ABSENT' ? 'bg-rose-600 text-white border-rose-600' :
+                                      st === 'LATE' ? 'bg-amber-600 text-white border-amber-600' :
+                                      'bg-blue-600 text-white border-blue-600'
+                                    : 'bg-card border-border text-muted-foreground hover:bg-muted'
+                                }`}
+                              >
+                                {st}
+                              </button>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Leave Log Applications */}
+          <div className="bg-card rounded-2xl border border-border p-5 shadow-sm space-y-4">
+            <h3 className="font-serif font-bold text-base text-foreground flex items-center gap-2">
+              <ClipboardList className="w-4 h-4 text-primary" /> Official Leave Requests & Permissions
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-muted/30 text-muted-foreground uppercase text-[10px]">
+                  <tr>
+                    <th className="py-2.5 px-3">Applicant Name</th>
+                    <th className="py-2.5 px-3">Role / Class</th>
+                    <th className="py-2.5 px-3">Leave Type</th>
+                    <th className="py-2.5 px-3">Duration</th>
+                    <th className="py-2.5 px-3">Reason</th>
+                    <th className="py-2.5 px-3 text-right">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {MOCK_LEAVE_LOGS.map(log => (
+                    <tr key={log.id} className="hover:bg-muted/20">
+                      <td className="py-3 px-3 font-bold text-foreground">{log.applicant}</td>
+                      <td className="py-3 px-3 text-muted-foreground">{log.role}</td>
+                      <td className="py-3 px-3 font-semibold text-primary">{log.type}</td>
+                      <td className="py-3 px-3 text-muted-foreground">{log.duration}</td>
+                      <td className="py-3 px-3 text-muted-foreground">{log.reason}</td>
+                      <td className="py-3 px-3 text-right">
+                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                          log.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200' : 'bg-amber-500/10 text-amber-600 border-amber-200'
+                        }`}>
+                          {log.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      );
+    }
     if (activeSection === 'announcements') return renderModuleHeader('Announcements', 'Publish announcements to parents, teachers, and students.', Megaphone);
     if (activeSection === 'calendar') return renderModuleHeader('School Calendar', 'View academic session terms, exam schedules, and official school holidays.', Calendar);
     if (activeSection === 'reports') return renderModuleHeader('Reports', 'Generate comprehensive academic, attendance, teacher, and student analytical reports.', BarChart2);
