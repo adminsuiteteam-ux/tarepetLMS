@@ -207,22 +207,39 @@ const MOCK_TEACHERS: any[] = [
   },
 ];
 const MOCK_SUBJECTS: any[] = [
-  { id: 1, code: 'MTH-001', title: 'Junior Mathematics', grade: 'JSS1', stream: 'General', teacher: 'Mr. Okonkwo Paul', studentsCount: 42 },
-  { id: 2, code: 'ENG-001', title: 'English Language', grade: 'JSS1', stream: 'General', teacher: 'Mrs. Okafor Chioma', studentsCount: 42 },
-  { id: 3, code: 'BSC-001', title: 'Basic Science', grade: 'JSS1', stream: 'General', teacher: 'Mrs. Okafor Chioma', studentsCount: 42 },
-  { id: 4, code: 'BTC-001', title: 'Basic Technology', grade: 'JSS2', stream: 'General', teacher: 'Engr. Emeka David', studentsCount: 38 },
-  { id: 5, code: 'CIV-001', title: 'Civic Education', grade: 'JSS2', stream: 'General', teacher: 'Dr. Grace Bassey', studentsCount: 38 },
-  { id: 6, code: 'SOC-001', title: 'Social Studies', grade: 'JSS3', stream: 'General', teacher: 'Dr. Grace Bassey', studentsCount: 40 },
-  { id: 7, code: 'ICT-001', title: 'Computer Studies / ICT', grade: 'JSS3', stream: 'General', teacher: 'Engr. Emeka David', studentsCount: 40 },
-  { id: 11, code: 'MTH-101', title: 'Senior Mathematics', grade: 'SS1', stream: 'Science', teacher: 'Mr. Okonkwo Paul', studentsCount: 35 },
-  { id: 12, code: 'PHY-101', title: 'Physics I', grade: 'SS1', stream: 'Science', teacher: 'Engr. Emeka David', studentsCount: 35 },
-  { id: 13, code: 'CHM-101', title: 'Chemistry I', grade: 'SS1', stream: 'Science', teacher: 'Mrs. Okafor Chioma', studentsCount: 35 },
-  { id: 14, code: 'ENG-101', title: 'English Language', grade: 'SS1', stream: 'Art', teacher: 'Dr. Grace Bassey', studentsCount: 28 },
-  { id: 15, code: 'LIT-101', title: 'Literature in English', grade: 'SS1', stream: 'Art', teacher: 'Dr. Grace Bassey', studentsCount: 28 },
-  { id: 16, code: 'MTH-201', title: 'Senior Mathematics II', grade: 'SS2', stream: 'Science', teacher: 'Mr. Okonkwo Paul', studentsCount: 32 },
-  { id: 17, code: 'GOV-201', title: 'Government II', grade: 'SS2', stream: 'Art', teacher: 'Dr. Grace Bassey', studentsCount: 25 },
-  { id: 18, code: 'MTH-301', title: 'Senior Mathematics III', grade: 'SS3', stream: 'Science', teacher: 'Mr. Okonkwo Paul', studentsCount: 30 },
-  { id: 19, code: 'HIS-301', title: 'History III', grade: 'SS3', stream: 'Art', teacher: 'Dr. Grace Bassey', studentsCount: 22 },
+  // Junior Secondary (JSS1 - JSS3)
+  { id: 1, code: 'MTH-001', title: 'Junior Mathematics', grade: 'JSS1', stream: 'General', category: 'STEM', teacher: 'Mr. Okonkwo Paul', studentsCount: 42, enrolled: 42 },
+  { id: 2, code: 'ENG-001', title: 'English Language', grade: 'JSS1', stream: 'General', category: 'Languages', teacher: 'Mrs. Okafor Chioma', studentsCount: 42, enrolled: 42 },
+  { id: 3, code: 'BSC-001', title: 'Basic Science', grade: 'JSS1', stream: 'General', category: 'Science', teacher: 'Mrs. Okafor Chioma', studentsCount: 42, enrolled: 42 },
+  { id: 4, code: 'BTC-001', title: 'Basic Technology', grade: 'JSS2', stream: 'General', category: 'Technical', teacher: 'Engr. Emeka David', studentsCount: 38, enrolled: 38 },
+  { id: 5, code: 'CIV-001', title: 'Civic Education', grade: 'JSS2', stream: 'General', category: 'Art', teacher: 'Dr. Grace Bassey', studentsCount: 38, enrolled: 38 },
+  { id: 6, code: 'SOC-001', title: 'Social Studies', grade: 'JSS3', stream: 'General', category: 'Art', teacher: 'Dr. Grace Bassey', studentsCount: 40, enrolled: 40 },
+  { id: 7, code: 'ICT-001', title: 'Computer Studies / ICT', grade: 'JSS3', stream: 'General', category: 'Technical', teacher: 'Engr. Emeka David', studentsCount: 40, enrolled: 40 },
+  { id: 8, code: 'AGR-001', title: 'Agricultural Science', grade: 'JSS1', stream: 'General', category: 'Science', teacher: 'Mr. James Eze', studentsCount: 42, enrolled: 42 },
+  { id: 9, code: 'BUS-001', title: 'Business Studies', grade: 'JSS2', stream: 'General', category: 'Commercial', teacher: 'Ms. Adaobi Nwosu', studentsCount: 38, enrolled: 38 },
+  { id: 10, code: 'CCA-001', title: 'Cultural & Creative Arts', grade: 'JSS3', stream: 'General', category: 'Art', teacher: 'Ms. Adaobi Nwosu', studentsCount: 40, enrolled: 40 },
+
+  // Senior Secondary (SS1 - SS3) - Science Stream
+  { id: 11, code: 'MTH-101', title: 'Senior Mathematics', grade: 'SS1', stream: 'Science', category: 'STEM', teacher: 'Mr. Okonkwo Paul', studentsCount: 35, enrolled: 35 },
+  { id: 12, code: 'PHY-101', title: 'Physics I', grade: 'SS1', stream: 'Science', category: 'Science', teacher: 'Engr. Emeka David', studentsCount: 35, enrolled: 35 },
+  { id: 13, code: 'CHM-101', title: 'Chemistry I', grade: 'SS1', stream: 'Science', category: 'Science', teacher: 'Mrs. Okafor Chioma', studentsCount: 35, enrolled: 35 },
+  { id: 14, code: 'BIO-101', title: 'Biology I', grade: 'SS1', stream: 'Science', category: 'Science', teacher: 'Mr. James Eze', studentsCount: 35, enrolled: 35 },
+  { id: 15, code: 'MTH-201', title: 'Senior Mathematics II', grade: 'SS2', stream: 'Science', category: 'STEM', teacher: 'Mr. Okonkwo Paul', studentsCount: 32, enrolled: 32 },
+  { id: 16, code: 'PHY-201', title: 'Physics II', grade: 'SS2', stream: 'Science', category: 'Science', teacher: 'Engr. Emeka David', studentsCount: 32, enrolled: 32 },
+  { id: 17, code: 'MTH-301', title: 'Senior Mathematics III', grade: 'SS3', stream: 'Science', category: 'STEM', teacher: 'Mr. Okonkwo Paul', studentsCount: 30, enrolled: 30 },
+  { id: 18, code: 'FMTH-301', title: 'Further Mathematics', grade: 'SS3', stream: 'Science', category: 'STEM', teacher: 'Mr. Okonkwo Paul', studentsCount: 22, enrolled: 22 },
+
+  // Senior Secondary (SS1 - SS3) - Art Stream
+  { id: 19, code: 'ENG-101', title: 'Senior English Language', grade: 'SS1', stream: 'Art', category: 'Languages', teacher: 'Dr. Grace Bassey', studentsCount: 28, enrolled: 28 },
+  { id: 20, code: 'LIT-101', title: 'Literature in English', grade: 'SS1', stream: 'Art', category: 'Art', teacher: 'Dr. Grace Bassey', studentsCount: 28, enrolled: 28 },
+  { id: 21, code: 'GOV-201', title: 'Government II', grade: 'SS2', stream: 'Art', category: 'Art', teacher: 'Dr. Grace Bassey', studentsCount: 25, enrolled: 25 },
+  { id: 22, code: 'HIS-301', title: 'History III', grade: 'SS3', stream: 'Art', category: 'Art', teacher: 'Dr. Grace Bassey', studentsCount: 22, enrolled: 22 },
+  { id: 23, code: 'CRS-101', title: 'Christian Religious Studies', grade: 'SS1', stream: 'Art', category: 'Art', teacher: 'Dr. Grace Bassey', studentsCount: 28, enrolled: 28 },
+
+  // Senior Secondary (SS1 - SS3) - Commercial Stream
+  { id: 24, code: 'ECO-101', title: 'Economics I', grade: 'SS1', stream: 'Commercial', category: 'Commercial', teacher: 'Ms. Adaobi Nwosu', studentsCount: 30, enrolled: 30 },
+  { id: 25, code: 'COM-201', title: 'Commerce II', grade: 'SS2', stream: 'Commercial', category: 'Commercial', teacher: 'Ms. Adaobi Nwosu', studentsCount: 26, enrolled: 26 },
+  { id: 26, code: 'ACC-201', title: 'Financial Accounting', grade: 'SS2', stream: 'Commercial', category: 'Commercial', teacher: 'Ms. Adaobi Nwosu', studentsCount: 26, enrolled: 26 },
 ];
 
 const MOCK_HOUSES = [
@@ -1207,17 +1224,22 @@ const CreateSubjectModal = ({ onClose, onCreated, defaultClass, defaultStream }:
               <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('addSubject.classLevel')}</label>
               <select value={form.grade} onChange={e => setForm({ ...form, grade: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                <option value="SS1">{t('addSubject.ss1')}</option>
-                <option value="SS2">{t('addSubject.ss2')}</option>
-                <option value="SS3">{t('addSubject.ss3')}</option>
+                <option value="JSS1">JSS 1</option>
+                <option value="JSS2">JSS 2</option>
+                <option value="JSS3">JSS 3</option>
+                <option value="SS1">SS 1</option>
+                <option value="SS2">SS 2</option>
+                <option value="SS3">SS 3</option>
               </select>
             </div>
             <div>
               <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('addSubject.stream')}</label>
               <select value={form.stream} onChange={e => setForm({ ...form, stream: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                <option value="Science">{t('addSubject.science')}</option>
-                <option value="Art">{t('addSubject.art')}</option>
+                <option value="General">General (JSS / Core)</option>
+                <option value="Science">Science Stream</option>
+                <option value="Art">Art & Humanities Stream</option>
+                <option value="Commercial">Commercial Stream</option>
               </select>
             </div>
           </div>
@@ -1502,6 +1524,8 @@ export default function AdminDashboard() {
   const [showCreateSubjectModal, setShowCreateSubjectModal] = useState(false);
   const [subjectsListState, setSubjectsListState] = useState(MOCK_SUBJECTS);
   const [selectedSubjectPreview, setSelectedSubjectPreview] = useState<any>(null);
+  const [subjectFilterTab, setSubjectFilterTab] = useState<'ALL' | 'JUNIOR' | 'SENIOR' | 'SCIENCE' | 'ART' | 'COMMERCIAL'>('ALL');
+  const [subjectSearch, setSubjectSearch] = useState('');
   const [settingsTab, setSettingsTab] = useState<'general' | 'academic' | 'security' | 'database'>('general');
 
   // Teacher management state
@@ -3923,7 +3947,213 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
       );
     }
     if (activeSection === 'classes') return renderModuleHeader('Classes', 'Manage junior & senior classes, assign form teachers, and monitor rosters.', School);
-    if (activeSection === 'subjects') return renderModuleHeader('Subjects', 'Manage school curriculum subjects, assign teachers, and review syllabi.', BookOpen);
+    if (activeSection === 'subjects') {
+      const filteredSubjects = subjectsListState.filter(sub => {
+        const q = subjectSearch.toLowerCase();
+        const matchSearch = !q || sub.title.toLowerCase().includes(q) || sub.code.toLowerCase().includes(q) || sub.grade.toLowerCase().includes(q) || sub.teacher.toLowerCase().includes(q);
+        
+        let matchFilter = true;
+        if (subjectFilterTab === 'JUNIOR') {
+          matchFilter = sub.grade.startsWith('JSS');
+        } else if (subjectFilterTab === 'SENIOR') {
+          matchFilter = sub.grade.startsWith('SS');
+        } else if (subjectFilterTab === 'SCIENCE') {
+          matchFilter = sub.stream === 'Science' || sub.category === 'Science' || sub.category === 'STEM';
+        } else if (subjectFilterTab === 'ART') {
+          matchFilter = sub.stream === 'Art' || sub.category === 'Art' || sub.category === 'Languages';
+        } else if (subjectFilterTab === 'COMMERCIAL') {
+          matchFilter = sub.stream === 'Commercial' || sub.category === 'Commercial';
+        }
+
+        return matchSearch && matchFilter;
+      });
+
+      const SUBJECT_FILTERS: { key: 'ALL' | 'JUNIOR' | 'SENIOR' | 'SCIENCE' | 'ART' | 'COMMERCIAL'; label: string; icon: React.ElementType }[] = [
+        { key: 'ALL',        label: 'All Subjects',        icon: BookOpen },
+        { key: 'JUNIOR',     label: 'Junior (JSS1 - JSS3)',icon: BookMarked },
+        { key: 'SENIOR',     label: 'Senior (SS1 - SS3)',  icon: GraduationCap },
+        { key: 'SCIENCE',    label: 'Science Stream',      icon: FlaskConical },
+        { key: 'ART',        label: 'Art & Humanities',   icon: Palette },
+        { key: 'COMMERCIAL', label: 'Commercial Stream',   icon: Briefcase },
+      ];
+
+      return (
+        <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
+          {/* Header Banner */}
+          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <BookOpen className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="font-bold text-xl text-foreground mb-1">School Curriculum & Subjects Directory</h2>
+                <p className="text-xs text-muted-foreground">Comprehensive overview of all JSS & SS subjects, course codes, assigned educators, and student rosters.</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowCreateSubjectModal(true)}
+              className="bg-primary text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2 shadow-sm shrink-0"
+            >
+              <Plus className="w-4 h-4" /> Add New Subject
+            </button>
+          </div>
+
+          {/* Metric Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total Subjects</p>
+                <h3 className="text-2xl font-serif font-bold text-foreground mt-1">{subjectsListState.length}</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Active curriculum offerings</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                <BookOpen className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Junior Subjects</p>
+                <h3 className="text-2xl font-serif font-bold text-blue-600 mt-1">{subjectsListState.filter(s => s.grade.startsWith('JSS')).length}</h3>
+                <p className="text-[11px] text-blue-600 mt-0.5">JSS1 — JSS3 Classes</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
+                <BookMarked className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Senior Subjects</p>
+                <h3 className="text-2xl font-serif font-bold text-emerald-600 mt-1">{subjectsListState.filter(s => s.grade.startsWith('SS')).length}</h3>
+                <p className="text-[11px] text-emerald-600 mt-0.5">SS1 — SS3 Classes</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                <GraduationCap className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Science & STEM</p>
+                <h3 className="text-2xl font-serif font-bold text-secondary mt-1">{subjectsListState.filter(s => s.stream === 'Science' || s.category === 'Science' || s.category === 'STEM').length}</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Laboratory & Practical</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center">
+                <FlaskConical className="w-5 h-5" />
+              </div>
+            </div>
+          </div>
+
+          {/* Search & Filter Bar */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <input
+                type="text"
+                value={subjectSearch}
+                onChange={e => setSubjectSearch(e.target.value)}
+                placeholder="Search subject by title, code (e.g. MTH-101), grade, teacher..."
+                className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-muted/20 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0">
+              {SUBJECT_FILTERS.map(f => {
+                const Icon = f.icon;
+                const isActive = subjectFilterTab === f.key;
+                return (
+                  <button
+                    key={f.key}
+                    onClick={() => setSubjectFilterTab(f.key)}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold border whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+                      isActive
+                        ? 'bg-primary text-white border-primary shadow-sm'
+                        : 'bg-card border-border text-muted-foreground hover:bg-muted/40'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    {f.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Subjects Table */}
+          <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+            <table className="w-full text-xs text-left">
+              <thead className="bg-muted/30 text-muted-foreground uppercase text-[10px] tracking-wider">
+                <tr>
+                  <th className="py-3.5 px-4">Subject Code & Title</th>
+                  <th className="py-3.5 px-4">Grade Level</th>
+                  <th className="py-3.5 px-4">Stream / Category</th>
+                  <th className="py-3.5 px-4">Assigned Educator</th>
+                  <th className="py-3.5 px-4">Students Enrolled</th>
+                  <th className="py-3.5 px-4 text-right">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filteredSubjects.length > 0 ? (
+                  filteredSubjects.map(sub => (
+                    <tr
+                      key={sub.id}
+                      className="hover:bg-primary/5 transition-colors cursor-pointer"
+                      onClick={() => setSelectedSubjectPreview(sub)}
+                    >
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs font-mono font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-lg border border-primary/20">
+                            {sub.code}
+                          </span>
+                          <div>
+                            <p className="font-bold text-foreground text-sm">{sub.title}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span className={`inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                          sub.grade.startsWith('JSS') ? 'bg-blue-500/10 text-blue-600 border-blue-200' : 'bg-emerald-500/10 text-emerald-600 border-emerald-200'
+                        }`}>
+                          {sub.grade}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 font-medium text-foreground">
+                        <span className={`inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                          sub.stream === 'Science' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200' :
+                          sub.stream === 'Art' ? 'bg-purple-500/10 text-purple-600 border-purple-200' :
+                          sub.stream === 'Commercial' ? 'bg-amber-500/10 text-amber-600 border-amber-200' :
+                          'bg-muted text-muted-foreground border-border'
+                        }`}>
+                          {sub.stream || 'General'}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 font-semibold text-foreground">
+                        {sub.teacher}
+                      </td>
+                      <td className="py-3.5 px-4 font-bold text-foreground">
+                        {sub.studentsCount || sub.enrolled || 30} Students
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-200">
+                          Active Course
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center text-muted-foreground">
+                      <BookOpen className="w-8 h-8 mx-auto mb-2 opacity-30 text-primary" />
+                      <p className="text-xs font-medium">No subjects found matching your filter criteria.</p>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
     if (activeSection === 'results') return renderModuleHeader('Results', 'View student grades, approve examination results, and print terminal report cards.', FileText);
     if (activeSection === 'attendance') return renderModuleHeader('Attendance', 'Track daily student and teacher presence, log leave requests, and view trends.', CalendarCheck);
     if (activeSection === 'announcements') return renderModuleHeader('Announcements', 'Publish announcements to parents, teachers, and students.', Megaphone);
