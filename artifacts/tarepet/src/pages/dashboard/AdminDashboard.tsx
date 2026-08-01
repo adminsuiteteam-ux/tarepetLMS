@@ -3340,14 +3340,34 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
         );
       }
 
+      // Nigerian secondary school filter helpers
+      const teachesJSS = (t: any) => t.subjectsAssigned?.some((s: any) => s.grade?.startsWith('JSS'));
+      const teachesSS  = (t: any) => t.subjectsAssigned?.some((s: any) => s.grade?.startsWith('SS'));
+      const teachesScience = (t: any) => t.subjectsAssigned?.some((s: any) => s.grade?.toLowerCase().includes('science'));
+      const teachesArt = (t: any) => t.subjectsAssigned?.some((s: any) => s.grade?.toLowerCase().includes('art'));
+      const isFormTeacher = (t: any) => t.formTeacherOf && t.formTeacherOf !== 'None' && t.formTeacherOf !== '';
+
       const filteredTeachers = teachersList.filter(t => {
         const q = teacherSearch.toLowerCase();
-        const matchSearch = !q || t.name.toLowerCase().includes(q) || t.email.toLowerCase().includes(q) || t.staffId.toLowerCase().includes(q) || (t.specialization && t.specialization.toLowerCase().includes(q));
-        const matchDept = selectedDepartment === 'ALL' || t.department === selectedDepartment;
-        return matchSearch && matchDept;
+        const matchSearch = !q || t.name.toLowerCase().includes(q) || t.email.toLowerCase().includes(q) || t.staffId.toLowerCase().includes(q) || (t.specialization && t.specialization.toLowerCase().includes(q)) || (t.formTeacherOf && t.formTeacherOf.toLowerCase().includes(q));
+        let matchFilter = true;
+        if (selectedDepartment === 'JUNIOR') matchFilter = teachesJSS(t);
+        else if (selectedDepartment === 'SENIOR') matchFilter = teachesSS(t);
+        else if (selectedDepartment === 'FORM') matchFilter = isFormTeacher(t);
+        else if (selectedDepartment === 'SCIENCE') matchFilter = teachesScience(t);
+        else if (selectedDepartment === 'ART') matchFilter = teachesArt(t);
+        // 'ALL' → matchFilter stays true
+        return matchSearch && matchFilter;
       });
 
-      const DEPARTMENTS = ['ALL', 'Mathematics & STEM', 'Sciences', 'Humanities & Arts', 'Vocational & Technology', 'Languages'];
+      const TEACHER_FILTERS: { key: string; label: string; icon: string }[] = [
+        { key: 'ALL',     label: 'All Staff',           icon: '👥' },
+        { key: 'JUNIOR',  label: 'Junior Teachers',      icon: '📘' },
+        { key: 'SENIOR',  label: 'Senior Teachers',      icon: '📗' },
+        { key: 'FORM',    label: 'Form Teachers',         icon: '📋' },
+        { key: 'SCIENCE', label: 'Science Stream',        icon: '🔬' },
+        { key: 'ART',     label: 'Art Stream',            icon: '🎨' },
+      ];
 
       return (
         <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
@@ -3407,12 +3427,12 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
 
             <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">STEM & Science</p>
-                <h3 className="text-2xl font-serif font-bold text-secondary mt-1">{teachersList.filter(t => t.department === 'Mathematics & STEM' || t.department === 'Sciences').length}</h3>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Specialist faculty</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Senior Teachers</p>
+                <h3 className="text-2xl font-serif font-bold text-secondary mt-1">{teachersList.filter(t => t.subjectsAssigned?.some((s: any) => s.grade?.startsWith('SS'))).length}</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Teaching SS classes</p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center">
-                <FlaskConical className="w-5 h-5" />
+                <GraduationCap className="w-5 h-5" />
               </div>
             </div>
           </div>
@@ -3430,17 +3450,17 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
               />
             </div>
             <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0">
-              {DEPARTMENTS.map(dept => (
+              {TEACHER_FILTERS.map(f => (
                 <button
-                  key={dept}
-                  onClick={() => setSelectedDepartment(dept)}
-                  className={`px-3 py-2 rounded-xl text-xs font-bold border whitespace-nowrap transition-colors ${
-                    selectedDepartment === dept
-                      ? 'bg-primary text-white border-primary'
+                  key={f.key}
+                  onClick={() => setSelectedDepartment(f.key)}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold border whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+                    selectedDepartment === f.key
+                      ? 'bg-primary text-white border-primary shadow-sm'
                       : 'bg-card border-border text-muted-foreground hover:bg-muted/40'
                   }`}
                 >
-                  {dept === 'ALL' ? 'All Departments' : dept}
+                  <span>{f.icon}</span> {f.label}
                 </button>
               ))}
             </div>
