@@ -3360,13 +3360,13 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
         return matchSearch && matchFilter;
       });
 
-      const TEACHER_FILTERS: { key: string; label: string; icon: string }[] = [
-        { key: 'ALL',     label: 'All Staff',           icon: '👥' },
-        { key: 'JUNIOR',  label: 'Junior Teachers',      icon: '📘' },
-        { key: 'SENIOR',  label: 'Senior Teachers',      icon: '📗' },
-        { key: 'FORM',    label: 'Form Teachers',         icon: '📋' },
-        { key: 'SCIENCE', label: 'Science Stream',        icon: '🔬' },
-        { key: 'ART',     label: 'Art Stream',            icon: '🎨' },
+      const TEACHER_FILTERS: { key: string; label: string; icon: React.ElementType }[] = [
+        { key: 'ALL',     label: 'All Staff',       icon: Users },
+        { key: 'JUNIOR',  label: 'Junior Teachers',  icon: BookOpen },
+        { key: 'SENIOR',  label: 'Senior Teachers',  icon: GraduationCap },
+        { key: 'FORM',    label: 'Form Teachers',    icon: ClipboardList },
+        { key: 'SCIENCE', label: 'Science Stream',   icon: FlaskConical },
+        { key: 'ART',     label: 'Art Stream',       icon: Palette },
       ];
 
       return (
@@ -3459,8 +3459,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                       ? 'bg-primary text-white border-primary shadow-sm'
                       : 'bg-card border-border text-muted-foreground hover:bg-muted/40'
                   }`}
-                >
-                  <span>{f.icon}</span> {f.label}
+                >{(() => { const Icon = f.icon; return <Icon className="w-3.5 h-3.5" />; })()} {f.label}
                 </button>
               ))}
             </div>
