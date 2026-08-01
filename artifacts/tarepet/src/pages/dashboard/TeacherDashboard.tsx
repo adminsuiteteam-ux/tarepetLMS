@@ -386,7 +386,7 @@ export default function TeacherDashboard() {
               <h2 className="text-2xl sm:text-3xl font-serif font-bold">
                 {selectedExamClass === 'ALL' ? 'All Senior Classes' : selectedExamClass} {selectedExamStream === 'ALL' ? 'General' : selectedExamStream} CBT Exam Control
               </h2>
-              <p className="text-blue-100 text-xs mt-1 max-w-xl">Create MCQs, select target class & stream (SS1-SS3 Science/Arts/Commercial), monitor approvals, and activate live exams for students.</p>
+              <p className="text-blue-100 text-xs mt-1 max-w-xl">Create MCQs, select target class &amp; stream (SS1-SS3 Science/Arts), monitor approvals, and activate live exams for students.</p>
             </div>
             <Link href="/dashboard/cbt-builder">
               <button className="bg-white text-blue-700 hover:bg-blue-50 font-bold px-6 py-3 rounded-xl text-sm transition-all shadow-lg whitespace-nowrap">
@@ -422,7 +422,7 @@ export default function TeacherDashboard() {
 
               {/* Stream Tabs */}
               <div className="flex gap-1.5 bg-muted/40 p-1 rounded-xl border border-border">
-                {['ALL', 'Science', 'Arts', 'Commercial'].map(st => (
+                {['ALL', 'Science', 'Arts'].map(st => (
                   <button
                     key={st}
                     onClick={() => setSelectedExamStream(st)}

@@ -236,10 +236,6 @@ const MOCK_SUBJECTS: any[] = [
   { id: 22, code: 'HIS-301', title: 'History III', grade: 'SS3', stream: 'Art', category: 'Art', teacher: 'Dr. Grace Bassey', studentsCount: 22, enrolled: 22 },
   { id: 23, code: 'CRS-101', title: 'Christian Religious Studies', grade: 'SS1', stream: 'Art', category: 'Art', teacher: 'Dr. Grace Bassey', studentsCount: 28, enrolled: 28 },
 
-  // Senior Secondary (SS1 - SS3) - Commercial Stream
-  { id: 24, code: 'ECO-101', title: 'Economics I', grade: 'SS1', stream: 'Commercial', category: 'Commercial', teacher: 'Ms. Adaobi Nwosu', studentsCount: 30, enrolled: 30 },
-  { id: 25, code: 'COM-201', title: 'Commerce II', grade: 'SS2', stream: 'Commercial', category: 'Commercial', teacher: 'Ms. Adaobi Nwosu', studentsCount: 26, enrolled: 26 },
-  { id: 26, code: 'ACC-201', title: 'Financial Accounting', grade: 'SS2', stream: 'Commercial', category: 'Commercial', teacher: 'Ms. Adaobi Nwosu', studentsCount: 26, enrolled: 26 },
 ];
 
 const MOCK_HOUSES = [
@@ -255,7 +251,7 @@ const MOCK_CLASSES = [
   { id: 'JSS3-GEN', code: 'JSS3', title: 'JSS 3 General (Gamma)', division: 'Junior', stream: 'General', formTeacher: 'Ms. Adaobi Nwosu', staffId: 'TMS/TCH/2023/045', enrolled: 40, capacity: 45, room: 'Block A, Room 103', classMonitor: 'Tari Ebimobowei', subjectsCount: 9 },
   { id: 'SS1-SCI', code: 'SS1', title: 'SS 1 Science Stream', division: 'Senior', stream: 'Science', formTeacher: 'Mr. Okonkwo Paul', staffId: 'TMS/TCH/2021/001', enrolled: 35, capacity: 40, room: 'Block B, Lab 201', classMonitor: 'Emmanuel Adebayo', subjectsCount: 9 },
   { id: 'SS1-ART', code: 'SS1', title: 'SS 1 Art & Humanities Stream', division: 'Senior', stream: 'Art', formTeacher: 'Dr. Grace Bassey', staffId: 'TMS/TCH/2019/008', enrolled: 28, capacity: 40, room: 'Block B, Room 202', classMonitor: 'Fatima Abubakar', subjectsCount: 8 },
-  { id: 'SS1-COM', code: 'SS1', title: 'SS 1 Commercial Stream', division: 'Senior', stream: 'Commercial', formTeacher: 'Ms. Adaobi Nwosu', staffId: 'TMS/TCH/2023/045', enrolled: 30, capacity: 40, room: 'Block B, Room 203', classMonitor: 'Chuka Ibru', subjectsCount: 8 },
+
   { id: 'SS2-SCI', code: 'SS2', title: 'SS 2 Science Stream', division: 'Senior', stream: 'Science', formTeacher: 'Engr. Emeka David', staffId: 'TMS/TCH/2022/032', enrolled: 32, capacity: 40, room: 'Block B, Lab 204', classMonitor: 'Buchi Nnamdi', subjectsCount: 9 },
   { id: 'SS2-ART', code: 'SS2', title: 'SS 2 Art & Humanities Stream', division: 'Senior', stream: 'Art', formTeacher: 'Dr. Grace Bassey', staffId: 'TMS/TCH/2019/008', enrolled: 25, capacity: 40, room: 'Block B, Room 205', classMonitor: 'Aisha Bello', subjectsCount: 8 },
   { id: 'SS3-SCI', code: 'SS3', title: 'SS 3 Science Stream (Exam Class)', division: 'Senior', stream: 'Science', formTeacher: 'Mr. James Eze', staffId: 'TMS/TCH/2018/003', enrolled: 30, capacity: 35, room: 'Block B, Lab 301', classMonitor: 'Zainab Mohammed', subjectsCount: 9 },
@@ -1586,7 +1582,6 @@ const CreateSubjectModal = ({ onClose, onCreated, defaultClass, defaultStream }:
                 <option value="General">General (JSS / Core)</option>
                 <option value="Science">Science Stream</option>
                 <option value="Art">Art & Humanities Stream</option>
-                <option value="Commercial">Commercial Stream</option>
               </select>
             </div>
           </div>
@@ -1871,7 +1866,7 @@ export default function AdminDashboard() {
   const [showCreateSubjectModal, setShowCreateSubjectModal] = useState(false);
   const [subjectsListState, setSubjectsListState] = useState(MOCK_SUBJECTS);
   const [selectedSubjectPreview, setSelectedSubjectPreview] = useState<any>(null);
-  const [subjectFilterTab, setSubjectFilterTab] = useState<'ALL' | 'JUNIOR' | 'SENIOR' | 'SCIENCE' | 'ART' | 'COMMERCIAL'>('ALL');
+  const [subjectFilterTab, setSubjectFilterTab] = useState<'ALL' | 'JUNIOR' | 'SENIOR' | 'SCIENCE' | 'ART'>('ALL');
   const [subjectSearch, setSubjectSearch] = useState('');
   const [settingsTab, setSettingsTab] = useState<'general' | 'academic' | 'security' | 'database'>('general');
 
@@ -1887,7 +1882,7 @@ export default function AdminDashboard() {
   const [editTeacherForm, setEditTeacherForm] = useState<any>(null);
 
   // Classes management state
-  const [classFilterTab, setClassFilterTab] = useState<'ALL' | 'JUNIOR' | 'SCIENCE' | 'ART' | 'COMMERCIAL'>('ALL');
+  const [classFilterTab, setClassFilterTab] = useState<'ALL' | 'JUNIOR' | 'SCIENCE' | 'ART'>('ALL');
   const [classSearch, setClassSearch] = useState('');
   const [selectedClassRosterModal, setSelectedClassRosterModal] = useState<any>(null);
 
@@ -4500,7 +4495,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Weekly Period Slots</p>
                 <h3 className="text-2xl font-serif font-bold text-primary mt-1">
-                  {Object.values(activeTimetable.schedule || {}).reduce((acc: number, curr: any) => acc + (Array.isArray(curr) ? curr.length : 0), 0)} Slots
+                  {Number(Object.values(activeTimetable.schedule || {}).reduce((acc: number, curr: any) => acc + (Array.isArray(curr) ? curr.length : 0), 0))} Slots
                 </h3>
                 <p className="text-[11px] text-muted-foreground mt-0.5">Across 5 academic days</p>
               </div>
@@ -4531,7 +4526,6 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                 { key: 'JSS3', label: 'JSS 3 General', badge: 'Junior' },
                 { key: 'SS1', label: 'SS 1 Science', badge: 'Science' },
                 { key: 'SS1-ART', label: 'SS 1 Art', badge: 'Art' },
-                { key: 'SS1-COM', label: 'SS 1 Commercial', badge: 'Commercial' },
                 { key: 'SS2', label: 'SS 2 Science', badge: 'Science' },
                 { key: 'SS2-ART', label: 'SS 2 Art', badge: 'Art' },
                 { key: 'SS3', label: 'SS 3 Science', badge: 'Science' },
@@ -4927,20 +4921,17 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
           matchFilter = sub.stream === 'Science' || sub.category === 'Science' || sub.category === 'STEM';
         } else if (subjectFilterTab === 'ART') {
           matchFilter = sub.stream === 'Art' || sub.category === 'Art' || sub.category === 'Languages';
-        } else if (subjectFilterTab === 'COMMERCIAL') {
-          matchFilter = sub.stream === 'Commercial' || sub.category === 'Commercial';
         }
 
         return matchSearch && matchFilter;
       });
 
-      const SUBJECT_FILTERS: { key: 'ALL' | 'JUNIOR' | 'SENIOR' | 'SCIENCE' | 'ART' | 'COMMERCIAL'; label: string; icon: React.ElementType }[] = [
-        { key: 'ALL',        label: 'All Subjects',        icon: BookOpen },
-        { key: 'JUNIOR',     label: 'Junior (JSS1 - JSS3)',icon: BookMarked },
-        { key: 'SENIOR',     label: 'Senior (SS1 - SS3)',  icon: GraduationCap },
-        { key: 'SCIENCE',    label: 'Science Stream',      icon: FlaskConical },
-        { key: 'ART',        label: 'Art & Humanities',   icon: Palette },
-        { key: 'COMMERCIAL', label: 'Commercial Stream',   icon: Briefcase },
+      const SUBJECT_FILTERS: { key: 'ALL' | 'JUNIOR' | 'SENIOR' | 'SCIENCE' | 'ART'; label: string; icon: React.ElementType }[] = [
+        { key: 'ALL',     label: 'All Subjects',        icon: BookOpen },
+        { key: 'JUNIOR',  label: 'Junior (JSS1 - JSS3)',icon: BookMarked },
+        { key: 'SENIOR',  label: 'Senior (SS1 - SS3)',  icon: GraduationCap },
+        { key: 'SCIENCE', label: 'Science Stream',      icon: FlaskConical },
+        { key: 'ART',     label: 'Art & Humanities',    icon: Palette },
       ];
 
       return (
@@ -5087,7 +5078,6 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                         <span className={`inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
                           sub.stream === 'Science' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200' :
                           sub.stream === 'Art' ? 'bg-purple-500/10 text-purple-600 border-purple-200' :
-                          sub.stream === 'Commercial' ? 'bg-amber-500/10 text-amber-600 border-amber-200' :
                           'bg-muted text-muted-foreground border-border'
                         }`}>
                           {sub.stream || 'General'}
@@ -5328,7 +5318,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                     <option value="General">General Stream (JSS)</option>
                     <option value="Science">Science Stream (SS)</option>
                     <option value="Art">Art & Humanities Stream (SS)</option>
-                    <option value="Commercial">Commercial Stream (SS)</option>
+
                   </select>
                 </div>
               </div>

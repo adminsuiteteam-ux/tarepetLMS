@@ -94,12 +94,8 @@ export const SENIOR_COURSES = [
   { id: 12, code: 'HIS-101', name: 'History', stream: 'Arts', category: 'Humanities' },
   { id: 13, code: 'CIV-101', name: 'Civic Education', stream: 'Arts', category: 'Humanities' },
 
-  // Commercial Stream
-  { id: 14, code: 'ACC-101', name: 'Financial Accounting', stream: 'Commercial', category: 'Business' },
-  { id: 15, code: 'ECO-101', name: 'Economics', stream: 'Commercial', category: 'Business' },
-  { id: 16, code: 'COM-101', name: 'Commerce', stream: 'Commercial', category: 'Business' },
-  { id: 17, code: 'OFF-101', name: 'Office Practice', stream: 'Commercial', category: 'Business' },
 ];
+
 
 export const ALL_COURSES = [...JUNIOR_COURSES, ...SENIOR_COURSES];
 
