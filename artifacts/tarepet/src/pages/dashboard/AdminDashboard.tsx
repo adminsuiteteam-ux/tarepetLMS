@@ -10,7 +10,8 @@ import {
   Plus, FileText, Download, Upload, Search,
   Activity, DollarSign, CreditCard,
   AlertCircle, BarChart2, Settings,
-  ChevronLeft, ChevronDown, RefreshCw, Lock, Clock, X,
+  ChevronLeft, ChevronDown, RefreshCw, Lock, Clock, X, MoreVertical,
+  UserCheck, Pencil, Trash2,
   ClipboardList, Printer, QrCode,
   ArrowUpRight, ArrowDownRight, Building2,
   Mail, Phone, MapPin, Calendar, Shield, GraduationCap, Award,
@@ -433,6 +434,99 @@ const TeacherIDCardModal = ({ teacher, onClose }: { teacher: any; onClose: () =>
             </button>
           </div>
         </div>
+      </div>
+    </div>
+  );
+};
+
+const EditTeacherModal = ({ teacher, onClose, onSave }: { teacher: any; onClose: () => void; onSave: (updated: any) => void }) => {
+  const [form, setForm] = useState({ ...teacher });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(form);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in zoom-in duration-150">
+      <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-serif font-bold text-xl text-foreground">Edit Teacher Profile</h3>
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+          <div>
+            <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Full Name & Title</label>
+            <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required
+              className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Staff ID</label>
+              <input type="text" value={form.staffId} onChange={e => setForm({ ...form, staffId: e.target.value })} required
+                className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-mono" />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Department</label>
+              <select value={form.department} onChange={e => setForm({ ...form, department: e.target.value })}
+                className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
+                <option value="Mathematics & STEM">Mathematics & STEM</option>
+                <option value="Sciences">Sciences</option>
+                <option value="Humanities & Arts">Humanities & Arts</option>
+                <option value="Vocational & Technology">Vocational & Technology</option>
+                <option value="Languages">Languages</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Specialization</label>
+            <input type="text" value={form.specialization} onChange={e => setForm({ ...form, specialization: e.target.value })}
+              className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+          </div>
+          <div>
+            <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Qualifications</label>
+            <input type="text" value={form.qualification} onChange={e => setForm({ ...form, qualification: e.target.value })}
+              className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Email Address</label>
+              <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required
+                className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Phone Number</label>
+              <input type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })}
+                className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Form Teacher Duty</label>
+              <input type="text" value={form.formTeacherOf || ''} onChange={e => setForm({ ...form, formTeacherOf: e.target.value })} placeholder="e.g. SS1 Science"
+                className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Status</label>
+              <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}
+                className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
+                <option value="Active">Active</option>
+                <option value="On Leave">On Leave</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex gap-3 pt-3">
+            <button type="submit" className="flex-1 bg-primary text-white py-2.5 rounded-xl font-bold hover:bg-primary/90 transition-colors">
+              Save Changes
+            </button>
+            <button type="button" onClick={onClose} className="border border-border px-5 py-2.5 rounded-xl hover:bg-accent transition-colors">
+              Cancel
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );
@@ -1050,6 +1144,9 @@ export default function AdminDashboard() {
   const [selectedDepartment, setSelectedDepartment] = useState('ALL');
   const [showAddTeacherModal, setShowAddTeacherModal] = useState(false);
   const [showTeacherIDCardModal, setShowTeacherIDCardModal] = useState<any>(null);
+  const [showTeacherActionsDropdown, setShowTeacherActionsDropdown] = useState(false);
+  const [showEditTeacherModal, setShowEditTeacherModal] = useState(false);
+  const [editTeacherForm, setEditTeacherForm] = useState<any>(null);
 
   const syncAdminExams = () => {
     const stored = getStoredExams();
@@ -1088,6 +1185,7 @@ export default function AdminDashboard() {
     }
     if (activeSection !== 'teachers') {
       setSelectedTeacher(null);
+      setShowTeacherActionsDropdown(false);
     }
     if (activeSection !== 'courses') {
       setSelectedSubjectClass(null); setSelectedSubjectStream(null); setOpenSubjectClassDropdown(null);
@@ -3039,33 +3137,85 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                   <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
                   <h3 className="font-serif font-bold text-lg text-foreground">Teacher Profile & Academic Records</h3>
                 </div>
-                <div className="flex items-center gap-2 flex-wrap">
+                {/* Actions Dropdown */}
+                <div className="relative">
                   <button
-                    onClick={() => setShowTeacherIDCardModal(tchr)}
-                    className="px-3.5 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition-colors flex items-center gap-2 shadow-sm"
+                    onClick={() => setShowTeacherActionsDropdown(prev => !prev)}
+                    className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition-colors flex items-center gap-2 shadow-sm"
                   >
-                    <FaIdCard className="w-3.5 h-3.5" /> Staff ID Card
+                    <MoreVertical className="w-3.5 h-3.5" /> Actions
+                    <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showTeacherActionsDropdown ? 'rotate-180' : ''}`} />
                   </button>
-                  <button
-                    onClick={() => alert(`Sending email to ${tchr.email}...`)}
-                    className="px-3.5 py-2 border border-border rounded-xl text-xs font-bold hover:bg-accent transition-colors flex items-center gap-2"
-                  >
-                    <Mail className="w-3.5 h-3.5 text-primary" /> Send Email
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (confirm(`Change status for teacher ${tchr.name}?`)) {
-                        const newStatus = tchr.status === 'Active' ? 'On Leave' : 'Active';
-                        setTeachersList(prev => prev.map(t => t.id === tchr.id ? { ...t, status: newStatus } : t));
-                        setSelectedTeacher({ ...tchr, status: newStatus });
-                      }
-                    }}
-                    className={`px-3.5 py-2 rounded-xl text-xs font-bold border transition-colors flex items-center gap-1.5 ${
-                      tchr.status === 'Active' ? 'border-amber-300 text-amber-600 hover:bg-amber-50' : 'border-emerald-300 text-emerald-600 hover:bg-emerald-50'
-                    }`}
-                  >
-                    {tchr.status === 'Active' ? 'Set On Leave' : 'Set Active'}
-                  </button>
+                  {showTeacherActionsDropdown && (
+                    <>
+                      {/* Backdrop to close on outside click */}
+                      <div className="fixed inset-0 z-40" onClick={() => setShowTeacherActionsDropdown(false)} />
+                      <div className="absolute right-0 top-full mt-2 z-50 w-52 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+                        {/* Staff ID Card */}
+                        <button
+                          onClick={() => { setShowTeacherIDCardModal(tchr); setShowTeacherActionsDropdown(false); }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold text-foreground hover:bg-accent transition-colors text-left"
+                        >
+                          <span className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                            <FaIdCard className="w-3.5 h-3.5 text-emerald-600" />
+                          </span>
+                          Staff ID Card
+                        </button>
+                        {/* Send Email */}
+                        <button
+                          onClick={() => { window.location.href = `mailto:${tchr.email}`; setShowTeacherActionsDropdown(false); }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold text-foreground hover:bg-accent transition-colors text-left"
+                        >
+                          <span className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                            <Mail className="w-3.5 h-3.5 text-blue-600" />
+                          </span>
+                          Send Email
+                        </button>
+                        {/* Set On Leave / Set Active */}
+                        <button
+                          onClick={() => {
+                            const newStatus = tchr.status === 'Active' ? 'On Leave' : 'Active';
+                            setTeachersList(prev => prev.map(t => t.id === tchr.id ? { ...t, status: newStatus } : t));
+                            setSelectedTeacher({ ...tchr, status: newStatus });
+                            setShowTeacherActionsDropdown(false);
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold text-foreground hover:bg-accent transition-colors text-left"
+                        >
+                          <span className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${tchr.status === 'Active' ? 'bg-amber-500/10' : 'bg-emerald-500/10'}`}>
+                            <UserCheck className={`w-3.5 h-3.5 ${tchr.status === 'Active' ? 'text-amber-600' : 'text-emerald-600'}`} />
+                          </span>
+                          {tchr.status === 'Active' ? 'Set On Leave' : 'Set Active'}
+                        </button>
+                        <div className="border-t border-border mx-3 my-1" />
+                        {/* Edit */}
+                        <button
+                          onClick={() => { setEditTeacherForm({ ...tchr }); setShowEditTeacherModal(true); setShowTeacherActionsDropdown(false); }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold text-foreground hover:bg-accent transition-colors text-left"
+                        >
+                          <span className="w-7 h-7 rounded-lg bg-violet-500/10 flex items-center justify-center shrink-0">
+                            <Pencil className="w-3.5 h-3.5 text-violet-600" />
+                          </span>
+                          Edit Profile
+                        </button>
+                        {/* Delete */}
+                        <button
+                          onClick={() => {
+                            if (confirm(`Are you sure you want to permanently delete ${tchr.name}'s profile? This action cannot be undone.`)) {
+                              setTeachersList(prev => prev.filter(t => t.id !== tchr.id));
+                              setSelectedTeacher(null);
+                              setShowTeacherActionsDropdown(false);
+                            }
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors text-left"
+                        >
+                          <span className="w-7 h-7 rounded-lg bg-rose-500/10 flex items-center justify-center shrink-0">
+                            <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                          </span>
+                          Delete Teacher
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -3425,6 +3575,18 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
     <ProtectedRoute allowedRoles={['ADMIN']}>
       <PortalLayout title="Admin Control Center" activeSection={activeSection} onNavigate={setActiveSection}>
         {idCardUser && <StudentIDModal student={idCardUser} onClose={() => setIdCardUser(null)} />}
+        {showEditTeacherModal && editTeacherForm && (
+          <EditTeacherModal
+            teacher={editTeacherForm}
+            onClose={() => { setShowEditTeacherModal(false); setEditTeacherForm(null); }}
+            onSave={(updated) => {
+              setTeachersList(prev => prev.map(t => t.id === updated.id ? updated : t));
+              if (selectedTeacher?.id === updated.id) setSelectedTeacher(updated);
+              setShowEditTeacherModal(false);
+              setEditTeacherForm(null);
+            }}
+          />
+        )}
         {showTeacherIDCardModal && <TeacherIDCardModal teacher={showTeacherIDCardModal} onClose={() => setShowTeacherIDCardModal(null)} />}
         {showBulkImport && <BulkImportModal onClose={() => setShowBulkImport(false)} />}
         {awardHouse && <AwardPointsModal house={awardHouse} onClose={() => setAwardHouse(null)} />}
