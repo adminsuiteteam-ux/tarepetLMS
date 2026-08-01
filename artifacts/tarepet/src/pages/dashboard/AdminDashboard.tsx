@@ -2506,7 +2506,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
         <div className="bg-card rounded-2xl border border-border p-5 shadow-sm space-y-3">
           <p className="text-xs text-muted-foreground">{t('operations.subtitle')}</p>
           <div className="grid grid-cols-2 gap-3 text-xs">
-            <div className="p-3 border border-border rounded-xl bg-muted/10"><p className="font-bold text-foreground">{t('operations.currentTerm')}</p><p className="text-muted-foreground">Term 2 · 2025/2026</p></div>
+            <div className="p-3 border border-border rounded-xl bg-muted/10"><p className="font-bold text-foreground">{t('operations.currentTerm')}</p><p className="text-muted-foreground">{t('operations.term2')}</p></div>
             <div className="p-3 border border-border rounded-xl bg-muted/10"><p className="font-bold text-foreground">{t('operations.totalClassrooms')}</p><p className="text-muted-foreground">12 Active Spaces</p></div>
           </div>
         </div>
@@ -2675,7 +2675,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
           {/* Tab 3: Security Rules */}
           {settingsTab === 'security' && (
             <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-6">
-              <h3 className="font-serif font-bold text-base text-foreground">Authentication & Access Policies</h3>
+              <h3 className="font-serif font-bold text-base text-foreground">{t('settings.authPolicies')}</h3>
               <div className="space-y-4 text-xs">
                 <div className="flex items-center justify-between p-4 border border-border rounded-xl bg-muted/10">
                   <div>
@@ -2760,7 +2760,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
             </div>
             <h3 className="font-bold text-lg text-foreground">{title} Management System</h3>
             <p className="text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
-              This module provides operational control for {title.toLowerCase()}. View records, manage assignments, export custom reports, and synchronize real-time updates across the school LMS.
+              {`This module provides operational control for ${title.toLowerCase()}. View records, manage assignments, export custom reports, and synchronize real-time updates across the school LMS.`}
             </p>
             <div className="pt-2 flex justify-center gap-3">
               <button className="px-4 py-2 text-xs font-bold bg-primary text-white rounded-xl shadow-xs hover:bg-primary/90 transition-all">

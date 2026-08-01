@@ -281,6 +281,7 @@
     "title": "School Operations",
     "subtitle": "Manage term schedules, academic years, and school facilities.",
     "currentTerm": "Current Term",
+    "term2": "Term 2 · 2025/2026",
     "totalClassrooms": "Total Classrooms"
   },
   "houseSystem": {
