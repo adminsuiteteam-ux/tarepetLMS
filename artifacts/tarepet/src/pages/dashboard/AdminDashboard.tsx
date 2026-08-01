@@ -46,6 +46,165 @@ const MOCK_STUDENTS: any[] = [
   { id: 10, name: 'David Danjuma', admissionNo: 'TMS/SS3/ART/2749', email: 'david.danjuma@tarepet.com', grade: 'SS3', stream: 'Art', house: 'Purple House (Phoenix)', status: 'ACTIVE', dob: '2007-06-18', gender: 'Male', country: 'Nigeria', stateOfOrigin: 'Bayelsa', lga: 'Yenagoa', address: '11 Ovom Street', parentName: 'Engr. Danjuma', parentPhone: '08030001122' },
 ];
 const MOCK_SS_STUDENTS = MOCK_STUDENTS;
+const MOCK_TEACHERS: any[] = [
+  {
+    id: 101,
+    staffId: 'TMS/TCH/2021/001',
+    name: 'Mr. Okonkwo Paul',
+    email: 'paul.okonkwo@tarepet.edu.ng',
+    phone: '+234 803 456 7890',
+    gender: 'Male',
+    department: 'Mathematics & STEM',
+    specialization: 'Pure & Applied Mathematics, Montessori STEM',
+    qualification: 'B.Sc. Ed (Mathematics), M.Sc. (Statistics)',
+    status: 'Active',
+    joined: '2021-09-10',
+    formTeacherOf: 'SS1 Science',
+    subjectsAssigned: [
+      { code: 'MTH-001', name: 'Junior Mathematics', grade: 'JSS1' },
+      { code: 'MTH-101', name: 'Senior Mathematics', grade: 'SS1 Science' },
+      { code: 'MTH-201', name: 'Senior Mathematics II', grade: 'SS2 Science' },
+      { code: 'MTH-301', name: 'Senior Mathematics III', grade: 'SS3 Science' },
+    ],
+    classesCount: 4,
+    studentsCount: 149,
+    address: '15 Swali Road, Yenagoa, Bayelsa State',
+    dob: '1985-04-12',
+    cbtExamsCount: 12,
+    attendanceRate: '98%',
+    profileImage: '',
+  },
+  {
+    id: 102,
+    staffId: 'TMS/TCH/2020/014',
+    name: 'Mrs. Okafor Chioma',
+    email: 'chioma.okafor@tarepet.edu.ng',
+    phone: '+234 802 345 6789',
+    gender: 'Female',
+    department: 'Sciences',
+    specialization: 'Biochemistry & Practical Science',
+    qualification: 'B.Sc. Biochemistry, PGDE (Science Education)',
+    status: 'Active',
+    joined: '2020-01-15',
+    formTeacherOf: 'JSS1 General',
+    subjectsAssigned: [
+      { code: 'ENG-001', name: 'English Language', grade: 'JSS1' },
+      { code: 'BSC-001', name: 'Basic Science', grade: 'JSS1' },
+      { code: 'CHM-101', name: 'Chemistry I', grade: 'SS1 Science' },
+    ],
+    classesCount: 3,
+    studentsCount: 119,
+    address: '22 Isaac Boro Expressway, Yenagoa, Bayelsa State',
+    dob: '1988-09-23',
+    cbtExamsCount: 9,
+    attendanceRate: '99%',
+    profileImage: '',
+  },
+  {
+    id: 103,
+    staffId: 'TMS/TCH/2019/008',
+    name: 'Dr. Grace Bassey',
+    email: 'grace.bassey@tarepet.edu.ng',
+    phone: '+234 805 678 9012',
+    gender: 'Female',
+    department: 'Humanities & Arts',
+    specialization: 'Civic Education & Political Science',
+    qualification: 'Ph.D. Educational Administration, M.A. History',
+    status: 'Active',
+    joined: '2019-08-01',
+    formTeacherOf: 'SS2 Art',
+    subjectsAssigned: [
+      { code: 'CIV-001', name: 'Civic Education', grade: 'JSS2' },
+      { code: 'SOC-001', name: 'Social Studies', grade: 'JSS3' },
+      { code: 'ENG-101', name: 'English Language', grade: 'SS1 Art' },
+      { code: 'LIT-101', name: 'Literature in English', grade: 'SS1 Art' },
+      { code: 'GOV-201', name: 'Government II', grade: 'SS2 Art' },
+    ],
+    classesCount: 5,
+    studentsCount: 153,
+    address: '8 Ovom Street, Yenagoa, Bayelsa State',
+    dob: '1982-11-05',
+    cbtExamsCount: 15,
+    attendanceRate: '97%',
+    profileImage: '',
+  },
+  {
+    id: 104,
+    staffId: 'TMS/TCH/2022/032',
+    name: 'Engr. Emeka David',
+    email: 'emeka.david@tarepet.edu.ng',
+    phone: '+234 806 789 0123',
+    gender: 'Male',
+    department: 'Vocational & Technology',
+    specialization: 'Computer Science, Electrical Technology & Physics',
+    qualification: 'B.Eng. Computer Engineering, Certified Montessori Educator',
+    status: 'Active',
+    joined: '2022-03-20',
+    formTeacherOf: 'JSS2 General',
+    subjectsAssigned: [
+      { code: 'BTC-001', name: 'Basic Technology', grade: 'JSS2' },
+      { code: 'ICT-001', name: 'Computer Studies / ICT', grade: 'JSS3' },
+      { code: 'PHY-101', name: 'Physics I', grade: 'SS1 Science' },
+    ],
+    classesCount: 3,
+    studentsCount: 113,
+    address: '45 Mbiama Road, Yenagoa, Bayelsa State',
+    dob: '1990-06-18',
+    cbtExamsCount: 11,
+    attendanceRate: '100%',
+    profileImage: '',
+  },
+  {
+    id: 105,
+    staffId: 'TMS/TCH/2023/045',
+    name: 'Ms. Adaobi Nwosu',
+    email: 'adaobi.nwosu@tarepet.edu.ng',
+    phone: '+234 807 890 1234',
+    gender: 'Female',
+    department: 'Languages',
+    specialization: 'French & Modern Languages',
+    qualification: 'B.A. French Studies, DELF C1 Certified',
+    status: 'Active',
+    joined: '2023-01-10',
+    formTeacherOf: 'JSS3 General',
+    subjectsAssigned: [
+      { code: 'FRN-001', name: 'French Language', grade: 'JSS1' },
+      { code: 'FRN-002', name: 'Intermediate French', grade: 'JSS2' },
+    ],
+    classesCount: 2,
+    studentsCount: 80,
+    address: '12 Etegwe Close, Yenagoa, Bayelsa State',
+    dob: '1993-02-14',
+    cbtExamsCount: 6,
+    attendanceRate: '96%',
+    profileImage: '',
+  },
+  {
+    id: 106,
+    staffId: 'TMS/TCH/2018/003',
+    name: 'Mr. James Eze',
+    email: 'james.eze@tarepet.edu.ng',
+    phone: '+234 808 901 2345',
+    gender: 'Male',
+    department: 'Sciences',
+    specialization: 'Agricultural Science & Environmental Biology',
+    qualification: 'B.Agric. (Crop Science), M.Ed',
+    status: 'Active',
+    joined: '2018-09-01',
+    formTeacherOf: 'SS3 Science',
+    subjectsAssigned: [
+      { code: 'AGR-101', name: 'Agricultural Science I', grade: 'SS1 Science' },
+      { code: 'AGR-201', name: 'Agricultural Science II', grade: 'SS2 Science' },
+    ],
+    classesCount: 2,
+    studentsCount: 67,
+    address: '30 Azikoro Road, Yenagoa, Bayelsa State',
+    dob: '1984-08-30',
+    cbtExamsCount: 14,
+    attendanceRate: '98%',
+    profileImage: '',
+  },
+];
 const MOCK_SUBJECTS: any[] = [
   { id: 1, code: 'MTH-001', title: 'Junior Mathematics', grade: 'JSS1', stream: 'General', teacher: 'Mr. Okonkwo Paul', studentsCount: 42 },
   { id: 2, code: 'ENG-001', title: 'English Language', grade: 'JSS1', stream: 'General', teacher: 'Mrs. Okafor Chioma', studentsCount: 42 },
@@ -200,6 +359,76 @@ const StudentIDModal = ({ student, onClose }: { student: any; onClose: () => voi
               <Printer className="w-4 h-4" /> Print ID Card
             </button>
             <button className="flex-1 flex items-center justify-center gap-2 border border-border py-2.5 rounded-xl text-sm font-medium hover:bg-accent transition-colors">
+              <Download className="w-4 h-4" /> Download PDF
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const TeacherIDCardModal = ({ teacher, onClose }: { teacher: any; onClose: () => void }) => {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in zoom-in duration-200">
+      <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-lg">
+        <div className="p-6 border-b border-border flex items-center justify-between">
+          <h3 className="font-serif font-bold text-xl text-foreground flex items-center gap-2">
+            <FaIdCard className="w-5 h-5 text-emerald-600" /> Faculty & Staff ID Card
+          </h3>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-1">✕</button>
+        </div>
+        <div className="p-6">
+          <div className="border-4 border-emerald-600 rounded-2xl overflow-hidden shadow-xl bg-gradient-to-br from-emerald-500/10 via-background to-teal-500/10 mb-5">
+            <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-4 flex items-center justify-between text-white">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest opacity-90">Tarepet Montessori School</p>
+                <p className="text-[10px] opacity-80">Faculty & Academic Staff Identification</p>
+              </div>
+              <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30">
+                <GraduationCap className="w-6 h-6 text-white" />
+              </div>
+            </div>
+            <div className="p-5 flex gap-5 items-center">
+              <div className="w-24 h-28 rounded-xl bg-muted/60 border-2 border-emerald-500/30 flex items-center justify-center shrink-0 shadow-inner overflow-hidden">
+                {teacher.profileImage ? (
+                  <img src={teacher.profileImage} alt={teacher.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="text-center">
+                    <div className="w-14 h-14 bg-emerald-500/20 text-emerald-700 rounded-full flex items-center justify-center mx-auto text-2xl font-serif font-bold">
+                      {teacher.name[0]}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                  {teacher.department || 'Academic Staff'}
+                </span>
+                <h4 className="font-serif font-bold text-foreground text-lg leading-tight mt-1 truncate">{teacher.name}</h4>
+                <p className="text-xs text-muted-foreground font-medium mt-0.5 truncate">{teacher.specialization || 'Educator'}</p>
+                <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <span className="text-muted-foreground text-[10px]">Staff ID:</span>
+                    <p className="font-bold font-mono text-emerald-700">{teacher.staffId || 'TMS/TCH/001'}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground text-[10px]">Status:</span>
+                    <p className="font-bold text-foreground">{teacher.status || 'Active'}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="bg-muted/30 px-5 py-2 border-t border-border/50 flex justify-between items-center text-[10px] text-muted-foreground font-mono">
+              <span>ISSUED: 2026-01-10</span>
+              <span>EXPIRES: 2028-12-31</span>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <button onClick={() => window.print()} className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors shadow-sm">
+              <Printer className="w-4 h-4" /> Print Staff Card
+            </button>
+            <button onClick={() => alert('Downloading Staff ID PDF...')} className="flex-1 flex items-center justify-center gap-2 border border-border py-2.5 rounded-xl text-sm font-medium hover:bg-accent transition-colors">
               <Download className="w-4 h-4" /> Download PDF
             </button>
           </div>
@@ -814,6 +1043,14 @@ export default function AdminDashboard() {
   const [selectedSubjectPreview, setSelectedSubjectPreview] = useState<any>(null);
   const [settingsTab, setSettingsTab] = useState<'general' | 'academic' | 'security' | 'database'>('general');
 
+  // Teacher management state
+  const [teachersList, setTeachersList] = useState(MOCK_TEACHERS);
+  const [selectedTeacher, setSelectedTeacher] = useState<any>(null);
+  const [teacherSearch, setTeacherSearch] = useState('');
+  const [selectedDepartment, setSelectedDepartment] = useState('ALL');
+  const [showAddTeacherModal, setShowAddTeacherModal] = useState(false);
+  const [showTeacherIDCardModal, setShowTeacherIDCardModal] = useState<any>(null);
+
   const syncAdminExams = () => {
     const stored = getStoredExams();
     const mapped = stored.map(e => ({
@@ -848,6 +1085,9 @@ export default function AdminDashboard() {
     } else {
       setUserSubPage(null); setSelectedUser(null);
       setSelectedClass(null); setSelectedStream(null); setOpenClassDropdown(null);
+    }
+    if (activeSection !== 'teachers') {
+      setSelectedTeacher(null);
     }
     if (activeSection !== 'courses') {
       setSelectedSubjectClass(null); setSelectedSubjectStream(null); setOpenSubjectClassDropdown(null);
@@ -2775,7 +3015,401 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
       );
     };
 
-    if (activeSection === 'teachers') return renderModuleHeader('Teachers', 'View teachers, add faculty members, assign subject loads and track attendance.', GraduationCap);
+    if (activeSection === 'teachers') {
+      if (selectedTeacher) {
+        const tchr = selectedTeacher;
+        return (
+          <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
+            {/* Breadcrumb Navigation */}
+            <div className="flex items-center gap-2 text-sm flex-wrap">
+              <button
+                onClick={() => setSelectedTeacher(null)}
+                className="text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors font-medium"
+              >
+                <ChevronLeft className="w-4 h-4" /> Teachers Directory
+              </button>
+              <span className="text-muted-foreground">/</span>
+              <span className="text-foreground font-semibold">Teacher Profile: {tchr.name}</span>
+            </div>
+
+            {/* Profile Card Header */}
+            <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
+              <div className="flex items-center justify-between pb-4 border-b border-border flex-wrap gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
+                  <h3 className="font-serif font-bold text-lg text-foreground">Teacher Profile & Academic Records</h3>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    onClick={() => setShowTeacherIDCardModal(tchr)}
+                    className="px-3.5 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition-colors flex items-center gap-2 shadow-sm"
+                  >
+                    <FaIdCard className="w-3.5 h-3.5" /> Staff ID Card
+                  </button>
+                  <button
+                    onClick={() => alert(`Sending email to ${tchr.email}...`)}
+                    className="px-3.5 py-2 border border-border rounded-xl text-xs font-bold hover:bg-accent transition-colors flex items-center gap-2"
+                  >
+                    <Mail className="w-3.5 h-3.5 text-primary" /> Send Email
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (confirm(`Change status for teacher ${tchr.name}?`)) {
+                        const newStatus = tchr.status === 'Active' ? 'On Leave' : 'Active';
+                        setTeachersList(prev => prev.map(t => t.id === tchr.id ? { ...t, status: newStatus } : t));
+                        setSelectedTeacher({ ...tchr, status: newStatus });
+                      }
+                    }}
+                    className={`px-3.5 py-2 rounded-xl text-xs font-bold border transition-colors flex items-center gap-1.5 ${
+                      tchr.status === 'Active' ? 'border-amber-300 text-amber-600 hover:bg-amber-50' : 'border-emerald-300 text-emerald-600 hover:bg-emerald-50'
+                    }`}
+                  >
+                    {tchr.status === 'Active' ? 'Set On Leave' : 'Set Active'}
+                  </button>
+                </div>
+              </div>
+
+              {/* 3-Column Specification Layout */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start pt-2">
+                {/* Column 1: Teacher Photo & Badge */}
+                <div className="md:col-span-3 flex flex-col items-center">
+                  <div className="w-44 h-52 rounded-2xl border-2 border-emerald-500/30 shadow-md overflow-hidden bg-muted/20 flex items-center justify-center">
+                    {tchr.profileImage ? (
+                      <img src={tchr.profileImage} alt={tchr.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-emerald-500/10 to-teal-500/10 flex items-center justify-center text-4xl font-serif font-bold text-emerald-700">
+                        {tchr.name[0]}
+                      </div>
+                    )}
+                  </div>
+                  <span className={`mt-3 px-3.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${
+                    tchr.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+                  }`}>
+                    {tchr.status || 'Active'}
+                  </span>
+                  <p className="text-[11px] text-muted-foreground mt-2 font-medium">Faculty Member</p>
+                </div>
+
+                {/* Column 2: Personal & Credentials Specifications */}
+                <div className="md:col-span-4 space-y-3.5 text-xs leading-relaxed">
+                  <div>
+                    <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider">Staff ID Number</span>
+                    <strong className="text-foreground font-mono font-bold text-sm bg-emerald-500/10 text-emerald-700 px-2.5 py-0.5 rounded border border-emerald-500/20 inline-block mt-0.5">
+                      {tchr.staffId || 'TMS/TCH/001'}
+                    </strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider">Full Name & Title</span>
+                    <strong className="text-foreground font-bold text-base uppercase">{tchr.name}</strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider">Department</span>
+                    <strong className="text-foreground font-bold text-emerald-700">{tchr.department || 'Mathematics & STEM'}</strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider">Academic Specialization</span>
+                    <strong className="text-foreground font-bold">{tchr.specialization || 'Pure Mathematics'}</strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider">Qualifications & Degrees</span>
+                    <strong className="text-foreground font-bold">{tchr.qualification || 'B.Sc. Ed, M.Sc'}</strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider">Form Teacher Assignment</span>
+                    <strong className="text-primary font-bold">{tchr.formTeacherOf || 'None'}</strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider">Date Joined Faculty</span>
+                    <strong className="text-foreground font-bold">{tchr.joined || '2021-09-10'}</strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider">Contact Phone</span>
+                    <strong className="text-foreground font-bold">{tchr.phone || '+234 800 000 0000'}</strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider">Official Email</span>
+                    <strong className="text-foreground font-bold underline">{tchr.email}</strong>
+                  </div>
+                </div>
+
+                {/* Column 3: Teaching Workload & Assigned Subjects */}
+                <div className="md:col-span-5 space-y-4 text-xs leading-relaxed border-t md:border-t-0 md:border-l border-border pt-4 md:pt-0 md:pl-6">
+                  <div>
+                    <h4 className="font-serif font-bold text-sm text-foreground flex items-center gap-2 mb-2">
+                      <BookOpen className="w-4 h-4 text-emerald-600" /> Assigned Subjects & Classes ({tchr.subjectsAssigned?.length || 0})
+                    </h4>
+                    <div className="space-y-2">
+                      {tchr.subjectsAssigned && tchr.subjectsAssigned.length > 0 ? (
+                        tchr.subjectsAssigned.map((sub: any, idx: number) => (
+                          <div key={idx} className="p-3 rounded-xl border border-border bg-muted/20 flex items-center justify-between">
+                            <div>
+                              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded font-mono mr-2">
+                                {sub.code}
+                              </span>
+                              <span className="font-bold text-foreground">{sub.name}</span>
+                            </div>
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                              {sub.grade}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-muted-foreground italic text-xs">No subjects currently assigned.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Performance & Portal Activity */}
+                  <div className="space-y-2 pt-2 border-t border-border/60">
+                    <h4 className="font-serif font-bold text-sm text-foreground flex items-center gap-2">
+                      <BarChart2 className="w-4 h-4 text-emerald-600" /> Teaching Stats & CBT Metrics
+                    </h4>
+                    <div className="grid grid-cols-2 gap-3 pt-1">
+                      <div className="p-3 rounded-xl bg-card border border-border">
+                        <p className="text-[10px] text-muted-foreground uppercase font-bold">Total Students Taught</p>
+                        <p className="text-xl font-serif font-bold text-foreground mt-0.5">{tchr.studentsCount || 120}</p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-card border border-border">
+                        <p className="text-[10px] text-muted-foreground uppercase font-bold">CBT Assessments</p>
+                        <p className="text-xl font-serif font-bold text-emerald-600 mt-0.5">{tchr.cbtExamsCount || 8} Created</p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-card border border-border">
+                        <p className="text-[10px] text-muted-foreground uppercase font-bold">Class Attendance Rate</p>
+                        <p className="text-xl font-serif font-bold text-emerald-600 mt-0.5">{tchr.attendanceRate || '98%'}</p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-card border border-border">
+                        <p className="text-[10px] text-muted-foreground uppercase font-bold">Residential Address</p>
+                        <p className="text-xs font-semibold text-foreground truncate mt-1">{tchr.address || 'Yenagoa, Bayelsa State'}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      const filteredTeachers = teachersList.filter(t => {
+        const q = teacherSearch.toLowerCase();
+        const matchSearch = !q || t.name.toLowerCase().includes(q) || t.email.toLowerCase().includes(q) || t.staffId.toLowerCase().includes(q) || (t.specialization && t.specialization.toLowerCase().includes(q));
+        const matchDept = selectedDepartment === 'ALL' || t.department === selectedDepartment;
+        return matchSearch && matchDept;
+      });
+
+      const DEPARTMENTS = ['ALL', 'Mathematics & STEM', 'Sciences', 'Humanities & Arts', 'Vocational & Technology', 'Languages'];
+
+      return (
+        <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
+          {/* Header Banner */}
+          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+                <GraduationCap className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="font-bold text-xl text-foreground mb-1">Teaching Staff & Faculty Directory</h2>
+                <p className="text-xs text-muted-foreground">Overview of all Montessori educators, subject workloads, and faculty profiles.</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowAddTeacherModal(true)}
+              className="bg-primary text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2 shadow-sm shrink-0"
+            >
+              <UserPlus className="w-4 h-4" /> Add New Teacher
+            </button>
+          </div>
+
+          {/* Summary Metrics Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total Faculty</p>
+                <h3 className="text-2xl font-serif font-bold text-foreground mt-1">{teachersList.length}</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Active educators</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                <GraduationCap className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Active Duty</p>
+                <h3 className="text-2xl font-serif font-bold text-emerald-600 mt-1">{teachersList.filter(t => t.status === 'Active').length}</h3>
+                <p className="text-[11px] text-emerald-600 mt-0.5">100% Present today</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Form Teachers</p>
+                <h3 className="text-2xl font-serif font-bold text-primary mt-1">{teachersList.filter(t => t.formTeacherOf && t.formTeacherOf !== 'None').length}</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Class educators</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                <School className="w-5 h-5" />
+              </div>
+            </div>
+
+            <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">STEM & Science</p>
+                <h3 className="text-2xl font-serif font-bold text-secondary mt-1">{teachersList.filter(t => t.department === 'Mathematics & STEM' || t.department === 'Sciences').length}</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Specialist faculty</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center">
+                <FlaskConical className="w-5 h-5" />
+              </div>
+            </div>
+          </div>
+
+          {/* Filter & Search Bar */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <input
+                type="text"
+                value={teacherSearch}
+                onChange={e => setTeacherSearch(e.target.value)}
+                placeholder="Search teacher by name, staff ID, subject, email..."
+                className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-muted/20 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0">
+              {DEPARTMENTS.map(dept => (
+                <button
+                  key={dept}
+                  onClick={() => setSelectedDepartment(dept)}
+                  className={`px-3 py-2 rounded-xl text-xs font-bold border whitespace-nowrap transition-colors ${
+                    selectedDepartment === dept
+                      ? 'bg-primary text-white border-primary'
+                      : 'bg-card border-border text-muted-foreground hover:bg-muted/40'
+                  }`}
+                >
+                  {dept === 'ALL' ? 'All Departments' : dept}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Clickable Teachers Table */}
+          <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+            <table className="w-full text-xs text-left">
+              <thead className="bg-muted/30 text-muted-foreground uppercase text-[10px] tracking-wider">
+                <tr>
+                  <th className="py-3.5 px-4">Teacher / Staff ID</th>
+                  <th className="py-3.5 px-4">Department & Specialization</th>
+                  <th className="py-3.5 px-4">Form Teacher Of</th>
+                  <th className="py-3.5 px-4">Email / Phone</th>
+                  <th className="py-3.5 px-4">Workload</th>
+                  <th className="py-3.5 px-4">Status</th>
+                  <th className="py-3.5 px-4 text-right text-[10px]">Click to View Profile</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filteredTeachers.length > 0 ? (
+                  filteredTeachers.map(tchr => (
+                    <tr
+                      key={tchr.id}
+                      onClick={() => setSelectedTeacher(tchr)}
+                      className="hover:bg-emerald-500/5 cursor-pointer transition-colors group"
+                    >
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl font-bold text-sm bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-500/20">
+                            {tchr.profileImage ? (
+                              <img src={tchr.profileImage} alt={tchr.name} className="w-full h-full object-cover rounded-xl" />
+                            ) : (
+                              tchr.name[0]
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-bold text-foreground group-hover:text-emerald-600 transition-colors text-sm">{tchr.name}</p>
+                            <p className="text-[10px] font-mono text-muted-foreground">{tchr.staffId}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <p className="font-bold text-foreground">{tchr.department}</p>
+                        <p className="text-[10px] text-muted-foreground truncate max-w-[180px]">{tchr.specialization}</p>
+                      </td>
+                      <td className="py-4 px-4 font-semibold text-primary">
+                        {tchr.formTeacherOf || 'None'}
+                      </td>
+                      <td className="py-4 px-4 text-muted-foreground">
+                        <p className="text-foreground font-medium">{tchr.email}</p>
+                        <p className="text-[10px]">{tchr.phone}</p>
+                      </td>
+                      <td className="py-4 px-4 text-muted-foreground">
+                        <p className="font-bold text-foreground">{tchr.subjectsAssigned?.length || 0} Subjects</p>
+                        <p className="text-[10px]">{tchr.studentsCount || 0} Students</p>
+                      </td>
+                      <td className="py-4 px-4">
+                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
+                          tchr.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200' : 'bg-amber-500/10 text-amber-600 border-amber-200'
+                        }`}>
+                          {tchr.status}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 text-right">
+                        <span className="text-[10px] text-emerald-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-end gap-1">
+                          View Profile <ArrowUpRight className="w-3.5 h-3.5" />
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center text-muted-foreground">
+                      <GraduationCap className="w-10 h-10 mx-auto mb-2 opacity-30 text-emerald-600" />
+                      <p className="text-sm font-semibold">No teachers found matching search parameters.</p>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {showAddTeacherModal && (
+            <CreateUserForTypeModal
+              typeLabel="Teachers"
+              defaultRole="TEACHER"
+              onClose={() => setShowAddTeacherModal(false)}
+              onCreated={(newTeacher: any) => {
+                const created = {
+                  id: Date.now(),
+                  staffId: `TMS/TCH/2026/${Math.floor(100 + Math.random() * 900)}`,
+                  name: newTeacher.name,
+                  email: newTeacher.email,
+                  phone: newTeacher.phone || '+234 800 000 0000',
+                  gender: 'Male',
+                  department: newTeacher.department || 'Mathematics & STEM',
+                  specialization: newTeacher.subject || 'Montessori Educator',
+                  qualification: 'B.Sc. Ed, Certified Montessori Teacher',
+                  status: 'Active',
+                  joined: new Date().toISOString().split('T')[0],
+                  formTeacherOf: 'Assigned on Request',
+                  subjectsAssigned: newTeacher.subject ? [{ code: 'SUB-01', name: newTeacher.subject, grade: 'SS1' }] : [],
+                  classesCount: 1,
+                  studentsCount: 30,
+                  address: 'Yenagoa, Bayelsa State',
+                  dob: '1990-01-01',
+                  cbtExamsCount: 0,
+                  attendanceRate: '100%',
+                  profileImage: ''
+                };
+                setTeachersList(prev => [created, ...prev]);
+                setShowAddTeacherModal(false);
+              }}
+            />
+          )}
+        </div>
+      );
+    }
     if (activeSection === 'classes') return renderModuleHeader('Classes', 'Manage junior & senior classes, assign form teachers, and monitor rosters.', School);
     if (activeSection === 'subjects') return renderModuleHeader('Subjects', 'Manage school curriculum subjects, assign teachers, and review syllabi.', BookOpen);
     if (activeSection === 'results') return renderModuleHeader('Results', 'View student grades, approve examination results, and print terminal report cards.', FileText);
@@ -2791,6 +3425,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
     <ProtectedRoute allowedRoles={['ADMIN']}>
       <PortalLayout title="Admin Control Center" activeSection={activeSection} onNavigate={setActiveSection}>
         {idCardUser && <StudentIDModal student={idCardUser} onClose={() => setIdCardUser(null)} />}
+        {showTeacherIDCardModal && <TeacherIDCardModal teacher={showTeacherIDCardModal} onClose={() => setShowTeacherIDCardModal(null)} />}
         {showBulkImport && <BulkImportModal onClose={() => setShowBulkImport(false)} />}
         {awardHouse && <AwardPointsModal house={awardHouse} onClose={() => setAwardHouse(null)} />}
         {previewExam && <ExamPreviewModal exam={previewExam} onClose={() => setPreviewExam(null)} />}
