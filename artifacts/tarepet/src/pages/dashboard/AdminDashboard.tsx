@@ -1869,6 +1869,11 @@ export default function AdminDashboard() {
   const [subjectFilterTab, setSubjectFilterTab] = useState<'ALL' | 'JUNIOR' | 'SENIOR' | 'SCIENCE' | 'ART'>('ALL');
   const [subjectSearch, setSubjectSearch] = useState('');
   const [settingsTab, setSettingsTab] = useState<'general' | 'academic' | 'notify' | 'access' | 'fees' | 'portal'>('general');
+  const [settingsSaved, setSettingsSaved] = useState(false);
+  const triggerSave = () => {
+    setSettingsSaved(true);
+    setTimeout(() => setSettingsSaved(false), 2500);
+  };
 
   // Teacher management state
   const [teachersList, setTeachersList] = useState(MOCK_TEACHERS);
@@ -3693,12 +3698,6 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
 
     // 7. SYSTEM SETTINGS
     if (activeSection === 'settings') {
-      const [settingsSaved, setSettingsSaved] = React.useState(false);
-      const triggerSave = () => {
-        setSettingsSaved(true);
-        setTimeout(() => setSettingsSaved(false), 2500);
-      };
-
       return (
         <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
 
