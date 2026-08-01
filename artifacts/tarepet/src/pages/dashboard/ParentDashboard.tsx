@@ -175,7 +175,7 @@ export default function ParentDashboard() {
             {[
               { label: 'View Gradebook', section: 'academic', icon: GraduationCap },
               { label: 'Pay School Fees', section: 'fees', icon: CreditCard },
-              { label: 'Book Teacher Conference', section: 'messages', icon: MessageSquare },
+              { label: 'Attendance & Leave', section: 'attendance', icon: UserCheck },
               { label: 'Montessori Development', section: 'montessori', icon: Star },
             ].map((a, i) => (
               <button key={i} onClick={() => setActiveSection(a.section)} className="flex items-center justify-between p-3.5 rounded-xl border border-border bg-muted/20 hover:border-primary/40 hover:bg-primary/5 transition-all text-xs font-bold text-foreground">

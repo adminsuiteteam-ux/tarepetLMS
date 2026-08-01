@@ -61,7 +61,6 @@ const ROLE_NAV: Record<string, NavSection[]> = {
     { id: 'academic',    label: 'Academic Progress',        icon: GraduationCap },
     { id: 'montessori',  label: 'Montessori Development',   icon: Star },
     { id: 'attendance',  label: 'Attendance & Leave',       icon: UserCheck },
-    { id: 'messages',    label: 'Messages & Conferences',   icon: MessageSquare },
     { id: 'houses',      label: 'House System',             icon: Trophy },
     { id: 'fees',        label: 'Fee Management & Pay',     icon: CreditCard },
     { id: 'support',     label: 'Support & Behavior',       icon: HeartHandshake },
@@ -262,12 +261,6 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
 
           {/* Right actions */}
           <div className="flex items-center gap-2 shrink-0">
-            {/* Messages */}
-            <button className="relative p-2 rounded-xl text-muted-foreground hover:bg-accent transition-colors">
-              <MessageSquare className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            </button>
-
             {/* Notifications */}
             <button className="relative p-2 rounded-xl text-muted-foreground hover:bg-accent transition-colors">
               <Bell className="w-5 h-5" />
