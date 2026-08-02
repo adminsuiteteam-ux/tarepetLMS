@@ -12,8 +12,7 @@ import {
   ClipboardList, Settings, ShieldCheck, User, Bell
 } from 'lucide-react';
 
-import { getStoredExams, updateExamStatus, getStoredSubmissions, subscribeToCBTStore } from '@/lib/cbt-store';
-import { RealTimeSyncStatus } from '@/components/cbt/RealTimeSyncStatus';
+import { getStoredExams, updateExamStatus, getStoredSubmissions } from '@/lib/cbt-store';
 import { useTranslation } from '@/lib/i18n';
 
 // ─── Initial Seed Data (SS1 Science Teacher) ─────────────────
@@ -113,25 +112,23 @@ export default function TeacherDashboard() {
     // =========================================================
     if (activeSection === 'overview') return (
       <div className="space-y-6">
-        <RealTimeSyncStatus title="Teacher CBT Builder & Live LMS Engine" />
-        
         {/* Welcome Header */}
         <div className="bg-gradient-to-r from-emerald-700 via-emerald-800 to-teal-900 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
-          <p className="text-xs font-bold uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full inline-block mb-3">Teacher Management Portal</p>
-          <h2 className="text-2xl sm:text-3xl font-serif font-bold mb-1">Welcome back, {user?.first_name ?? 'Teacher'}! 👋</h2>
-          <p className="text-emerald-100 text-sm">Manage classes, CBT assessments, and student progress.</p>
+          <p className="text-xs font-bold uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full inline-block mb-3">{t('teacher.management_portal', 'Teacher Management Portal')}</p>
+          <h2 className="text-2xl sm:text-3xl font-serif font-bold mb-1">{t('teacher.welcome_back', 'Welcome back,')} {user?.first_name ?? 'Teacher'}! 👋</h2>
+          <p className="text-emerald-100 text-sm">{t('teacher.manage_subtitle', 'Manage classes, CBT assessments, and student progress.')}</p>
         </div>
 
         {/* CBT Exam Engine Card */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-2xl p-5 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <span className="bg-white/20 text-white text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full mb-1.5 inline-block">CBT Assessment System</span>
-            <h3 className="text-xl font-bold">CBT Exam Builder & Management</h3>
-            <p className="text-blue-100 text-xs mt-1">Create CBT tests/exams, submit for admin approval, upload to students & sync scores to report cards.</p>
+            <span className="bg-white/20 text-white text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full mb-1.5 inline-block">{t('teacher.cbt_assessment_system', 'CBT Assessment System')}</span>
+            <h3 className="text-xl font-bold">{t('teacher.cbt_exam_builder_title', 'CBT Exam Builder & Management')}</h3>
+            <p className="text-blue-100 text-xs mt-1">{t('teacher.cbt_exam_builder_desc', 'Create CBT tests/exams, submit for admin approval, upload to students & sync scores to report cards.')}</p>
           </div>
           <Link href="/dashboard/cbt-builder">
             <button className="px-5 py-2.5 rounded-xl bg-white text-blue-700 font-bold text-sm hover:bg-blue-50 transition shadow-md whitespace-nowrap">
-              Open CBT Builder →
+              {t('teacher.open_cbt_builder', 'Open CBT Builder →')}
             </button>
           </Link>
         </div>
@@ -157,7 +154,7 @@ export default function TeacherDashboard() {
 
         {/* Quick Action Navigation Buttons */}
         <div className="bg-card rounded-2xl border border-border p-5 shadow-sm">
-          <h3 className="font-serif font-bold text-foreground mb-4">Quick Portal Access</h3>
+          <h3 className="font-serif font-bold text-foreground mb-4">{t('teacher.quick_portal_access', 'Quick Portal Access')}</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
               { label: 'Manage Students', section: 'students', icon: Users },
@@ -199,7 +196,7 @@ export default function TeacherDashboard() {
               </div>
             )) : (
               <div className="py-6 text-center text-muted-foreground bg-muted/10 rounded-xl border border-border/50">
-                <p className="text-xs font-semibold">No class schedule configured for today.</p>
+                <p className="text-xs font-semibold">{t('teacher.no_schedule', 'No class schedule configured for today.')}</p>
               </div>
             )}
           </div>
@@ -214,8 +211,8 @@ export default function TeacherDashboard() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 className="text-2xl font-serif font-bold text-foreground">Manage Students</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">Roster profiles, daily attendance, and Montessori observations.</p>
+            <h2 className="text-2xl font-serif font-bold text-foreground">{t('teacher.manage_students', 'Manage Students')}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">{t('teacher.manage_students_desc', 'Roster profiles, daily attendance, and Montessori observations.')}</p>
           </div>
           <div className="flex gap-2">
             <button onClick={() => setShowObsModal(true)} className="flex items-center gap-1.5 bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 px-3.5 py-2 rounded-xl text-xs font-bold transition-all">
@@ -267,13 +264,13 @@ export default function TeacherDashboard() {
               <table className="w-full text-xs text-left">
                 <thead className="bg-muted/40 uppercase text-[10px] text-muted-foreground tracking-wider border-b border-border">
                   <tr>
-                    <th className="p-3">Student Name</th>
-                    <th className="p-3">Student ID</th>
-                    <th className="p-3">Class</th>
-                    <th className="p-3">House</th>
-                    <th className="p-3">GPA</th>
-                    <th className="p-3">Attendance</th>
-                    <th className="p-3">Status</th>
+                    <th className="p-3">{t('teacher.col_student_name', 'Student Name')}</th>
+                    <th className="p-3">{t('teacher.col_student_id', 'Student ID')}</th>
+                    <th className="p-3">{t('teacher.col_class', 'Class')}</th>
+                    <th className="p-3">{t('teacher.col_house', 'House')}</th>
+                    <th className="p-3">{t('teacher.col_gpa', 'GPA')}</th>
+                    <th className="p-3">{t('teacher.col_attendance', 'Attendance')}</th>
+                    <th className="p-3">{t('teacher.col_status', 'Status')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -303,34 +300,38 @@ export default function TeacherDashboard() {
           <div className="bg-card rounded-2xl border border-border shadow-sm p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-serif font-bold text-foreground">Mark Attendance — MTH-101</h3>
-                <p className="text-xs text-muted-foreground">Select present, late, or absent status for today's session.</p>
+                <h3 className="font-serif font-bold text-foreground">{t('teacher.mark_attendance', 'Mark Attendance — MTH-101')}</h3>
+                <p className="text-xs text-muted-foreground">{t('teacher.attendance_desc', "Select present, late, or absent status for today's session.")}</p>
               </div>
               <button onClick={() => showToast('Attendance saved successfully!')} className="bg-primary text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors">
-                Save Attendance
+                {t('teacher.save_attendance', 'Save Attendance')}
               </button>
             </div>
             <div className="space-y-2">
-              {roster.map(s => (
-                <div key={s.id} className="flex items-center justify-between p-3.5 rounded-xl border border-border bg-muted/10">
-                  <span className="font-bold text-sm text-foreground">{s.name} ({s.code})</span>
-                  <div className="flex gap-2">
-                    {['present', 'late', 'absent'].map(st => (
-                      <button
-                        key={st}
-                        onClick={() => setAttendanceState(prev => ({ ...prev, [s.id]: st }))}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${
-                          (Object.prototype.hasOwnProperty.call(attendanceState, s.id) ? attendanceState[s.id] : 'present') === st
-                            ? st === 'present' ? 'bg-emerald-600 text-white' : st === 'late' ? 'bg-amber-500 text-white' : 'bg-rose-600 text-white'
-                            : 'bg-muted text-muted-foreground hover:bg-accent'
-                        }`}
-                      >
-                        {st}
-                      </button>
-                    ))}
+              {roster.map(s => {
+                // Safe lookup without bracket notation to prevent prototype pollution
+                const currentAttendance = Object.entries(attendanceState).find(([k]) => Number(k) === s.id)?.[1] ?? 'present';
+                return (
+                  <div key={s.id} className="flex items-center justify-between p-3.5 rounded-xl border border-border bg-muted/10">
+                    <span className="font-bold text-sm text-foreground">{s.name} ({s.code})</span>
+                    <div className="flex gap-2">
+                      {['present', 'late', 'absent'].map(st => (
+                        <button
+                          key={st}
+                          onClick={() => setAttendanceState(prev => ({ ...prev, [s.id]: st }))}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${
+                            currentAttendance === st
+                              ? st === 'present' ? 'bg-emerald-600 text-white' : st === 'late' ? 'bg-amber-500 text-white' : 'bg-rose-600 text-white'
+                              : 'bg-muted text-muted-foreground hover:bg-accent'
+                          }`}
+                        >
+                          {st}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -382,15 +383,15 @@ export default function TeacherDashboard() {
         <div className="space-y-6">
           <div className="bg-gradient-to-r from-blue-700 via-indigo-800 to-purple-900 text-white p-6 rounded-2xl shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <span className="bg-white/20 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full inline-block mb-2">CBT Examination System</span>
+              <span className="bg-white/20 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full inline-block mb-2">{t('teacher.cbt_exam_system', 'CBT Examination System')}</span>
               <h2 className="text-2xl sm:text-3xl font-serif font-bold">
-                {selectedExamClass === 'ALL' ? 'All Senior Classes' : selectedExamClass} {selectedExamStream === 'ALL' ? 'General' : selectedExamStream} CBT Exam Control
+                {selectedExamClass === 'ALL' ? t('teacher.all_senior_classes', 'All Senior Classes') : selectedExamClass} {selectedExamStream === 'ALL' ? t('teacher.general', 'General') : selectedExamStream} {t('teacher.cbt_exam_control', 'CBT Exam Control')}
               </h2>
-              <p className="text-blue-100 text-xs mt-1 max-w-xl">Create MCQs, select target class &amp; stream (SS1-SS3 Science/Arts), monitor approvals, and activate live exams for students.</p>
+              <p className="text-blue-100 text-xs mt-1 max-w-xl">{t('teacher.cbt_filter_desc', 'Create MCQs, select target class & stream (SS1-SS3 Science/Arts), monitor approvals, and activate live exams for students.')}</p>
             </div>
             <Link href="/dashboard/cbt-builder">
               <button className="bg-white text-blue-700 hover:bg-blue-50 font-bold px-6 py-3 rounded-xl text-sm transition-all shadow-lg whitespace-nowrap">
-                Launch CBT Exam Builder →
+                {t('teacher.launch_cbt_builder', 'Launch CBT Exam Builder →')}
               </button>
             </Link>
           </div>
@@ -399,8 +400,8 @@ export default function TeacherDashboard() {
           <div className="bg-card rounded-2xl border border-border p-4 shadow-sm space-y-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h3 className="font-serif font-bold text-foreground text-sm">Select Target Class & Department</h3>
-                <p className="text-xs text-muted-foreground">Filter exams and student submissions by Senior Level & Department Stream</p>
+                <h3 className="font-serif font-bold text-foreground text-sm">{t('teacher.select_target_class', 'Select Target Class & Department')}</h3>
+                <p className="text-xs text-muted-foreground">{t('teacher.filter_desc', 'Filter exams and student submissions by Senior Level & Department Stream')}</p>
               </div>
             </div>
 
@@ -442,9 +443,9 @@ export default function TeacherDashboard() {
             <div className="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-5 shadow-sm space-y-3">
               <div className="flex items-center gap-2 text-emerald-800 font-bold text-sm">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                <span>Admin Approved Exams Ready to Proceed ({approvedExams.length})</span>
+                <span>{t('teacher.approved_exams_ready', 'Admin Approved Exams Ready to Proceed')} ({approvedExams.length})</span>
               </div>
-              <p className="text-xs text-emerald-700">The Admin has reviewed and approved the following exams. Click <strong>"Proceed / Activate Exam"</strong> so target students can receive and take the exam in their portal.</p>
+              <p className="text-xs text-emerald-700">{t('teacher.approved_exams_desc', 'The Admin has reviewed and approved the following exams. Click')} <strong>{t('teacher.proceed_activate', '"Proceed / Activate Exam"')}</strong> {t('teacher.approved_exams_desc2', 'so target students can receive and take the exam in their portal.')}</p>
               <div className="space-y-3 pt-1">
                 {approvedExams.map(ex => (
                   <div key={ex.id} className="bg-white p-4 rounded-xl border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
@@ -487,7 +488,7 @@ export default function TeacherDashboard() {
                       <p className="text-xs text-muted-foreground">{ex.course_code} · {ex.duration_minutes} mins · {ex.class || 'SS1'} {ex.stream || 'Science'} Students</p>
                     </div>
                     <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-3 py-1.5 rounded-xl">
-                      Receiving Submissions...
+                      {t('teacher.receiving_submissions', 'Receiving Submissions...')}
                     </span>
                   </div>
                 ))}
@@ -498,8 +499,8 @@ export default function TeacherDashboard() {
           {/* Real-Time Student CBT Submissions Queue */}
           <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-serif font-bold text-foreground text-base">Received Student CBT Submissions ({filteredSubmissions.length})</h3>
-              <span className="text-xs font-semibold text-muted-foreground">Auto-Graded & Verified</span>
+              <h3 className="font-serif font-bold text-foreground text-base">{t('teacher.received_submissions', 'Received Student CBT Submissions')} ({filteredSubmissions.length})</h3>
+              <span className="text-xs font-semibold text-muted-foreground">{t('teacher.auto_graded_verified', 'Auto-Graded & Verified')}</span>
             </div>
 
             {filteredSubmissions.length > 0 ? (
@@ -513,18 +514,18 @@ export default function TeacherDashboard() {
                         <span className="text-xs text-muted-foreground">({sub.student_id})</span>
                       </div>
                       <h4 className="font-semibold text-foreground text-xs">{sub.exam_title} ({sub.course_code})</h4>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">Submitted: {new Date(sub.submitted_at).toLocaleTimeString()} · Score: <strong>{sub.score} / {sub.total_possible}</strong></p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{t('teacher.submitted_at', 'Submitted:')} {new Date(sub.submitted_at).toLocaleTimeString()} · {t('teacher.score_label', 'Score:')} <strong>{sub.score} / {sub.total_possible}</strong></p>
                     </div>
                     <div className="flex items-center gap-3 self-start sm:self-auto">
                       <div className="text-right">
                         <span className="text-lg font-serif font-bold text-emerald-600">{sub.percentage}%</span>
-                        <p className="text-[9px] font-bold uppercase text-emerald-700">Auto-Graded</p>
+                        <p className="text-[9px] font-bold uppercase text-emerald-700">{t('teacher.auto_graded', 'Auto-Graded')}</p>
                       </div>
                       <button
                         onClick={() => showToast(`Synced ${sub.student_name}'s score (${sub.percentage}%) to official gradebook!`)}
                         className="bg-primary text-white font-bold px-3.5 py-2 rounded-xl text-xs hover:bg-primary/90 transition-colors"
                       >
-                        Sync Gradebook
+                        {t('teacher.sync_gradebook', 'Sync Gradebook')}
                       </button>
                     </div>
                   </div>
@@ -532,8 +533,8 @@ export default function TeacherDashboard() {
               </div>
             ) : (
               <div className="py-8 text-center text-muted-foreground bg-muted/10 rounded-xl border border-border/50">
-                <p className="text-sm font-semibold">No student submissions received yet.</p>
-                <p className="text-xs mt-1">Once students start and submit their exams in the student portal, their scores will appear here automatically.</p>
+                <p className="text-sm font-semibold">{t('teacher.no_submissions_yet', 'No student submissions received yet.')}</p>
+                <p className="text-xs mt-1">{t('teacher.no_submissions_desc', 'Once students start and submit their exams in the student portal, their scores will appear here automatically.')}</p>
               </div>
             )}
           </div>
@@ -548,8 +549,8 @@ export default function TeacherDashboard() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 className="text-2xl font-serif font-bold text-foreground">Manage Results & Gradebook</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">Grade student assignment submissions and record term CA & exam scores.</p>
+            <h2 className="text-2xl font-serif font-bold text-foreground">{t('teacher.manage_results', 'Manage Results & Gradebook')}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">{t('teacher.manage_results_desc', 'Grade student assignment submissions and record term CA & exam scores.')}</p>
           </div>
         </div>
 
@@ -577,8 +578,8 @@ export default function TeacherDashboard() {
             {submissions.length === 0 ? (
               <div className="bg-card rounded-2xl border border-border p-12 text-center">
                 <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
-                <h4 className="font-serif font-bold text-foreground text-lg">All Submissions Graded!</h4>
-                <p className="text-xs text-muted-foreground">There are no pending student submissions requiring evaluation.</p>
+                <h4 className="font-serif font-bold text-foreground text-lg">{t('teacher.all_graded', 'All Submissions Graded!')}</h4>
+                <p className="text-xs text-muted-foreground">{t('teacher.all_graded_desc', 'There are no pending student submissions requiring evaluation.')}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -590,10 +591,10 @@ export default function TeacherDashboard() {
                         <span className="text-xs text-muted-foreground">{s.submittedAt}</span>
                       </div>
                       <h4 className="font-bold text-foreground text-sm">{s.title}</h4>
-                      <p className="text-xs text-muted-foreground mt-0.5">Submitted by: <strong>{s.student}</strong> • File: <span className="font-mono text-primary">{s.file}</span></p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{t('teacher.submitted_by', 'Submitted by:')} <strong>{s.student}</strong> • {t('teacher.file_label', 'File:')} <span className="font-mono text-primary">{s.file}</span></p>
                     </div>
                     <button onClick={() => setSelectedSub(s)} className="bg-primary text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors self-start md:self-auto">
-                      Grade Submission
+                      {t('teacher.grade_submission', 'Grade Submission')}
                     </button>
                   </div>
                 ))}
@@ -604,19 +605,19 @@ export default function TeacherDashboard() {
             {selectedSub && (
               <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setSelectedSub(null)}>
                 <div className="bg-card rounded-2xl border border-border max-w-md w-full p-6 space-y-4 shadow-2xl" onClick={e => e.stopPropagation()}>
-                  <h3 className="font-serif font-bold text-lg text-foreground">Grade: {selectedSub.student}</h3>
+                  <h3 className="font-serif font-bold text-lg text-foreground">{t('teacher.grade_label', 'Grade:')} {selectedSub.student}</h3>
                   <p className="text-xs text-muted-foreground">{selectedSub.title} ({selectedSub.classCode})</p>
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Score (out of 100)</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.score_out_of', 'Score (out of 100)')}</label>
                     <input type="number" min={0} max={100} value={gradeInput} onChange={e => setGradeInput(e.target.value)} placeholder="e.g. 85" className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-sm focus:ring-2 focus:ring-primary outline-none" />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Feedback Comments</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.feedback_comments', 'Feedback Comments')}</label>
                     <textarea rows={3} value={feedbackInput} onChange={e => setFeedbackInput(e.target.value)} placeholder="Provide constructive feedback for student..." className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-sm focus:ring-2 focus:ring-primary outline-none" />
                   </div>
                   <div className="flex gap-3">
-                    <button onClick={() => setSelectedSub(null)} className="flex-1 py-2.5 rounded-xl border border-border text-xs font-bold hover:bg-accent">Cancel</button>
-                    <button onClick={handleGradeSubmit} disabled={!gradeInput} className="flex-1 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 disabled:opacity-50">Submit Grade</button>
+                    <button onClick={() => setSelectedSub(null)} className="flex-1 py-2.5 rounded-xl border border-border text-xs font-bold hover:bg-accent">{t('teacher.cancel', 'Cancel')}</button>
+                    <button onClick={handleGradeSubmit} disabled={!gradeInput} className="flex-1 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 disabled:opacity-50">{t('teacher.submit_grade', 'Submit Grade')}</button>
                   </div>
                 </div>
               </div>
@@ -629,11 +630,11 @@ export default function TeacherDashboard() {
           <div className="bg-card rounded-2xl border border-border shadow-sm p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-serif font-bold text-foreground">Class Gradebook — MTH-101</h3>
-                <p className="text-xs text-muted-foreground">Record and review CA1 (10%), CA2 (10%), Midterm (20%), and Final Exam (60%) scores.</p>
+                <h3 className="font-serif font-bold text-foreground">{t('teacher.class_gradebook', 'Class Gradebook — MTH-101')}</h3>
+                <p className="text-xs text-muted-foreground">{t('teacher.gradebook_desc', 'Record and review CA1 (10%), CA2 (10%), Midterm (20%), and Final Exam (60%) scores.')}</p>
               </div>
               <button onClick={() => showToast('Gradebook scores saved & synced to student report cards!')} className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 transition-colors">
-                Sync Scores to Report Cards
+                {t('teacher.sync_report_cards', 'Sync Scores to Report Cards')}
               </button>
             </div>
 
@@ -641,18 +642,19 @@ export default function TeacherDashboard() {
               <table className="w-full text-xs text-left">
                 <thead className="bg-muted/40 uppercase text-[10px] text-muted-foreground tracking-wider border-b border-border">
                   <tr>
-                    <th className="p-3">Student</th>
-                    <th className="p-3 text-center">CA 1 (10%)</th>
-                    <th className="p-3 text-center">CA 2 (10%)</th>
-                    <th className="p-3 text-center">Midterm (20%)</th>
-                    <th className="p-3 text-center">Final Exam (60%)</th>
-                    <th className="p-3 text-center">Total (100%)</th>
-                    <th className="p-3 text-center">Grade</th>
+                    <th className="p-3">{t('teacher.col_student', 'Student')}</th>
+                    <th className="p-3 text-center">{t('teacher.col_ca1', 'CA 1 (10%)')}</th>
+                    <th className="p-3 text-center">{t('teacher.col_ca2', 'CA 2 (10%)')}</th>
+                    <th className="p-3 text-center">{t('teacher.col_midterm', 'Midterm (20%)')}</th>
+                    <th className="p-3 text-center">{t('teacher.col_final', 'Final Exam (60%)')}</th>
+                    <th className="p-3 text-center">{t('teacher.col_total', 'Total (100%)')}</th>
+                    <th className="p-3 text-center">{t('teacher.col_grade', 'Grade')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {roster.map(s => {
-                    const sc = (Object.prototype.hasOwnProperty.call(gradebookScores, s.id) ? gradebookScores[s.id] : null) || { ca1: 0, ca2: 0, midterm: 0, exam: 0 };
+                    // Safe lookup without bracket notation to prevent prototype pollution
+                    const sc = Object.entries(gradebookScores).find(([k]) => Number(k) === s.id)?.[1] ?? { ca1: 0, ca2: 0, midterm: 0, exam: 0 };
                     const total = sc.ca1 + sc.ca2 + sc.midterm + sc.exam;
                     const letter = total >= 90 ? 'A+' : total >= 80 ? 'A' : total >= 70 ? 'B' : total >= 60 ? 'C' : total >= 50 ? 'D' : 'F';
                     return (
@@ -685,8 +687,8 @@ export default function TeacherDashboard() {
     if (activeSection === 'settings') return (
       <div className="space-y-6 max-w-3xl">
         <div>
-          <h2 className="text-2xl font-serif font-bold text-foreground">Teacher Portal Settings</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Manage your profile details, assigned courses, and notification alerts.</p>
+          <h2 className="text-2xl font-serif font-bold text-foreground">{t('teacher.settings_title', 'Teacher Portal Settings')}</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">{t('teacher.settings_desc', 'Manage your profile details, assigned courses, and notification alerts.')}</p>
         </div>
 
         <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
@@ -695,26 +697,26 @@ export default function TeacherDashboard() {
           </h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">First Name</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.first_name', 'First Name')}</label>
               <input type="text" value={profileForm.firstName} onChange={e => setProfileForm({...profileForm, firstName: e.target.value})} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
             </div>
             <div>
-              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Last Name</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.last_name', 'Last Name')}</label>
               <input type="text" value={profileForm.lastName} onChange={e => setProfileForm({...profileForm, lastName: e.target.value})} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Email Address</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.email_address', 'Email Address')}</label>
               <input type="email" value={profileForm.email} onChange={e => setProfileForm({...profileForm, email: e.target.value})} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
             </div>
             <div>
-              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Phone Number</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.phone_number', 'Phone Number')}</label>
               <input type="text" value={profileForm.phone} onChange={e => setProfileForm({...profileForm, phone: e.target.value})} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
             </div>
           </div>
           <div>
-            <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Subject Specialization</label>
+            <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.subject_specialization', 'Subject Specialization')}</label>
             <input type="text" value={profileForm.specialization} onChange={e => setProfileForm({...profileForm, specialization: e.target.value})} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
           </div>
         </div>
@@ -726,21 +728,21 @@ export default function TeacherDashboard() {
           <div className="space-y-3">
             <label className="flex items-center justify-between p-3 rounded-xl border border-border bg-muted/10 cursor-pointer">
               <div>
-                <p className="font-bold text-xs text-foreground">CBT Exam Submission Alerts</p>
-                <p className="text-[10px] text-muted-foreground">Receive real-time alerts when students submit completed CBT exams.</p>
+                <p className="font-bold text-xs text-foreground">{t('teacher.cbt_submission_alerts', 'CBT Exam Submission Alerts')}</p>
+                <p className="text-[10px] text-muted-foreground">{t('teacher.cbt_submission_alerts_desc', 'Receive real-time alerts when students submit completed CBT exams.')}</p>
               </div>
               <input type="checkbox" checked={profileForm.cbtAlerts} onChange={e => setProfileForm({...profileForm, cbtAlerts: e.target.checked})} className="w-4 h-4 text-primary rounded" />
             </label>
             <label className="flex items-center justify-between p-3 rounded-xl border border-border bg-muted/10 cursor-pointer">
               <div>
-                <p className="font-bold text-xs text-foreground">Admin Approval Notifications</p>
-                <p className="text-[10px] text-muted-foreground">Get notified when an Admin approves or rejects your drafted CBT exams.</p>
+                <p className="font-bold text-xs text-foreground">{t('teacher.admin_approval_notifs', 'Admin Approval Notifications')}</p>
+                <p className="text-[10px] text-muted-foreground">{t('teacher.admin_approval_notifs_desc', 'Get notified when an Admin approves or rejects your drafted CBT exams.')}</p>
               </div>
               <input type="checkbox" checked={profileForm.emailAlerts} onChange={e => setProfileForm({...profileForm, emailAlerts: e.target.checked})} className="w-4 h-4 text-primary rounded" />
             </label>
           </div>
           <button onClick={() => showToast('Teacher profile & preferences updated!')} className="bg-primary text-white px-6 py-2.5 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors">
-            Save Settings
+            {t('teacher.save_settings', 'Save Settings')}
           </button>
         </div>
       </div>
@@ -749,8 +751,8 @@ export default function TeacherDashboard() {
     // Fallback for any unknown section
     return (
       <div className="space-y-6">
-        <h2 className="text-xl font-bold text-foreground">Teacher Management Portal</h2>
-        <p className="text-xs text-muted-foreground">Select a section from the sidebar menu to begin.</p>
+        <h2 className="text-xl font-bold text-foreground">{t('teacher.management_portal', 'Teacher Management Portal')}</h2>
+        <p className="text-xs text-muted-foreground">{t('teacher.select_section', 'Select a section from the sidebar menu to begin.')}</p>
       </div>
     );
   };
