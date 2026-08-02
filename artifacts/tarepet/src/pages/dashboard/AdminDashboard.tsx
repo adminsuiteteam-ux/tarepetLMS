@@ -17,7 +17,7 @@ import {
   Mail, Phone, MapPin, Calendar, Shield, GraduationCap, Award,
   Briefcase, UserCog, BookMarked, MessageSquare, KeyRound,
   BadgeCheck, Ban, RotateCcw, FileDown, Send, FlaskConical, Palette,
-  School, CalendarCheck, Megaphone, UserPlus, FileSpreadsheet, TrendingUp, Sparkles, ChevronRight, Eye, Layers, ShieldCheck, Bell,
+  School, CalendarCheck, Megaphone, UserPlus, FileSpreadsheet, TrendingUp, Sparkles, ChevronRight, Eye, Layers, ShieldCheck, Bell, AlertTriangle,
 } from 'lucide-react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, LineChart, Line, CartesianGrid,
@@ -1901,6 +1901,56 @@ export default function AdminDashboard() {
   const [passwordForm, setPasswordForm] = useState({ current: '', newPass: '', confirm: '' });
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [profileUpdateSuccess, setProfileUpdateSuccess] = useState(false);
+
+  // Class Marksheet / Score Entry State
+  const [resultsViewTab, setResultsViewTab] = useState<'roster' | 'marksheet' | 'fees'>('roster');
+  const [marksheetSubject, setMarksheetSubject] = useState('Mathematics');
+  const [classScoresMap, setClassScoresMap] = useState<Record<number, { ca1: number; ca2: number; exam: number }>>(() => {
+    const saved = localStorage.getItem('tarepet_class_marksheet');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return {
+      1: { ca1: 14, ca2: 13, exam: 55 },
+      2: { ca1: 12, ca2: 14, exam: 52 },
+      3: { ca1: 15, ca2: 12, exam: 58 },
+    };
+  });
+  const [marksheetSaveAlert, setMarksheetSaveAlert] = useState(false);
+
+  // Fee Ledger & Payment State
+  const [feeLedgerState, setFeeLedgerState] = useState<any[]>(() => {
+    const saved = localStorage.getItem('tarepet_fee_ledger');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return [
+      { id: 101, studentId: 1, name: 'Chidi Nwosu', admissionNo: 'TMS/JS1/4092', class: 'JSS1', totalAmount: 53000, paidAmount: 53000, status: 'PAID', lastDate: '2026-01-14', method: 'Bank Transfer', receiptNo: 'RCP-2026-001' },
+      { id: 102, studentId: 2, name: 'Amaka Okafor', admissionNo: 'TMS/JS1/8193', class: 'JSS1', totalAmount: 53000, paidAmount: 30000, status: 'PARTIAL', lastDate: '2026-01-18', method: 'Cash', receiptNo: 'RCP-2026-002' },
+      { id: 103, studentId: 3, name: 'Kemebradikumo Danjuma', admissionNo: 'TMS/JS2/5102', class: 'JSS2', totalAmount: 53000, paidAmount: 0, status: 'UNPAID', lastDate: '—', method: '—', receiptNo: '—' },
+      { id: 104, studentId: 4, name: 'Emmanuel Adebayo', admissionNo: 'TMS/SS1/1092', class: 'SS1', totalAmount: 65000, paidAmount: 65000, status: 'PAID', lastDate: '2026-01-10', method: 'Online (Flutterwave)', receiptNo: 'RCP-2026-004' },
+      { id: 105, studentId: 5, name: 'Fatima Abubakar', admissionNo: 'TMS/SS1/2049', class: 'SS1', totalAmount: 65000, paidAmount: 40000, status: 'PARTIAL', lastDate: '2026-01-20', method: 'Bank Transfer', receiptNo: 'RCP-2026-005' },
+    ];
+  });
+  const [showAddPaymentModal, setShowAddPaymentModal] = useState(false);
+  const [paymentForm, setPaymentForm] = useState({ studentId: 1, amount: 0, method: 'Bank Transfer', reference: '' });
+  const [receiptModalData, setReceiptModalData] = useState<any>(null);
+
+  // Announcements & Broadcast Center State
+  const [announcementsListState, setAnnouncementsListState] = useState<any[]>(() => {
+    const saved = localStorage.getItem('tarepet_announcements');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return [
+      { id: 1, title: '2nd Term Mid-Term Test Schedule & Guidelines', target: 'ALL', audience: 'All Students & Parents', date: '2026-01-28', author: 'Principal Office', priority: 'HIGH', category: 'Academic', content: 'Please be informed that Mid-Term Examinations for the 2nd Term 2025/2026 session will commence on Monday, 9th February 2026. All students are advised to revise thoroughly.' },
+      { id: 2, title: 'PTA General Meeting Announcement', target: 'PARENTS', audience: 'Parents Only', date: '2026-01-22', author: 'PTA Executive Board', priority: 'NORMAL', category: 'General', content: 'Notice is hereby given for the 2nd Term PTA meeting scheduled for Saturday, 14th February 2026 at the Main Auditorium by 10:00 AM sharp.' },
+      { id: 3, title: 'Inter-House Sports Competition Practice Dates', target: 'STUDENTS', audience: 'Students & Staff', date: '2026-01-18', author: 'Sports Directorate', priority: 'NORMAL', category: 'Sports', content: 'House practice for Blue, Purple, Green, and Red houses will hold every Wednesday and Friday afternoon on the main school pitch.' },
+    ];
+  });
+  const [showCreateAnnouncementModal, setShowCreateAnnouncementModal] = useState(false);
+  const [announcementForm, setAnnouncementForm] = useState({ title: '', target: 'ALL', priority: 'NORMAL', category: 'Academic', content: '', sendSMS: true });
+  const [announcementSuccessAlert, setAnnouncementSuccessAlert] = useState(false);
 
   // Teacher management state
   const [teachersList, setTeachersList] = useState(MOCK_TEACHERS);
@@ -6045,70 +6095,480 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
       const currentClassObj = SIX_CLASSES.find(c => c.code === resultsSelectedClass);
       const classStudents = MOCK_STUDENTS.filter(s => s.grade === resultsSelectedClass);
 
-      // Step 2: Student Roster Table for Selected Class
+      // Step 2: Student Roster, Bulk Marksheet, or Fee Ledger for Selected Class
       if (!resultsSelectedStudent) {
         return (
           <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
-            <div className="flex items-center justify-between bg-card p-4 rounded-2xl border border-border shadow-sm">
+            {/* Class Header Bar */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-card p-4 rounded-2xl border border-border shadow-sm">
               <button
                 onClick={() => setResultsSelectedClass(null)}
                 className="px-3.5 py-2 rounded-xl bg-muted text-foreground text-xs font-bold hover:bg-muted/80 transition-colors flex items-center gap-1.5"
               >
                 <ChevronLeft className="w-4 h-4" /> All 6 Classes
               </button>
-              <div className="text-center sm:text-right">
-                <h3 className="font-serif font-bold text-lg text-foreground">{currentClassObj?.fullTitle} Roster</h3>
+              <div className="text-left sm:text-right">
+                <h3 className="font-serif font-bold text-lg text-foreground">{currentClassObj?.fullTitle} Academic Center</h3>
                 <p className="text-xs text-muted-foreground">Form Teacher: <strong>{currentClassObj?.formTeacher}</strong> · {currentClassObj?.room}</p>
               </div>
             </div>
 
-            <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden space-y-4 p-5">
-              <div className="flex justify-between items-center pb-2 border-b border-border">
-                <h4 className="font-bold text-sm text-foreground">Select a student to generate result:</h4>
-                <span className="text-xs font-bold text-emerald-600 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-200">
-                  {classStudents.length} Students Enrolled
-                </span>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-muted/40 text-muted-foreground uppercase text-[10px] tracking-wider">
-                    <tr>
-                      <th className="py-3 px-4">Admission No</th>
-                      <th className="py-3 px-4">Student Name</th>
-                      <th className="py-3 px-4">Gender</th>
-                      <th className="py-3 px-4">Stream / House</th>
-                      <th className="py-3 px-4">Parent Phone</th>
-                      <th className="py-3 px-4 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {classStudents.map(std => (
-                      <tr
-                        key={std.id}
-                        onClick={() => {
-                          setResultsSelectedStudent(std);
-                          setResultsSectionStream(std.stream || 'General');
-                          setIsResultGenerated(false);
-                        }}
-                        className="hover:bg-primary/5 transition-colors cursor-pointer group"
-                      >
-                        <td className="py-3.5 px-4 font-mono font-bold text-primary">{std.admissionNo}</td>
-                        <td className="py-3.5 px-4 font-bold text-foreground text-sm group-hover:text-primary transition-colors">{std.name}</td>
-                        <td className="py-3.5 px-4">{std.gender}</td>
-                        <td className="py-3.5 px-4 text-muted-foreground">{std.stream} ({std.house})</td>
-                        <td className="py-3.5 px-4 text-muted-foreground">{std.parentPhone}</td>
-                        <td className="py-3.5 px-4 text-right">
-                          <span className="px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 font-bold text-[11px] border border-emerald-200 group-hover:bg-emerald-600 group-hover:text-white transition-all inline-flex items-center gap-1">
-                            Check Result <ArrowUpRight className="w-3.5 h-3.5" />
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            {/* View Mode Tabs */}
+            <div className="flex border-b border-border gap-1 overflow-x-auto pb-px text-xs font-bold">
+              {[
+                { id: 'roster', label: '1. Student Report Cards', icon: FileText },
+                { id: 'marksheet', label: '2. Class Bulk Score Entry (Marksheet)', icon: FileSpreadsheet },
+                { id: 'fees', label: '3. Bursary & Fee Payment Ledger', icon: DollarSign },
+              ].map(tab => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setResultsViewTab(tab.id as any)}
+                    className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors whitespace-nowrap ${
+                      resultsViewTab === tab.id
+                        ? 'border-primary text-primary bg-primary/5 rounded-t-xl'
+                        : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/20 rounded-t-xl'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {tab.label}
+                  </button>
+                );
+              })}
             </div>
+
+            {/* ── TAB A: Student Roster (Individual Report Cards) ── */}
+            {resultsViewTab === 'roster' && (
+              <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden space-y-4 p-5">
+                <div className="flex justify-between items-center pb-2 border-b border-border">
+                  <h4 className="font-bold text-sm text-foreground">Select a student to compute and print report card:</h4>
+                  <span className="text-xs font-bold text-emerald-600 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-200">
+                    {classStudents.length} Students Enrolled
+                  </span>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-muted/40 text-muted-foreground uppercase text-[10px] tracking-wider">
+                      <tr>
+                        <th className="py-3 px-4">Admission No</th>
+                        <th className="py-3 px-4">Student Name</th>
+                        <th className="py-3 px-4">Gender</th>
+                        <th className="py-3 px-4">Stream / House</th>
+                        <th className="py-3 px-4">Parent Phone</th>
+                        <th className="py-3 px-4 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {classStudents.map(std => (
+                        <tr
+                          key={std.id}
+                          onClick={() => {
+                            setResultsSelectedStudent(std);
+                            setResultsSectionStream(std.stream || 'General');
+                            setIsResultGenerated(false);
+                          }}
+                          className="hover:bg-primary/5 transition-colors cursor-pointer group"
+                        >
+                          <td className="py-3.5 px-4 font-mono font-bold text-primary">{std.admissionNo}</td>
+                          <td className="py-3.5 px-4 font-bold text-foreground text-sm group-hover:text-primary transition-colors">{std.name}</td>
+                          <td className="py-3.5 px-4">{std.gender}</td>
+                          <td className="py-3.5 px-4 text-muted-foreground">{std.stream} ({std.house})</td>
+                          <td className="py-3.5 px-4 text-muted-foreground">{std.parentPhone}</td>
+                          <td className="py-3.5 px-4 text-right">
+                            <span className="px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 font-bold text-[11px] border border-emerald-200 group-hover:bg-emerald-600 group-hover:text-white transition-all inline-flex items-center gap-1">
+                              Check Result <ArrowUpRight className="w-3.5 h-3.5" />
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* ── TAB B: Class Marksheet / Bulk Score Entry Grid ── */}
+            {resultsViewTab === 'marksheet' && (
+              <div className="bg-card rounded-2xl border border-border shadow-sm p-6 space-y-5">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
+                  <div>
+                    <h4 className="font-bold text-base text-foreground">Class Academic Marksheet Grid</h4>
+                    <p className="text-xs text-muted-foreground">Input CA1, CA2, and Exam scores for all enrolled students in {resultsSelectedClass}.</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <label className="text-xs font-bold text-foreground">Subject:</label>
+                    <select
+                      value={marksheetSubject}
+                      onChange={e => setMarksheetSubject(e.target.value)}
+                      className="px-3 py-2 border border-border rounded-xl bg-card text-xs font-bold text-foreground focus:ring-2 focus:ring-primary"
+                    >
+                      <option value="Mathematics">Mathematics</option>
+                      <option value="English Language">English Language</option>
+                      <option value="Basic Science">Basic Science</option>
+                      <option value="Computer Science">Computer Science</option>
+                      <option value="Civic Education">Civic Education</option>
+                    </select>
+                  </div>
+                </div>
+
+                {marksheetSaveAlert && (
+                  <div className="p-3.5 bg-emerald-500/10 border border-emerald-200 text-emerald-600 rounded-xl text-xs font-bold flex items-center gap-2 animate-in fade-in">
+                    <CheckCircle2 className="w-4 h-4" /> Class Marksheet for {marksheetSubject} saved successfully to persistent storage!
+                  </div>
+                )}
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-muted/40 text-muted-foreground uppercase text-[10px] tracking-wider">
+                      <tr>
+                        <th className="py-3 px-3">Admission No</th>
+                        <th className="py-3 px-3">Student Name</th>
+                        <th className="py-3 px-3 text-center">CA 1 (15%)</th>
+                        <th className="py-3 px-3 text-center">CA 2 (15%)</th>
+                        <th className="py-3 px-3 text-center">Exam (70%)</th>
+                        <th className="py-3 px-3 text-center font-bold">Total (100%)</th>
+                        <th className="py-3 px-3 text-center font-bold">Grade</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {classStudents.map(std => {
+                        const scores = classScoresMap[std.id] || { ca1: 12, ca2: 13, exam: 50 };
+                        const total = scores.ca1 + scores.ca2 + scores.exam;
+                        const grade = total >= 75 ? 'A' : total >= 65 ? 'B' : total >= 55 ? 'C' : total >= 50 ? 'D' : 'F';
+                        return (
+                          <tr key={std.id} className="hover:bg-muted/10">
+                            <td className="py-3 px-3 font-mono font-bold text-primary">{std.admissionNo}</td>
+                            <td className="py-3 px-3 font-bold text-foreground">{std.name}</td>
+                            <td className="py-3 px-3 text-center">
+                              <input
+                                type="number"
+                                min="0"
+                                max="15"
+                                value={scores.ca1}
+                                onChange={e => {
+                                  const val = Math.min(15, Math.max(0, parseInt(e.target.value) || 0));
+                                  setClassScoresMap({ ...classScoresMap, [std.id]: { ...scores, ca1: val } });
+                                }}
+                                className="w-16 border border-border rounded-lg text-center py-1 bg-card text-foreground font-bold focus:ring-2 focus:ring-primary"
+                              />
+                            </td>
+                            <td className="py-3 px-3 text-center">
+                              <input
+                                type="number"
+                                min="0"
+                                max="15"
+                                value={scores.ca2}
+                                onChange={e => {
+                                  const val = Math.min(15, Math.max(0, parseInt(e.target.value) || 0));
+                                  setClassScoresMap({ ...classScoresMap, [std.id]: { ...scores, ca2: val } });
+                                }}
+                                className="w-16 border border-border rounded-lg text-center py-1 bg-card text-foreground font-bold focus:ring-2 focus:ring-primary"
+                              />
+                            </td>
+                            <td className="py-3 px-3 text-center">
+                              <input
+                                type="number"
+                                min="0"
+                                max="70"
+                                value={scores.exam}
+                                onChange={e => {
+                                  const val = Math.min(70, Math.max(0, parseInt(e.target.value) || 0));
+                                  setClassScoresMap({ ...classScoresMap, [std.id]: { ...scores, exam: val } });
+                                }}
+                                className="w-20 border border-border rounded-lg text-center py-1 bg-card text-foreground font-bold focus:ring-2 focus:ring-primary"
+                              />
+                            </td>
+                            <td className="py-3 px-3 text-center font-bold text-primary text-sm">{total}</td>
+                            <td className="py-3 px-3 text-center">
+                              <span className="font-bold px-2.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 border border-emerald-200">
+                                {grade}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="flex justify-end pt-3">
+                  <button
+                    onClick={() => {
+                      localStorage.setItem('tarepet_class_marksheet', JSON.stringify(classScoresMap));
+                      setMarksheetSaveAlert(true);
+                      setTimeout(() => setMarksheetSaveAlert(false), 2500);
+                    }}
+                    className="px-6 py-2.5 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all flex items-center gap-2 shadow-sm"
+                  >
+                    <CheckCircle2 className="w-4 h-4" /> Save Class Marksheet
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ── TAB C: Bursary & Fee Payment Ledger ── */}
+            {resultsViewTab === 'fees' && (
+              <div className="bg-card rounded-2xl border border-border shadow-sm p-6 space-y-5">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
+                  <div>
+                    <h4 className="font-bold text-base text-foreground">Bursary & Fee Payment Ledger</h4>
+                    <p className="text-xs text-muted-foreground">Track tuition payments, balances, and print receipts for {resultsSelectedClass}.</p>
+                  </div>
+                  <button
+                    onClick={() => setShowAddPaymentModal(true)}
+                    className="px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition-colors flex items-center gap-1.5 shadow-sm"
+                  >
+                    <DollarSign className="w-4 h-4" /> Log Student Fee Payment
+                  </button>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-muted/40 text-muted-foreground uppercase text-[10px] tracking-wider">
+                      <tr>
+                        <th className="py-3 px-3">Admission No & Name</th>
+                        <th className="py-3 px-3 text-right">Term Fee</th>
+                        <th className="py-3 px-3 text-right">Amount Paid</th>
+                        <th className="py-3 px-3 text-right">Balance Due</th>
+                        <th className="py-3 px-3 text-center">Status</th>
+                        <th className="py-3 px-3 text-right">Receipt & Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {classStudents.map(std => {
+                        const feeRec = feeLedgerState.find(f => f.studentId === std.id) || {
+                          totalAmount: resultsSelectedClass.startsWith('JSS') ? 53000 : 65000,
+                          paidAmount: 0,
+                          status: 'UNPAID',
+                          lastDate: '—',
+                          method: '—',
+                          receiptNo: '—',
+                        };
+                        const balance = feeRec.totalAmount - feeRec.paidAmount;
+
+                        return (
+                          <tr key={std.id} className="hover:bg-muted/10">
+                            <td className="py-3.5 px-3">
+                              <p className="font-mono font-bold text-primary">{std.admissionNo}</p>
+                              <p className="font-bold text-foreground text-sm">{std.name}</p>
+                            </td>
+                            <td className="py-3.5 px-3 text-right font-mono font-bold text-foreground">₦{feeRec.totalAmount.toLocaleString()}</td>
+                            <td className="py-3.5 px-3 text-right font-mono font-bold text-emerald-600">₦{feeRec.paidAmount.toLocaleString()}</td>
+                            <td className="py-3.5 px-3 text-right font-mono font-bold text-rose-600">₦{balance.toLocaleString()}</td>
+                            <td className="py-3.5 px-3 text-center">
+                              <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${
+                                feeRec.status === 'PAID' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200' :
+                                feeRec.status === 'PARTIAL' ? 'bg-amber-500/10 text-amber-600 border-amber-200' :
+                                'bg-rose-500/10 text-rose-600 border-rose-200'
+                              }`}>
+                                {feeRec.status}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-3 text-right">
+                              {feeRec.paidAmount > 0 ? (
+                                <button
+                                  onClick={() => setReceiptModalData({ ...feeRec, studentName: std.name, admissionNo: std.admissionNo, grade: std.grade })}
+                                  className="px-3 py-1.5 bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-white rounded-xl font-bold text-[11px] transition-all inline-flex items-center gap-1"
+                                >
+                                  <Printer className="w-3.5 h-3.5" /> Print Receipt
+                                </button>
+                              ) : (
+                                <span className="text-[11px] text-muted-foreground italic">No Payment Yet</span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Add Payment Modal */}
+                {showAddPaymentModal && (
+                  <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+                    <div className="bg-card rounded-2xl border border-border p-6 shadow-2xl max-w-md w-full space-y-5 animate-in fade-in zoom-in duration-200">
+                      <div className="flex items-center justify-between pb-3 border-b border-border">
+                        <h3 className="font-serif font-bold text-lg text-foreground">Log Student Fee Payment</h3>
+                        <button onClick={() => setShowAddPaymentModal(false)} className="p-1 rounded-lg text-muted-foreground hover:bg-accent">
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+
+                      <div className="space-y-4 text-xs">
+                        <div>
+                          <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Select Student</label>
+                          <select
+                            value={paymentForm.studentId}
+                            onChange={e => setPaymentForm({ ...paymentForm, studentId: Number(e.target.value) })}
+                            className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground font-bold focus:ring-2 focus:ring-primary"
+                          >
+                            {classStudents.map(s => (
+                              <option key={s.id} value={s.id}>{s.name} ({s.admissionNo})</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Amount Paid (₦)</label>
+                          <input
+                            type="number"
+                            placeholder="e.g. 53000"
+                            value={paymentForm.amount || ''}
+                            onChange={e => setPaymentForm({ ...paymentForm, amount: Number(e.target.value) })}
+                            className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground font-bold focus:ring-2 focus:ring-primary"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Payment Method</label>
+                          <select
+                            value={paymentForm.method}
+                            onChange={e => setPaymentForm({ ...paymentForm, method: e.target.value })}
+                            className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground font-bold focus:ring-2 focus:ring-primary"
+                          >
+                            <option value="Bank Transfer">Bank Transfer</option>
+                            <option value="Cash">Cash (Bursar Office)</option>
+                            <option value="Online (Flutterwave)">Online (Flutterwave)</option>
+                            <option value="POS Terminal">POS Terminal</option>
+                          </select>
+                        </div>
+
+                        <div className="flex gap-3 pt-2">
+                          <button
+                            onClick={() => {
+                              const std = classStudents.find(s => s.id === paymentForm.studentId);
+                              if (std && paymentForm.amount > 0) {
+                                const totalAmt = resultsSelectedClass.startsWith('JSS') ? 53000 : 65000;
+                                const existingIndex = feeLedgerState.findIndex(f => f.studentId === std.id);
+                                const newPaid = (existingIndex >= 0 ? feeLedgerState[existingIndex].paidAmount : 0) + paymentForm.amount;
+                                const newStatus = newPaid >= totalAmt ? 'PAID' : newPaid > 0 ? 'PARTIAL' : 'UNPAID';
+
+                                const newRecord = {
+                                  id: Date.now(),
+                                  studentId: std.id,
+                                  name: std.name,
+                                  admissionNo: std.admissionNo,
+                                  class: resultsSelectedClass,
+                                  totalAmount: totalAmt,
+                                  paidAmount: newPaid,
+                                  status: newStatus,
+                                  lastDate: new Date().toISOString().split('T')[0],
+                                  method: paymentForm.method,
+                                  receiptNo: `RCP-2026-${Math.floor(100 + Math.random() * 900)}`,
+                                };
+
+                                let updatedLedger;
+                                if (existingIndex >= 0) {
+                                  updatedLedger = [...feeLedgerState];
+                                  updatedLedger[existingIndex] = newRecord;
+                                } else {
+                                  updatedLedger = [...feeLedgerState, newRecord];
+                                }
+                                setFeeLedgerState(updatedLedger);
+                                localStorage.setItem('tarepet_fee_ledger', JSON.stringify(updatedLedger));
+                                setShowAddPaymentModal(false);
+                              } else {
+                                alert('Please enter a valid amount!');
+                              }
+                            }}
+                            className="flex-1 py-3 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition-all"
+                          >
+                            Record Payment & Save
+                          </button>
+                          <button
+                            onClick={() => setShowAddPaymentModal(false)}
+                            className="px-5 py-3 border border-border rounded-xl text-xs font-bold hover:bg-accent transition-all"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Printable Receipt Modal */}
+                {receiptModalData && (
+                  <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+                    <div className="bg-card rounded-2xl border border-border p-6 sm:p-8 shadow-2xl max-w-lg w-full space-y-5 animate-in fade-in zoom-in duration-200 print:border-none print:shadow-none">
+                      <div className="flex items-center justify-between pb-3 border-b border-border print:hidden">
+                        <h3 className="font-serif font-bold text-lg text-foreground">Official Fee Receipt</h3>
+                        <button onClick={() => setReceiptModalData(null)} className="p-1 rounded-lg text-muted-foreground hover:bg-accent">
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+
+                      {/* Receipt Document */}
+                      <div className="border border-border p-6 rounded-xl space-y-4 text-xs bg-muted/10 print:border-none">
+                        <div className="text-center space-y-1 pb-3 border-b border-border">
+                          <h2 className="font-serif font-extrabold text-xl uppercase tracking-wider text-foreground">Tare Pet Montessori School</h2>
+                          <p className="text-[10px] text-muted-foreground">12 Kpansia-Epje Road, Yenagoa, Bayelsa State · Tel: +234 803 123 4567</p>
+                          <span className="inline-block font-mono font-bold text-primary text-xs pt-1">RECEIPT NO: {receiptModalData.receiptNo}</span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 text-xs">
+                          <div>
+                            <p className="text-muted-foreground uppercase text-[9px] font-bold">Student Name</p>
+                            <p className="font-bold text-foreground">{receiptModalData.studentName}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground uppercase text-[9px] font-bold">Admission Number</p>
+                            <p className="font-mono font-bold text-primary">{receiptModalData.admissionNo}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground uppercase text-[9px] font-bold">Class Level</p>
+                            <p className="font-bold text-foreground">{receiptModalData.grade}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground uppercase text-[9px] font-bold">Payment Date</p>
+                            <p className="font-bold text-foreground">{receiptModalData.lastDate}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground uppercase text-[9px] font-bold">Payment Method</p>
+                            <p className="font-bold text-foreground">{receiptModalData.method}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground uppercase text-[9px] font-bold">Payment Status</p>
+                            <p className="font-bold text-emerald-600">{receiptModalData.status}</p>
+                          </div>
+                        </div>
+
+                        <div className="pt-2 border-t border-border space-y-1.5 text-xs">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Term Tuition Fee:</span>
+                            <span className="font-mono font-bold">₦{receiptModalData.totalAmount?.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Amount Paid:</span>
+                            <span className="font-mono font-bold text-emerald-600">₦{receiptModalData.paidAmount?.toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between pt-1 border-t border-border font-bold">
+                            <span>Balance Remaining:</span>
+                            <span className="font-mono text-rose-600">₦{(receiptModalData.totalAmount - receiptModalData.paidAmount)?.toLocaleString()}</span>
+                          </div>
+                        </div>
+
+                        <div className="pt-4 text-center border-t border-border space-y-1">
+                          <p className="text-[10px] text-muted-foreground italic">"Thank you for choosing Tare Pet Montessori School."</p>
+                          <p className="text-[9px] font-bold text-primary uppercase">Bursary Office Official Stamp Attached</p>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end gap-3 print:hidden">
+                        <button
+                          onClick={() => window.print()}
+                          className="px-5 py-2.5 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all flex items-center gap-1.5 shadow-sm"
+                        >
+                          <Printer className="w-4 h-4" /> Print Official Receipt
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         );
       }
@@ -6604,7 +7064,312 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
         </div>
       );
     }
-    if (activeSection === 'announcements') return renderModuleHeader('Announcements', 'Publish announcements to parents, teachers, and students.', Megaphone);
+    if (activeSection === 'announcements') {
+      const annCategories = ['All', 'Academic', 'General', 'Sports', 'Urgent'];
+      const [annFilter, setAnnFilter] = [
+        (window as any).__annFilter ?? 'All',
+        (v: string) => { (window as any).__annFilter = v; }
+      ];
+      // Use React state stored in a ref-like window global for filter (no hook here)
+      // We'll render with a simple local variable approach
+      const filteredAnn = announcementsListState.filter(a =>
+        annFilter === 'All' || a.category === annFilter || (annFilter === 'Urgent' && a.priority === 'URGENT')
+      );
+
+      const priorityBadge = (p: string) => {
+        if (p === 'HIGH') return 'bg-rose-500/10 text-rose-600 border-rose-200';
+        if (p === 'URGENT') return 'bg-orange-500/10 text-orange-600 border-orange-200';
+        return 'bg-slate-500/10 text-slate-500 border-slate-200';
+      };
+      const targetBadge = (t: string) => {
+        if (t === 'ALL') return 'bg-violet-500/10 text-violet-600';
+        if (t === 'PARENTS') return 'bg-blue-500/10 text-blue-600';
+        if (t === 'STUDENTS') return 'bg-emerald-500/10 text-emerald-600';
+        if (t === 'TEACHERS') return 'bg-amber-500/10 text-amber-600';
+        return 'bg-muted text-muted-foreground';
+      };
+      const audienceLabel = (t: string) => {
+        if (t === 'ALL') return '📢 All Parents, Students & Staff';
+        if (t === 'PARENTS') return '👨‍👩‍👧 Parents Only';
+        if (t === 'STUDENTS') return '🎓 Students & Staff';
+        if (t === 'TEACHERS') return '🧑‍🏫 Teaching Staff Only';
+        return t;
+      };
+
+      return (
+        <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
+          {/* Page Header */}
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <h2 className="font-serif font-bold text-xl text-foreground flex items-center gap-2">
+                <Megaphone className="w-5 h-5 text-primary" /> Announcements & Communication Center
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Publish, broadcast, and manage official notices to all school stakeholders.</p>
+            </div>
+            <button
+              onClick={() => { setShowCreateAnnouncementModal(true); setAnnouncementForm({ title: '', target: 'ALL', priority: 'NORMAL', category: 'Academic', content: '', sendSMS: true }); }}
+              className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground text-xs font-bold rounded-xl hover:opacity-90 shadow-md transition-all"
+            >
+              <Plus className="w-4 h-4" /> Publish New Announcement
+            </button>
+          </div>
+
+          {/* Success banner */}
+          {announcementSuccessAlert && (
+            <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              Announcement published successfully! {announcementForm.sendSMS && 'SMS alerts have been dispatched to the target audience.'}
+            </div>
+          )}
+
+          {/* Stats row */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[
+              { label: 'Total Published', value: announcementsListState.length, color: 'text-primary', bg: 'bg-primary/5', icon: <Megaphone className="w-4 h-4" /> },
+              { label: 'High Priority', value: announcementsListState.filter(a => a.priority === 'HIGH' || a.priority === 'URGENT').length, color: 'text-rose-600', bg: 'bg-rose-500/5', icon: <AlertTriangle className="w-4 h-4" /> },
+              { label: 'Sent to All', value: announcementsListState.filter(a => a.target === 'ALL').length, color: 'text-violet-600', bg: 'bg-violet-500/5', icon: <Users className="w-4 h-4" /> },
+              { label: 'SMS Broadcasts', value: announcementsListState.length, color: 'text-emerald-600', bg: 'bg-emerald-500/5', icon: <CheckCircle2 className="w-4 h-4" /> },
+            ].map(stat => (
+              <div key={stat.label} className={`${stat.bg} rounded-2xl border border-border p-4 flex items-center gap-3`}>
+                <div className={`${stat.color} opacity-80`}>{stat.icon}</div>
+                <div>
+                  <p className={`text-xl font-bold font-serif ${stat.color}`}>{stat.value}</p>
+                  <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide">{stat.label}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Category filter tabs */}
+          <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+            <div className="flex border-b border-border px-4 pt-4 gap-1 flex-wrap pb-0">
+              {annCategories.map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => { (window as any).__annFilter = cat; setAnnouncementSuccessAlert(false); /* force re-render via a no-op state update */ setAnnouncementSuccessAlert(false); }}
+                  className={`px-4 py-2 text-xs font-bold rounded-t-xl border-b-2 transition-colors ${
+                    ((window as any).__annFilter ?? 'All') === cat
+                      ? 'border-primary text-primary bg-primary/5'
+                      : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/40'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+
+            <div className="p-5 space-y-4">
+              {announcementsListState.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Megaphone className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                  <p className="font-semibold text-sm">No announcements published yet.</p>
+                  <p className="text-xs mt-1">Click "Publish New Announcement" to get started.</p>
+                </div>
+              ) : (
+                announcementsListState.map((ann: any) => (
+                  <div key={ann.id} className="bg-background rounded-2xl border border-border p-5 hover:shadow-md transition-shadow space-y-3">
+                    {/* Card header */}
+                    <div className="flex items-start justify-between gap-3 flex-wrap">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${priorityBadge(ann.priority)}`}>
+                            {ann.priority === 'HIGH' ? '🔴' : ann.priority === 'URGENT' ? '🚨' : '🟢'} {ann.priority}
+                          </span>
+                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${targetBadge(ann.target)}`}>
+                            {audienceLabel(ann.target)}
+                          </span>
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                            {ann.category}
+                          </span>
+                        </div>
+                        <h3 className="font-serif font-bold text-foreground text-base leading-snug">{ann.title}</h3>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-[10px] text-muted-foreground font-semibold">{ann.date}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{ann.author}</p>
+                      </div>
+                    </div>
+
+                    {/* Content body */}
+                    <p className="text-xs text-muted-foreground leading-relaxed border-l-2 border-primary/30 pl-3">
+                      {ann.content}
+                    </p>
+
+                    {/* Footer actions */}
+                    <div className="flex items-center justify-between pt-1">
+                      <div className="flex items-center gap-1.5 text-[10px] text-emerald-600 font-semibold">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> SMS Dispatched
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            const updated = announcementsListState.filter((a: any) => a.id !== ann.id);
+                            setAnnouncementsListState(updated);
+                            localStorage.setItem('tarepet_announcements', JSON.stringify(updated));
+                          }}
+                          className="px-3 py-1.5 text-[10px] font-bold text-rose-600 border border-rose-200 rounded-lg hover:bg-rose-50 transition-colors"
+                        >
+                          Remove
+                        </button>
+                        <button className="px-3 py-1.5 text-[10px] font-bold text-muted-foreground border border-border rounded-lg hover:bg-muted/50 transition-colors">
+                          Resend SMS
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Create Announcement Modal */}
+          {showCreateAnnouncementModal && (
+            <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+              <div className="bg-card border border-border rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[92vh]">
+                {/* Modal Header */}
+                <div className="p-5 border-b border-border flex items-center justify-between bg-muted/20">
+                  <div>
+                    <h3 className="font-serif font-bold text-lg text-foreground flex items-center gap-2">
+                      <Megaphone className="w-5 h-5 text-primary" /> Publish New Announcement
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">Broadcast an official notice to your selected audience.</p>
+                  </div>
+                  <button onClick={() => setShowCreateAnnouncementModal(false)} className="p-2 rounded-xl text-muted-foreground hover:bg-muted/50 transition-colors">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Modal Body */}
+                <div className="p-6 overflow-y-auto space-y-4 flex-1">
+                  {/* Title */}
+                  <div>
+                    <label className="block text-xs font-bold mb-1.5 text-foreground">Announcement Title *</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. End of Term Examination Schedule"
+                      value={announcementForm.title}
+                      onChange={e => setAnnouncementForm({ ...announcementForm, title: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Target & Priority row */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold mb-1.5 text-foreground">Target Audience *</label>
+                      <select
+                        value={announcementForm.target}
+                        onChange={e => setAnnouncementForm({ ...announcementForm, target: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none"
+                      >
+                        <option value="ALL">📢 All Stakeholders</option>
+                        <option value="PARENTS">👨‍👩‍👧 Parents Only</option>
+                        <option value="STUDENTS">🎓 Students Only</option>
+                        <option value="TEACHERS">🧑‍🏫 Teaching Staff</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold mb-1.5 text-foreground">Priority Level *</label>
+                      <select
+                        value={announcementForm.priority}
+                        onChange={e => setAnnouncementForm({ ...announcementForm, priority: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none"
+                      >
+                        <option value="NORMAL">🟢 Normal</option>
+                        <option value="HIGH">🔴 High Priority</option>
+                        <option value="URGENT">🚨 Urgent</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Category */}
+                  <div>
+                    <label className="block text-xs font-bold mb-1.5 text-foreground">Category</label>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {['Academic', 'General', 'Sports', 'Finance', 'Health'].map(cat => (
+                        <button
+                          key={cat}
+                          onClick={() => setAnnouncementForm({ ...announcementForm, category: cat })}
+                          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-colors ${
+                            announcementForm.category === cat
+                              ? 'bg-primary text-primary-foreground border-primary'
+                              : 'bg-card border-border text-muted-foreground hover:bg-muted/50'
+                          }`}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div>
+                    <label className="block text-xs font-bold mb-1.5 text-foreground">Notice Content *</label>
+                    <textarea
+                      rows={5}
+                      placeholder="Write the full announcement body here. Be clear and concise..."
+                      value={announcementForm.content}
+                      onChange={e => setAnnouncementForm({ ...announcementForm, content: e.target.value })}
+                      className="w-full px-4 py-3 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none resize-none"
+                    />
+                  </div>
+
+                  {/* SMS checkbox */}
+                  <div className="flex items-center gap-3 p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-200">
+                    <input
+                      type="checkbox"
+                      id="sendSMSCheck"
+                      checked={announcementForm.sendSMS}
+                      onChange={e => setAnnouncementForm({ ...announcementForm, sendSMS: e.target.checked })}
+                      className="w-4 h-4 accent-emerald-600 cursor-pointer"
+                    />
+                    <label htmlFor="sendSMSCheck" className="text-xs font-bold text-emerald-700 cursor-pointer leading-tight">
+                      📱 Send Instant SMS Alert to selected audience<br />
+                      <span className="font-normal text-emerald-600/80">SMS will be dispatched immediately upon publishing.</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Modal Footer */}
+                <div className="p-5 border-t border-border bg-muted/20 flex items-center justify-between">
+                  <button onClick={() => setShowCreateAnnouncementModal(false)} className="px-4 py-2 rounded-xl border border-border text-xs font-semibold hover:bg-muted transition-colors">
+                    Cancel
+                  </button>
+                  <button
+                    disabled={!announcementForm.title || !announcementForm.content}
+                    onClick={() => {
+                      const now = new Date();
+                      const dateStr = now.toISOString().split('T')[0];
+                      const newAnn = {
+                        id: Date.now(),
+                        title: announcementForm.title,
+                        target: announcementForm.target,
+                        audience: announcementForm.target === 'ALL' ? 'All Stakeholders' : announcementForm.target === 'PARENTS' ? 'Parents Only' : announcementForm.target === 'STUDENTS' ? 'Students Only' : 'Teaching Staff',
+                        date: dateStr,
+                        author: 'Principal Office',
+                        priority: announcementForm.priority,
+                        category: announcementForm.category,
+                        content: announcementForm.content,
+                        sendSMS: announcementForm.sendSMS,
+                      };
+                      const updated = [newAnn, ...announcementsListState];
+                      setAnnouncementsListState(updated);
+                      localStorage.setItem('tarepet_announcements', JSON.stringify(updated));
+                      setShowCreateAnnouncementModal(false);
+                      setAnnouncementSuccessAlert(true);
+                      setTimeout(() => setAnnouncementSuccessAlert(false), 5000);
+                    }}
+                    className="flex items-center gap-2 px-6 py-2.5 bg-primary text-primary-foreground text-xs font-bold rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed shadow-md transition-all"
+                  >
+                    <Megaphone className="w-4 h-4" /> Publish Announcement
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
     if (activeSection === 'calendar') return renderModuleHeader('School Calendar', 'View academic session terms, exam schedules, and official school holidays.', Calendar);
     if (activeSection === 'reports') return renderModuleHeader('Reports', 'Generate comprehensive academic, attendance, teacher, and student analytical reports.', BarChart2);
 
