@@ -9,7 +9,7 @@ import {
   FileText, MessageSquare, BarChart2, Building2, Settings,
   Briefcase, PenLine, Star, Library, ClipboardList, Trophy,
   CreditCard, HeartHandshake, School, Shield, Search,
-  Megaphone, CalendarCheck, ChevronRight, Sun, Moon,
+  Megaphone, CalendarCheck, ChevronRight, Sun, Moon, DollarSign,
 } from 'lucide-react';
 
 export interface NavSection {
@@ -36,6 +36,7 @@ const ROLE_NAV: Record<string, NavSection[]> = {
     { id: 'results',        label: 'Results',           icon: FileText },
     { id: 'attendance',     label: 'Attendance',        icon: CalendarCheck },
     { id: 'announcements',  label: 'Announcements',     icon: Megaphone },
+    { id: 'finance',        label: 'Finance',           icon: DollarSign },
     { id: 'calendar',       label: 'School Calendar',   icon: Calendar },
     { id: 'reports',        label: 'Reports',           icon: BarChart2 },
     { id: 'profile',        label: 'My Profile',        icon: UserCheck },

@@ -1952,6 +1952,39 @@ export default function AdminDashboard() {
   const [announcementForm, setAnnouncementForm] = useState({ title: '', target: 'ALL', priority: 'NORMAL', category: 'Academic', content: '', sendSMS: true });
   const [announcementSuccessAlert, setAnnouncementSuccessAlert] = useState(false);
 
+  // Finance & Bursary State
+  const [financeTab, setFinanceTab] = useState<'overview' | 'income' | 'expenses' | 'budget'>('overview');
+  const [financeExpenses, setFinanceExpenses] = useState<any[]>(() => {
+    const saved = localStorage.getItem('tarepet_fin_expenses');
+    if (saved) { try { return JSON.parse(saved); } catch (e) {} }
+    return [
+      { id: 1, date: '2026-01-05', description: 'Staff Salary — January', category: 'Salaries', amount: 2850000, status: 'PAID', ref: 'EXP-2026-001' },
+      { id: 2, date: '2026-01-08', description: 'NEPA Electricity Bill', category: 'Utilities', amount: 185000, status: 'PAID', ref: 'EXP-2026-002' },
+      { id: 3, date: '2026-01-10', description: 'Classroom Furniture Replacement', category: 'Infrastructure', amount: 420000, status: 'PAID', ref: 'EXP-2026-003' },
+      { id: 4, date: '2026-01-15', description: 'Lab Consumables & Chemicals', category: 'Academic', amount: 95000, status: 'PAID', ref: 'EXP-2026-004' },
+      { id: 5, date: '2026-01-20', description: 'Sports Equipment Purchase', category: 'Sports', amount: 130000, status: 'PENDING', ref: 'EXP-2026-005' },
+      { id: 6, date: '2026-01-22', description: 'School Bus Maintenance', category: 'Transport', amount: 78000, status: 'PAID', ref: 'EXP-2026-006' },
+      { id: 7, date: '2026-01-28', description: 'Printing & Stationery', category: 'Admin', amount: 45000, status: 'PAID', ref: 'EXP-2026-007' },
+    ];
+  });
+  const [financeIncome, setFinanceIncome] = useState<any[]>(() => {
+    const saved = localStorage.getItem('tarepet_fin_income');
+    if (saved) { try { return JSON.parse(saved); } catch (e) {} }
+    return [
+      { id: 1, date: '2026-01-03', description: 'School Fees — JSS1 (32 students)', category: 'School Fees', amount: 1696000, status: 'RECEIVED', ref: 'INC-2026-001' },
+      { id: 2, date: '2026-01-04', description: 'School Fees — JSS2 (28 students)', category: 'School Fees', amount: 1484000, status: 'RECEIVED', ref: 'INC-2026-002' },
+      { id: 3, date: '2026-01-06', description: 'School Fees — SS1 Science (18 students)', category: 'School Fees', amount: 1170000, status: 'RECEIVED', ref: 'INC-2026-003' },
+      { id: 4, date: '2026-01-10', description: 'PTA Levy Collection', category: 'Levies', amount: 380000, status: 'RECEIVED', ref: 'INC-2026-004' },
+      { id: 5, date: '2026-01-14', description: 'Examination Fees Collection', category: 'Exam Fees', amount: 220000, status: 'RECEIVED', ref: 'INC-2026-005' },
+      { id: 6, date: '2026-01-18', description: 'Development Levy — SS Classes', category: 'Levies', amount: 165000, status: 'RECEIVED', ref: 'INC-2026-006' },
+    ];
+  });
+  const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
+  const [showAddIncomeModal, setShowAddIncomeModal] = useState(false);
+  const [expenseForm, setExpenseForm] = useState({ description: '', category: 'Salaries', amount: '', status: 'PAID' });
+  const [incomeForm, setIncomeForm] = useState({ description: '', category: 'School Fees', amount: '', status: 'RECEIVED' });
+  const [financeSaveAlert, setFinanceSaveAlert] = useState('');
+
   // Teacher management state
   const [teachersList, setTeachersList] = useState(MOCK_TEACHERS);
   const [selectedTeacher, setSelectedTeacher] = useState<any>(null);
@@ -7362,6 +7395,464 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                     className="flex items-center gap-2 px-6 py-2.5 bg-primary text-primary-foreground text-xs font-bold rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed shadow-md transition-all"
                   >
                     <Megaphone className="w-4 h-4" /> Publish Announcement
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+    if (activeSection === 'finance') {
+      const totalIncome = financeIncome.reduce((s: number, r: any) => s + r.amount, 0);
+      const totalExpenses = financeExpenses.reduce((s: number, r: any) => s + r.amount, 0);
+      const netBalance = totalIncome - totalExpenses;
+      const pendingExp = financeExpenses.filter((e: any) => e.status === 'PENDING').reduce((s: number, r: any) => s + r.amount, 0);
+
+      const EXPENSE_CATEGORIES = ['Salaries', 'Utilities', 'Infrastructure', 'Academic', 'Sports', 'Transport', 'Admin', 'Other'];
+      const INCOME_CATEGORIES = ['School Fees', 'Levies', 'Exam Fees', 'Donations', 'Grants', 'Other'];
+
+      const chartData = [
+        { month: 'Sep', income: 4200000, expenses: 3100000 },
+        { month: 'Oct', income: 3800000, expenses: 3400000 },
+        { month: 'Nov', income: 2100000, expenses: 2800000 },
+        { month: 'Dec', income: 1200000, expenses: 1950000 },
+        { month: 'Jan', income: totalIncome, expenses: totalExpenses },
+      ];
+
+      const fmtCurrency = (v: number) => '₦' + v.toLocaleString();
+
+      const expCatBreakdown = EXPENSE_CATEGORIES.map(cat => ({
+        cat,
+        total: financeExpenses.filter((e: any) => e.category === cat).reduce((s: number, r: any) => s + r.amount, 0),
+      })).filter(c => c.total > 0);
+
+      return (
+        <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
+          {/* Header */}
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <h2 className="font-serif font-bold text-xl text-foreground flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-primary" /> Finance & Bursary Management
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Track school revenue, expenditure, fee collections, and budget planning.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => { setShowAddIncomeModal(true); setIncomeForm({ description: '', category: 'School Fees', amount: '', status: 'RECEIVED' }); }}
+                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 shadow-sm transition-colors"
+              >
+                <Plus className="w-4 h-4" /> Add Income
+              </button>
+              <button
+                onClick={() => { setShowAddExpenseModal(true); setExpenseForm({ description: '', category: 'Salaries', amount: '', status: 'PAID' }); }}
+                className="flex items-center gap-2 px-4 py-2 bg-rose-600 text-white text-xs font-bold rounded-xl hover:bg-rose-700 shadow-sm transition-colors"
+              >
+                <Plus className="w-4 h-4" /> Add Expense
+              </button>
+            </div>
+          </div>
+
+          {/* Alert */}
+          {financeSaveAlert && (
+            <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 text-xs font-semibold flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 shrink-0" /> {financeSaveAlert}
+            </div>
+          )}
+
+          {/* KPI Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { label: 'Total Income', value: fmtCurrency(totalIncome), sub: 'This term', color: 'text-emerald-600', bg: 'bg-emerald-500/5', border: 'border-emerald-200', icon: <TrendingUp className="w-5 h-5" />, arrow: true },
+              { label: 'Total Expenses', value: fmtCurrency(totalExpenses), sub: 'This term', color: 'text-rose-600', bg: 'bg-rose-500/5', border: 'border-rose-200', icon: <ArrowDownRight className="w-5 h-5" />, arrow: false },
+              { label: 'Net Balance', value: fmtCurrency(netBalance), sub: netBalance >= 0 ? 'Surplus' : 'Deficit', color: netBalance >= 0 ? 'text-primary' : 'text-orange-600', bg: 'bg-primary/5', border: 'border-primary/20', icon: <DollarSign className="w-5 h-5" />, arrow: netBalance >= 0 },
+              { label: 'Pending Payments', value: fmtCurrency(pendingExp), sub: `${financeExpenses.filter((e: any) => e.status === 'PENDING').length} items`, color: 'text-amber-600', bg: 'bg-amber-500/5', border: 'border-amber-200', icon: <Clock className="w-5 h-5" />, arrow: false },
+            ].map(kpi => (
+              <div key={kpi.label} className={`${kpi.bg} border ${kpi.border} rounded-2xl p-4 space-y-2`}>
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{kpi.label}</p>
+                  <span className={kpi.color}>{kpi.icon}</span>
+                </div>
+                <p className={`text-xl font-bold font-serif ${kpi.color}`}>{kpi.value}</p>
+                <p className="text-[10px] text-muted-foreground">{kpi.sub}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Sub-tabs */}
+          <div className="flex gap-1 border-b border-border">
+            {(['overview', 'income', 'expenses', 'budget'] as const).map(tab => (
+              <button
+                key={tab}
+                onClick={() => setFinanceTab(tab)}
+                className={`px-5 py-2.5 text-xs font-bold capitalize rounded-t-xl border-b-2 transition-colors ${
+                  financeTab === tab
+                    ? 'border-primary text-primary bg-primary/5'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/40'
+                }`}
+              >
+                {tab === 'overview' ? '📊 Overview' : tab === 'income' ? '💰 Income Records' : tab === 'expenses' ? '💸 Expense Log' : '📋 Budget Plan'}
+              </button>
+            ))}
+          </div>
+
+          {/* ── OVERVIEW TAB ── */}
+          {financeTab === 'overview' && (
+            <div className="space-y-5">
+              {/* Chart */}
+              <div className="bg-card rounded-2xl border border-border p-5 shadow-sm">
+                <h3 className="font-serif font-bold text-sm text-foreground mb-4">Income vs. Expenditure — Last 5 Months</h3>
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={chartData} barGap={4}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 10 }} tickFormatter={(v: number) => '₦' + (v / 1000000).toFixed(1) + 'M'} />
+                    <Tooltip formatter={(v: number) => fmtCurrency(v)} />
+                    <Bar dataKey="income" fill="hsl(142 76% 36%)" name="Income" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="expenses" fill="hsl(0 84% 60%)" name="Expenses" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Expense breakdown table */}
+              <div className="bg-card rounded-2xl border border-border p-5 shadow-sm">
+                <h3 className="font-serif font-bold text-sm text-foreground mb-4">Expense Category Breakdown</h3>
+                <div className="space-y-2">
+                  {expCatBreakdown.map(({ cat, total }) => (
+                    <div key={cat} className="flex items-center gap-3">
+                      <span className="text-xs font-semibold text-muted-foreground w-28 shrink-0">{cat}</span>
+                      <div className="flex-1 bg-muted/30 rounded-full h-2 overflow-hidden">
+                        <div
+                          className="h-full bg-primary/70 rounded-full"
+                          style={{ width: `${Math.min(100, (total / totalExpenses) * 100).toFixed(1)}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-bold text-foreground w-28 text-right shrink-0">{fmtCurrency(total)}</span>
+                      <span className="text-[10px] text-muted-foreground w-10 text-right shrink-0">{((total / totalExpenses) * 100).toFixed(0)}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Recent transactions */}
+              <div className="bg-card rounded-2xl border border-border p-5 shadow-sm">
+                <h3 className="font-serif font-bold text-sm text-foreground mb-4">Recent Transactions</h3>
+                <div className="space-y-2">
+                  {[...financeIncome.slice(0, 3).map((r: any) => ({ ...r, type: 'income' })), ...financeExpenses.slice(0, 3).map((r: any) => ({ ...r, type: 'expense' }))]
+                    .sort((a, b) => b.date.localeCompare(a.date))
+                    .map((tx: any) => (
+                      <div key={tx.ref} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                            tx.type === 'income' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'
+                          }`}>
+                            {tx.type === 'income' ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-foreground">{tx.description}</p>
+                            <p className="text-[10px] text-muted-foreground">{tx.ref} · {tx.date}</p>
+                          </div>
+                        </div>
+                        <span className={`text-sm font-bold font-serif ${
+                          tx.type === 'income' ? 'text-emerald-600' : 'text-rose-600'
+                        }`}>
+                          {tx.type === 'income' ? '+' : '-'}{fmtCurrency(tx.amount)}
+                        </span>
+                      </div>
+                    ))
+                  }
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── INCOME TAB ── */}
+          {financeTab === 'income' && (
+            <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-border flex items-center justify-between">
+                <h3 className="font-serif font-bold text-sm text-foreground">Income Records — {new Date().getFullYear()}</h3>
+                <span className="text-xs font-bold text-emerald-600 bg-emerald-500/10 px-3 py-1 rounded-full">Total: {fmtCurrency(totalIncome)}</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-muted/30 text-muted-foreground uppercase text-[10px] tracking-wider">
+                    <tr>
+                      <th className="py-3 px-4">Ref No.</th>
+                      <th className="py-3 px-4">Description</th>
+                      <th className="py-3 px-4">Category</th>
+                      <th className="py-3 px-4">Date</th>
+                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4 text-right">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {financeIncome.map((row: any) => (
+                      <tr key={row.id} className="hover:bg-muted/20">
+                        <td className="py-3 px-4 font-mono font-bold text-primary text-[10px]">{row.ref}</td>
+                        <td className="py-3 px-4 font-semibold text-foreground">{row.description}</td>
+                        <td className="py-3 px-4 text-muted-foreground">{row.category}</td>
+                        <td className="py-3 px-4 text-muted-foreground">{row.date}</td>
+                        <td className="py-3 px-4">
+                          <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-200">
+                            {row.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right font-bold text-emerald-600 font-serif">{fmtCurrency(row.amount)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="bg-muted/30">
+                    <tr>
+                      <td colSpan={5} className="py-3 px-4 text-xs font-bold text-foreground text-right">Total Income</td>
+                      <td className="py-3 px-4 text-right font-bold text-emerald-700 font-serif text-sm">{fmtCurrency(totalIncome)}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ── EXPENSES TAB ── */}
+          {financeTab === 'expenses' && (
+            <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-border flex items-center justify-between">
+                <h3 className="font-serif font-bold text-sm text-foreground">Expense Log — {new Date().getFullYear()}</h3>
+                <span className="text-xs font-bold text-rose-600 bg-rose-500/10 px-3 py-1 rounded-full">Total: {fmtCurrency(totalExpenses)}</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-muted/30 text-muted-foreground uppercase text-[10px] tracking-wider">
+                    <tr>
+                      <th className="py-3 px-4">Ref No.</th>
+                      <th className="py-3 px-4">Description</th>
+                      <th className="py-3 px-4">Category</th>
+                      <th className="py-3 px-4">Date</th>
+                      <th className="py-3 px-4">Status</th>
+                      <th className="py-3 px-4 text-right">Amount</th>
+                      <th className="py-3 px-4 text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {financeExpenses.map((row: any) => (
+                      <tr key={row.id} className="hover:bg-muted/20">
+                        <td className="py-3 px-4 font-mono font-bold text-primary text-[10px]">{row.ref}</td>
+                        <td className="py-3 px-4 font-semibold text-foreground">{row.description}</td>
+                        <td className="py-3 px-4 text-muted-foreground">{row.category}</td>
+                        <td className="py-3 px-4 text-muted-foreground">{row.date}</td>
+                        <td className="py-3 px-4">
+                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                            row.status === 'PAID'
+                              ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200'
+                              : 'bg-amber-500/10 text-amber-600 border-amber-200'
+                          }`}>
+                            {row.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right font-bold text-rose-600 font-serif">{fmtCurrency(row.amount)}</td>
+                        <td className="py-3 px-4 text-center">
+                          <button
+                            onClick={() => {
+                              if (row.status === 'PENDING') {
+                                const updated = financeExpenses.map((e: any) => e.id === row.id ? { ...e, status: 'PAID' } : e);
+                                setFinanceExpenses(updated);
+                                localStorage.setItem('tarepet_fin_expenses', JSON.stringify(updated));
+                              }
+                            }}
+                            disabled={row.status === 'PAID'}
+                            className="text-[10px] font-bold px-2.5 py-1 rounded-lg border border-border hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                          >
+                            {row.status === 'PAID' ? '✓ Settled' : 'Mark Paid'}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="bg-muted/30">
+                    <tr>
+                      <td colSpan={5} className="py-3 px-4 text-xs font-bold text-foreground text-right">Total Expenses</td>
+                      <td className="py-3 px-4 text-right font-bold text-rose-700 font-serif text-sm">{fmtCurrency(totalExpenses)}</td>
+                      <td />
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ── BUDGET TAB ── */}
+          {financeTab === 'budget' && (
+            <div className="space-y-5">
+              <div className="bg-card rounded-2xl border border-border p-5 shadow-sm space-y-4">
+                <h3 className="font-serif font-bold text-sm text-foreground">2025/2026 Annual Budget Plan</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[
+                    { cat: 'Staff Salaries & Benefits', budgeted: 34200000, spent: 2850000 * 5, color: 'bg-rose-500' },
+                    { cat: 'Utilities & Services', budgeted: 2400000, spent: 185000 * 5, color: 'bg-amber-500' },
+                    { cat: 'Infrastructure & Maintenance', budgeted: 5000000, spent: 420000 * 3, color: 'bg-blue-500' },
+                    { cat: 'Academic Resources & Labs', budgeted: 1500000, spent: 95000 * 4, color: 'bg-violet-500' },
+                    { cat: 'Sports & Extracurricular', budgeted: 1200000, spent: 130000 * 2, color: 'bg-emerald-500' },
+                    { cat: 'Transport & Logistics', budgeted: 950000, spent: 78000 * 5, color: 'bg-cyan-500' },
+                    { cat: 'Admin & Office', budgeted: 600000, spent: 45000 * 5, color: 'bg-slate-500' },
+                  ].map(b => {
+                    const pct = Math.min(100, (b.spent / b.budgeted) * 100);
+                    const over = pct > 90;
+                    return (
+                      <div key={b.cat} className="p-4 bg-background rounded-xl border border-border space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-foreground">{b.cat}</span>
+                          {over && <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 border border-rose-200">⚠ Near Limit</span>}
+                        </div>
+                        <div className="w-full bg-muted/40 rounded-full h-2 overflow-hidden">
+                          <div className={`h-full rounded-full ${over ? 'bg-rose-500' : b.color}`} style={{ width: `${pct.toFixed(0)}%` }} />
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                          <span>Spent: <span className="font-bold text-foreground">{fmtCurrency(b.spent)}</span></span>
+                          <span>Budget: <span className="font-bold text-foreground">{fmtCurrency(b.budgeted)}</span></span>
+                          <span className={`font-bold ${over ? 'text-rose-600' : 'text-emerald-600'}`}>{pct.toFixed(0)}%</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── ADD INCOME MODAL ── */}
+          {showAddIncomeModal && (
+            <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+              <div className="bg-card border border-border rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
+                <div className="p-5 border-b border-border flex items-center justify-between bg-muted/20">
+                  <h3 className="font-serif font-bold text-base text-foreground flex items-center gap-2">
+                    <ArrowUpRight className="w-5 h-5 text-emerald-600" /> Record New Income
+                  </h3>
+                  <button onClick={() => setShowAddIncomeModal(false)} className="p-2 rounded-xl text-muted-foreground hover:bg-muted/50 transition-colors"><X className="w-5 h-5" /></button>
+                </div>
+                <div className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold mb-1.5 text-foreground">Description *</label>
+                    <input type="text" placeholder="e.g. School Fees — JSS3 (25 students)" value={incomeForm.description}
+                      onChange={e => setIncomeForm({ ...incomeForm, description: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold mb-1.5 text-foreground">Category</label>
+                      <select value={incomeForm.category} onChange={e => setIncomeForm({ ...incomeForm, category: e.target.value })}
+                        className="w-full px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none">
+                        {INCOME_CATEGORIES.map(c => <option key={c}>{c}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold mb-1.5 text-foreground">Amount (₦) *</label>
+                      <input type="number" placeholder="0" value={incomeForm.amount}
+                        onChange={e => setIncomeForm({ ...incomeForm, amount: e.target.value })}
+                        className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                    </div>
+                  </div>
+                </div>
+                <div className="p-5 border-t border-border bg-muted/20 flex items-center justify-between">
+                  <button onClick={() => setShowAddIncomeModal(false)} className="px-4 py-2 rounded-xl border border-border text-xs font-semibold hover:bg-muted transition-colors">Cancel</button>
+                  <button
+                    disabled={!incomeForm.description || !incomeForm.amount}
+                    onClick={() => {
+                      const newRec = {
+                        id: Date.now(),
+                        date: new Date().toISOString().split('T')[0],
+                        description: incomeForm.description,
+                        category: incomeForm.category,
+                        amount: Number(incomeForm.amount),
+                        status: 'RECEIVED',
+                        ref: `INC-${Date.now()}`,
+                      };
+                      const updated = [newRec, ...financeIncome];
+                      setFinanceIncome(updated);
+                      localStorage.setItem('tarepet_fin_income', JSON.stringify(updated));
+                      setShowAddIncomeModal(false);
+                      setFinanceSaveAlert('Income record saved successfully!');
+                      setTimeout(() => setFinanceSaveAlert(''), 4000);
+                    }}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 disabled:opacity-50 shadow-sm transition-colors"
+                  >
+                    <CheckCircle2 className="w-4 h-4" /> Save Income
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── ADD EXPENSE MODAL ── */}
+          {showAddExpenseModal && (
+            <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+              <div className="bg-card border border-border rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
+                <div className="p-5 border-b border-border flex items-center justify-between bg-muted/20">
+                  <h3 className="font-serif font-bold text-base text-foreground flex items-center gap-2">
+                    <ArrowDownRight className="w-5 h-5 text-rose-600" /> Record New Expense
+                  </h3>
+                  <button onClick={() => setShowAddExpenseModal(false)} className="p-2 rounded-xl text-muted-foreground hover:bg-muted/50 transition-colors"><X className="w-5 h-5" /></button>
+                </div>
+                <div className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold mb-1.5 text-foreground">Description *</label>
+                    <input type="text" placeholder="e.g. Generator Fuel — February" value={expenseForm.description}
+                      onChange={e => setExpenseForm({ ...expenseForm, description: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold mb-1.5 text-foreground">Category</label>
+                      <select value={expenseForm.category} onChange={e => setExpenseForm({ ...expenseForm, category: e.target.value })}
+                        className="w-full px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none">
+                        {EXPENSE_CATEGORIES.map(c => <option key={c}>{c}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold mb-1.5 text-foreground">Amount (₦) *</label>
+                      <input type="number" placeholder="0" value={expenseForm.amount}
+                        onChange={e => setExpenseForm({ ...expenseForm, amount: e.target.value })}
+                        className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold mb-1.5 text-foreground">Payment Status</label>
+                    <div className="flex gap-2">
+                      {['PAID', 'PENDING'].map(st => (
+                        <button key={st} onClick={() => setExpenseForm({ ...expenseForm, status: st })}
+                          className={`px-4 py-2 rounded-xl text-xs font-bold border transition-colors ${
+                            expenseForm.status === st
+                              ? st === 'PAID' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-amber-500 text-white border-amber-500'
+                              : 'bg-card border-border text-muted-foreground hover:bg-muted/50'
+                          }`}>
+                          {st}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="p-5 border-t border-border bg-muted/20 flex items-center justify-between">
+                  <button onClick={() => setShowAddExpenseModal(false)} className="px-4 py-2 rounded-xl border border-border text-xs font-semibold hover:bg-muted transition-colors">Cancel</button>
+                  <button
+                    disabled={!expenseForm.description || !expenseForm.amount}
+                    onClick={() => {
+                      const newRec = {
+                        id: Date.now(),
+                        date: new Date().toISOString().split('T')[0],
+                        description: expenseForm.description,
+                        category: expenseForm.category,
+                        amount: Number(expenseForm.amount),
+                        status: expenseForm.status,
+                        ref: `EXP-${Date.now()}`,
+                      };
+                      const updated = [newRec, ...financeExpenses];
+                      setFinanceExpenses(updated);
+                      localStorage.setItem('tarepet_fin_expenses', JSON.stringify(updated));
+                      setShowAddExpenseModal(false);
+                      setFinanceSaveAlert('Expense record saved successfully!');
+                      setTimeout(() => setFinanceSaveAlert(''), 4000);
+                    }}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-rose-600 text-white text-xs font-bold rounded-xl hover:bg-rose-700 disabled:opacity-50 shadow-sm transition-colors"
+                  >
+                    <CheckCircle2 className="w-4 h-4" /> Save Expense
                   </button>
                 </div>
               </div>
