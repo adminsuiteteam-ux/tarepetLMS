@@ -179,12 +179,16 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
       {/* User card & logout */}
       <div className="p-3 border-t border-border shrink-0">
         <div className="flex items-center justify-between p-3 rounded-xl bg-muted/50 border border-border/50">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-sm shrink-0">
-              {user?.first_name?.[0] ?? 'U'}
+          <div
+            onClick={() => onNavigate('profile')}
+            className="flex items-center gap-2.5 min-w-0 cursor-pointer group"
+            title="View Admin Profile"
+          >
+            <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-sm shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
+              {user?.first_name?.[0] ?? 'A'}
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-bold text-foreground truncate">{user?.first_name} {user?.last_name}</p>
+              <p className="text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors">{user?.first_name} {user?.last_name}</p>
               <span className={`inline-block text-[9px] font-bold px-1.5 py-0.5 rounded-full border ${roleColor}`}>
                 {user?.role}
               </span>
@@ -277,13 +281,17 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
               {isDarkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5" />}
             </button>
 
-            {/* Profile */}
-            <div className="flex items-center gap-2 pl-2 border-l border-border">
-              <div className="w-8 h-8 rounded-full bg-primary text-white font-bold flex items-center justify-center text-sm">
-                {user?.first_name?.[0] ?? 'P'}
+            {/* Profile Header Trigger */}
+            <div
+              onClick={() => onNavigate('profile')}
+              className="flex items-center gap-2 pl-2 border-l border-border cursor-pointer group"
+              title="Click to view Admin Profile"
+            >
+              <div className="w-8 h-8 rounded-full bg-primary text-white font-bold flex items-center justify-center text-sm group-hover:scale-105 transition-transform shadow-xs">
+                {user?.first_name?.[0] ?? 'A'}
               </div>
               <div className="hidden sm:block">
-                <p className="text-xs font-bold text-foreground leading-tight">{user?.first_name ?? 'Principal'} {user?.last_name ?? ''}</p>
+                <p className="text-xs font-bold text-foreground leading-tight group-hover:text-primary transition-colors">{user?.first_name ?? 'Principal'} {user?.last_name ?? ''}</p>
                 <p className="text-[10px] text-muted-foreground">Administrator</p>
               </div>
             </div>
