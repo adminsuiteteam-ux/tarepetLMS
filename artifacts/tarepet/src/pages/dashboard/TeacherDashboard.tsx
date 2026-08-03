@@ -1,3 +1,4 @@
+// Tarepet Montessori Teacher Dashboard Component (Fully Internationalized)
 import React, { useState } from 'react';
 import { PortalLayout } from '@/components/layout/PortalLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
