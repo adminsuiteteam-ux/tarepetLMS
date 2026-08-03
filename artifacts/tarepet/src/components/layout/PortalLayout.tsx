@@ -47,6 +47,7 @@ const ROLE_NAV: Record<string, NavSection[]> = {
     { id: 'students',  label: 'Manage Students',    icon: Users },
     { id: 'exams',     label: 'Manage Exams',       icon: ClipboardList },
     { id: 'results',   label: 'Manage Results',     icon: FileText },
+    { id: 'profile',   label: 'My Profile',         icon: UserCheck },
     { id: 'settings',  label: 'Settings',           icon: Settings },
   ],
   STUDENT: [
@@ -293,7 +294,7 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
               </div>
               <div className="hidden sm:block">
                 <p className="text-xs font-bold text-foreground leading-tight group-hover:text-primary transition-colors">{user?.first_name ?? 'Principal'} {user?.last_name ?? ''}</p>
-                <p className="text-[10px] text-muted-foreground">Administrator</p>
+                <p className="text-[10px] text-muted-foreground">{t('common.administrator', 'Administrator')}</p>
               </div>
             </div>
           </div>

@@ -20,6 +20,7 @@ import SignIn from '@/pages/sign-in';
 import DashboardRedirect from '@/pages/dashboard/DashboardRedirect';
 import AdminDashboard from '@/pages/dashboard/AdminDashboard';
 import TeacherDashboard from '@/pages/dashboard/TeacherDashboard';
+import TeacherProfile from '@/pages/dashboard/TeacherProfile';
 import StudentDashboard from '@/pages/dashboard/StudentDashboard';
 import ParentDashboard from '@/pages/dashboard/ParentDashboard';
 import CBTExam from '@/pages/dashboard/CBTExam';
@@ -44,6 +45,8 @@ function Router() {
       <Route path="/dashboard" component={DashboardRedirect} />
       <Route path="/dashboard/admin" component={AdminDashboard} />
       <Route path="/dashboard/teacher" component={TeacherDashboard} />
+      <Route path="/dashboard/teacher/profile" component={TeacherProfile} />
+      <Route path="/teacher-profile" component={TeacherProfile} />
       <Route path="/dashboard/student" component={StudentDashboard} />
       <Route path="/dashboard/parent" component={ParentDashboard} />
       <Route path="/dashboard/cbt-exam" component={CBTExam} />
