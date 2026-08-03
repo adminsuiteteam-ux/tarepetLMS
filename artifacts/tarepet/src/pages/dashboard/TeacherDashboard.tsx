@@ -7,9 +7,9 @@ import {
   BookOpen, Users, FileText, UserCheck, Award, Calendar,
   BarChart2, Star, Clock, CheckCircle2, AlertCircle, Plus,
   Search, Filter, Upload, Download, Send, Eye, Edit2, Trash2, X,
-  TrendingUp, Play, Lock, MessageSquare, ChevronDown, ChevronRight,
+  TrendingUp, Play, Lock, MessageSquare, ChevronDown, ChevronRight, ChevronLeft,
   CheckSquare, XCircle, RefreshCw, PenLine, Globe, Layers, ArrowUpRight,
-  ClipboardList, Settings, ShieldCheck, User, Bell
+  ClipboardList, Settings, ShieldCheck, User, Bell, Printer, CreditCard
 } from 'lucide-react';
 
 import { getStoredExams, updateExamStatus, getStoredSubmissions } from '@/lib/cbt-store';
@@ -119,6 +119,8 @@ export default function TeacherDashboard() {
   const [promotingStudent, setPromotingStudent] = useState<any>(null);
   const [deletingStudent, setDeletingStudent] = useState<any>(null);
   const [targetPromotionClass, setTargetPromotionClass] = useState<string>('SS2');
+  const [showActionsDropdown, setShowActionsDropdown] = useState(false);
+  const [showIDCardModal, setShowIDCardModal] = useState<any>(null);
 
   // Settings State
   const [profileForm, setProfileForm] = useState({
@@ -532,77 +534,189 @@ export default function TeacherDashboard() {
           </div>
         )}
 
-        {/* View Student Profile / Preview Modal */}
+        {/* View Student Profile / Preview Modal (Admin Specification Card Design) */}
         {selectedStudentProfile && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4" onClick={() => setSelectedStudentProfile(null)}>
-            <div className="bg-card rounded-2xl border border-border max-w-md w-full p-6 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150" onClick={e => e.stopPropagation()}>
-              <div className="flex items-center justify-between border-b border-border pb-3">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={() => setSelectedStudentProfile(null)}>
+            <div className="bg-card rounded-2xl border border-border max-w-3xl w-full p-6 sm:p-8 space-y-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150 my-8" onClick={e => e.stopPropagation()}>
+              {/* Header Actions Bar */}
+              <div className="flex items-center justify-between pb-4 border-b border-border flex-wrap gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-base border border-primary/20">
-                    {selectedStudentProfile.name?.[0] ?? 'S'}
+                  <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                  <div>
+                    <h3 className="font-serif font-bold text-lg text-foreground">Student Profile & Credentials Specification</h3>
+                    <p className="text-xs text-muted-foreground">{selectedStudentProfile.name} • {selectedStudentProfile.code}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowActionsDropdown(prev => !prev)}
+                      className="px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-2 shadow-sm"
+                    >
+                      <span>Actions</span>
+                      <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showActionsDropdown ? 'rotate-180' : ''}`} />
+                    </button>
+                    {showActionsDropdown && (
+                      <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-xl shadow-2xl z-50 py-1.5 text-xs divide-y divide-border animate-in fade-in zoom-in-95 duration-100">
+                        <div className="py-1">
+                          <button
+                            onClick={() => {
+                              setShowIDCardModal(selectedStudentProfile);
+                              setShowActionsDropdown(false);
+                            }}
+                            className="w-full text-left px-4 py-2.5 hover:bg-muted/50 flex items-center gap-2 font-semibold text-foreground transition-colors"
+                          >
+                            <CreditCard className="w-4 h-4 text-primary" /> Generate Student ID Card
+                          </button>
+                          <button
+                            onClick={() => {
+                              const student = selectedStudentProfile;
+                              setSelectedStudentProfile(null);
+                              setEditingStudent({ ...student });
+                              setShowActionsDropdown(false);
+                            }}
+                            className="w-full text-left px-4 py-2.5 hover:bg-muted/50 flex items-center gap-2 font-semibold text-foreground transition-colors"
+                          >
+                            <Edit2 className="w-4 h-4 text-blue-500" /> Edit Student Profile
+                          </button>
+                          <button
+                            onClick={() => {
+                              const student = selectedStudentProfile;
+                              setSelectedStudentProfile(null);
+                              setPromotingStudent(student);
+                              const nextClass = student.grade === 'JSS1' ? 'JSS2' : student.grade === 'JSS2' ? 'JSS3' : student.grade === 'JSS3' ? 'SS1' : student.grade === 'SS1' ? 'SS2' : student.grade === 'SS2' ? 'SS3' : 'Graduated';
+                              setTargetPromotionClass(nextClass);
+                              setShowActionsDropdown(false);
+                            }}
+                            className="w-full text-left px-4 py-2.5 hover:bg-muted/50 flex items-center gap-2 font-semibold text-foreground transition-colors"
+                          >
+                            <TrendingUp className="w-4 h-4 text-emerald-500" /> Promote Student
+                          </button>
+                        </div>
+                        <div className="py-1">
+                          <button
+                            onClick={() => {
+                              const student = selectedStudentProfile;
+                              setSelectedStudentProfile(null);
+                              setDeletingStudent(student);
+                              setShowActionsDropdown(false);
+                            }}
+                            className="w-full text-left px-4 py-2.5 hover:bg-rose-500/10 text-rose-600 flex items-center gap-2 font-semibold transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4 text-rose-500" /> Delete Student Record
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <button onClick={() => setSelectedStudentProfile(null)} className="p-2 rounded-xl hover:bg-accent text-muted-foreground transition-colors">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* 3-Column Specification Layout (Admin Design) */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start pt-1">
+                {/* Column 1: Student Photo & Status */}
+                <div className="md:col-span-3 flex flex-col items-center text-center">
+                  <div className="w-36 h-44 rounded-2xl border-2 border-border shadow-md overflow-hidden bg-muted/20 flex items-center justify-center relative">
+                    {selectedStudentProfile.profileImage ? (
+                      <img src={selectedStudentProfile.profileImage} alt={selectedStudentProfile.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-primary/15 via-background to-secondary/15 flex items-center justify-center text-4xl font-serif font-bold text-primary">
+                        {selectedStudentProfile.name?.[0] ?? 'S'}
+                      </div>
+                    )}
+                  </div>
+                  <span className={`mt-3 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                    selectedStudentProfile.atRisk ? 'bg-rose-500/10 text-rose-600 border-rose-500/20' : 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                  }`}>
+                    STATUS: {selectedStudentProfile.status || 'ACTIVE'}
+                  </span>
+                  <button
+                    onClick={() => {
+                      setShowIDCardModal(selectedStudentProfile);
+                    }}
+                    className="mt-3 w-full py-2 px-3 rounded-xl border border-border text-xs font-bold text-foreground hover:bg-primary/10 hover:text-primary hover:border-primary/30 transition-all flex items-center justify-center gap-1.5 shadow-2xs"
+                  >
+                    <CreditCard className="w-3.5 h-3.5 text-primary" /> ID Card
+                  </button>
+                </div>
+
+                {/* Column 2: Personal & Contact Identifiers */}
+                <div className="md:col-span-4 space-y-3.5 text-xs leading-relaxed">
+                  <div>
+                    <span className="text-muted-foreground font-medium block text-[11px] uppercase tracking-wider mb-0.5">Student ID Number</span>
+                    <strong className="text-foreground font-mono font-bold text-xs bg-primary/10 text-primary px-2.5 py-1 rounded-lg border border-primary/20 inline-block">
+                      {selectedStudentProfile.code}
+                    </strong>
                   </div>
                   <div>
-                    <h3 className="font-serif font-bold text-base text-foreground">{selectedStudentProfile.name}</h3>
-                    <p className="text-xs text-primary font-mono">{selectedStudentProfile.code}</p>
+                    <span className="text-muted-foreground font-medium block text-[11px] uppercase tracking-wider mb-0.5">Student Full Name</span>
+                    <strong className="text-foreground font-bold text-sm uppercase">{selectedStudentProfile.name}</strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium block text-[11px] uppercase tracking-wider mb-0.5">Email Address</span>
+                    <strong className="text-foreground font-bold underline">{selectedStudentProfile.email || 'N/A'}</strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium block text-[11px] uppercase tracking-wider mb-0.5">Gender & DOB</span>
+                    <strong className="text-foreground font-bold">{selectedStudentProfile.gender || 'Male'} ({selectedStudentProfile.dob || '2009-07-19'})</strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium block text-[11px] uppercase tracking-wider mb-0.5">House Assignment</span>
+                    <strong className="text-foreground font-bold">{selectedStudentProfile.house || 'Blue House (Eagle)'}</strong>
                   </div>
                 </div>
-                <button onClick={() => setSelectedStudentProfile(null)} className="p-1 rounded-lg hover:bg-accent text-muted-foreground transition-colors">
-                  <X className="w-5 h-5" />
-                </button>
+
+                {/* Column 3: Academic & Guardian Information */}
+                <div className="md:col-span-5 space-y-3.5 text-xs leading-relaxed border-t md:border-t-0 md:border-l border-border pt-4 md:pt-0 md:pl-6">
+                  <div>
+                    <span className="text-muted-foreground font-medium block text-[11px] uppercase tracking-wider mb-0.5">Class & Stream</span>
+                    <strong className="text-primary font-bold text-sm">
+                      {selectedStudentProfile.grade} ({selectedStudentProfile.stream || 'General'} Stream)
+                    </strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium block text-[11px] uppercase tracking-wider mb-0.5">Academic Programme</span>
+                    <strong className="text-foreground font-bold">
+                      {selectedStudentProfile.grade?.startsWith('SS') ? 'Senior Secondary Certificate (SSCE)' : 'Basic Education Certificate (BECE)'}
+                    </strong>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 bg-muted/20 p-3 rounded-xl border border-border">
+                    <div>
+                      <span className="text-muted-foreground font-medium block text-[10px] uppercase">GPA Score</span>
+                      <strong className="text-emerald-600 font-bold text-base">{selectedStudentProfile.gpa || '3.85'}</strong>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground font-medium block text-[10px] uppercase">Attendance</span>
+                      <strong className="text-emerald-600 font-bold text-base">{selectedStudentProfile.attendance || '98%'}</strong>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium block text-[11px] uppercase tracking-wider mb-0.5">Parent / Guardian Name</span>
+                    <strong className="text-foreground font-bold">{selectedStudentProfile.parentName || 'Pastor Adebayo'}</strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground font-medium block text-[11px] uppercase tracking-wider mb-0.5">Parent Contact Phone</span>
+                    <strong className="text-foreground font-mono font-bold">{selectedStudentProfile.parentPhone || '08035556677'}</strong>
+                  </div>
+                </div>
               </div>
 
-              <div className="space-y-2 text-xs divide-y divide-border">
-                <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_email', 'Email Address')}</span>
-                  <span className="font-bold text-foreground">{selectedStudentProfile.email || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_class_level', 'Class & Stream')}</span>
-                  <span className="font-bold text-primary">{selectedStudentProfile.grade} ({selectedStudentProfile.stream || 'General'})</span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_gpa', 'GPA Score')}</span>
-                  <span className="font-bold text-emerald-600">{selectedStudentProfile.gpa || '3.50'}</span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_attendance', 'Attendance Rate')}</span>
-                  <span className="font-bold text-emerald-600">{selectedStudentProfile.attendance || '98%'}</span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_parent', 'Parent / Guardian')}</span>
-                  <span className="font-bold text-foreground">{selectedStudentProfile.parentName || 'Chief Nwosu'}</span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_parent_phone', 'Parent Contact')}</span>
-                  <span className="font-mono text-foreground">{selectedStudentProfile.parentPhone || '08031112233'}</span>
-                </div>
-                <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_status', 'Account Status')}</span>
-                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${selectedStudentProfile.atRisk ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                    {selectedStudentProfile.status || 'ACTIVE'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Action Buttons inside Preview */}
-              <div className="bg-muted/20 rounded-xl p-3 border border-border space-y-2">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <Settings className="w-3 h-3 text-primary" />
-                  <span>{t('teacher.student_actions', 'Student Management Actions')}</span>
-                </p>
-                
-                <div className="grid grid-cols-3 gap-2">
+              {/* Bottom Quick Actions & Close Bar */}
+              <div className="pt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="flex gap-2 w-full sm:w-auto">
                   <button
                     onClick={() => {
                       const student = selectedStudentProfile;
                       setSelectedStudentProfile(null);
                       setEditingStudent({ ...student });
                     }}
-                    className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-card border border-border text-xs font-bold text-foreground hover:bg-blue-500/10 hover:text-blue-600 hover:border-blue-500/30 transition-all shadow-2xs"
-                    title="Edit student profile"
+                    className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 py-2 px-3.5 rounded-xl bg-card border border-border text-xs font-bold text-foreground hover:bg-blue-500/10 hover:text-blue-600 hover:border-blue-500/30 transition-all shadow-2xs"
                   >
                     <Edit2 className="w-3.5 h-3.5 text-blue-500" />
-                    <span>Edit</span>
+                    <span>Edit Profile</span>
                   </button>
                   <button
                     onClick={() => {
@@ -612,8 +726,7 @@ export default function TeacherDashboard() {
                       const nextClass = student.grade === 'JSS1' ? 'JSS2' : student.grade === 'JSS2' ? 'JSS3' : student.grade === 'JSS3' ? 'SS1' : student.grade === 'SS1' ? 'SS2' : student.grade === 'SS2' ? 'SS3' : 'Graduated';
                       setTargetPromotionClass(nextClass);
                     }}
-                    className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-card border border-border text-xs font-bold text-foreground hover:bg-emerald-500/10 hover:text-emerald-600 hover:border-emerald-500/30 transition-all shadow-2xs"
-                    title="Promote student to next class"
+                    className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 py-2 px-3.5 rounded-xl bg-card border border-border text-xs font-bold text-foreground hover:bg-emerald-500/10 hover:text-emerald-600 hover:border-emerald-500/30 transition-all shadow-2xs"
                   >
                     <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
                     <span>Promote</span>
@@ -624,21 +737,84 @@ export default function TeacherDashboard() {
                       setSelectedStudentProfile(null);
                       setDeletingStudent(student);
                     }}
-                    className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-card border border-border text-xs font-bold text-rose-600 hover:bg-rose-500/10 hover:border-rose-500/30 transition-all shadow-2xs"
-                    title="Delete student record"
+                    className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 py-2 px-3.5 rounded-xl bg-card border border-border text-xs font-bold text-rose-600 hover:bg-rose-500/10 hover:border-rose-500/30 transition-all shadow-2xs"
                   >
                     <Trash2 className="w-3.5 h-3.5 text-rose-500" />
                     <span>Delete</span>
                   </button>
                 </div>
+                <button
+                  onClick={() => setSelectedStudentProfile(null)}
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-muted text-muted-foreground hover:text-foreground text-xs font-bold hover:bg-accent transition-colors"
+                >
+                  {t('teacher.close_profile', 'Close Preview')}
+                </button>
               </div>
+            </div>
+          </div>
+        )}
 
-              <button
-                onClick={() => setSelectedStudentProfile(null)}
-                className="w-full py-2.5 rounded-xl bg-muted text-muted-foreground hover:text-foreground text-xs font-bold hover:bg-accent transition-colors"
-              >
-                {t('teacher.close_profile', 'Close Preview')}
-              </button>
+        {/* Student ID Card Modal */}
+        {showIDCardModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in zoom-in duration-150" onClick={() => setShowIDCardModal(null)}>
+            <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
+              <div className="p-6 border-b border-border flex items-center justify-between">
+                <h3 className="font-serif font-bold text-xl text-foreground flex items-center gap-2">
+                  <CreditCard className="w-5 h-5 text-primary" /> Official Student ID Card
+                </h3>
+                <button onClick={() => setShowIDCardModal(null)} className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-accent">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-6 space-y-4">
+                <div className="border-4 border-primary rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-primary/5 to-secondary/5">
+                  <div className="bg-gradient-to-r from-primary to-secondary p-4 flex items-center justify-between text-white">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-widest opacity-90">Tarepet Montessori School</p>
+                      <p className="text-[11px] opacity-75">Yenagoa, Bayelsa State</p>
+                    </div>
+                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md">
+                      <span className="text-primary font-bold text-xs">TMS</span>
+                    </div>
+                  </div>
+                  <div className="p-5 flex gap-5 items-center">
+                    <div className="w-20 h-24 rounded-xl bg-muted/50 border-2 border-border flex items-center justify-center shrink-0 shadow-inner overflow-hidden">
+                      {showIDCardModal.profileImage ? (
+                        <img src={showIDCardModal.profileImage} alt={showIDCardModal.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="text-center">
+                          <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto text-2xl font-serif font-bold text-primary">
+                            {showIDCardModal.name?.[0] ?? 'S'}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-serif font-bold text-foreground text-lg leading-tight">{showIDCardModal.name}</h4>
+                      <p className="text-xs text-primary font-bold mt-0.5">{showIDCardModal.grade} ({showIDCardModal.stream || 'General'})</p>
+                      <p className="text-xs text-muted-foreground">{showIDCardModal.house || 'Blue House (Eagle)'}</p>
+                      <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-muted-foreground text-[10px] block">STUDENT ID:</span>
+                          <p className="font-bold font-mono text-foreground">{showIDCardModal.code || showIDCardModal.studentId}</p>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground text-[10px] block">VALID UNTIL:</span>
+                          <p className="font-bold text-foreground">DEC 2028</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <button onClick={() => window.print()} className="flex-1 flex items-center justify-center gap-2 bg-primary text-white py-2.5 rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm">
+                    <Printer className="w-4 h-4" /> Print ID Card
+                  </button>
+                  <button onClick={() => window.print()} className="flex-1 flex items-center justify-center gap-2 border border-border py-2.5 rounded-xl text-sm font-medium hover:bg-accent transition-colors">
+                    <Download className="w-4 h-4" /> Download PDF
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
