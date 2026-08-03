@@ -460,22 +460,22 @@ export default function TeacherDashboard() {
                       onChange={e => setAddStudentForm({ ...addStudentForm, stream: e.target.value })}
                       className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
                     >
-                      <option value="General">{t('teacher.opt_general_junior', 'General (Junior)')}</option>
-                      <option value="Science">{t('teacher.opt_science_stream', 'Science Stream')}</option>
-                      <option value="Art">{t('teacher.opt_art_humanities', 'Art & Humanities')}</option>
+                      <option value="General">{t('teacher.opt_general_junior')}</option>
+                      <option value="Science">{t('teacher.opt_science_stream')}</option>
+                      <option value="Art">{t('teacher.opt_art_humanities')}</option>
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.house', 'House Assignment')}</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.house')}</label>
                     <select
                       value={addStudentForm.house}
                       onChange={e => setAddStudentForm({ ...addStudentForm, house: e.target.value })}
                       className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
                     >
-                      <option value="Blue House (Eagle)">{t('teacher.house_blue', 'Blue House (Eagle)')}</option>
-                      <option value="Purple House (Phoenix)">{t('teacher.house_purple', 'Purple House (Phoenix)')}</option>
-                      <option value="Green House (Jaguar)">{t('teacher.house_green', 'Green House (Jaguar)')}</option>
-                      <option value="Red House (Falcon)">{t('teacher.house_red', 'Red House (Falcon)')}</option>
+                      <option value="Blue House (Eagle)">{t('teacher.house_blue')}</option>
+                      <option value="Purple House (Phoenix)">{t('teacher.house_purple')}</option>
+                      <option value="Green House (Jaguar)">{t('teacher.house_green')}</option>
+                      <option value="Red House (Falcon)">{t('teacher.house_red')}</option>
                     </select>
                   </div>
                 </div>
@@ -541,37 +541,37 @@ export default function TeacherDashboard() {
 
               <div className="space-y-2 text-xs divide-y divide-border">
                 <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_email', 'Email Address')}</span>
+                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_email')}</span>
                   <span className="font-bold text-foreground">{selectedStudentProfile.email || 'N/A'}</span>
                 </div>
                 <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_class_level', 'Class Level')}</span>
+                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_class_level')}</span>
                   <span className="font-bold text-primary">{selectedStudentProfile.grade} ({selectedStudentProfile.stream})</span>
                 </div>
                 <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_house_assign', 'House Assignment')}</span>
+                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_house_assign')}</span>
                   <span className="font-bold text-foreground">{selectedStudentProfile.house}</span>
                 </div>
                 <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_gpa', 'GPA / Cumulative')}</span>
+                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_gpa')}</span>
                   <span className="font-bold text-emerald-600">{selectedStudentProfile.gpa || '3.50'}</span>
                 </div>
                 <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_attendance', 'Attendance Record')}</span>
+                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_attendance')}</span>
                   <span className="font-bold text-emerald-600">{selectedStudentProfile.attendance || '98%'}</span>
                 </div>
                 <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_parent', 'Parent / Guardian')}</span>
+                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_parent')}</span>
                   <span className="font-bold text-foreground">{selectedStudentProfile.parentName || 'Chief Nwosu'}</span>
                 </div>
                 <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_parent_phone', 'Parent Phone')}</span>
+                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_parent_phone')}</span>
                   <span className="font-mono text-foreground">{selectedStudentProfile.parentPhone || '08031112233'}</span>
                 </div>
               </div>
 
               <button onClick={() => setSelectedStudentProfile(null)} className="w-full py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-colors">
-                {t('teacher.close_profile', 'Close Profile')}
+                {t('teacher.close_profile')}
               </button>
             </div>
           </div>
@@ -582,7 +582,7 @@ export default function TeacherDashboard() {
           <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4" onClick={() => setEditingStudent(null)}>
             <div className="bg-card rounded-2xl border border-border max-w-md w-full p-6 space-y-4 shadow-2xl" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between border-b border-border pb-3">
-                <h3 className="font-serif font-bold text-lg text-foreground">{t('teacher.edit_student', 'Edit Student')} — {editingStudent.code}</h3>
+                <h3 className="font-serif font-bold text-lg text-foreground">{t('teacher.edit_student')} — {editingStudent.code}</h3>
                 <button onClick={() => setEditingStudent(null)} className="p-1 rounded-lg hover:bg-accent text-muted-foreground">
                   <X className="w-5 h-5" />
                 </button>
@@ -590,7 +590,7 @@ export default function TeacherDashboard() {
 
               <div className="space-y-3 text-xs">
                 <div>
-                  <label className="font-bold text-muted-foreground uppercase block mb-1">{t('teacher.lbl_student_name', 'Student Full Name')}</label>
+                  <label className="font-bold text-muted-foreground uppercase block mb-1">{t('teacher.lbl_student_name')}</label>
                   <input
                     type="text"
                     value={editingStudent.name}
@@ -599,7 +599,7 @@ export default function TeacherDashboard() {
                   />
                 </div>
                 <div>
-                  <label className="font-bold text-muted-foreground uppercase block mb-1">{t('teacher.lbl_email', 'Email Address')}</label>
+                  <label className="font-bold text-muted-foreground uppercase block mb-1">{t('teacher.lbl_email')}</label>
                   <input
                     type="email"
                     value={editingStudent.email}
@@ -609,7 +609,7 @@ export default function TeacherDashboard() {
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="font-bold text-muted-foreground uppercase block mb-1">{t('teacher.lbl_class_level', 'Class Level')}</label>
+                    <label className="font-bold text-muted-foreground uppercase block mb-1">{t('teacher.lbl_class_level')}</label>
                     <select
                       value={editingStudent.grade}
                       onChange={e => setEditingStudent({ ...editingStudent, grade: e.target.value })}
@@ -619,16 +619,16 @@ export default function TeacherDashboard() {
                     </select>
                   </div>
                   <div>
-                    <label className="font-bold text-muted-foreground uppercase block mb-1">{t('teacher.lbl_house', 'House')}</label>
+                    <label className="font-bold text-muted-foreground uppercase block mb-1">{t('teacher.lbl_house')}</label>
                     <select
                       value={editingStudent.house}
                       onChange={e => setEditingStudent({ ...editingStudent, house: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
                     >
-                      <option value="Blue House (Eagle)">{t('teacher.house_blue', 'Blue House (Eagle)')}</option>
-                      <option value="Purple House (Phoenix)">{t('teacher.house_purple', 'Purple House (Phoenix)')}</option>
-                      <option value="Green House (Jaguar)">{t('teacher.house_green', 'Green House (Jaguar)')}</option>
-                      <option value="Red House (Falcon)">{t('teacher.house_red', 'Red House (Falcon)')}</option>
+                      <option value="Blue House (Eagle)">{t('teacher.house_blue')}</option>
+                      <option value="Purple House (Phoenix)">{t('teacher.house_purple')}</option>
+                      <option value="Green House (Jaguar)">{t('teacher.house_green')}</option>
+                      <option value="Red House (Falcon)">{t('teacher.house_red')}</option>
                     </select>
                   </div>
                 </div>
@@ -636,7 +636,7 @@ export default function TeacherDashboard() {
 
               <div className="flex gap-3 pt-2">
                 <button onClick={() => setEditingStudent(null)} className="flex-1 py-2.5 rounded-xl border border-border text-xs font-bold hover:bg-accent">
-                  {t('teacher.cancel', 'Cancel')}
+                  {t('teacher.cancel')}
                 </button>
                 <button
                   onClick={() => {
@@ -646,7 +646,7 @@ export default function TeacherDashboard() {
                   }}
                   className="flex-1 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-colors shadow-sm"
                 >
-                  {t('teacher.save_changes', 'Save Changes')}
+                  {t('teacher.save_changes')}
                 </button>
               </div>
             </div>
@@ -660,33 +660,33 @@ export default function TeacherDashboard() {
               <div className="flex items-center gap-3 border-b border-border pb-3">
                 <TrendingUp className="w-6 h-6 text-emerald-600 shrink-0" />
                 <div>
-                  <h3 className="font-serif font-bold text-base text-foreground">{t('teacher.promote_student', 'Promote Student')} — {promotingStudent.name}</h3>
-                  <p className="text-xs text-muted-foreground">{t('teacher.current_class', 'Current Class:')} <strong>{promotingStudent.grade}</strong> ({promotingStudent.code})</p>
+                  <h3 className="font-serif font-bold text-base text-foreground">{t('teacher.promote_student')} — {promotingStudent.name}</h3>
+                  <p className="text-xs text-muted-foreground">{t('teacher.current_class')} <strong>{promotingStudent.grade}</strong> ({promotingStudent.code})</p>
                 </div>
               </div>
 
               <div className="space-y-3 text-xs">
-                <p className="text-muted-foreground">{t('teacher.select_target_class_promo', 'Select the target class level to promote')} <strong>{promotingStudent.name}</strong> {t('teacher.for_upcoming_session', 'for the upcoming academic session:')}</p>
+                <p className="text-muted-foreground">{t('teacher.select_target_class_promo')} <strong>{promotingStudent.name}</strong> {t('teacher.for_upcoming_session')}</p>
                 <div>
-                  <label className="font-bold text-muted-foreground uppercase block mb-1">{t('teacher.target_promo_class', 'Target Promotion Class *')}</label>
+                  <label className="font-bold text-muted-foreground uppercase block mb-1">{t('teacher.target_promo_class')}</label>
                   <select
                     value={targetPromotionClass}
                     onChange={e => setTargetPromotionClass(e.target.value)}
                     className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs font-bold text-primary focus:ring-2 focus:ring-primary outline-none"
                   >
-                    <option value="JSS2">{t('teacher.promo_jss2', 'Promote to JSS 2')}</option>
-                    <option value="JSS3">{t('teacher.promo_jss3', 'Promote to JSS 3')}</option>
-                    <option value="SS1">{t('teacher.promo_ss1', 'Promote to SS 1')}</option>
-                    <option value="SS2">{t('teacher.promo_ss2', 'Promote to SS 2')}</option>
-                    <option value="SS3">{t('teacher.promo_ss3', 'Promote to SS 3 (Senior Exam Class)')}</option>
-                    <option value="Graduated">{t('teacher.promo_graduated', 'Graduate / Alumnus Status')}</option>
+                    <option value="JSS2">{t('teacher.promo_jss2')}</option>
+                    <option value="JSS3">{t('teacher.promo_jss3')}</option>
+                    <option value="SS1">{t('teacher.promo_ss1')}</option>
+                    <option value="SS2">{t('teacher.promo_ss2')}</option>
+                    <option value="SS3">{t('teacher.promo_ss3')}</option>
+                    <option value="Graduated">{t('teacher.promo_graduated')}</option>
                   </select>
                 </div>
               </div>
 
               <div className="flex gap-3 pt-2">
                 <button onClick={() => setPromotingStudent(null)} className="flex-1 py-2.5 rounded-xl border border-border text-xs font-bold hover:bg-accent">
-                  {t('teacher.cancel', 'Cancel')}
+                  {t('teacher.cancel')}
                 </button>
                 <button
                   onClick={() => {
@@ -696,7 +696,7 @@ export default function TeacherDashboard() {
                   }}
                   className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors shadow-sm"
                 >
-                  {t('teacher.confirm_promotion', 'Confirm Promotion')}
+                  {t('teacher.confirm_promotion')}
                 </button>
               </div>
             </div>
@@ -711,12 +711,12 @@ export default function TeacherDashboard() {
                 <Trash2 className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="font-serif font-bold text-base text-foreground">{t('teacher.delete_record', 'Delete Student Record?')}</h3>
-                <p className="text-xs text-muted-foreground mt-1">{t('teacher.delete_confirm', 'Are you sure you want to delete')} <strong>{deletingStudent.name}</strong> ({deletingStudent.code})? {t('teacher.cannot_undo', 'This action cannot be undone.')}</p>
+                <h3 className="font-serif font-bold text-base text-foreground">{t('teacher.delete_record')}</h3>
+                <p className="text-xs text-muted-foreground mt-1">{t('teacher.delete_confirm')} <strong>{deletingStudent.name}</strong> ({deletingStudent.code})? {t('teacher.cannot_undo')}</p>
               </div>
               <div className="flex gap-3 pt-2">
                 <button onClick={() => setDeletingStudent(null)} className="flex-1 py-2.5 rounded-xl border border-border text-xs font-bold hover:bg-accent">
-                  {t('teacher.cancel', 'Cancel')}
+                  {t('teacher.cancel')}
                 </button>
                 <button
                   onClick={() => {
@@ -726,7 +726,7 @@ export default function TeacherDashboard() {
                   }}
                   className="flex-1 py-2.5 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition-colors shadow-sm"
                 >
-                  {t('teacher.delete', 'Delete')}
+                  {t('teacher.delete')}
                 </button>
               </div>
             </div>
