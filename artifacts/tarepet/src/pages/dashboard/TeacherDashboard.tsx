@@ -723,11 +723,11 @@ export default function TeacherDashboard() {
                 <div className="border-4 border-primary rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-primary/5 to-secondary/5">
                   <div className="bg-gradient-to-r from-primary to-secondary p-4 flex items-center justify-between text-white">
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-widest opacity-90">{t('school.name', 'Tarepet Montessori School')}</p>
-                      <p className="text-[11px] opacity-75">{t('school.location', 'Yenagoa, Bayelsa State')}</p>
+                      <p className="text-xs font-bold uppercase tracking-widest opacity-90">{t('school.name')}</p>
+                      <p className="text-[11px] opacity-75">{t('school.location')}</p>
                     </div>
                     <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md">
-                      <span className="text-primary font-bold text-xs">{t('school.abbr', 'TMS')}</span>
+                      <span className="text-primary font-bold text-xs">{t('school.abbr')}</span>
                     </div>
                   </div>
                   <div className="p-5 flex gap-5 items-center">
@@ -748,12 +748,12 @@ export default function TeacherDashboard() {
                       <p className="text-xs text-muted-foreground">{showIDCardModal.house || 'Blue House (Eagle)'}</p>
                       <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                         <div>
-                          <span className="text-muted-foreground text-[10px] block">{t('teacher.id_card_student_id', 'STUDENT ID:')}</span>
+                          <span className="text-muted-foreground text-[10px] block">{t('teacher.id_card_student_id')}</span>
                           <p className="font-bold font-mono text-foreground">{showIDCardModal.code || showIDCardModal.studentId}</p>
                         </div>
                         <div>
-                          <span className="text-muted-foreground text-[10px] block">{t('teacher.id_card_valid_until', 'VALID UNTIL:')}</span>
-                          <p className="font-bold text-foreground">{t('teacher.id_card_valid_date', 'DEC 2028')}</p>
+                          <span className="text-muted-foreground text-[10px] block">{t('teacher.id_card_valid_until')}</span>
+                          <p className="font-bold text-foreground">{t('teacher.id_card_valid_date')}</p>
                         </div>
                       </div>
                     </div>
@@ -761,10 +761,10 @@ export default function TeacherDashboard() {
                 </div>
                 <div className="flex gap-3">
                   <button onClick={() => window.print()} className="flex-1 flex items-center justify-center gap-2 bg-primary text-white py-2.5 rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm">
-                    <Printer className="w-4 h-4" /> {t('teacher.btn_print_id', 'Print ID Card')}
+                    <Printer className="w-4 h-4" /> {t('teacher.btn_print_id')}
                   </button>
                   <button onClick={() => window.print()} className="flex-1 flex items-center justify-center gap-2 border border-border py-2.5 rounded-xl text-sm font-medium hover:bg-accent transition-colors">
-                    <Download className="w-4 h-4" /> {t('teacher.btn_download_pdf', 'Download PDF')}
+                    <Download className="w-4 h-4" /> {t('teacher.btn_download_pdf')}
                   </button>
                 </div>
               </div>
