@@ -7,7 +7,7 @@ import {
   BookOpen, Users, FileText, UserCheck, Award, Calendar,
   BarChart2, Star, Clock, CheckCircle2, AlertCircle, Plus,
   Search, Filter, Upload, Download, Send, Eye, Edit2, Trash2, X,
-  TrendingUp, Play, Lock, MessageSquare, ChevronDown,
+  TrendingUp, Play, Lock, MessageSquare, ChevronDown, ChevronRight,
   CheckSquare, XCircle, RefreshCw, PenLine, Globe, Layers, ArrowUpRight,
   ClipboardList, Settings, ShieldCheck, User, Bell
 } from 'lucide-react';
@@ -292,8 +292,13 @@ export default function TeacherDashboard() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {filteredRoster.map(s => (
-                    <tr key={s.id} className="hover:bg-muted/10">
-                      <td className="p-3 font-bold text-foreground">{s.name}</td>
+                    <tr
+                      key={s.id}
+                      onClick={() => setSelectedStudentProfile(s)}
+                      className="hover:bg-muted/20 cursor-pointer transition-colors group"
+                      title="Click row to view student preview & actions"
+                    >
+                      <td className="p-3 font-bold text-foreground group-hover:text-primary transition-colors">{s.name}</td>
                       <td className="p-3 text-muted-foreground font-mono">{s.code}</td>
                       <td className="p-3 font-semibold text-primary">{s.grade}</td>
                       <td className="p-3 font-bold text-foreground">{s.gpa}</td>
@@ -304,40 +309,18 @@ export default function TeacherDashboard() {
                         </span>
                       </td>
                       <td className="p-3 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => setSelectedStudentProfile(s)}
-                            title="View Profile"
-                            className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => setEditingStudent({ ...s })}
-                            title="Edit Student"
-                            className="p-1.5 rounded-lg text-muted-foreground hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => {
-                              setPromotingStudent(s);
-                              const nextClass = s.grade === 'JSS1' ? 'JSS2' : s.grade === 'JSS2' ? 'JSS3' : s.grade === 'JSS3' ? 'SS1' : s.grade === 'SS1' ? 'SS2' : s.grade === 'SS2' ? 'SS3' : 'Graduated';
-                              setTargetPromotionClass(nextClass);
-                            }}
-                            title="Promote Student"
-                            className="p-1.5 rounded-lg text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
-                          >
-                            <TrendingUp className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => setDeletingStudent(s)}
-                            title="Delete Student"
-                            className="p-1.5 rounded-lg text-muted-foreground hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedStudentProfile(s);
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all text-xs font-bold inline-flex items-center gap-1.5 shadow-2xs group-hover:scale-105"
+                          title="Open student preview and actions"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Action</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -503,13 +486,13 @@ export default function TeacherDashboard() {
           </div>
         )}
 
-        {/* View Student Profile Modal */}
+        {/* View Student Profile / Preview Modal */}
         {selectedStudentProfile && (
           <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4" onClick={() => setSelectedStudentProfile(null)}>
-            <div className="bg-card rounded-2xl border border-border max-w-md w-full p-6 space-y-4 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="bg-card rounded-2xl border border-border max-w-md w-full p-6 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-150" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between border-b border-border pb-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-base">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-base border border-primary/20">
                     {selectedStudentProfile.name?.[0] ?? 'S'}
                   </div>
                   <div>
@@ -517,40 +500,98 @@ export default function TeacherDashboard() {
                     <p className="text-xs text-primary font-mono">{selectedStudentProfile.code}</p>
                   </div>
                 </div>
-                <button onClick={() => setSelectedStudentProfile(null)} className="p-1 rounded-lg hover:bg-accent text-muted-foreground">
+                <button onClick={() => setSelectedStudentProfile(null)} className="p-1 rounded-lg hover:bg-accent text-muted-foreground transition-colors">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               <div className="space-y-2 text-xs divide-y divide-border">
                 <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_email')}</span>
+                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_email', 'Email Address')}</span>
                   <span className="font-bold text-foreground">{selectedStudentProfile.email || 'N/A'}</span>
                 </div>
                 <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_class_level')}</span>
-                  <span className="font-bold text-primary">{selectedStudentProfile.grade} ({selectedStudentProfile.stream})</span>
+                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_class_level', 'Class & Stream')}</span>
+                  <span className="font-bold text-primary">{selectedStudentProfile.grade} ({selectedStudentProfile.stream || 'General'})</span>
                 </div>
                 <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_gpa')}</span>
+                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_gpa', 'GPA Score')}</span>
                   <span className="font-bold text-emerald-600">{selectedStudentProfile.gpa || '3.50'}</span>
                 </div>
                 <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_attendance')}</span>
+                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_attendance', 'Attendance Rate')}</span>
                   <span className="font-bold text-emerald-600">{selectedStudentProfile.attendance || '98%'}</span>
                 </div>
                 <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_parent')}</span>
+                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_parent', 'Parent / Guardian')}</span>
                   <span className="font-bold text-foreground">{selectedStudentProfile.parentName || 'Chief Nwosu'}</span>
                 </div>
                 <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_parent_phone')}</span>
+                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_parent_phone', 'Parent Contact')}</span>
                   <span className="font-mono text-foreground">{selectedStudentProfile.parentPhone || '08031112233'}</span>
+                </div>
+                <div className="flex justify-between py-2">
+                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_status', 'Account Status')}</span>
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${selectedStudentProfile.atRisk ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                    {selectedStudentProfile.status || 'ACTIVE'}
+                  </span>
                 </div>
               </div>
 
-              <button onClick={() => setSelectedStudentProfile(null)} className="w-full py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-colors">
-                {t('teacher.close_profile')}
+              {/* Action Buttons inside Preview */}
+              <div className="bg-muted/20 rounded-xl p-3 border border-border space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Settings className="w-3 h-3 text-primary" />
+                  <span>{t('teacher.student_actions', 'Student Management Actions')}</span>
+                </p>
+                
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    onClick={() => {
+                      const student = selectedStudentProfile;
+                      setSelectedStudentProfile(null);
+                      setEditingStudent({ ...student });
+                    }}
+                    className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-card border border-border text-xs font-bold text-foreground hover:bg-blue-500/10 hover:text-blue-600 hover:border-blue-500/30 transition-all shadow-2xs"
+                    title="Edit student profile"
+                  >
+                    <Edit2 className="w-3.5 h-3.5 text-blue-500" />
+                    <span>Edit</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      const student = selectedStudentProfile;
+                      setSelectedStudentProfile(null);
+                      setPromotingStudent(student);
+                      const nextClass = student.grade === 'JSS1' ? 'JSS2' : student.grade === 'JSS2' ? 'JSS3' : student.grade === 'JSS3' ? 'SS1' : student.grade === 'SS1' ? 'SS2' : student.grade === 'SS2' ? 'SS3' : 'Graduated';
+                      setTargetPromotionClass(nextClass);
+                    }}
+                    className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-card border border-border text-xs font-bold text-foreground hover:bg-emerald-500/10 hover:text-emerald-600 hover:border-emerald-500/30 transition-all shadow-2xs"
+                    title="Promote student to next class"
+                  >
+                    <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
+                    <span>Promote</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      const student = selectedStudentProfile;
+                      setSelectedStudentProfile(null);
+                      setDeletingStudent(student);
+                    }}
+                    className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-card border border-border text-xs font-bold text-rose-600 hover:bg-rose-500/10 hover:border-rose-500/30 transition-all shadow-2xs"
+                    title="Delete student record"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                    <span>Delete</span>
+                  </button>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setSelectedStudentProfile(null)}
+                className="w-full py-2.5 rounded-xl bg-muted text-muted-foreground hover:text-foreground text-xs font-bold hover:bg-accent transition-colors"
+              >
+                {t('teacher.close_profile', 'Close Preview')}
               </button>
             </div>
           </div>
