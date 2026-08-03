@@ -761,10 +761,10 @@ export default function TeacherDashboard() {
                 </div>
                 <div className="flex gap-3">
                   <button onClick={() => window.print()} className="flex-1 flex items-center justify-center gap-2 bg-primary text-white py-2.5 rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shadow-sm">
-                    <Printer className="w-4 h-4" /> Print ID Card
+                    <Printer className="w-4 h-4" /> {t('teacher.btn_print_id', 'Print ID Card')}
                   </button>
                   <button onClick={() => window.print()} className="flex-1 flex items-center justify-center gap-2 border border-border py-2.5 rounded-xl text-sm font-medium hover:bg-accent transition-colors">
-                    <Download className="w-4 h-4" /> Download PDF
+                    <Download className="w-4 h-4" /> {t('teacher.btn_download_pdf', 'Download PDF')}
                   </button>
                 </div>
               </div>
