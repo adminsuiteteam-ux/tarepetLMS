@@ -1843,10 +1843,23 @@ const CreateUserForTypeModal = ({
 export default function AdminDashboard() {
   const { t } = useTranslation();
   const [activeSection, setActiveSectionState] = useState(() => {
-    return sessionStorage.getItem('admin_active_section') || 'overview';
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const urlSec = params.get('section');
+      if (urlSec) return urlSec;
+      const cached = localStorage.getItem('admin_active_section') || sessionStorage.getItem('admin_active_section');
+      if (cached) return cached;
+    }
+    return 'overview';
   });
   const setActiveSection = (section: string) => {
-    sessionStorage.setItem('admin_active_section', section);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('admin_active_section', section);
+      sessionStorage.setItem('admin_active_section', section);
+      const url = new URL(window.location.href);
+      url.searchParams.set('section', section);
+      window.history.replaceState(null, '', url.toString());
+    }
     setActiveSectionState(section);
   };
   const [userSubPage, setUserSubPage] = useState<string | null>(null);

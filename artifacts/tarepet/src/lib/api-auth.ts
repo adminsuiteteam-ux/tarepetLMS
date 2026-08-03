@@ -44,6 +44,11 @@ authClient.interceptors.response.use(
           originalRequest.headers.Authorization = `Bearer ${access}`;
           return authClient(originalRequest);
         } catch (refreshError) {
+          // If refresh fails but we have cached user data (demo/offline mode), keep session intact
+          const cachedUser = localStorage.getItem('user_data');
+          if (cachedUser) {
+            return Promise.reject(refreshError);
+          }
           localStorage.removeItem('access_token');
           localStorage.removeItem('refresh_token');
           localStorage.removeItem('user_data');

@@ -101,7 +101,26 @@ function getTimetableForDay(day: DayKey) {
 export default function StudentDashboard() {
   const { user } = useAuth();
   const { t } = useTranslation();
-  const [activeSection, setActiveSection] = useState('overview');
+  const [activeSection, setActiveSectionState] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const urlSec = params.get('section');
+      if (urlSec) return urlSec;
+      const cached = localStorage.getItem('student_active_section');
+      if (cached) return cached;
+    }
+    return 'overview';
+  });
+
+  const setActiveSection = (sec: string) => {
+    setActiveSectionState(sec);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('student_active_section', sec);
+      const url = new URL(window.location.href);
+      url.searchParams.set('section', sec);
+      window.history.replaceState(null, '', url.toString());
+    }
+  };
   const [timetableDay, setTimetableDay] = useState<DayKey>('Monday');
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 

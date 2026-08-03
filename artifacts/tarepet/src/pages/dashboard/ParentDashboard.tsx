@@ -88,7 +88,26 @@ const PTA_EVENTS = [
 export default function ParentDashboard() {
   const { user } = useAuth();
   const { t } = useTranslation();
-  const [activeSection, setActiveSection] = useState('overview');
+  const [activeSection, setActiveSectionState] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const urlSec = params.get('section');
+      if (urlSec) return urlSec;
+      const cached = localStorage.getItem('parent_active_section');
+      if (cached) return cached;
+    }
+    return 'overview';
+  });
+
+  const setActiveSection = (sec: string) => {
+    setActiveSectionState(sec);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('parent_active_section', sec);
+      const url = new URL(window.location.href);
+      url.searchParams.set('section', sec);
+      window.history.replaceState(null, '', url.toString());
+    }
+  };
   const [selectedChildId, setSelectedChildId] = useState<number>(1);
   const [selectedTeacher, setSelectedTeacher] = useState(TEACHERS[0].name);
   const [chatMsg, setChatMsg] = useState('');

@@ -32,15 +32,61 @@ const TIMETABLE: any[] = [];
 export default function TeacherDashboard() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const [activeSection, setActiveSection] = useState('overview');
+  // Active section & tab persistence on refresh
+  const [activeSection, setActiveSectionState] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const urlSec = params.get('section');
+      if (urlSec) return urlSec;
+      const cached = localStorage.getItem('teacher_active_section');
+      if (cached) return cached;
+    }
+    return 'overview';
+  });
+
+  const setActiveSection = (sec: string) => {
+    setActiveSectionState(sec);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('teacher_active_section', sec);
+      const url = new URL(window.location.href);
+      url.searchParams.set('section', sec);
+      window.history.replaceState(null, '', url.toString());
+    }
+  };
 
   // Form Teacher designation
   const isFormTeacher = Boolean(user?.role === 'TEACHER' || user?.role === 'ADMIN');
   const formClass = (user?.profile as any)?.formTeacherOf || 'SS1';
 
-  // Sub-tab states
-  const [studentSubTab, setStudentSubTab] = useState<'roster' | 'attendance'>('roster');
-  const [resultsSubTab, setResultsSubTab] = useState<'queue' | 'gradebook'>('queue');
+  // Sub-tab states with persistent caching
+  const [studentSubTab, setStudentSubTabState] = useState<'roster' | 'attendance'>(() => {
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('teacher_student_subtab');
+      if (cached === 'roster' || cached === 'attendance') return cached;
+    }
+    return 'roster';
+  });
+  const setStudentSubTab = (tab: 'roster' | 'attendance') => {
+    setStudentSubTabState(tab);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('teacher_student_subtab', tab);
+    }
+  };
+
+  const [resultsSubTab, setResultsSubTabState] = useState<'queue' | 'gradebook'>(() => {
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('teacher_results_subtab');
+      if (cached === 'queue' || cached === 'gradebook') return cached;
+    }
+    return 'queue';
+  });
+  const setResultsSubTab = (tab: 'queue' | 'gradebook') => {
+    setResultsSubTabState(tab);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('teacher_results_subtab', tab);
+    }
+  };
+
   const [selectedExamClass, setSelectedExamClass] = useState<string>('ALL');
   const [selectedExamStream, setSelectedExamStream] = useState<string>('ALL');
 
