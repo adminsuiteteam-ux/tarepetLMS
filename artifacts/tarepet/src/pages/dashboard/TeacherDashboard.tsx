@@ -287,10 +287,10 @@ export default function TeacherDashboard() {
                 onClick={() => setSelectedStudentProfile(null)}
                 className="text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors font-medium cursor-pointer"
               >
-                <ChevronLeft className="w-4 h-4" /> Back to All Classes
+                <ChevronLeft className="w-4 h-4" /> {t('teacher.back_to_all_classes', 'Back to All Classes')}
               </button>
               <span className="text-muted-foreground">/</span>
-              <span className="text-foreground font-semibold">Student Profile — {u.name}</span>
+              <span className="text-foreground font-semibold">{t('teacher.student_profile_prefix', 'Student Profile — ')}{u.name}</span>
             </div>
 
             {/* Profile Specification Card (Exact Match to User Reference Image) */}
@@ -299,14 +299,14 @@ export default function TeacherDashboard() {
               <div className="flex items-center justify-between pb-4 border-b border-border flex-wrap gap-3">
                 <div className="flex items-center gap-3">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                  <h3 className="font-serif font-bold text-lg text-foreground">Official Student Profile & Credentials</h3>
+                  <h3 className="font-serif font-bold text-lg text-foreground">{t('teacher.official_student_profile', 'Official Student Profile & Credentials')}</h3>
                 </div>
                 <div className="relative">
                   <button
                     onClick={() => setShowActionsDropdown(prev => !prev)}
                     className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-full text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
                   >
-                    <span>Actions</span>
+                    <span>{t('teacher.btn_actions', 'Actions')}</span>
                     <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showActionsDropdown ? 'rotate-180' : ''}`} />
                   </button>
                   {showActionsDropdown && (
@@ -319,7 +319,7 @@ export default function TeacherDashboard() {
                           }}
                           className="w-full text-left px-4 py-2.5 hover:bg-muted/50 flex items-center gap-2 font-semibold text-foreground transition-colors cursor-pointer"
                         >
-                          <CreditCard className="w-4 h-4 text-primary" /> Generate Student ID Card
+                          <CreditCard className="w-4 h-4 text-primary" /> {t('teacher.gen_id_card', 'Generate Student ID Card')}
                         </button>
                         <button
                           onClick={() => {
@@ -329,7 +329,7 @@ export default function TeacherDashboard() {
                           }}
                           className="w-full text-left px-4 py-2.5 hover:bg-muted/50 flex items-center gap-2 font-semibold text-foreground transition-colors cursor-pointer"
                         >
-                          <Edit2 className="w-4 h-4 text-blue-500" /> Edit Student Profile
+                          <Edit2 className="w-4 h-4 text-blue-500" /> {t('teacher.edit_profile', 'Edit Student Profile')}
                         </button>
                         <button
                           onClick={() => {
@@ -341,7 +341,7 @@ export default function TeacherDashboard() {
                           }}
                           className="w-full text-left px-4 py-2.5 hover:bg-muted/50 flex items-center gap-2 font-semibold text-foreground transition-colors cursor-pointer"
                         >
-                          <TrendingUp className="w-4 h-4 text-emerald-500" /> Promote Student
+                          <TrendingUp className="w-4 h-4 text-emerald-500" /> {t('teacher.promote_student', 'Promote Student')}
                         </button>
                       </div>
                       <div className="py-1">
@@ -353,7 +353,7 @@ export default function TeacherDashboard() {
                           }}
                           className="w-full text-left px-4 py-2.5 hover:bg-rose-500/10 text-rose-600 flex items-center gap-2 font-semibold transition-colors cursor-pointer"
                         >
-                          <Trash2 className="w-4 h-4 text-rose-500" /> Delete Student Record
+                          <Trash2 className="w-4 h-4 text-rose-500" /> {t('teacher.delete_record_btn', 'Delete Student Record')}
                         </button>
                       </div>
                     </div>
@@ -375,52 +375,52 @@ export default function TeacherDashboard() {
                     )}
                   </div>
                   <span className="mt-3 px-3.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 uppercase tracking-wider">
-                    STATUS: {u.status || 'ACTIVE'}
+                    {t('teacher.status_prefix', 'STATUS:')} {u.status || 'ACTIVE'}
                   </span>
                 </div>
 
                 {/* Column 2: Personal Identifiers */}
                 <div className="md:col-span-4 space-y-3 text-xs leading-relaxed">
                   <div>
-                    <span className="text-muted-foreground font-medium">Student ID: </span>
+                    <span className="text-muted-foreground font-medium">{t('teacher.lbl_student_id_prefix', 'Student ID:')} </span>
                     <strong className="text-foreground font-mono font-bold text-xs bg-rose-500/10 text-rose-600 px-2.5 py-0.5 rounded border border-rose-500/20">
                       {u.code}
                     </strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">Name: </span>
+                    <span className="text-muted-foreground font-medium">{t('teacher.lbl_name_prefix', 'Name:')} </span>
                     <strong className="text-foreground font-bold text-sm uppercase">{u.name}</strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">Gender: </span>
+                    <span className="text-muted-foreground font-medium">{t('teacher.lbl_gender_prefix', 'Gender:')} </span>
                     <strong className="text-foreground font-bold">{u.gender || 'Male'}</strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">Marital Status: </span>
-                    <strong className="text-foreground font-bold">Single</strong>
+                    <span className="text-muted-foreground font-medium">{t('teacher.lbl_marital_status_prefix', 'Marital Status:')} </span>
+                    <strong className="text-foreground font-bold">{t('teacher.lbl_single', 'Single')}</strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">Date of Birth: </span>
+                    <span className="text-muted-foreground font-medium">{t('teacher.lbl_dob_prefix', 'Date of Birth:')} </span>
                     <strong className="text-foreground font-bold">{u.dob || '2012-05-14'}</strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">Phone Number: </span>
+                    <span className="text-muted-foreground font-medium">{t('teacher.lbl_phone_prefix', 'Phone Number:')} </span>
                     <strong className="text-foreground font-bold">{u.phone || 'Not Available'}</strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">Country: </span>
+                    <span className="text-muted-foreground font-medium">{t('teacher.lbl_country_prefix', 'Country:')} </span>
                     <strong className="text-foreground font-bold">{u.country || 'Nigeria'}</strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">State of Origin: </span>
+                    <span className="text-muted-foreground font-medium">{t('teacher.lbl_state_prefix', 'State of Origin:')} </span>
                     <strong className="text-foreground font-bold">{u.stateOfOrigin || (u.name.includes('Chidi') ? 'Anambra' : 'Bayelsa')}</strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">L.G.A: </span>
+                    <span className="text-muted-foreground font-medium">{t('teacher.lbl_lga_prefix', 'L.G.A:')} </span>
                     <strong className="text-foreground font-bold">{u.lga || (u.name.includes('Chidi') ? 'Nnewi South' : 'Yenagoa')}</strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">Email: </span>
+                    <span className="text-muted-foreground font-medium">{t('teacher.lbl_email_prefix', 'Email:')} </span>
                     <strong className="text-foreground font-bold underline">{u.email}</strong>
                   </div>
                 </div>
@@ -428,32 +428,32 @@ export default function TeacherDashboard() {
                 {/* Column 3: Academic & Guardian Details */}
                 <div className="md:col-span-5 space-y-3 text-xs leading-relaxed border-t md:border-t-0 md:border-l border-border pt-4 md:pt-0 md:pl-6">
                   <div>
-                    <span className="text-muted-foreground font-medium">Address: </span>
+                    <span className="text-muted-foreground font-medium">{t('teacher.lbl_address_prefix', 'Address:')} </span>
                     <strong className="text-foreground font-bold">{u.address || (u.name.includes('Chidi') ? '12 Swali Road, Yenagoa' : '12 Kpansia-Epje Road, Yenagoa')}</strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">Class: </span>
+                    <span className="text-muted-foreground font-medium">{t('teacher.lbl_class_prefix', 'Class:')} </span>
                     <strong className="text-foreground font-bold">
                       {u.grade} ({u.stream || 'General Stream'})
                     </strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">Programme: </span>
+                    <span className="text-muted-foreground font-medium">{t('teacher.lbl_programme_prefix', 'Programme:')} </span>
                     <strong className="text-foreground font-bold">
                       {u.grade?.startsWith('SS') ? 'Senior Secondary Certificate (SSCE)' : 'Basic Education Certificate (BECE)'}
                     </strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">Parent Name: </span>
+                    <span className="text-muted-foreground font-medium">{t('teacher.lbl_parent_name_prefix', 'Parent Name:')} </span>
                     <strong className="text-foreground font-bold">{u.parentName || 'Chief Nwosu'}</strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">Status: </span>
-                    <strong className="text-emerald-600 font-bold">Active</strong>
+                    <span className="text-muted-foreground font-medium">{t('teacher.lbl_status_field_prefix', 'Status:')} </span>
+                    <strong className="text-emerald-600 font-bold">{t('teacher.lbl_active', 'Active')}</strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium">Study Mode: </span>
-                    <strong className="text-foreground font-bold">Full Time</strong>
+                    <span className="text-muted-foreground font-medium">{t('teacher.lbl_study_mode_prefix', 'Study Mode:')} </span>
+                    <strong className="text-foreground font-bold">{t('teacher.lbl_full_time', 'Full Time')}</strong>
                   </div>
                 </div>
               </div>
@@ -723,11 +723,11 @@ export default function TeacherDashboard() {
                 <div className="border-4 border-primary rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-primary/5 to-secondary/5">
                   <div className="bg-gradient-to-r from-primary to-secondary p-4 flex items-center justify-between text-white">
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-widest opacity-90">Tarepet Montessori School</p>
-                      <p className="text-[11px] opacity-75">Yenagoa, Bayelsa State</p>
+                      <p className="text-xs font-bold uppercase tracking-widest opacity-90">{t('school.name', 'Tarepet Montessori School')}</p>
+                      <p className="text-[11px] opacity-75">{t('school.location', 'Yenagoa, Bayelsa State')}</p>
                     </div>
                     <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md">
-                      <span className="text-primary font-bold text-xs">TMS</span>
+                      <span className="text-primary font-bold text-xs">{t('school.abbr', 'TMS')}</span>
                     </div>
                   </div>
                   <div className="p-5 flex gap-5 items-center">
@@ -748,12 +748,12 @@ export default function TeacherDashboard() {
                       <p className="text-xs text-muted-foreground">{showIDCardModal.house || 'Blue House (Eagle)'}</p>
                       <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                         <div>
-                          <span className="text-muted-foreground text-[10px] block">STUDENT ID:</span>
+                          <span className="text-muted-foreground text-[10px] block">{t('teacher.id_card_student_id', 'STUDENT ID:')}</span>
                           <p className="font-bold font-mono text-foreground">{showIDCardModal.code || showIDCardModal.studentId}</p>
                         </div>
                         <div>
-                          <span className="text-muted-foreground text-[10px] block">VALID UNTIL:</span>
-                          <p className="font-bold text-foreground">DEC 2028</p>
+                          <span className="text-muted-foreground text-[10px] block">{t('teacher.id_card_valid_until', 'VALID UNTIL:')}</span>
+                          <p className="font-bold text-foreground">{t('teacher.id_card_valid_date', 'DEC 2028')}</p>
                         </div>
                       </div>
                     </div>
