@@ -63,7 +63,6 @@ export default function TeacherDashboard() {
     email: '',
     grade: 'SS1',
     stream: 'Science',
-    house: 'Blue House (Eagle)',
     parentName: '',
     parentPhone: ''
   });
@@ -112,7 +111,6 @@ export default function TeacherDashboard() {
       email: addStudentForm.email,
       grade: addStudentForm.grade,
       stream: addStudentForm.stream,
-      house: addStudentForm.house,
       gpa: '0.00',
       attendance: '100%',
       status: 'ACTIVE',
@@ -121,7 +119,7 @@ export default function TeacherDashboard() {
     setRoster(prev => [newStudent, ...prev]);
     setShowAddStudentModal(false);
     showToast(`Registered ${addStudentForm.name}! Student ID: ${generatedId}`);
-    setAddStudentForm({ name: '', email: '', grade: 'SS1', stream: 'Science', house: 'Blue House (Eagle)', parentName: '', parentPhone: '' });
+    setAddStudentForm({ name: '', email: '', grade: 'SS1', stream: 'Science', parentName: '', parentPhone: '' });
   };
 
   const filteredRoster = roster.filter(s => 
@@ -286,7 +284,6 @@ export default function TeacherDashboard() {
                     <th className="p-3">{t('teacher.col_student_name', 'Student Name')}</th>
                     <th className="p-3">{t('teacher.col_student_id', 'Student ID')}</th>
                     <th className="p-3">{t('teacher.col_class', 'Class')}</th>
-                    <th className="p-3">{t('teacher.col_house', 'House')}</th>
                     <th className="p-3">{t('teacher.col_gpa', 'GPA')}</th>
                     <th className="p-3">{t('teacher.col_attendance', 'Attendance')}</th>
                     <th className="p-3">{t('teacher.col_status', 'Status')}</th>
@@ -299,7 +296,6 @@ export default function TeacherDashboard() {
                       <td className="p-3 font-bold text-foreground">{s.name}</td>
                       <td className="p-3 text-muted-foreground font-mono">{s.code}</td>
                       <td className="p-3 font-semibold text-primary">{s.grade}</td>
-                      <td className="p-3 text-muted-foreground">{s.house}</td>
                       <td className="p-3 font-bold text-foreground">{s.gpa}</td>
                       <td className="p-3 text-emerald-600 font-semibold">{s.attendance}</td>
                       <td className="p-3">
@@ -465,19 +461,6 @@ export default function TeacherDashboard() {
                       <option value="Art">{t('teacher.opt_art_humanities')}</option>
                     </select>
                   </div>
-                  <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.house')}</label>
-                    <select
-                      value={addStudentForm.house}
-                      onChange={e => setAddStudentForm({ ...addStudentForm, house: e.target.value })}
-                      className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
-                    >
-                      <option value="Blue House (Eagle)">{t('teacher.house_blue')}</option>
-                      <option value="Purple House (Phoenix)">{t('teacher.house_purple')}</option>
-                      <option value="Green House (Jaguar)">{t('teacher.house_green')}</option>
-                      <option value="Red House (Falcon)">{t('teacher.house_red')}</option>
-                    </select>
-                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -549,10 +532,6 @@ export default function TeacherDashboard() {
                   <span className="font-bold text-primary">{selectedStudentProfile.grade} ({selectedStudentProfile.stream})</span>
                 </div>
                 <div className="flex justify-between py-2">
-                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_house_assign')}</span>
-                  <span className="font-bold text-foreground">{selectedStudentProfile.house}</span>
-                </div>
-                <div className="flex justify-between py-2">
                   <span className="text-muted-foreground font-semibold">{t('teacher.lbl_gpa')}</span>
                   <span className="font-bold text-emerald-600">{selectedStudentProfile.gpa || '3.50'}</span>
                 </div>
@@ -607,30 +586,15 @@ export default function TeacherDashboard() {
                     className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="font-bold text-muted-foreground uppercase block mb-1">{t('teacher.lbl_class_level')}</label>
-                    <select
-                      value={editingStudent.grade}
-                      onChange={e => setEditingStudent({ ...editingStudent, grade: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
-                    >
-                      {['JSS1', 'JSS2', 'JSS3', 'SS1', 'SS2', 'SS3'].map(g => <option key={g} value={g}>{g}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="font-bold text-muted-foreground uppercase block mb-1">{t('teacher.lbl_house')}</label>
-                    <select
-                      value={editingStudent.house}
-                      onChange={e => setEditingStudent({ ...editingStudent, house: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
-                    >
-                      <option value="Blue House (Eagle)">{t('teacher.house_blue')}</option>
-                      <option value="Purple House (Phoenix)">{t('teacher.house_purple')}</option>
-                      <option value="Green House (Jaguar)">{t('teacher.house_green')}</option>
-                      <option value="Red House (Falcon)">{t('teacher.house_red')}</option>
-                    </select>
-                  </div>
+                <div>
+                  <label className="font-bold text-muted-foreground uppercase block mb-1">{t('teacher.lbl_class_level')}</label>
+                  <select
+                    value={editingStudent.grade}
+                    onChange={e => setEditingStudent({ ...editingStudent, grade: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                  >
+                    {['JSS1', 'JSS2', 'JSS3', 'SS1', 'SS2', 'SS3'].map(g => <option key={g} value={g}>{g}</option>)}
+                  </select>
                 </div>
               </div>
 

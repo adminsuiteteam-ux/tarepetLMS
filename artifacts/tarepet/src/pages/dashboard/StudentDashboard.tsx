@@ -147,7 +147,7 @@ export default function StudentDashboard() {
         <div className="bg-gradient-to-r from-rose-800 via-red-900 to-rose-950 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
           <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
             <span className="text-[10px] font-bold uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full">
-              {t('student.header_class_info', 'SS1 SCIENCE · BLUE HOUSE EAGLE · TERM 2 2026')}
+              {t('student.header_class_info', 'SS1 SCIENCE · TERM 2 2026')}
             </span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-serif font-bold mb-1">
@@ -584,15 +584,9 @@ export default function StudentDashboard() {
               <input type="text" value={profileForm.lastName} onChange={e => setProfileForm({...profileForm, lastName: e.target.value})} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('student.student_id', 'Student ID Code')}</label>
-              <input type="text" disabled value={profileForm.studentId} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted text-xs font-mono font-bold outline-none cursor-not-allowed" />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('student.assigned_house', 'Assigned House')}</label>
-              <input type="text" disabled value={profileForm.house} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted text-xs font-bold outline-none cursor-not-allowed" />
-            </div>
+          <div>
+            <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('student.student_id', 'Student ID Code')}</label>
+            <input type="text" disabled value={profileForm.studentId} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted text-xs font-mono font-bold outline-none cursor-not-allowed" />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
