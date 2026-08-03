@@ -6,7 +6,7 @@ import { Link } from 'wouter';
 import {
   BookOpen, Users, FileText, UserCheck, Award, Calendar,
   BarChart2, Star, Clock, CheckCircle2, AlertCircle, Plus,
-  Search, Filter, Upload, Download, Send, Eye, Edit2, Trash2,
+  Search, Filter, Upload, Download, Send, Eye, Edit2, Trash2, X,
   TrendingUp, Play, Lock, MessageSquare, ChevronDown,
   CheckSquare, XCircle, RefreshCw, PenLine, Globe, Layers, ArrowUpRight,
   ClipboardList, Settings, ShieldCheck, User, Bell
@@ -15,12 +15,17 @@ import {
 import { getStoredExams, updateExamStatus, getStoredSubmissions } from '@/lib/cbt-store';
 import { useTranslation } from '@/lib/i18n';
 
-// ─── Initial Seed Data (SS1 Science Teacher) ─────────────────
+// ─── Initial Seed Data (Form Teacher & Subject Teacher) ───────
 const TEACHER_CLASSES: any[] = [];
 
 const PENDING_SUBMISSIONS: any[] = [];
-const STUDENT_ROSTER: any[] = [];
-const MONTESSORI_OBSERVATIONS: any[] = [];
+const STUDENT_ROSTER: any[] = [
+  { id: 1, name: 'Emmanuel Adebayo', code: 'TMS/SS1/SCI/7281', email: 'emmanuel.adebayo@tarepet.com', grade: 'SS1', stream: 'Science', house: 'Blue House (Eagle)', gpa: '3.85', attendance: '98%', status: 'ACTIVE', atRisk: false, dob: '2009-07-19', gender: 'Male', parentName: 'Pastor Adebayo', parentPhone: '08035556677' },
+  { id: 2, name: 'Chidi Nwosu', code: 'TMS/JS1/4092', email: 'chidi.nwosu@tarepet.com', grade: 'JSS1', stream: 'General', house: 'Blue House (Eagle)', gpa: '3.70', attendance: '95%', status: 'ACTIVE', atRisk: false, dob: '2012-05-14', gender: 'Male', parentName: 'Chief Nwosu', parentPhone: '08031112233' },
+  { id: 3, name: 'Amaka Okafor', code: 'TMS/JS1/8193', email: 'amaka.okafor@tarepet.com', grade: 'JSS1', stream: 'General', house: 'Purple House (Phoenix)', gpa: '3.90', attendance: '100%', status: 'ACTIVE', atRisk: false, dob: '2012-09-20', gender: 'Female', parentName: 'Dr. Okafor', parentPhone: '08032223344' },
+  { id: 4, name: 'Buchi Nnamdi', code: 'TMS/SS2/SCI/6291', email: 'buchi.nnamdi@tarepet.com', grade: 'SS2', stream: 'Science', house: 'Green House (Jaguar)', gpa: '3.60', attendance: '92%', status: 'ACTIVE', atRisk: false, dob: '2008-08-12', gender: 'Male', parentName: 'Chief Nnamdi', parentPhone: '08037778899' },
+  { id: 5, name: 'Zainab Mohammed', code: 'TMS/SS3/SCI/8391', email: 'zainab.mohammed@tarepet.com', grade: 'SS3', stream: 'Science', house: 'Blue House (Eagle)', gpa: '3.95', attendance: '99%', status: 'ACTIVE', atRisk: false, dob: '2007-12-02', gender: 'Female', parentName: 'Dr. Mohammed', parentPhone: '08039990011' },
+];
 
 const TIMETABLE: any[] = [];
 
@@ -29,8 +34,12 @@ export default function TeacherDashboard() {
   const { user } = useAuth();
   const [activeSection, setActiveSection] = useState('overview');
 
+  // Form Teacher designation
+  const isFormTeacher = Boolean(user?.role === 'TEACHER' || user?.role === 'ADMIN');
+  const formClass = (user?.profile as any)?.formTeacherOf || 'SS1';
+
   // Sub-tab states
-  const [studentSubTab, setStudentSubTab] = useState<'roster' | 'attendance' | 'montessori'>('roster');
+  const [studentSubTab, setStudentSubTab] = useState<'roster' | 'attendance'>('roster');
   const [resultsSubTab, setResultsSubTab] = useState<'queue' | 'gradebook'>('queue');
   const [selectedExamClass, setSelectedExamClass] = useState<string>('ALL');
   const [selectedExamStream, setSelectedExamStream] = useState<string>('ALL');
@@ -58,6 +67,13 @@ export default function TeacherDashboard() {
     parentName: '',
     parentPhone: ''
   });
+
+  // Student management modal states
+  const [selectedStudentProfile, setSelectedStudentProfile] = useState<any>(null);
+  const [editingStudent, setEditingStudent] = useState<any>(null);
+  const [promotingStudent, setPromotingStudent] = useState<any>(null);
+  const [deletingStudent, setDeletingStudent] = useState<any>(null);
+  const [targetPromotionClass, setTargetPromotionClass] = useState<string>('SS2');
 
   // Settings State
   const [profileForm, setProfileForm] = useState({
@@ -189,7 +205,7 @@ export default function TeacherDashboard() {
         {/* Timetable Overview */}
         <div className="bg-card rounded-2xl border border-border p-5 shadow-sm">
           <h3 className="font-serif font-bold text-foreground mb-3 flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-primary" /> Today's Class Schedule
+            <Calendar className="w-4 h-4 text-primary" /> {t('teacher.todays_schedule', "Today's Class Schedule")}
           </h3>
           <div className="space-y-2.5">
             {TIMETABLE.length > 0 ? TIMETABLE.map((t, i) => (
@@ -274,6 +290,7 @@ export default function TeacherDashboard() {
                     <th className="p-3">{t('teacher.col_gpa', 'GPA')}</th>
                     <th className="p-3">{t('teacher.col_attendance', 'Attendance')}</th>
                     <th className="p-3">{t('teacher.col_status', 'Status')}</th>
+                    <th className="p-3 text-right">{t('teacher.col_actions', 'Actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -289,6 +306,42 @@ export default function TeacherDashboard() {
                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${s.atRisk ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
                           {s.status}
                         </span>
+                      </td>
+                      <td className="p-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => setSelectedStudentProfile(s)}
+                            title="View Profile"
+                            className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => setEditingStudent({ ...s })}
+                            title="Edit Student"
+                            className="p-1.5 rounded-lg text-muted-foreground hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setPromotingStudent(s);
+                              const nextClass = s.grade === 'JSS1' ? 'JSS2' : s.grade === 'JSS2' ? 'JSS3' : s.grade === 'JSS3' ? 'SS1' : s.grade === 'SS1' ? 'SS2' : s.grade === 'SS2' ? 'SS3' : 'Graduated';
+                              setTargetPromotionClass(nextClass);
+                            }}
+                            title="Promote Student"
+                            className="p-1.5 rounded-lg text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                          >
+                            <TrendingUp className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => setDeletingStudent(s)}
+                            title="Delete Student"
+                            className="p-1.5 rounded-lg text-muted-foreground hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -407,9 +460,9 @@ export default function TeacherDashboard() {
                       onChange={e => setAddStudentForm({ ...addStudentForm, stream: e.target.value })}
                       className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
                     >
-                      <option value="General">General (Junior)</option>
-                      <option value="Science">Science Stream</option>
-                      <option value="Art">Art & Humanities</option>
+                      <option value="General">{t('teacher.opt_general_junior', 'General (Junior)')}</option>
+                      <option value="Science">{t('teacher.opt_science_stream', 'Science Stream')}</option>
+                      <option value="Art">{t('teacher.opt_art_humanities', 'Art & Humanities')}</option>
                     </select>
                   </div>
                   <div>
@@ -419,10 +472,10 @@ export default function TeacherDashboard() {
                       onChange={e => setAddStudentForm({ ...addStudentForm, house: e.target.value })}
                       className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
                     >
-                      <option value="Blue House (Eagle)">Blue House (Eagle)</option>
-                      <option value="Purple House (Phoenix)">Purple House (Phoenix)</option>
-                      <option value="Green House (Jaguar)">Green House (Jaguar)</option>
-                      <option value="Red House (Falcon)">Red House (Falcon)</option>
+                      <option value="Blue House (Eagle)">{t('teacher.house_blue', 'Blue House (Eagle)')}</option>
+                      <option value="Purple House (Phoenix)">{t('teacher.house_purple', 'Purple House (Phoenix)')}</option>
+                      <option value="Green House (Jaguar)">{t('teacher.house_green', 'Green House (Jaguar)')}</option>
+                      <option value="Red House (Falcon)">{t('teacher.house_red', 'Red House (Falcon)')}</option>
                     </select>
                   </div>
                 </div>
@@ -466,6 +519,219 @@ export default function TeacherDashboard() {
             </div>
           </div>
         )}
+
+        {/* View Student Profile Modal */}
+        {selectedStudentProfile && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4" onClick={() => setSelectedStudentProfile(null)}>
+            <div className="bg-card rounded-2xl border border-border max-w-md w-full p-6 space-y-4 shadow-2xl" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-base">
+                    {selectedStudentProfile.name?.[0] ?? 'S'}
+                  </div>
+                  <div>
+                    <h3 className="font-serif font-bold text-base text-foreground">{selectedStudentProfile.name}</h3>
+                    <p className="text-xs text-primary font-mono">{selectedStudentProfile.code}</p>
+                  </div>
+                </div>
+                <button onClick={() => setSelectedStudentProfile(null)} className="p-1 rounded-lg hover:bg-accent text-muted-foreground">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-2 text-xs divide-y divide-border">
+                <div className="flex justify-between py-2">
+                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_email', 'Email Address')}</span>
+                  <span className="font-bold text-foreground">{selectedStudentProfile.email || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between py-2">
+                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_class_level', 'Class Level')}</span>
+                  <span className="font-bold text-primary">{selectedStudentProfile.grade} ({selectedStudentProfile.stream})</span>
+                </div>
+                <div className="flex justify-between py-2">
+                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_house_assign', 'House Assignment')}</span>
+                  <span className="font-bold text-foreground">{selectedStudentProfile.house}</span>
+                </div>
+                <div className="flex justify-between py-2">
+                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_gpa', 'GPA / Cumulative')}</span>
+                  <span className="font-bold text-emerald-600">{selectedStudentProfile.gpa || '3.50'}</span>
+                </div>
+                <div className="flex justify-between py-2">
+                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_attendance', 'Attendance Record')}</span>
+                  <span className="font-bold text-emerald-600">{selectedStudentProfile.attendance || '98%'}</span>
+                </div>
+                <div className="flex justify-between py-2">
+                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_parent', 'Parent / Guardian')}</span>
+                  <span className="font-bold text-foreground">{selectedStudentProfile.parentName || 'Chief Nwosu'}</span>
+                </div>
+                <div className="flex justify-between py-2">
+                  <span className="text-muted-foreground font-semibold">{t('teacher.lbl_parent_phone', 'Parent Phone')}</span>
+                  <span className="font-mono text-foreground">{selectedStudentProfile.parentPhone || '08031112233'}</span>
+                </div>
+              </div>
+
+              <button onClick={() => setSelectedStudentProfile(null)} className="w-full py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-colors">
+                {t('teacher.close_profile', 'Close Profile')}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Student Modal */}
+        {editingStudent && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4" onClick={() => setEditingStudent(null)}>
+            <div className="bg-card rounded-2xl border border-border max-w-md w-full p-6 space-y-4 shadow-2xl" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <h3 className="font-serif font-bold text-lg text-foreground">{t('teacher.edit_student', 'Edit Student')} — {editingStudent.code}</h3>
+                <button onClick={() => setEditingStudent(null)} className="p-1 rounded-lg hover:bg-accent text-muted-foreground">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-3 text-xs">
+                <div>
+                  <label className="font-bold text-muted-foreground uppercase block mb-1">{t('teacher.lbl_student_name', 'Student Full Name')}</label>
+                  <input
+                    type="text"
+                    value={editingStudent.name}
+                    onChange={e => setEditingStudent({ ...editingStudent, name: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-muted-foreground uppercase block mb-1">{t('teacher.lbl_email', 'Email Address')}</label>
+                  <input
+                    type="email"
+                    value={editingStudent.email}
+                    onChange={e => setEditingStudent({ ...editingStudent, email: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="font-bold text-muted-foreground uppercase block mb-1">{t('teacher.lbl_class_level', 'Class Level')}</label>
+                    <select
+                      value={editingStudent.grade}
+                      onChange={e => setEditingStudent({ ...editingStudent, grade: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    >
+                      {['JSS1', 'JSS2', 'JSS3', 'SS1', 'SS2', 'SS3'].map(g => <option key={g} value={g}>{g}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="font-bold text-muted-foreground uppercase block mb-1">{t('teacher.lbl_house', 'House')}</label>
+                    <select
+                      value={editingStudent.house}
+                      onChange={e => setEditingStudent({ ...editingStudent, house: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    >
+                      <option value="Blue House (Eagle)">{t('teacher.house_blue', 'Blue House (Eagle)')}</option>
+                      <option value="Purple House (Phoenix)">{t('teacher.house_purple', 'Purple House (Phoenix)')}</option>
+                      <option value="Green House (Jaguar)">{t('teacher.house_green', 'Green House (Jaguar)')}</option>
+                      <option value="Red House (Falcon)">{t('teacher.house_red', 'Red House (Falcon)')}</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button onClick={() => setEditingStudent(null)} className="flex-1 py-2.5 rounded-xl border border-border text-xs font-bold hover:bg-accent">
+                  {t('teacher.cancel', 'Cancel')}
+                </button>
+                <button
+                  onClick={() => {
+                    setRoster(prev => prev.map(s => s.id === editingStudent.id ? editingStudent : s));
+                    setEditingStudent(null);
+                    showToast(`Updated student profile for ${editingStudent.name}!`);
+                  }}
+                  className="flex-1 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-colors shadow-sm"
+                >
+                  {t('teacher.save_changes', 'Save Changes')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Promote Student Modal */}
+        {promotingStudent && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4" onClick={() => setPromotingStudent(null)}>
+            <div className="bg-card rounded-2xl border border-border max-w-md w-full p-6 space-y-4 shadow-2xl" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center gap-3 border-b border-border pb-3">
+                <TrendingUp className="w-6 h-6 text-emerald-600 shrink-0" />
+                <div>
+                  <h3 className="font-serif font-bold text-base text-foreground">{t('teacher.promote_student', 'Promote Student')} — {promotingStudent.name}</h3>
+                  <p className="text-xs text-muted-foreground">{t('teacher.current_class', 'Current Class:')} <strong>{promotingStudent.grade}</strong> ({promotingStudent.code})</p>
+                </div>
+              </div>
+
+              <div className="space-y-3 text-xs">
+                <p className="text-muted-foreground">{t('teacher.select_target_class_promo', 'Select the target class level to promote')} <strong>{promotingStudent.name}</strong> {t('teacher.for_upcoming_session', 'for the upcoming academic session:')}</p>
+                <div>
+                  <label className="font-bold text-muted-foreground uppercase block mb-1">{t('teacher.target_promo_class', 'Target Promotion Class *')}</label>
+                  <select
+                    value={targetPromotionClass}
+                    onChange={e => setTargetPromotionClass(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs font-bold text-primary focus:ring-2 focus:ring-primary outline-none"
+                  >
+                    <option value="JSS2">{t('teacher.promo_jss2', 'Promote to JSS 2')}</option>
+                    <option value="JSS3">{t('teacher.promo_jss3', 'Promote to JSS 3')}</option>
+                    <option value="SS1">{t('teacher.promo_ss1', 'Promote to SS 1')}</option>
+                    <option value="SS2">{t('teacher.promo_ss2', 'Promote to SS 2')}</option>
+                    <option value="SS3">{t('teacher.promo_ss3', 'Promote to SS 3 (Senior Exam Class)')}</option>
+                    <option value="Graduated">{t('teacher.promo_graduated', 'Graduate / Alumnus Status')}</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button onClick={() => setPromotingStudent(null)} className="flex-1 py-2.5 rounded-xl border border-border text-xs font-bold hover:bg-accent">
+                  {t('teacher.cancel', 'Cancel')}
+                </button>
+                <button
+                  onClick={() => {
+                    setRoster(prev => prev.map(s => s.id === promotingStudent.id ? { ...s, grade: targetPromotionClass } : s));
+                    showToast(`Promoted ${promotingStudent.name} from ${promotingStudent.grade} to ${targetPromotionClass}! 🎉`);
+                    setPromotingStudent(null);
+                  }}
+                  className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors shadow-sm"
+                >
+                  {t('teacher.confirm_promotion', 'Confirm Promotion')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Student Modal */}
+        {deletingStudent && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4" onClick={() => setDeletingStudent(null)}>
+            <div className="bg-card rounded-2xl border border-border max-w-sm w-full p-6 space-y-4 shadow-2xl text-center" onClick={e => e.stopPropagation()}>
+              <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-serif font-bold text-base text-foreground">{t('teacher.delete_record', 'Delete Student Record?')}</h3>
+                <p className="text-xs text-muted-foreground mt-1">{t('teacher.delete_confirm', 'Are you sure you want to delete')} <strong>{deletingStudent.name}</strong> ({deletingStudent.code})? {t('teacher.cannot_undo', 'This action cannot be undone.')}</p>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button onClick={() => setDeletingStudent(null)} className="flex-1 py-2.5 rounded-xl border border-border text-xs font-bold hover:bg-accent">
+                  {t('teacher.cancel', 'Cancel')}
+                </button>
+                <button
+                  onClick={() => {
+                    setRoster(prev => prev.filter(s => s.id !== deletingStudent.id));
+                    showToast(`Deleted ${deletingStudent.name} from class roster.`);
+                    setDeletingStudent(null);
+                  }}
+                  className="flex-1 py-2.5 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition-colors shadow-sm"
+                >
+                  {t('teacher.delete', 'Delete')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
 
@@ -498,9 +764,9 @@ export default function TeacherDashboard() {
             <div>
               <span className="bg-white/20 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full inline-block mb-2">{t('teacher.cbt_exam_system', 'CBT Examination System')}</span>
               <h2 className="text-2xl sm:text-3xl font-serif font-bold">
-                {selectedExamClass === 'ALL' ? t('teacher.all_senior_classes', 'All Senior Classes') : selectedExamClass} {selectedExamStream === 'ALL' ? t('teacher.general', 'General') : selectedExamStream} {t('teacher.cbt_exam_control', 'CBT Exam Control')}
+                {t('teacher.cbt_exam_control', 'CBT Exam Control')}
               </h2>
-              <p className="text-blue-100 text-xs mt-1 max-w-xl">{t('teacher.cbt_filter_desc', 'Create MCQs, select target class & stream (SS1-SS3 Science/Arts), monitor approvals, and activate live exams for students.')}</p>
+              <p className="text-blue-100 text-xs mt-1 max-w-xl">{t('teacher.cbt_workflow_desc', 'Subject Teacher creates questions → Form Teacher reviews → Admin approves → Form Teacher uploads to Student Portal.')}</p>
             </div>
             <Link href="/dashboard/cbt-builder">
               <button className="bg-white text-blue-700 hover:bg-blue-50 font-bold px-6 py-3 rounded-xl text-sm transition-all shadow-lg whitespace-nowrap">
@@ -509,17 +775,28 @@ export default function TeacherDashboard() {
             </Link>
           </div>
 
+          {/* Workflow Status Info Banner */}
+          <div className="bg-card rounded-2xl border border-border p-4 shadow-sm">
+            <h3 className="font-serif font-bold text-foreground text-sm mb-3">{t('teacher.approval_workflow', 'Question Approval Workflow')}</h3>
+            <div className="flex flex-col sm:flex-row gap-2">
+              {[
+                { step: '1', label: 'Subject Teacher Creates', color: 'bg-blue-100 text-blue-800' },
+                { step: '2', label: 'Form Teacher Reviews', color: 'bg-amber-100 text-amber-800' },
+                { step: '3', label: 'Admin Approves', color: 'bg-purple-100 text-purple-800' },
+                { step: '4', label: 'Form Teacher Uploads', color: 'bg-emerald-100 text-emerald-800' },
+              ].map(s => (
+                <div key={s.step} className="flex items-center gap-2 flex-1">
+                  <span className={`w-6 h-6 rounded-full ${s.color} text-[10px] font-bold flex items-center justify-center shrink-0`}>{s.step}</span>
+                  <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${s.color} flex-1 text-center`}>{s.label}</span>
+                  {s.step !== '4' && <span className="text-muted-foreground hidden sm:block">→</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Class & Department Filter Bar */}
           <div className="bg-card rounded-2xl border border-border p-4 shadow-sm space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <h3 className="font-serif font-bold text-foreground text-sm">{t('teacher.select_target_class', 'Select Target Class & Department')}</h3>
-                <p className="text-xs text-muted-foreground">{t('teacher.filter_desc', 'Filter exams and student submissions by Senior Level & Department Stream')}</p>
-              </div>
-            </div>
-
             <div className="flex flex-col sm:flex-row gap-3 pt-1">
-              {/* Class Tabs */}
               <div className="flex gap-1.5 bg-muted/40 p-1 rounded-xl border border-border">
                 {['ALL', 'JSS1', 'JSS2', 'JSS3', 'SS1', 'SS2', 'SS3'].map(cls => (
                   <button
@@ -533,8 +810,6 @@ export default function TeacherDashboard() {
                   </button>
                 ))}
               </div>
-
-              {/* Stream Tabs */}
               <div className="flex gap-1.5 bg-muted/40 p-1 rounded-xl border border-border">
                 {['ALL', 'Science', 'Arts'].map(st => (
                   <button
@@ -551,14 +826,49 @@ export default function TeacherDashboard() {
             </div>
           </div>
 
-          {/* Action Required: Approved Exams Waiting to Proceed */}
+          {/* Panel 1: Pending Form Teacher Review */}
+          {pendingExams.length > 0 && (
+            <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-5 shadow-sm space-y-3">
+              <div className="flex items-center gap-2 text-amber-800 font-bold text-sm">
+                <Clock className="w-5 h-5 text-amber-600" />
+                <span>{t('teacher.pending_review', 'Pending Form Teacher Review')} ({pendingExams.length})</span>
+              </div>
+              <p className="text-xs text-amber-700">{t('teacher.pending_review_desc', 'These exams were submitted by Subject Teachers and are awaiting Form Teacher review before forwarding to Admin.')}</p>
+              <div className="space-y-3 pt-1">
+                {pendingExams.map(ex => (
+                  <div key={ex.id} className="bg-white p-4 rounded-xl border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">{ex.course_code}</span>
+                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">{ex.class || 'SS1'} {ex.stream || 'Science'}</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">{t('teacher.by', 'by')} {ex.teacher_name || t('teacher.subject_teacher', 'Subject Teacher')}</span>
+                      </div>
+                      <h4 className="font-bold text-foreground text-sm">{ex.title}</h4>
+                      <p className="text-xs text-muted-foreground">{ex.duration_minutes} mins · {ex.questions_count || ex.questions?.length} Questions</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        updateExamStatus(ex.id, 'APPROVED');
+                        showToast(`Reviewed & forwarded "${ex.title}" to Admin for final approval.`);
+                      }}
+                      className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-colors shadow-md flex items-center gap-1.5 self-start sm:self-auto"
+                    >
+                      <Send className="w-4 h-4" /> Review & Forward to Admin
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Panel 2: Admin Approved — Ready to Upload to Students */}
           {approvedExams.length > 0 && (
             <div className="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-5 shadow-sm space-y-3">
               <div className="flex items-center gap-2 text-emerald-800 font-bold text-sm">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                <span>{t('teacher.approved_exams_ready', 'Admin Approved Exams Ready to Proceed')} ({approvedExams.length})</span>
+                <span>{t('teacher.approved_exams_ready', 'Admin Approved — Ready to Upload to Students')} ({approvedExams.length})</span>
               </div>
-              <p className="text-xs text-emerald-700">{t('teacher.approved_exams_desc', 'The Admin has reviewed and approved the following exams. Click')} <strong>{t('teacher.proceed_activate', '"Proceed / Activate Exam"')}</strong> {t('teacher.approved_exams_desc2', 'so target students can receive and take the exam in their portal.')}</p>
+              <p className="text-xs text-emerald-700">{t('teacher.approved_exams_desc', 'Admin has approved these exams. Click')} <strong>{t('teacher.upload_activate', '"Upload & Activate for Students"')}</strong> {t('teacher.approved_exams_desc2', 'to publish to the student portal.')}</p>
               <div className="space-y-3 pt-1">
                 {approvedExams.map(ex => (
                   <div key={ex.id} className="bg-white p-4 rounded-xl border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
@@ -568,16 +878,16 @@ export default function TeacherDashboard() {
                         <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">{ex.class || 'SS1'} {ex.stream || 'Science'}</span>
                       </div>
                       <h4 className="font-bold text-foreground text-sm">{ex.title}</h4>
-                      <p className="text-xs text-muted-foreground">{ex.duration_minutes} mins · {ex.questions_count || ex.questions?.length} Objective Questions</p>
+                      <p className="text-xs text-muted-foreground">{ex.duration_minutes} mins · {ex.questions_count || ex.questions?.length} Questions</p>
                     </div>
                     <button
                       onClick={() => {
                         updateExamStatus(ex.id, 'ACTIVE');
-                        showToast(`Activated "${ex.title}"! ${ex.class || 'SS1'} ${ex.stream || 'Science'} students can now start this exam.`);
+                        showToast(`Activated "${ex.title}"! ${ex.class || 'SS1'} ${ex.stream || 'Science'} students can now take this exam.`);
                       }}
                       className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-colors shadow-md flex items-center gap-1.5 self-start sm:self-auto ring-2 ring-emerald-400/50 animate-pulse"
                     >
-                      <Send className="w-4 h-4" /> Proceed / Activate Exam for Students
+                      <Send className="w-4 h-4" /> Upload & Activate for Students
                     </button>
                   </div>
                 ))}
@@ -635,10 +945,10 @@ export default function TeacherDashboard() {
                         <p className="text-[9px] font-bold uppercase text-emerald-700">{t('teacher.auto_graded', 'Auto-Graded')}</p>
                       </div>
                       <button
-                        onClick={() => showToast(`Synced ${sub.student_name}'s score (${sub.percentage}%) to official gradebook!`)}
+                        onClick={() => showToast(`Recorded ${sub.student_name}'s score (${sub.percentage}%) to class broadsheet!`)}
                         className="bg-primary text-white font-bold px-3.5 py-2 rounded-xl text-xs hover:bg-primary/90 transition-colors"
                       >
-                        {t('teacher.sync_gradebook', 'Sync Gradebook')}
+                        {t('teacher.record_broadsheet', 'Record to Broadsheet')}
                       </button>
                     </div>
                   </div>
@@ -662,8 +972,8 @@ export default function TeacherDashboard() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 className="text-2xl font-serif font-bold text-foreground">{t('teacher.manage_results', 'Manage Results & Gradebook')}</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">{t('teacher.manage_results_desc', 'Grade student assignment submissions and record term CA & exam scores.')}</p>
+            <h2 className="text-2xl font-serif font-bold text-foreground">{t('teacher.manage_results', 'Manage Results & Broadsheet')}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">{t('teacher.manage_results_desc', 'Grade student submissions and record term CA & exam scores to the class broadsheet.')}</p>
           </div>
         </div>
 
@@ -671,16 +981,16 @@ export default function TeacherDashboard() {
         <div className="flex border-b border-border gap-2">
           {[
             { id: 'queue', label: `Pending Submissions (${submissions.length})`, icon: FileText },
-            { id: 'gradebook', label: 'Term Gradebook & Scores', icon: BarChart2 },
-          ].map(t => (
+            { id: 'gradebook', label: 'Class Broadsheet & Scores', icon: BarChart2 },
+          ].map(tab => (
             <button
-              key={t.id}
-              onClick={() => setResultsSubTab(t.id as any)}
+              key={tab.id}
+              onClick={() => setResultsSubTab(tab.id as any)}
               className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all ${
-                resultsSubTab === t.id ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
+                resultsSubTab === tab.id ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
-              <t.icon className="w-3.5 h-3.5" /> {t.label}
+              <tab.icon className="w-3.5 h-3.5" /> {tab.label}
             </button>
           ))}
         </div>
@@ -743,8 +1053,8 @@ export default function TeacherDashboard() {
           <div className="bg-card rounded-2xl border border-border shadow-sm p-5 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-serif font-bold text-foreground">{t('teacher.class_gradebook', 'Class Gradebook — MTH-101')}</h3>
-                <p className="text-xs text-muted-foreground">{t('teacher.gradebook_desc', 'Record and review CA1 (10%), CA2 (10%), Midterm (20%), and Final Exam (60%) scores.')}</p>
+                <h3 className="font-serif font-bold text-foreground">{t('teacher.class_broadsheet', 'Class Broadsheet — MTH-101')}</h3>
+                <p className="text-xs text-muted-foreground">{t('teacher.broadsheet_desc', 'Record and review CA1 (10%), CA2 (10%), Midterm (20%), and Final Exam (60%) scores for your class.')}</p>
               </div>
               <button onClick={() => showToast('Gradebook scores saved & synced to student report cards!')} className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 transition-colors">
                 {t('teacher.sync_report_cards', 'Sync Scores to Report Cards')}

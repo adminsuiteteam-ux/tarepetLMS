@@ -86,14 +86,14 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 function getCategoryColorClass(cat: string): string {
   if (Object.prototype.hasOwnProperty.call(CATEGORY_COLORS, cat)) {
-    return CATEGORY_COLORS[cat];
+    return Reflect.get(CATEGORY_COLORS, cat);
   }
   return 'bg-muted text-muted-foreground';
 }
 
 function getTimetableForDay(day: DayKey) {
   if (Object.prototype.hasOwnProperty.call(WEEKLY_TIMETABLE, day)) {
-    return WEEKLY_TIMETABLE[day] || [];
+    return Reflect.get(WEEKLY_TIMETABLE, day) || [];
   }
   return [];
 }
@@ -147,30 +147,30 @@ export default function StudentDashboard() {
         <div className="bg-gradient-to-r from-rose-800 via-red-900 to-rose-950 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
           <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
             <span className="text-[10px] font-bold uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full">
-              SS1 SCIENCE · BLUE HOUSE EAGLE · TERM 2 2026
+              {t('student.header_class_info', 'SS1 SCIENCE · BLUE HOUSE EAGLE · TERM 2 2026')}
             </span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-serif font-bold mb-1">
-            Good morning, {user?.first_name ?? 'Student'}! 👋
+            {t('student.welcome_greeting', 'Good morning,')} {user?.first_name ?? t('student.role_student', 'Student')}! 👋
           </h2>
           <p className="text-rose-100 text-sm mb-3">
-            Welcome to your student portal. Check your active courses and upcoming CBT exams.
+            {t('student.welcome_sub', 'Welcome to your student portal. Check your active courses and upcoming CBT exams.')}
           </p>
           <p className="text-xs italic text-rose-200/90 font-serif border-t border-white/10 pt-2.5">
-            "Knowledge is Power." — Tarepet Guiding Principle
+            "{t('student.motto', 'Knowledge is Power.')}" — {t('student.motto_author', 'Tarepet Guiding Principle')}
           </p>
         </div>
 
         {/* Live CBT Exam Hero Banner */}
         <div className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-2xl p-5 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <span className="bg-white/20 text-white text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full mb-1.5 inline-block">CBT Examinations</span>
-            <h3 className="text-xl font-bold">Online CBT Exams & C.A. Tests</h3>
-            <p className="text-emerald-100 text-xs mt-1">Take your online tests and exams with automatic timer submission and instant scoring.</p>
+            <span className="bg-white/20 text-white text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full mb-1.5 inline-block">{t('student.cbt_exams_tag', 'CBT Examinations')}</span>
+            <h3 className="text-xl font-bold">{t('student.cbt_exams_title', 'Online CBT Exams & C.A. Tests')}</h3>
+            <p className="text-emerald-100 text-xs mt-1">{t('student.cbt_exams_desc', 'Take your online tests and exams with automatic timer submission and instant scoring.')}</p>
           </div>
           <Link href="/dashboard/cbt-exam">
             <button className="px-5 py-2.5 rounded-xl bg-white text-emerald-800 font-bold text-sm hover:bg-emerald-50 transition shadow-md whitespace-nowrap">
-              Take CBT Exam →
+              {t('student.take_cbt_btn', 'Take CBT Exam →')}
             </button>
           </Link>
         </div>
@@ -196,7 +196,7 @@ export default function StudentDashboard() {
 
         {/* Quick Student Access Shortcuts */}
         <div className="bg-card rounded-2xl border border-border p-5 shadow-sm">
-          <h3 className="font-serif font-bold text-foreground mb-4">Quick Student Access</h3>
+          <h3 className="font-serif font-bold text-foreground mb-4">{t('student.quick_access', 'Quick Student Access')}</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
               { label: 'My course', section: 'courses', icon: BookOpen },
@@ -222,8 +222,8 @@ export default function StudentDashboard() {
     if (activeSection === 'courses') return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-serif font-bold text-foreground">My course</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Active subjects, course progress, and assigned teachers.</p>
+          <h2 className="text-2xl font-serif font-bold text-foreground">{t('student.my_courses_title', 'My course')}</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">{t('student.my_courses_desc', 'Active subjects, course progress, and assigned teachers.')}</p>
         </div>
 
         {MY_COURSES.length > 0 ? (
@@ -234,14 +234,14 @@ export default function StudentDashboard() {
                   <div>
                     <span className="text-[10px] font-bold uppercase text-primary bg-primary/10 px-2.5 py-1 rounded-lg">{c.code}</span>
                     <h3 className="font-serif font-bold text-lg text-foreground mt-2">{c.name}</h3>
-                    <p className="text-xs text-muted-foreground">Instructor: {c.teacher}</p>
+                    <p className="text-xs text-muted-foreground">{t('student.instructor_label', 'Instructor:')} {c.teacher}</p>
                   </div>
-                  <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">Grade: {c.grade} ({c.score})</span>
+                  <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">{t('student.grade_label', 'Grade:')} {c.grade} ({c.score})</span>
                 </div>
 
                 <div>
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-muted-foreground">Syllabus Progress</span>
+                    <span className="text-muted-foreground">{t('student.syllabus_progress', 'Syllabus Progress')}</span>
                     <span className="font-bold text-foreground">{c.progress}%</span>
                   </div>
                   <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
@@ -259,8 +259,8 @@ export default function StudentDashboard() {
         ) : (
           <div className="bg-card rounded-2xl border border-border p-12 text-center">
             <BookOpen className="w-12 h-12 text-muted-foreground/50 mx-auto mb-3" />
-            <h4 className="font-serif font-bold text-foreground text-lg">No Enrolled Courses</h4>
-            <p className="text-xs text-muted-foreground">You do not have any active course enrollments at this time.</p>
+            <h4 className="font-serif font-bold text-foreground text-lg">{t('student.no_courses_title', 'No Enrolled Courses')}</h4>
+            <p className="text-xs text-muted-foreground">{t('student.no_courses_desc', 'You do not have any active course enrollments at this time.')}</p>
           </div>
         )}
       </div>
@@ -277,19 +277,19 @@ export default function StudentDashboard() {
         <div className="space-y-6">
           <div className="bg-gradient-to-r from-emerald-700 via-teal-800 to-blue-900 text-white p-6 rounded-2xl shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
-              <span className="bg-white/20 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full inline-block mb-2">CBT Examination System</span>
-              <h2 className="text-2xl sm:text-3xl font-serif font-bold">Online CBT Exams & Assessments</h2>
-              <p className="text-emerald-100 text-xs mt-1 max-w-xl">Take active CBT continuous assessment tests and terminal exams. Automatic timer submission & instant results.</p>
+              <span className="bg-white/20 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full inline-block mb-2">{t('student.cbt_system_tag', 'CBT Examination System')}</span>
+              <h2 className="text-2xl sm:text-3xl font-serif font-bold">{t('student.cbt_system_title', 'Online CBT Exams & Assessments')}</h2>
+              <p className="text-emerald-100 text-xs mt-1 max-w-xl">{t('student.cbt_system_desc', 'Take active CBT continuous assessment tests and terminal exams. Automatic timer submission & instant results.')}</p>
             </div>
             <Link href="/dashboard/cbt-exam">
               <button className="bg-white text-emerald-800 hover:bg-emerald-50 font-bold px-6 py-3 rounded-xl text-sm transition-all shadow-lg whitespace-nowrap">
-                Open CBT Portal →
+                {t('student.open_cbt_btn', 'Open CBT Portal →')}
               </button>
             </Link>
           </div>
 
           <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
-            <h3 className="font-serif font-bold text-foreground text-lg mb-2">Available Live CBT Exams & Tests</h3>
+            <h3 className="font-serif font-bold text-foreground text-lg mb-2">{t('student.available_cbt_title', 'Available Live CBT Exams & Tests')}</h3>
             <div className="space-y-3">
               {activeExams.length > 0 ? activeExams.map((ex) => (
                 <div key={ex.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-border bg-muted/10 gap-3">
@@ -306,14 +306,14 @@ export default function StudentDashboard() {
                   </div>
                   <Link href="/dashboard/cbt-exam">
                     <button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-colors self-start sm:self-auto shadow-md">
-                      Start Exam Now
+                      {t('student.start_exam_btn', 'Start Exam Now')}
                     </button>
                   </Link>
                 </div>
               )) : (
                 <div className="py-8 text-center text-muted-foreground bg-muted/10 rounded-xl border border-border/60">
-                  <p className="text-sm font-semibold">No active exams at this moment.</p>
-                  <p className="text-xs mt-1">When your teacher activates an approved exam, it will appear here instantly!</p>
+                  <p className="text-sm font-semibold">{t('student.no_active_exams_title', 'No active exams at this moment.')}</p>
+                  <p className="text-xs mt-1">{t('student.no_active_exams_desc', 'When your teacher activates an approved exam, it will appear here instantly!')}</p>
                 </div>
               )}
             </div>
@@ -322,18 +322,18 @@ export default function StudentDashboard() {
           {/* Submitted Exams History */}
           {studentSubs.length > 0 && (
             <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
-              <h3 className="font-serif font-bold text-foreground text-base">Completed CBT Exam Submissions</h3>
+              <h3 className="font-serif font-bold text-foreground text-base">{t('student.completed_cbt_title', 'Completed CBT Exam Submissions')}</h3>
               <div className="space-y-3">
                 {studentSubs.map(sub => (
                   <div key={sub.id} className="p-4 rounded-xl border border-border bg-emerald-500/5 flex items-center justify-between">
                     <div>
                       <span className="text-[10px] font-bold uppercase text-primary bg-primary/10 px-2 py-0.5 rounded-full">{sub.course_code}</span>
                       <h4 className="font-bold text-foreground text-sm mt-1">{sub.exam_title}</h4>
-                      <p className="text-xs text-muted-foreground">Submitted: {new Date(sub.submitted_at).toLocaleTimeString()} · Score: {sub.score} / {sub.total_possible}</p>
+                      <p className="text-xs text-muted-foreground">{t('student.submitted_time_label', 'Submitted:')} {new Date(sub.submitted_at).toLocaleTimeString()} · {t('student.score_label', 'Score:')} {sub.score} / {sub.total_possible}</p>
                     </div>
                     <div className="text-right">
                       <span className="text-lg font-serif font-bold text-emerald-600">{sub.percentage}%</span>
-                      <p className="text-[10px] font-bold text-emerald-700 uppercase">Graded & Synced</p>
+                      <p className="text-[10px] font-bold text-emerald-700 uppercase">{t('student.graded_synced', 'Graded & Synced')}</p>
                     </div>
                   </div>
                 ))}
@@ -351,20 +351,20 @@ export default function StudentDashboard() {
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 className="text-2xl font-serif font-bold text-foreground">Check Academic Results</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">Term report card, continuous assessments, and exam breakdown.</p>
+            <h2 className="text-2xl font-serif font-bold text-foreground">{t('student.check_results_title', 'Check Academic Results')}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">{t('student.check_results_desc', 'Term report card, continuous assessments, and exam breakdown.')}</p>
           </div>
           <button onClick={() => showToast('Official Report Card PDF downloaded!')} className="flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors shadow-sm self-start sm:self-auto">
-            <Download className="w-4 h-4" /> Download Official Report Card (PDF)
+            <Download className="w-4 h-4" /> {t('student.download_pdf_btn', 'Download Official Report Card (PDF)')}
           </button>
         </div>
 
         {/* Result Summary Card */}
         <div className="bg-card rounded-2xl border border-border p-6 shadow-sm grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-          <div><p className="text-[10px] font-bold uppercase text-muted-foreground">Cumulative GPA</p><p className="text-3xl font-serif font-bold text-primary mt-1">3.85</p></div>
-          <div><p className="text-[10px] font-bold uppercase text-muted-foreground">Overall Average</p><p className="text-3xl font-serif font-bold text-emerald-600 mt-1">86.5%</p></div>
-          <div><p className="text-[10px] font-bold uppercase text-muted-foreground">Class Position</p><p className="text-3xl font-serif font-bold text-purple-600 mt-1">2nd / 24</p></div>
-          <div><p className="text-[10px] font-bold uppercase text-muted-foreground">Term Status</p><p className="text-3xl font-serif font-bold text-blue-600 mt-1">PASSED</p></div>
+          <div><p className="text-[10px] font-bold uppercase text-muted-foreground">{t('student.cgpa', 'Cumulative GPA')}</p><p className="text-3xl font-serif font-bold text-primary mt-1">3.85</p></div>
+          <div><p className="text-[10px] font-bold uppercase text-muted-foreground">{t('student.overall_avg', 'Overall Average')}</p><p className="text-3xl font-serif font-bold text-emerald-600 mt-1">86.5%</p></div>
+          <div><p className="text-[10px] font-bold uppercase text-muted-foreground">{t('student.class_position', 'Class Position')}</p><p className="text-3xl font-serif font-bold text-purple-600 mt-1">2nd / 24</p></div>
+          <div><p className="text-[10px] font-bold uppercase text-muted-foreground">{t('student.term_status', 'Term Status')}</p><p className="text-3xl font-serif font-bold text-blue-600 mt-1">{t('student.status_passed', 'PASSED')}</p></div>
         </div>
 
         {/* Subject Score Breakdown */}
@@ -374,13 +374,13 @@ export default function StudentDashboard() {
             <table className="w-full text-xs text-left">
               <thead className="bg-muted/40 uppercase text-[10px] text-muted-foreground tracking-wider border-b border-border">
                 <tr>
-                  <th className="p-3">Subject</th>
-                  <th className="p-3 text-center">CA 1 (10%)</th>
-                  <th className="p-3 text-center">CA 2 (10%)</th>
-                  <th className="p-3 text-center">Midterm (20%)</th>
-                  <th className="p-3 text-center">Final Exam (60%)</th>
-                  <th className="p-3 text-center">Total (100%)</th>
-                  <th className="p-3 text-center">Grade</th>
+                  <th className="p-3">{t('student.col_subject', 'Subject')}</th>
+                  <th className="p-3 text-center">{t('student.col_ca1', 'CA 1 (10%)')}</th>
+                  <th className="p-3 text-center">{t('student.col_ca2', 'CA 2 (10%)')}</th>
+                  <th className="p-3 text-center">{t('student.col_midterm', 'Midterm (20%)')}</th>
+                  <th className="p-3 text-center">{t('student.col_final', 'Final Exam (60%)')}</th>
+                  <th className="p-3 text-center">{t('student.col_total', 'Total (100%)')}</th>
+                  <th className="p-3 text-center">{t('student.col_grade', 'Grade')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -412,31 +412,31 @@ export default function StudentDashboard() {
     if (activeSection === 'payments') return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-serif font-bold text-foreground">Payment & Fee Management</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">School fees summary, payment receipts, and online payment options.</p>
+          <h2 className="text-2xl font-serif font-bold text-foreground">{t('student.payments_title', 'Payment & Fee Management')}</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">{t('student.payments_desc', 'School fees summary, payment receipts, and online payment options.')}</p>
         </div>
 
         {/* Fee Status Card */}
         <div className="bg-gradient-to-r from-purple-700 to-indigo-800 text-white p-6 rounded-2xl shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <span className="bg-white/20 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full inline-block mb-2">2nd Term 2026</span>
-            <h3 className="text-2xl font-bold">Total Fees: ₦200,000</h3>
-            <p className="text-purple-100 text-xs mt-1">Paid in Full • Outstanding Balance: ₦0.00</p>
+            <h3 className="text-2xl font-bold">{t('student.total_fees', 'Total Fees: ₦200,000')}</h3>
+            <p className="text-purple-100 text-xs mt-1">{t('student.paid_full', 'Paid in Full • Outstanding Balance: ₦0.00')}</p>
           </div>
           <button onClick={() => showToast('Official Fee Receipt (PDF) downloaded!')} className="bg-white text-purple-800 font-bold px-5 py-2.5 rounded-xl text-xs hover:bg-purple-50 transition-colors shadow-md">
-            Download Official Receipt
+            {t('student.download_receipt_btn', 'Download Official Receipt')}
           </button>
         </div>
 
         {/* Breakdown Table */}
         <div className="bg-card rounded-2xl border border-border p-5 shadow-sm space-y-4">
-          <h3 className="font-serif font-bold text-foreground">Paid Fee Items</h3>
+          <h3 className="font-serif font-bold text-foreground">{t('student.paid_items_title', 'Paid Fee Items')}</h3>
           <div className="space-y-2">
             {FEE_BREAKDOWN.map((f, i) => (
               <div key={i} className="flex items-center justify-between p-3.5 rounded-xl border border-border bg-muted/10 text-xs">
                 <div>
                   <h4 className="font-bold text-foreground">{f.item}</h4>
-                  <p className="text-[10px] text-muted-foreground">Paid on {f.date}</p>
+                  <p className="text-[10px] text-muted-foreground">{t('student.paid_on', 'Paid on')} {f.date}</p>
                 </div>
                 <div className="text-right">
                   <span className="font-mono font-bold text-foreground block">₦{f.paid.toLocaleString()}</span>
@@ -455,8 +455,8 @@ export default function StudentDashboard() {
     if (activeSection === 'calendar') return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-serif font-bold text-foreground">Academic Calendar & Class Timetable</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">2nd Term 2026 Academic Milestones, Exam Dates & Weekly Class Timetable.</p>
+          <h2 className="text-2xl font-serif font-bold text-foreground">{t('student.calendar_header_title', 'Academic Calendar & Class Timetable')}</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">{t('student.calendar_header_desc', 'Daily class schedule, subject periods, instructors, and rooms.')}</p>
         </div>
 
         {/* 1. Class Timetable Component */}
@@ -464,9 +464,9 @@ export default function StudentDashboard() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
             <div>
               <h3 className="font-serif font-bold text-foreground text-lg flex items-center gap-2">
-                <Clock className="w-5 h-5 text-rose-700" /> SS1 Science Class Timetable
+                <Clock className="w-5 h-5 text-rose-700" /> {t('student.timetable_title', 'SS1 Science Class Timetable')}
               </h3>
-              <p className="text-xs text-muted-foreground">Daily class schedule, subject periods, instructors, and rooms.</p>
+              <p className="text-xs text-muted-foreground">{t('student.timetable_desc', 'Daily class schedule, subject periods, instructors, and rooms.')}</p>
             </div>
             
             {/* Day Selector Tabs */}
@@ -566,41 +566,41 @@ export default function StudentDashboard() {
     if (activeSection === 'settings') return (
       <div className="space-y-6 max-w-3xl">
         <div>
-          <h2 className="text-2xl font-serif font-bold text-foreground">Setting/profile</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Manage your student profile, account security, and notifications.</p>
+          <h2 className="text-2xl font-serif font-bold text-foreground">{t('student.settings_title', 'Setting/profile')}</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">{t('student.settings_desc', 'Manage your student profile, account security, and notifications.')}</p>
         </div>
 
         <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
           <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
-            <User className="w-4 h-4 text-primary" /> Student Information
+            <User className="w-4 h-4 text-primary" /> {t('student.info_header', 'Student Information')}
           </h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">First Name</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('student.first_name', 'First Name')}</label>
               <input type="text" value={profileForm.firstName} onChange={e => setProfileForm({...profileForm, firstName: e.target.value})} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
             </div>
             <div>
-              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Last Name</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('student.last_name', 'Last Name')}</label>
               <input type="text" value={profileForm.lastName} onChange={e => setProfileForm({...profileForm, lastName: e.target.value})} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Student ID Code</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('student.student_id', 'Student ID Code')}</label>
               <input type="text" disabled value={profileForm.studentId} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted text-xs font-mono font-bold outline-none cursor-not-allowed" />
             </div>
             <div>
-              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Assigned House</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('student.assigned_house', 'Assigned House')}</label>
               <input type="text" disabled value={profileForm.house} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted text-xs font-bold outline-none cursor-not-allowed" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Email Address</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('student.email_address', 'Email Address')}</label>
               <input type="email" value={profileForm.email} onChange={e => setProfileForm({...profileForm, email: e.target.value})} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
             </div>
             <div>
-              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Phone Number</label>
+              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('student.phone_number', 'Phone Number')}</label>
               <input type="text" value={profileForm.phone} onChange={e => setProfileForm({...profileForm, phone: e.target.value})} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
             </div>
           </div>
@@ -608,17 +608,17 @@ export default function StudentDashboard() {
 
         <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
           <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
-            <Bell className="w-4 h-4 text-primary" /> Notifications
+            <Bell className="w-4 h-4 text-primary" /> {t('student.notifications_header', 'Notifications')}
           </h3>
           <label className="flex items-center justify-between p-3 rounded-xl border border-border bg-muted/10 cursor-pointer">
             <div>
-              <p className="font-bold text-xs text-foreground">Email Notifications</p>
-              <p className="text-[10px] text-muted-foreground">Receive email alerts for published CBT exams and graded results.</p>
+              <p className="font-bold text-xs text-foreground">{t('student.email_notifications', 'Email Notifications')}</p>
+              <p className="text-[10px] text-muted-foreground">{t('student.email_notifications_desc', 'Receive email alerts for published CBT exams and graded results.')}</p>
             </div>
             <input type="checkbox" checked={profileForm.emailNotifications} onChange={e => setProfileForm({...profileForm, emailNotifications: e.target.checked})} className="w-4 h-4 text-primary rounded" />
           </label>
           <button onClick={() => showToast('Student settings saved!')} className="bg-primary text-white px-6 py-2.5 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors">
-            Save Profile Settings
+            {t('student.save_settings', 'Save Profile Settings')}
           </button>
         </div>
       </div>
