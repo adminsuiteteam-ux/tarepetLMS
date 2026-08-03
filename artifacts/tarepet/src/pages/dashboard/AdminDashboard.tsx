@@ -1713,11 +1713,29 @@ const CreateUserForTypeModal = ({
 
               {/* Role-specific fields */}
               {defaultRole === 'TEACHER' && (
-                <div>
-                  <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createStaff.subjectsTaught')}</label>
-                  <input value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })}
-                    placeholder="e.g. Montessori Mathematics, Agronomy"
-                    className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary" />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createStaff.subjectsTaught', 'Subjects Taught')}</label>
+                    <input value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })}
+                      placeholder="e.g. Mathematics, Biology"
+                      className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createStaff.formTeacherClass', 'Form Teacher Duty (Class)')}</label>
+                    <select value={form.department} onChange={e => setForm({ ...form, department: e.target.value })}
+                      className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary">
+                      <option value="">None / Subject Teacher Only</option>
+                      <option value="JSS1 General">JSS 1 Form Teacher</option>
+                      <option value="JSS2 General">JSS 2 Form Teacher</option>
+                      <option value="JSS3 General">JSS 3 Form Teacher</option>
+                      <option value="SS1 Science">SS 1 Science Form Teacher</option>
+                      <option value="SS1 Art">SS 1 Art Form Teacher</option>
+                      <option value="SS2 Science">SS 2 Science Form Teacher</option>
+                      <option value="SS2 Art">SS 2 Art Form Teacher</option>
+                      <option value="SS3 Science">SS 3 Science Form Teacher</option>
+                      <option value="SS3 Art">SS 3 Art Form Teacher</option>
+                    </select>
+                  </div>
                 </div>
               )}
               {defaultRole === 'STAFF' && (
@@ -1757,31 +1775,40 @@ const CreateUserForTypeModal = ({
                 </div>
               )}
               {defaultRole === 'STUDENT' && (
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createStaff.gradeLevel')}</label>
-                    <select value={form.grade} onChange={e => setForm({ ...form, grade: e.target.value })}
-                      className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary">
-                      <option value="">{t('createStaff.selectGrade')}</option>
-                      <option>{t('createStaff.jss1')}</option><option>{t('createStaff.jss2')}</option><option>{t('createStaff.jss3')}</option>
-                      <option>{t('createStaff.shs1')}</option><option>{t('createStaff.shs2')}</option><option>{t('createStaff.shs3')}</option>
-                    </select>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createStaff.gradeLevel')}</label>
+                      <select value={form.grade} onChange={e => setForm({ ...form, grade: e.target.value })}
+                        className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary">
+                        <option value="">{t('createStaff.selectGrade')}</option>
+                        <option value="JSS1">JSS 1</option>
+                        <option value="JSS2">JSS 2</option>
+                        <option value="JSS3">JSS 3</option>
+                        <option value="SS1">SS 1</option>
+                        <option value="SS2">SS 2</option>
+                        <option value="SS3">SS 3</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createStaff.houseAssignment')}</label>
+                      <select className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary">
+                        <option>{t('createStaff.autoAssign')}</option>
+                        <option>{t('createStaff.blueHouse')}</option>
+                        <option>{t('createStaff.purpleHouse')}</option>
+                        <option>{t('createStaff.greenHouse')}</option>
+                        <option>{t('createStaff.redHouse')}</option>
+                      </select>
+                    </div>
                   </div>
-                  <div>
-                    <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createStaff.houseAssignment')}</label>
-                    <select className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary">
-                      <option>{t('createStaff.autoAssign')}</option>
-                      <option>{t('createStaff.blueHouse')}</option>
-                      <option>{t('createStaff.purpleHouse')}</option>
-                      <option>{t('createStaff.greenHouse')}</option>
-                      <option>{t('createStaff.redHouse')}</option>
-                    </select>
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-800">
+                    🔑 <strong>Student Authentication:</strong> Student ID Number (Admission No) will be auto-generated. Students log into their portal using their <strong>Email Address</strong> and <strong>Student ID Number</strong>.
                   </div>
                 </div>
               )}
 
               <div className="bg-muted/20 border border-border rounded-xl p-3 text-xs text-muted-foreground">
-                🔒 A temporary password will be auto-generated and emailed to the user. They'll be prompted to change it on first login.
+                🔒 Account credentials and initial login access instructions will be sent to the email provided.
               </div>
 
               <div className="flex gap-3 pt-1">

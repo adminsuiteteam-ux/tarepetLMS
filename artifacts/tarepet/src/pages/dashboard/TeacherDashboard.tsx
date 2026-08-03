@@ -48,11 +48,16 @@ export default function TeacherDashboard() {
   
   // Modals & toast
   const [toastMsg, setToastMsg] = useState<string | null>(null);
-  const [showObsModal, setShowObsModal] = useState(false);
-  const [obsForm, setObsForm] = useState({ student: 'Emeka Amadi', category: 'Practical Life', observation: '', mastery: 'Proficient' });
-  const [obsList, setObsList] = useState(MONTESSORI_OBSERVATIONS);
-  const [showPointModal, setShowPointModal] = useState(false);
-  const [pointForm, setPointForm] = useState({ student: 'Emeka Amadi', points: 15, category: 'Academic Excellence', house: 'Blue House (Eagle)' });
+  const [showAddStudentModal, setShowAddStudentModal] = useState(false);
+  const [addStudentForm, setAddStudentForm] = useState({
+    name: '',
+    email: '',
+    grade: 'SS1',
+    stream: 'Science',
+    house: 'Blue House (Eagle)',
+    parentName: '',
+    parentPhone: ''
+  });
 
   // Settings State
   const [profileForm, setProfileForm] = useState({
@@ -81,24 +86,26 @@ export default function TeacherDashboard() {
     showToast(`Graded submission for ${selectedSub.student} successfully!`);
   };
 
-  const handleAddObservation = () => {
-    if (!obsForm.observation) return;
-    setObsList(prev => [{
-      id: prev.length + 1,
-      student: obsForm.student,
-      category: obsForm.category,
-      observation: obsForm.observation,
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      mastery: obsForm.mastery,
-    }, ...prev]);
-    setShowObsModal(false);
-    showToast(`Montessori observation logged for ${obsForm.student}.`);
-    setObsForm({ student: '', category: 'Practical Life', observation: '', mastery: 'Proficient' });
-  };
-
-  const handleAwardPoints = () => {
-    setShowPointModal(false);
-    showToast(`Awarded ${pointForm.points} House Points! 🎉`);
+  const handleAddStudentSubmit = () => {
+    if (!addStudentForm.name || !addStudentForm.email) return;
+    const generatedId = `TMS/${addStudentForm.grade}/${Math.floor(1000 + Math.random() * 9000)}`;
+    const newStudent = {
+      id: roster.length + 1,
+      name: addStudentForm.name,
+      code: generatedId,
+      email: addStudentForm.email,
+      grade: addStudentForm.grade,
+      stream: addStudentForm.stream,
+      house: addStudentForm.house,
+      gpa: '0.00',
+      attendance: '100%',
+      status: 'ACTIVE',
+      atRisk: false
+    };
+    setRoster(prev => [newStudent, ...prev]);
+    setShowAddStudentModal(false);
+    showToast(`Registered ${addStudentForm.name}! Student ID: ${generatedId}`);
+    setAddStudentForm({ name: '', email: '', grade: 'SS1', stream: 'Science', house: 'Blue House (Eagle)', parentName: '', parentPhone: '' });
   };
 
   const filteredRoster = roster.filter(s => 
@@ -212,14 +219,11 @@ export default function TeacherDashboard() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="text-2xl font-serif font-bold text-foreground">{t('teacher.manage_students', 'Manage Students')}</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">{t('teacher.manage_students_desc', 'Roster profiles, daily attendance, and Montessori observations.')}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{t('teacher.manage_students_desc', 'Roster profiles, daily attendance, and student registration.')}</p>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => setShowObsModal(true)} className="flex items-center gap-1.5 bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 px-3.5 py-2 rounded-xl text-xs font-bold transition-all">
-              <Star className="w-3.5 h-3.5" /> Log Observation
-            </button>
-            <button onClick={() => setShowPointModal(true)} className="flex items-center gap-1.5 bg-emerald-600 text-white hover:bg-emerald-700 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-sm">
-              <Award className="w-3.5 h-3.5" /> Award House Points
+            <button onClick={() => setShowAddStudentModal(true)} className="flex items-center gap-1.5 bg-primary text-white hover:bg-primary/90 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm">
+              <Plus className="w-4 h-4" /> {t('teacher.add_student', 'Add Student')}
             </button>
           </div>
         </div>
@@ -227,18 +231,17 @@ export default function TeacherDashboard() {
         {/* Sub-tab Switcher */}
         <div className="flex border-b border-border gap-2">
           {[
-            { id: 'roster', label: 'Student Roster', icon: Users },
-            { id: 'attendance', label: 'Daily Attendance', icon: UserCheck },
-            { id: 'montessori', label: 'Montessori & Behavior', icon: Star },
-          ].map(t => (
+            { id: 'roster', label: t('teacher.student_roster', 'Student Roster'), icon: Users },
+            { id: 'attendance', label: t('teacher.daily_attendance', 'Daily Attendance'), icon: UserCheck },
+          ].map(tItem => (
             <button
-              key={t.id}
-              onClick={() => setStudentSubTab(t.id as any)}
+              key={tItem.id}
+              onClick={() => setStudentSubTab(tItem.id as any)}
               className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all ${
-                studentSubTab === t.id ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
+                studentSubTab === tItem.id ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
-              <t.icon className="w-3.5 h-3.5" /> {t.label}
+              <tItem.icon className="w-3.5 h-3.5" /> {tItem.label}
             </button>
           ))}
         </div>
@@ -336,20 +339,130 @@ export default function TeacherDashboard() {
           </div>
         )}
 
-        {/* Sub-tab 3: Montessori Observations */}
-        {studentSubTab === 'montessori' && (
-          <div className="space-y-4">
-            <div className="grid gap-3">
-              {obsList.map(o => (
-                <div key={o.id} className="bg-card rounded-2xl border border-border p-4 shadow-sm">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-foreground text-sm">{o.student} • <span className="text-primary">{o.category}</span></span>
-                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700">{o.mastery}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{o.observation}</p>
-                  <p className="text-[10px] text-muted-foreground mt-2">{o.date}</p>
+        {/* Add Student Modal */}
+        {showAddStudentModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4" onClick={() => setShowAddStudentModal(false)}>
+            <div className="bg-card rounded-2xl border border-border max-w-lg w-full p-6 space-y-4 shadow-2xl" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <div>
+                  <h3 className="font-serif font-bold text-lg text-foreground">{t('teacher.register_new_student', 'Register New Student')}</h3>
+                  <p className="text-xs text-muted-foreground">{t('teacher.register_student_desc', 'Enter student credentials to generate their portal ID number.')}</p>
                 </div>
-              ))}
+                <button onClick={() => setShowAddStudentModal(false)} className="p-1 rounded-lg hover:bg-accent text-muted-foreground">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Login authentication notice */}
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3.5 text-xs text-blue-800 space-y-1">
+                <p className="font-bold flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0" />
+                  {t('teacher.auth_note_title', 'Portal Authentication Credentials')}
+                </p>
+                <p className="text-[11px] leading-relaxed text-blue-700">
+                  {t('teacher.auth_note_desc', 'When a student is registered, their official Student ID (Admission Number) is auto-generated. Students log into their student portal using their Email Address and Student ID Number.')}
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.student_full_name', 'Student Full Name *')}</label>
+                  <input
+                    type="text"
+                    value={addStudentForm.name}
+                    onChange={e => setAddStudentForm({ ...addStudentForm, name: e.target.value })}
+                    placeholder="e.g. Chidi Nwosu"
+                    className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.email_address', 'Email Address *')}</label>
+                    <input
+                      type="email"
+                      value={addStudentForm.email}
+                      onChange={e => setAddStudentForm({ ...addStudentForm, email: e.target.value })}
+                      placeholder="chidi@tarepet.com"
+                      className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.class_level', 'Class Level *')}</label>
+                    <select
+                      value={addStudentForm.grade}
+                      onChange={e => setAddStudentForm({ ...addStudentForm, grade: e.target.value })}
+                      className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    >
+                      {['JSS1', 'JSS2', 'JSS3', 'SS1', 'SS2', 'SS3'].map(g => <option key={g} value={g}>{g}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.stream', 'Department Stream')}</label>
+                    <select
+                      value={addStudentForm.stream}
+                      onChange={e => setAddStudentForm({ ...addStudentForm, stream: e.target.value })}
+                      className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    >
+                      <option value="General">General (Junior)</option>
+                      <option value="Science">Science Stream</option>
+                      <option value="Art">Art & Humanities</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.house', 'House Assignment')}</label>
+                    <select
+                      value={addStudentForm.house}
+                      onChange={e => setAddStudentForm({ ...addStudentForm, house: e.target.value })}
+                      className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    >
+                      <option value="Blue House (Eagle)">Blue House (Eagle)</option>
+                      <option value="Purple House (Phoenix)">Purple House (Phoenix)</option>
+                      <option value="Green House (Jaguar)">Green House (Jaguar)</option>
+                      <option value="Red House (Falcon)">Red House (Falcon)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.parent_name', 'Parent Name')}</label>
+                    <input
+                      type="text"
+                      value={addStudentForm.parentName}
+                      onChange={e => setAddStudentForm({ ...addStudentForm, parentName: e.target.value })}
+                      placeholder="Chief Nwosu"
+                      className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.parent_phone', 'Parent Phone')}</label>
+                    <input
+                      type="text"
+                      value={addStudentForm.parentPhone}
+                      onChange={e => setAddStudentForm({ ...addStudentForm, parentPhone: e.target.value })}
+                      placeholder="08031112233"
+                      className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button onClick={() => setShowAddStudentModal(false)} className="flex-1 py-2.5 rounded-xl border border-border text-xs font-bold hover:bg-accent">
+                  {t('teacher.cancel', 'Cancel')}
+                </button>
+                <button
+                  onClick={handleAddStudentSubmit}
+                  disabled={!addStudentForm.name || !addStudentForm.email}
+                  className="flex-1 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 disabled:opacity-50 transition-colors shadow-sm"
+                >
+                  {t('teacher.register_student_btn', 'Create & Register Student')}
+                </button>
+              </div>
             </div>
           </div>
         )}
