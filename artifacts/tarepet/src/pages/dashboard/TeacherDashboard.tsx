@@ -521,7 +521,6 @@ export default function TeacherDashboard() {
                     <th className="p-3">{t('teacher.col_gpa', 'GPA')}</th>
                     <th className="p-3">{t('teacher.col_attendance', 'Attendance')}</th>
                     <th className="p-3">{t('teacher.col_status', 'Status')}</th>
-                    <th className="p-3 text-right">{t('teacher.col_actions', 'Actions')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -530,7 +529,7 @@ export default function TeacherDashboard() {
                       key={s.id}
                       onClick={() => setSelectedStudentProfile(s)}
                       className="hover:bg-muted/20 cursor-pointer transition-colors group"
-                      title="Click row to view student preview & actions"
+                      title="Click row to view student profile"
                     >
                       <td className="p-3 font-bold text-foreground group-hover:text-primary transition-colors">{s.name}</td>
                       <td className="p-3 text-muted-foreground font-mono">{s.code}</td>
@@ -541,20 +540,6 @@ export default function TeacherDashboard() {
                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${s.atRisk ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
                           {s.status}
                         </span>
-                      </td>
-                      <td className="p-3 text-right">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedStudentProfile(s);
-                          }}
-                          className="px-3 py-1.5 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all text-xs font-bold inline-flex items-center gap-1.5 shadow-2xs group-hover:scale-105"
-                          title="Open student preview and actions"
-                        >
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>Action</span>
-                          <ChevronRight className="w-3.5 h-3.5" />
-                        </button>
                       </td>
                     </tr>
                   ))}
