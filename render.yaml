@@ -33,6 +33,6 @@ services:
         destination: "/index.html"
     envVars:
       - key: VITE_API_URL
-        value: "https://tarepet-backend.onrender.com/api/v1"
+        value: "https://tarepet-backend-4iw6.onrender.com/api/v1"
       - key: NODE_VERSION
         value: "20.18.0"

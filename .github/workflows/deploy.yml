@@ -35,7 +35,7 @@ jobs:
         env:
           BASE_PATH: /tarepetwebapp/
           NODE_ENV: production
-          VITE_API_URL: https://tarepet-backend.onrender.com/api/v1
+          VITE_API_URL: https://tarepet-backend-4iw6.onrender.com/api/v1
 
       - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
