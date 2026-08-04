@@ -4805,14 +4805,33 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
       );
     }
     if (activeSection === 'classes') {
-      const activeClassData = MOCK_CLASSES.find(c => c.code === selectedTimetableClassKey || c.id === selectedTimetableClassKey) || MOCK_CLASSES[0];
-      const activeTimetable = timetablesState[selectedTimetableClassKey] || timetablesState[activeClassData.code] || MOCK_CLASS_TIMETABLES.JSS1;
-      
+      const fallbackClass = {
+        id: selectedTimetableClassKey || 'JSS1',
+        code: selectedTimetableClassKey || 'JSS1',
+        title: `${selectedTimetableClassKey || 'JSS 1'} Class`,
+        division: 'Junior',
+        stream: 'General',
+        formTeacher: 'Unassigned',
+        enrolled: 0,
+        capacity: 45,
+        room: 'Unassigned',
+      };
+      const activeClassData = (MOCK_CLASSES && MOCK_CLASSES.length > 0)
+        ? (MOCK_CLASSES.find(c => c.code === selectedTimetableClassKey || c.id === selectedTimetableClassKey) || MOCK_CLASSES[0])
+        : fallbackClass;
+
+      const activeTimetable = (timetablesState && (timetablesState[selectedTimetableClassKey] || (activeClassData.code && timetablesState[activeClassData.code]))) || {
+        title: `${activeClassData.title} Timetable`,
+        formTeacher: activeClassData.formTeacher,
+        room: activeClassData.room,
+        schedule: { Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [] },
+      };
+
       const daysList = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
       const handleSaveSlot = (e: React.FormEvent) => {
         e.preventDefault();
-        const currentTt = timetablesState[selectedTimetableClassKey] || timetablesState[activeClassData.code] || { ...MOCK_CLASS_TIMETABLES.JSS1, schedule: { Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [] } };
+        const currentTt = timetablesState[selectedTimetableClassKey] || (activeClassData.code && timetablesState[activeClassData.code]) || { title: activeClassData.title, schedule: { Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [] } };
         const updatedSchedule = { ...currentTt.schedule };
         
         const targetDay = slotForm.day;
