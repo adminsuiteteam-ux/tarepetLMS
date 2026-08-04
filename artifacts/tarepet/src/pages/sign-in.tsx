@@ -29,10 +29,13 @@ export default function SignIn() {
       login(access, refresh, user);
       setLocation("/dashboard");
     } catch (apiError: any) {
-      // If backend is unreachable, offer demo mode
       if (!apiError.response) {
-        // Network error — backend not running
-        handleDemoLogin(email);
+        // Network error — only fall back to demo in local dev
+        if (import.meta.env.DEV) {
+          handleDemoLogin(email);
+        } else {
+          setError("Unable to connect to the server. Please try again later.");
+        }
       } else if (apiError.response?.status === 401) {
         setError("Invalid email or password. Please try again.");
       } else {
@@ -44,6 +47,14 @@ export default function SignIn() {
   };
 
   const handleDemoLogin = (demoEmail: string) => {
+    // SECURITY: Demo login is only available in local development.
+    // In production builds this function is intentionally a no-op.
+    if (!import.meta.env.DEV) {
+      console.warn('[Auth] Demo login is disabled in production.');
+      setError('Authentication failed. Please try again.');
+      return;
+    }
+
     // Determine role from email
     let role: "ADMIN" | "TEACHER" | "STUDENT" | "PARENT" = "STUDENT";
     let firstName = "Demo";
@@ -129,46 +140,48 @@ export default function SignIn() {
               Access grades, attendance records, CBT exam portal, fee statements, and school announcements for parents, students, and staff.
             </p>
 
-            {/* Quick Demo Role Shortcut Buttons */}
-            <div className="space-y-3">
-              <p className="text-xs uppercase tracking-widest text-white/70 font-semibold font-sans mb-2">
-                Quick Demo Portal Login:
-              </p>
-              <div className="grid grid-cols-2 gap-2.5 max-w-sm">
-                <button
-                  type="button"
-                  onClick={() => handleDemoLogin("admin@tarepet.edu.ng")}
-                  className="px-3.5 py-2.5 rounded-xl glass-button text-white text-xs font-bold uppercase tracking-wider text-left hover:bg-white/20 transition-all flex items-center justify-between"
-                >
-                  <span>👑 Admin</span>
-                  <span>→</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDemoLogin("teacher@tarepet.edu.ng")}
-                  className="px-3.5 py-2.5 rounded-xl glass-button text-white text-xs font-bold uppercase tracking-wider text-left hover:bg-white/20 transition-all flex items-center justify-between"
-                >
-                  <span>👩‍🏫 Teacher</span>
-                  <span>→</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDemoLogin("student@tarepet.edu.ng")}
-                  className="px-3.5 py-2.5 rounded-xl glass-button text-white text-xs font-bold uppercase tracking-wider text-left hover:bg-white/20 transition-all flex items-center justify-between"
-                >
-                  <span>🎓 Student</span>
-                  <span>→</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDemoLogin("parent@tarepet.edu.ng")}
-                  className="px-3.5 py-2.5 rounded-xl glass-button text-white text-xs font-bold uppercase tracking-wider text-left hover:bg-white/20 transition-all flex items-center justify-between"
-                >
-                  <span>👨‍👩‍👧 Parent</span>
-                  <span>→</span>
-                </button>
+            {/* Quick Demo Role Shortcut Buttons — DEV only */}
+            {import.meta.env.DEV && (
+              <div className="space-y-3">
+                <p className="text-xs uppercase tracking-widest text-white/70 font-semibold font-sans mb-2">
+                  Quick Demo Portal Login:
+                </p>
+                <div className="grid grid-cols-2 gap-2.5 max-w-sm">
+                  <button
+                    type="button"
+                    onClick={() => handleDemoLogin("admin@tarepet.edu.ng")}
+                    className="px-3.5 py-2.5 rounded-xl glass-button text-white text-xs font-bold uppercase tracking-wider text-left hover:bg-white/20 transition-all flex items-center justify-between"
+                  >
+                    <span>👑 Admin</span>
+                    <span>→</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDemoLogin("teacher@tarepet.edu.ng")}
+                    className="px-3.5 py-2.5 rounded-xl glass-button text-white text-xs font-bold uppercase tracking-wider text-left hover:bg-white/20 transition-all flex items-center justify-between"
+                  >
+                    <span>👩‍🏫 Teacher</span>
+                    <span>→</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDemoLogin("student@tarepet.edu.ng")}
+                    className="px-3.5 py-2.5 rounded-xl glass-button text-white text-xs font-bold uppercase tracking-wider text-left hover:bg-white/20 transition-all flex items-center justify-between"
+                  >
+                    <span>🎓 Student</span>
+                    <span>→</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDemoLogin("parent@tarepet.edu.ng")}
+                    className="px-3.5 py-2.5 rounded-xl glass-button text-white text-xs font-bold uppercase tracking-wider text-left hover:bg-white/20 transition-all flex items-center justify-between"
+                  >
+                    <span>👨‍👩‍👧 Parent</span>
+                    <span>→</span>
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </motion.div>
         </div>
 

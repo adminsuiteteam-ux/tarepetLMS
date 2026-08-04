@@ -6,11 +6,17 @@ import environ
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env()
-environ.Env.read_env(os.path.join(BASE_DIR.parent, '.env'))
 
-SECRET_KEY = env('SECRET_KEY', default='django-insecure-e2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0')
-DEBUG = env.bool('DEBUG', default=True)
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['*'])
+# Load .env file if present in BASE_DIR or parent directory
+env_file = BASE_DIR / '.env'
+if not env_file.exists():
+    env_file = BASE_DIR.parent / '.env'
+if env_file.exists():
+    environ.Env.read_env(str(env_file))
+
+SECRET_KEY = env('SECRET_KEY', default='django-insecure-tarepet-montessori-lms-production-key-2026')
+DEBUG = env.bool('DEBUG', default=False)
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['.onrender.com', 'localhost', '127.0.0.1', '*'])
 
 # Application definition
 INSTALLED_APPS = [
@@ -75,14 +81,14 @@ _db_config = env.db(
 # Layerbase serverless keepalive & pool settings
 if _db_config.get('ENGINE') != 'django.db.backends.sqlite3':
     _db_config.update({
-        'CONN_MAX_AGE': 600,  # maintain connection pool for Layerbase
+        'CONN_MAX_AGE': 0,   # serverless: no persistent connections (prevents mid-op drops)
         'OPTIONS': {
             'sslmode': 'require',
             'keepalives': 1,
             'keepalives_idle': 60,
             'keepalives_interval': 10,
             'keepalives_count': 5,
-            'connect_timeout': 10,
+            'connect_timeout': 30,  # allow 30s for Layerbase cold-start wake-up
         },
     })
 DATABASES = {'default': _db_config}

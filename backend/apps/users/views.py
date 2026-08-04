@@ -6,7 +6,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.contrib.auth import get_user_model
 from django.db.models import Count
 from django.utils import timezone
-import csv, io, platform, os
+import csv, io, platform, os, secrets
 
 from .serializers import (
     CustomTokenObtainPairSerializer,
@@ -196,14 +196,18 @@ class BulkUserImportView(APIView):
                 continue
 
             try:
+                # Generate a unique, cryptographically random temp password per user.
+                # The admin receives these in the response to distribute securely.
+                # Users should be required to change their password on first login.
+                temp_password = secrets.token_urlsafe(16)
                 user = User.objects.create_user(
                     email=email,
-                    password='TarepetLMS2026!',
+                    password=temp_password,
                     first_name=row.get('first_name', '').strip(),
                     last_name=row.get('last_name', '').strip(),
                     role=row.get('role', 'STUDENT').strip().upper(),
                 )
-                created.append(email)
+                created.append({'email': email, 'temp_password': temp_password})
             except Exception as e:
                 errors.append({'email': email, 'reason': str(e)})
 
@@ -211,7 +215,7 @@ class BulkUserImportView(APIView):
             'created_count': len(created),
             'skipped_count': len(skipped),
             'error_count': len(errors),
-            'created': created,
+            'created': created,   # contains {email, temp_password} — handle securely
             'skipped': skipped,
             'errors': errors,
         }, status=status.HTTP_200_OK)
