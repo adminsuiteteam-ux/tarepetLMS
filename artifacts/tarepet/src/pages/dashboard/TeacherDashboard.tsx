@@ -1337,7 +1337,7 @@ export default function TeacherDashboard() {
                 className="bg-white text-primary hover:bg-white/90 px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
               >
                 <Printer className="w-3.5 h-3.5" />
-                <span>{t('teacher.btn_print_profile', 'Print Profile')}</span>
+                <span>{t('teacher.btn_print_profile')}</span>
               </button>
             </div>
           </div>
@@ -1364,7 +1364,7 @@ export default function TeacherDashboard() {
                 <p className="text-xs text-muted-foreground flex items-center gap-2">
                   <span>{profileForm.department}</span>
                   <span>•</span>
-                  <span>{t('teacher.form_teacher_prefix', 'Form Teacher: ')}{formClass}</span>
+                  <span>{t('teacher.form_teacher_prefix')}{formClass}</span>
                 </p>
               </div>
             </div>
@@ -1375,7 +1375,7 @@ export default function TeacherDashboard() {
                 className="flex items-center gap-2 px-4 py-2 rounded-xl border border-border text-xs font-semibold hover:bg-accent text-foreground transition-colors"
               >
                 <Edit2 className="w-3.5 h-3.5 text-primary" />
-                <span>{t('teacher.edit_profile', 'Edit Profile')}</span>
+                <span>{t('teacher.edit_profile')}</span>
               </button>
             </div>
           </div>
@@ -1383,20 +1383,20 @@ export default function TeacherDashboard() {
           {/* Stats Bar */}
           <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-border bg-muted/20">
             <div className="p-4 text-center">
-              <p className="text-[10px] uppercase font-bold text-muted-foreground">{t('teacher.form_class', 'Form Class')}</p>
+              <p className="text-[10px] uppercase font-bold text-muted-foreground">{t('teacher.form_class')}</p>
               <p className="text-base font-serif font-bold text-foreground mt-0.5">{formClass}</p>
             </div>
             <div className="p-4 text-center">
-              <p className="text-[10px] uppercase font-bold text-muted-foreground">{t('teacher.students_supervised', 'Students Supervised')}</p>
-              <p className="text-base font-serif font-bold text-foreground mt-0.5">{roster.length} {t('teacher.active_students', 'Active')}</p>
+              <p className="text-[10px] uppercase font-bold text-muted-foreground">{t('teacher.students_supervised')}</p>
+              <p className="text-base font-serif font-bold text-foreground mt-0.5">{roster.length} {t('teacher.active_students')}</p>
             </div>
             <div className="p-4 text-center">
-              <p className="text-[10px] uppercase font-bold text-muted-foreground">{t('teacher.service_duration', 'Service Duration')}</p>
+              <p className="text-[10px] uppercase font-bold text-muted-foreground">{t('teacher.service_duration')}</p>
               <p className="text-base font-serif font-bold text-foreground mt-0.5">{profileForm.experience}</p>
             </div>
             <div className="p-4 text-center">
-              <p className="text-[10px] uppercase font-bold text-muted-foreground">{t('teacher.status', 'Status')}</p>
-              <p className="text-base font-serif font-bold text-emerald-600 mt-0.5">{t('teacher.active_verified', 'Active / Verified')}</p>
+              <p className="text-[10px] uppercase font-bold text-muted-foreground">{t('teacher.status')}</p>
+              <p className="text-base font-serif font-bold text-emerald-600 mt-0.5">{t('teacher.active_verified')}</p>
             </div>
           </div>
         </div>
@@ -1408,37 +1408,37 @@ export default function TeacherDashboard() {
             <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
               <div className="flex items-center justify-between border-b border-border pb-3">
                 <h3 className="font-serif font-bold text-foreground text-base flex items-center gap-2">
-                  <User className="w-4 h-4 text-primary" /> {t('teacher.personal_info', 'Personal & Contact Information')}
+                  <User className="w-4 h-4 text-primary" /> {t('teacher.personal_info')}
                 </h3>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                 <div className="p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1">
-                  <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.full_name', 'Full Name')}</span>
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.full_name')}</span>
                   <p className="font-bold text-foreground">{profileForm.firstName} {profileForm.lastName}</p>
                 </div>
                 <div className="p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1">
-                  <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.staff_designation_code', 'Staff Designation Code')}</span>
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.staff_designation_code')}</span>
                   <p className="font-mono font-bold text-primary">{profileForm.staffId}</p>
                 </div>
                 <div className="p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1">
-                  <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.official_email', 'Official Email Address')}</span>
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.official_email')}</span>
                   <p className="font-semibold text-foreground truncate">{profileForm.email}</p>
                 </div>
                 <div className="p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1">
-                  <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.phone_contact', 'Phone Contact')}</span>
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.phone_contact')}</span>
                   <p className="font-semibold text-foreground">{profileForm.phone}</p>
                 </div>
                 <div className="p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1">
-                  <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.gender_dob', 'Gender / Date of Birth')}</span>
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.gender_dob')}</span>
                   <p className="font-semibold text-foreground">{profileForm.gender} • {profileForm.dob}</p>
                 </div>
                 <div className="p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1">
-                  <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.first_appointment_date', 'First Appointment Date')}</span>
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.first_appointment_date')}</span>
                   <p className="font-semibold text-foreground">{profileForm.joiningDate}</p>
                 </div>
                 <div className="sm:col-span-2 p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1">
-                  <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.residential_address', 'Residential Address')}</span>
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.residential_address')}</span>
                   <p className="font-semibold text-foreground">{profileForm.address}</p>
                 </div>
               </div>
@@ -1447,18 +1447,18 @@ export default function TeacherDashboard() {
             {/* Educational Qualifications & Bio */}
             <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
               <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
-                <Award className="w-4 h-4 text-primary" /> {t('teacher.qualifications', 'Certifications & Qualifications')}
+                <Award className="w-4 h-4 text-primary" /> {t('teacher.qualifications')}
               </h3>
               <div className="space-y-3 text-xs">
                 <div className="flex items-start gap-3 p-3.5 rounded-xl border border-border/60 bg-muted/10">
                   <BookOpen className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                   <div>
                     <p className="font-bold text-foreground">{profileForm.qualification}</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">{t('teacher.specialization_in', 'Specialization in ')}{profileForm.specialization}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{t('teacher.specialization_in')}{profileForm.specialization}</p>
                   </div>
                 </div>
                 <div className="p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1">
-                  <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.philosophy_statement', 'Professional Philosophy Statement')}</span>
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.philosophy_statement')}</span>
                   <p className="text-foreground leading-relaxed italic">"{profileForm.bio}"</p>
                 </div>
               </div>
@@ -1469,19 +1469,19 @@ export default function TeacherDashboard() {
           <div className="space-y-6">
             <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
               <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-primary" /> {t('teacher.teaching_assignments', 'Teaching Assignments & Schedule')}
+                <BookOpen className="w-4 h-4 text-primary" /> {t('teacher.teaching_assignments')}
               </h3>
               <div className="space-y-3 text-xs">
                 <div className="p-3 rounded-xl bg-primary/5 border border-primary/15">
-                  <span className="text-[10px] uppercase font-bold text-primary block">{t('teacher.form_teacher_class', 'Form Teacher Class')}</span>
-                  <p className="font-serif font-bold text-foreground text-sm mt-0.5">{formClass} {t('teacher.science', 'Science')}</p>
+                  <span className="text-[10px] uppercase font-bold text-primary block">{t('teacher.form_teacher_class')}</span>
+                  <p className="font-serif font-bold text-foreground text-sm mt-0.5">{formClass} {t('teacher.science')}</p>
                 </div>
                 <div className="p-3 rounded-xl bg-muted/20 border border-border">
-                  <span className="text-[10px] uppercase font-bold text-muted-foreground block">{t('teacher.assigned_subjects', 'Assigned Subjects')}</span>
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground block">{t('teacher.assigned_subjects')}</span>
                   <p className="font-semibold text-foreground mt-1">{profileForm.specialization}</p>
                 </div>
                 <div className="p-3 rounded-xl bg-muted/20 border border-border">
-                  <span className="text-[10px] uppercase font-bold text-muted-foreground block">{t('teacher.consultation_hours', 'Consultation / Office Hours')}</span>
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground block">{t('teacher.consultation_hours')}</span>
                   <p className="font-semibold text-foreground mt-1">{profileForm.officeHours}</p>
                 </div>
               </div>
@@ -1491,11 +1491,11 @@ export default function TeacherDashboard() {
             <div className="bg-gradient-to-br from-primary via-primary/95 to-secondary rounded-2xl p-5 text-white shadow-md space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-90">{t('school.name', 'Tarepet Montessori School')}</p>
-                  <p className="text-[11px] font-bold">{t('teacher.faculty_staff_identity', 'FACULTY / STAFF IDENTITY')}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest opacity-90">{t('school.name')}</p>
+                  <p className="text-[11px] font-bold">{t('teacher.faculty_staff_identity')}</p>
                 </div>
                 <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center text-xs font-bold border border-white/30">
-                  {t('school.abbr', 'TMS')}
+                  {t('school.abbr')}
                 </div>
               </div>
               <div className="flex items-center gap-3 pt-2">
@@ -1505,14 +1505,14 @@ export default function TeacherDashboard() {
                 <div>
                   <h4 className="font-serif font-bold text-sm leading-tight">{profileForm.firstName} {profileForm.lastName}</h4>
                   <p className="text-[11px] opacity-80 mt-0.5">{profileForm.staffId}</p>
-                  <p className="text-[10px] font-semibold text-emerald-300 mt-0.5">{t('teacher.valid_until_dec_2028', 'VALID UNTIL DEC 2028')}</p>
+                  <p className="text-[10px] font-semibold text-emerald-300 mt-0.5">{t('teacher.valid_until_dec_2028')}</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowStaffIdModal(true)}
                 className="w-full bg-white text-primary font-bold py-2 rounded-xl text-xs hover:bg-white/90 transition-colors shadow-sm"
               >
-                {t('teacher.expand_print_id', 'Expand & Print ID Card')}
+                {t('teacher.expand_print_id')}
               </button>
             </div>
           </div>
