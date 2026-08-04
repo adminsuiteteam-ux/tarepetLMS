@@ -2,6 +2,7 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils import timezone
+from django.db import models as db_models
 from .models import Assignment, Submission, Gradebook, Attendance, BehaviorLog, House
 from .serializers import (
     AssignmentSerializer,
@@ -12,6 +13,7 @@ from .serializers import (
     HouseSerializer,
 )
 from apps.users.permissions import IsTeacher, IsStudent, IsAdmin
+from apps.users.models import CustomUser
 
 
 class HouseViewSet(viewsets.ReadOnlyModelViewSet):
@@ -179,7 +181,7 @@ class BehaviorLogViewSet(viewsets.ModelViewSet):
         # Award House points if positive behavior
         if log.student and log.student.house and log.points:
             House.objects.filter(name=log.student.house).update(
-                points=models.F('points') + log.points
+                points=db_models.F('points') + log.points
             )
 
 
@@ -247,7 +249,6 @@ class CBTExamViewSet(viewsets.ModelViewSet):
         exam.status = 'PENDING'
         exam.save()
         # Notify all admins
-        from apps.users.models import CustomUser
         admins = CustomUser.objects.filter(role='ADMIN')
         for admin in admins:
             CBTNotification.objects.create(

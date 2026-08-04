@@ -1,0 +1,25 @@
+# Pyrefly configuration for the Django backend
+# source_roots tells Pyrefly that 'backend/' is the Python root,
+# so 'apps.users', 'apps.courses', etc. resolve correctly.
+
+[pyrefly]
+source_roots = ["."]
+
+# Use the system Python where django-stubs is installed
+python_interpreter = "C:/Users/Dimacode.x/AppData/Local/Programs/Python/Python314/python.exe"
+
+# Don't error on third-party packages that don't ship stubs themselves
+ignore_missing_imports = true
+
+# -----------------------------------------------------------------------
+# Suppress Django false-positive errors.
+# Django uses metaclasses to dynamically add `objects`, `DoesNotExist`,
+# etc. to models at runtime — Pyrefly can't see these without django-stubs.
+# `bad-override-mutable-attribute` fires on ModelAdmin.list_display /
+# .inlines which are intentionally overridden in every Django admin class.
+# `untyped-import` fires because django doesn't ship inline type stubs.
+# -----------------------------------------------------------------------
+[errors]
+missing-attribute = false
+bad-override-mutable-attribute = false
+untyped-import = false

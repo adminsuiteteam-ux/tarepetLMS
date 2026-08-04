@@ -18,7 +18,9 @@ from .serializers import (
     AdminProfileSerializer,
 )
 from .permissions import IsAdmin, IsSelfOrAdmin
+# pyrefly: ignore [missing-import]
 from apps.courses.models import Course
+# pyrefly: ignore [missing-import]
 from apps.assessments.models import Attendance, BehaviorLog, House, Submission, Assignment
 
 User = get_user_model()
