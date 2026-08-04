@@ -34,18 +34,7 @@ import {
 interface TabProps { id: string; label: string; icon: React.ReactNode; badge?: number }
 
 const MOCK_USERS: any[] = [];
-const MOCK_STUDENTS: any[] = [
-  { id: 1, name: 'Chidi Nwosu', admissionNo: 'TMS/JS1/4092', email: 'chidi.nwosu@tarepet.com', grade: 'JSS1', stream: 'General', house: 'Blue House (Eagle)', status: 'ACTIVE', dob: '2012-05-14', gender: 'Male', country: 'Nigeria', stateOfOrigin: 'Anambra', lga: 'Nnewi South', address: '12 Swali Road, Yenagoa', parentName: 'Chief Nwosu', parentPhone: '08031112233' },
-  { id: 2, name: 'Amaka Okafor', admissionNo: 'TMS/JS1/8193', email: 'amaka.okafor@tarepet.com', grade: 'JSS1', stream: 'General', house: 'Purple House (Phoenix)', status: 'ACTIVE', dob: '2012-09-20', gender: 'Female', country: 'Nigeria', stateOfOrigin: 'Enugu', lga: 'Nsukka', address: '45 Mbiama Yenagoa Road', parentName: 'Dr. Okafor', parentPhone: '08032223344' },
-  { id: 3, name: 'Kemebradikumo Danjuma', admissionNo: 'TMS/JS2/5102', email: 'kemebradikumo.danjuma@tarepet.com', grade: 'JSS2', stream: 'General', house: 'Green House (Jaguar)', status: 'ACTIVE', dob: '2011-03-11', gender: 'Male', country: 'Nigeria', stateOfOrigin: 'Bayelsa', lga: 'Southern Ijaw', address: '8 Isaac Boro Expressway', parentName: 'Engr. Danjuma', parentPhone: '08033334455' },
-  { id: 4, name: 'Tari Ebimobowei', admissionNo: 'TMS/JS3/3029', email: 'tari.ebimobowei@tarepet.com', grade: 'JSS3', stream: 'General', house: 'Red House (Falcon)', status: 'ACTIVE', dob: '2010-11-05', gender: 'Female', country: 'Nigeria', stateOfOrigin: 'Bayelsa', lga: 'Ekeremor', address: '22 Amarata Street', parentName: 'Mr. Ebimobowei', parentPhone: '08034445566' },
-  { id: 5, name: 'Emmanuel Adebayo', admissionNo: 'TMS/SS1/SCI/7281', email: 'emmanuel.adebayo@tarepet.com', grade: 'SS1', stream: 'Science', house: 'Blue House (Eagle)', status: 'ACTIVE', dob: '2009-07-19', gender: 'Male', country: 'Nigeria', stateOfOrigin: 'Oyo', lga: 'Ibadan North', address: '15 Kpansia Market Road', parentName: 'Pastor Adebayo', parentPhone: '08035556677' },
-  { id: 6, name: 'Fatima Abubakar', admissionNo: 'TMS/SS1/ART/9104', email: 'fatima.abubakar@tarepet.com', grade: 'SS1', stream: 'Art', house: 'Purple House (Phoenix)', status: 'ACTIVE', dob: '2009-01-30', gender: 'Female', country: 'Nigeria', stateOfOrigin: 'Kano', lga: 'Kano Municipal', address: '3 Tombia Link Road', parentName: 'Alhaji Abubakar', parentPhone: '08036667788' },
-  { id: 7, name: 'Buchi Nnamdi', admissionNo: 'TMS/SS2/SCI/6291', email: 'buchi.nnamdi@tarepet.com', grade: 'SS2', stream: 'Science', house: 'Green House (Jaguar)', status: 'ACTIVE', dob: '2008-08-12', gender: 'Male', country: 'Nigeria', stateOfOrigin: 'Abia', lga: 'Umuahia North', address: '7 Obele Estate', parentName: 'Chief Nnamdi', parentPhone: '08037778899' },
-  { id: 8, name: 'Aisha Bello', admissionNo: 'TMS/SS2/ART/4810', email: 'aisha.bello@tarepet.com', grade: 'SS2', stream: 'Art', house: 'Red House (Falcon)', status: 'ACTIVE', dob: '2008-04-25', gender: 'Female', country: 'Nigeria', stateOfOrigin: 'Kaduna', lga: 'Zaria', address: '19 Etegwe Close', parentName: 'Mallam Bello', parentPhone: '08038889900' },
-  { id: 9, name: 'Zainab Mohammed', admissionNo: 'TMS/SS3/SCI/8391', email: 'zainab.mohammed@tarepet.com', grade: 'SS3', stream: 'Science', house: 'Blue House (Eagle)', status: 'ACTIVE', dob: '2007-12-02', gender: 'Female', country: 'Nigeria', stateOfOrigin: 'Sokoto', lga: 'Sokoto North', address: '30 Azikoro Road', parentName: 'Dr. Mohammed', parentPhone: '08039990011' },
-  { id: 10, name: 'David Danjuma', admissionNo: 'TMS/SS3/ART/2749', email: 'david.danjuma@tarepet.com', grade: 'SS3', stream: 'Art', house: 'Purple House (Phoenix)', status: 'ACTIVE', dob: '2007-06-18', gender: 'Male', country: 'Nigeria', stateOfOrigin: 'Bayelsa', lga: 'Yenagoa', address: '11 Ovom Street', parentName: 'Engr. Danjuma', parentPhone: '08030001122' },
-];
+const MOCK_STUDENTS: any[] = [];
 const MOCK_SS_STUDENTS = MOCK_STUDENTS;
 const MOCK_TEACHERS: any[] = [
   {
@@ -1964,13 +1953,7 @@ export default function AdminDashboard() {
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
     }
-    return [
-      { id: 101, studentId: 1, name: 'Chidi Nwosu', admissionNo: 'TMS/JS1/4092', class: 'JSS1', totalAmount: 53000, paidAmount: 53000, status: 'PAID', lastDate: '2026-01-14', method: 'Bank Transfer', receiptNo: 'RCP-2026-001' },
-      { id: 102, studentId: 2, name: 'Amaka Okafor', admissionNo: 'TMS/JS1/8193', class: 'JSS1', totalAmount: 53000, paidAmount: 30000, status: 'PARTIAL', lastDate: '2026-01-18', method: 'Cash', receiptNo: 'RCP-2026-002' },
-      { id: 103, studentId: 3, name: 'Kemebradikumo Danjuma', admissionNo: 'TMS/JS2/5102', class: 'JSS2', totalAmount: 53000, paidAmount: 0, status: 'UNPAID', lastDate: '—', method: '—', receiptNo: '—' },
-      { id: 104, studentId: 4, name: 'Emmanuel Adebayo', admissionNo: 'TMS/SS1/1092', class: 'SS1', totalAmount: 65000, paidAmount: 65000, status: 'PAID', lastDate: '2026-01-10', method: 'Online (Flutterwave)', receiptNo: 'RCP-2026-004' },
-      { id: 105, studentId: 5, name: 'Fatima Abubakar', admissionNo: 'TMS/SS1/2049', class: 'SS1', totalAmount: 65000, paidAmount: 40000, status: 'PARTIAL', lastDate: '2026-01-20', method: 'Bank Transfer', receiptNo: 'RCP-2026-005' },
-    ];
+    return [];
   });
   const [showAddPaymentModal, setShowAddPaymentModal] = useState(false);
   const [paymentForm, setPaymentForm] = useState({ studentId: 1, amount: 0, method: 'Bank Transfer', reference: '' });

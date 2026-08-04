@@ -20,13 +20,7 @@ import { useTranslation } from '@/lib/i18n';
 const TEACHER_CLASSES: any[] = [];
 
 const PENDING_SUBMISSIONS: any[] = [];
-const STUDENT_ROSTER: any[] = [
-  { id: 1, name: 'Emmanuel Adebayo', code: 'TMS/SS1/SCI/7281', email: 'emmanuel.adebayo@tarepet.com', grade: 'SS1', stream: 'Science', house: 'Blue House (Eagle)', gpa: '3.85', attendance: '98%', status: 'ACTIVE', atRisk: false, dob: '2009-07-19', gender: 'Male', parentName: 'Pastor Adebayo', parentPhone: '08035556677' },
-  { id: 2, name: 'Chidi Nwosu', code: 'TMS/JS1/4092', email: 'chidi.nwosu@tarepet.com', grade: 'JSS1', stream: 'General', house: 'Blue House (Eagle)', gpa: '3.70', attendance: '95%', status: 'ACTIVE', atRisk: false, dob: '2012-05-14', gender: 'Male', parentName: 'Chief Nwosu', parentPhone: '08031112233' },
-  { id: 3, name: 'Amaka Okafor', code: 'TMS/JS1/8193', email: 'amaka.okafor@tarepet.com', grade: 'JSS1', stream: 'General', house: 'Purple House (Phoenix)', gpa: '3.90', attendance: '100%', status: 'ACTIVE', atRisk: false, dob: '2012-09-20', gender: 'Female', parentName: 'Dr. Okafor', parentPhone: '08032223344' },
-  { id: 4, name: 'Buchi Nnamdi', code: 'TMS/SS2/SCI/6291', email: 'buchi.nnamdi@tarepet.com', grade: 'SS2', stream: 'Science', house: 'Green House (Jaguar)', gpa: '3.60', attendance: '92%', status: 'ACTIVE', atRisk: false, dob: '2008-08-12', gender: 'Male', parentName: 'Chief Nnamdi', parentPhone: '08037778899' },
-  { id: 5, name: 'Zainab Mohammed', code: 'TMS/SS3/SCI/8391', email: 'zainab.mohammed@tarepet.com', grade: 'SS3', stream: 'Science', house: 'Blue House (Eagle)', gpa: '3.95', attendance: '99%', status: 'ACTIVE', atRisk: false, dob: '2007-12-02', gender: 'Female', parentName: 'Dr. Mohammed', parentPhone: '08039990011' },
-];
+const STUDENT_ROSTER: any[] = [];
 
 const TIMETABLE: any[] = [];
 
