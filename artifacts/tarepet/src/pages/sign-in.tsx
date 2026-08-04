@@ -29,7 +29,8 @@ export default function SignIn() {
       const res = await authClient.post("/auth/login/", { email, password });
       const { access, refresh, user } = res.data;
       login(access, refresh, user);
-      setLocation("/dashboard");
+      const role = user?.role?.toLowerCase() || 'student';
+      setLocation(`/dashboard/${role}`);
     } catch (apiError: any) {
       if (!apiError.response) {
         // Network error — only fall back to demo in local dev
