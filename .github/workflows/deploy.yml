@@ -33,7 +33,7 @@ jobs:
           pnpm --filter "@workspace/tarepet" build
           cp artifacts/tarepet/dist/public/index.html artifacts/tarepet/dist/public/404.html
         env:
-          BASE_PATH: /tarepetwebapp/
+          BASE_PATH: /
           NODE_ENV: production
           VITE_API_URL: https://tarepet-backend-4iw6.onrender.com/api/v1
 
@@ -43,3 +43,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./artifacts/tarepet/dist/public
           publish_branch: gh-pages
+          cname: tarepetmontessorischool.com
