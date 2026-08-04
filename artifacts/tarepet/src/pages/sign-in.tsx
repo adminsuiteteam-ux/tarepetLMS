@@ -6,8 +6,10 @@ import tarepetLogo from "@assets/tarepet__1784835204178.png";
 import heroImg from "@assets/classroom_hero.jpg";
 import { useAuth } from "@/context/AuthContext";
 import { authClient } from "@/lib/api-auth";
+import { useTranslation } from "@/lib/i18n";
 
 export default function SignIn() {
+  const { t } = useTranslation();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -120,10 +122,10 @@ export default function SignIn() {
             />
             <div className="flex flex-col">
               <span className="font-serif font-bold text-3xl text-white leading-none tracking-tight">
-                Tare Pet
+                {t('school.name')}
               </span>
               <span className="font-sans text-xs uppercase tracking-[0.2em] text-white/80 font-semibold mt-1">
-                montessori school
+                {t('school.abbr')}
               </span>
             </div>
           </div>
@@ -134,17 +136,17 @@ export default function SignIn() {
             transition={{ delay: 0.2 }}
           >
             <h1 className="text-4xl md:text-5xl font-serif font-bold mb-6 leading-tight drop-shadow-sm">
-              Welcome to the <span className="text-primary italic font-light">School Portal</span>
+              {t('signin.welcome_portal')}<span className="text-primary italic font-light">{t('signin.school_portal')}</span>
             </h1>
             <p className="text-lg text-white/90 leading-relaxed max-w-md font-sans mb-8">
-              Access grades, attendance records, CBT exam portal, fee statements, and school announcements for parents, students, and staff.
+              {t('signin.portal_desc')}
             </p>
 
             {/* Quick Demo Role Shortcut Buttons — DEV only */}
             {import.meta.env.DEV && (
               <div className="space-y-3">
                 <p className="text-xs uppercase tracking-widest text-white/70 font-semibold font-sans mb-2">
-                  Quick Demo Portal Login:
+                  {t('signin.quick_demo')}
                 </p>
                 <div className="grid grid-cols-2 gap-2.5 max-w-sm">
                   <button
@@ -152,7 +154,7 @@ export default function SignIn() {
                     onClick={() => handleDemoLogin("admin@tarepet.edu.ng")}
                     className="px-3.5 py-2.5 rounded-xl glass-button text-white text-xs font-bold uppercase tracking-wider text-left hover:bg-white/20 transition-all flex items-center justify-between"
                   >
-                    <span>👑 Admin</span>
+                    <span>👑 {t('common.administrator')}</span>
                     <span>→</span>
                   </button>
                   <button
@@ -192,10 +194,10 @@ export default function SignIn() {
           className="relative z-10"
         >
           <p className="text-white/60 text-sm italic font-serif">
-            "Not to Knowledge is Power."
+            &ldquo;Not to Knowledge is Power.&rdquo;
           </p>
           <p className="text-white/80 text-xs mt-2 uppercase tracking-wider">
-            Our Guiding Principle
+            {t('signin.guiding_principle')}
           </p>
         </motion.div>
       </div>
@@ -217,17 +219,17 @@ export default function SignIn() {
             />
             <div className="flex flex-col">
               <span className="font-serif font-bold text-2xl text-primary leading-none tracking-tight">
-                Tare Pet
+                {t('school.name')}
               </span>
               <span className="font-sans text-xs uppercase tracking-[0.15em] text-secondary font-medium mt-1">
-                montessori school
+                {t('school.abbr')}
               </span>
             </div>
           </div>
 
           <div className="mb-10">
-            <h2 className="text-3xl font-serif font-bold text-foreground mb-2">Sign In</h2>
-            <p className="text-muted-foreground">Access your parent or staff portal</p>
+            <h2 className="text-3xl font-serif font-bold text-foreground mb-2">{t('signin.title')}</h2>
+            <p className="text-muted-foreground">{t('signin.subtitle')}</p>
           </div>
 
           {/* Error Message */}
@@ -246,7 +248,7 @@ export default function SignIn() {
             {/* Email Field */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
-                Email Address
+                {t('signin.email_label')}
               </label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
@@ -266,7 +268,7 @@ export default function SignIn() {
             {/* Password Field */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
-                Password
+                {t('signin.password_label')}
               </label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
@@ -300,13 +302,13 @@ export default function SignIn() {
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="w-4 h-4 rounded border-border text-primary focus:ring-2 focus:ring-primary cursor-pointer"
                 />
-                <span className="text-sm text-foreground">Remember me</span>
+                <span className="text-sm text-foreground">{t('signin.remember_me')}</span>
               </label>
               <button
                 type="button"
                 className="text-sm text-primary hover:underline font-medium"
               >
-                Forgot password?
+                {t('signin.forgot_password')}
               </button>
             </div>
 
@@ -322,16 +324,16 @@ export default function SignIn() {
                   Signing in...
                 </>
               ) : (
-                "Sign In"
+                t('signin.title')
               )}
             </button>
           </form>
 
           {/* Footer Note */}
           <p className="text-xs text-muted-foreground text-center mt-8 border-t border-border pt-8">
-            This portal is for enrolled parents and staff only. For admission inquiries, please visit our{" "}
+            {t('signin.footer_note')}
             <Link href="/admissions" className="text-primary hover:underline">
-              Admissions page
+              {t('signin.admissions_page')}
             </Link>.
           </p>
         </motion.div>

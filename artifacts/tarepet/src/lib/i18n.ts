@@ -48,6 +48,19 @@ const defaultTranslations = new Map<string, string>([
   ['teacher.official_staff_account', 'Tarepet Montessori School — Official Staff Account'],
   ['teacher.active_students', 'Active'],
   ['teacher.science', 'Science'],
+  ['signin.title', 'Sign In'],
+  ['signin.subtitle', 'Access your parent or staff portal'],
+  ['signin.welcome_portal', 'Welcome to the '],
+  ['signin.school_portal', 'School Portal'],
+  ['signin.portal_desc', 'Access grades, attendance records, CBT exam portal, fee statements, and school announcements for parents, students, and staff.'],
+  ['signin.quick_demo', 'Quick Demo Portal Login:'],
+  ['signin.guiding_principle', 'Our Guiding Principle'],
+  ['signin.email_label', 'Email Address'],
+  ['signin.password_label', 'Password'],
+  ['signin.remember_me', 'Remember me'],
+  ['signin.forgot_password', 'Forgot password?'],
+  ['signin.footer_note', 'This portal is for enrolled parents and staff only. For admission inquiries, please visit our '],
+  ['signin.admissions_page', 'Admissions page'],
 ]);
 
 export function t(key: string, fallback?: string): string {
