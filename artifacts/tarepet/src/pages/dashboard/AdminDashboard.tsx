@@ -38,37 +38,7 @@ const MOCK_STUDENTS: any[] = [];
 const MOCK_SS_STUDENTS = MOCK_STUDENTS;
 const MOCK_TEACHERS: any[] = [];
 
-const MOCK_SUBJECTS: any[] = [
-  // Junior Secondary (JSS1 - JSS3)
-  { id: 1, code: 'MTH-001', title: 'Junior Mathematics', grade: 'JSS1', stream: 'General', category: 'STEM', teacher: 'Mr. Okonkwo Paul', studentsCount: 42, enrolled: 42 },
-  { id: 2, code: 'ENG-001', title: 'English Language', grade: 'JSS1', stream: 'General', category: 'Languages', teacher: 'Mrs. Okafor Chioma', studentsCount: 42, enrolled: 42 },
-  { id: 3, code: 'BSC-001', title: 'Basic Science', grade: 'JSS1', stream: 'General', category: 'Science', teacher: 'Mrs. Okafor Chioma', studentsCount: 42, enrolled: 42 },
-  { id: 4, code: 'BTC-001', title: 'Basic Technology', grade: 'JSS2', stream: 'General', category: 'Technical', teacher: 'Engr. Emeka David', studentsCount: 38, enrolled: 38 },
-  { id: 5, code: 'CIV-001', title: 'Civic Education', grade: 'JSS2', stream: 'General', category: 'Art', teacher: 'Dr. Grace Bassey', studentsCount: 38, enrolled: 38 },
-  { id: 6, code: 'SOC-001', title: 'Social Studies', grade: 'JSS3', stream: 'General', category: 'Art', teacher: 'Dr. Grace Bassey', studentsCount: 40, enrolled: 40 },
-  { id: 7, code: 'ICT-001', title: 'Computer Studies / ICT', grade: 'JSS3', stream: 'General', category: 'Technical', teacher: 'Engr. Emeka David', studentsCount: 40, enrolled: 40 },
-  { id: 8, code: 'AGR-001', title: 'Agricultural Science', grade: 'JSS1', stream: 'General', category: 'Science', teacher: 'Mr. James Eze', studentsCount: 42, enrolled: 42 },
-  { id: 9, code: 'BUS-001', title: 'Business Studies', grade: 'JSS2', stream: 'General', category: 'Commercial', teacher: 'Ms. Adaobi Nwosu', studentsCount: 38, enrolled: 38 },
-  { id: 10, code: 'CCA-001', title: 'Cultural & Creative Arts', grade: 'JSS3', stream: 'General', category: 'Art', teacher: 'Ms. Adaobi Nwosu', studentsCount: 40, enrolled: 40 },
-
-  // Senior Secondary (SS1 - SS3) - Science Stream
-  { id: 11, code: 'MTH-101', title: 'Senior Mathematics', grade: 'SS1', stream: 'Science', category: 'STEM', teacher: 'Mr. Okonkwo Paul', studentsCount: 35, enrolled: 35 },
-  { id: 12, code: 'PHY-101', title: 'Physics I', grade: 'SS1', stream: 'Science', category: 'Science', teacher: 'Engr. Emeka David', studentsCount: 35, enrolled: 35 },
-  { id: 13, code: 'CHM-101', title: 'Chemistry I', grade: 'SS1', stream: 'Science', category: 'Science', teacher: 'Mrs. Okafor Chioma', studentsCount: 35, enrolled: 35 },
-  { id: 14, code: 'BIO-101', title: 'Biology I', grade: 'SS1', stream: 'Science', category: 'Science', teacher: 'Mr. James Eze', studentsCount: 35, enrolled: 35 },
-  { id: 15, code: 'MTH-201', title: 'Senior Mathematics II', grade: 'SS2', stream: 'Science', category: 'STEM', teacher: 'Mr. Okonkwo Paul', studentsCount: 32, enrolled: 32 },
-  { id: 16, code: 'PHY-201', title: 'Physics II', grade: 'SS2', stream: 'Science', category: 'Science', teacher: 'Engr. Emeka David', studentsCount: 32, enrolled: 32 },
-  { id: 17, code: 'MTH-301', title: 'Senior Mathematics III', grade: 'SS3', stream: 'Science', category: 'STEM', teacher: 'Mr. Okonkwo Paul', studentsCount: 30, enrolled: 30 },
-  { id: 18, code: 'FMTH-301', title: 'Further Mathematics', grade: 'SS3', stream: 'Science', category: 'STEM', teacher: 'Mr. Okonkwo Paul', studentsCount: 22, enrolled: 22 },
-
-  // Senior Secondary (SS1 - SS3) - Art Stream
-  { id: 19, code: 'ENG-101', title: 'Senior English Language', grade: 'SS1', stream: 'Art', category: 'Languages', teacher: 'Dr. Grace Bassey', studentsCount: 28, enrolled: 28 },
-  { id: 20, code: 'LIT-101', title: 'Literature in English', grade: 'SS1', stream: 'Art', category: 'Art', teacher: 'Dr. Grace Bassey', studentsCount: 28, enrolled: 28 },
-  { id: 21, code: 'GOV-201', title: 'Government II', grade: 'SS2', stream: 'Art', category: 'Art', teacher: 'Dr. Grace Bassey', studentsCount: 25, enrolled: 25 },
-  { id: 22, code: 'HIS-301', title: 'History III', grade: 'SS3', stream: 'Art', category: 'Art', teacher: 'Dr. Grace Bassey', studentsCount: 22, enrolled: 22 },
-  { id: 23, code: 'CRS-101', title: 'Christian Religious Studies', grade: 'SS1', stream: 'Art', category: 'Art', teacher: 'Dr. Grace Bassey', studentsCount: 28, enrolled: 28 },
-
-];
+const MOCK_SUBJECTS: any[] = [];
 
 const MOCK_HOUSES = [
   { name: 'Blue House (Eagle)', color: '#3B82F6', motto: 'Wisdom & Integrity', points: 520, students: 0, head: 'Mrs. Okafor Chioma' },
@@ -77,18 +47,8 @@ const MOCK_HOUSES = [
   { name: 'Red House (Falcon)', color: '#EF4444', motto: 'Passion & Determination', points: 450, students: 0, head: 'Mr. Bello' },
 ];
 
-const MOCK_CLASSES = [
-  { id: 'JSS1-GEN', code: 'JSS1', title: 'JSS 1 General (Alpha)', division: 'Junior', stream: 'General', formTeacher: 'Mrs. Okafor Chioma', staffId: 'TMS/TCH/2020/014', enrolled: 42, capacity: 45, room: 'Block A, Room 101', classMonitor: 'Chidi Nwosu', subjectsCount: 8 },
-  { id: 'JSS2-GEN', code: 'JSS2', title: 'JSS 2 General (Beta)', division: 'Junior', stream: 'General', formTeacher: 'Engr. Emeka David', staffId: 'TMS/TCH/2022/032', enrolled: 38, capacity: 45, room: 'Block A, Room 102', classMonitor: 'Kemebradikumo Danjuma', subjectsCount: 8 },
-  { id: 'JSS3-GEN', code: 'JSS3', title: 'JSS 3 General (Gamma)', division: 'Junior', stream: 'General', formTeacher: 'Ms. Adaobi Nwosu', staffId: 'TMS/TCH/2023/045', enrolled: 40, capacity: 45, room: 'Block A, Room 103', classMonitor: 'Tari Ebimobowei', subjectsCount: 9 },
-  { id: 'SS1-SCI', code: 'SS1', title: 'SS 1 Science Stream', division: 'Senior', stream: 'Science', formTeacher: 'Mr. Okonkwo Paul', staffId: 'TMS/TCH/2021/001', enrolled: 35, capacity: 40, room: 'Block B, Lab 201', classMonitor: 'Emmanuel Adebayo', subjectsCount: 9 },
-  { id: 'SS1-ART', code: 'SS1', title: 'SS 1 Art & Humanities Stream', division: 'Senior', stream: 'Art', formTeacher: 'Dr. Grace Bassey', staffId: 'TMS/TCH/2019/008', enrolled: 28, capacity: 40, room: 'Block B, Room 202', classMonitor: 'Fatima Abubakar', subjectsCount: 8 },
+const MOCK_CLASSES: any[] = [];
 
-  { id: 'SS2-SCI', code: 'SS2', title: 'SS 2 Science Stream', division: 'Senior', stream: 'Science', formTeacher: 'Engr. Emeka David', staffId: 'TMS/TCH/2022/032', enrolled: 32, capacity: 40, room: 'Block B, Lab 204', classMonitor: 'Buchi Nnamdi', subjectsCount: 9 },
-  { id: 'SS2-ART', code: 'SS2', title: 'SS 2 Art & Humanities Stream', division: 'Senior', stream: 'Art', formTeacher: 'Dr. Grace Bassey', staffId: 'TMS/TCH/2019/008', enrolled: 25, capacity: 40, room: 'Block B, Room 205', classMonitor: 'Aisha Bello', subjectsCount: 8 },
-  { id: 'SS3-SCI', code: 'SS3', title: 'SS 3 Science Stream (Exam Class)', division: 'Senior', stream: 'Science', formTeacher: 'Mr. James Eze', staffId: 'TMS/TCH/2018/003', enrolled: 30, capacity: 35, room: 'Block B, Lab 301', classMonitor: 'Zainab Mohammed', subjectsCount: 9 },
-  { id: 'SS3-ART', code: 'SS3', title: 'SS 3 Art Stream (Exam Class)', division: 'Senior', stream: 'Art', formTeacher: 'Dr. Grace Bassey', staffId: 'TMS/TCH/2019/008', enrolled: 22, capacity: 35, room: 'Block B, Room 302', classMonitor: 'David Danjuma', subjectsCount: 8 },
-];
 
 const TIMETABLE_PERIODS = [
   { time: '08:00 - 08:30', isBreak: true, label: 'Devotion & Assembly' },
