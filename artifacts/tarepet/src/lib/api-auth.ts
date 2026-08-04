@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Enterprise API Client for Django JWT Authentication
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://tarepet-backend-4iw6.onrender.com/api/v1';
 
 export const authClient = axios.create({
   baseURL: API_BASE_URL,
