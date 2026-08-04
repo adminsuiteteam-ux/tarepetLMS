@@ -6,7 +6,13 @@ from drf_spectacular.views import (
     SpectacularRedocView,
 )
 
+from django.http import JsonResponse
+
+def health_check(request):
+    return JsonResponse({'status': 'healthy', 'service': 'tarepet-backend'})
+
 urlpatterns = [
+    path('health/', health_check, name='health-check'),
     path('admin/', admin.site.urls),
 
     # OpenAPI Schema & Docs
