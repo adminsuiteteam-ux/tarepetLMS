@@ -1059,7 +1059,7 @@ export default function TeacherDashboard() {
                       }}
                       className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-colors shadow-md flex items-center gap-1.5 self-start sm:self-auto"
                     >
-                      <Send className="w-4 h-4" /> Review & Forward to Admin
+                      <Send className="w-4 h-4" /> Review and Forward to Admin
                     </button>
                   </div>
                 ))}
@@ -1093,7 +1093,7 @@ export default function TeacherDashboard() {
                       }}
                       className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-colors shadow-md flex items-center gap-1.5 self-start sm:self-auto ring-2 ring-emerald-400/50 animate-pulse"
                     >
-                      <Send className="w-4 h-4" /> Upload & Activate for Students
+                      <Send className="w-4 h-4" /> Upload and Activate for Students
                     </button>
                   </div>
                 ))}
