@@ -6632,309 +6632,56 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
         </div>
       );
     }
-    if (activeSection === 'announcements') {
-      const annCategories = ['All', 'Academic', 'General', 'Sports', 'Urgent'];
-      const [annFilter, setAnnFilter] = [
-        (window as any).__annFilter ?? 'All',
-        (v: string) => { (window as any).__annFilter = v; }
-      ];
-      // Use React state stored in a ref-like window global for filter (no hook here)
-      // We'll render with a simple local variable approach
-      const filteredAnn = announcementsListState.filter(a =>
-        annFilter === 'All' || a.category === annFilter || (annFilter === 'Urgent' && a.priority === 'URGENT')
-      );
-
-      const priorityBadge = (p: string) => {
-        if (p === 'HIGH') return 'bg-rose-500/10 text-rose-600 border-rose-200';
-        if (p === 'URGENT') return 'bg-orange-500/10 text-orange-600 border-orange-200';
-        return 'bg-slate-500/10 text-slate-500 border-slate-200';
-      };
-      const targetBadge = (t: string) => {
-        if (t === 'ALL') return 'bg-violet-500/10 text-violet-600';
-        if (t === 'PARENTS') return 'bg-blue-500/10 text-blue-600';
-        if (t === 'STUDENTS') return 'bg-emerald-500/10 text-emerald-600';
-        if (t === 'TEACHERS') return 'bg-amber-500/10 text-amber-600';
-        return 'bg-muted text-muted-foreground';
-      };
-      const audienceLabel = (t: string) => {
-        if (t === 'ALL') return '📢 All Parents, Students & Staff';
-        if (t === 'PARENTS') return '👨‍👩‍👧 Parents Only';
-        if (t === 'STUDENTS') return '🎓 Students & Staff';
-        if (t === 'TEACHERS') return '🧑‍🏫 Teaching Staff Only';
-        return t;
-      };
+    if (activeSection === 'announcements' || activeSection === 'finance') {
+      const isFinance = activeSection === 'finance';
+      const title = isFinance ? 'School Finance & Bursary Management' : 'Announcements & Communication Center';
+      const desc = isFinance
+        ? 'Comprehensive financial tracking, tuition fee billing, expense approvals, and bursary audit reports.'
+        : 'Publish, broadcast, and manage official notices to all school stakeholders via SMS and portal notifications.';
+      const IconComponent = isFinance ? DollarSign : Megaphone;
 
       return (
         <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
           {/* Page Header */}
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <div>
-              <h2 className="font-serif font-bold text-xl text-foreground flex items-center gap-2">
-                <Megaphone className="w-5 h-5 text-primary" /> Announcements & Communication Center
-              </h2>
-              <p className="text-xs text-muted-foreground mt-0.5">Publish, broadcast, and manage official notices to all school stakeholders.</p>
-            </div>
-            <button
-              onClick={() => { setShowCreateAnnouncementModal(true); setAnnouncementForm({ title: '', target: 'ALL', priority: 'NORMAL', category: 'Academic', content: '', sendSMS: true }); }}
-              className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground text-xs font-bold rounded-xl hover:opacity-90 shadow-md transition-all"
-            >
-              <Plus className="w-4 h-4" /> Publish New Announcement
-            </button>
-          </div>
-
-          {/* Success banner */}
-          {announcementSuccessAlert && (
-            <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
-              <CheckCircle2 className="w-4 h-4 shrink-0" />
-              Announcement published successfully! {announcementForm.sendSMS && 'SMS alerts have been dispatched to the target audience.'}
-            </div>
-          )}
-
-          {/* Stats row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {[
-              { label: 'Total Published', value: announcementsListState.length, color: 'text-primary', bg: 'bg-primary/5', icon: <Megaphone className="w-4 h-4" /> },
-              { label: 'High Priority', value: announcementsListState.filter(a => a.priority === 'HIGH' || a.priority === 'URGENT').length, color: 'text-rose-600', bg: 'bg-rose-500/5', icon: <AlertTriangle className="w-4 h-4" /> },
-              { label: 'Sent to All', value: announcementsListState.filter(a => a.target === 'ALL').length, color: 'text-violet-600', bg: 'bg-violet-500/5', icon: <Users className="w-4 h-4" /> },
-              { label: 'SMS Broadcasts', value: announcementsListState.length, color: 'text-emerald-600', bg: 'bg-emerald-500/5', icon: <CheckCircle2 className="w-4 h-4" /> },
-            ].map(stat => (
-              <div key={stat.label} className={`${stat.bg} rounded-2xl border border-border p-4 flex items-center gap-3`}>
-                <div className={`${stat.color} opacity-80`}>{stat.icon}</div>
-                <div>
-                  <p className={`text-xl font-bold font-serif ${stat.color}`}>{stat.value}</p>
-                  <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide">{stat.label}</p>
-                </div>
+          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <IconComponent className="w-6 h-6" />
               </div>
-            ))}
-          </div>
-
-          {/* Category filter tabs */}
-          <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
-            <div className="flex border-b border-border px-4 pt-4 gap-1 flex-wrap pb-0">
-              {annCategories.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => { (window as any).__annFilter = cat; setAnnouncementSuccessAlert(false); /* force re-render via a no-op state update */ setAnnouncementSuccessAlert(false); }}
-                  className={`px-4 py-2 text-xs font-bold rounded-t-xl border-b-2 transition-colors ${
-                    ((window as any).__annFilter ?? 'All') === cat
-                      ? 'border-primary text-primary bg-primary/5'
-                      : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/40'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-
-            <div className="p-5 space-y-4">
-              {announcementsListState.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Megaphone className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                  <p className="font-semibold text-sm">No announcements published yet.</p>
-                  <p className="text-xs mt-1">Click "Publish New Announcement" to get started.</p>
-                </div>
-              ) : (
-                announcementsListState.map((ann: any) => (
-                  <div key={ann.id} className="bg-background rounded-2xl border border-border p-5 hover:shadow-md transition-shadow space-y-3">
-                    {/* Card header */}
-                    <div className="flex items-start justify-between gap-3 flex-wrap">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${priorityBadge(ann.priority)}`}>
-                            {ann.priority === 'HIGH' ? '🔴' : ann.priority === 'URGENT' ? '🚨' : '🟢'} {ann.priority}
-                          </span>
-                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${targetBadge(ann.target)}`}>
-                            {audienceLabel(ann.target)}
-                          </span>
-                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                            {ann.category}
-                          </span>
-                        </div>
-                        <h3 className="font-serif font-bold text-foreground text-base leading-snug">{ann.title}</h3>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-[10px] text-muted-foreground font-semibold">{ann.date}</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">{ann.author}</p>
-                      </div>
-                    </div>
-
-                    {/* Content body */}
-                    <p className="text-xs text-muted-foreground leading-relaxed border-l-2 border-primary/30 pl-3">
-                      {ann.content}
-                    </p>
-
-                    {/* Footer actions */}
-                    <div className="flex items-center justify-between pt-1">
-                      <div className="flex items-center gap-1.5 text-[10px] text-emerald-600 font-semibold">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> SMS Dispatched
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => {
-                            const updated = announcementsListState.filter((a: any) => a.id !== ann.id);
-                            setAnnouncementsListState(updated);
-                            localStorage.setItem('tarepet_announcements', JSON.stringify(updated));
-                          }}
-                          className="px-3 py-1.5 text-[10px] font-bold text-rose-600 border border-rose-200 rounded-lg hover:bg-rose-50 transition-colors"
-                        >
-                          Remove
-                        </button>
-                        <button className="px-3 py-1.5 text-[10px] font-bold text-muted-foreground border border-border rounded-lg hover:bg-muted/50 transition-colors">
-                          Resend SMS
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Create Announcement Modal */}
-          {showCreateAnnouncementModal && (
-            <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-              <div className="bg-card border border-border rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[92vh]">
-                {/* Modal Header */}
-                <div className="p-5 border-b border-border flex items-center justify-between bg-muted/20">
-                  <div>
-                    <h3 className="font-serif font-bold text-lg text-foreground flex items-center gap-2">
-                      <Megaphone className="w-5 h-5 text-primary" /> Publish New Announcement
-                    </h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">Broadcast an official notice to your selected audience.</p>
-                  </div>
-                  <button onClick={() => setShowCreateAnnouncementModal(false)} className="p-2 rounded-xl text-muted-foreground hover:bg-muted/50 transition-colors">
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-                {/* Modal Body */}
-                <div className="p-6 overflow-y-auto space-y-4 flex-1">
-                  {/* Title */}
-                  <div>
-                    <label className="block text-xs font-bold mb-1.5 text-foreground">Announcement Title *</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. End of Term Examination Schedule"
-                      value={announcementForm.title}
-                      onChange={e => setAnnouncementForm({ ...announcementForm, title: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none"
-                    />
-                  </div>
-
-                  {/* Target & Priority row */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold mb-1.5 text-foreground">Target Audience *</label>
-                      <select
-                        value={announcementForm.target}
-                        onChange={e => setAnnouncementForm({ ...announcementForm, target: e.target.value })}
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none"
-                      >
-                        <option value="ALL">📢 All Stakeholders</option>
-                        <option value="PARENTS">👨‍👩‍👧 Parents Only</option>
-                        <option value="STUDENTS">🎓 Students Only</option>
-                        <option value="TEACHERS">🧑‍🏫 Teaching Staff</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold mb-1.5 text-foreground">Priority Level *</label>
-                      <select
-                        value={announcementForm.priority}
-                        onChange={e => setAnnouncementForm({ ...announcementForm, priority: e.target.value })}
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none"
-                      >
-                        <option value="NORMAL">🟢 Normal</option>
-                        <option value="HIGH">🔴 High Priority</option>
-                        <option value="URGENT">🚨 Urgent</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Category */}
-                  <div>
-                    <label className="block text-xs font-bold mb-1.5 text-foreground">Category</label>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {['Academic', 'General', 'Sports', 'Finance', 'Health'].map(cat => (
-                        <button
-                          key={cat}
-                          onClick={() => setAnnouncementForm({ ...announcementForm, category: cat })}
-                          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-colors ${
-                            announcementForm.category === cat
-                              ? 'bg-primary text-primary-foreground border-primary'
-                              : 'bg-card border-border text-muted-foreground hover:bg-muted/50'
-                          }`}
-                        >
-                          {cat}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Content */}
-                  <div>
-                    <label className="block text-xs font-bold mb-1.5 text-foreground">Notice Content *</label>
-                    <textarea
-                      rows={5}
-                      placeholder="Write the full announcement body here. Be clear and concise..."
-                      value={announcementForm.content}
-                      onChange={e => setAnnouncementForm({ ...announcementForm, content: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none resize-none"
-                    />
-                  </div>
-
-                  {/* SMS checkbox */}
-                  <div className="flex items-center gap-3 p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-200">
-                    <input
-                      type="checkbox"
-                      id="sendSMSCheck"
-                      checked={announcementForm.sendSMS}
-                      onChange={e => setAnnouncementForm({ ...announcementForm, sendSMS: e.target.checked })}
-                      className="w-4 h-4 accent-emerald-600 cursor-pointer"
-                    />
-                    <label htmlFor="sendSMSCheck" className="text-xs font-bold text-emerald-700 cursor-pointer leading-tight">
-                      📱 Send Instant SMS Alert to selected audience<br />
-                      <span className="font-normal text-emerald-600/80">SMS will be dispatched immediately upon publishing.</span>
-                    </label>
-                  </div>
-                </div>
-
-                {/* Modal Footer */}
-                <div className="p-5 border-t border-border bg-muted/20 flex items-center justify-between">
-                  <button onClick={() => setShowCreateAnnouncementModal(false)} className="px-4 py-2 rounded-xl border border-border text-xs font-semibold hover:bg-muted transition-colors">
-                    Cancel
-                  </button>
-                  <button
-                    disabled={!announcementForm.title || !announcementForm.content}
-                    onClick={() => {
-                      const now = new Date();
-                      const dateStr = now.toISOString().split('T')[0];
-                      const newAnn = {
-                        id: Date.now(),
-                        title: announcementForm.title,
-                        target: announcementForm.target,
-                        audience: announcementForm.target === 'ALL' ? 'All Stakeholders' : announcementForm.target === 'PARENTS' ? 'Parents Only' : announcementForm.target === 'STUDENTS' ? 'Students Only' : 'Teaching Staff',
-                        date: dateStr,
-                        author: 'Principal Office',
-                        priority: announcementForm.priority,
-                        category: announcementForm.category,
-                        content: announcementForm.content,
-                        sendSMS: announcementForm.sendSMS,
-                      };
-                      const updated = [newAnn, ...announcementsListState];
-                      setAnnouncementsListState(updated);
-                      localStorage.setItem('tarepet_announcements', JSON.stringify(updated));
-                      setShowCreateAnnouncementModal(false);
-                      setAnnouncementSuccessAlert(true);
-                      setTimeout(() => setAnnouncementSuccessAlert(false), 5000);
-                    }}
-                    className="flex items-center gap-2 px-6 py-2.5 bg-primary text-primary-foreground text-xs font-bold rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed shadow-md transition-all"
-                  >
-                    <Megaphone className="w-4 h-4" /> Publish Announcement
-                  </button>
-                </div>
+              <div>
+                <h2 className="font-bold text-xl text-foreground mb-1">{title}</h2>
+                <p className="text-xs text-muted-foreground">{desc}</p>
               </div>
             </div>
-          )}
+          </div>
+
+          {/* Update Coming Out Soon Notice Card */}
+          <div className="bg-card border border-border rounded-3xl p-12 text-center shadow-sm max-w-2xl mx-auto space-y-6 my-8">
+            <div className="w-20 h-20 rounded-3xl bg-amber-500/10 text-amber-600 border border-amber-500/20 flex items-center justify-center mx-auto shadow-inner animate-pulse">
+              <Sparkles className="w-10 h-10" />
+            </div>
+            
+            <div className="space-y-2">
+              <span className="inline-block px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                Update Coming Out Soon
+              </span>
+              <h3 className="font-serif font-bold text-2xl sm:text-3xl text-foreground pt-2">
+                {isFinance ? 'Finance Module Update In Progress' : 'Announcements Module Update In Progress'}
+              </h3>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
+                Our team is actively building enhanced tools for {isFinance ? 'automated billing, payment reconciliation, and ledger analytics' : 'instant SMS broadcasting, targeted notifications, and parent communication'}. Stay tuned!
+              </p>
+            </div>
+
+            <div className="pt-4 flex items-center justify-center gap-3">
+              <button
+                onClick={() => setActiveSection('overview')}
+                className="px-6 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-all shadow-md"
+              >
+                Back to Control Center
+              </button>
+            </div>
+          </div>
         </div>
       );
     }
