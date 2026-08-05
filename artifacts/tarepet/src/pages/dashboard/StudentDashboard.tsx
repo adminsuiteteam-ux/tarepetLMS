@@ -27,15 +27,7 @@ const FEE_BREAKDOWN = [
   { item: 'Montessori Practical Life Kit', amount: 10000, paid: 10000, status: 'Paid', date: 'Jan 10, 2026' },
 ];
 
-const TERM_ACADEMIC_CALENDAR = [
-  { date: 'Jan 12, 2026', title: '2nd Term Resumption & Orientation', category: 'Academic', status: 'Completed', detail: 'Classes commence for JSS1-SS3' },
-  { date: 'Feb 16 - Feb 20, 2026', title: 'Mid-Term CBT Continuous Assessments', category: 'Exam', status: 'Completed', detail: 'Online C.A. Tests 1 & 2 across all subjects' },
-  { date: 'Feb 23 - Feb 27, 2026', title: 'Mid-Term Break', category: 'Holiday', status: 'Completed', detail: 'School closed for mid-term holidays' },
-  { date: 'Mar 12, 2026', title: 'Montessori Practical Life Exhibition', category: 'Event', status: 'Completed', detail: 'Student showcase & parent open house' },
-  { date: 'Aug 10 - Aug 14, 2026', title: 'Revision Week & Mock Exercises', category: 'Academic', status: 'Upcoming', detail: 'Final prep for 2nd Term examinations' },
-  { date: 'Aug 17 - Aug 28, 2026', title: '2nd Term Terminal CBT Examinations', category: 'Exam', status: 'Upcoming', detail: 'CBT Hall A & B terminal examination sessions' },
-  { date: 'Sep 04, 2026', title: 'Vacation & Report Card Publication', category: 'Holiday', status: 'Upcoming', detail: 'End of 2nd Term & online report release' },
-];
+const TERM_ACADEMIC_CALENDAR: any[] = [];
 
 type DayKey = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday';
 
@@ -553,34 +545,47 @@ export default function StudentDashboard() {
           </div>
 
           <div className="space-y-3">
-            {TERM_ACADEMIC_CALENDAR.map((ev, i) => {
-              const catClass = getCategoryColorClass(ev.category);
+            {(() => {
+              let eventsToDisplay: any[] = TERM_ACADEMIC_CALENDAR;
+              if (typeof window !== 'undefined') {
+                const saved = localStorage.getItem('tarepet_calendar_events');
+                if (saved) { try { eventsToDisplay = JSON.parse(saved); } catch (e) {} }
+              }
+              if (eventsToDisplay.length === 0) {
+                return (
+                  <div className="text-center py-8 bg-muted/10 rounded-xl border border-border space-y-1">
+                    <p className="text-xs font-semibold text-muted-foreground">No academic calendar events published yet.</p>
+                  </div>
+                );
+              }
+              return eventsToDisplay.map((ev, i) => {
+                const catClass = getCategoryColorClass(ev.category);
+                return (
+                  <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-border bg-card shadow-xs gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full ${catClass}`}>
+                          {ev.category}
+                        </span>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          ev.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          {ev.status || 'Upcoming'}
+                        </span>
+                      </div>
+                      <h4 className="font-bold text-foreground text-sm">{ev.title}</h4>
+                      <p className="text-xs text-muted-foreground">{ev.detail}</p>
+                    </div>
 
-              return (
-                <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-border bg-card shadow-xs gap-3">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className={`text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full ${catClass}`}>
-                        {ev.category}
-                      </span>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        ev.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-                      }`}>
-                        {ev.status}
+                    <div className="text-left sm:text-right shrink-0">
+                      <span className="font-bold text-foreground text-xs block font-mono bg-muted/40 px-3 py-1.5 rounded-lg border border-border">
+                        {ev.date}{ev.endDate ? ` — ${ev.endDate}` : ''}
                       </span>
                     </div>
-                    <h4 className="font-bold text-foreground text-sm">{ev.title}</h4>
-                    <p className="text-xs text-muted-foreground">{ev.detail}</p>
                   </div>
-
-                  <div className="text-left sm:text-right shrink-0">
-                    <span className="font-bold text-foreground text-xs block font-mono bg-muted/40 px-3 py-1.5 rounded-lg border border-border">
-                      {ev.date}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              });
+            })()}
           </div>
         </div>
       </div>

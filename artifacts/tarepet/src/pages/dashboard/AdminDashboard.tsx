@@ -1538,21 +1538,13 @@ export default function AdminDashboard() {
 
 
 
-  // Real-Time Calendar Events State
+  // Real-Time Calendar Events State (Cleared)
   const [calendarEventsState, setCalendarEventsState] = useState<any[]>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('tarepet_calendar_events');
       if (saved) { try { return JSON.parse(saved); } catch (e) {} }
     }
-    return [
-      { id: 'cal-1', title: '2nd Term Resumption & Orientation', date: '2026-01-12', category: 'Academic', scope: 'All Classes', status: 'Completed', detail: 'Academic classes commence for JSS1-SS3 students.' },
-      { id: 'cal-2', title: 'Mid-Term CBT Continuous Assessments', date: '2026-02-16', endDate: '2026-02-20', category: 'Exam', scope: 'All Classes', status: 'Completed', detail: 'Online C.A. Tests 1 & 2 across all subjects.' },
-      { id: 'cal-3', title: 'Mid-Term Break', date: '2026-02-23', endDate: '2026-02-27', category: 'Holiday', scope: 'School Wide', status: 'Completed', detail: 'School closed for mid-term holidays.' },
-      { id: 'cal-4', title: 'Montessori Practical Life Exhibition', date: '2026-03-12', category: 'Event', scope: 'Parents & Students', status: 'Completed', detail: 'Student showcase & parent open house exhibition.' },
-      { id: 'cal-5', title: 'Revision Week & Mock Exercises', date: '2026-08-10', endDate: '2026-08-14', category: 'Academic', scope: 'SS3 & JSS3', status: 'Upcoming', detail: 'Final prep for 2nd Term examinations & BECE/WAEC drills.' },
-      { id: 'cal-6', title: '2nd Term Terminal CBT Examinations', date: '2026-08-17', endDate: '2026-08-28', category: 'Exam', scope: 'All Classes', status: 'Upcoming', detail: 'CBT Hall A & B terminal examination sessions.' },
-      { id: 'cal-7', title: 'Vacation & Report Card Publication', date: '2026-09-04', category: 'Holiday', scope: 'School Wide', status: 'Upcoming', detail: 'End of 2nd Term & online report release.' },
-    ];
+    return [];
   });
   const [showAddCalendarModal, setShowAddCalendarModal] = useState(false);
   const [calendarForm, setCalendarForm] = useState({ title: '', category: 'Academic', date: '', endDate: '', scope: 'All Classes', detail: '', status: 'Upcoming' });
@@ -1764,11 +1756,12 @@ export default function AdminDashboard() {
         { text: 'New announcement published', detail: 'Mid-Term Exam Timetable released to parents', time: '4 hours ago', icon: Megaphone, color: 'text-primary bg-primary/10' },
       ];
 
-      const upcomingEvents = [
-        { title: 'Mid-Term Examination', date: 'Oct 15 - Oct 20, 2026', scope: 'All Classes', badgeColor: 'bg-primary/10 text-primary border-primary/20' },
-        { title: 'Parents Meeting', date: 'Oct 24, 2026', scope: 'School Auditorium', badgeColor: 'bg-secondary/10 text-secondary border-secondary/20' },
-        { title: 'Sports Competition', date: 'Nov 05, 2026', scope: 'Main Sports Field', badgeColor: 'bg-amber-500/10 text-amber-600 border-amber-200' },
-      ];
+      const upcomingEvents = calendarEventsState.map(ev => ({
+        title: ev.title,
+        date: ev.date + (ev.endDate ? ` — ${ev.endDate}` : ''),
+        scope: ev.scope || 'School Wide',
+        badgeColor: 'bg-primary/10 text-primary border-primary/20',
+      }));
 
       return (
         <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
@@ -1951,19 +1944,28 @@ export default function AdminDashboard() {
                 </button>
               </div>
               <div className="space-y-3">
-                {upcomingEvents.map((evt, idx) => (
-                  <div key={idx} className="p-3.5 rounded-xl border border-border bg-muted/20 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-bold text-foreground">{evt.title}</h4>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${evt.badgeColor}`}>
-                        {evt.scope}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-primary" /> {evt.date}
-                    </p>
+                {upcomingEvents.length === 0 ? (
+                  <div className="text-center py-6 space-y-1">
+                    <p className="text-xs font-semibold text-muted-foreground">No upcoming calendar events.</p>
+                    <button onClick={() => setActiveSection('calendar')} className="text-[11px] font-bold text-primary hover:underline">
+                      + Add Calendar Event
+                    </button>
                   </div>
-                ))}
+                ) : (
+                  upcomingEvents.map((evt, idx) => (
+                    <div key={idx} className="p-3.5 rounded-xl border border-border bg-muted/20 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-foreground">{evt.title}</h4>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${evt.badgeColor}`}>
+                          {evt.scope}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-primary" /> {evt.date}
+                      </p>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
