@@ -138,15 +138,22 @@ export default function StudentDashboard() {
     return () => unsub();
   }, []);
 
-  // Settings form state
-  const [profileForm, setProfileForm] = useState({
-    firstName: user?.first_name || 'Student',
-    lastName: user?.last_name || 'Suite',
-    email: user?.email || 'student@tarepet.edu.ng',
-    phone: '+234 812 345 6789',
-    studentId: 'STU-2026-001',
-    house: 'Blue House (Eagle)',
-    emailNotifications: true,
+  // Settings form state with localStorage caching
+  const [profileForm, setProfileForm] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('student_profile_data');
+      if (saved) { try { return JSON.parse(saved); } catch (e) {} }
+    }
+    return {
+      firstName: user?.first_name || 'Student',
+      lastName: user?.last_name || 'Suite',
+      email: user?.email || 'student@tarepet.edu.ng',
+      phone: '+234 812 345 6789',
+      studentId: 'STU-2026-001',
+      house: 'Blue House (Eagle)',
+      profileImage: '',
+      emailNotifications: true,
+    };
   });
 
   const showToast = (msg: string) => {
@@ -593,6 +600,59 @@ export default function StudentDashboard() {
           <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
             <User className="w-4 h-4 text-primary" /> {t('student.info_header', 'Student Information')}
           </h3>
+
+          {/* Profile Photo Upload */}
+          <div className="flex items-center gap-4 pb-3 border-b border-border">
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 border-2 border-primary/20 flex items-center justify-center font-serif font-bold text-xl text-primary overflow-hidden shrink-0">
+              {profileForm.profileImage ? (
+                <img src={profileForm.profileImage} alt="Student Avatar" className="w-full h-full object-cover" />
+              ) : (
+                `${profileForm.firstName?.[0] || 'S'}${profileForm.lastName?.[0] || 'T'}`
+              )}
+            </div>
+            <div className="space-y-1.5 flex-1">
+              <input
+                type="file"
+                accept="image/*"
+                id="studentAvatarInputPicker"
+                className="hidden"
+                onChange={e => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      const updated = { ...profileForm, profileImage: reader.result as string };
+                      setProfileForm(updated);
+                      localStorage.setItem('student_profile_data', JSON.stringify(updated));
+                      showToast('Profile photo updated in real time!');
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }}
+              />
+              <div className="flex items-center gap-2">
+                <label htmlFor="studentAvatarInputPicker" className="px-3.5 py-1.5 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 cursor-pointer inline-flex items-center gap-1.5 shadow-sm">
+                  Upload Profile Picture
+                </label>
+                {profileForm.profileImage && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const updated = { ...profileForm, profileImage: '' };
+                      setProfileForm(updated);
+                      localStorage.setItem('student_profile_data', JSON.stringify(updated));
+                      showToast('Photo removed!');
+                    }}
+                    className="px-3 py-1.5 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold hover:bg-rose-50"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+              <p className="text-[10px] text-muted-foreground">Select a picture file to update your student profile avatar.</p>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('student.first_name', 'First Name')}</label>
@@ -630,7 +690,10 @@ export default function StudentDashboard() {
             </div>
             <input type="checkbox" checked={profileForm.emailNotifications} onChange={e => setProfileForm({...profileForm, emailNotifications: e.target.checked})} className="w-4 h-4 text-primary rounded" />
           </label>
-          <button onClick={() => showToast('Student settings saved!')} className="bg-primary text-white px-6 py-2.5 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors">
+          <button onClick={() => {
+            localStorage.setItem('student_profile_data', JSON.stringify(profileForm));
+            showToast('Student profile & photo settings saved!');
+          }} className="bg-primary text-white px-6 py-2.5 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors">
             {t('student.save_settings', 'Save Profile Settings')}
           </button>
         </div>

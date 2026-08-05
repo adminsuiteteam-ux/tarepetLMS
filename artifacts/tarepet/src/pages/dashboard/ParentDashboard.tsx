@@ -122,6 +122,13 @@ export default function ParentDashboard() {
   const [confBooked, setConfBooked] = useState(false);
   const [leaveSubmitted, setLeaveSubmitted] = useState(false);
   const [showReportCardModal, setShowReportCardModal] = useState(false);
+  const [parentProfile, setParentProfile] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('parent_profile_data');
+      if (saved) { try { return JSON.parse(saved); } catch (e) {} }
+    }
+    return { name: user?.first_name ? `${user.first_name} ${user.last_name}` : 'Parent Member', profileImage: '' };
+  });
 
   const activeChild = CHILDREN.find(c => c.id === selectedChildId) ?? CHILDREN[0];
 
@@ -606,9 +613,65 @@ export default function ParentDashboard() {
     );
 
     // 10. SETTINGS & PARENT TOOLS
-    if (activeSection === 'settings') return (
+    if (activeSection === 'settings' || activeSection === 'profile') return (
       <div className="space-y-5">
-        <h2 className="text-xl font-serif font-bold text-foreground">{t('Parent Settings & Tools')}</h2>
+        <h2 className="text-xl font-serif font-bold text-foreground">{t('Parent Settings & Profile')}</h2>
+        
+        <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
+          <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
+            <User className="w-4 h-4 text-primary" /> Profile Photo & Information
+          </h3>
+
+          <div className="flex items-center gap-4 pb-3 border-b border-border">
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 border-2 border-primary/20 flex items-center justify-center font-serif font-bold text-xl text-primary overflow-hidden shrink-0">
+              {parentProfile.profileImage ? (
+                <img src={parentProfile.profileImage} alt="Parent Avatar" className="w-full h-full object-cover" />
+              ) : (
+                'P'
+              )}
+            </div>
+            <div className="space-y-1.5 flex-1">
+              <input
+                type="file"
+                accept="image/*"
+                id="parentAvatarPicker"
+                className="hidden"
+                onChange={e => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      const updated = { ...parentProfile, profileImage: reader.result as string };
+                      setParentProfile(updated);
+                      localStorage.setItem('parent_profile_data', JSON.stringify(updated));
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }}
+              />
+              <div className="flex items-center gap-2">
+                <label htmlFor="parentAvatarPicker" className="px-3.5 py-1.5 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 cursor-pointer inline-flex items-center gap-1.5 shadow-sm">
+                  Upload Profile Photo
+                </label>
+                {parentProfile.profileImage && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const updated = { ...parentProfile, profileImage: '' };
+                      setParentProfile(updated);
+                      localStorage.setItem('parent_profile_data', JSON.stringify(updated));
+                    }}
+                    className="px-3 py-1.5 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold hover:bg-rose-50"
+                  >
+                    Remove Photo
+                  </button>
+                )}
+              </div>
+              <p className="text-[10px] text-muted-foreground">Select an image file to update your parent profile avatar in real time.</p>
+            </div>
+          </div>
+        </div>
+
         <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
           <h3 className="font-serif font-bold text-foreground">{t('Notification Preferences')}</h3>
           <div className="space-y-2 text-xs">

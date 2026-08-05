@@ -6,7 +6,7 @@
     <script type="text/javascript">
       // SPA GitHub Pages 404 redirect script
       // Handles client-side routing refreshes on GitHub Pages
-      var pathSegmentsToKeep = 1; // 1 segment for repository subpath (e.g. /tarepet/)
+      var pathSegmentsToKeep = 0; // 0 for custom domain (root path), 1 for github.io/repo-name/ subpath
       var l = window.location;
       l.replace(
         l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +

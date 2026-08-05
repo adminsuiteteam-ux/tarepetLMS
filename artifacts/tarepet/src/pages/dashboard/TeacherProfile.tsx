@@ -136,10 +136,36 @@ export default function TeacherProfile() {
               <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 -mt-12 relative z-20">
                 <div className="relative group">
                   <div className="w-24 h-24 rounded-2xl bg-card border-4 border-card shadow-lg flex items-center justify-center text-primary font-bold text-3xl font-serif overflow-hidden">
-                    <div className="w-full h-full bg-primary/10 flex items-center justify-center text-primary">
-                      {profileForm.firstName?.[0]}{profileForm.lastName?.[0]}
-                    </div>
+                    {profileForm.profileImage ? (
+                      <img src={profileForm.profileImage} alt="Teacher" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-primary/10 flex items-center justify-center text-primary">
+                        {profileForm.firstName?.[0]}{profileForm.lastName?.[0]}
+                      </div>
+                    )}
                   </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    id="teacherAvatarPicker"
+                    className="hidden"
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          const updated = { ...profileForm, profileImage: reader.result as string };
+                          setProfileForm(updated);
+                          localStorage.setItem('teacher_profile_data', JSON.stringify(updated));
+                          showToast('Profile photo updated in real time!');
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                  <label htmlFor="teacherAvatarPicker" className="absolute -bottom-1 -right-1 p-2 bg-primary text-white rounded-xl shadow-md cursor-pointer hover:scale-105 transition-all border-2 border-card" title="Upload Photo">
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </label>
                   <span className="absolute bottom-1 right-1 w-4 h-4 bg-emerald-500 border-2 border-card rounded-full" title="Active Staff" />
                 </div>
                 <div className="space-y-1">

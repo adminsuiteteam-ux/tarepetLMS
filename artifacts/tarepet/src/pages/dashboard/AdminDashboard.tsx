@@ -1536,6 +1536,28 @@ export default function AdminDashboard() {
     room: '',
   });
 
+
+
+  // Real-Time Calendar Events State
+  const [calendarEventsState, setCalendarEventsState] = useState<any[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('tarepet_calendar_events');
+      if (saved) { try { return JSON.parse(saved); } catch (e) {} }
+    }
+    return [
+      { id: 'cal-1', title: '2nd Term Resumption & Orientation', date: '2026-01-12', category: 'Academic', scope: 'All Classes', status: 'Completed', detail: 'Academic classes commence for JSS1-SS3 students.' },
+      { id: 'cal-2', title: 'Mid-Term CBT Continuous Assessments', date: '2026-02-16', endDate: '2026-02-20', category: 'Exam', scope: 'All Classes', status: 'Completed', detail: 'Online C.A. Tests 1 & 2 across all subjects.' },
+      { id: 'cal-3', title: 'Mid-Term Break', date: '2026-02-23', endDate: '2026-02-27', category: 'Holiday', scope: 'School Wide', status: 'Completed', detail: 'School closed for mid-term holidays.' },
+      { id: 'cal-4', title: 'Montessori Practical Life Exhibition', date: '2026-03-12', category: 'Event', scope: 'Parents & Students', status: 'Completed', detail: 'Student showcase & parent open house exhibition.' },
+      { id: 'cal-5', title: 'Revision Week & Mock Exercises', date: '2026-08-10', endDate: '2026-08-14', category: 'Academic', scope: 'SS3 & JSS3', status: 'Upcoming', detail: 'Final prep for 2nd Term examinations & BECE/WAEC drills.' },
+      { id: 'cal-6', title: '2nd Term Terminal CBT Examinations', date: '2026-08-17', endDate: '2026-08-28', category: 'Exam', scope: 'All Classes', status: 'Upcoming', detail: 'CBT Hall A & B terminal examination sessions.' },
+      { id: 'cal-7', title: 'Vacation & Report Card Publication', date: '2026-09-04', category: 'Holiday', scope: 'School Wide', status: 'Upcoming', detail: 'End of 2nd Term & online report release.' },
+    ];
+  });
+  const [showAddCalendarModal, setShowAddCalendarModal] = useState(false);
+  const [calendarForm, setCalendarForm] = useState({ title: '', category: 'Academic', date: '', endDate: '', scope: 'All Classes', detail: '', status: 'Upcoming' });
+  const [calendarFilter, setCalendarFilter] = useState('All');
+
   const saveTimetables = (newTimetables: Record<string, any>) => {
     setTimetablesState(newTimetables);
     if (typeof window !== 'undefined') {
@@ -3880,8 +3902,12 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
           <div className="bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 text-center sm:text-left">
               <div className="relative shrink-0">
-                <div className="w-20 h-20 rounded-2xl bg-primary text-white font-bold text-3xl flex items-center justify-center shadow-lg border-2 border-primary/20">
-                  {adminProfileData.name.split(' ').map(n => n[0]).join('')}
+                <div className="w-20 h-20 rounded-2xl bg-primary text-white font-bold text-3xl flex items-center justify-center shadow-lg border-2 border-primary/20 overflow-hidden">
+                  {adminProfileData.profileImage ? (
+                    <img src={adminProfileData.profileImage} alt={adminProfileData.name} className="w-full h-full object-cover" />
+                  ) : (
+                    adminProfileData.name.split(' ').map(n => n[0]).join('')
+                  )}
                 </div>
                 <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-card" title="Account Active" />
               </div>
@@ -4211,12 +4237,58 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                       className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:ring-2 focus:ring-primary"
                     />
                   </div>
+                  <div className="sm:col-span-2 space-y-1 pt-1 border-t border-border">
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block">Profile Photo Avatar</label>
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 text-primary font-bold text-xl flex items-center justify-center overflow-hidden shrink-0">
+                        {editProfileForm.profileImage ? (
+                          <img src={editProfileForm.profileImage} alt="Preview" className="w-full h-full object-cover" />
+                        ) : (
+                          editProfileForm.name?.[0] || 'A'
+                        )}
+                      </div>
+                      <div className="space-y-1.5 flex-1">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          id="adminAvatarFilePicker"
+                          className="hidden"
+                          onChange={e => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                setEditProfileForm(prev => ({ ...prev, profileImage: reader.result as string }));
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                        <div className="flex items-center gap-2">
+                          <label htmlFor="adminAvatarFilePicker" className="px-3.5 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 cursor-pointer inline-flex items-center gap-1.5 shadow-sm">
+                            <Upload className="w-3.5 h-3.5" /> Select Image File
+                          </label>
+                          {editProfileForm.profileImage && (
+                            <button
+                              type="button"
+                              onClick={() => setEditProfileForm({ ...editProfileForm, profileImage: '' })}
+                              className="px-3 py-2 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold hover:bg-rose-50"
+                            >
+                              Clear Photo
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-muted-foreground">Supported formats: JPG, PNG, WEBP. Real-time preview applied.</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex gap-3 pt-2">
                   <button
                     onClick={() => {
                       setAdminProfileData(editProfileForm);
+                      localStorage.setItem('admin_profile_data', JSON.stringify(editProfileForm));
                       setProfileUpdateSuccess(true);
                       setTimeout(() => {
                         setProfileUpdateSuccess(false);
@@ -4225,7 +4297,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                     }}
                     className="flex-1 py-3 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all"
                   >
-                    Save Changes
+                    Save Profile & Picture
                   </button>
                   <button
                     onClick={() => setShowEditProfileModal(false)}
@@ -7143,7 +7215,241 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
         </div>
       );
     }
-    if (activeSection === 'calendar') return renderModuleHeader('School Calendar', 'View academic session terms, exam schedules, and official school holidays.', Calendar);
+    if (activeSection === 'calendar') {
+      const filteredEvents = calendarEventsState.filter(ev => calendarFilter === 'All' || ev.category === calendarFilter);
+
+      const handleSaveCalendarEvent = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!calendarForm.title || !calendarForm.date) return;
+        const newEv = {
+          id: `cal-${Date.now()}`,
+          title: calendarForm.title,
+          category: calendarForm.category,
+          date: calendarForm.date,
+          endDate: calendarForm.endDate || undefined,
+          scope: calendarForm.scope,
+          status: calendarForm.status || 'Upcoming',
+          detail: calendarForm.detail || 'Scheduled school event.',
+        };
+        const updated = [newEv, ...calendarEventsState];
+        setCalendarEventsState(updated);
+        localStorage.setItem('tarepet_calendar_events', JSON.stringify(updated));
+        setShowAddCalendarModal(false);
+        setCalendarForm({ title: '', category: 'Academic', date: '', endDate: '', scope: 'All Classes', detail: '', status: 'Upcoming' });
+      };
+
+      const handleDeleteCalendarEvent = (id: string) => {
+        const updated = calendarEventsState.filter(ev => ev.id !== id);
+        setCalendarEventsState(updated);
+        localStorage.setItem('tarepet_calendar_events', JSON.stringify(updated));
+      };
+
+      return (
+        <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
+          {/* Header */}
+          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                <Calendar className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="font-bold text-xl text-foreground mb-1">School Academic Calendar & Events</h2>
+                <p className="text-xs text-muted-foreground">Manage academic session schedules, term dates, CBT exam timetables, and official holidays in real time.</p>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setCalendarForm({ title: '', category: 'Academic', date: new Date().toISOString().split('T')[0], endDate: '', scope: 'All Classes', detail: '', status: 'Upcoming' });
+                setShowAddCalendarModal(true);
+              }}
+              className="px-5 py-2.5 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all flex items-center gap-2 shadow-md shrink-0"
+            >
+              <Plus className="w-4 h-4" /> Add Calendar Event
+            </button>
+          </div>
+
+          {/* Filter Pills */}
+          <div className="flex items-center justify-between flex-wrap gap-3 bg-card p-4 rounded-2xl border border-border shadow-sm">
+            <div className="flex items-center gap-2 overflow-x-auto">
+              {['All', 'Academic', 'Exam', 'Holiday', 'Event'].map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setCalendarFilter(cat)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
+                    calendarFilter === cat
+                      ? 'bg-primary text-white border-primary shadow-sm'
+                      : 'bg-muted/20 border-border text-muted-foreground hover:bg-muted/60'
+                  }`}
+                >
+                  {cat === 'All' ? 'All Calendar Events' : cat}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground font-semibold">Total: <strong>{filteredEvents.length} events</strong></p>
+          </div>
+
+          {/* Calendar Events List */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredEvents.length === 0 ? (
+              <div className="md:col-span-2 bg-card rounded-2xl border border-border p-12 text-center space-y-3">
+                <Calendar className="w-12 h-12 text-muted-foreground/30 mx-auto" />
+                <h4 className="font-serif font-bold text-base text-foreground">No events found</h4>
+                <p className="text-xs text-muted-foreground">Click "Add Calendar Event" to create a new entry.</p>
+              </div>
+            ) : (
+              filteredEvents.map(ev => (
+                <div key={ev.id} className="bg-card rounded-2xl border border-border p-5 shadow-sm hover:shadow-md transition-all space-y-3 flex flex-col justify-between">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${
+                        ev.category === 'Exam' ? 'bg-amber-500/10 text-amber-600 border-amber-200' :
+                        ev.category === 'Holiday' ? 'bg-rose-500/10 text-rose-600 border-rose-200' :
+                        ev.category === 'Academic' ? 'bg-primary/10 text-primary border-primary/20' :
+                        'bg-emerald-500/10 text-emerald-600 border-emerald-200'
+                      }`}>
+                        {ev.category}
+                      </span>
+                      <span className="text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-md">
+                        {ev.scope}
+                      </span>
+                    </div>
+
+                    <h3 className="font-serif font-bold text-lg text-foreground leading-snug">{ev.title}</h3>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1.5 font-medium">
+                      <Clock className="w-3.5 h-3.5 text-primary shrink-0" />
+                      {ev.date}{ev.endDate ? ` — ${ev.endDate}` : ''}
+                    </p>
+                    <p className="text-xs text-muted-foreground/90 leading-relaxed pt-1">{ev.detail}</p>
+                  </div>
+
+                  <div className="pt-3 border-t border-border flex items-center justify-between">
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                      ev.status === 'Completed' ? 'bg-muted text-muted-foreground' : 'bg-emerald-500/10 text-emerald-600 border border-emerald-200'
+                    }`}>
+                      {ev.status || 'Upcoming'}
+                    </span>
+                    <button
+                      onClick={() => handleDeleteCalendarEvent(ev.id)}
+                      className="text-xs text-rose-600 font-bold hover:underline flex items-center gap-1"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> Remove
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Add Calendar Event Modal */}
+          {showAddCalendarModal && (
+            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-2xl max-w-md w-full space-y-4 animate-in fade-in zoom-in duration-200">
+                <div className="flex items-center justify-between pb-3 border-b border-border">
+                  <h3 className="font-serif font-bold text-lg text-foreground">Add New Calendar Event</h3>
+                  <button onClick={() => setShowAddCalendarModal(false)} className="p-1 rounded-lg text-muted-foreground hover:bg-accent">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleSaveCalendarEvent} className="space-y-4 text-xs">
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Event Title *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. 2nd Term CBT Mock Examination"
+                      value={calendarForm.title}
+                      onChange={e => setCalendarForm({ ...calendarForm, title: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground font-bold focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Category</label>
+                      <select
+                        value={calendarForm.category}
+                        onChange={e => setCalendarForm({ ...calendarForm, category: e.target.value })}
+                        className="w-full border border-border rounded-xl px-3.5 py-2.5 bg-card text-foreground font-bold focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="Academic">Academic</option>
+                        <option value="Exam">Exam / CBT</option>
+                        <option value="Holiday">Holiday / Break</option>
+                        <option value="Event">Exhibition / Event</option>
+                        <option value="Meeting">Meeting / PTA</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Scope</label>
+                      <select
+                        value={calendarForm.scope}
+                        onChange={e => setCalendarForm({ ...calendarForm, scope: e.target.value })}
+                        className="w-full border border-border rounded-xl px-3.5 py-2.5 bg-card text-foreground font-bold focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="All Classes">All Classes</option>
+                        <option value="Junior Secondary">Junior Secondary</option>
+                        <option value="Senior Secondary">Senior Secondary</option>
+                        <option value="School Wide">School Wide</option>
+                        <option value="Parents & Staff">Parents & Staff</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Start Date *</label>
+                      <input
+                        type="date"
+                        required
+                        value={calendarForm.date}
+                        onChange={e => setCalendarForm({ ...calendarForm, date: e.target.value })}
+                        className="w-full border border-border rounded-xl px-3.5 py-2 bg-card text-foreground font-bold focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">End Date (Optional)</label>
+                      <input
+                        type="date"
+                        value={calendarForm.endDate}
+                        onChange={e => setCalendarForm({ ...calendarForm, endDate: e.target.value })}
+                        className="w-full border border-border rounded-xl px-3.5 py-2 bg-card text-foreground font-bold focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Event Description & Detail</label>
+                    <textarea
+                      rows={3}
+                      placeholder="Brief details about schedule, venue, or requirements..."
+                      value={calendarForm.detail}
+                      onChange={e => setCalendarForm({ ...calendarForm, detail: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:ring-2 focus:ring-primary resize-none"
+                    />
+                  </div>
+
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="submit"
+                      className="flex-1 py-3 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all flex items-center justify-center gap-2 shadow-sm"
+                    >
+                      <CheckCircle2 className="w-4 h-4" /> Save & Publish Event
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddCalendarModal(false)}
+                      className="px-5 py-3 border border-border rounded-xl text-xs font-bold hover:bg-accent transition-all"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
     if (activeSection === 'reports') return renderModuleHeader('Reports', 'Generate comprehensive academic, attendance, teacher, and student analytical reports.', BarChart2);
 
     return null;
