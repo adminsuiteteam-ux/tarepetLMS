@@ -65,11 +65,8 @@ const TIMETABLE_PERIODS = [
 
 const MOCK_CLASS_TIMETABLES: Record<string, any> = {};
 
-const MOCK_LEAVE_LOGS = [
-  { id: 1, applicant: 'Mrs. Okafor Chioma', role: 'Teacher', type: 'Medical Leave', duration: '2 Days (Aug 3 - Aug 4)', status: 'APPROVED', reason: 'Hospital appointment' },
-  { id: 2, applicant: 'Chidi Nwosu', role: 'Student (JSS1)', type: 'Casual Leave', duration: '1 Day (Aug 1)', status: 'PENDING', reason: 'Family engagement' },
-  { id: 3, applicant: 'Engr. Emeka David', role: 'Teacher', type: 'Official Duty', duration: '1 Day (Aug 5)', status: 'APPROVED', reason: 'WAEC Coordination Conference' },
-];
+const MOCK_LEAVE_LOGS: any[] = [];
+
 
 const MOCK_AUDIT_LOGS = [
   { id: 1, user: 'admin@tarepet.edu.ng', action: 'LOGIN', target: 'Auth System', ip: '127.0.0.1', timestamp: '2026-07-24 07:00:12', status: 'SUCCESS' },
