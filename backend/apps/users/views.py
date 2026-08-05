@@ -178,7 +178,7 @@ class BulkUserImportView(APIView):
         decoded = csv_file.read().decode('utf-8')
         reader = csv.DictReader(io.StringIO(decoded))
 
-        required_cols = {'email', 'first_name', 'last_name', 'role'}
+        required_cols = {'first_name', 'last_name', 'role'}
         if not required_cols.issubset(set(reader.fieldnames or [])):
             return Response(
                 {'error': f'CSV must have columns: {", ".join(required_cols)}'},
@@ -187,29 +187,56 @@ class BulkUserImportView(APIView):
 
         created, skipped, errors = [], [], []
 
+        from .models import StudentProfile, TeacherProfile, ParentProfile, AdminProfile
+
         for row in reader:
+            first_name = row.get('first_name', '').strip()
+            last_name = row.get('last_name', '').strip()
+            role = row.get('role', 'STUDENT').strip().upper()
             email = row.get('email', '').strip().lower()
+
             if not email:
-                errors.append({'row': row, 'reason': 'Missing email'})
-                continue
+                if first_name and last_name:
+                    fn = first_name.lower().replace(' ', '')
+                    ln = last_name.lower().replace(' ', '')
+                    email = f"{fn}.{ln}@tarepet.com"
+                else:
+                    errors.append({'row': row, 'reason': 'Missing first_name or last_name for email generation'})
+                    continue
 
             if User.objects.filter(email=email).exists():
                 skipped.append(email)
                 continue
 
             try:
-                # Generate a unique, cryptographically random temp password per user.
-                # The admin receives these in the response to distribute securely.
-                # Users should be required to change their password on first login.
-                temp_password = secrets.token_urlsafe(16)
+                user_id_val = None
+                if role == 'STUDENT':
+                    user_id_val = row.get('student_id', '').strip() or f"TP-STU-{StudentProfile.objects.count() + 1:03d}"
+                    password = user_id_val
+                elif role == 'TEACHER':
+                    user_id_val = row.get('teacher_id', '').strip() or f"TP-TCH-{TeacherProfile.objects.count() + 1:03d}"
+                    password = user_id_val
+                else:
+                    password = row.get('password', '').strip() or secrets.token_urlsafe(12)
+
                 user = User.objects.create_user(
                     email=email,
-                    password=temp_password,
-                    first_name=row.get('first_name', '').strip(),
-                    last_name=row.get('last_name', '').strip(),
-                    role=row.get('role', 'STUDENT').strip().upper(),
+                    password=password,
+                    first_name=first_name,
+                    last_name=last_name,
+                    role=role,
                 )
-                created.append({'email': email, 'temp_password': temp_password})
+
+                if role == 'STUDENT':
+                    StudentProfile.objects.create(user=user, student_id=user_id_val, grade_level=row.get('grade_level', 'Primary 1'))
+                elif role == 'TEACHER':
+                    TeacherProfile.objects.create(user=user, teacher_id=user_id_val)
+                elif role == 'PARENT':
+                    ParentProfile.objects.create(user=user)
+                elif role == 'ADMIN':
+                    AdminProfile.objects.create(user=user)
+
+                created.append({'email': email, 'user_id': user_id_val, 'role': role})
             except Exception as e:
                 errors.append({'email': email, 'reason': str(e)})
 

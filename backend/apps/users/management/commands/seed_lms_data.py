@@ -34,33 +34,44 @@ class Command(BaseCommand):
         AdminProfile.objects.get_or_create(user=admin_user, defaults={'role_type': 'Super Admin'})
 
         # 3. Create Teacher Account
-        teacher_user = User.objects.filter(email='teacher@tarepet.edu.ng').first()
+        teacher_email = 'chioma.okafor@tarepet.com'
+        teacher_id_val = 'TP-TCH-001'
+        teacher_user = User.objects.filter(email=teacher_email).first()
         if not teacher_user:
             teacher_user = User.objects.create_user(
-                email='teacher@tarepet.edu.ng',
-                password='TeacherPassword123!',
-                first_name='Mrs. Okafor',
-                last_name='Chioma',
+                email=teacher_email,
+                password=teacher_id_val,
+                first_name='Chioma',
+                last_name='Okafor',
                 role=User.Role.TEACHER,
                 is_staff=True,
             )
+        else:
+            teacher_user.set_password(teacher_id_val)
+            teacher_user.save()
+
         teacher_prof, _ = TeacherProfile.objects.get_or_create(
             user=teacher_user,
             defaults={
+                'teacher_id': teacher_id_val,
                 'department': 'Montessori Secondary (Erdkinder)',
                 'subjects_taught': ['Mathematics', 'Practical Life', 'Botany & Agronomy'],
                 'bio': 'Senior Montessori Educator with 12+ years teaching experience.'
             }
         )
+        if not teacher_prof.teacher_id:
+            teacher_prof.teacher_id = teacher_id_val
+            teacher_prof.save()
 
         # 4. Create Parent Account
-        parent_user = User.objects.filter(email='parent@tarepet.edu.ng').first()
+        parent_email = 'ebi.amadi@tarepet.com'
+        parent_user = User.objects.filter(email=parent_email).first()
         if not parent_user:
             parent_user = User.objects.create_user(
-                email='parent@tarepet.edu.ng',
+                email=parent_email,
                 password='ParentPassword123!',
-                first_name='Mr. Amadi',
-                last_name='Ebi',
+                first_name='Ebi',
+                last_name='Amadi',
                 role=User.Role.PARENT,
             )
         parent_prof, _ = ParentProfile.objects.get_or_create(
@@ -69,22 +80,33 @@ class Command(BaseCommand):
         )
 
         # 5. Create Student Account
-        student_user = User.objects.filter(email='student@tarepet.edu.ng').first()
+        student_email = 'emeka.amadi@tarepet.com'
+        student_id_val = 'TP-STU-001'
+        student_user = User.objects.filter(email=student_email).first()
         if not student_user:
             student_user = User.objects.create_user(
-                email='student@tarepet.edu.ng',
-                password='StudentPassword123!',
+                email=student_email,
+                password=student_id_val,
                 first_name='Emeka',
                 last_name='Amadi',
                 role=User.Role.STUDENT,
             )
+        else:
+            student_user.set_password(student_id_val)
+            student_user.save()
+
         student_prof, _ = StudentProfile.objects.get_or_create(
             user=student_user,
             defaults={
+                'student_id': student_id_val,
                 'grade_level': 'Junior Secondary 1',
                 'house': 'Blue House (Eagle)',
             }
         )
+        if not student_prof.student_id:
+            student_prof.student_id = student_id_val
+            student_prof.save()
+
         student_prof.parents.add(parent_prof)
 
         # 6. Create Course & Modules
@@ -133,6 +155,6 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS('Successfully seeded Tarepet LMS demo accounts:'))
         self.stdout.write('  - Admin: admin@tarepet.edu.ng (Pass: AdminPassword123!)')
-        self.stdout.write('  - Teacher: teacher@tarepet.edu.ng (Pass: TeacherPassword123!)')
-        self.stdout.write('  - Student: student@tarepet.edu.ng (Pass: StudentPassword123!)')
-        self.stdout.write('  - Parent: parent@tarepet.edu.ng (Pass: ParentPassword123!)')
+        self.stdout.write(f'  - Teacher: {teacher_email} (ID & Pass: {teacher_id_val})')
+        self.stdout.write(f'  - Student: {student_email} (ID & Pass: {student_id_val})')
+        self.stdout.write(f'  - Parent: {parent_email} (Pass: ParentPassword123!)')

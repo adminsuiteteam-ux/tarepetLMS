@@ -88,6 +88,7 @@ class StudentProfile(models.Model):
     user = models.OneToOneField(
         CustomUser, on_delete=models.CASCADE, related_name='student_profile'
     )
+    student_id = models.CharField(max_length=50, unique=True, null=True, blank=True)
     parents = models.ManyToManyField(
         ParentProfile, related_name='students', blank=True
     )
@@ -100,13 +101,14 @@ class StudentProfile(models.Model):
     emergency_contact = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):
-        return f"Student: {self.user.get_full_name()} ({self.grade_level})"
+        return f"Student: {self.user.get_full_name()} ({self.student_id or 'No ID'})"
 
 
 class TeacherProfile(models.Model):
     user = models.OneToOneField(
         CustomUser, on_delete=models.CASCADE, related_name='teacher_profile'
     )
+    teacher_id = models.CharField(max_length=50, unique=True, null=True, blank=True)
     department = models.CharField(max_length=100, default='Montessori Primary')
     subjects_taught = models.JSONField(default=list, blank=True)
     hire_date = models.DateField(blank=True, null=True)
@@ -114,7 +116,7 @@ class TeacherProfile(models.Model):
     bio = models.TextField(blank=True, null=True)
 
     def __str__(self):
-        return f"Teacher: {self.user.get_full_name()} ({self.department})"
+        return f"Teacher: {self.user.get_full_name()} ({self.teacher_id or 'No ID'})"
 
 
 class AdminProfile(models.Model):

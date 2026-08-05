@@ -7,7 +7,11 @@ User = get_user_model()
 
 
 class CustomTokenObtainPairSerializer(serializers.Serializer):
-    """Accepts either 'email' or 'username' alongside 'password' for JWT login."""
+    """
+    Accepts email, username, or Student ID / Teacher ID alongside password for JWT login.
+    For students: email is firstname.surname@tarepet.com and password is their Student ID.
+    For teachers: email is firstname.surname@tarepet.com and password is their Teacher ID.
+    """
     email = serializers.EmailField(required=False, allow_blank=True)
     username = serializers.CharField(required=False, allow_blank=True)
     password = serializers.CharField(write_only=True, trim_whitespace=False)
@@ -22,9 +26,21 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
         password = attrs.get('password')
 
         if not identifier:
-            raise serializers.ValidationError({'email': 'Email or username is required.'})
+            raise serializers.ValidationError({'email': 'Email, Username, or ID is required.'})
         if not password:
             raise serializers.ValidationError({'password': 'Password is required.'})
+
+        identifier = identifier.strip()
+
+        # If identifier matches a student_id or teacher_id, resolve the associated user's email
+        from apps.users.models import StudentProfile, TeacherProfile
+        student_prof = StudentProfile.objects.filter(student_id__iexact=identifier).first()
+        if student_prof:
+            identifier = student_prof.user.email
+        else:
+            teacher_prof = TeacherProfile.objects.filter(teacher_id__iexact=identifier).first()
+            if teacher_prof:
+                identifier = teacher_prof.user.email
 
         from django.contrib.auth import authenticate
         from rest_framework_simplejwt.exceptions import AuthenticationFailed
@@ -32,7 +48,7 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
 
         user = authenticate(self.context.get('request'), username=identifier, password=password)
         if not user or not user.is_active:
-            raise AuthenticationFailed('No active account found with the given credentials')
+            raise AuthenticationFailed('Invalid email/ID or password credentials.')
 
         refresh = RefreshToken.for_user(user)
         refresh['email'] = user.email
@@ -40,6 +56,10 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
         refresh['first_name'] = user.first_name
         refresh['last_name'] = user.last_name
         refresh['full_name'] = user.get_full_name()
+
+        # Add profile details (student_id / teacher_id) if available
+        student_id = getattr(getattr(user, 'student_profile', None), 'student_id', None)
+        teacher_id = getattr(getattr(user, 'teacher_profile', None), 'teacher_id', None)
 
         return {
             'refresh': str(refresh),
@@ -51,6 +71,8 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
                 'last_name': user.last_name,
                 'role': user.role,
                 'phone': user.phone,
+                'student_id': student_id,
+                'teacher_id': teacher_id,
             }
         }
 
@@ -64,13 +86,13 @@ class ParentProfileSerializer(serializers.ModelSerializer):
 class StudentProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = StudentProfile
-        fields = ['id', 'grade_level', 'house', 'admission_date', 'date_of_birth', 'medical_conditions', 'allergies', 'emergency_contact']
+        fields = ['id', 'student_id', 'grade_level', 'house', 'admission_date', 'date_of_birth', 'medical_conditions', 'allergies', 'emergency_contact']
 
 
 class TeacherProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeacherProfile
-        fields = ['id', 'department', 'subjects_taught', 'hire_date', 'qualifications', 'bio']
+        fields = ['id', 'teacher_id', 'department', 'subjects_taught', 'hire_date', 'qualifications', 'bio']
 
 
 class AdminProfileSerializer(serializers.ModelSerializer):
@@ -100,29 +122,68 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, min_length=12)
+    password = serializers.CharField(write_only=True, required=False, allow_blank=True)
     role = serializers.ChoiceField(choices=User.Role.choices, default=User.Role.STUDENT)
+    student_id = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    teacher_id = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model = User
-        fields = ['email', 'password', 'first_name', 'last_name', 'phone', 'role']
+        fields = ['email', 'password', 'first_name', 'last_name', 'phone', 'role', 'student_id', 'teacher_id']
 
     def create(self, validated_data):
         role = validated_data.get('role', User.Role.STUDENT)
+        first_name = validated_data.get('first_name', '').strip()
+        last_name = validated_data.get('last_name', '').strip()
+        email = validated_data.get('email', '').strip().lower()
+
+        # Enforce email format: firstname.surname@tarepet.com for Student & Teacher
+        if not email or '@' not in email:
+            if first_name and last_name:
+                fn = first_name.lower().replace(' ', '')
+                ln = last_name.lower().replace(' ', '')
+                email = f"{fn}.{ln}@tarepet.com"
+            else:
+                email = email or "user@tarepet.com"
+
+        # Determine Student ID / Teacher ID and Password
+        password = validated_data.get('password')
+        custom_stu_id = validated_data.pop('student_id', None)
+        custom_tch_id = validated_data.pop('teacher_id', None)
+
+        if role == User.Role.STUDENT:
+            if not custom_stu_id:
+                count = StudentProfile.objects.count() + 1
+                custom_stu_id = f"TP-STU-{count:03d}"
+            # Strictly: Password for student is their Student ID
+            if not password:
+                password = custom_stu_id
+
+        elif role == User.Role.TEACHER:
+            if not custom_tch_id:
+                count = TeacherProfile.objects.count() + 1
+                custom_tch_id = f"TP-TCH-{count:03d}"
+            # Strictly: Password for teacher is their Teacher ID
+            if not password:
+                password = custom_tch_id
+
+        if not password:
+            password = "DefaultPassword123!"
+
         user = User.objects.create_user(
-            email=validated_data['email'],
-            password=validated_data['password'],
-            first_name=validated_data.get('first_name', ''),
-            last_name=validated_data.get('last_name', ''),
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
             phone=validated_data.get('phone', ''),
             role=role,
         )
 
-        # Auto-create role profile
+        # Create role profile with strictly assigned ID
         if role == User.Role.STUDENT:
-            StudentProfile.objects.create(user=user)
+            StudentProfile.objects.create(user=user, student_id=custom_stu_id)
         elif role == User.Role.TEACHER:
-            TeacherProfile.objects.create(user=user)
+            TeacherProfile.objects.create(user=user, teacher_id=custom_tch_id)
         elif role == User.Role.PARENT:
             ParentProfile.objects.create(user=user)
         elif role == User.Role.ADMIN:
