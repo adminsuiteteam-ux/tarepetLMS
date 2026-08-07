@@ -646,9 +646,7 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                     {form.subjectsAssigned.map((sub: any, i: number) => (
                       <div key={i} className="flex items-center gap-3">
                         <input className={inputCls + ' flex-1'} value={sub.name} onChange={e => updateSubject(i, 'name', e.target.value)} placeholder="Subject Name (e.g. Mathematics)" />
-                        <select className={inputCls + ' w-44'} value={sub.grade} onChange={e => updateSubject(i, 'grade', e.target.value)}>
-                          {GRADE_OPTIONS.map(g => <option key={g}>{g}</option>)}
-                        </select>
+                        <input className={inputCls + ' w-48'} value={sub.grade} onChange={e => updateSubject(i, 'grade', e.target.value)} placeholder="Class / Level (e.g. JSS 1)" />
                         <button type="button" onClick={() => removeSubject(i)} className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center hover:bg-rose-100 transition shrink-0 cursor-pointer">
                           <X className="w-3.5 h-3.5" />
                         </button>
