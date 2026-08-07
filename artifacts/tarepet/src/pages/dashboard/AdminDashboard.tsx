@@ -312,8 +312,8 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
   }));
 
   const handleSave = () => {
-    const serial = String(Math.floor(100 + Math.random() * 900)).padStart(3, '0');
-    const staffId = form.staffId || `TMS/TCH/${new Date().getFullYear()}/${serial}`;
+    const serial = String(Math.floor(1 + Math.random() * 9999)).padStart(4, '0');
+    const staffId = form.staffId || `TMS/TCH/${serial}`;
     const nameParts = (form.name || 'Teacher Staff').trim().split(' ');
     const firstName = nameParts[0] || 'Teacher';
     const lastName = nameParts.slice(1).join(' ') || 'Staff';

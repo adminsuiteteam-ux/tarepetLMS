@@ -133,7 +133,7 @@ export default function TeacherDashboard() {
       lastName: user?.last_name || 'Adeyemi',
       email: user?.email || 'v.adeyemi@tarepet.edu.ng',
       phone: '+234 803 456 7890',
-      staffId: 'TMS/TCH/2026/042',
+      staffId: 'TMS/TCH/0042',
       roleTitle: 'Senior Subject Specialist & SS1 Form Teacher',
       department: 'Science & Mathematics Department',
       qualification: 'M.Sc. Industrial Mathematics (UI), TRCN Certified',

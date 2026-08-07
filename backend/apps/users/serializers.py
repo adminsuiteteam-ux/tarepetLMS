@@ -162,7 +162,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         elif role == User.Role.TEACHER:
             if not custom_tch_id:
                 count = TeacherProfile.objects.count() + 1
-                custom_tch_id = f"TP-TCH-{count:03d}"
+                custom_tch_id = f"TMS/TCH/{count:04d}"
             # Strictly: Password for teacher is their Teacher ID
             if not password:
                 password = custom_tch_id

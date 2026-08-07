@@ -214,7 +214,7 @@ class BulkUserImportView(APIView):
                     user_id_val = row.get('student_id', '').strip() or f"TP-STU-{StudentProfile.objects.count() + 1:03d}"
                     password = user_id_val
                 elif role == 'TEACHER':
-                    user_id_val = row.get('teacher_id', '').strip() or f"TP-TCH-{TeacherProfile.objects.count() + 1:03d}"
+                    user_id_val = row.get('teacher_id', '').strip() or f"TMS/TCH/{TeacherProfile.objects.count() + 1:04d}"
                     password = user_id_val
                 else:
                     password = row.get('password', '').strip() or secrets.token_urlsafe(12)
