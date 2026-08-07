@@ -802,23 +802,10 @@ const EditTeacherModal = ({ teacher, onClose, onSave }: { teacher: any; onClose:
             <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required
               className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Staff ID</label>
-              <input type="text" value={form.staffId} onChange={e => setForm({ ...form, staffId: e.target.value })} required
-                className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-mono" />
-            </div>
-            <div>
-              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Department</label>
-              <select value={form.department} onChange={e => setForm({ ...form, department: e.target.value })}
-                className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                <option value="Mathematics & STEM">Mathematics & STEM</option>
-                <option value="Sciences">Sciences</option>
-                <option value="Humanities & Arts">Humanities & Arts</option>
-                <option value="Vocational & Technology">Vocational & Technology</option>
-                <option value="Languages">Languages</option>
-              </select>
-            </div>
+          <div>
+            <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Staff ID</label>
+            <input type="text" value={form.staffId} onChange={e => setForm({ ...form, staffId: e.target.value })} required
+              className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-mono" />
           </div>
           <div>
             <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Specialization</label>
@@ -4841,8 +4828,8 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                     <strong className="text-foreground font-bold text-base uppercase">{tchr.name}</strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider">Department</span>
-                    <strong className="text-foreground font-bold text-emerald-700">{tchr.department || 'Mathematics & STEM'}</strong>
+                    <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider">Staff Role / Duty</span>
+                    <strong className="text-foreground font-bold text-emerald-700">{tchr.formTeacherOf && tchr.formTeacherOf !== 'None' ? 'Form Teacher' : 'Subject Educator'}</strong>
                   </div>
                   <div>
                     <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider">Academic Specialization</span>
@@ -5059,7 +5046,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
               <thead className="bg-muted/30 text-muted-foreground uppercase text-[10px] tracking-wider">
                 <tr>
                   <th className="py-3.5 px-4">Teacher / Staff ID</th>
-                  <th className="py-3.5 px-4">Department & Specialization</th>
+                  <th className="py-3.5 px-4">Specialization & Qualification</th>
                   <th className="py-3.5 px-4">Form Teacher Of</th>
                   <th className="py-3.5 px-4">Email / Phone</th>
                   <th className="py-3.5 px-4">Workload</th>
@@ -5091,8 +5078,8 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                         </div>
                       </td>
                       <td className="py-4 px-4">
-                        <p className="font-bold text-foreground">{tchr.department}</p>
-                        <p className="text-[10px] text-muted-foreground truncate max-w-[180px]">{tchr.specialization}</p>
+                        <p className="font-bold text-foreground">{tchr.specialization || 'Subject Educator'}</p>
+                        <p className="text-[10px] text-muted-foreground truncate max-w-[180px]">{tchr.qualification || 'B.Sc. Education'}</p>
                       </td>
                       <td className="py-4 px-4 font-semibold text-primary">
                         {tchr.formTeacherOf || 'None'}
