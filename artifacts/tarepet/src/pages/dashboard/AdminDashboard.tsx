@@ -271,25 +271,27 @@ const TeacherIDCardModal = ({ teacher, onClose }: { teacher: any; onClose: () =>
 };
 
 const WIZARD_STEPS = [
-  { step: 1, label: 'Personal Info',   icon: 'user' },
-  { step: 2, label: 'Academic Info',   icon: 'book' },
-  { step: 3, label: 'Teaching Load',   icon: 'clipboard' },
-  { step: 4, label: 'Employment',      icon: 'briefcase' },
-  { step: 5, label: 'Review & Save',   icon: 'check' },
+  { step: 1, label: 'Personal Details',  sub: 'Name, Email & Photo' },
+  { step: 2, label: 'Academic Details',  sub: 'Specialization & Degrees' },
+  { step: 3, label: 'Teaching Load',     sub: 'Form Teacher & Subjects' },
+  { step: 4, label: 'Employment',        sub: 'Staff ID & Payroll' },
+  { step: 5, label: 'Review & Save',     sub: 'Confirm Profile' },
 ];
 
-const DEPT_OPTIONS = ['Mathematics & STEM', 'Sciences', 'Humanities & Arts', 'Vocational & Technology', 'Languages'];
-const GRADE_OPTIONS = ['JSS1', 'JSS2', 'JSS3', 'SS1 Science', 'SS1 Art', 'SS2 Science', 'SS2 Art', 'SS3 Science', 'SS3 Art'];
+const GRADE_OPTIONS = ['JSS 1', 'JSS 2', 'JSS 3', 'SS 1 Science', 'SS 1 Art', 'SS 2 Science', 'SS 2 Art', 'SS 3 Science', 'SS 3 Art'];
 
 const EMPTY_TEACHER_FORM = {
-  // Step 1 — Personal Info
-  name: '', gender: '', dob: '', phone: '', email: '', address: '',
-  // Step 2 — Academic Info
-  department: '', specialization: '', qualification: '', profileImage: '',
+  // Step 1 — Personal Details
+  name: '', gender: '', dob: '', phone: '', email: '', address: '', profileImage: '',
+  // Step 2 — Academic Details
+  specialization: '', qualification: '',
   // Step 3 — Teaching Load
-  formTeacherOf: '', subjectsAssigned: [{ code: '', name: '', grade: 'JSS1' }],
+  isFormTeacher: 'No', // 'Yes' | 'No'
+  formTeacherClass: 'SS 1 Science',
+  teachingDivision: 'Junior Secondary (JSS 1 - JSS 3)', // 'Junior Secondary (JSS 1 - JSS 3)' | 'Senior Secondary (SS 1 - SS 3)'
+  subjectsAssigned: [{ name: 'Mathematics', grade: 'JSS 1' }],
   // Step 4 — Employment
-  staffId: '', joined: '', status: 'Active', salary: '', salaryGrade: '', bankName: '', accountNumber: '',
+  staffId: '', joined: '', status: 'Active', salary: '', bankName: '', accountNumber: '',
 };
 
 const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSave: (t: any) => void }) => {
@@ -300,7 +302,7 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
 
   const addSubject = () => setForm(prev => ({
     ...prev,
-    subjectsAssigned: [...prev.subjectsAssigned, { code: '', name: '', grade: 'JSS1' }],
+    subjectsAssigned: [...prev.subjectsAssigned, { name: '', grade: 'JSS 1' }],
   }));
   const removeSubject = (i: number) => setForm(prev => ({
     ...prev,
@@ -319,6 +321,10 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
     const lastName = nameParts.slice(1).join(' ') || 'Staff';
     const email = form.email || `${firstName.toLowerCase()}.${lastName.toLowerCase()}@tarepet.com`;
 
+    const formTeacherDisplay = form.isFormTeacher === 'Yes'
+      ? form.formTeacherClass
+      : `No (${form.teachingDivision})`;
+
     const created = {
       id: Date.now(),
       staffId: staffId,
@@ -326,12 +332,12 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
       email: email,
       phone: form.phone,
       gender: form.gender,
-      department: form.department,
+      department: form.isFormTeacher === 'Yes' ? 'Form Teacher' : 'Subject Teacher',
       specialization: form.specialization,
       qualification: form.qualification,
       status: form.status,
       joined: form.joined || new Date().toISOString().split('T')[0],
-      formTeacherOf: form.formTeacherOf || 'None',
+      formTeacherOf: formTeacherDisplay,
       subjectsAssigned: form.subjectsAssigned.filter((s: any) => s.name),
       classesCount: form.subjectsAssigned.filter((s: any) => s.name).length,
       studentsCount: 0,
@@ -341,7 +347,7 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
       attendanceRate: '0%',
       profileImage: form.profileImage || '',
       salary: form.salary,
-      salaryGrade: form.salaryGrade,
+      salaryGrade: 'Standard',
       bankName: form.bankName,
       accountNumber: form.accountNumber,
     };
@@ -355,11 +361,9 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
       phone: form.phone,
       role: 'TEACHER',
       teacher_id: staffId,
-    }).catch(() => {
-      // Backend offline or unreachable — local fallback handles it
-    });
+    }).catch(() => {});
 
-    // 2. Persist locally for offline / fallback authentication & permanent storage
+    // 2. Persist locally
     try {
       const existing = JSON.parse(localStorage.getItem('local_registered_users') || '[]');
       existing.push({
@@ -377,146 +381,136 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
       const perm = JSON.parse(localStorage.getItem('tarepet_permanent_teachers') || '[]');
       perm.unshift(created);
       localStorage.setItem('tarepet_permanent_teachers', JSON.stringify(perm));
-    } catch (e) {
-      // ignore
-    }
+    } catch (e) {}
 
     onSave(created);
   };
 
-  const inputCls = 'w-full border border-border rounded-xl px-4 py-2.5 text-xs text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary';
-  const labelCls = 'text-[10px] font-bold uppercase text-muted-foreground block mb-1';
-
-  const StepIcon = ({ s }: { s: number }) => {
-    const icons: Record<number, React.ReactNode> = {
-      1: <Users className="w-4 h-4" />,
-      2: <BookOpen className="w-4 h-4" />,
-      3: <ClipboardList className="w-4 h-4" />,
-      4: <Briefcase className="w-4 h-4" />,
-      5: <CheckCircle2 className="w-4 h-4" />,
-    };
-    return <>{icons[s]}</>;
-  };
+  const inputCls = 'w-full border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all';
+  const labelCls = 'text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block mb-1.5';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150">
-      <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-2xl flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-2xl w-full max-w-4xl flex flex-col md:flex-row overflow-hidden max-h-[92vh] min-h-[580px]">
 
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-border shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
-              <GraduationCap className="w-5 h-5" />
+        {/* LEFT VERTICAL SIDEBAR STEPPER (DNB Design Pattern) */}
+        <div className="w-full md:w-72 bg-gradient-to-b from-[#ECFDF5] via-[#F4FBF7] to-[#E6F4ED] border-r border-teal-100/60 p-6 flex flex-col justify-between shrink-0">
+          <div>
+            {/* Header Brand */}
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 rounded-2xl bg-teal-600 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-teal-600/20">
+                🎓
+              </div>
+              <div>
+                <h2 className="font-serif font-bold text-sm text-slate-900 leading-tight">Tarepet Montessori</h2>
+                <p className="text-[10px] font-extrabold uppercase tracking-wider text-teal-700">Teacher Registration</p>
+              </div>
             </div>
-            <div>
-              <h3 className="font-bold text-base text-foreground">Register New Teacher</h3>
-              <p className="text-[10px] text-muted-foreground">Step {step} of {WIZARD_STEPS.length} — {WIZARD_STEPS[step - 1].label}</p>
-            </div>
-          </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
 
-        {/* Step Progress Bar */}
-        <div className="px-6 pt-4 pb-2 shrink-0">
-          <div className="flex items-center gap-1">
-            {WIZARD_STEPS.map((s, i) => (
-              <React.Fragment key={s.step}>
-                <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
-                  step === s.step ? 'bg-primary text-white' :
-                  step > s.step ? 'bg-emerald-500/10 text-emerald-600' :
-                  'bg-muted/40 text-muted-foreground'
-                }`}>
-                  <StepIcon s={s.step} />
-                  <span className="hidden sm:inline">{s.label}</span>
-                </div>
-                {i < WIZARD_STEPS.length - 1 && (
-                  <div className={`flex-1 h-0.5 rounded-full transition-all ${step > s.step ? 'bg-emerald-500' : 'bg-border'}`} />
-                )}
-              </React.Fragment>
-            ))}
-          </div>
-        </div>
+            {/* Vertical Stepper */}
+            <div className="space-y-1 relative">
+              {WIZARD_STEPS.map((s, idx) => {
+                const isActive = step === s.step;
+                const isCompleted = step > s.step;
 
-        {/* Form Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-
-          {/* STEP 1 — Personal Info */}
-          {step === 1 && (
-            <div className="space-y-3">
-              <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-2">Personal Information</p>
-              <div>
-                <label className={labelCls}>Full Name & Title (e.g. Mr. John Doe)</label>
-                <input className={inputCls} value={form.name} onChange={e => setF('name', e.target.value)} placeholder="e.g. Mr. Okonkwo Paul" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={labelCls}>Gender</label>
-                  <select className={inputCls} value={form.gender} onChange={e => setF('gender', e.target.value)}>
-                    <option value="">Select gender</option>
-                    <option>Male</option>
-                    <option>Female</option>
-                  </select>
-                </div>
-                <div>
-                  <label className={labelCls}>Date of Birth</label>
-                  <input type="date" className={inputCls} value={form.dob} onChange={e => setF('dob', e.target.value)} />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={labelCls}>Phone Number</label>
-                  <input className={inputCls} value={form.phone} onChange={e => setF('phone', e.target.value)} placeholder="+234 800 000 0000" />
-                </div>
-                <div>
-                  <label className={labelCls}>Email Address</label>
-                  <input type="email" className={inputCls} value={form.email} onChange={e => setF('email', e.target.value)} placeholder="name@tarepet.edu.ng" />
-                </div>
-              </div>
-              <div>
-                <label className={labelCls}>Residential Address</label>
-                <input className={inputCls} value={form.address} onChange={e => setF('address', e.target.value)} placeholder="e.g. 15 Swali Road, Yenagoa, Bayelsa State" />
-              </div>
-              <div>
-                <label className={labelCls}>Teacher Profile Photo</label>
-                <div className="flex items-center gap-4 p-3 bg-muted/20 border border-border rounded-xl">
-                  <div className="w-16 h-16 rounded-xl bg-card border-2 border-border flex items-center justify-center overflow-hidden shrink-0 shadow-sm relative group">
-                    {form.profileImage ? (
-                      <img src={form.profileImage} alt="Teacher Preview" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 font-bold text-lg font-serif">
-                        {form.name ? form.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() : 'TC'}
-                      </div>
+                return (
+                  <div key={s.step} className="relative flex items-start gap-3.5 pb-6 last:pb-0 group">
+                    {/* Connecting Vertical Line */}
+                    {idx < WIZARD_STEPS.length - 1 && (
+                      <div className={`absolute left-4 top-8 bottom-0 w-0.5 transition-colors ${
+                        isCompleted ? 'bg-teal-600' : 'bg-slate-200'
+                      }`} />
                     )}
+
+                    {/* Step Icon Badge */}
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-all z-10 ${
+                      isActive
+                        ? 'bg-teal-600 text-white ring-4 ring-teal-100 shadow-sm'
+                        : isCompleted
+                          ? 'bg-teal-600 text-white'
+                          : 'bg-white text-slate-400 border border-slate-200'
+                    }`}>
+                      {isCompleted ? '✓' : s.step}
+                    </div>
+
+                    {/* Step Text Label */}
+                    <div className="min-w-0 pt-0.5">
+                      <p className={`text-xs font-bold transition-colors ${
+                        isActive ? 'text-teal-900 font-extrabold' : isCompleted ? 'text-slate-800 font-semibold' : 'text-slate-400'
+                      }`}>
+                        {s.label}
+                      </p>
+                      <p className="text-[10px] text-slate-500 font-medium truncate">{s.sub}</p>
+                    </div>
                   </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-teal-200/40 text-[11px] text-teal-800/80 font-medium">
+            Step <span className="font-bold text-teal-900">{step}</span> of 5
+          </div>
+        </div>
+
+        {/* RIGHT MAIN FORM WORKSPACE */}
+        <div className="flex-1 flex flex-col justify-between overflow-hidden bg-white">
+
+          {/* Form Header */}
+          <div className="flex items-center justify-between px-8 py-5 border-b border-slate-100 shrink-0">
+            <div>
+              <h3 className="font-serif font-bold text-xl text-slate-900">{WIZARD_STEPS[step - 1].label}</h3>
+              <p className="text-xs text-slate-500 mt-0.5">{WIZARD_STEPS[step - 1].sub}</p>
+            </div>
+            <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition cursor-pointer">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Form Body Scroll Area */}
+          <div className="flex-1 overflow-y-auto px-8 py-6 space-y-5">
+
+            {/* STEP 1 — Personal Details */}
+            {step === 1 && (
+              <div className="space-y-4">
+
+                {/* Profile Photo Uploader Section */}
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 flex items-center gap-5">
+                  <div className="relative shrink-0">
+                    <div className="w-20 h-20 rounded-2xl bg-white border-2 border-teal-200 shadow-sm flex items-center justify-center overflow-hidden">
+                      {form.profileImage ? (
+                        <img src={form.profileImage} alt="Teacher Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-teal-50 text-teal-700 font-serif font-bold text-xl flex items-center justify-center">
+                          {form.name ? form.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() : 'TC'}
+                        </div>
+                      )}
+                    </div>
+                    <label htmlFor="wizardPhotoUpload" className="absolute -bottom-1 -right-1 w-7 h-7 bg-teal-600 hover:bg-teal-700 text-white rounded-full flex items-center justify-center shadow-md cursor-pointer transition">
+                      <Upload className="w-3.5 h-3.5" />
+                    </label>
+                  </div>
+
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2">
-                      <label htmlFor="wizardTeacherPhotoInput" className="px-3 py-1.5 bg-primary text-white text-[11px] font-bold rounded-lg cursor-pointer hover:bg-primary/90 transition-colors shadow-sm inline-flex items-center gap-1.5">
-                        <Upload className="w-3.5 h-3.5" /> Upload Image
+                      <label htmlFor="wizardPhotoUpload" className="px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl cursor-pointer shadow-xs transition inline-flex items-center gap-1.5">
+                        <Upload className="w-3.5 h-3.5" /> Upload Teacher Photo
                       </label>
                       {form.profileImage && (
-                        <button
-                          type="button"
-                          onClick={() => setF('profileImage', '')}
-                          className="px-2.5 py-1.5 bg-rose-500/10 text-rose-600 text-[11px] font-bold rounded-lg hover:bg-rose-500/20 transition-colors"
-                        >
+                        <button type="button" onClick={() => setF('profileImage', '')} className="px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl transition">
                           Remove
                         </button>
                       )}
                     </div>
                     <input
                       type="file"
-                      id="wizardTeacherPhotoInput"
+                      id="wizardPhotoUpload"
                       accept="image/jpeg,image/png,image/webp,image/svg+xml"
                       className="hidden"
                       onChange={e => {
                         const file = e.target.files?.[0];
                         if (file) {
-                          if (file.size > 5 * 1024 * 1024) {
-                            alert('Image size exceeds 5MB limit.');
-                            return;
-                          }
+                          if (file.size > 5 * 1024 * 1024) { alert('Image size exceeds 5MB'); return; }
                           const reader = new FileReader();
                           reader.onloadend = () => setF('profileImage', reader.result as string);
                           reader.readAsDataURL(file);
@@ -524,211 +518,260 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                       }}
                     />
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-muted-foreground font-semibold">Or enter URL:</span>
+                      <span className="text-[11px] font-semibold text-slate-400">Or Image URL:</span>
                       <input
                         type="url"
-                        className="flex-1 border border-border rounded-lg px-2.5 py-1 text-[11px] text-foreground bg-card focus:outline-none focus:ring-1 focus:ring-primary"
+                        className="flex-1 border border-slate-200 rounded-lg px-2.5 py-1 text-xs bg-white focus:outline-none focus:border-teal-500"
                         value={form.profileImage.startsWith('data:') ? '' : form.profileImage}
                         onChange={e => setF('profileImage', e.target.value)}
                         placeholder="https://example.com/photo.jpg"
                       />
                     </div>
-                    <p className="text-[10px] text-muted-foreground font-medium">
-                      Supported Formats: <span className="font-bold text-foreground">JPEG, PNG, WEBP, SVG</span> (Max: 5MB)
-                    </p>
                   </div>
                 </div>
-              </div>
-            </div>
-          )}
 
-          {/* STEP 2 — Academic Info */}
-          {step === 2 && (
-            <div className="space-y-3">
-              <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-2">Academic Credentials</p>
-              <div>
-                <label className={labelCls}>Department</label>
-                <select className={inputCls} value={form.department} onChange={e => setF('department', e.target.value)}>
-                  <option value="">Select department</option>
-                  {DEPT_OPTIONS.map(d => <option key={d}>{d}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className={labelCls}>Specialization / Subject Area</label>
-                <input className={inputCls} value={form.specialization} onChange={e => setF('specialization', e.target.value)} placeholder="e.g. Pure & Applied Mathematics, STEM" />
-              </div>
-              <div>
-                <label className={labelCls}>Qualifications & Degrees</label>
-                <input className={inputCls} value={form.qualification} onChange={e => setF('qualification', e.target.value)} placeholder="e.g. B.Sc. Ed (Mathematics), M.Sc. Statistics, Ph.D" />
-              </div>
-            </div>
-          )}
+                <div>
+                  <label className={labelCls}>Full Name & Title <span className="text-rose-500">*</span></label>
+                  <input className={inputCls} value={form.name} onChange={e => setF('name', e.target.value)} placeholder="e.g. Mr. Okonkwo Paul" />
+                </div>
 
-          {/* STEP 3 — Teaching Load */}
-          {step === 3 && (
-            <div className="space-y-3">
-              <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-2">Teaching Load & Assignments</p>
-              <div>
-                <label className={labelCls}>Form Teacher Of (Class Register Holder)</label>
-                <select className={inputCls} value={form.formTeacherOf} onChange={e => setF('formTeacherOf', e.target.value)}>
-                  <option value="">None / Not a Form Teacher</option>
-                  {['JSS1 General', 'JSS2 General', 'JSS3 General', 'SS1 Science', 'SS1 Art', 'SS2 Science', 'SS2 Art', 'SS3 Science', 'SS3 Art'].map(c => <option key={c}>{c}</option>)}
-                </select>
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className={labelCls + ' mb-0'}>Subjects Assigned</label>
-                  <button type="button" onClick={addSubject} className="text-[10px] font-bold text-primary flex items-center gap-1 hover:underline">
-                    <Plus className="w-3 h-3" /> Add Subject
-                  </button>
-                </div>
-                <div className="space-y-2">
-                  {form.subjectsAssigned.map((sub: any, i: number) => (
-                    <div key={i} className="grid grid-cols-12 gap-2 items-center">
-                      <input className={inputCls + ' col-span-2'} value={sub.code} onChange={e => updateSubject(i, 'code', e.target.value)} placeholder="Code" />
-                      <input className={inputCls + ' col-span-5'} value={sub.name} onChange={e => updateSubject(i, 'name', e.target.value)} placeholder="Subject Name" />
-                      <select className={inputCls + ' col-span-4'} value={sub.grade} onChange={e => updateSubject(i, 'grade', e.target.value)}>
-                        {GRADE_OPTIONS.map(g => <option key={g}>{g}</option>)}
-                      </select>
-                      <button type="button" onClick={() => removeSubject(i)} className="col-span-1 flex justify-center text-rose-500 hover:text-rose-700">
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 4 — Employment & Payroll */}
-          {step === 4 && (
-            <div className="space-y-3">
-              <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-2">Employment & Payroll Details</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={labelCls}>Staff ID (auto-generated if blank)</label>
-                  <input className={inputCls + ' font-mono'} value={form.staffId} onChange={e => setF('staffId', e.target.value)} placeholder="TMS/TCH/2026/001" />
-                </div>
-                <div>
-                  <label className={labelCls}>Date of Employment</label>
-                  <input type="date" className={inputCls} value={form.joined} onChange={e => setF('joined', e.target.value)} />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={labelCls}>Employment Status</label>
-                  <select className={inputCls} value={form.status} onChange={e => setF('status', e.target.value)}>
-                    <option>Active</option>
-                    <option>On Leave</option>
-                    <option>Inactive</option>
-                  </select>
-                </div>
-                <div>
-                  <label className={labelCls}>Salary Grade Level</label>
-                  <select className={inputCls} value={form.salaryGrade} onChange={e => setF('salaryGrade', e.target.value)}>
-                    <option value="">Select grade</option>
-                    {['GL-07', 'GL-08', 'GL-09', 'GL-10', 'GL-12', 'GL-13', 'GL-14', 'GL-15 (HOD)', 'GL-16 (Principal)'].map(g => <option key={g}>{g}</option>)}
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className={labelCls}>Monthly Gross Salary (₦)</label>
-                <input type="number" className={inputCls} value={form.salary} onChange={e => setF('salary', e.target.value)} placeholder="e.g. 150000" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={labelCls}>Bank Name</label>
-                  <input className={inputCls} value={form.bankName} onChange={e => setF('bankName', e.target.value)} placeholder="e.g. First Bank, GTBank" />
-                </div>
-                <div>
-                  <label className={labelCls}>Bank Account Number</label>
-                  <input className={inputCls} value={form.accountNumber} onChange={e => setF('accountNumber', e.target.value)} placeholder="10-digit account number" maxLength={10} />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 5 — Review & Save */}
-          {step === 5 && (
-            <div className="space-y-4">
-              <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Review Teacher Profile</p>
-              <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-5 space-y-4">
-                {/* Header preview */}
-                <div className="flex items-center gap-4 pb-4 border-b border-border">
-                  <div className="w-14 h-14 rounded-xl bg-emerald-500/10 flex items-center justify-center text-2xl font-bold text-emerald-700 shrink-0">
-                    {form.name?.[0] || '?'}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelCls}>Gender</label>
+                    <select className={inputCls} value={form.gender} onChange={e => setF('gender', e.target.value)}>
+                      <option value="">Select Gender</option>
+                      <option>Male</option>
+                      <option>Female</option>
+                    </select>
                   </div>
                   <div>
-                    <p className="font-bold text-foreground text-sm">{form.name || '—'}</p>
-                    <p className="text-xs text-muted-foreground">{form.specialization || '—'}</p>
-                    <span className={`mt-1 inline-block text-[10px] font-bold px-2 py-0.5 rounded-full border ${form.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 border-amber-500/20'}`}>{form.status}</span>
+                    <label className={labelCls}>Date of Birth</label>
+                    <input type="date" className={inputCls} value={form.dob} onChange={e => setF('dob', e.target.value)} />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs">
-                  {[
-                    ['Staff ID', form.staffId || `TMS/TCH/${new Date().getFullYear()}/AUTO`],
-                    ['Department', form.department || '—'],
-                    ['Gender', form.gender || '—'],
-                    ['Date of Birth', form.dob || '—'],
-                    ['Email', form.email || '—'],
-                    ['Phone', form.phone || '—'],
-                    ['Qualifications', form.qualification || '—'],
-                    ['Form Teacher Of', form.formTeacherOf || 'None'],
-                    ['Date of Employment', form.joined || '—'],
-                    ['Salary Grade', form.salaryGrade || '—'],
-                    ['Monthly Salary', form.salary ? `₦${Number(form.salary).toLocaleString()}` : '—'],
-                    ['Bank / Account', form.bankName ? `${form.bankName} — ${form.accountNumber}` : '—'],
-                    ['Address', form.address || '—'],
-                  ].map(([k, v]) => (
-                    <div key={k} className="py-1 border-b border-border/40">
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{k}</p>
-                      <p className="font-semibold text-foreground truncate">{v}</p>
-                    </div>
-                  ))}
-                </div>
-                {form.subjectsAssigned.filter((s: any) => s.name).length > 0 && (
-                  <div className="pt-2">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Subjects Assigned ({form.subjectsAssigned.filter((s: any) => s.name).length})</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {form.subjectsAssigned.filter((s: any) => s.name).map((s: any, i: number) => (
-                        <span key={i} className="px-2 py-0.5 rounded-lg bg-primary/10 text-primary text-[10px] font-bold border border-primary/20">
-                          {s.code && `[${s.code}] `}{s.name} — {s.grade}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
 
-        {/* Footer Navigation */}
-        <div className="px-6 py-4 border-t border-border flex items-center justify-between shrink-0">
-          {step > 1 ? (
-            <button onClick={() => setStep(s => s - 1)} className="px-4 py-2 border border-border rounded-xl text-xs font-bold hover:bg-muted transition-colors flex items-center gap-1.5">
-              <ChevronLeft className="w-3.5 h-3.5" /> Back
-            </button>
-          ) : <div />}
-          <div className="flex items-center gap-2">
-            {step < 5 ? (
-              <button
-                onClick={() => setStep(s => s + 1)}
-                disabled={step === 1 && !form.name}
-                className="px-5 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors flex items-center gap-1.5 disabled:opacity-50"
-              >
-                Next Step <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            ) : (
-              <button
-                onClick={handleSave}
-                disabled={!form.name || !form.email || !form.department}
-                className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition-colors flex items-center gap-2 disabled:opacity-50 shadow-sm"
-              >
-                <CheckCircle2 className="w-4 h-4" /> Save & Register Teacher
-              </button>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelCls}>Phone Number</label>
+                    <input className={inputCls} value={form.phone} onChange={e => setF('phone', e.target.value)} placeholder="+234 800 000 0000" />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Email Address <span className="text-rose-500">*</span></label>
+                    <input type="email" className={inputCls} value={form.email} onChange={e => setF('email', e.target.value)} placeholder="name@tarepet.edu.ng" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className={labelCls}>Residential Address</label>
+                  <input className={inputCls} value={form.address} onChange={e => setF('address', e.target.value)} placeholder="e.g. 15 Swali Road, Yenagoa, Bayelsa State" />
+                </div>
+              </div>
             )}
+
+            {/* STEP 2 — Academic Details */}
+            {step === 2 && (
+              <div className="space-y-4">
+                <div>
+                  <label className={labelCls}>Specialization / Core Subject Area</label>
+                  <input className={inputCls} value={form.specialization} onChange={e => setF('specialization', e.target.value)} placeholder="e.g. Pure & Applied Mathematics, Physics & STEM" />
+                </div>
+                <div>
+                  <label className={labelCls}>Academic Qualifications & Degrees</label>
+                  <input className={inputCls} value={form.qualification} onChange={e => setF('qualification', e.target.value)} placeholder="e.g. B.Sc. Ed (Mathematics), M.Sc. Statistics, TRCN Certified" />
+                </div>
+              </div>
+            )}
+
+            {/* STEP 3 — Teaching Load & Duty */}
+            {step === 3 && (
+              <div className="space-y-5">
+                {/* Form Teacher Radio Toggle */}
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-3">
+                  <label className={labelCls}>Form Teacher Assignment (Class Register Holder)</label>
+                  <div className="flex items-center gap-6">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-800">
+                      <input
+                        type="radio"
+                        name="isFormTeacher"
+                        value="Yes"
+                        checked={form.isFormTeacher === 'Yes'}
+                        onChange={e => setF('isFormTeacher', e.target.value)}
+                        className="w-4 h-4 text-teal-600 focus:ring-teal-500"
+                      />
+                      <span>🔘 Yes, Form Teacher</span>
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-800">
+                      <input
+                        type="radio"
+                        name="isFormTeacher"
+                        value="No"
+                        checked={form.isFormTeacher === 'No'}
+                        onChange={e => setF('isFormTeacher', e.target.value)}
+                        className="w-4 h-4 text-teal-600 focus:ring-teal-500"
+                      />
+                      <span>🔘 No, Subject Teacher Only</span>
+                    </label>
+                  </div>
+
+                  {/* Conditional selection */}
+                  {form.isFormTeacher === 'Yes' ? (
+                    <div className="pt-2 animate-in fade-in">
+                      <label className={labelCls}>Select Specific Form Class</label>
+                      <select className={inputCls} value={form.formTeacherClass} onChange={e => setF('formTeacherClass', e.target.value)}>
+                        {GRADE_OPTIONS.map(c => <option key={c}>{c}</option>)}
+                      </select>
+                    </div>
+                  ) : (
+                    <div className="pt-2 animate-in fade-in">
+                      <label className={labelCls}>Teaching Division Level</label>
+                      <select className={inputCls} value={form.teachingDivision} onChange={e => setF('teachingDivision', e.target.value)}>
+                        <option>Junior Secondary (JSS 1 - JSS 3)</option>
+                        <option>Senior Secondary (SS 1 - SS 3)</option>
+                        <option>Both Junior & Senior Secondary</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+
+                {/* Subjects List (No Code Field!) */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className={labelCls + ' mb-0'}>Subjects Assigned</label>
+                    <button type="button" onClick={addSubject} className="text-xs font-bold text-teal-700 flex items-center gap-1 hover:underline cursor-pointer">
+                      <Plus className="w-3.5 h-3.5" /> Add Subject
+                    </button>
+                  </div>
+                  <div className="space-y-2.5">
+                    {form.subjectsAssigned.map((sub: any, i: number) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <input className={inputCls + ' flex-1'} value={sub.name} onChange={e => updateSubject(i, 'name', e.target.value)} placeholder="Subject Name (e.g. Mathematics)" />
+                        <select className={inputCls + ' w-44'} value={sub.grade} onChange={e => updateSubject(i, 'grade', e.target.value)}>
+                          {GRADE_OPTIONS.map(g => <option key={g}>{g}</option>)}
+                        </select>
+                        <button type="button" onClick={() => removeSubject(i)} className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center hover:bg-rose-100 transition shrink-0 cursor-pointer">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 4 — Employment & Payroll */}
+            {step === 4 && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelCls}>Staff ID (Auto-generated if blank)</label>
+                    <input className={inputCls + ' font-mono'} value={form.staffId} onChange={e => setF('staffId', e.target.value)} placeholder="TMS/TCH/0001" />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Date of Employment</label>
+                    <input type="date" className={inputCls} value={form.joined} onChange={e => setF('joined', e.target.value)} />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelCls}>Employment Status</label>
+                    <select className={inputCls} value={form.status} onChange={e => setF('status', e.target.value)}>
+                      <option>Active</option>
+                      <option>On Leave</option>
+                      <option>Inactive</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelCls}>Monthly Gross Salary (₦)</label>
+                    <input type="number" className={inputCls} value={form.salary} onChange={e => setF('salary', e.target.value)} placeholder="e.g. 180000" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelCls}>Bank Name</label>
+                    <input className={inputCls} value={form.bankName} onChange={e => setF('bankName', e.target.value)} placeholder="e.g. First Bank, GTBank" />
+                  </div>
+                  <div>
+                    <label className={labelCls}>Bank Account Number</label>
+                    <input className={inputCls} value={form.accountNumber} onChange={e => setF('accountNumber', e.target.value)} placeholder="10-digit NUBAN account number" maxLength={10} />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 5 — Review & Save */}
+            {step === 5 && (
+              <div className="space-y-4">
+                <div className="bg-teal-50/60 border border-teal-200/80 rounded-2xl p-5 space-y-4">
+                  <div className="flex items-center gap-4 pb-4 border-b border-teal-200/60">
+                    <div className="w-14 h-14 rounded-2xl bg-teal-600 text-white flex items-center justify-center text-xl font-bold font-serif shadow-sm">
+                      {form.name?.[0] || '?'}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-900 text-base">{form.name || '—'}</h4>
+                      <p className="text-xs text-teal-800">{form.specialization || 'General Subject Teacher'}</p>
+                      <span className="mt-1 inline-block text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-800 border border-teal-300">
+                        {form.status}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-2.5 text-xs">
+                    {[
+                      ['Staff ID', form.staffId || 'TMS/TCH/AUTO'],
+                      ['Form Teacher', form.isFormTeacher === 'Yes' ? form.formTeacherClass : `No (${form.teachingDivision})`],
+                      ['Gender', form.gender || '—'],
+                      ['Date of Birth', form.dob || '—'],
+                      ['Email', form.email || '—'],
+                      ['Phone', form.phone || '—'],
+                      ['Qualifications', form.qualification || '—'],
+                      ['Joined Date', form.joined || '—'],
+                      ['Monthly Salary', form.salary ? `₦${Number(form.salary).toLocaleString()}` : '—'],
+                      ['Bank Account', form.bankName ? `${form.bankName} — ${form.accountNumber}` : '—'],
+                    ].map(([k, v]) => (
+                      <div key={k} className="py-1 border-b border-teal-200/40">
+                        <p className="text-[9px] text-slate-400 uppercase font-extrabold">{k}</p>
+                        <p className="font-bold text-slate-800 truncate">{v}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
           </div>
+
+          {/* Footer Controls */}
+          <div className="px-8 py-4 border-t border-slate-100 flex items-center justify-between bg-white shrink-0">
+            {step > 1 ? (
+              <button onClick={() => setStep(s => s - 1)} className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer">
+                Back
+              </button>
+            ) : <div />}
+
+            <div>
+              {step < 5 ? (
+                <button
+                  onClick={() => setStep(s => s + 1)}
+                  disabled={step === 1 && (!form.name || !form.email)}
+                  className="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold shadow-md transition disabled:opacity-50 cursor-pointer"
+                >
+                  Next Step →
+                </button>
+              ) : (
+                <button
+                  onClick={handleSave}
+                  disabled={!form.name || !form.email}
+                  className="px-7 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold shadow-md transition flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+                >
+                  <CheckCircle2 className="w-4 h-4" /> Complete Registration
+                </button>
+              )}
+            </div>
+          </div>
+
         </div>
 
       </div>
