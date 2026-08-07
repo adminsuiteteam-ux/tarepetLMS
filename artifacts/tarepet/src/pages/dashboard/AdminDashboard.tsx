@@ -1437,7 +1437,15 @@ export default function AdminDashboard() {
   const [awardHouse, setAwardHouse] = useState<any>(null);
   const [auditSearch, setAuditSearch] = useState('');
   const [usersList, setUsersList] = useState(MOCK_USERS);
-  const [studentsList, setStudentsList] = useState(MOCK_STUDENTS);
+  const [studentsList, setStudentsList] = useState<any[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('tarepet_students_list');
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return MOCK_STUDENTS;
+  });
   const [showAddStudentModal, setShowAddStudentModal] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
   const [newStudentForm, setNewStudentForm] = useState({
@@ -1618,6 +1626,21 @@ export default function AdminDashboard() {
               profileImage: '',
             }));
 
+          const liveStudents = users
+            .filter((u: any) => u.role === 'STUDENT')
+            .map((u: any) => ({
+              id: u.id,
+              studentId: u.profile?.student_id || u.student_id || `TP-STU-${String(u.id).padStart(3, '0')}`,
+              name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
+              email: u.email,
+              phone: u.phone || '+234 800 000 0000',
+              gender: 'Male',
+              grade: u.profile?.grade_level || 'JSS1',
+              stream: 'General',
+              status: u.is_active ? 'Active' : 'Inactive',
+              joined: u.date_joined ? u.date_joined.split('T')[0] : '2026-01-01',
+            }));
+
           if (liveTeachers.length > 0) {
             setTeachersList(prev => {
               const combined = [...liveTeachers];
@@ -1627,6 +1650,19 @@ export default function AdminDashboard() {
                 }
               });
               try { localStorage.setItem('tarepet_teachers_list', JSON.stringify(combined)); } catch (e) {}
+              return combined;
+            });
+          }
+
+          if (liveStudents.length > 0) {
+            setStudentsList(prev => {
+              const combined = [...liveStudents];
+              prev.forEach(s => {
+                if (!combined.some(c => c.email?.toLowerCase() === s.email?.toLowerCase())) {
+                  combined.push(s);
+                }
+              });
+              try { localStorage.setItem('tarepet_students_list', JSON.stringify(combined)); } catch (e) {}
               return combined;
             });
           }
