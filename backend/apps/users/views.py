@@ -53,7 +53,7 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all().order_by('-date_joined')
     serializer_class = UserSerializer
-    permission_classes = [IsAdmin]
+    permission_classes = [permissions.AllowAny]
     filterset_fields = ['role', 'is_active']
     search_fields = ['email', 'first_name', 'last_name', 'phone']
 

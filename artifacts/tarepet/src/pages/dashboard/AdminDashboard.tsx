@@ -359,7 +359,7 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
       // Backend offline or unreachable — local fallback handles it
     });
 
-    // 2. Persist locally for offline / fallback authentication
+    // 2. Persist locally for offline / fallback authentication & permanent storage
     try {
       const existing = JSON.parse(localStorage.getItem('local_registered_users') || '[]');
       existing.push({
@@ -373,6 +373,10 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
         profileImage: form.profileImage || '',
       });
       localStorage.setItem('local_registered_users', JSON.stringify(existing));
+
+      const perm = JSON.parse(localStorage.getItem('tarepet_permanent_teachers') || '[]');
+      perm.unshift(created);
+      localStorage.setItem('tarepet_permanent_teachers', JSON.stringify(perm));
     } catch (e) {
       // ignore
     }
@@ -1587,8 +1591,38 @@ export default function AdminDashboard() {
   const [teachersList, setTeachersList] = useState<any[]>(() => {
     if (typeof window !== 'undefined') {
       try {
-        const saved = localStorage.getItem('tarepet_teachers_list');
-        if (saved) return JSON.parse(saved);
+        const perm = JSON.parse(localStorage.getItem('tarepet_permanent_teachers') || '[]');
+        const saved = JSON.parse(localStorage.getItem('tarepet_teachers_list') || '[]');
+        const regUsers = JSON.parse(localStorage.getItem('local_registered_users') || '[]');
+        
+        const regTeachers = regUsers.filter((u: any) => u.role === 'TEACHER').map((u: any) => ({
+          id: Date.now(),
+          staffId: u.staffId || u.teacher_id,
+          name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
+          email: u.email,
+          phone: u.phone || '+234 800 000 0000',
+          gender: 'Male',
+          department: 'Mathematics & STEM',
+          specialization: 'General Education',
+          qualification: 'B.Sc. Education',
+          status: 'Active',
+          joined: '2026-01-01',
+          formTeacherOf: 'None',
+          subjectsAssigned: [],
+          classesCount: 1,
+          studentsCount: 30,
+          address: 'Tarepet School Campus',
+          dob: '1990-01-01',
+          cbtExamsCount: 0,
+          attendanceRate: '100%',
+          profileImage: u.profileImage || '',
+        }));
+
+        const combined = [...perm, ...saved, ...regTeachers];
+        const unique = combined.filter((t, index, self) =>
+          t.email && self.findIndex(s => s.email?.toLowerCase() === t.email?.toLowerCase()) === index
+        );
+        if (unique.length > 0) return unique;
       } catch (e) {}
     }
     return MOCK_TEACHERS;
