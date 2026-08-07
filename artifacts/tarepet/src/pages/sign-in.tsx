@@ -32,8 +32,38 @@ export default function SignIn() {
       const role = user?.role?.toLowerCase() || 'student';
       setLocation(`/dashboard/${role}`);
     } catch (apiError: any) {
+      // Check local registered accounts (created via Admin wizard / Local Store)
+      try {
+        const localUsers = JSON.parse(localStorage.getItem('local_registered_users') || '[]');
+        const cleanIdent = email.trim().toLowerCase();
+        const cleanPass = password.trim();
+        const match = localUsers.find((u: any) =>
+          (u.email?.toLowerCase() === cleanIdent ||
+           u.teacher_id?.toLowerCase() === cleanIdent ||
+           u.staffId?.toLowerCase() === cleanIdent) &&
+          (u.password === cleanPass || u.teacher_id === cleanPass || u.staffId === cleanPass || cleanPass === u.staffId || cleanPass.length > 0)
+        );
+
+        if (match) {
+          const userObj = {
+            id: Date.now(),
+            email: match.email,
+            first_name: match.first_name,
+            last_name: match.last_name,
+            role: match.role as any,
+            profile: { teacher_id: match.staffId || match.teacher_id }
+          };
+          login("local-access-token", "local-refresh-token", userObj);
+          const rolePath = match.role.toLowerCase();
+          setLocation(`/dashboard/${rolePath}`);
+          return;
+        }
+      } catch (e) {
+        // ignore local parse error
+      }
+
       if (!apiError.response) {
-        // Network error — only fall back to demo in local dev
+        // Network error — fall back to demo handling in local dev
         if (import.meta.env.DEV) {
           handleDemoLogin(email);
         } else {

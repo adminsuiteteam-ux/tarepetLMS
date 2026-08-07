@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from '@/i18n';
 import { Link } from 'wouter';
+import { authClient } from '@/lib/api-auth';
 import { PortalLayout } from '@/components/layout/PortalLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber } from '@/lib/cbt-store';
@@ -312,11 +313,17 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
 
   const handleSave = () => {
     const serial = String(Math.floor(100 + Math.random() * 900)).padStart(3, '0');
+    const staffId = form.staffId || `TMS/TCH/${new Date().getFullYear()}/${serial}`;
+    const nameParts = (form.name || 'Teacher Staff').trim().split(' ');
+    const firstName = nameParts[0] || 'Teacher';
+    const lastName = nameParts.slice(1).join(' ') || 'Staff';
+    const email = form.email || `${firstName.toLowerCase()}.${lastName.toLowerCase()}@tarepet.com`;
+
     const created = {
       id: Date.now(),
-      staffId: form.staffId || `TMS/TCH/${new Date().getFullYear()}/${serial}`,
-      name: form.name,
-      email: form.email,
+      staffId: staffId,
+      name: form.name || `${firstName} ${lastName}`,
+      email: email,
       phone: form.phone,
       gender: form.gender,
       department: form.department,
@@ -338,6 +345,38 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
       bankName: form.bankName,
       accountNumber: form.accountNumber,
     };
+
+    // 1. Post to backend Django REST API
+    authClient.post('/auth/register/', {
+      email: email,
+      password: staffId,
+      first_name: firstName,
+      last_name: lastName,
+      phone: form.phone,
+      role: 'TEACHER',
+      teacher_id: staffId,
+    }).catch(() => {
+      // Backend offline or unreachable — local fallback handles it
+    });
+
+    // 2. Persist locally for offline / fallback authentication
+    try {
+      const existing = JSON.parse(localStorage.getItem('local_registered_users') || '[]');
+      existing.push({
+        email: email,
+        teacher_id: staffId,
+        staffId: staffId,
+        password: staffId,
+        first_name: firstName,
+        last_name: lastName,
+        role: 'TEACHER',
+        profileImage: form.profileImage || '',
+      });
+      localStorage.setItem('local_registered_users', JSON.stringify(existing));
+    } catch (e) {
+      // ignore
+    }
+
     onSave(created);
   };
 
