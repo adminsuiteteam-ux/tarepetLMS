@@ -189,10 +189,19 @@ export default function TeacherDashboard() {
     setAddStudentForm({ name: '', email: '', grade: 'SS1', stream: 'Science', parentName: '', parentPhone: '' });
   };
 
-  const filteredRoster = roster.filter(s => 
-    s.name.toLowerCase().includes(studentSearch.toLowerCase()) || 
-    s.code.toLowerCase().includes(studentSearch.toLowerCase())
-  );
+  const filteredRoster = roster.filter(s => {
+    const q = studentSearch.toLowerCase();
+    const matchSearch = !q || s.name.toLowerCase().includes(q) || s.code.toLowerCase().includes(q);
+    
+    // Form Teachers are strictly restricted to their assigned form class only
+    if (formClass) {
+      const fcClean = formClass.toLowerCase().replace(/\s+/g, '');
+      const sGradeClean = (s.grade || '').toLowerCase().replace(/\s+/g, '');
+      const matchClass = sGradeClean.includes(fcClean) || fcClean.includes(sGradeClean);
+      return matchSearch && matchClass;
+    }
+    return matchSearch;
+  });
 
   const renderSection = () => {
     // =========================================================
@@ -494,6 +503,24 @@ export default function TeacherDashboard() {
             </button>
           </div>
         </div>
+
+        {/* Form Teacher Assigned Class Banner */}
+        {formClass && (
+          <div className="bg-emerald-500/10 border border-emerald-200 rounded-2xl p-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+                🎓
+              </div>
+              <div>
+                <h4 className="font-bold text-sm text-emerald-950">Assigned Form Class: <span className="text-emerald-700 font-mono font-bold">{formClass}</span></h4>
+                <p className="text-xs text-emerald-800/80">You are the designated Form Teacher for {formClass}. Student roster and daily attendance are restricted strictly to your assigned class.</p>
+              </div>
+            </div>
+            <span className="text-[10px] font-extrabold uppercase px-3 py-1 bg-emerald-600 text-white rounded-full shadow-xs whitespace-nowrap">
+              Form Register
+            </span>
+          </div>
+        )}
 
         {/* Sub-tab Switcher */}
         <div className="flex border-b border-border gap-2">
