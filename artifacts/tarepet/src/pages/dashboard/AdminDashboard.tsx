@@ -1121,18 +1121,19 @@ const ExamPreviewModal = ({ exam, onClose }: { exam: any; onClose: () => void })
 const CreateSubjectModal = ({ onClose, onCreated, defaultClass, defaultStream }: { onClose: () => void; onCreated: (sub: any) => void; defaultClass?: string; defaultStream?: string }) => {
   const { t } = useTranslation();
   const [form, setForm] = useState({
-    code: 'BIO-201',
-    title: 'Advanced Biology II',
-    teacher: 'Mr. Okonkwo Paul',
-    grade: defaultClass || 'SS2',
-    stream: defaultStream || 'Science',
-    category: 'STEM',
-    enrolled: 25
+    code: '',
+    title: '',
+    teacher: '',
+    grade: defaultClass || 'JSS1',
+    stream: defaultStream || 'General',
+    category: 'General',
+    enrolled: 0
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onCreated(form);
+    const autoCode = form.title.trim().slice(0, 3).toUpperCase() || 'SUB';
+    onCreated({ ...form, code: autoCode });
   };
 
   return (
@@ -1146,18 +1147,13 @@ const CreateSubjectModal = ({ onClose, onCreated, defaultClass, defaultStream }:
         </div>
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
           <div>
-            <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('addSubject.codeLabel')}</label>
-            <input type="text" value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} required
-              className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
-          </div>
-          <div>
             <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('addSubject.nameLabel')}</label>
-            <input type="text" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required
+            <input type="text" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="e.g. Mathematics" required
               className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
           <div>
             <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('addSubject.instructorLabel')}</label>
-            <input type="text" value={form.teacher} onChange={e => setForm({ ...form, teacher: e.target.value })} required
+            <input type="text" value={form.teacher} onChange={e => setForm({ ...form, teacher: e.target.value })} placeholder="e.g. Mr. Okonkwo Paul" required
               className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
           <div className="grid grid-cols-2 gap-4">
