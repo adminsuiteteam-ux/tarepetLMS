@@ -1439,6 +1439,26 @@ const CreateUserForTypeModal = ({
   );
 };
 
+// ── Cache Buster ─────────────────────────────────────────────
+// Increment this version string on every deploy to wipe stale localStorage data.
+const APP_DATA_VERSION = 'v2.0.0';
+const STALE_CACHE_KEYS = [
+  'tarepet_students_list',
+  'tarepet_teachers_list',
+  'tarepet_permanent_teachers',
+  'local_registered_users',
+  'tarepet_class_marksheet',
+];
+function bustStaleCache() {
+  if (typeof window === 'undefined') return;
+  const stored = localStorage.getItem('tarepet_data_version');
+  if (stored !== APP_DATA_VERSION) {
+    STALE_CACHE_KEYS.forEach(key => localStorage.removeItem(key));
+    localStorage.setItem('tarepet_data_version', APP_DATA_VERSION);
+  }
+}
+bustStaleCache();
+
 // ── Main Component ───────────────────────────────────────────
 export default function AdminDashboard() {
   const { t } = useTranslation();
@@ -1471,15 +1491,7 @@ export default function AdminDashboard() {
   const [awardHouse, setAwardHouse] = useState<any>(null);
   const [auditSearch, setAuditSearch] = useState('');
   const [usersList, setUsersList] = useState(MOCK_USERS);
-  const [studentsList, setStudentsList] = useState<any[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('tarepet_students_list');
-        if (saved) return JSON.parse(saved);
-      } catch (e) {}
-    }
-    return MOCK_STUDENTS;
-  });
+  const [studentsList, setStudentsList] = useState<any[]>([]);
   const [showAddStudentModal, setShowAddStudentModal] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
   const [newStudentForm, setNewStudentForm] = useState({
@@ -1617,46 +1629,8 @@ export default function AdminDashboard() {
   const [incomeForm, setIncomeForm] = useState({ description: '', category: 'School Fees', amount: '', status: 'RECEIVED' });
   const [financeSaveAlert, setFinanceSaveAlert] = useState('');
 
-  // Teacher management state
-  const [teachersList, setTeachersList] = useState<any[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const perm = JSON.parse(localStorage.getItem('tarepet_permanent_teachers') || '[]');
-        const saved = JSON.parse(localStorage.getItem('tarepet_teachers_list') || '[]');
-        const regUsers = JSON.parse(localStorage.getItem('local_registered_users') || '[]');
-        
-        const regTeachers = regUsers.filter((u: any) => u.role === 'TEACHER').map((u: any) => ({
-          id: Date.now(),
-          staffId: u.staffId || u.teacher_id,
-          name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
-          email: u.email,
-          phone: u.phone || '+234 800 000 0000',
-          gender: 'Male',
-          department: 'Mathematics & STEM',
-          specialization: 'General Education',
-          qualification: 'B.Sc. Education',
-          status: 'Active',
-          joined: '2026-01-01',
-          formTeacherOf: 'None',
-          subjectsAssigned: [],
-          classesCount: 1,
-          studentsCount: 30,
-          address: 'Tarepet School Campus',
-          dob: '1990-01-01',
-          cbtExamsCount: 0,
-          attendanceRate: '100%',
-          profileImage: u.profileImage || '',
-        }));
-
-        const combined = [...perm, ...saved, ...regTeachers];
-        const unique = combined.filter((t, index, self) =>
-          t.email && self.findIndex(s => s.email?.toLowerCase() === t.email?.toLowerCase()) === index
-        );
-        if (unique.length > 0) return unique;
-      } catch (e) {}
-    }
-    return MOCK_TEACHERS;
-  });
+  // Teacher management state — always starts empty; populated from live backend API
+  const [teachersList, setTeachersList] = useState<any[]>([]);
 
   // Sync teachers & users from live Django REST API backend
   React.useEffect(() => {
@@ -1986,6 +1960,17 @@ export default function AdminDashboard() {
       const presentAttCount = Object.values(attendanceMap).filter(v => v === 'PRESENT').length;
       const calculatedAttendancePercent = totalAttCount > 0 ? Math.round((presentAttCount / totalAttCount) * 100) : 0;
 
+      // Count only class levels that actually have enrolled students
+      const activeClassesCount = STUDENT_CLASSES.filter(cls => {
+        if (cls.hasStreams) {
+          return ((cls as any).sciCount || 0) + ((cls as any).artCount || 0) > 0;
+        }
+        return (cls.totalCount || 0) > 0;
+      }).length;
+
+      const hasPerformanceData = classPerformanceData.some(d => d.score > 0);
+      const hasAttendanceData = totalAttCount > 0;
+
       const weeklyAttendanceData = [
         { day: 'Mon', attendance: calculatedAttendancePercent },
         { day: 'Tue', attendance: calculatedAttendancePercent },
@@ -2059,8 +2044,8 @@ export default function AdminDashboard() {
             <div className="bg-card p-5 rounded-2xl border border-border shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
               <div className="space-y-1">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('dashboard.classes')}</p>
-                <h3 className="text-3xl font-bold text-foreground">{STUDENT_CLASSES.length}</h3>
-                <p className="text-[11px] text-muted-foreground font-medium">Academic Levels</p>
+                <h3 className="text-3xl font-bold text-foreground">{activeClassesCount}</h3>
+                <p className="text-[11px] text-muted-foreground font-medium">Active class levels</p>
               </div>
               <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
                 <School className="w-6 h-6" />
@@ -2094,18 +2079,26 @@ export default function AdminDashboard() {
                 </span>
               </div>
               <div className="h-64 w-full pt-2">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={classPerformanceData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                    <XAxis dataKey="class" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
-                    <YAxis tickLine={false} axisLine={false} domain={[0, 100]} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
-                    <Tooltip
-                      contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', fontSize: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                      formatter={(val: any) => [`${val}%`, 'Average Score']}
-                    />
-                    <Bar dataKey="score" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} barSize={36} />
-                  </BarChart>
-                </ResponsiveContainer>
+                {hasPerformanceData ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={classPerformanceData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                      <XAxis dataKey="class" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
+                      <YAxis tickLine={false} axisLine={false} domain={[0, 100]} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', fontSize: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                        formatter={(val: any) => [`${val}%`, 'Average Score']}
+                      />
+                      <Bar dataKey="score" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} barSize={36} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                    <BarChart2 className="w-10 h-10 opacity-20" />
+                    <p className="text-xs font-medium">No results uploaded yet</p>
+                    <p className="text-[10px] opacity-60">Upload student scores to see class performance</p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -2121,20 +2114,29 @@ export default function AdminDashboard() {
                 </span>
               </div>
               <div className="h-64 w-full pt-2">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={weeklyAttendanceData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                    <XAxis dataKey="day" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
-                    <YAxis tickLine={false} axisLine={false} domain={[0, 100]} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
-                    <Tooltip
-                      contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', fontSize: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                      formatter={(val: any) => [`${val}%`, 'Attendance']}
-                    />
-                    <Line type="monotone" dataKey="attendance" stroke="#0F8A3D" strokeWidth={3} dot={{ r: 5, fill: '#0F8A3D', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 7 }} />
-                  </LineChart>
-                </ResponsiveContainer>
+                {hasAttendanceData ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={weeklyAttendanceData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                      <XAxis dataKey="day" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
+                      <YAxis tickLine={false} axisLine={false} domain={[80, 100]} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', fontSize: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                        formatter={(val: any) => [`${val}%`, 'Attendance']}
+                      />
+                      <Line type="monotone" dataKey="attendance" stroke="hsl(var(--secondary))" strokeWidth={2.5} dot={{ r: 4, fill: 'hsl(var(--secondary))' }} activeDot={{ r: 6 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                    <CalendarCheck className="w-10 h-10 opacity-20" />
+                    <p className="text-xs font-medium">No attendance recorded yet</p>
+                    <p className="text-[10px] opacity-60">Mark student attendance to see weekly trends</p>
+                  </div>
+                )}
               </div>
             </div>
+
           </div>
 
           {/* Bottom Grid: Quick Actions, Recent Activities & Upcoming Events */}
