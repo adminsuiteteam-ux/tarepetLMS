@@ -11,6 +11,7 @@ export interface CBTQuestion {
   correct_option: string;
   points: number;
   explanation?: string;
+  image_url?: string;
 }
 
 export interface CBTExam {

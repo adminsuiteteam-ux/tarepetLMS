@@ -67,6 +67,33 @@ export default function StudentCBTExam() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [flaggedQuestions, setFlaggedQuestions] = useState<Record<number, boolean>>({});
+  const [showCalculator, setShowCalculator] = useState(false);
+  const [calcInput, setCalcInput] = useState('0');
+  const [warningCount, setWarningCount] = useState(0);
+  const [showWarningModal, setShowWarningModal] = useState(false);
+
+  useEffect(() => {
+    if (phase !== 'exam') return;
+    const handleBlur = () => {
+      setWarningCount(prev => prev + 1);
+      setShowWarningModal(true);
+    };
+    const handleVisibility = () => {
+      if (document.hidden) handleBlur();
+    };
+    window.addEventListener('blur', handleBlur);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      window.removeEventListener('blur', handleBlur);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [phase]);
+
+  const toggleFlag = (questionId: number) => {
+    setFlaggedQuestions(prev => ({ ...prev, [questionId]: !prev[questionId] }));
+  };
+
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const submittedRef = useRef(false);
 
@@ -100,12 +127,27 @@ export default function StudentCBTExam() {
       });
     }, 1000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [phase]);
+  }, [phase, timeLeft]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const handleCalcBtn = (val: string) => {
+    if (val === 'C') setCalcInput('0');
+    else if (val === '=') {
+      try {
+        const sanitized = calcInput.replace(/[^0-9+\-*/.]/g, '');
+        const res = Function(`"use strict"; return (${sanitized})`)();
+        setCalcInput(String(res));
+      } catch (e) {
+        setCalcInput('Error');
+      }
+    } else {
+      setCalcInput(prev => (prev === '0' || prev === 'Error' ? val : prev + val));
+    }
   };
 
   const handleStartExam = async () => {
@@ -337,18 +379,89 @@ export default function StudentCBTExam() {
               <span>{formatTime(timeLeft)}</span>
             </div>
 
-            <button
-              onClick={() => { if (confirm('Are you sure you want to submit your exam now?')) handleSubmit(false); }}
-              disabled={isSubmitting}
-              className="bg-emerald-400 hover:bg-emerald-300 text-emerald-950 font-bold px-3.5 py-2 rounded-xl text-xs transition shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-            >
-              <Send className="w-3.5 h-3.5" /> Submit Exam
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowCalculator(prev => !prev)}
+                className="bg-teal-700 hover:bg-teal-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg border border-teal-500/50 shadow-xs flex items-center gap-1.5 transition cursor-pointer"
+                title="Toggle Calculator"
+              >
+                🧮 Calculator
+              </button>
+              {warningCount > 0 && (
+                <span className="bg-amber-500/20 text-amber-300 text-[11px] font-bold px-2.5 py-1 rounded-lg border border-amber-400/30 flex items-center gap-1">
+                  <AlertTriangle className="w-3.5 h-3.5" /> Warnings: {warningCount}
+                </span>
+              )}
+              <button
+                onClick={() => { if (confirm('Are you sure you want to submit your exam now?')) handleSubmit(false); }}
+                disabled={isSubmitting}
+                className="bg-emerald-400 hover:bg-emerald-300 text-emerald-950 font-bold px-3.5 py-2 rounded-xl text-xs transition shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                <Send className="w-3.5 h-3.5" /> Submit Exam
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Main Interface Layout: Left Green Sidebar + Main Canvas */}
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex overflow-hidden relative">
+
+          {/* Floating Scientific / Standard Calculator Widget */}
+          {showCalculator && (
+            <div className="absolute right-6 top-6 z-40 bg-slate-900 text-white p-4 rounded-2xl shadow-2xl border border-slate-700 w-64 animate-in fade-in duration-150">
+              <div className="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
+                <span className="text-xs font-bold text-teal-400 flex items-center gap-1.5">🧮 Exam Calculator</span>
+                <button onClick={() => setShowCalculator(false)} className="text-slate-400 hover:text-white text-xs font-bold px-1.5 py-0.5 rounded">✕</button>
+              </div>
+              <div className="bg-slate-950 p-3 rounded-xl mb-3 text-right font-mono font-bold text-xl text-emerald-400 overflow-x-auto min-h-[44px] flex items-center justify-end border border-slate-800">
+                {calcInput}
+              </div>
+              <div className="grid grid-cols-4 gap-1.5 text-xs font-bold">
+                {['C', '(', ')', '/'].map(btn => (
+                  <button key={btn} onClick={() => handleCalcBtn(btn)} className="p-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 transition">{btn}</button>
+                ))}
+                {['7', '8', '9', '*'].map(btn => (
+                  <button key={btn} onClick={() => handleCalcBtn(btn)} className={`p-2.5 rounded-lg transition ${btn === '*' ? 'bg-slate-800 hover:bg-slate-700 text-amber-400' : 'bg-slate-800/60 hover:bg-slate-800 text-white'}`}>{btn}</button>
+                ))}
+                {['4', '5', '6', '-'].map(btn => (
+                  <button key={btn} onClick={() => handleCalcBtn(btn)} className={`p-2.5 rounded-lg transition ${btn === '-' ? 'bg-slate-800 hover:bg-slate-700 text-amber-400' : 'bg-slate-800/60 hover:bg-slate-800 text-white'}`}>{btn}</button>
+                ))}
+                {['1', '2', '3', '+'].map(btn => (
+                  <button key={btn} onClick={() => handleCalcBtn(btn)} className={`p-2.5 rounded-lg transition ${btn === '+' ? 'bg-slate-800 hover:bg-slate-700 text-amber-400' : 'bg-slate-800/60 hover:bg-slate-800 text-white'}`}>{btn}</button>
+                ))}
+                {['0', '.', '='].map(btn => (
+                  <button key={btn} onClick={() => handleCalcBtn(btn)} className={`p-2.5 rounded-lg transition ${btn === '=' ? 'col-span-2 bg-emerald-600 hover:bg-emerald-500 text-white' : 'bg-slate-800/60 hover:bg-slate-800 text-white'}`}>{btn}</button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Anti-Cheat Window Blur Warning Modal */}
+          {showWarningModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 animate-in fade-in">
+              <div className="bg-white rounded-2xl p-6 max-w-md w-full border-2 border-amber-500 shadow-2xl text-center space-y-4">
+                <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-600 mx-auto flex items-center justify-center">
+                  <AlertTriangle className="w-8 h-8" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-lg font-bold text-slate-900">Anti-Cheat Warning Notice</h3>
+                  <p className="text-xs text-slate-600">
+                    Window blur / tab switching detected! Warning count: <span className="font-bold text-amber-600">{warningCount}</span>
+                  </p>
+                  <p className="text-[11px] text-slate-400 pt-1">
+                    Please remain on the exam screen until completion. Excessive focus loss may be logged for teacher review.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowWarningModal(false)}
+                  className="w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-sm transition"
+                >
+                  I Understand — Return to Exam
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Left Emerald Sidebar */}
           <div className="w-64 bg-[#0D9488] text-white p-5 flex flex-col justify-between hidden lg:flex shrink-0">
             <div>
@@ -373,12 +486,6 @@ export default function StudentCBTExam() {
                 </div>
                 <div className="px-4 py-3 rounded-xl text-teal-100/80 hover:bg-white/10 transition flex items-center gap-3 cursor-pointer">
                   <span>Student Profile</span>
-                </div>
-                <div className="px-4 py-3 rounded-xl text-teal-100/80 hover:bg-white/10 transition flex items-center gap-3 cursor-pointer">
-                  <span>Notifications</span>
-                </div>
-                <div className="px-4 py-3 rounded-xl text-teal-100/80 hover:bg-white/10 transition flex items-center gap-3 cursor-pointer">
-                  <span>Payments</span>
                 </div>
               </nav>
             </div>
@@ -412,10 +519,13 @@ export default function StudentCBTExam() {
 
                 {/* Card 2: Sisa Waktu (Timer Display) */}
                 <div className="bg-white rounded-2xl p-5 border border-emerald-100 shadow-sm space-y-2">
-                  <p className="text-xs font-bold uppercase tracking-wider text-emerald-600">Sisa Waktu</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-emerald-600 flex items-center justify-between">
+                    <span>Sisa Waktu</span>
+                    {timerWarning && <span className="text-red-500 font-extrabold animate-pulse">⏰ Time Ending Soon!</span>}
+                  </p>
                   <div className="flex items-center gap-3">
-                    <Clock className="w-6 h-6 text-emerald-600" />
-                    <span className="font-mono font-extrabold text-2xl text-emerald-600 tracking-wider">
+                    <Clock className={`w-6 h-6 ${timerWarning ? 'text-red-500 animate-bounce' : 'text-emerald-600'}`} />
+                    <span className={`font-mono font-extrabold text-2xl tracking-wider ${timerWarning ? 'text-red-600' : 'text-emerald-600'}`}>
                       {formatTime(timeLeft)}
                     </span>
                   </div>
@@ -430,38 +540,40 @@ export default function StudentCBTExam() {
                 {/* Card 3: Soal (Question Palette Grid) */}
                 <div className="bg-white rounded-2xl p-5 border border-emerald-100 shadow-sm space-y-3">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-bold uppercase tracking-wider text-emerald-600">Soal</p>
+                    <p className="text-xs font-bold uppercase tracking-wider text-emerald-600">Questions Palette</p>
                     <span className="text-xs font-semibold text-slate-500">{answeredCount}/{examData.questions.length} Answered</span>
                   </div>
                   <div className="grid grid-cols-6 gap-2">
                     {examData.questions.map((q, i) => {
                       const isAnswered = Boolean(answers[q.id]);
+                      const isFlagged = Boolean(flaggedQuestions[q.id]);
                       const isCurrent = currentPage === i;
 
                       return (
                         <button
                           key={q.id}
                           onClick={() => setCurrentPage(i)}
-                          className={`h-9 rounded-xl text-xs font-bold flex items-center justify-center transition-all cursor-pointer ${
-                            isAnswered
-                              ? 'bg-emerald-600 text-white shadow-xs'
-                              : isCurrent
-                                ? 'bg-emerald-100 text-emerald-800 ring-2 ring-emerald-500 font-extrabold'
-                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          className={`h-9 rounded-xl text-xs font-bold flex items-center justify-center transition-all cursor-pointer relative ${
+                            isFlagged
+                              ? 'bg-amber-500 text-white shadow-xs'
+                              : isAnswered
+                                ? 'bg-emerald-600 text-white shadow-xs'
+                                : isCurrent
+                                  ? 'bg-emerald-100 text-emerald-800 ring-2 ring-emerald-500 font-extrabold'
+                                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                           }`}
                         >
                           {i + 1}
+                          {isFlagged && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500 border border-white" />}
                         </button>
                       );
                     })}
                   </div>
-                </div>
-
-                {/* Card 4: Test Selanjutnya (Next Exam Preview) */}
-                <div className="bg-white rounded-2xl p-5 border border-emerald-100 shadow-sm space-y-1">
-                  <p className="text-xs font-bold uppercase tracking-wider text-emerald-600">Test Selanjutnya</p>
-                  <h4 className="font-serif font-bold text-sm text-slate-800">Test Potensi Akademik</h4>
-                  <p className="text-[11px] text-slate-400">Scheduled upon completion of current session</p>
+                  <div className="flex items-center justify-between text-[10px] font-semibold text-slate-500 pt-1 border-t border-slate-100">
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-600"></span> Answered</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500"></span> Flagged</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-slate-200"></span> Pending</span>
+                  </div>
                 </div>
 
               </div>
@@ -470,26 +582,39 @@ export default function StudentCBTExam() {
               <div className="lg:col-span-8">
                 <div className="bg-white rounded-2xl p-6 md:p-8 border border-emerald-100 shadow-md space-y-6">
 
-                  {/* Top Bar: Previous | Pertanyaan X | Next */}
+                  {/* Top Bar: Previous | Pertanyaan X | Flag | Next */}
                   <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                     <button
                       onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
                       disabled={currentPage === 0}
                       className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-emerald-700 disabled:opacity-30 disabled:hover:text-slate-600 cursor-pointer"
                     >
-                      <ArrowLeft className="w-4 h-4" /> Sebelumnya
+                      <ArrowLeft className="w-4 h-4" /> Previously
                     </button>
 
-                    <h3 className="font-serif font-bold text-lg text-emerald-600">
-                      Pertanyaan {currentPage + 1} <span className="text-slate-400 font-normal text-sm">/ {examData.questions.length}</span>
-                    </h3>
+                    <div className="flex items-center gap-3">
+                      <h3 className="font-serif font-bold text-lg text-emerald-600">
+                        Question {currentPage + 1} <span className="text-slate-400 font-normal text-sm">/ {examData.questions.length}</span>
+                      </h3>
+                      <button
+                        onClick={() => toggleFlag(currentQ.id)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition ${
+                          flaggedQuestions[currentQ.id]
+                            ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                        title="Flag for Review"
+                      >
+                        🚩 {flaggedQuestions[currentQ.id] ? 'Flagged' : 'Flag'}
+                      </button>
+                    </div>
 
                     <button
                       onClick={() => setCurrentPage(p => Math.min(examData.questions.length - 1, p + 1))}
                       disabled={currentPage >= examData.questions.length - 1}
                       className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-emerald-700 disabled:opacity-30 disabled:hover:text-slate-600 cursor-pointer"
                     >
-                      Selanjutnya <ArrowRight className="w-4 h-4" />
+                      Next <ArrowRight className="w-4 h-4" />
                     </button>
                   </div>
 

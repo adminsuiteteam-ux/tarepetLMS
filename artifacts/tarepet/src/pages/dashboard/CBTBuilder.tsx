@@ -30,6 +30,8 @@ interface QuestionForm {
   option_d: string;
   correct_option: string;
   points: number;
+  explanation?: string;
+  image_url?: string;
 }
 
 interface Exam {
@@ -66,7 +68,7 @@ type View = 'list' | 'create' | 'questions' | 'attempts' | 'attempt-detail';
 
 const EMPTY_QUESTION: QuestionForm = {
   question_text: '', option_a: '', option_b: '', option_c: '', option_d: '',
-  correct_option: 'A', points: 1,
+  correct_option: 'A', points: 1, explanation: '', image_url: '',
 };
 
 const STATUS_STYLES: Record<string, string> = {
@@ -219,6 +221,9 @@ export default function CBTBuilder() {
     setQuestions(ex?.questions || []);
   };
 
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [bulkCsvText, setBulkCsvText] = useState('');
+
   const handleAddQuestion = async () => {
     if (!selectedExamId) return;
     const examsList = getStoredExams();
@@ -233,7 +238,9 @@ export default function CBTBuilder() {
       option_c: newQuestion.option_c || 'Option C',
       option_d: newQuestion.option_d || 'Option D',
       correct_option: newQuestion.correct_option || 'A',
-      points: newQuestion.points || 5,
+      points: newQuestion.points || 1,
+      explanation: newQuestion.explanation || '',
+      image_url: newQuestion.image_url || '',
     };
 
     ex.questions.push(newQ);
@@ -241,6 +248,47 @@ export default function CBTBuilder() {
     saveCBTExam(ex);
     fetchQuestions(selectedExamId);
     setNewQuestion({ ...EMPTY_QUESTION });
+  };
+
+  const handleBulkCSVImport = () => {
+    if (!bulkCsvText.trim() || !selectedExamId) return;
+    const examsList = getStoredExams();
+    const ex = examsList.find(e => e.id === selectedExamId);
+    if (!ex) return;
+
+    const lines = bulkCsvText.split('\n').filter(l => l.trim());
+    let addedCount = 0;
+    lines.forEach((line, idx) => {
+      if (idx === 0 && (line.toLowerCase().includes('question') || line.toLowerCase().includes('option'))) return;
+      const cols = line.split(',').map(c => c.trim().replace(/^"(.*)"$/, '$1'));
+      if (cols.length >= 6) {
+        const qObj = {
+          id: ex.questions.length + 1,
+          question_text: cols[0],
+          option_a: cols[1],
+          option_b: cols[2],
+          option_c: cols[3],
+          option_d: cols[4],
+          correct_option: (cols[5] || 'A').toUpperCase(),
+          points: parseFloat(cols[6]) || 1,
+          explanation: cols[7] || '',
+          image_url: cols[8] || '',
+        };
+        ex.questions.push(qObj);
+        addedCount++;
+      }
+    });
+
+    if (addedCount > 0) {
+      ex.questions_count = ex.questions.length;
+      saveCBTExam(ex);
+      fetchQuestions(selectedExamId);
+      setBulkCsvText('');
+      setShowBulkModal(false);
+      alert(`Successfully imported ${addedCount} questions into exam!`);
+    } else {
+      alert('Could not parse questions. Expected format: question_text, option_a, option_b, option_c, option_d, correct_option, points, explanation, image_url');
+    }
   };
 
   const handleSubmitForApproval = async () => {
@@ -649,15 +697,56 @@ export default function CBTBuilder() {
                 <p className="text-sm text-slate-500">{questions.length} question(s) added so far</p>
               </div>
             </div>
-            {questions.length > 0 && (
+            <div className="flex items-center gap-2">
               <button
-                onClick={handleSubmitForApproval}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition shadow-lg"
+                onClick={() => setShowBulkModal(true)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200 hover:bg-emerald-100 transition text-xs"
               >
-                <Send className="w-4 h-4" /> Submit for Approval
+                📥 Bulk CSV Import
               </button>
-            )}
+              {questions.length > 0 && (
+                <button
+                  onClick={handleSubmitForApproval}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition shadow-lg text-xs"
+                >
+                  <Send className="w-4 h-4" /> Submit for Approval
+                </button>
+              )}
+            </div>
           </div>
+
+          {/* Bulk CSV Modal */}
+          {showBulkModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in">
+              <div className="bg-white rounded-2xl p-6 max-w-xl w-full border border-slate-200 shadow-2xl space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
+                    📥 Bulk Import Questions via CSV
+                  </h3>
+                  <button onClick={() => setShowBulkModal(false)} className="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+                </div>
+                <div className="space-y-2 text-xs text-slate-600">
+                  <p className="font-medium">Paste CSV content below (one line per question):</p>
+                  <p className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 font-mono text-[10px] text-slate-500">
+                    question_text, option_a, option_b, option_c, option_d, correct_option, points, explanation, image_url
+                  </p>
+                  <textarea
+                    rows={8}
+                    className="w-full border border-slate-200 rounded-xl p-3 text-xs font-mono bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    value={bulkCsvText}
+                    onChange={e => setBulkCsvText(e.target.value)}
+                    placeholder={`What is 2 + 2?, 3, 4, 5, 6, B, 1, Basic addition, https://...\nWhat is H2O?, Hydrogen, Oxygen, Water, Carbon, C, 1, Water molecule, `}
+                  />
+                </div>
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                  <button onClick={() => setShowBulkModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Cancel</button>
+                  <button onClick={handleBulkCSVImport} disabled={!bulkCsvText.trim()} className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition disabled:opacity-50">
+                    Parse & Import Questions
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Existing Questions */}
           {questions.length > 0 && (
@@ -666,8 +755,8 @@ export default function CBTBuilder() {
                 <div key={q.id} className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
                   <div className="flex items-start gap-3">
                     <span className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold shrink-0">{i + 1}</span>
-                    <div className="flex-1">
-                      <p className="font-medium text-slate-800 text-sm mb-2">{q.question_text}</p>
+                    <div className="flex-1 space-y-2">
+                      <p className="font-medium text-slate-800 text-sm">{q.question_text}</p>
                       <div className="grid grid-cols-2 gap-1.5 text-xs">
                         {['A', 'B', 'C', 'D'].map(opt => (
                           <span key={opt} className={`px-2 py-1 rounded-lg ${q.correct_option === opt ? 'bg-green-100 text-green-700 font-semibold' : 'bg-slate-50 text-slate-500'}`}>
@@ -675,6 +764,11 @@ export default function CBTBuilder() {
                           </span>
                         ))}
                       </div>
+                      {q.explanation && (
+                        <p className="text-[11px] text-emerald-700 bg-emerald-50 p-2 rounded-lg border border-emerald-100">
+                          💡 <strong>Explanation:</strong> {q.explanation}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -700,6 +794,14 @@ export default function CBTBuilder() {
                   </select>
                 </div>
                 <div><label className={labelClass}>{t("Points")}</label><input type="number" className={inputClass} value={newQuestion.points} onChange={e => setNewQuestion({...newQuestion, points: parseFloat(e.target.value) || 1})} min={0.5} step={0.5} /></div>
+              </div>
+              <div>
+                <label className={labelClass}>Answer Explanation (Optional)</label>
+                <input className={inputClass} value={newQuestion.explanation || ''} onChange={e => setNewQuestion({...newQuestion, explanation: e.target.value})} placeholder="Why is this answer correct?" />
+              </div>
+              <div>
+                <label className={labelClass}>Question Image Attachment URL (Optional)</label>
+                <input type="url" className={inputClass} value={newQuestion.image_url || ''} onChange={e => setNewQuestion({...newQuestion, image_url: e.target.value})} placeholder="https://example.com/diagram.png" />
               </div>
               <button
                 onClick={handleAddQuestion}
