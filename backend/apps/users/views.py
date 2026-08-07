@@ -130,16 +130,16 @@ class AdminAnalyticsView(APIView):
             'teacher_avg_effectiveness_score': 88.6,
         }
 
-        # --- Enrollment Trend (last 7 days simulated) ---
-        enrollment_trend = [
-            {'date': '2026-07-17', 'new_enrollments': 2},
-            {'date': '2026-07-18', 'new_enrollments': 0},
-            {'date': '2026-07-19', 'new_enrollments': 1},
-            {'date': '2026-07-20', 'new_enrollments': 4},
-            {'date': '2026-07-21', 'new_enrollments': 3},
-            {'date': '2026-07-22', 'new_enrollments': 1},
-            {'date': '2026-07-23', 'new_enrollments': 2},
-        ]
+        # --- Enrollment Trend (Real query for past 7 days) ---
+        from datetime import timedelta
+        enrollment_trend = []
+        for i in range(6, -1, -1):
+            day_date = today - timedelta(days=i)
+            count = User.objects.filter(date_joined__date=day_date).count()
+            enrollment_trend.append({
+                'date': day_date.strftime('%Y-%m-%d'),
+                'new_enrollments': count
+            })
 
         return Response({
             'user_stats': {

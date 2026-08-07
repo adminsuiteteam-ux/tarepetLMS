@@ -41,10 +41,10 @@ const MOCK_TEACHERS: any[] = [];
 const MOCK_SUBJECTS: any[] = [];
 
 const MOCK_HOUSES = [
-  { name: 'Blue House (Eagle)', color: '#3B82F6', motto: 'Wisdom & Integrity', points: 520, students: 0, head: 'Mrs. Okafor Chioma' },
-  { name: 'Purple House (Phoenix)', color: '#8B5CF6', motto: 'Royalty & Distinction', points: 510, students: 0, head: 'Mr. James Eze' },
-  { name: 'Green House (Jaguar)', color: '#10B981', motto: 'Growth & Resilience', points: 480, students: 0, head: 'Ms. Adaobi' },
-  { name: 'Red House (Falcon)', color: '#EF4444', motto: 'Passion & Determination', points: 450, students: 0, head: 'Mr. Bello' },
+  { name: 'Blue House (Eagle)', color: '#3B82F6', motto: 'Wisdom & Integrity', points: 0, students: 0, head: 'Unassigned' },
+  { name: 'Purple House (Phoenix)', color: '#8B5CF6', motto: 'Royalty & Distinction', points: 0, students: 0, head: 'Unassigned' },
+  { name: 'Green House (Jaguar)', color: '#10B981', motto: 'Growth & Resilience', points: 0, students: 0, head: 'Unassigned' },
+  { name: 'Red House (Falcon)', color: '#EF4444', motto: 'Passion & Determination', points: 0, students: 0, head: 'Unassigned' },
 ];
 
 const MOCK_CLASSES: any[] = [];
@@ -68,13 +68,7 @@ const MOCK_CLASS_TIMETABLES: Record<string, any> = {};
 const MOCK_LEAVE_LOGS: any[] = [];
 
 
-const MOCK_AUDIT_LOGS = [
-  { id: 1, user: 'admin@tarepet.edu.ng', action: 'LOGIN', target: 'Auth System', ip: '127.0.0.1', timestamp: '2026-07-24 07:00:12', status: 'SUCCESS' },
-  { id: 2, user: 'admin@tarepet.edu.ng', action: 'BULK_IMPORT', target: 'System Users', ip: '127.0.0.1', timestamp: '2026-07-24 07:02:48', status: 'SUCCESS' },
-  { id: 3, user: 'teacher@tarepet.edu.ng', action: 'MARK_ATTENDANCE', target: 'SS1 Science Class', ip: '192.168.1.20', timestamp: '2026-07-24 08:05:00', status: 'SUCCESS' },
-  { id: 4, user: 'admin@tarepet.edu.ng', action: 'AWARD_HOUSE_POINTS', target: 'Blue House Eagle (+25 pts)', ip: '127.0.0.1', timestamp: '2026-07-24 09:10:02', status: 'SUCCESS' },
-  { id: 5, user: 'admin@tarepet.edu.ng', action: 'UPDATE_SETTINGS', target: 'School Config (Grading Schema)', ip: '127.0.0.1', timestamp: '2026-07-24 09:45:00', status: 'SUCCESS' },
-];
+const MOCK_AUDIT_LOGS: any[] = [];
 
 const INITIAL_EXAMS: any[] = [];
 
@@ -337,7 +331,7 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
       address: form.address,
       dob: form.dob,
       cbtExamsCount: 0,
-      attendanceRate: '100%',
+      attendanceRate: '0%',
       profileImage: form.profileImage || '',
       salary: form.salary,
       salaryGrade: form.salaryGrade,
@@ -442,8 +436,65 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                 <input className={inputCls} value={form.address} onChange={e => setF('address', e.target.value)} placeholder="e.g. 15 Swali Road, Yenagoa, Bayelsa State" />
               </div>
               <div>
-                <label className={labelCls}>Profile Image URL (optional)</label>
-                <input className={inputCls} value={form.profileImage} onChange={e => setF('profileImage', e.target.value)} placeholder="https://..." />
+                <label className={labelCls}>Teacher Profile Photo</label>
+                <div className="flex items-center gap-4 p-3 bg-muted/20 border border-border rounded-xl">
+                  <div className="w-16 h-16 rounded-xl bg-card border-2 border-border flex items-center justify-center overflow-hidden shrink-0 shadow-sm relative group">
+                    {form.profileImage ? (
+                      <img src={form.profileImage} alt="Teacher Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 font-bold text-lg font-serif">
+                        {form.name ? form.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() : 'TC'}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <label htmlFor="wizardTeacherPhotoInput" className="px-3 py-1.5 bg-primary text-white text-[11px] font-bold rounded-lg cursor-pointer hover:bg-primary/90 transition-colors shadow-sm inline-flex items-center gap-1.5">
+                        <Upload className="w-3.5 h-3.5" /> Upload Image
+                      </label>
+                      {form.profileImage && (
+                        <button
+                          type="button"
+                          onClick={() => setF('profileImage', '')}
+                          className="px-2.5 py-1.5 bg-rose-500/10 text-rose-600 text-[11px] font-bold rounded-lg hover:bg-rose-500/20 transition-colors"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      type="file"
+                      id="wizardTeacherPhotoInput"
+                      accept="image/jpeg,image/png,image/webp,image/svg+xml"
+                      className="hidden"
+                      onChange={e => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          if (file.size > 5 * 1024 * 1024) {
+                            alert('Image size exceeds 5MB limit.');
+                            return;
+                          }
+                          const reader = new FileReader();
+                          reader.onloadend = () => setF('profileImage', reader.result as string);
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-muted-foreground font-semibold">Or enter URL:</span>
+                      <input
+                        type="url"
+                        className="flex-1 border border-border rounded-lg px-2.5 py-1 text-[11px] text-foreground bg-card focus:outline-none focus:ring-1 focus:ring-primary"
+                        value={form.profileImage.startsWith('data:') ? '' : form.profileImage}
+                        onChange={e => setF('profileImage', e.target.value)}
+                        placeholder="https://example.com/photo.jpg"
+                      />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground font-medium">
+                      Supported Formats: <span className="font-bold text-foreground">JPEG, PNG, WEBP, SVG</span> (Max: 5MB)
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -1399,7 +1450,19 @@ export default function AdminDashboard() {
 
   // Admin Profile state
   const [profileTab, setProfileTab] = useState<'info' | 'security' | 'permissions' | 'activity'>('info');
-  const [adminProfileData, setAdminProfileData] = useState({
+  const [adminProfileData, setAdminProfileData] = useState<{
+    name: string;
+    title: string;
+    id: string;
+    email: string;
+    phone: string;
+    address: string;
+    dob: string;
+    gender: string;
+    department: string;
+    dateJoined: string;
+    profileImage?: string;
+  }>({
     name: 'Dr. T. Montessori',
     title: 'School Principal & Chief Administrator',
     id: 'TMS/ADM/2018/001',
@@ -1410,6 +1473,7 @@ export default function AdminDashboard() {
     gender: 'Male',
     department: 'Executive Governance & Academics',
     dateJoined: '2018-09-01',
+    profileImage: '',
   });
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [editProfileForm, setEditProfileForm] = useState(adminProfileData);
@@ -1426,11 +1490,7 @@ export default function AdminDashboard() {
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
     }
-    return {
-      1: { ca1: 14, ca2: 13, exam: 55 },
-      2: { ca1: 12, ca2: 14, exam: 52 },
-      3: { ca1: 15, ca2: 12, exam: 58 },
-    };
+    return {};
   });
   const [marksheetSaveAlert, setMarksheetSaveAlert] = useState(false);
 
@@ -1452,11 +1512,7 @@ export default function AdminDashboard() {
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
     }
-    return [
-      { id: 1, title: '2nd Term Mid-Term Test Schedule & Guidelines', target: 'ALL', audience: 'All Students & Parents', date: '2026-01-28', author: 'Principal Office', priority: 'HIGH', category: 'Academic', content: 'Please be informed that Mid-Term Examinations for the 2nd Term 2025/2026 session will commence on Monday, 9th February 2026. All students are advised to revise thoroughly.' },
-      { id: 2, title: 'PTA General Meeting Announcement', target: 'PARENTS', audience: 'Parents Only', date: '2026-01-22', author: 'PTA Executive Board', priority: 'NORMAL', category: 'General', content: 'Notice is hereby given for the 2nd Term PTA meeting scheduled for Saturday, 14th February 2026 at the Main Auditorium by 10:00 AM sharp.' },
-      { id: 3, title: 'Inter-House Sports Competition Practice Dates', target: 'STUDENTS', audience: 'Students & Staff', date: '2026-01-18', author: 'Sports Directorate', priority: 'NORMAL', category: 'Sports', content: 'House practice for Blue, Purple, Green, and Red houses will hold every Wednesday and Friday afternoon on the main school pitch.' },
-    ];
+    return [];
   });
   const [showCreateAnnouncementModal, setShowCreateAnnouncementModal] = useState(false);
   const [announcementForm, setAnnouncementForm] = useState({ title: '', target: 'ALL', priority: 'NORMAL', category: 'Academic', content: '', sendSMS: true });
@@ -1467,27 +1523,12 @@ export default function AdminDashboard() {
   const [financeExpenses, setFinanceExpenses] = useState<any[]>(() => {
     const saved = localStorage.getItem('tarepet_fin_expenses');
     if (saved) { try { return JSON.parse(saved); } catch (e) {} }
-    return [
-      { id: 1, date: '2026-01-05', description: 'Staff Salary — January', category: 'Salaries', amount: 2850000, status: 'PAID', ref: 'EXP-2026-001' },
-      { id: 2, date: '2026-01-08', description: 'NEPA Electricity Bill', category: 'Utilities', amount: 185000, status: 'PAID', ref: 'EXP-2026-002' },
-      { id: 3, date: '2026-01-10', description: 'Classroom Furniture Replacement', category: 'Infrastructure', amount: 420000, status: 'PAID', ref: 'EXP-2026-003' },
-      { id: 4, date: '2026-01-15', description: 'Lab Consumables & Chemicals', category: 'Academic', amount: 95000, status: 'PAID', ref: 'EXP-2026-004' },
-      { id: 5, date: '2026-01-20', description: 'Sports Equipment Purchase', category: 'Sports', amount: 130000, status: 'PENDING', ref: 'EXP-2026-005' },
-      { id: 6, date: '2026-01-22', description: 'School Bus Maintenance', category: 'Transport', amount: 78000, status: 'PAID', ref: 'EXP-2026-006' },
-      { id: 7, date: '2026-01-28', description: 'Printing & Stationery', category: 'Admin', amount: 45000, status: 'PAID', ref: 'EXP-2026-007' },
-    ];
+    return [];
   });
   const [financeIncome, setFinanceIncome] = useState<any[]>(() => {
     const saved = localStorage.getItem('tarepet_fin_income');
     if (saved) { try { return JSON.parse(saved); } catch (e) {} }
-    return [
-      { id: 1, date: '2026-01-03', description: 'School Fees — JSS1 (32 students)', category: 'School Fees', amount: 1696000, status: 'RECEIVED', ref: 'INC-2026-001' },
-      { id: 2, date: '2026-01-04', description: 'School Fees — JSS2 (28 students)', category: 'School Fees', amount: 1484000, status: 'RECEIVED', ref: 'INC-2026-002' },
-      { id: 3, date: '2026-01-06', description: 'School Fees — SS1 Science (18 students)', category: 'School Fees', amount: 1170000, status: 'RECEIVED', ref: 'INC-2026-003' },
-      { id: 4, date: '2026-01-10', description: 'PTA Levy Collection', category: 'Levies', amount: 380000, status: 'RECEIVED', ref: 'INC-2026-004' },
-      { id: 5, date: '2026-01-14', description: 'Examination Fees Collection', category: 'Exam Fees', amount: 220000, status: 'RECEIVED', ref: 'INC-2026-005' },
-      { id: 6, date: '2026-01-18', description: 'Development Levy — SS Classes', category: 'Levies', amount: 165000, status: 'RECEIVED', ref: 'INC-2026-006' },
-    ];
+    return [];
   });
   const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
   const [showAddIncomeModal, setShowAddIncomeModal] = useState(false);
@@ -1571,8 +1612,12 @@ export default function AdminDashboard() {
   // Attendance management state
   const [attendanceClassFilter, setAttendanceClassFilter] = useState('JSS1');
   const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
-  const [attendanceMap, setAttendanceMap] = useState<Record<number, 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED'>>({
-    1: 'PRESENT', 2: 'PRESENT', 3: 'PRESENT', 4: 'ABSENT', 5: 'PRESENT', 6: 'LATE', 7: 'PRESENT', 8: 'PRESENT', 9: 'ABSENT', 10: 'PRESENT'
+  const [attendanceMap, setAttendanceMap] = useState<Record<number, 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED'>>(() => {
+    const saved = localStorage.getItem('tarepet_attendance');
+    if (saved) {
+      try { return JSON.parse(saved); } catch (e) {}
+    }
+    return {};
   });
   const [attendanceNoticeAlert, setAttendanceNoticeAlert] = useState(false);
 
@@ -1723,21 +1768,31 @@ export default function AdminDashboard() {
   const renderSection = () => {
     // 1. OVERVIEW & SCHOOL EXECUTIVE ANALYTICS
     if (activeSection === 'overview' || activeSection === 'analytics') {
-      const classPerformanceData = [
-        { class: 'JS 1', score: 78 },
-        { class: 'JS 2', score: 82 },
-        { class: 'JS 3', score: 85 },
-        { class: 'SS 1', score: 88 },
-        { class: 'SS 2', score: 84 },
-        { class: 'SS 3', score: 91 },
-      ];
+      const classPerformanceData = STUDENT_CLASSES.map(cls => {
+        const classStudents = studentsList.filter(s => s.grade === cls.key);
+        let totalScore = 0;
+        let count = 0;
+        classStudents.forEach(st => {
+          const entry = classScoresMap[st.id];
+          if (entry) {
+            totalScore += (entry.ca1 || 0) + (entry.ca2 || 0) + (entry.exam || 0);
+            count++;
+          }
+        });
+        const avgScore = count > 0 ? Math.round(totalScore / count) : 0;
+        return { class: cls.label, score: avgScore };
+      });
+
+      const totalAttCount = Object.keys(attendanceMap).length;
+      const presentAttCount = Object.values(attendanceMap).filter(v => v === 'PRESENT').length;
+      const calculatedAttendancePercent = totalAttCount > 0 ? Math.round((presentAttCount / totalAttCount) * 100) : 0;
 
       const weeklyAttendanceData = [
-        { day: 'Mon', attendance: 95 },
-        { day: 'Tue', attendance: 98 },
-        { day: 'Wed', attendance: 94 },
-        { day: 'Thu', attendance: 96 },
-        { day: 'Fri', attendance: 97 },
+        { day: 'Mon', attendance: calculatedAttendancePercent },
+        { day: 'Tue', attendance: calculatedAttendancePercent },
+        { day: 'Wed', attendance: calculatedAttendancePercent },
+        { day: 'Thu', attendance: calculatedAttendancePercent },
+        { day: 'Fri', attendance: calculatedAttendancePercent },
       ];
 
       const quickActionButtons = [
@@ -1749,12 +1804,7 @@ export default function AdminDashboard() {
         { label: 'Generate Reports', icon: BarChart2, color: 'bg-secondary/10 text-secondary hover:bg-secondary/20 border-secondary/20', action: () => setActiveSection('reports') },
       ];
 
-      const recentActivities = [
-        { text: 'New student registered', detail: 'John Doe enrolled in SS1 Science', time: '10 mins ago', icon: UserPlus, color: 'text-primary bg-primary/10' },
-        { text: 'Teacher submitted results', detail: 'Mathematics Second Term Continuous Assessment', time: '45 mins ago', icon: FileText, color: 'text-secondary bg-secondary/10' },
-        { text: 'Attendance updated', detail: 'SS2 Class Attendance marked at 98% presence', time: '2 hours ago', icon: CalendarCheck, color: 'text-amber-600 bg-amber-500/10' },
-        { text: 'New announcement published', detail: 'Mid-Term Exam Timetable released to parents', time: '4 hours ago', icon: Megaphone, color: 'text-primary bg-primary/10' },
-      ];
+      const recentActivities: any[] = [];
 
       const upcomingEvents = calendarEventsState.map(ev => ({
         title: ev.title,
@@ -1784,9 +1834,9 @@ export default function AdminDashboard() {
             <div className="bg-card p-5 rounded-2xl border border-border shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
               <div className="space-y-1">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('dashboard.totalStudents')}</p>
-                <h3 className="text-3xl font-bold text-foreground">385</h3>
-                <p className="text-[11px] text-secondary font-medium flex items-center gap-1">
-                  <TrendingUp className="w-3 h-3" /> +12% from last term
+                <h3 className="text-3xl font-bold text-foreground">{studentsList.length}</h3>
+                <p className="text-[11px] text-muted-foreground font-medium flex items-center gap-1">
+                  Enrolled Students
                 </p>
               </div>
               <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
@@ -1798,7 +1848,7 @@ export default function AdminDashboard() {
             <div className="bg-card p-5 rounded-2xl border border-border shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
               <div className="space-y-1">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('dashboard.teachers')}</p>
-                <h3 className="text-3xl font-bold text-foreground">28</h3>
+                <h3 className="text-3xl font-bold text-foreground">{teachersList.length}</h3>
                 <p className="text-[11px] text-muted-foreground font-medium">{t('dashboard.fullTimeFaculty')}</p>
               </div>
               <div className="w-12 h-12 rounded-2xl bg-secondary/10 text-secondary flex items-center justify-center shrink-0">
@@ -1810,8 +1860,8 @@ export default function AdminDashboard() {
             <div className="bg-card p-5 rounded-2xl border border-border shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
               <div className="space-y-1">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('dashboard.classes')}</p>
-                <h3 className="text-3xl font-bold text-foreground">12</h3>
-                <p className="text-[11px] text-muted-foreground font-medium">{t('dashboard.junior')}</p>
+                <h3 className="text-3xl font-bold text-foreground">{STUDENT_CLASSES.length}</h3>
+                <p className="text-[11px] text-muted-foreground font-medium">Academic Levels</p>
               </div>
               <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
                 <School className="w-6 h-6" />
@@ -1822,7 +1872,7 @@ export default function AdminDashboard() {
             <div className="bg-card p-5 rounded-2xl border border-border shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
               <div className="space-y-1">
                 <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('dashboard.attendanceToday')}</p>
-                <h3 className="text-3xl font-bold text-secondary">96%</h3>
+                <h3 className="text-3xl font-bold text-secondary">{calculatedAttendancePercent}%</h3>
                 <p className="text-[11px] text-muted-foreground font-medium">{t('dashboard.dailyAverage')}</p>
               </div>
               <div className="w-12 h-12 rounded-2xl bg-secondary/10 text-secondary flex items-center justify-center shrink-0">
@@ -1876,7 +1926,7 @@ export default function AdminDashboard() {
                   <LineChart data={weeklyAttendanceData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
                     <XAxis dataKey="day" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
-                    <YAxis tickLine={false} axisLine={false} domain={[80, 100]} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
+                    <YAxis tickLine={false} axisLine={false} domain={[0, 100]} tick={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }} />
                     <Tooltip
                       contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', fontSize: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                       formatter={(val: any) => [`${val}%`, 'Attendance']}
@@ -1917,21 +1967,27 @@ export default function AdminDashboard() {
                 <span className="text-xs text-muted-foreground">{t('dashboard.today')}</span>
               </div>
               <div className="space-y-3">
-                {recentActivities.map((act, idx) => {
-                  const Icon = act.icon;
-                  return (
-                    <div key={idx} className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-muted/40 transition-colors">
-                      <div className={`p-2 rounded-xl shrink-0 ${act.color}`}>
-                        <Icon className="w-4 h-4" />
+                {recentActivities.length === 0 ? (
+                  <div className="text-center py-6 space-y-1">
+                    <p className="text-xs font-semibold text-muted-foreground">No recent activities recorded.</p>
+                  </div>
+                ) : (
+                  recentActivities.map((act, idx) => {
+                    const Icon = act.icon;
+                    return (
+                      <div key={idx} className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-muted/40 transition-colors">
+                        <div className={`p-2 rounded-xl shrink-0 ${act.color}`}>
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold text-foreground truncate">{act.text}</p>
+                          <p className="text-[11px] text-muted-foreground truncate">{act.detail}</p>
+                        </div>
+                        <span className="text-[10px] text-muted-foreground whitespace-nowrap">{act.time}</span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-foreground truncate">{act.text}</p>
-                        <p className="text-[11px] text-muted-foreground truncate">{act.detail}</p>
-                      </div>
-                      <span className="text-[10px] text-muted-foreground whitespace-nowrap">{act.time}</span>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
               </div>
             </div>
 
@@ -4637,19 +4693,19 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                     <div className="grid grid-cols-2 gap-3 pt-1">
                       <div className="p-3 rounded-xl bg-card border border-border">
                         <p className="text-[10px] text-muted-foreground uppercase font-bold">Total Students Taught</p>
-                        <p className="text-xl font-serif font-bold text-foreground mt-0.5">{tchr.studentsCount || 120}</p>
+                        <p className="text-xl font-serif font-bold text-foreground mt-0.5">{tchr.studentsCount ?? 0}</p>
                       </div>
                       <div className="p-3 rounded-xl bg-card border border-border">
                         <p className="text-[10px] text-muted-foreground uppercase font-bold">CBT Assessments</p>
-                        <p className="text-xl font-serif font-bold text-emerald-600 mt-0.5">{tchr.cbtExamsCount || 8} Created</p>
+                        <p className="text-xl font-serif font-bold text-emerald-600 mt-0.5">{tchr.cbtExamsCount ?? 0} Created</p>
                       </div>
                       <div className="p-3 rounded-xl bg-card border border-border">
                         <p className="text-[10px] text-muted-foreground uppercase font-bold">Class Attendance Rate</p>
-                        <p className="text-xl font-serif font-bold text-emerald-600 mt-0.5">{tchr.attendanceRate || '98%'}</p>
+                        <p className="text-xl font-serif font-bold text-emerald-600 mt-0.5">{tchr.attendanceRate || '0%'}</p>
                       </div>
                       <div className="p-3 rounded-xl bg-card border border-border">
                         <p className="text-[10px] text-muted-foreground uppercase font-bold">Residential Address</p>
-                        <p className="text-xs font-semibold text-foreground truncate mt-1">{tchr.address || 'Yenagoa, Bayelsa State'}</p>
+                        <p className="text-xs font-semibold text-foreground truncate mt-1">{tchr.address || 'Not Provided'}</p>
                       </div>
                     </div>
                   </div>

@@ -14,9 +14,22 @@ if not env_file.exists():
 if env_file.exists():
     environ.Env.read_env(str(env_file))
 
-SECRET_KEY = env('SECRET_KEY', default='django-insecure-tarepet-montessori-lms-production-key-2026')
+import logging
+import secrets
+
+def get_secret_key():
+    secret = env('SECRET_KEY', default=None) or os.getenv('SECRET_KEY')
+    if secret:
+        return secret
+    secret_file = BASE_DIR / 'secret_key.txt'
+    if secret_file.exists():
+        return secret_file.read_text().strip()
+    logging.warning("Generating ephemeral SECRET_KEY. Instance-isolated!")
+    return secrets.token_hex(32)
+
+SECRET_KEY = get_secret_key()
 DEBUG = env.bool('DEBUG', default=False)
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['.onrender.com', 'localhost', '127.0.0.1', '*'])
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['.onrender.com', 'localhost', '127.0.0.1'])
 
 # Application definition
 INSTALLED_APPS = [
@@ -162,7 +175,22 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 
 # CORS Headers
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = env.list(
+    'CORS_ALLOWED_ORIGINS',
+    default=[
+        'https://tarepetmontessorischool.com',
+        'https://tarepet-frontend.onrender.com',
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'http://localhost:3000',
+        'http://127.0.0.1:3000',
+    ]
+)
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://.*\.onrender\.com$",
+    r"^https://.*\.github\.io$",
+]
 CORS_ALLOW_CREDENTIALS = True
 
 # Internationalization

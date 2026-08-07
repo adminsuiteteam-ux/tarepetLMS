@@ -146,12 +146,16 @@ export default function TeacherProfile() {
                   </div>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp,image/svg+xml"
                     id="teacherAvatarPicker"
                     className="hidden"
                     onChange={e => {
                       const file = e.target.files?.[0];
                       if (file) {
+                        if (file.size > 5 * 1024 * 1024) {
+                          showToast('Image size exceeds 5MB limit.');
+                          return;
+                        }
                         const reader = new FileReader();
                         reader.onloadend = () => {
                           const updated = { ...profileForm, profileImage: reader.result as string };

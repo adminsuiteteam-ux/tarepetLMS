@@ -213,6 +213,7 @@ class CBTExamViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.is_admin:
+            # pyrefly: ignore [missing-attribute]
             return CBTExam.objects.all()
         elif user.is_teacher and hasattr(user, 'teacher_profile'):
             return CBTExam.objects.filter(teacher=user.teacher_profile)
