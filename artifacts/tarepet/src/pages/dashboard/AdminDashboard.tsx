@@ -1576,7 +1576,67 @@ export default function AdminDashboard() {
   const [financeSaveAlert, setFinanceSaveAlert] = useState('');
 
   // Teacher management state
-  const [teachersList, setTeachersList] = useState(MOCK_TEACHERS);
+  const [teachersList, setTeachersList] = useState<any[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('tarepet_teachers_list');
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return MOCK_TEACHERS;
+  });
+
+  // Sync teachers & users from live Django REST API backend
+  React.useEffect(() => {
+    const fetchBackendUsers = async () => {
+      try {
+        const res = await authClient.get('/auth/users/');
+        const users = Array.isArray(res.data?.results) ? res.data.results : Array.isArray(res.data) ? res.data : [];
+        if (users.length > 0) {
+          const liveTeachers = users
+            .filter((u: any) => u.role === 'TEACHER')
+            .map((u: any) => ({
+              id: u.id,
+              staffId: u.profile?.teacher_id || u.teacher_id || `TMS/TCH/${String(u.id).padStart(4, '0')}`,
+              name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
+              email: u.email,
+              phone: u.phone || '+234 800 000 0000',
+              gender: 'Male',
+              department: u.profile?.department || 'Mathematics & STEM',
+              specialization: u.profile?.subjects_taught || 'General Education',
+              qualification: u.profile?.qualifications || 'B.Sc. Education',
+              status: u.is_active ? 'Active' : 'Inactive',
+              joined: u.date_joined ? u.date_joined.split('T')[0] : '2026-01-01',
+              formTeacherOf: 'None',
+              subjectsAssigned: [],
+              classesCount: 1,
+              studentsCount: 30,
+              address: 'Tarepet School Campus',
+              dob: '1990-01-01',
+              cbtExamsCount: 0,
+              attendanceRate: '100%',
+              profileImage: '',
+            }));
+
+          if (liveTeachers.length > 0) {
+            setTeachersList(prev => {
+              const combined = [...liveTeachers];
+              prev.forEach(t => {
+                if (!combined.some(c => c.email?.toLowerCase() === t.email?.toLowerCase())) {
+                  combined.push(t);
+                }
+              });
+              try { localStorage.setItem('tarepet_teachers_list', JSON.stringify(combined)); } catch (e) {}
+              return combined;
+            });
+          }
+        }
+      } catch (e) {
+        // Backend offline or user not admin — fallback to local storage
+      }
+    };
+    fetchBackendUsers();
+  }, []);
   const [selectedTeacher, setSelectedTeacher] = useState<any>(null);
   const [teacherSearch, setTeacherSearch] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('ALL');
@@ -4962,7 +5022,11 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
             <AddTeacherWizardModal
               onClose={() => setShowAddTeacherModal(false)}
               onSave={(created) => {
-                setTeachersList(prev => [created, ...prev]);
+                setTeachersList(prev => {
+                  const updated = [created, ...prev];
+                  try { localStorage.setItem('tarepet_teachers_list', JSON.stringify(updated)); } catch (e) {}
+                  return updated;
+                });
                 setShowAddTeacherModal(false);
               }}
             />
