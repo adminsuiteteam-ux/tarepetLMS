@@ -6,6 +6,19 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
+    <!-- Content Security Policy: restricts resource loading to known safe origins -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self';
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      font-src 'self' https://fonts.gstatic.com;
+      img-src 'self' data: blob: https:;
+      media-src 'self' blob:;
+      connect-src 'self' https://tarepet-backend.onrender.com https://tarepet-backend-4iw6.onrender.com;
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+    " />
     <title>Tare Pet Montessori School</title>
     <!-- Single Page App redirect decoder for GitHub Pages -->
     <script type="text/javascript">

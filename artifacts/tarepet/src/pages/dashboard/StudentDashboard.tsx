@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 
 import { getStoredExams, getStoredSubmissions, subscribeToCBTStore } from '@/lib/cbt-store';
-import { RealTimeSyncStatus } from '@/components/cbt/RealTimeSyncStatus';
 
 // ─── Initial Seed Data (SS1 Science) ─────────────────────────
 const MY_COURSES: any[] = [];
@@ -27,42 +26,13 @@ const TERM_ACADEMIC_CALENDAR: any[] = [];
 type DayKey = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday';
 
 const WEEKLY_TIMETABLE: Record<DayKey, Array<{ time: string; subject: string; teacher: string; room: string }>> = {
-  Monday: [
-    { time: '08:00 AM - 09:00 AM', subject: 'Applied Mathematics (MTH-101)', teacher: 'Mr. Okonkwo Paul', room: 'Room 5' },
-    { time: '09:00 AM - 10:00 AM', subject: 'Practical Agronomy (BOT-102)', teacher: 'Mrs. Stella Obi', room: 'Farm Area' },
-    { time: '10:00 AM - 10:30 AM', subject: 'Short Break & Morning Refreshment', teacher: 'Faculty Staff', room: 'Cafeteria' },
-    { time: '10:30 AM - 11:30 AM', subject: 'General Science & Lab (SCI-104)', teacher: 'Engr. Emeka David', room: 'Lab 2' },
-    { time: '01:00 PM - 02:00 PM', subject: 'Language Arts (ENG-103)', teacher: 'Dr. Grace Bassey', room: 'Room 8' },
-  ],
-  Tuesday: [
-    { time: '08:00 AM - 09:00 AM', subject: 'Language Arts (ENG-103)', teacher: 'Dr. Grace Bassey', room: 'Room 8' },
-    { time: '09:00 AM - 10:00 AM', subject: 'Montessori Practical Life Kit', teacher: 'Mrs. Stella Obi', room: 'Workshop 1' },
-    { time: '10:00 AM - 10:30 AM', subject: 'Short Break & Morning Refreshment', teacher: 'Faculty Staff', room: 'Cafeteria' },
-    { time: '10:30 AM - 11:30 AM', subject: 'General Science & Lab (SCI-104)', teacher: 'Engr. Emeka David', room: 'Lab 2' },
-    { time: '01:00 PM - 02:00 PM', subject: 'Cultural & Creative Arts', teacher: 'Mr. Okonkwo Paul', room: 'Arts Studio' },
-  ],
-  Wednesday: [
-    { time: '08:00 AM - 09:00 AM', subject: 'Applied Mathematics (MTH-101)', teacher: 'Mr. Okonkwo Paul', room: 'Room 5' },
-    { time: '09:00 AM - 10:00 AM', subject: 'Practical Agronomy (BOT-102)', teacher: 'Mrs. Stella Obi', room: 'Farm Area' },
-    { time: '10:00 AM - 10:30 AM', subject: 'Short Break & Morning Refreshment', teacher: 'Faculty Staff', room: 'Cafeteria' },
-    { time: '10:30 AM - 11:30 AM', subject: 'CBT Practice & Computer Skills', teacher: 'Tech Facilitator', room: 'CBT Lab A' },
-    { time: '01:00 PM - 02:00 PM', subject: 'Language Arts (ENG-103)', teacher: 'Dr. Grace Bassey', room: 'Room 8' },
-  ],
-  Thursday: [
-    { time: '08:00 AM - 09:00 AM', subject: 'Applied Mathematics (MTH-101)', teacher: 'Mr. Okonkwo Paul', room: 'Room 5' },
-    { time: '09:00 AM - 10:00 AM', subject: 'General Science (SCI-104)', teacher: 'Engr. Emeka David', room: 'Lab 2' },
-    { time: '10:00 AM - 10:30 AM', subject: 'Short Break & Morning Refreshment', teacher: 'Faculty Staff', room: 'Cafeteria' },
-    { time: '10:30 AM - 11:30 AM', subject: 'Montessori Applied Mathematics', teacher: 'Mr. Okonkwo Paul', room: 'Room 5' },
-    { time: '01:00 PM - 02:00 PM', subject: 'Physical & Health Education', teacher: 'Coach Ibrahim', room: 'Sports Complex' },
-  ],
-  Friday: [
-    { time: '08:00 AM - 09:00 AM', subject: 'Practical Agronomy (BOT-102)', teacher: 'Mrs. Stella Obi', room: 'Farm Area' },
-    { time: '09:00 AM - 10:00 AM', subject: 'Language Arts & Library Reading', teacher: 'Dr. Grace Bassey', room: 'Library' },
-    { time: '10:00 AM - 10:30 AM', subject: 'Short Break & Morning Refreshment', teacher: 'Faculty Staff', room: 'Cafeteria' },
-    { time: '10:30 AM - 11:30 AM', subject: 'Weekly Assessment & Quiz Review', teacher: 'Subject Instructors', room: 'Hall B' },
-    { time: '11:30 AM - 12:30 PM', subject: 'House Assembly & Club Activities', teacher: 'House Masters', room: 'Auditorium' },
-  ],
+  Monday: [],
+  Tuesday: [],
+  Wednesday: [],
+  Thursday: [],
+  Friday: [],
 };
+
 
 const CATEGORY_COLORS: Record<string, string> = {
   Academic: 'bg-blue-100 text-blue-700',
@@ -93,8 +63,6 @@ export default function StudentDashboard() {
       const params = new URLSearchParams(window.location.search);
       const urlSec = params.get('section');
       if (urlSec) return urlSec;
-      const cached = localStorage.getItem('student_active_section');
-      if (cached) return cached;
     }
     return 'overview';
   });
@@ -102,7 +70,6 @@ export default function StudentDashboard() {
   const setActiveSection = (sec: string) => {
     setActiveSectionState(sec);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('student_active_section', sec);
       const url = new URL(window.location.href);
       url.searchParams.set('section', sec);
       window.history.replaceState(null, '', url.toString());
@@ -125,23 +92,19 @@ export default function StudentDashboard() {
     return () => unsub();
   }, []);
 
-  // Settings form state with localStorage caching
-  const [profileForm, setProfileForm] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('student_profile_data');
-      if (saved) { try { return JSON.parse(saved); } catch (e) {} }
-    }
-    return {
-      firstName: user?.first_name || 'Student',
-      lastName: user?.last_name || 'Suite',
-      email: user?.email || 'student@tarepet.edu.ng',
-      phone: '+234 812 345 6789',
-      studentId: 'STU-2026-001',
-      house: 'Blue House (Eagle)',
-      profileImage: '',
-      emailNotifications: true,
-    };
-  });
+  // Settings form state (in-memory only)
+  const [profileForm, setProfileForm] = useState(() => ({
+    firstName: user?.first_name || 'Kelechi',
+    lastName: user?.last_name || 'Amadi',
+    email: user?.email || 'kelechi.amadi@tarepet.com',
+    phone: '+234 812 345 6789',
+    studentId: (user?.profile as any)?.student_id || 'TMS/SS1/SCI/4821',
+    house: 'Blue House (Eagle)',
+    profileImage: '',
+    emailNotifications: true,
+  }));
+
+  const [selectedTerm, setSelectedTerm] = useState<'1st Term' | '2nd Term' | '3rd Term'>('1st Term');
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -154,20 +117,32 @@ export default function StudentDashboard() {
     // =========================================================
     if (activeSection === 'overview') return (
       <div className="space-y-6">
-        <RealTimeSyncStatus title="Student CBT & LMS Real-Time Engine" />
-        
         {/* Welcome Banner */}
+
         <div className="bg-gradient-to-r from-rose-800 via-red-900 to-rose-950 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
           <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
             <span className="text-[10px] font-bold uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full">
-              {t('student.header_class_info', 'SS1 SCIENCE · TERM 2 2026')}
+              {`SS1 SCIENCE · ${selectedTerm.toUpperCase()} 2026`}
             </span>
+            <div className="flex items-center gap-1 bg-black/20 p-1 rounded-xl">
+              {(['1st Term', '2nd Term', '3rd Term'] as const).map(term => (
+                <button
+                  key={term}
+                  onClick={() => setSelectedTerm(term)}
+                  className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                    selectedTerm === term ? 'bg-white text-rose-950 shadow-sm' : 'text-rose-100 hover:text-white'
+                  }`}
+                >
+                  {term}
+                </button>
+              ))}
+            </div>
           </div>
           <h2 className="text-2xl sm:text-3xl font-serif font-bold mb-1">
             {t('student.welcome_greeting', 'Good morning,')} {user?.first_name ?? t('student.role_student', 'Student')}! 👋
           </h2>
           <p className="text-rose-100 text-sm mb-3">
-            {t('student.welcome_sub', 'Welcome to your student portal. Check your active courses and upcoming CBT exams.')}
+            {t('student.welcome_sub', 'Welcome to your student portal. Check your active subjects and upcoming CBT exams.')}
           </p>
           <p className="text-xs italic text-rose-200/90 font-serif border-t border-white/10 pt-2.5">
             "{t('student.motto', 'Knowledge is Power.')}" — {t('student.motto_author', 'Tarepet Guiding Principle')}
@@ -189,10 +164,10 @@ export default function StudentDashboard() {
         </div>
 
         {/* Quick Stats Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {[
-            { label: 'Active Courses', val: '0', sub: '0% avg progress', icon: BookOpen, color: 'text-rose-700 bg-rose-500/10 border-rose-200' },
-            { label: 'Current GPA', val: '0.00', sub: 'No GPA recorded', icon: Star, color: 'text-emerald-600 bg-emerald-500/10 border-emerald-200' },
+            { label: 'Active Subjects', val: '0', sub: '0% avg progress', icon: BookOpen, color: 'text-rose-700 bg-rose-500/10 border-rose-200' },
+            { label: 'Overall Average', val: '0%', sub: 'Overall performance', icon: Award, color: 'text-emerald-600 bg-emerald-500/10 border-emerald-200' },
             { label: 'Attendance', val: '0%', sub: 'No attendance recorded', icon: UserCheck, color: 'text-blue-600 bg-blue-500/10 border-blue-200' },
           ].map((s, i) => (
             <div key={i} className={`bg-card rounded-2xl border p-4 shadow-sm ${s.color.split(' ').slice(2).join(' ')}`}>
@@ -211,7 +186,7 @@ export default function StudentDashboard() {
           <h3 className="font-serif font-bold text-foreground mb-4">{t('student.quick_access', 'Quick Student Access')}</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { label: 'My course', section: 'courses', icon: BookOpen },
+              { label: 'My Subjects', section: 'courses', icon: BookOpen },
               { label: 'Exams/Test', section: 'exams', icon: ClipboardList },
               { label: 'Check Results', section: 'results', icon: BarChart2 },
               { label: 'Calendar', section: 'calendar', icon: Calendar },
@@ -233,8 +208,8 @@ export default function StudentDashboard() {
     if (activeSection === 'courses') return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-serif font-bold text-foreground">{t('student.my_courses_title', 'My course')}</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">{t('student.my_courses_desc', 'Active subjects, course progress, and assigned teachers.')}</p>
+          <h2 className="text-2xl font-serif font-bold text-foreground">{t('student.my_courses_title', 'My Subjects')}</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">{t('student.my_courses_desc', 'Active subjects, subject progress, and assigned teachers.')}</p>
         </div>
 
         {MY_COURSES.length > 0 ? (
@@ -270,8 +245,8 @@ export default function StudentDashboard() {
         ) : (
           <div className="bg-card rounded-2xl border border-border p-12 text-center">
             <BookOpen className="w-12 h-12 text-muted-foreground/50 mx-auto mb-3" />
-            <h4 className="font-serif font-bold text-foreground text-lg">{t('student.no_courses_title', 'No Enrolled Courses')}</h4>
-            <p className="text-xs text-muted-foreground">{t('student.no_courses_desc', 'You do not have any active course enrollments at this time.')}</p>
+            <h4 className="font-serif font-bold text-foreground text-lg">{t('student.no_courses_title', 'No Enrolled Subjects')}</h4>
+            <p className="text-xs text-muted-foreground">{t('student.no_courses_desc', 'You do not have any active subject enrollments at this time.')}</p>
           </div>
         )}
       </div>
@@ -365,55 +340,78 @@ export default function StudentDashboard() {
             <h2 className="text-2xl font-serif font-bold text-foreground">{t('student.check_results_title', 'Check Academic Results')}</h2>
             <p className="text-xs text-muted-foreground mt-0.5">{t('student.check_results_desc', 'Term report card, continuous assessments, and exam breakdown.')}</p>
           </div>
-          <button onClick={() => showToast('Official Report Card PDF downloaded!')} className="flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors shadow-sm self-start sm:self-auto">
-            <Download className="w-4 h-4" /> {t('student.download_pdf_btn', 'Download Official Report Card (PDF)')}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border">
+              {(['1st Term', '2nd Term', '3rd Term'] as const).map(term => (
+                <button
+                  key={term}
+                  onClick={() => setSelectedTerm(term)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    selectedTerm === term ? 'bg-primary text-white shadow-xs' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {term}
+                </button>
+              ))}
+            </div>
+            <button onClick={() => showToast(`Official ${selectedTerm} Report Card PDF downloaded!`)} className="flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors shadow-sm self-start sm:self-auto">
+              <Download className="w-4 h-4" /> {t('student.download_pdf_btn', 'Download Official Report Card (PDF)')}
+            </button>
+          </div>
         </div>
 
         {/* Result Summary Card */}
-        <div className="bg-card rounded-2xl border border-border p-6 shadow-sm grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-          <div><p className="text-[10px] font-bold uppercase text-muted-foreground">{t('student.cgpa', 'Cumulative GPA')}</p><p className="text-3xl font-serif font-bold text-primary mt-1">3.85</p></div>
-          <div><p className="text-[10px] font-bold uppercase text-muted-foreground">{t('student.overall_avg', 'Overall Average')}</p><p className="text-3xl font-serif font-bold text-emerald-600 mt-1">86.5%</p></div>
-          <div><p className="text-[10px] font-bold uppercase text-muted-foreground">{t('student.class_position', 'Class Position')}</p><p className="text-3xl font-serif font-bold text-purple-600 mt-1">2nd / 24</p></div>
-          <div><p className="text-[10px] font-bold uppercase text-muted-foreground">{t('student.term_status', 'Term Status')}</p><p className="text-3xl font-serif font-bold text-blue-600 mt-1">{t('student.status_passed', 'PASSED')}</p></div>
+        <div className="bg-card rounded-2xl border border-border p-6 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+          <div><p className="text-[10px] font-bold uppercase text-muted-foreground">{t('student.overall_avg', 'Overall Average')}</p><p className="text-3xl font-serif font-bold text-emerald-600 mt-1">{GRADE_REPORT.length > 0 ? `${(GRADE_REPORT.reduce((a, b) => a + b.total, 0) / GRADE_REPORT.length).toFixed(1)}%` : '-'}</p></div>
+          <div><p className="text-[10px] font-bold uppercase text-muted-foreground">{t('student.class_position', 'Class Position')}</p><p className="text-3xl font-serif font-bold text-purple-600 mt-1">{GRADE_REPORT.length > 0 ? '1st' : '-'}</p></div>
+          <div><p className="text-[10px] font-bold uppercase text-muted-foreground">{t('student.term_status', 'Term Status')}</p><p className="text-3xl font-serif font-bold text-blue-600 mt-1">{GRADE_REPORT.length > 0 ? t('student.status_passed', 'PASSED') : '-'}</p></div>
         </div>
 
         {/* Subject Score Breakdown */}
-        <div className="bg-card rounded-2xl border border-border shadow-sm p-5 space-y-4">
-          <h3 className="font-serif font-bold text-foreground">2nd Term Subject Scores</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left">
-              <thead className="bg-muted/40 uppercase text-[10px] text-muted-foreground tracking-wider border-b border-border">
-                <tr>
-                  <th className="p-3">{t('student.col_subject', 'Subject')}</th>
-                  <th className="p-3 text-center">{t('student.col_ca1', 'CA 1 (10%)')}</th>
-                  <th className="p-3 text-center">{t('student.col_ca2', 'CA 2 (10%)')}</th>
-                  <th className="p-3 text-center">{t('student.col_midterm', 'Midterm (20%)')}</th>
-                  <th className="p-3 text-center">{t('student.col_final', 'Final Exam (60%)')}</th>
-                  <th className="p-3 text-center">{t('student.col_total', 'Total (100%)')}</th>
-                  <th className="p-3 text-center">{t('student.col_grade', 'Grade')}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {GRADE_REPORT.map((g, i) => (
-                  <tr key={i} className="hover:bg-muted/10">
-                    <td className="p-3 font-bold text-foreground">{g.name} <span className="text-muted-foreground text-[10px]">({g.subject})</span></td>
-                    <td className="p-3 text-center font-mono">{g.ca1}</td>
-                    <td className="p-3 text-center font-mono">{g.ca2}</td>
-                    <td className="p-3 text-center font-mono">{g.midterm}</td>
-                    <td className="p-3 text-center font-mono">{g.exam}</td>
-                    <td className="p-3 text-center font-bold text-foreground">{g.total}%</td>
-                    <td className="p-3 text-center">
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
-                        {g.grade}
-                      </span>
-                    </td>
+        {GRADE_REPORT.length > 0 ? (
+          <div className="bg-card rounded-2xl border border-border shadow-sm p-5 space-y-4">
+            <h3 className="font-serif font-bold text-foreground">{selectedTerm} Subject Scores</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-muted/40 uppercase text-[10px] text-muted-foreground tracking-wider border-b border-border">
+                  <tr>
+                    <th className="p-3">{t('student.col_subject', 'Subject')}</th>
+                    <th className="p-3 text-center">{t('student.col_ca1', 'CA 1 (10%)')}</th>
+                    <th className="p-3 text-center">{t('student.col_ca2', 'CA 2 (10%)')}</th>
+                    <th className="p-3 text-center">{t('student.col_midterm', 'Midterm (20%)')}</th>
+                    <th className="p-3 text-center">{t('student.col_final', 'Final Exam (60%)')}</th>
+                    <th className="p-3 text-center">{t('student.col_total', 'Total (100%)')}</th>
+                    <th className="p-3 text-center">{t('student.col_grade', 'Grade')}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {GRADE_REPORT.map((g, i) => (
+                    <tr key={i} className="hover:bg-muted/10">
+                      <td className="p-3 font-bold text-foreground">{g.name} <span className="text-muted-foreground text-[10px]">({g.subject})</span></td>
+                      <td className="p-3 text-center font-mono">{g.ca1}</td>
+                      <td className="p-3 text-center font-mono">{g.ca2}</td>
+                      <td className="p-3 text-center font-mono">{g.midterm}</td>
+                      <td className="p-3 text-center font-mono">{g.exam}</td>
+                      <td className="p-3 text-center font-bold text-foreground">{g.total}%</td>
+                      <td className="p-3 text-center">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">
+                          {g.grade}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="bg-card rounded-2xl border border-border p-12 text-center">
+            <BarChart2 className="w-12 h-12 text-muted-foreground/50 mx-auto mb-3" />
+            <h4 className="font-serif font-bold text-foreground text-lg">{t('student.no_results_title', 'No Results Published')}</h4>
+            <p className="text-xs text-muted-foreground">{t('student.no_results_desc', 'Your academic report card and subject scores will appear here once published by the school administration.')}</p>
+          </div>
+        )}
+
       </div>
     );
 
@@ -459,50 +457,68 @@ export default function StudentDashboard() {
 
           {/* Timetable Schedule Cards */}
           <div className="space-y-2.5">
-            {getTimetableForDay(timetableDay).map((slot, idx) => (
-              <div
-                key={idx}
-                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-border bg-muted/10 hover:border-rose-300 transition-all gap-2"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-700 shrink-0">
-                    <Clock className="w-4 h-4" />
+            {getTimetableForDay(timetableDay).length > 0 ? (
+              getTimetableForDay(timetableDay).map((slot, idx) => (
+                <div
+                  key={idx}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-border bg-muted/10 hover:border-rose-300 transition-all gap-2"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-700 shrink-0">
+                      <Clock className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-foreground text-sm">{slot.subject}</h4>
+                      <p className="text-xs text-muted-foreground">{t('student.instructor', 'Instructor: ')}<span className="font-semibold text-foreground">{slot.teacher}</span></p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-bold text-foreground text-sm">{slot.subject}</h4>
-                    <p className="text-xs text-muted-foreground">{t('student.instructor', 'Instructor: ')}<span className="font-semibold text-foreground">{slot.teacher}</span></p>
-                  </div>
-                </div>
 
-                <div className="flex items-center justify-between sm:justify-end gap-4 text-xs shrink-0">
-                  <span className="font-mono font-bold text-rose-700 bg-rose-50 border border-rose-100 px-2.5 py-1 rounded-lg">
-                    {slot.time}
-                  </span>
-                  <span className="font-bold text-muted-foreground bg-muted px-2.5 py-1 rounded-lg">
-                    {slot.room}
-                  </span>
+                  <div className="flex items-center justify-between sm:justify-end gap-4 text-xs shrink-0">
+                    <span className="font-mono font-bold text-rose-700 bg-rose-50 border border-rose-100 px-2.5 py-1 rounded-lg">
+                      {slot.time}
+                    </span>
+                    <span className="font-bold text-muted-foreground bg-muted px-2.5 py-1 rounded-lg">
+                      {slot.room}
+                    </span>
+                  </div>
                 </div>
+              ))
+            ) : (
+              <div className="text-center py-8 bg-muted/10 rounded-xl border border-border/60 space-y-1">
+                <p className="text-xs font-semibold text-muted-foreground">{t('student.no_timetable', 'No class timetable scheduled for this day.')}</p>
               </div>
-            ))}
+            )}
           </div>
+
         </div>
 
         {/* 2. Term Academic Calendar Component */}
         <div className="bg-card rounded-2xl border border-border p-5 shadow-sm space-y-4">
-          <div className="border-b border-border pb-3">
-            <h3 className="font-serif font-bold text-foreground text-lg flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-rose-700" /> {t('student.academic_calendar_title', '2nd Term 2026 Academic Calendar')}
-            </h3>
-            <p className="text-xs text-muted-foreground">{t('student.academic_calendar_desc', 'Important school key dates, continuous assessment tests, holidays, and term exams.')}</p>
+          <div className="border-b border-border pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h3 className="font-serif font-bold text-foreground text-lg flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-rose-700" /> {selectedTerm} 2026 Academic Calendar
+              </h3>
+              <p className="text-xs text-muted-foreground">{t('student.academic_calendar_desc', 'Important school key dates, continuous assessment tests, holidays, and term exams.')}</p>
+            </div>
+            <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border self-start sm:self-auto">
+              {(['1st Term', '2nd Term', '3rd Term'] as const).map(term => (
+                <button
+                  key={term}
+                  onClick={() => setSelectedTerm(term)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    selectedTerm === term ? 'bg-rose-700 text-white shadow-xs' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {term}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="space-y-3">
             {(() => {
               let eventsToDisplay: any[] = TERM_ACADEMIC_CALENDAR;
-              if (typeof window !== 'undefined') {
-                const saved = localStorage.getItem('tarepet_calendar_events');
-                if (saved) { try { eventsToDisplay = JSON.parse(saved); } catch (e) {} }
-              }
               if (eventsToDisplay.length === 0) {
                 return (
                   <div className="text-center py-8 bg-muted/10 rounded-xl border border-border space-y-1">
@@ -580,7 +596,6 @@ export default function StudentDashboard() {
                     reader.onloadend = () => {
                       const updated = { ...profileForm, profileImage: reader.result as string };
                       setProfileForm(updated);
-                      localStorage.setItem('student_profile_data', JSON.stringify(updated));
                       showToast('Profile photo updated in real time!');
                     };
                     reader.readAsDataURL(file);
@@ -597,7 +612,6 @@ export default function StudentDashboard() {
                     onClick={() => {
                       const updated = { ...profileForm, profileImage: '' };
                       setProfileForm(updated);
-                      localStorage.setItem('student_profile_data', JSON.stringify(updated));
                       showToast('Photo removed!');
                     }}
                     className="px-3 py-1.5 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold hover:bg-rose-50"
@@ -648,7 +662,6 @@ export default function StudentDashboard() {
             <input type="checkbox" checked={profileForm.emailNotifications} onChange={e => setProfileForm({...profileForm, emailNotifications: e.target.checked})} className="w-4 h-4 text-primary rounded" />
           </label>
           <button onClick={() => {
-            localStorage.setItem('student_profile_data', JSON.stringify(profileForm));
             showToast('Student profile & photo settings saved!');
           }} className="bg-primary text-white px-6 py-2.5 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors">
             {t('student.save_settings', 'Save Profile Settings')}

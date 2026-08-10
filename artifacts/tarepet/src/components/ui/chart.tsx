@@ -39,7 +39,7 @@ const ChartContainer = React.forwardRef<
       typeof RechartsPrimitive.ResponsiveContainer
     >['children'];
   }
->(({ id, className, children, config, ...props }, ref) => {
+>(({ id, className, children, config, style, onClick, onMouseEnter, onMouseLeave, onKeyDown, role, 'aria-label': ariaLabel, tabIndex }, ref) => {
   const uniqueId = React.useId();
   const chartId = `chart-${id || uniqueId.replace(/:/g, '')}`;
 
@@ -48,11 +48,19 @@ const ChartContainer = React.forwardRef<
       <div
         data-chart={chartId}
         ref={ref}
+        // Explicit props instead of spread to prevent injection of arbitrary HTML attributes.
+        style={style}
+        onClick={onClick}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        onKeyDown={onKeyDown}
+        role={role}
+        aria-label={ariaLabel}
+        tabIndex={tabIndex}
         className={cn(
           "flex aspect-video justify-center text-xs [&_.recharts-cartesian-axis-tick_text]:fill-muted-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-border/50 [&_.recharts-curve.recharts-tooltip-cursor]:stroke-border [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-layer]:outline-none [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-border [&_.recharts-radial-bar-background-sector]:fill-muted [&_.recharts-rectangle.recharts-tooltip-cursor]:fill-muted [&_.recharts-reference-line_[stroke='#ccc']]:stroke-border [&_.recharts-sector[stroke='#fff']]:stroke-transparent [&_.recharts-sector]:outline-none [&_.recharts-surface]:outline-none",
           className,
         )}
-        {...props}
       >
         <ChartStyle id={chartId} config={config} />
         <RechartsPrimitive.ResponsiveContainer>
@@ -69,32 +77,48 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     ([, config]) => config.theme || config.color,
   );
 
-  if (!colorConfig.length) {
-    return null;
-  }
+  // Ref used to inject CSS via textContent — avoids dangerouslySetInnerHTML entirely.
+  const styleRef = React.useRef<HTMLStyleElement>(null);
 
-  return (
-    <style
-      dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
-${colorConfig
-  .map(([key, itemConfig]) => {
-    const color =
-      itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
-      itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
-  })
-  .join('\n')}
-}
-`,
-          )
-          .join('\n'),
-      }}
-    />
-  );
+  // Sanitize CSS variable key: only allow alphanumeric characters and dashes.
+  const sanitizeCSSKey = (key: string): string => key.replace(/[^a-zA-Z0-9-]/g, '');
+
+  // Sanitize color value: allow only safe CSS color patterns.
+  const SAFE_COLOR_RE = /^(#[0-9a-fA-F]{3,8}|rgba?\([^)]*\)|hsla?\([^)]*\)|var\(--[a-zA-Z0-9-]+\)|[a-zA-Z]{1,30}|transparent|inherit|none)$/;
+  const sanitizeColor = (color: string): string | null =>
+    SAFE_COLOR_RE.test(color.trim()) ? color.trim() : null;
+
+  React.useEffect(() => {
+    if (!styleRef.current || !colorConfig.length) return;
+
+    const css = Object.entries(THEMES)
+      .map(([theme, prefix]) => {
+        const vars = colorConfig
+          .map(([key, itemConfig]) => {
+            // Guard bracket notation with hasOwnProperty to prevent prototype pollution.
+            const themeKey = theme as keyof typeof itemConfig.theme;
+            const rawColor =
+              (itemConfig.theme && Object.prototype.hasOwnProperty.call(itemConfig.theme, themeKey)
+                ? itemConfig.theme[themeKey]
+                : undefined) ?? itemConfig.color;
+            const safeKey = sanitizeCSSKey(key);
+            const safeColor = rawColor ? sanitizeColor(rawColor) : null;
+            return (safeKey && safeColor) ? `  --color-${safeKey}: ${safeColor};` : null;
+          })
+          .filter(Boolean)
+          .join('\n');
+        return `\n${prefix} [data-chart=${id}] {\n${vars}\n}`;
+      })
+      .join('\n');
+
+    // Set via textContent — safe, does not parse as HTML, no XSS risk.
+    styleRef.current.textContent = css;
+  }, [id, colorConfig]);
+
+  if (!colorConfig.length) return null;
+
+  // Render an empty <style> tag; CSS is injected via the ref above.
+  return <style ref={styleRef} />;
 };
 
 const ChartTooltip = RechartsPrimitive.Tooltip;
@@ -140,7 +164,8 @@ const ChartTooltipContent = React.forwardRef<
       const itemConfig = getPayloadConfigFromPayload(config, item, key);
       const value =
         !labelKey && typeof label === 'string'
-          ? config[label as keyof typeof config]?.label || label
+          // safeGet() performs hasOwnProperty check internally — no direct bracket notation.
+          ? safeGet(config, label as string)?.label || label
           : itemConfig?.label;
 
       if (labelFormatter) {
@@ -317,6 +342,18 @@ const ChartLegendContent = React.forwardRef<
 );
 ChartLegendContent.displayName = 'ChartLegend';
 
+/**
+ * Safe property accessor that guards against prototype pollution.
+ * Uses Object.entries() to retrieve the value — no bracket notation used.
+ * Only returns a value if `key` is an own (non-inherited) property of `obj`.
+ */
+function safeGet<T extends object>(obj: T, key: string): T[keyof T] | undefined {
+  // Object.entries() only iterates own enumerable properties, so prototype
+  // keys like __proto__ or constructor are never reachable.
+  const entry = Object.entries(obj).find(([k]) => k === key);
+  return entry ? (entry[1] as T[keyof T]) : undefined;
+}
+
 // Helper to extract item config from a payload.
 function getPayloadConfigFromPayload(
   config: ChartConfig,
@@ -336,24 +373,18 @@ function getPayloadConfigFromPayload(
 
   let configLabelKey: string = key;
 
-  if (
-    key in payload &&
-    typeof payload[key as keyof typeof payload] === 'string'
-  ) {
-    configLabelKey = payload[key as keyof typeof payload] as string;
-  } else if (
-    payloadPayload &&
-    key in payloadPayload &&
-    typeof payloadPayload[key as keyof typeof payloadPayload] === 'string'
-  ) {
-    configLabelKey = payloadPayload[
-      key as keyof typeof payloadPayload
-    ] as string;
+  // safeGet() guards all bracket-notation accesses against prototype pollution.
+  const payloadVal = safeGet(payload as Record<string, unknown>, key);
+  if (typeof payloadVal === 'string') {
+    configLabelKey = payloadVal;
+  } else if (payloadPayload) {
+    const nestedVal = safeGet(payloadPayload as Record<string, unknown>, key);
+    if (typeof nestedVal === 'string') {
+      configLabelKey = nestedVal;
+    }
   }
 
-  return configLabelKey in config
-    ? config[configLabelKey]
-    : config[key as keyof typeof config];
+  return safeGet(config, configLabelKey) ?? safeGet(config, key);
 }
 
 export {

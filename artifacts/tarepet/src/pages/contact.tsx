@@ -32,7 +32,7 @@ export default function Contact() {
   });
 
   function onSubmit(values: z.infer<typeof contactSchema>) {
-    console.log(values);
+    // Values are submitted to the toast notification — not logged to console.
     toast({
       title: "Message Sent",
       description: "Thank you for reaching out. We will get back to you soon.",

@@ -13,7 +13,7 @@ import {
   ClipboardList, Settings, ShieldCheck, User, Bell, Printer, CreditCard
 } from 'lucide-react';
 
-import { getStoredExams, updateExamStatus, getStoredSubmissions } from '@/lib/cbt-store';
+import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, saveStudent, deleteStudent, subscribeToCBTStore, syncStudentsWithBackend } from '@/lib/cbt-store';
 import { useTranslation } from '@/lib/i18n';
 
 // ─── Initial Seed Data (Form Teacher & Subject Teacher) ───────
@@ -23,9 +23,9 @@ const PENDING_SUBMISSIONS: any[] = [];
 const STUDENT_ROSTER: any[] = [
   {
     id: 1,
-    code: 'TMS/SS1/9927',
+    code: 'TMS/SS1/SCI/9927',
     name: 'Civa Media',
-    email: 'media.civa@tarepet.edu.ng',
+    email: 'civa.media@tarepet.com',
     gender: 'Male',
     maritalStatus: 'Single',
     dob: '2012-05-14',
@@ -41,7 +41,6 @@ const STUDENT_ROSTER: any[] = [
     parentPhone: '08031112233',
     status: 'ACTIVE',
     studyMode: 'Full Time',
-    gpa: '3.85',
     attendance: '98%',
     atRisk: false
   }
@@ -52,14 +51,12 @@ const TIMETABLE: any[] = [];
 export default function TeacherDashboard() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  // Active section & tab persistence on refresh
+  // Active section & tab persistence
   const [activeSection, setActiveSectionState] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const urlSec = params.get('section');
       if (urlSec) return urlSec;
-      const cached = localStorage.getItem('teacher_active_section');
-      if (cached) return cached;
     }
     return 'overview';
   });
@@ -67,7 +64,6 @@ export default function TeacherDashboard() {
   const setActiveSection = (sec: string) => {
     setActiveSectionState(sec);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('teacher_active_section', sec);
       const url = new URL(window.location.href);
       url.searchParams.set('section', sec);
       window.history.replaceState(null, '', url.toString());
@@ -78,33 +74,15 @@ export default function TeacherDashboard() {
   const isFormTeacher = Boolean(user?.role === 'TEACHER' || user?.role === 'ADMIN');
   const formClass = (user?.profile as any)?.formTeacherOf || 'SS1';
 
-  // Sub-tab states with persistent caching
-  const [studentSubTab, setStudentSubTabState] = useState<'roster' | 'attendance'>(() => {
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('teacher_student_subtab');
-      if (cached === 'roster' || cached === 'attendance') return cached;
-    }
-    return 'roster';
-  });
+  // Sub-tab states
+  const [studentSubTab, setStudentSubTabState] = useState<'roster' | 'attendance'>('roster');
   const setStudentSubTab = (tab: 'roster' | 'attendance') => {
     setStudentSubTabState(tab);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('teacher_student_subtab', tab);
-    }
   };
 
-  const [resultsSubTab, setResultsSubTabState] = useState<'queue' | 'gradebook'>(() => {
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('teacher_results_subtab');
-      if (cached === 'queue' || cached === 'gradebook') return cached;
-    }
-    return 'queue';
-  });
+  const [resultsSubTab, setResultsSubTabState] = useState<'queue' | 'gradebook'>('queue');
   const setResultsSubTab = (tab: 'queue' | 'gradebook') => {
     setResultsSubTabState(tab);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('teacher_results_subtab', tab);
-    }
   };
 
   const [selectedExamClass, setSelectedExamClass] = useState<string>('ALL');
@@ -115,15 +93,16 @@ export default function TeacherDashboard() {
   const [selectedSub, setSelectedSub] = useState<any>(null);
   const [gradeInput, setGradeInput] = useState('');
   const [feedbackInput, setFeedbackInput] = useState('');
-  const [roster, setRoster] = useState<any[]>(() => {
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('tarepet_student_roster');
-      if (cached) {
-        try { return JSON.parse(cached); } catch (e) {}
-      }
-    }
-    return STUDENT_ROSTER;
-  });
+  const [roster, setRoster] = useState<any[]>(() => getStoredStudents());
+
+  React.useEffect(() => {
+    setRoster(getStoredStudents());
+    syncStudentsWithBackend().then(res => setRoster(res));
+    const unsub = subscribeToCBTStore(() => {
+      setRoster(getStoredStudents());
+    });
+    return () => unsub();
+  }, []);
 
   const [studentSearch, setStudentSearch] = useState('');
   const [attendanceState, setAttendanceState] = useState<Record<number, string>>({
@@ -164,20 +143,11 @@ export default function TeacherDashboard() {
   const [showIDCardModal, setShowIDCardModal] = useState<any>(null);
   const [showStaffIdModal, setShowStaffIdModal] = useState<boolean>(false);
 
-  // Settings & Profile State
-  const [profileForm, setProfileForm] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('teacher_profile_data');
-      if (cached) {
-        try {
-          return JSON.parse(cached);
-        } catch (e) {}
-      }
-    }
-    return {
-      firstName: user?.first_name || 'Dr. Victoria',
-      lastName: user?.last_name || 'Adeyemi',
-      email: user?.email || 'v.adeyemi@tarepet.edu.ng',
+  // Settings & Profile State (in-memory only)
+  const [profileForm, setProfileForm] = useState(() => ({
+    firstName: user?.first_name || 'Dr. Victoria',
+    lastName: user?.last_name || 'Adeyemi',
+    email: user?.email || 'v.adeyemi@tarepet.edu.ng',
       phone: '+234 803 456 7890',
       staffId: 'TMS/TCH/0042',
       roleTitle: 'Senior Subject Specialist & SS1 Form Teacher',
@@ -195,8 +165,7 @@ export default function TeacherDashboard() {
       officeHours: 'Monday - Thursday: 2:00 PM - 4:00 PM',
       emailAlerts: true,
       cbtAlerts: true,
-    };
-  });
+    }));
 
   const [gradebookScores, setGradebookScores] = useState<Record<number, { ca1: number; ca2: number; midterm: number; exam: number }>>({});
 
@@ -215,12 +184,18 @@ export default function TeacherDashboard() {
   };
 
   const handleAddStudentSubmit = () => {
-    if (!addStudentForm.name || !addStudentForm.code || !addStudentForm.email) return;
-    const newStudent = {
+    if (!addStudentForm.name.trim()) return;
+    const assignedGrade = formClass || addStudentForm.grade || 'SS1';
+    const autoCode = addStudentForm.code.trim() || generateAdmissionNumber(assignedGrade, addStudentForm.stream);
+    const autoEmail = addStudentForm.email.trim() || formatStudentEmail(addStudentForm.name);
+
+    saveStudent({
       id: Date.now(),
-      code: addStudentForm.code.trim(),
+      code: autoCode,
+      admissionNo: autoCode,
       name: addStudentForm.name.trim(),
-      email: addStudentForm.email.trim(),
+      email: autoEmail,
+      password: autoCode,
       gender: addStudentForm.gender,
       maritalStatus: addStudentForm.maritalStatus,
       dob: addStudentForm.dob || 'Not Available',
@@ -229,24 +204,18 @@ export default function TeacherDashboard() {
       stateOfOrigin: addStudentForm.stateOfOrigin || 'Bayelsa',
       lga: addStudentForm.lga || 'Yenagoa',
       address: addStudentForm.address || 'Not Available',
-      grade: formClass || addStudentForm.grade,
+      grade: assignedGrade,
       stream: addStudentForm.stream,
       programme: addStudentForm.programme,
       parentName: addStudentForm.parentName || 'Not Available',
       parentPhone: addStudentForm.parentPhone || 'Not Available',
       status: addStudentForm.status || 'ACTIVE',
       studyMode: addStudentForm.studyMode || 'Full Time',
-      gpa: '0.00',
       attendance: '100%',
       atRisk: false
-    };
-    const updated = [newStudent, ...roster];
-    setRoster(updated);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('tarepet_student_roster', JSON.stringify(updated));
-    }
+    });
     setShowAddStudentModal(false);
-    showToast(`Registered ${addStudentForm.name}! Student ID: ${addStudentForm.code}`);
+    showToast(`Registered ${addStudentForm.name}! Email: ${autoEmail} | Password (School ID): ${autoCode}`);
     setAddStudentForm({
       code: '',
       name: '',
@@ -592,12 +561,12 @@ export default function TeacherDashboard() {
                 🎓
               </div>
               <div>
-                <h4 className="font-bold text-sm text-emerald-950">Assigned Form Class: <span className="text-emerald-700 font-mono font-bold">{formClass}</span></h4>
-                <p className="text-xs text-emerald-800/80">You are the designated Form Teacher for {formClass}. Student roster and daily attendance are restricted strictly to your assigned class.</p>
+                <h4 className="font-bold text-sm text-emerald-950">{`Assigned Form Class: `}<span className="text-emerald-700 font-mono font-bold">{formClass}</span></h4>
+                <p className="text-xs text-emerald-800/80">{`You are the designated Form Teacher for `}{formClass}{`. Student roster and daily attendance are restricted strictly to your assigned class.`}</p>
               </div>
             </div>
             <span className="text-[10px] font-extrabold uppercase px-3 py-1 bg-emerald-600 text-white rounded-full shadow-xs whitespace-nowrap">
-              Form Register
+              {`Form Register`}
             </span>
           </div>
         )}
@@ -644,7 +613,6 @@ export default function TeacherDashboard() {
                     <th className="p-3">{t('teacher.col_student_name', 'Student Name')}</th>
                     <th className="p-3">{t('teacher.col_student_id', 'Student ID')}</th>
                     <th className="p-3">{t('teacher.col_class', 'Class')}</th>
-                    <th className="p-3">{t('teacher.col_gpa', 'GPA')}</th>
                     <th className="p-3">{t('teacher.col_attendance', 'Attendance')}</th>
                     <th className="p-3">{t('teacher.col_status', 'Status')}</th>
                   </tr>
@@ -660,7 +628,6 @@ export default function TeacherDashboard() {
                       <td className="p-3 font-bold text-foreground group-hover:text-primary transition-colors">{s.name}</td>
                       <td className="p-3 text-muted-foreground font-mono">{s.code}</td>
                       <td className="p-3 font-semibold text-primary">{s.grade}</td>
-                      <td className="p-3 font-bold text-foreground">{s.gpa}</td>
                       <td className="p-3 text-emerald-600 font-semibold">{s.attendance}</td>
                       <td className="p-3">
                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${s.atRisk ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}`}>
@@ -746,20 +713,20 @@ export default function TeacherDashboard() {
               <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">STATUS *</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`STATUS *`}</label>
                     <select
                       value={addStudentForm.status}
                       onChange={e => setAddStudentForm({ ...addStudentForm, status: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none font-bold text-emerald-600"
                     >
-                      <option value="ACTIVE">ACTIVE</option>
-                      <option value="INACTIVE">INACTIVE</option>
-                      <option value="SUSPENDED">SUSPENDED</option>
+                      <option value="ACTIVE">{`ACTIVE`}</option>
+                      <option value="INACTIVE">{`INACTIVE`}</option>
+                      <option value="SUSPENDED">{`SUSPENDED`}</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Student ID (Manual Input) *</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Student ID (Manual Input) *`}</label>
                     <input
                       type="text"
                       value={addStudentForm.code}
@@ -772,7 +739,7 @@ export default function TeacherDashboard() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Student Full Name *</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Student Full Name *`}</label>
                     <input
                       type="text"
                       value={addStudentForm.name}
@@ -783,33 +750,33 @@ export default function TeacherDashboard() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Gender *</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Gender *`}</label>
                     <select
                       value={addStudentForm.gender}
                       onChange={e => setAddStudentForm({ ...addStudentForm, gender: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
                     >
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
+                      <option value="Male">{`Male`}</option>
+                      <option value="Female">{`Female`}</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Marital Status *</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Marital Status *`}</label>
                     <select
                       value={addStudentForm.maritalStatus}
                       onChange={e => setAddStudentForm({ ...addStudentForm, maritalStatus: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
                     >
-                      <option value="Single">Single</option>
-                      <option value="Married">Married</option>
+                      <option value="Single">{`Single`}</option>
+                      <option value="Married">{`Married`}</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Date of Birth *</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Date of Birth *`}</label>
                     <input
                       type="date"
                       value={addStudentForm.dob}
@@ -821,7 +788,7 @@ export default function TeacherDashboard() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Phone Number</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Phone Number`}</label>
                     <input
                       type="text"
                       value={addStudentForm.phone}
@@ -832,7 +799,7 @@ export default function TeacherDashboard() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Email Address *</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Email Address *`}</label>
                     <input
                       type="email"
                       value={addStudentForm.email}
@@ -845,7 +812,7 @@ export default function TeacherDashboard() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Country</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Country`}</label>
                     <input
                       type="text"
                       value={addStudentForm.country}
@@ -856,7 +823,7 @@ export default function TeacherDashboard() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">State of Origin</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`State of Origin`}</label>
                     <input
                       type="text"
                       value={addStudentForm.stateOfOrigin}
@@ -879,7 +846,7 @@ export default function TeacherDashboard() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Residential Address</label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Residential Address`}</label>
                   <input
                     type="text"
                     value={addStudentForm.address}
@@ -891,7 +858,7 @@ export default function TeacherDashboard() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Class Level *</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Class Level *`}</label>
                     {formClass ? (
                       <input
                         type="text"
@@ -911,49 +878,49 @@ export default function TeacherDashboard() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Department Stream</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Department Stream`}</label>
                     <select
                       value={addStudentForm.stream}
                       onChange={e => setAddStudentForm({ ...addStudentForm, stream: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
                     >
-                      <option value="Science">Science</option>
-                      <option value="Art">Art / Humanities</option>
-                      <option value="Commercial">Commercial</option>
-                      <option value="General">General Junior</option>
+                      <option value="Science">{`Science`}</option>
+                      <option value="Art">{`Art / Humanities`}</option>
+                      <option value="Commercial">{`Commercial`}</option>
+                      <option value="General">{`General Junior`}</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Academic Programme</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Academic Programme`}</label>
                     <select
                       value={addStudentForm.programme}
                       onChange={e => setAddStudentForm({ ...addStudentForm, programme: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
                     >
-                      <option value="Senior Secondary Certificate (SSCE)">Senior Secondary Certificate (SSCE)</option>
-                      <option value="Basic Education Certificate (BECE)">Basic Education Certificate (BECE)</option>
+                      <option value="Senior Secondary Certificate (SSCE)">{`Senior Secondary Certificate (SSCE)`}</option>
+                      <option value="Basic Education Certificate (BECE)">{`Basic Education Certificate (BECE)`}</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Study Mode</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Study Mode`}</label>
                     <select
                       value={addStudentForm.studyMode}
                       onChange={e => setAddStudentForm({ ...addStudentForm, studyMode: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
                     >
-                      <option value="Full Time">Full Time</option>
-                      <option value="Part Time">Part Time</option>
+                      <option value="Full Time">{`Full Time`}</option>
+                      <option value="Part Time">{`Part Time`}</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Parent Name</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Parent Name`}</label>
                     <input
                       type="text"
                       value={addStudentForm.parentName}
@@ -964,7 +931,7 @@ export default function TeacherDashboard() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Parent Phone</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Parent Phone`}</label>
                     <input
                       type="text"
                       value={addStudentForm.parentPhone}
@@ -1073,19 +1040,19 @@ export default function TeacherDashboard() {
               <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">STATUS</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`STATUS`}</label>
                     <select
                       value={editingStudent.status || 'ACTIVE'}
                       onChange={e => setEditingStudent({ ...editingStudent, status: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none font-bold text-emerald-600"
                     >
-                      <option value="ACTIVE">ACTIVE</option>
-                      <option value="INACTIVE">INACTIVE</option>
-                      <option value="SUSPENDED">SUSPENDED</option>
+                      <option value="ACTIVE">{`ACTIVE`}</option>
+                      <option value="INACTIVE">{`INACTIVE`}</option>
+                      <option value="SUSPENDED">{`SUSPENDED`}</option>
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Student ID (Manual Input)</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Student ID (Manual Input)`}</label>
                     <input
                       type="text"
                       value={editingStudent.code || ''}
@@ -1097,7 +1064,7 @@ export default function TeacherDashboard() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Student Full Name</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Student Full Name`}</label>
                     <input
                       type="text"
                       value={editingStudent.name || ''}
@@ -1106,32 +1073,32 @@ export default function TeacherDashboard() {
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Gender</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Gender`}</label>
                     <select
                       value={editingStudent.gender || 'Male'}
                       onChange={e => setEditingStudent({ ...editingStudent, gender: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
                     >
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
+                      <option value="Male">{`Male`}</option>
+                      <option value="Female">{`Female`}</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Marital Status</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Marital Status`}</label>
                     <select
                       value={editingStudent.maritalStatus || 'Single'}
                       onChange={e => setEditingStudent({ ...editingStudent, maritalStatus: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
                     >
-                      <option value="Single">Single</option>
-                      <option value="Married">Married</option>
+                      <option value="Single">{`Single`}</option>
+                      <option value="Married">{`Married`}</option>
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Date of Birth</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Date of Birth`}</label>
                     <input
                       type="date"
                       value={editingStudent.dob || ''}
@@ -1143,7 +1110,7 @@ export default function TeacherDashboard() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Phone Number</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Phone Number`}</label>
                     <input
                       type="text"
                       value={editingStudent.phone || ''}
@@ -1152,7 +1119,7 @@ export default function TeacherDashboard() {
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Email Address</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Email Address`}</label>
                     <input
                       type="email"
                       value={editingStudent.email || ''}
@@ -1164,7 +1131,7 @@ export default function TeacherDashboard() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Country</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Country`}</label>
                     <input
                       type="text"
                       value={editingStudent.country || ''}
@@ -1173,7 +1140,7 @@ export default function TeacherDashboard() {
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">State of Origin</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`State of Origin`}</label>
                     <input
                       type="text"
                       value={editingStudent.stateOfOrigin || ''}
@@ -1193,7 +1160,7 @@ export default function TeacherDashboard() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Residential Address</label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Residential Address`}</label>
                   <input
                     type="text"
                     value={editingStudent.address || ''}
@@ -1204,7 +1171,7 @@ export default function TeacherDashboard() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Class Level</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Class Level`}</label>
                     {formClass ? (
                       <input
                         type="text"
@@ -1223,48 +1190,48 @@ export default function TeacherDashboard() {
                     )}
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Department Stream</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Department Stream`}</label>
                     <select
                       value={editingStudent.stream || 'Science'}
                       onChange={e => setEditingStudent({ ...editingStudent, stream: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
                     >
-                      <option value="Science">Science</option>
-                      <option value="Art">Art / Humanities</option>
-                      <option value="Commercial">Commercial</option>
-                      <option value="General">General Junior</option>
+                      <option value="Science">{`Science`}</option>
+                      <option value="Art">{`Art / Humanities`}</option>
+                      <option value="Commercial">{`Commercial`}</option>
+                      <option value="General">{`General Junior`}</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Academic Programme</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Academic Programme`}</label>
                     <select
                       value={editingStudent.programme || 'Senior Secondary Certificate (SSCE)'}
                       onChange={e => setEditingStudent({ ...editingStudent, programme: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
                     >
-                      <option value="Senior Secondary Certificate (SSCE)">Senior Secondary Certificate (SSCE)</option>
-                      <option value="Basic Education Certificate (BECE)">Basic Education Certificate (BECE)</option>
+                      <option value="Senior Secondary Certificate (SSCE)">{`Senior Secondary Certificate (SSCE)`}</option>
+                      <option value="Basic Education Certificate (BECE)">{`Basic Education Certificate (BECE)`}</option>
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Study Mode</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Study Mode`}</label>
                     <select
                       value={editingStudent.studyMode || 'Full Time'}
                       onChange={e => setEditingStudent({ ...editingStudent, studyMode: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
                     >
-                      <option value="Full Time">Full Time</option>
-                      <option value="Part Time">Part Time</option>
+                      <option value="Full Time">{`Full Time`}</option>
+                      <option value="Part Time">{`Part Time`}</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Parent Name</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Parent Name`}</label>
                     <input
                       type="text"
                       value={editingStudent.parentName || ''}
@@ -1273,7 +1240,7 @@ export default function TeacherDashboard() {
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Parent Phone</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Parent Phone`}</label>
                     <input
                       type="text"
                       value={editingStudent.parentPhone || ''}
@@ -1290,11 +1257,7 @@ export default function TeacherDashboard() {
                 </button>
                 <button
                   onClick={() => {
-                    const updated = roster.map(s => s.id === editingStudent.id ? editingStudent : s);
-                    setRoster(updated);
-                    if (typeof window !== 'undefined') {
-                      localStorage.setItem('tarepet_student_roster', JSON.stringify(updated));
-                    }
+                    saveStudent(editingStudent);
                     if (selectedStudentProfile?.id === editingStudent.id) {
                       setSelectedStudentProfile(editingStudent);
                     }
@@ -1347,7 +1310,7 @@ export default function TeacherDashboard() {
                 </button>
                 <button
                   onClick={() => {
-                    setRoster(prev => prev.map(s => s.id === promotingStudent.id ? { ...s, grade: targetPromotionClass } : s));
+                    saveStudent({ ...promotingStudent, grade: targetPromotionClass });
                     showToast(`Promoted ${promotingStudent.name} from ${promotingStudent.grade} to ${targetPromotionClass}! 🎉`);
                     setPromotingStudent(null);
                   }}
@@ -1377,7 +1340,7 @@ export default function TeacherDashboard() {
                 </button>
                 <button
                   onClick={() => {
-                    setRoster(prev => prev.filter(s => s.id !== deletingStudent.id));
+                    deleteStudent(deletingStudent.id);
                     showToast(`Deleted ${deletingStudent.name} from class roster.`);
                     setDeletingStudent(null);
                   }}
@@ -2033,9 +1996,6 @@ export default function TeacherDashboard() {
             </label>
           </div>
           <button onClick={() => {
-            if (typeof window !== 'undefined') {
-              localStorage.setItem('teacher_profile_data', JSON.stringify(profileForm));
-            }
             showToast('Teacher profile & preferences saved successfully!');
           }} className="bg-primary text-white px-6 py-2.5 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors">
             {t('teacher.save_settings', 'Save Settings')}

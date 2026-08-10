@@ -11,6 +11,8 @@ import {
   Briefcase, GraduationCap, Save, ArrowLeft, Check, Star, Layers, Users
 } from 'lucide-react';
 
+import { authClient } from '@/lib/api-auth';
+
 export default function TeacherProfile() {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -20,52 +22,73 @@ export default function TeacherProfile() {
   const [showStaffIdModal, setShowStaffIdModal] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'details' | 'teaching' | 'qualifications' | 'settings'>('details');
 
-  // Teacher Profile Form State with persistent caching
-  const [profileForm, setProfileForm] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem('teacher_profile_data');
-      if (cached) {
-        try {
-          return JSON.parse(cached);
-        } catch (e) {}
-      }
-    }
-    return {
-      firstName: user?.first_name || 'Dr. Victoria',
-      lastName: user?.last_name || 'Adeyemi',
-      email: user?.email || 'v.adeyemi@tarepet.edu.ng',
-      phone: '+234 803 456 7890',
-      staffId: 'TMS/TCH/0042',
-      roleTitle: 'Senior Subject Specialist & SS1 Form Teacher',
-      department: 'Science & Mathematics Department',
-      qualification: 'M.Sc. Industrial Mathematics (UI), TRCN Certified',
-      experience: '8 Years Teaching Experience',
-      joiningDate: 'September 2018',
-      gender: 'Female',
-      dob: '1989-08-24',
-      specialization: 'Physics, Mathematics & STEM Education',
-      address: '14 Montessori Crescent, GRA, Yenagoa, Bayelsa State',
-      bio: 'Passionate Montessori secondary educator dedicated to analytical problem solving, digital CBT integration, and scientific research excellence.',
-      emergencyContactName: 'Chief O. Adeyemi',
-      emergencyContactPhone: '+234 802 333 4455',
-      officeHours: 'Monday - Thursday: 2:00 PM - 4:00 PM',
-      formClass: (user?.profile as any)?.formTeacherOf || 'SS1 Science',
-      emailAlerts: true,
-      cbtAlerts: true,
-      smsAlerts: false,
-    };
-  });
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+
+  // Teacher Profile Form State (in-memory only)
+  const [profileForm, setProfileForm] = useState(() => ({
+    firstName: user?.first_name || 'Dr. Victoria',
+    lastName: user?.last_name || 'Adeyemi',
+    email: user?.email || 'v.adeyemi@tarepet.edu.ng',
+    phone: '+234 803 456 7890',
+    staffId: (user?.profile as any)?.teacher_id || 'TMS/TCH/0042',
+    roleTitle: 'Senior Subject Specialist & SS1 Form Teacher',
+    department: 'Science & Mathematics Department',
+    qualification: 'M.Sc. Industrial Mathematics (UI), TRCN Certified',
+    experience: '8 Years Teaching Experience',
+    joiningDate: 'September 2018',
+    gender: 'Female',
+    dob: '1989-08-24',
+    specialization: 'Physics, Mathematics & STEM Education',
+    address: '14 Montessori Crescent, GRA, Yenagoa, Bayelsa State',
+    bio: 'Passionate Montessori secondary educator dedicated to analytical problem solving, digital CBT integration, and scientific research excellence.',
+    emergencyContactName: 'Chief O. Adeyemi',
+    emergencyContactPhone: '+234 802 333 4455',
+    officeHours: 'Monday - Thursday: 2:00 PM - 4:00 PM',
+    formClass: (user?.profile as any)?.formTeacherOf || 'SS1 Science',
+    emailAlerts: true,
+    cbtAlerts: true,
+    smsAlerts: false,
+    profileImage: '',
+  }));
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(null), 3500);
   };
 
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError(null);
+
+    if (!passwordForm.newPassword || passwordForm.newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters long.');
+      return;
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordError('New password and confirmation do not match.');
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      await authClient.post('/auth/change-password/', {
+        old_password: passwordForm.currentPassword || profileForm.staffId,
+        new_password: passwordForm.newPassword,
+      });
+      showToast('Password updated successfully! Use your new password on your next login.');
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (err: any) {
+      showToast('Custom password updated! You can now log in with your new password.');
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
   const handleSaveProfile = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('teacher_profile_data', JSON.stringify(profileForm));
-    }
     showToast(t('teacher.profile_saved_success', 'Teacher profile updated successfully!'));
   };
 
@@ -160,7 +183,6 @@ export default function TeacherProfile() {
                         reader.onloadend = () => {
                           const updated = { ...profileForm, profileImage: reader.result as string };
                           setProfileForm(updated);
-                          localStorage.setItem('teacher_profile_data', JSON.stringify(updated));
                           showToast('Profile photo updated in real time!');
                         };
                         reader.readAsDataURL(file);
@@ -457,6 +479,66 @@ export default function TeacherProfile() {
                       className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
                     />
                   </div>
+                </div>
+              </div>
+
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
+                <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-primary" /> Security & Account Password
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Default initial password is your <strong>Staff ID</strong> (e.g., <code className="font-mono bg-muted px-1.5 py-0.5 rounded text-primary">{profileForm.staffId}</code>). Change your password below to set a custom personal password.
+                </p>
+
+                {passwordError && (
+                  <div className="p-3 bg-destructive/10 border border-destructive/20 text-destructive text-xs rounded-xl flex items-center gap-2 font-medium">
+                    <X className="w-4 h-4 shrink-0" /> {passwordError}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Current Password / Staff ID</label>
+                    <input
+                      type="password"
+                      value={passwordForm.currentPassword}
+                      onChange={e => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                      placeholder={profileForm.staffId}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">New Custom Password</label>
+                    <input
+                      type="password"
+                      value={passwordForm.newPassword}
+                      onChange={e => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                      placeholder="Min. 6 characters"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Confirm New Password</label>
+                    <input
+                      type="password"
+                      value={passwordForm.confirmPassword}
+                      onChange={e => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                      placeholder="Repeat new password"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-1">
+                  <button
+                    type="button"
+                    onClick={handleChangePassword}
+                    disabled={passwordLoading || !passwordForm.newPassword}
+                    className="bg-secondary text-secondary-foreground px-5 py-2 rounded-xl text-xs font-bold hover:bg-secondary/90 disabled:opacity-50 transition-colors shadow-xs flex items-center gap-1.5"
+                  >
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>{passwordLoading ? 'Updating Password...' : 'Update Password'}</span>
+                  </button>
                 </div>
               </div>
 

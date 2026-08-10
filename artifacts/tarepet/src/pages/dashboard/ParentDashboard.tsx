@@ -93,8 +93,6 @@ export default function ParentDashboard() {
       const params = new URLSearchParams(window.location.search);
       const urlSec = params.get('section');
       if (urlSec) return urlSec;
-      const cached = localStorage.getItem('parent_active_section');
-      if (cached) return cached;
     }
     return 'overview';
   });
@@ -102,7 +100,6 @@ export default function ParentDashboard() {
   const setActiveSection = (sec: string) => {
     setActiveSectionState(sec);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('parent_active_section', sec);
       const url = new URL(window.location.href);
       url.searchParams.set('section', sec);
       window.history.replaceState(null, '', url.toString());
@@ -122,13 +119,10 @@ export default function ParentDashboard() {
   const [confBooked, setConfBooked] = useState(false);
   const [leaveSubmitted, setLeaveSubmitted] = useState(false);
   const [showReportCardModal, setShowReportCardModal] = useState(false);
-  const [parentProfile, setParentProfile] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('parent_profile_data');
-      if (saved) { try { return JSON.parse(saved); } catch (e) {} }
-    }
-    return { name: user?.first_name ? `${user.first_name} ${user.last_name}` : 'Parent Member', profileImage: '' };
-  });
+  const [parentProfile, setParentProfile] = useState(() => ({
+    name: user?.first_name ? `${user.first_name} ${user.last_name}` : 'Parent Member',
+    profileImage: '',
+  }));
 
   const activeChild = CHILDREN.find(c => c.id === selectedChildId) ?? CHILDREN[0];
 
@@ -178,7 +172,7 @@ export default function ParentDashboard() {
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { label: 'Current GPA', val: `${activeChild.gpa}/4.0`, sub: 'Exemplary', icon: GraduationCap, color: 'text-primary bg-primary/10 border-primary/20' },
+            { label: 'Overall Average', val: '88.5%', sub: 'Exemplary', icon: GraduationCap, color: 'text-primary bg-primary/10 border-primary/20' },
             { label: 'Class Rank', val: `#${activeChild.rank}/${activeChild.classSize}`, sub: 'Top 15%', icon: Star, color: 'text-secondary bg-secondary/10 border-secondary/20' },
             { label: 'Attendance Rate', val: activeChild.attendance, sub: `${activeChild.absences} Absence`, icon: UserCheck, color: 'text-secondary bg-secondary/10 border-secondary/20' },
             { label: 'Pending Fees', val: '₦185,000', sub: 'Due Aug 10', icon: CreditCard, color: 'text-primary bg-primary/10 border-primary/20' },
@@ -301,8 +295,8 @@ export default function ParentDashboard() {
                     <strong className="text-slate-800">{activeChild.house}</strong>
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold uppercase text-slate-400 block">{t('Term GPA / Position')}</span>
-                    <strong className="text-primary">{activeChild.gpa} / 4.0 (3rd of {activeChild.classSize})</strong>
+                    <span className="text-[10px] font-bold uppercase text-slate-400 block">{t('Class Position')}</span>
+                    <strong className="text-primary">3rd of {activeChild.classSize}</strong>
                   </div>
                 </div>
 
@@ -643,7 +637,6 @@ export default function ParentDashboard() {
                     reader.onloadend = () => {
                       const updated = { ...parentProfile, profileImage: reader.result as string };
                       setParentProfile(updated);
-                      localStorage.setItem('parent_profile_data', JSON.stringify(updated));
                     };
                     reader.readAsDataURL(file);
                   }
@@ -659,7 +652,6 @@ export default function ParentDashboard() {
                     onClick={() => {
                       const updated = { ...parentProfile, profileImage: '' };
                       setParentProfile(updated);
-                      localStorage.setItem('parent_profile_data', JSON.stringify(updated));
                     }}
                     className="px-3 py-1.5 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold hover:bg-rose-50"
                   >

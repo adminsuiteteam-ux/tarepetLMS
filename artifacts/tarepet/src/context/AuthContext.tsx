@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authClient } from '@/lib/api-auth';
+import { authClient, setTokens, clearTokens, getRefreshToken, safeRedirect } from '@/lib/api-auth';
 
 export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT' | 'PARENT';
 
@@ -28,66 +28,35 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(() => {
-    // Only restore a session if a real access_token exists from a previous login
-    const token = localStorage.getItem('access_token');
-    const savedUser = localStorage.getItem('user_data');
-    if (token && savedUser) {
-      try { return JSON.parse(savedUser); } catch (e) { /* ignore parse error */ }
-    }
-    // No valid session — start unauthenticated
-    return null;
-  });
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  // Session state lives entirely in memory — no localStorage
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  // No localStorage restore on mount.
+  // If tokens exist in memory (same tab session), verify with /auth/me/.
+  // On page refresh tokens are cleared (by design — no localStorage).
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      authClient
-        .get('/auth/me/')
-        .then((res) => {
-          setUser(res.data);
-          localStorage.setItem('user_data', JSON.stringify(res.data));
-        })
-        .catch(() => {
-          // Backend unreachable — keep the locally cached user so the page
-          // doesn't log the user out on a transient network blip.
-          const cached = localStorage.getItem('user_data');
-          if (cached) {
-            try { setUser(JSON.parse(cached)); } catch (e) {
-              // Corrupt cache — force re-login
-              localStorage.removeItem('user_data');
-              localStorage.removeItem('access_token');
-              localStorage.removeItem('refresh_token');
-              setUser(null);
-            }
-          }
-        })
-        .finally(() => setIsLoading(false));
-    } else {
-      setIsLoading(false);
-    }
+    setIsLoading(false);
   }, []);
 
   const login = (accessToken: string, refreshToken: string, userData: User) => {
-    localStorage.setItem('access_token', accessToken);
-    localStorage.setItem('refresh_token', refreshToken);
-    localStorage.setItem('user_data', JSON.stringify(userData));
+    // Store tokens in memory only — never in localStorage
+    setTokens(accessToken, refreshToken);
     setUser(userData);
   };
 
   const logout = () => {
-    const refreshToken = localStorage.getItem('refresh_token');
+    const refreshToken = getRefreshToken();
     if (refreshToken) {
       authClient.post('/auth/logout/', { refresh: refreshToken }).catch(() => {});
     }
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user_data');
+    clearTokens();
     setUser(null);
+    // safeRedirect ensures we only ever navigate within the same origin.
     const baseUrl = import.meta.env.BASE_URL || '/';
     const cleanBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
-    window.location.href = `${cleanBase}sign-in`;
+    const target = `${cleanBase}sign-in`;
+    safeRedirect(target);
   };
 
   const isAdmin = user?.role === 'ADMIN';
@@ -121,3 +90,6 @@ export const useAuth = () => {
   }
   return context;
 };
+
+
+

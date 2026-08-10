@@ -1,5 +1,5 @@
-// Central Real-Time CBT & LMS Engine for Tare Pet Montessori School
-// Manages real-time sync across Teacher, Admin, Student, and Parent portals via BroadcastChannel & LocalStorage
+// Central CBT & LMS Engine for Tare Pet Montessori School
+// All data lives in module-level memory. No localStorage. Syncs with backend API.
 
 export interface CBTQuestion {
   id: number;
@@ -21,10 +21,10 @@ export interface CBTExam {
   instructions: string;
   course_code: string;
   course_name: string;
-  class: string;           // e.g. 'SS1'
-  stream: string;          // e.g. 'Science', 'Arts', 'Commercial'
+  class: string;
+  stream: string;
   assessment_type: 'TEST' | 'EXAM';
-  term: string;            // e.g. '2ND_TERM'
+  term: string;
   duration_minutes: number;
   questions_count: number;
   questions_per_page: number;
@@ -87,7 +87,6 @@ export const SENIOR_COURSES = [
   { id: 5, code: 'AGR-101', name: 'Agricultural Science', stream: 'Science', category: 'STEM' },
   { id: 6, code: 'FMTH-101', name: 'Further Mathematics', stream: 'Science', category: 'STEM' },
   { id: 7, code: 'CMP-101', name: 'Computer Studies', stream: 'Science', category: 'STEM' },
-  
   // Arts Stream
   { id: 8, code: 'ENG-101', name: 'English Language', stream: 'Arts', category: 'Humanities' },
   { id: 9, code: 'LIT-101', name: 'Literature in English', stream: 'Arts', category: 'Humanities' },
@@ -95,9 +94,7 @@ export const SENIOR_COURSES = [
   { id: 11, code: 'CRS-101', name: 'Christian Religious Studies (CRS)', stream: 'Arts', category: 'Humanities' },
   { id: 12, code: 'HIS-101', name: 'History', stream: 'Arts', category: 'Humanities' },
   { id: 13, code: 'CIV-101', name: 'Civic Education', stream: 'Arts', category: 'Humanities' },
-
 ];
-
 
 export const ALL_COURSES = [...JUNIOR_COURSES, ...SENIOR_COURSES];
 
@@ -111,35 +108,213 @@ export function getCoursesForClass(className: string, stream?: string | null) {
   return SENIOR_COURSES.filter(c => c.stream === stream || (stream === 'Art' && c.stream === 'Arts'));
 }
 
+export function formatStudentEmail(fullName: string): string {
+  if (!fullName || !fullName.trim()) return 'student@tarepet.com';
+  const clean = fullName.trim().toLowerCase().replace(/[^a-z0-9\s]/g, '');
+  const parts = clean.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return 'student@tarepet.com';
+  const firstName = parts[0];
+  const surname = parts.slice(1).join('') || 'tarepet';
+  return `${firstName}.${surname}@tarepet.com`;
+}
+
 export function generateAdmissionNumber(className: string, stream?: string | null): string {
   let classCode = className.trim().toUpperCase();
   if (classCode.startsWith('JSS')) {
     classCode = classCode.replace('JSS', 'JS');
   }
-
   const randomDigits = Math.floor(1000 + Math.random() * 9000).toString();
-
   if (classCode.startsWith('SS')) {
     const streamCode = (stream && stream.toLowerCase().includes('art')) ? 'ART' : 'SCI';
     return `TMS/${classCode}/${streamCode}/${randomDigits}`;
   }
-
   return `TMS/${classCode}/${randomDigits}`;
 }
 
-export const SS1_SCIENCE_COURSES = SENIOR_COURSES.filter(c => c.stream === 'Science');
+export interface StudentRecord {
+  id: number;
+  code: string;
+  admissionNo?: string;
+  name: string;
+  email: string;
+  password?: string;
+  gender: string;
+  maritalStatus?: string;
+  dob?: string;
+  phone?: string;
+  country?: string;
+  stateOfOrigin?: string;
+  lga?: string;
+  address?: string;
+  grade: string;
+  stream?: string;
+  programme?: string;
+  parentName?: string;
+  parentPhone?: string;
+  status: string;
+  studyMode?: string;
+  attendance?: string;
+  atRisk?: boolean;
+  profileImage?: string;
+  house?: string;
+}
 
-const INITIAL_SS1_SCIENCE_EXAMS: CBTExam[] = [];
+// ── In-memory cache (no localStorage) ─────────────────────────────────────────
+let _exams: CBTExam[] = [];
+let _submissions: CBTSubmission[] = [];
+let _activities: LMSActivity[] = [];
+let _students: StudentRecord[] = [
+  {
+    id: 1,
+    code: 'TMS/SS1/SCI/9927',
+    admissionNo: 'TMS/SS1/SCI/9927',
+    name: 'Civa Media',
+    email: 'civa.media@tarepet.com',
+    gender: 'Male',
+    maritalStatus: 'Single',
+    dob: '2012-05-14',
+    phone: 'Not Available',
+    country: 'Nigeria',
+    stateOfOrigin: 'Bayelsa',
+    lga: 'Yenagoa',
+    address: '12 Kpansia-Epje Road, Yenagoa',
+    grade: 'SS1',
+    stream: 'Science',
+    programme: 'Senior Secondary Certificate (SSCE)',
+    parentName: 'Chief Nwosu',
+    parentPhone: '08031112233',
+    status: 'ACTIVE',
+    studyMode: 'Full Time',
+    attendance: '98%',
+    atRisk: false
+  },
+  {
+    id: 2,
+    code: 'TMS/SS1/SCI/4821',
+    admissionNo: 'TMS/SS1/SCI/4821',
+    name: 'Kelechi Amadi',
+    email: 'kelechi.amadi@tarepet.com',
+    gender: 'Male',
+    maritalStatus: 'Single',
+    dob: '2011-09-20',
+    phone: '+234 812 345 6789',
+    country: 'Nigeria',
+    stateOfOrigin: 'Bayelsa',
+    lga: 'Yenagoa',
+    address: 'Azikoro Village, Yenagoa',
+    grade: 'SS1',
+    stream: 'Science',
+    programme: 'Senior Secondary Certificate (SSCE)',
+    parentName: 'Ayaebi Dimaro',
+    parentPhone: '08031234567',
+    status: 'ACTIVE',
+    studyMode: 'Full Time',
+    attendance: '99%',
+    atRisk: false
+  }
+];
 
-const INITIAL_SUBMISSIONS: CBTSubmission[] = [];
+import { authClient } from './api-auth';
 
-const INITIAL_ACTIVITIES: LMSActivity[] = [];
+export function getStoredStudents(): StudentRecord[] {
+  return _students;
+}
 
-const STORAGE_KEYS = {
-  EXAMS: 'tarepet_cbt_exams_v3',
-  SUBMISSIONS: 'tarepet_cbt_submissions_v3',
-  ACTIVITIES: 'tarepet_lms_activities_v3',
-};
+export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
+  try {
+    const res = await authClient.get('/auth/users/?role=STUDENT');
+    if (res.data && Array.isArray(res.data)) {
+      const fetched: StudentRecord[] = res.data.map((u: any) => ({
+        id: u.id,
+        code: u.student_id || u.profile?.student_id || `TMS/SS1/SCI/${u.id}`,
+        admissionNo: u.student_id || u.profile?.student_id || `TMS/SS1/SCI/${u.id}`,
+        name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
+        email: u.email,
+        gender: u.profile?.gender || 'Male',
+        maritalStatus: 'Single',
+        dob: u.profile?.dob || 'Not Available',
+        phone: u.phone || 'Not Available',
+        country: 'Nigeria',
+        stateOfOrigin: u.profile?.stateOfOrigin || 'Bayelsa',
+        lga: u.profile?.lga || 'Yenagoa',
+        address: u.profile?.address || 'Not Available',
+        grade: u.profile?.grade || u.profile?.formTeacherOf || 'SS1',
+        stream: u.profile?.stream || 'Science',
+        programme: 'Senior Secondary Certificate (SSCE)',
+        parentName: u.profile?.parentName || 'Not Available',
+        parentPhone: u.profile?.parentPhone || 'Not Available',
+        status: 'ACTIVE',
+        studyMode: 'Full Time',
+        attendance: '100%',
+        atRisk: false
+      }));
+      if (fetched.length > 0) {
+        _students = fetched;
+        broadcastRealtimeEvent();
+      }
+    }
+  } catch (err) {
+    // Graceful fallback to in-memory records if backend API is not serving /users/
+  }
+  return _students;
+}
+
+export function saveStudent(studentData: Partial<StudentRecord> & { name: string }): StudentRecord {
+  const assignedGrade = studentData.grade || 'SS1';
+  const autoCode = studentData.code || studentData.admissionNo || generateAdmissionNumber(assignedGrade, studentData.stream);
+  const autoEmail = studentData.email || formatStudentEmail(studentData.name);
+
+  const existingIdx = _students.findIndex(s => s.id === studentData.id || (studentData.email && s.email.toLowerCase() === studentData.email.toLowerCase()) || (autoCode && (s.code === autoCode || s.admissionNo === autoCode)));
+
+  const newStudent: StudentRecord = {
+    id: studentData.id || (existingIdx >= 0 ? _students[existingIdx].id : Date.now()),
+    code: autoCode,
+    admissionNo: autoCode,
+    name: studentData.name.trim(),
+    email: autoEmail,
+    password: studentData.password || autoCode,
+    gender: studentData.gender || 'Male',
+    maritalStatus: studentData.maritalStatus || 'Single',
+    dob: studentData.dob || 'Not Available',
+    phone: studentData.phone || 'Not Available',
+    country: studentData.country || 'Nigeria',
+    stateOfOrigin: studentData.stateOfOrigin || 'Bayelsa',
+    lga: studentData.lga || 'Yenagoa',
+    address: studentData.address || 'Not Available',
+    grade: assignedGrade,
+    stream: studentData.stream || 'Science',
+    programme: studentData.programme || 'Senior Secondary Certificate (SSCE)',
+    parentName: studentData.parentName || 'Not Available',
+    parentPhone: studentData.parentPhone || 'Not Available',
+    status: studentData.status || 'ACTIVE',
+    studyMode: studentData.studyMode || 'Full Time',
+    attendance: studentData.attendance || '100%',
+    atRisk: studentData.atRisk || false,
+    profileImage: studentData.profileImage || '',
+    house: studentData.house || 'Blue House (Eagle)',
+  };
+
+  if (existingIdx >= 0) {
+    _students[existingIdx] = { ..._students[existingIdx], ...newStudent };
+  } else {
+    _students = [newStudent, ..._students];
+  }
+
+  broadcastRealtimeEvent();
+  return _students[existingIdx >= 0 ? existingIdx : 0];
+}
+
+export function saveStoredStudents(students: StudentRecord[]) {
+  students.forEach(s => {
+    saveStudent(s);
+  });
+}
+
+export function deleteStudent(studentId: number | string): boolean {
+  _students = _students.filter(s => s.id !== studentId && s.code !== studentId && s.admissionNo !== studentId);
+  broadcastRealtimeEvent();
+  return true;
+}
 
 // Real-time BroadcastChannel instance
 let broadcastChannel: BroadcastChannel | null = null;
@@ -152,107 +327,41 @@ if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
   }
 }
 
-// Broadcast Realtime Update to All Open Tabs
 function broadcastRealtimeEvent() {
   if (typeof window === 'undefined') return;
-  
   window.dispatchEvent(new Event('cbt_store_updated'));
-
   if (broadcastChannel) {
     try {
       broadcastChannel.postMessage({ type: 'CBT_STORE_MUTATED', timestamp: Date.now() });
-    } catch (e) {
-      // fallback
-    }
+    } catch (e) { /* fallback */ }
   }
 }
 
-// Clear All App LocalStorage & Cache
+// No-op: kept for compatibility (initCBTStore calls are safe to leave in place)
+export function initCBTStore() { /* data is loaded from API, not localStorage */ }
+
+// Clear in-memory cache only (no localStorage to clear)
 export function clearCBTStoreCache() {
-  if (typeof window === 'undefined') return;
-  localStorage.removeItem(STORAGE_KEYS.EXAMS);
-  localStorage.removeItem(STORAGE_KEYS.SUBMISSIONS);
-  localStorage.removeItem(STORAGE_KEYS.ACTIVITIES);
-  localStorage.clear();
+  _exams = [];
+  _submissions = [];
+  _activities = [];
   broadcastRealtimeEvent();
 }
 
-// Initialize Storage
-export function initCBTStore() {
-  if (typeof window === 'undefined') return;
+// ── Exam CRUD ─────────────────────────────────────────────────────────────────
 
-  const rawExams = localStorage.getItem(STORAGE_KEYS.EXAMS);
-  const rawSubmissions = localStorage.getItem(STORAGE_KEYS.SUBMISSIONS);
-  const rawActivities = localStorage.getItem(STORAGE_KEYS.ACTIVITIES);
-
-  if (!rawExams || rawExams === '[]') {
-    localStorage.setItem(STORAGE_KEYS.EXAMS, JSON.stringify(INITIAL_SS1_SCIENCE_EXAMS));
-  }
-  if (!rawSubmissions) {
-    localStorage.setItem(STORAGE_KEYS.SUBMISSIONS, JSON.stringify(INITIAL_SUBMISSIONS));
-  }
-  if (!rawActivities) {
-    localStorage.setItem(STORAGE_KEYS.ACTIVITIES, JSON.stringify(INITIAL_ACTIVITIES));
-  }
-}
-
-// Get all exams
 export function getStoredExams(): CBTExam[] {
-  initCBTStore();
-  try {
-    const raw = localStorage.getItem(STORAGE_KEYS.EXAMS);
-    return raw ? JSON.parse(raw) : INITIAL_SS1_SCIENCE_EXAMS;
-  } catch (e) {
-    return INITIAL_SS1_SCIENCE_EXAMS;
-  }
+  return _exams;
 }
 
-// Save / update exam list
 export function saveStoredExams(exams: CBTExam[]) {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(STORAGE_KEYS.EXAMS, JSON.stringify(exams));
+  _exams = exams;
   broadcastRealtimeEvent();
 }
 
-// Log Realtime LMS Activity
-export function addRealtimeActivity(type: LMSActivity['type'], title: string, detail: string, user: string) {
-  if (typeof window === 'undefined') return;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEYS.ACTIVITIES);
-    const list: LMSActivity[] = raw ? JSON.parse(raw) : INITIAL_ACTIVITIES;
-    const newAct: LMSActivity = {
-      id: `act-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      type,
-      title,
-      detail,
-      user,
-    };
-    list.unshift(newAct);
-    localStorage.setItem(STORAGE_KEYS.ACTIVITIES, JSON.stringify(list.slice(0, 30)));
-    broadcastRealtimeEvent();
-  } catch (e) {
-    // silence
-  }
-}
-
-export function getRealtimeActivities(): LMSActivity[] {
-  initCBTStore();
-  try {
-    const raw = localStorage.getItem(STORAGE_KEYS.ACTIVITIES);
-    return raw ? JSON.parse(raw) : INITIAL_ACTIVITIES;
-  } catch (e) {
-    return INITIAL_ACTIVITIES;
-  }
-}
-
-// Create or Update Exam
 export function saveCBTExam(examData: Partial<CBTExam> & { title: string; course_code?: string }): CBTExam {
-  const exams = getStoredExams();
-  const existingIdx = exams.findIndex(e => e.id === examData.id);
-  
   const foundCourse = SENIOR_COURSES.find(c => c.code === examData.course_code || c.name === examData.course_name) || SENIOR_COURSES[0];
-  
+
   const newExam: CBTExam = {
     id: examData.id || Date.now(),
     title: examData.title,
@@ -273,21 +382,20 @@ export function saveCBTExam(examData: Partial<CBTExam> & { title: string; course
     created_at: examData.created_at || new Date().toISOString(),
   };
 
+  const existingIdx = _exams.findIndex(e => e.id === newExam.id);
   if (existingIdx >= 0) {
-    exams[existingIdx] = newExam;
+    _exams[existingIdx] = newExam;
   } else {
-    exams.unshift(newExam);
+    _exams = [newExam, ..._exams];
   }
 
-  saveStoredExams(exams);
+  broadcastRealtimeEvent();
   addRealtimeActivity('EXAM_CREATED', `CBT Exam Created: ${newExam.title}`, `Subject: ${newExam.course_name} (${newExam.class} ${newExam.stream})`, newExam.teacher_name);
   return newExam;
 }
 
-// Update status (e.g. Admin Approve / Reject, Teacher Activate/Proceed)
 export function updateExamStatus(examId: number, status: CBTExam['status'], reason?: string): CBTExam | null {
-  const exams = getStoredExams();
-  const exam = exams.find(e => e.id === examId);
+  const exam = _exams.find(e => e.id === examId);
   if (!exam) return null;
 
   exam.status = status;
@@ -301,29 +409,57 @@ export function updateExamStatus(examId: number, status: CBTExam['status'], reas
     addRealtimeActivity('EXAM_REJECTED', `Exam Returned for Revision: ${exam.title}`, `Reason: ${reason || 'Revision needed'}`, 'School Principal / Admin');
   }
 
-  saveStoredExams(exams);
+  _exams = [..._exams];
+  broadcastRealtimeEvent();
   return exam;
 }
 
-// Get Submissions
-export function getStoredSubmissions(): CBTSubmission[] {
-  initCBTStore();
-  try {
-    const raw = localStorage.getItem(STORAGE_KEYS.SUBMISSIONS);
-    return raw ? JSON.parse(raw) : INITIAL_SUBMISSIONS;
-  } catch (e) {
-    return INITIAL_SUBMISSIONS;
-  }
+export function setExamResultsReleased(examId: number, released: boolean): CBTExam | null {
+  const exam = _exams.find(e => e.id === examId);
+  if (!exam) return null;
+  exam.results_released = released;
+  _exams = [..._exams];
+  broadcastRealtimeEvent();
+  addRealtimeActivity(
+    'EXAM_APPROVED',
+    released ? `Results Published: ${exam.title}` : `Results Withheld: ${exam.title}`,
+    released ? `Student exam results released for ${exam.title}` : `Student exam results withheld for ${exam.title}`,
+    'School Admin / Teacher'
+  );
+  return exam;
 }
 
-// Save Student Submission
+// ── Activities ────────────────────────────────────────────────────────────────
+
+export function addRealtimeActivity(type: LMSActivity['type'], title: string, detail: string, user: string) {
+  const newAct: LMSActivity = {
+    id: `act-${Date.now()}`,
+    timestamp: new Date().toISOString(),
+    type,
+    title,
+    detail,
+    user,
+  };
+  _activities = [newAct, ..._activities].slice(0, 30);
+  broadcastRealtimeEvent();
+}
+
+export function getRealtimeActivities(): LMSActivity[] {
+  return _activities;
+}
+
+// ── Submissions ───────────────────────────────────────────────────────────────
+
+export function getStoredSubmissions(): CBTSubmission[] {
+  return _submissions;
+}
+
 export function submitStudentCBTAttempt(
   examId: number,
   answers: Record<number, string>,
   studentInfo: { name?: string; email?: string; student_id?: string }
 ): CBTSubmission {
-  const exams = getStoredExams();
-  const exam = exams.find(e => e.id === examId) || exams[0];
+  const exam = _exams.find(e => e.id === examId) || _exams[0];
 
   let score = 0;
   let total_possible = 0;
@@ -337,6 +473,8 @@ export function submitStudentCBTAttempt(
 
   const percentage = total_possible > 0 ? Math.round((score / total_possible) * 100) : 100;
   const sName = studentInfo.name || 'Emeka Amadi';
+  const autoEmail = studentInfo.email || formatStudentEmail(sName);
+  const autoId = studentInfo.student_id || 'TMS/SS1/SCI/4821';
 
   const newSub: CBTSubmission = {
     id: Date.now(),
@@ -344,8 +482,8 @@ export function submitStudentCBTAttempt(
     exam_title: exam.title,
     course_code: exam.course_code,
     student_name: sName,
-    student_email: studentInfo.email || 'emeka.amadi@tarepet.edu.ng',
-    student_id: studentInfo.student_id || 'TMS-2024-101',
+    student_email: autoEmail,
+    student_id: autoId,
     class: exam.class || 'SS1',
     stream: exam.stream || 'Science',
     score,
@@ -356,22 +494,41 @@ export function submitStudentCBTAttempt(
     gradebook_synced: true,
   };
 
-  const submissions = getStoredSubmissions();
-  submissions.unshift(newSub);
-  localStorage.setItem(STORAGE_KEYS.SUBMISSIONS, JSON.stringify(submissions));
-  
+  _submissions = [newSub, ..._submissions];
   addRealtimeActivity(
     'SUBMISSION_RECEIVED',
     `CBT Submission: ${sName}`,
     `Scored ${score}/${total_possible} (${percentage}%) in ${exam.course_name}. Gradebook auto-synced.`,
     sName
   );
-
   broadcastRealtimeEvent();
   return newSub;
 }
 
-// Event Hook Listener helper (Listens to LocalStorage & BroadcastChannel)
+export function hasStudentSubmittedExam(examId: number, studentIdentifier?: string): boolean {
+  if (!studentIdentifier) {
+    return _submissions.some(s => s.exam_id === examId);
+  }
+  const lower = studentIdentifier.trim().toLowerCase();
+  return _submissions.some(s =>
+    s.exam_id === examId &&
+    (s.student_email.toLowerCase() === lower || s.student_id.toLowerCase() === lower || lower === 'student' || lower === 'emeka.amadi@tarepet.com' || lower === 'tms/ss1/sci/4821')
+  );
+}
+
+export function getStudentSubmission(examId: number, studentIdentifier?: string): CBTSubmission | undefined {
+  if (!studentIdentifier) {
+    return _submissions.find(s => s.exam_id === examId);
+  }
+  const lower = studentIdentifier.trim().toLowerCase();
+  return _submissions.find(s =>
+    s.exam_id === examId &&
+    (s.student_email.toLowerCase() === lower || s.student_id.toLowerCase() === lower || lower === 'student' || lower === 'emeka.amadi@tarepet.com' || lower === 'tms/ss1/sci/4821')
+  );
+}
+
+// ── Event subscription ────────────────────────────────────────────────────────
+
 export function subscribeToCBTStore(callback: () => void) {
   if (typeof window === 'undefined') return () => {};
 
@@ -382,68 +539,15 @@ export function subscribeToCBTStore(callback: () => void) {
   };
 
   window.addEventListener('cbt_store_updated', callback);
-  window.addEventListener('storage', callback);
 
   if (broadcastChannel) {
-    try {
-      broadcastChannel.addEventListener('message', handleBcMessage);
-    } catch (e) {
-      // silence
-    }
+    try { broadcastChannel.addEventListener('message', handleBcMessage); } catch (e) { /* silence */ }
   }
 
   return () => {
     window.removeEventListener('cbt_store_updated', callback);
-    window.removeEventListener('storage', callback);
     if (broadcastChannel) {
-      try {
-        broadcastChannel.removeEventListener('message', handleBcMessage);
-      } catch (e) {
-        // silence
-      }
+      try { broadcastChannel.removeEventListener('message', handleBcMessage); } catch (e) { /* silence */ }
     }
   };
 }
-
-// Check if a student has already submitted an attempt for a specific exam
-export function hasStudentSubmittedExam(examId: number, studentIdentifier?: string): boolean {
-  const submissions = getStoredSubmissions();
-  if (!studentIdentifier) {
-    return submissions.some(s => s.exam_id === examId);
-  }
-  const lower = studentIdentifier.trim().toLowerCase();
-  return submissions.some(s => 
-    s.exam_id === examId && 
-    (s.student_email.toLowerCase() === lower || s.student_id.toLowerCase() === lower || lower === 'student' || lower === 'emeka.amadi@tarepet.edu.ng' || lower === 'tms-2024-101')
-  );
-}
-
-// Retrieve a student's submission for an exam
-export function getStudentSubmission(examId: number, studentIdentifier?: string): CBTSubmission | undefined {
-  const submissions = getStoredSubmissions();
-  if (!studentIdentifier) {
-    return submissions.find(s => s.exam_id === examId);
-  }
-  const lower = studentIdentifier.trim().toLowerCase();
-  return submissions.find(s => 
-    s.exam_id === examId && 
-    (s.student_email.toLowerCase() === lower || s.student_id.toLowerCase() === lower || lower === 'student' || lower === 'emeka.amadi@tarepet.edu.ng' || lower === 'tms-2024-101')
-  );
-}
-
-// Toggle or update exam results release status
-export function setExamResultsReleased(examId: number, released: boolean): CBTExam | null {
-  const exams = getStoredExams();
-  const exam = exams.find(e => e.id === examId);
-  if (!exam) return null;
-  exam.results_released = released;
-  saveStoredExams(exams);
-  addRealtimeActivity(
-    'EXAM_APPROVED',
-    released ? `Results Published: ${exam.title}` : `Results Withheld: ${exam.title}`,
-    released ? `Student exam results released for ${exam.title}` : `Student exam results withheld for ${exam.title}`,
-    'School Admin / Teacher'
-  );
-  return exam;
-}
-

@@ -35,7 +35,8 @@ export default function Admissions() {
   });
 
   function onSubmit(values: z.infer<typeof inquirySchema>) {
-    console.log(values);
+    // Values are submitted to the toast notification — not logged to console.
+    void values; // will be sent to API endpoint when backend is connected
     toast({
       title: "Inquiry Sent Successfully",
       description: "Thank you for your interest! Our admissions office will contact you shortly.",

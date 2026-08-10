@@ -4,7 +4,7 @@ import { Link } from 'wouter';
 import { authClient } from '@/lib/api-auth';
 import { PortalLayout } from '@/components/layout/PortalLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber } from '@/lib/cbt-store';
+import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, deleteStudent, syncStudentsWithBackend } from '@/lib/cbt-store';
 
 import {
   Users, BookOpen, Server, CheckCircle2,
@@ -362,26 +362,6 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
       role: 'TEACHER',
       teacher_id: staffId,
     }).catch(() => {});
-
-    // 2. Persist locally
-    try {
-      const existing = JSON.parse(localStorage.getItem('local_registered_users') || '[]');
-      existing.push({
-        email: email,
-        teacher_id: staffId,
-        staffId: staffId,
-        password: staffId,
-        first_name: firstName,
-        last_name: lastName,
-        role: 'TEACHER',
-        profileImage: form.profileImage || '',
-      });
-      localStorage.setItem('local_registered_users', JSON.stringify(existing));
-
-      const perm = JSON.parse(localStorage.getItem('tarepet_permanent_teachers') || '[]');
-      perm.unshift(created);
-      localStorage.setItem('tarepet_permanent_teachers', JSON.stringify(perm));
-    } catch (e) {}
 
     onSave(created);
   };
@@ -1198,6 +1178,61 @@ const AddUserModal = ({ onClose }: { onClose: () => void }) => {
   const { t } = useTranslation();
   const [form, setForm] = useState({ name: '', email: '', role: 'STUDENT', status: 'Active' });
   const [created, setCreated] = useState(false);
+  const [generatedCreds, setGeneratedCreds] = useState<{ email: string; studentId: string } | null>(null);
+
+  const handleNameChange = (nameVal: string) => {
+    const updatedForm = { ...form, name: nameVal };
+    if (form.role === 'STUDENT') {
+      updatedForm.email = formatStudentEmail(nameVal);
+    }
+    setForm(updatedForm);
+  };
+
+  const handleRoleChange = (roleVal: string) => {
+    const updatedForm = { ...form, role: roleVal };
+    if (roleVal === 'STUDENT' && form.name) {
+      updatedForm.email = formatStudentEmail(form.name);
+    }
+    setForm(updatedForm);
+  };
+
+  const handleCreate = () => {
+    if (!form.name.trim()) return;
+    const finalEmail = form.role === 'STUDENT' ? formatStudentEmail(form.name) : (form.email || formatStudentEmail(form.name));
+    const schoolId = form.role === 'TEACHER' 
+      ? `TMS/TCH/${Math.floor(1000 + Math.random() * 9000)}`
+      : generateAdmissionNumber('SS1', 'Science');
+
+    // Post to Django REST API
+    authClient.post('/auth/register/', {
+      email: finalEmail,
+      password: schoolId,
+      first_name: form.name.trim().split(' ')[0],
+      last_name: form.name.trim().split(' ').slice(1).join(' ') || 'Staff',
+      role: form.role,
+      teacher_id: form.role === 'TEACHER' ? schoolId : undefined,
+      student_id: form.role === 'STUDENT' ? schoolId : undefined,
+    }).catch(() => {});
+
+    if (form.role === 'STUDENT') {
+      saveStudent({
+        id: Date.now(),
+        name: form.name.trim(),
+        email: finalEmail,
+        code: schoolId,
+        admissionNo: schoolId,
+        password: schoolId,
+        grade: 'SS1',
+        stream: 'Science',
+        status: 'ACTIVE'
+      });
+    }
+
+    setForm({ ...form, email: finalEmail });
+    setGeneratedCreds({ email: finalEmail, studentId: schoolId });
+    setCreated(true);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-md p-6">
@@ -1206,31 +1241,45 @@ const AddUserModal = ({ onClose }: { onClose: () => void }) => {
           <div className="space-y-3">
             <div>
               <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createUser.fullName')}</label>
-              <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="e.g. Dr. Ngozi Eze" className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary" />
-            </div>
-            <div>
-              <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createUser.email')}</label>
-              <input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="e.g. ngozi.eze@tarepet.edu.ng" className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary" />
+              <input value={form.name} onChange={e => handleNameChange(e.target.value)} placeholder="e.g. Kelechi Amadi" className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary" />
             </div>
             <div>
               <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createUser.role')}</label>
-              <select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary">
+              <select value={form.role} onChange={e => handleRoleChange(e.target.value)} className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary">
                 <option value="STUDENT">{t('createUser.student')}</option>
                 <option value="TEACHER">{t('createUser.teacher')}</option>
                 <option value="PARENT">{t('createUser.parent')}</option>
                 <option value="ADMIN">{t('createUser.admin')}</option>
               </select>
             </div>
+            <div>
+              <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createUser.email')}</label>
+              <input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder={form.role === 'STUDENT' ? "firstname.surname@tarepet.com" : "e.g. ngozi.eze@tarepet.edu.ng"} className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary font-mono text-xs" />
+              {form.role === 'STUDENT' && (
+                <p className="text-[11px] text-emerald-600 font-semibold mt-1">
+                  Format: firstname.surname@tarepet.com | Password: Auto-created School ID
+                </p>
+              )}
+            </div>
             <div className="flex gap-3 pt-2">
-              <button onClick={() => setCreated(true)} className="flex-1 bg-primary text-white py-2.5 rounded-xl font-bold text-xs hover:bg-primary/90 transition-colors">{t('createUser.createBtn')}</button>
+              <button onClick={handleCreate} disabled={!form.name.trim()} className="flex-1 bg-primary text-white py-2.5 rounded-xl font-bold text-xs hover:bg-primary/90 disabled:opacity-50 transition-colors">{t('createUser.createBtn')}</button>
               <button onClick={onClose} className="border border-border px-4 py-2.5 rounded-xl text-xs hover:bg-accent transition-colors">{t('createUser.cancel')}</button>
             </div>
           </div>
         ) : (
-          <div className="text-center py-6 space-y-2">
+          <div className="text-center py-6 space-y-3">
             <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto" />
             <h4 className="font-serif font-bold text-foreground text-lg">{t('createUser.created')}</h4>
-            <p className="text-xs text-muted-foreground">{t('createUser.credentials')} & login instructions sent to {form.email}.</p>
+            <div className="p-4 rounded-xl bg-muted/30 border border-border text-left space-y-1.5 text-xs font-sans">
+              <p><span className="text-muted-foreground font-semibold">User Role:</span> <strong className="text-primary">{form.role}</strong></p>
+              <p><span className="text-muted-foreground font-semibold">Email:</span> <strong className="font-mono text-foreground">{generatedCreds?.email}</strong></p>
+              {form.role === 'STUDENT' && (
+                <p><span className="text-muted-foreground font-semibold">Password (School ID):</span> <strong className="font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">{generatedCreds?.studentId}</strong></p>
+              )}
+              {form.role === 'TEACHER' && (
+                <p><span className="text-muted-foreground font-semibold">Default Password (Staff ID):</span> <strong className="font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">{generatedCreds?.studentId}</strong></p>
+              )}
+            </div>
             <button onClick={onClose} className="bg-primary text-white px-6 py-2 rounded-xl text-xs font-bold mt-2">{t('createUser.done')}</button>
           </div>
         )}
@@ -1436,22 +1485,7 @@ const CreateUserForTypeModal = ({
 // ── Cache Buster ─────────────────────────────────────────────
 // Increment this version string on every deploy to wipe stale localStorage data.
 const APP_DATA_VERSION = 'v2.0.0';
-const STALE_CACHE_KEYS = [
-  'tarepet_students_list',
-  'tarepet_teachers_list',
-  'tarepet_permanent_teachers',
-  'local_registered_users',
-  'tarepet_class_marksheet',
-];
-function bustStaleCache() {
-  if (typeof window === 'undefined') return;
-  const stored = localStorage.getItem('tarepet_data_version');
-  if (stored !== APP_DATA_VERSION) {
-    STALE_CACHE_KEYS.forEach(key => localStorage.removeItem(key));
-    localStorage.setItem('tarepet_data_version', APP_DATA_VERSION);
-  }
-}
-bustStaleCache();
+
 
 // ── Main Component ───────────────────────────────────────────
 export default function AdminDashboard() {
@@ -1461,14 +1495,14 @@ export default function AdminDashboard() {
       const params = new URLSearchParams(window.location.search);
       const urlSec = params.get('section');
       if (urlSec) return urlSec;
-      const cached = localStorage.getItem('admin_active_section') || sessionStorage.getItem('admin_active_section');
+      const cached = null;
       if (cached) return cached;
     }
     return 'overview';
   });
   const setActiveSection = (section: string) => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('admin_active_section', section);
+      
       sessionStorage.setItem('admin_active_section', section);
       const url = new URL(window.location.href);
       url.searchParams.set('section', section);
@@ -1485,7 +1519,16 @@ export default function AdminDashboard() {
   const [awardHouse, setAwardHouse] = useState<any>(null);
   const [auditSearch, setAuditSearch] = useState('');
   const [usersList, setUsersList] = useState(MOCK_USERS);
-  const [studentsList, setStudentsList] = useState<any[]>([]);
+  const [studentsList, setStudentsList] = useState<any[]>(() => getStoredStudents());
+
+  React.useEffect(() => {
+    setStudentsList(getStoredStudents());
+    syncStudentsWithBackend().then(res => setStudentsList(res));
+    const unsub = subscribeToCBTStore(() => {
+      setStudentsList(getStoredStudents());
+    });
+    return () => unsub();
+  }, []);
   const [showAddStudentModal, setShowAddStudentModal] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
   const [newStudentForm, setNewStudentForm] = useState({
@@ -1503,6 +1546,10 @@ export default function AdminDashboard() {
     parentPhone: '',
     profileImage: '',
   });
+
+  const currentWizardAdmissionNo = React.useMemo(() => {
+    return generateAdmissionNumber(newStudentForm.grade, newStudentForm.stream);
+  }, [newStudentForm.grade, newStudentForm.stream, showAddStudentModal]);
   const [showActionsDropdown, setShowActionsDropdown] = useState(false);
   // Student class drill-down
   const [selectedClass, setSelectedClass] = useState<string | null>(null);   // 'SS1' | 'SS2' | 'SS3'
@@ -1573,7 +1620,7 @@ export default function AdminDashboard() {
   const [resultsViewTab, setResultsViewTab] = useState<'roster' | 'marksheet' | 'fees'>('roster');
   const [marksheetSubject, setMarksheetSubject] = useState('Mathematics');
   const [classScoresMap, setClassScoresMap] = useState<Record<number, { ca1: number; ca2: number; exam: number }>>(() => {
-    const saved = localStorage.getItem('tarepet_class_marksheet');
+    const saved = null;
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
     }
@@ -1583,7 +1630,7 @@ export default function AdminDashboard() {
 
   // Fee Ledger & Payment State
   const [feeLedgerState, setFeeLedgerState] = useState<any[]>(() => {
-    const saved = localStorage.getItem('tarepet_fee_ledger');
+    const saved = null;
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
     }
@@ -1595,7 +1642,7 @@ export default function AdminDashboard() {
 
   // Announcements & Broadcast Center State
   const [announcementsListState, setAnnouncementsListState] = useState<any[]>(() => {
-    const saved = localStorage.getItem('tarepet_announcements');
+    const saved = null;
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
     }
@@ -1608,12 +1655,12 @@ export default function AdminDashboard() {
   // Finance & Bursary State
   const [financeTab, setFinanceTab] = useState<'overview' | 'income' | 'expenses' | 'budget'>('overview');
   const [financeExpenses, setFinanceExpenses] = useState<any[]>(() => {
-    const saved = localStorage.getItem('tarepet_fin_expenses');
+    const saved = null;
     if (saved) { try { return JSON.parse(saved); } catch (e) {} }
     return [];
   });
   const [financeIncome, setFinanceIncome] = useState<any[]>(() => {
-    const saved = localStorage.getItem('tarepet_fin_income');
+    const saved = null;
     if (saved) { try { return JSON.parse(saved); } catch (e) {} }
     return [];
   });
@@ -1681,7 +1728,7 @@ export default function AdminDashboard() {
                   combined.push(t);
                 }
               });
-              try { localStorage.setItem('tarepet_teachers_list', JSON.stringify(combined)); } catch (e) {}
+              
               return combined;
             });
           }
@@ -1694,7 +1741,7 @@ export default function AdminDashboard() {
                   combined.push(s);
                 }
               });
-              try { localStorage.setItem('tarepet_students_list', JSON.stringify(combined)); } catch (e) {}
+              
               return combined;
             });
           }
@@ -1723,7 +1770,7 @@ export default function AdminDashboard() {
   const [timetablesState, setTimetablesState] = useState<Record<string, any>>(() => {
     if (typeof window !== 'undefined') {
       try {
-        const saved = localStorage.getItem('tarepet_class_timetables');
+        const saved = null;
         if (saved) return JSON.parse(saved);
       } catch (e) {}
     }
@@ -1749,7 +1796,7 @@ export default function AdminDashboard() {
   // Real-Time Calendar Events State (Cleared)
   const [calendarEventsState, setCalendarEventsState] = useState<any[]>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('tarepet_calendar_events');
+      const saved = null;
       if (saved) { try { return JSON.parse(saved); } catch (e) {} }
     }
     return [];
@@ -1762,7 +1809,7 @@ export default function AdminDashboard() {
     setTimetablesState(newTimetables);
     if (typeof window !== 'undefined') {
       try {
-        localStorage.setItem('tarepet_class_timetables', JSON.stringify(newTimetables));
+        
       } catch (e) {}
     }
   };
@@ -1780,7 +1827,7 @@ export default function AdminDashboard() {
   const [attendanceClassFilter, setAttendanceClassFilter] = useState('JSS1');
   const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
   const [attendanceMap, setAttendanceMap] = useState<Record<number, 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED'>>(() => {
-    const saved = localStorage.getItem('tarepet_attendance');
+    const saved = null;
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
     }
@@ -2521,7 +2568,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                       <div className="py-1">
                         <button onClick={() => {
                           if (confirm(`Are you sure you want to delete student "${u.name}"?`)) {
-                            setStudentsList(prev => prev.filter(s => s.id !== u.id));
+                            deleteStudent(u.id);
                             setSelectedUser(null);
                           }
                           setShowActionsDropdown(false);
@@ -4541,7 +4588,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                   <button
                     onClick={() => {
                       setAdminProfileData(editProfileForm);
-                      localStorage.setItem('admin_profile_data', JSON.stringify(editProfileForm));
+                      
                       setProfileUpdateSuccess(true);
                       setTimeout(() => {
                         setProfileUpdateSuccess(false);
@@ -5120,7 +5167,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
               onSave={(created) => {
                 setTeachersList(prev => {
                   const updated = [created, ...prev];
-                  try { localStorage.setItem('tarepet_teachers_list', JSON.stringify(updated)); } catch (e) {}
+                  
                   return updated;
                 });
                 setShowAddTeacherModal(false);
@@ -6187,7 +6234,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                 <div className="flex justify-end pt-3">
                   <button
                     onClick={() => {
-                      localStorage.setItem('tarepet_class_marksheet', JSON.stringify(classScoresMap));
+                      
                       setMarksheetSaveAlert(true);
                       setTimeout(() => setMarksheetSaveAlert(false), 2500);
                     }}
@@ -6358,7 +6405,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                                   updatedLedger = [...feeLedgerState, newRecord];
                                 }
                                 setFeeLedgerState(updatedLedger);
-                                localStorage.setItem('tarepet_fee_ledger', JSON.stringify(updatedLedger));
+                                
                                 setShowAddPaymentModal(false);
                               } else {
                                 alert('Please enter a valid amount!');
@@ -6701,8 +6748,8 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                 <p className="text-xl font-serif font-bold text-foreground mt-0.5">74.5%</p>
               </div>
               <div>
-                <p className="text-[10px] text-muted-foreground uppercase font-bold">GPA Grade</p>
-                <p className="text-xl font-serif font-bold text-emerald-600 mt-0.5">3.85 / 4.0</p>
+                <p className="text-[10px] text-muted-foreground uppercase font-bold">WASSCE Grade</p>
+                <p className="text-xl font-serif font-bold text-emerald-600 mt-0.5">A1 (Distinction)</p>
               </div>
             </div>
 
@@ -7263,7 +7310,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                               if (row.status === 'PENDING') {
                                 const updated = financeExpenses.map((e: any) => e.id === row.id ? { ...e, status: 'PAID' } : e);
                                 setFinanceExpenses(updated);
-                                localStorage.setItem('tarepet_fin_expenses', JSON.stringify(updated));
+                                
                               }
                             }}
                             disabled={row.status === 'PAID'}
@@ -7375,7 +7422,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                       };
                       const updated = [newRec, ...financeIncome];
                       setFinanceIncome(updated);
-                      localStorage.setItem('tarepet_fin_income', JSON.stringify(updated));
+                      
                       setShowAddIncomeModal(false);
                       setFinanceSaveAlert('Income record saved successfully!');
                       setTimeout(() => setFinanceSaveAlert(''), 4000);
@@ -7453,7 +7500,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                       };
                       const updated = [newRec, ...financeExpenses];
                       setFinanceExpenses(updated);
-                      localStorage.setItem('tarepet_fin_expenses', JSON.stringify(updated));
+                      
                       setShowAddExpenseModal(false);
                       setFinanceSaveAlert('Expense record saved successfully!');
                       setTimeout(() => setFinanceSaveAlert(''), 4000);
@@ -7487,7 +7534,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
         };
         const updated = [newEv, ...calendarEventsState];
         setCalendarEventsState(updated);
-        localStorage.setItem('tarepet_calendar_events', JSON.stringify(updated));
+        
         setShowAddCalendarModal(false);
         setCalendarForm({ title: '', category: 'Academic', date: '', endDate: '', scope: 'All Classes', detail: '', status: 'Upcoming' });
       };
@@ -7495,7 +7542,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
       const handleDeleteCalendarEvent = (id: string) => {
         const updated = calendarEventsState.filter(ev => ev.id !== id);
         setCalendarEventsState(updated);
-        localStorage.setItem('tarepet_calendar_events', JSON.stringify(updated));
+        
       };
 
       return (
@@ -7948,18 +7995,19 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold text-foreground">{t('wizard.admissionNo')}</span>
                         <span className="text-sm font-mono font-bold text-primary bg-primary/10 px-3 py-1 rounded-lg border border-primary/30">
-                          {generateAdmissionNumber(newStudentForm.grade, newStudentForm.stream)}
+                          {currentWizardAdmissionNo}
                         </span>
                       </div>
                       <div className="flex items-center justify-between pt-1">
                         <span className="text-xs font-semibold text-foreground">{t('wizard.genEmail')}</span>
-                        <span className="text-xs font-bold text-foreground underline">
-                          {(() => {
-                            const parts = newStudentForm.name.trim().toLowerCase().split(/\s+/);
-                            const fn = parts[0] || 'student';
-                            const sn = parts.slice(1).join('') || 'tarepet';
-                            return `${fn}.${sn}@tarepet.com`;
-                          })()}
+                        <span className="text-xs font-bold text-foreground underline font-mono">
+                          {formatStudentEmail(newStudentForm.name)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between pt-1">
+                        <span className="text-xs font-semibold text-foreground">Default Password</span>
+                        <span className="text-xs font-mono font-bold text-emerald-700 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                          {currentWizardAdmissionNo} (School ID)
                         </span>
                       </div>
                       <div className="flex items-center justify-between pt-1">
@@ -7995,17 +8043,16 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                 ) : (
                   <button
                     onClick={() => {
-                      const generatedId = generateAdmissionNumber(newStudentForm.grade, newStudentForm.stream);
-                      const parts = newStudentForm.name.trim().toLowerCase().split(/\s+/);
-                      const fn = parts[0] || 'student';
-                      const sn = parts.slice(1).join('') || 'tarepet';
-                      const autoEmail = `${fn}.${sn}@tarepet.com`;
+                      const generatedId = currentWizardAdmissionNo;
+                      const autoEmail = formatStudentEmail(newStudentForm.name);
 
-                      const createdStudent = {
-                        id: studentsList.length + 1,
+                      saveStudent({
+                        id: Date.now(),
                         name: newStudentForm.name,
+                        code: generatedId,
                         admissionNo: generatedId,
                         email: autoEmail,
+                        password: generatedId,
                         grade: newStudentForm.grade,
                         stream: newStudentForm.stream,
                         house: 'Blue House (Eagle)',
@@ -8019,8 +8066,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                         parentName: newStudentForm.parentName,
                         parentPhone: newStudentForm.parentPhone,
                         profileImage: newStudentForm.profileImage,
-                      };
-                      setStudentsList([createdStudent, ...studentsList]);
+                      });
                       setShowAddStudentModal(false);
                     }}
                     className="px-6 py-2.5 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 transition-colors shadow-md flex items-center gap-1.5">

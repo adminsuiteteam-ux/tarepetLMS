@@ -56,6 +56,67 @@ function getQuestionOption(q: Question, opt: 'A' | 'B' | 'C' | 'D'): string {
   }
 }
 
+/**
+ * Safe arithmetic evaluator — recursive descent parser.
+ * Supports: numbers, +, -, *, /, parentheses, decimals.
+ * Does NOT use eval() or Function() — no code injection possible.
+ */
+function safeEval(expr: string): number {
+  let pos = 0;
+  const peek = () => expr[pos];
+  const consume = () => expr[pos++];
+
+  function skipWS() { while (pos < expr.length && expr[pos] === ' ') pos++; }
+
+  function parseNumber(): number {
+    skipWS();
+    let num = '';
+    if (peek() === '-') { num += consume(); }
+    while (pos < expr.length && /[0-9.]/.test(peek())) { num += consume(); }
+    if (num === '' || num === '-') throw new Error('Invalid number');
+    return parseFloat(num);
+  }
+
+  function parsePrimary(): number {
+    skipWS();
+    if (peek() === '(') {
+      consume(); // '('
+      const val = parseExpr();
+      skipWS();
+      if (consume() !== ')') throw new Error('Missing )');
+      return val;
+    }
+    return parseNumber();
+  }
+
+  function parseTerm(): number {
+    let left = parsePrimary();
+    skipWS();
+    while (pos < expr.length && (peek() === '*' || peek() === '/')) {
+      const op = consume();
+      const right = parsePrimary();
+      left = op === '*' ? left * right : left / right;
+      skipWS();
+    }
+    return left;
+  }
+
+  function parseExpr(): number {
+    let left = parseTerm();
+    skipWS();
+    while (pos < expr.length && (peek() === '+' || peek() === '-')) {
+      const op = consume();
+      const right = parseTerm();
+      left = op === '+' ? left + right : left - right;
+      skipWS();
+    }
+    return left;
+  }
+
+  const result = parseExpr();
+  if (pos !== expr.length) throw new Error('Unexpected character');
+  return result;
+}
 export default function StudentCBTExam() {
   const { user } = useAuth();
   const [phase, setPhase] = useState<Phase>('list');
@@ -137,18 +198,21 @@ export default function StudentCBTExam() {
   };
 
   const handleCalcBtn = (val: string) => {
-    if (val === 'C') setCalcInput('0');
-    else if (val === '=') {
+    if (val === 'C') { setCalcInput('0'); return; }
+    if (val === '=') {
       try {
-        const sanitized = calcInput.replace(/[^0-9+\-*/.]/g, '');
-        const res = Function(`"use strict"; return (${sanitized})`)();
-        setCalcInput(String(res));
-      } catch (e) {
+        // Safe arithmetic evaluator — allows only digits and + - * / . ( ) whitespace
+        // No eval() or Function() used — prevents code injection.
+        const expr = calcInput.replace(/[^0-9+\-*/.() ]/g, '');
+        if (!expr.trim()) { setCalcInput('Error'); return; }
+        const result = safeEval(expr);
+        setCalcInput(isFinite(result) ? String(result) : 'Error');
+      } catch {
         setCalcInput('Error');
       }
-    } else {
-      setCalcInput(prev => (prev === '0' || prev === 'Error' ? val : prev + val));
+      return;
     }
+    setCalcInput(prev => (prev === '0' || prev === 'Error' ? val : prev + val));
   };
 
   const handleStartExam = async () => {
@@ -745,7 +809,7 @@ export default function StudentCBTExam() {
                       }}
                       className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md transition-colors flex items-center gap-2 cursor-pointer"
                     >
-                      {currentPage === examData.questions.length - 1 ? 'Submit Exam' : 'Submit Jawaban'}
+                      {currentPage === examData.questions.length - 1 ? 'Submit Exam' : 'Next'}
                     </button>
                   </div>
 

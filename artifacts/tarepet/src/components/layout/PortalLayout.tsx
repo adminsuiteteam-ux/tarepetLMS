@@ -3,9 +3,10 @@ import { Link } from 'wouter';
 import { useAuth } from '@/context/AuthContext';
 import { useTranslation } from '@/lib/i18n';
 import tarepetLogo from '@assets/tarepet__1784835204178.png';
+import { NotificationPanel } from '@/components/ui/NotificationPanel';
 import {
   LayoutDashboard, BookOpen, GraduationCap, Users, Award,
-  Calendar, LogOut, Bell, Menu, X, UserCheck, ShieldAlert,
+  Calendar, LogOut, Menu, X, UserCheck, ShieldAlert,
   FileText, MessageSquare, BarChart2, Building2, Settings,
   Briefcase, PenLine, Star, Library, ClipboardList, Trophy,
   CreditCard, HeartHandshake, School, Shield, Search,
@@ -52,8 +53,9 @@ const ROLE_NAV: Record<string, NavSection[]> = {
   ],
   STUDENT: [
     { id: 'overview',  label: 'Overview',        icon: LayoutDashboard },
-    { id: 'courses',   label: 'My course',       icon: BookOpen },
+    { id: 'courses',   label: 'My Subjects',     icon: BookOpen },
     { id: 'exams',     label: 'Exams/Test',      icon: ClipboardList },
+
     { id: 'results',   label: 'Check Results',   icon: BarChart2 },
     { id: 'calendar',  label: 'Calendar',        icon: Calendar },
     { id: 'settings',  label: 'Setting/profile', icon: Settings },
@@ -268,10 +270,7 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
           {/* Right actions */}
           <div className="flex items-center gap-2 shrink-0">
             {/* Notifications */}
-            <button className="relative p-2 rounded-xl text-muted-foreground hover:bg-accent transition-colors">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-primary" />
-            </button>
+            <NotificationPanel role={(user?.role ?? 'STUDENT') as any} />
 
             {/* Dark Mode Toggle */}
             <button

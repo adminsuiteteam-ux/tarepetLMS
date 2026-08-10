@@ -7,6 +7,8 @@ import { Layout } from '@/components/layout/Layout';
 import { AnimatePresence } from 'framer-motion';
 import { AuthProvider } from '@/context/AuthContext';
 
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+
 // Pages
 import Home from '@/pages/home';
 import About from '@/pages/about';
@@ -43,15 +45,53 @@ function Router() {
       {/* Standalone Pages (No public Header/Footer layout) */}
       <Route path="/sign-in" component={SignIn} />
       <Route path="/dashboard" component={DashboardRedirect} />
-      <Route path="/dashboard/admin" component={AdminDashboard} />
-      <Route path="/dashboard/teacher" component={TeacherDashboard} />
-      <Route path="/dashboard/teacher/profile" component={TeacherProfile} />
-      <Route path="/teacher-profile" component={TeacherProfile} />
-      <Route path="/dashboard/student" component={StudentDashboard} />
-      <Route path="/dashboard/parent" component={ParentDashboard} />
-      <Route path="/dashboard/cbt-exam" component={CBTExam} />
-      <Route path="/dashboard/cbt-builder" component={CBTBuilder} />
-      <Route path="/dashboard/cbt-approval" component={CBTApproval} />
+
+      {/* Protected Dashboard Routes — role-gated */}
+      <Route path="/dashboard/admin">
+        <ProtectedRoute allowedRoles={['ADMIN']}>
+          <AdminDashboard />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/dashboard/teacher">
+        <ProtectedRoute allowedRoles={['TEACHER']}>
+          <TeacherDashboard />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/dashboard/teacher/profile">
+        <ProtectedRoute allowedRoles={['TEACHER']}>
+          <TeacherProfile />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/teacher-profile">
+        <ProtectedRoute allowedRoles={['TEACHER']}>
+          <TeacherProfile />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/dashboard/student">
+        <ProtectedRoute allowedRoles={['STUDENT']}>
+          <StudentDashboard />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/dashboard/parent">
+        <ProtectedRoute allowedRoles={['PARENT']}>
+          <ParentDashboard />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/dashboard/cbt-exam">
+        <ProtectedRoute allowedRoles={['STUDENT']}>
+          <CBTExam />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/dashboard/cbt-builder">
+        <ProtectedRoute allowedRoles={['TEACHER']}>
+          <CBTBuilder />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/dashboard/cbt-approval">
+        <ProtectedRoute allowedRoles={['ADMIN']}>
+          <CBTApproval />
+        </ProtectedRoute>
+      </Route>
       
       {/* Public Pages with Layout */}
       <Route path="/">
