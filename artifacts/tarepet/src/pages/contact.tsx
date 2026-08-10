@@ -126,7 +126,7 @@ export default function Contact() {
                     <h3 className="font-bold text-foreground mb-1 text-lg">Our Physical Address</h3>
                     <p className="text-muted-foreground text-sm leading-relaxed">
                       Tare Pet Montessori School<br />
-                      47 Chief John Obi Str., Nuxtin, Kpansia<br />
+                      43. LT. Col Edor Obi Road Kpansia<br />
                       Yenagoa, Bayelsa State, Nigeria
                     </p>
                   </div>

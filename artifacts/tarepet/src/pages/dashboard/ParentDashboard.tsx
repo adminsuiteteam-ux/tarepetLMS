@@ -271,7 +271,7 @@ export default function ParentDashboard() {
                     <div>
                       <h2 className="font-serif font-bold text-base text-primary uppercase tracking-wide">{t('Tarepet Montessori International College')}</h2>
                       <p className="text-[10px] text-slate-500">{t('Motto: Excellence, Integrity & Practical Life Erdkinder Mastery')}</p>
-                      <p className="text-[10px] text-slate-500">{t('Km 14 Airport Road, Abuja & Port Harcourt Campuses · www.tarepet.edu.ng')}</p>
+                      <p className="text-[10px] text-slate-500">{t('43. LT. Col Edor Obi Road Kpansia, Yenagoa, Bayelsa State · www.tarepet.edu.ng')}</p>
                     </div>
                   </div>
                   <div className="text-right border-l border-slate-200 pl-4">

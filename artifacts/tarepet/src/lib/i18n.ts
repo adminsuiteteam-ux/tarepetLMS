@@ -3,7 +3,7 @@
 
 const defaultTranslations = new Map<string, string>([
   ['school.name', 'Tarepet Montessori School'],
-  ['school.location', 'Yenagoa, Bayelsa State'],
+  ['school.location', '43. LT. Col Edor Obi Road Kpansia, Yenagoa, Bayelsa State'],
   ['school.abbr', 'TMS'],
   ['teacher.id_card_official_title', 'Official Student ID Card'],
   ['teacher.id_card_student_id', 'STUDENT ID:'],

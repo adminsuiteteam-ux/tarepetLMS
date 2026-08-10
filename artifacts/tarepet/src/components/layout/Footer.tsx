@@ -16,7 +16,7 @@ export function Footer() {
   const contactInfo = [
     {
       icon: <MapPin size={18} className="text-primary shrink-0" />,
-      text: "47 Chief John Obi Str., Nuxtin, Kpansia, Yenagoa, Bayelsa State",
+      text: "43. LT. Col Edor Obi Road Kpansia, Yenagoa, Bayelsa State",
       href: null,
     },
     {
