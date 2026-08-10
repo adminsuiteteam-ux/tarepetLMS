@@ -35,7 +35,7 @@ const ROLE_NAV: Record<string, NavSection[]> = {
     { id: 'subjects',       label: 'Subjects',          icon: BookOpen },
     { id: 'results',        label: 'Results',           icon: FileText },
     { id: 'attendance',     label: 'Attendance',        icon: CalendarCheck },
-    { id: 'announcements',  label: 'Announcements',     icon: Megaphone },
+    { id: 'exams',          label: 'Manage Exams',      icon: ClipboardList },
     { id: 'finance',        label: 'Finance',           icon: DollarSign },
     { id: 'calendar',       label: 'School Calendar',   icon: Calendar },
     { id: 'reports',        label: 'Reports',           icon: BarChart2 },
@@ -55,7 +55,6 @@ const ROLE_NAV: Record<string, NavSection[]> = {
     { id: 'courses',   label: 'My course',       icon: BookOpen },
     { id: 'exams',     label: 'Exams/Test',      icon: ClipboardList },
     { id: 'results',   label: 'Check Results',   icon: BarChart2 },
-    { id: 'payments',  label: 'Payment Page',    icon: CreditCard },
     { id: 'calendar',  label: 'Calendar',        icon: Calendar },
     { id: 'settings',  label: 'Setting/profile', icon: Settings },
   ],
@@ -134,7 +133,7 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
     <div className="flex flex-col h-full" style={{ fontFamily: 'var(--font-poppins)' }}>
       {/* Brand */}
       <div className="p-5 border-b border-border flex items-center gap-3 shrink-0">
-        <img src={tarepetLogo} alt="Tare Pet Logo" className="w-10 h-10 object-contain rounded-xl" />
+        <img src={tarepetLogo} alt="Tare Pet Logo" className="w-7 h-7 object-contain rounded-lg" />
         <div className="flex flex-col">
           <h2 className="font-bold text-base text-foreground leading-tight">{t('common.app_name', 'Tare Pet LMS')}</h2>
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">{t('common.portal_system', 'Portal System')}</p>

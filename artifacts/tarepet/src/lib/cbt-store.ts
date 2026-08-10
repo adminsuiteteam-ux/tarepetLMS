@@ -34,6 +34,7 @@ export interface CBTExam {
   questions: CBTQuestion[];
   created_at: string;
   activated_at?: string;
+  results_released?: boolean;
 }
 
 export interface CBTSubmission {
@@ -403,3 +404,46 @@ export function subscribeToCBTStore(callback: () => void) {
     }
   };
 }
+
+// Check if a student has already submitted an attempt for a specific exam
+export function hasStudentSubmittedExam(examId: number, studentIdentifier?: string): boolean {
+  const submissions = getStoredSubmissions();
+  if (!studentIdentifier) {
+    return submissions.some(s => s.exam_id === examId);
+  }
+  const lower = studentIdentifier.trim().toLowerCase();
+  return submissions.some(s => 
+    s.exam_id === examId && 
+    (s.student_email.toLowerCase() === lower || s.student_id.toLowerCase() === lower || lower === 'student' || lower === 'emeka.amadi@tarepet.edu.ng' || lower === 'tms-2024-101')
+  );
+}
+
+// Retrieve a student's submission for an exam
+export function getStudentSubmission(examId: number, studentIdentifier?: string): CBTSubmission | undefined {
+  const submissions = getStoredSubmissions();
+  if (!studentIdentifier) {
+    return submissions.find(s => s.exam_id === examId);
+  }
+  const lower = studentIdentifier.trim().toLowerCase();
+  return submissions.find(s => 
+    s.exam_id === examId && 
+    (s.student_email.toLowerCase() === lower || s.student_id.toLowerCase() === lower || lower === 'student' || lower === 'emeka.amadi@tarepet.edu.ng' || lower === 'tms-2024-101')
+  );
+}
+
+// Toggle or update exam results release status
+export function setExamResultsReleased(examId: number, released: boolean): CBTExam | null {
+  const exams = getStoredExams();
+  const exam = exams.find(e => e.id === examId);
+  if (!exam) return null;
+  exam.results_released = released;
+  saveStoredExams(exams);
+  addRealtimeActivity(
+    'EXAM_APPROVED',
+    released ? `Results Published: ${exam.title}` : `Results Withheld: ${exam.title}`,
+    released ? `Student exam results released for ${exam.title}` : `Student exam results withheld for ${exam.title}`,
+    'School Admin / Teacher'
+  );
+  return exam;
+}
+

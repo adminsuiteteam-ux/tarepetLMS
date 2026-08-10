@@ -7,7 +7,7 @@ import { Link } from 'wouter';
 import {
   BookOpen, Calendar, Clock, Award, Star, CheckCircle2,
   FileText, ArrowRight, Download, ChevronRight, UserCheck,
-  CreditCard, Settings, User, Bell, Lock, AlertCircle,
+  Settings, User, Bell, Lock, AlertCircle,
   BarChart2, Shield, Play, ArrowUpRight, Trophy, ClipboardList,
   CheckSquare, Filter, Search, Sparkles
 } from 'lucide-react';
@@ -20,12 +20,7 @@ const MY_COURSES: any[] = [];
 
 const GRADE_REPORT: any[] = [];
 
-const FEE_BREAKDOWN = [
-  { item: 'Tuition Fee (2nd Term 2026)', amount: 150000, paid: 150000, status: 'Paid', date: 'Jan 10, 2026' },
-  { item: 'Development & Facility Levy', amount: 25000, paid: 25000, status: 'Paid', date: 'Jan 10, 2026' },
-  { item: 'CBT Examination & Tech Fee', amount: 15000, paid: 15000, status: 'Paid', date: 'Jan 10, 2026' },
-  { item: 'Montessori Practical Life Kit', amount: 10000, paid: 10000, status: 'Paid', date: 'Jan 10, 2026' },
-];
+
 
 const TERM_ACADEMIC_CALENDAR: any[] = [];
 
@@ -199,7 +194,6 @@ export default function StudentDashboard() {
             { label: 'Active Courses', val: '0', sub: '0% avg progress', icon: BookOpen, color: 'text-rose-700 bg-rose-500/10 border-rose-200' },
             { label: 'Current GPA', val: '0.00', sub: 'No GPA recorded', icon: Star, color: 'text-emerald-600 bg-emerald-500/10 border-emerald-200' },
             { label: 'Attendance', val: '0%', sub: 'No attendance recorded', icon: UserCheck, color: 'text-blue-600 bg-blue-500/10 border-blue-200' },
-            { label: 'Fee Status', val: 'CLEARED', sub: 'No Outstanding Fees', icon: CreditCard, color: 'text-purple-600 bg-purple-500/10 border-purple-200' },
           ].map((s, i) => (
             <div key={i} className={`bg-card rounded-2xl border p-4 shadow-sm ${s.color.split(' ').slice(2).join(' ')}`}>
               <div className="flex items-center justify-between mb-2">
@@ -220,7 +214,6 @@ export default function StudentDashboard() {
               { label: 'My course', section: 'courses', icon: BookOpen },
               { label: 'Exams/Test', section: 'exams', icon: ClipboardList },
               { label: 'Check Results', section: 'results', icon: BarChart2 },
-              { label: 'Payment Page', section: 'payments', icon: CreditCard },
               { label: 'Calendar', section: 'calendar', icon: Calendar },
               { label: 'Setting/profile', section: 'settings', icon: Settings },
             ].map((a: any, i: number) => (
@@ -424,48 +417,7 @@ export default function StudentDashboard() {
       </div>
     );
 
-    // =========================================================
-    // 5. PAYMENT PAGE
-    // =========================================================
-    if (activeSection === 'payments') return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-serif font-bold text-foreground">{t('student.payments_title', 'Payment & Fee Management')}</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">{t('student.payments_desc', 'School fees summary, payment receipts, and online payment options.')}</p>
-        </div>
 
-        {/* Fee Status Card */}
-        <div className="bg-gradient-to-r from-purple-700 to-indigo-800 text-white p-6 rounded-2xl shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <span className="bg-white/20 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full inline-block mb-2">2nd Term 2026</span>
-            <h3 className="text-2xl font-bold">{t('student.total_fees', 'Total Fees: ₦200,000')}</h3>
-            <p className="text-purple-100 text-xs mt-1">{t('student.paid_full', 'Paid in Full • Outstanding Balance: ₦0.00')}</p>
-          </div>
-          <button onClick={() => showToast('Official Fee Receipt (PDF) downloaded!')} className="bg-white text-purple-800 font-bold px-5 py-2.5 rounded-xl text-xs hover:bg-purple-50 transition-colors shadow-md">
-            {t('student.download_receipt_btn', 'Download Official Receipt')}
-          </button>
-        </div>
-
-        {/* Breakdown Table */}
-        <div className="bg-card rounded-2xl border border-border p-5 shadow-sm space-y-4">
-          <h3 className="font-serif font-bold text-foreground">{t('student.paid_items_title', 'Paid Fee Items')}</h3>
-          <div className="space-y-2">
-            {FEE_BREAKDOWN.map((f, i) => (
-              <div key={i} className="flex items-center justify-between p-3.5 rounded-xl border border-border bg-muted/10 text-xs">
-                <div>
-                  <h4 className="font-bold text-foreground">{f.item}</h4>
-                  <p className="text-[10px] text-muted-foreground">{t('student.paid_on', 'Paid on')} {f.date}</p>
-                </div>
-                <div className="text-right">
-                  <span className="font-mono font-bold text-foreground block">₦{f.paid.toLocaleString()}</span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">✓ {f.status}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
 
     // =========================================================
     // 6. CALENDAR & TIMETABLE
@@ -554,7 +506,7 @@ export default function StudentDashboard() {
               if (eventsToDisplay.length === 0) {
                 return (
                   <div className="text-center py-8 bg-muted/10 rounded-xl border border-border space-y-1">
-                    <p className="text-xs font-semibold text-muted-foreground">No academic calendar events published yet.</p>
+                    <p className="text-xs font-semibold text-muted-foreground">{t('student.no_events', 'No academic calendar events published yet.')}</p>
                   </div>
                 );
               }
@@ -637,7 +589,7 @@ export default function StudentDashboard() {
               />
               <div className="flex items-center gap-2">
                 <label htmlFor="studentAvatarInputPicker" className="px-3.5 py-1.5 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 cursor-pointer inline-flex items-center gap-1.5 shadow-sm">
-                  Upload Profile Picture
+                  {t('student.upload_profile_picture', 'Upload Profile Picture')}
                 </label>
                 {profileForm.profileImage && (
                   <button
@@ -650,11 +602,11 @@ export default function StudentDashboard() {
                     }}
                     className="px-3 py-1.5 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold hover:bg-rose-50"
                   >
-                    Remove
+                    {t('student.remove_photo', 'Remove')}
                   </button>
                 )}
               </div>
-              <p className="text-[10px] text-muted-foreground">Select a picture file to update your student profile avatar.</p>
+              <p className="text-[10px] text-muted-foreground">{t('student.avatar_help', 'Select a picture file to update your student profile avatar.')}</p>
             </div>
           </div>
 

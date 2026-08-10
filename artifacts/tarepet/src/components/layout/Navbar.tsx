@@ -75,7 +75,7 @@ export function Navbar() {
               <img
                 src={tarepetLogo}
                 alt="Tare Pet Montessori School Logo"
-                className="w-9 h-9 md:w-12 md:h-12 object-contain relative z-10 transition-transform duration-300 group-hover:scale-105"
+                className="w-7 h-7 md:w-9 md:h-9 object-contain relative z-10 transition-transform duration-300 group-hover:scale-105"
               />
             </div>
             <div className="flex flex-col">
@@ -187,7 +187,7 @@ export function Navbar() {
             {/* Mobile Overlay Header */}
             <div className="flex items-center justify-between pb-3 border-b border-white/40 relative z-10 shrink-0">
               <Link href="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-2.5">
-                <img src={tarepetLogo} alt="Tare Pet Logo" className="w-8 h-8 object-contain" />
+                <img src={tarepetLogo} alt="Tare Pet Logo" className="w-7 h-7 object-contain" />
                 <div className="flex flex-col">
                   <span className="font-serif font-bold text-lg text-primary leading-none">{t("Tare Pet")}</span>
                   <span className="font-sans text-[9px] uppercase tracking-[0.16em] text-secondary font-semibold mt-0.5">

@@ -49,7 +49,7 @@ export function Footer() {
               <img 
                 src={tarepetLogo} 
                 alt="Tare Pet Montessori School Logo" 
-                className="w-10 h-10 object-contain group-hover:scale-105 transition-transform"
+                className="w-7 h-7 object-contain group-hover:scale-105 transition-transform"
               />
               <div className="flex flex-col">
                 <span className="font-serif font-bold text-xl text-white leading-none tracking-tight">

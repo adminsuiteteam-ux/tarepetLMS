@@ -20,7 +20,32 @@ import { useTranslation } from '@/lib/i18n';
 const TEACHER_CLASSES: any[] = [];
 
 const PENDING_SUBMISSIONS: any[] = [];
-const STUDENT_ROSTER: any[] = [];
+const STUDENT_ROSTER: any[] = [
+  {
+    id: 1,
+    code: 'TMS/SS1/9927',
+    name: 'Civa Media',
+    email: 'media.civa@tarepet.edu.ng',
+    gender: 'Male',
+    maritalStatus: 'Single',
+    dob: '2012-05-14',
+    phone: 'Not Available',
+    country: 'Nigeria',
+    stateOfOrigin: 'Bayelsa',
+    lga: 'Yenagoa',
+    address: '12 Kpansia-Epje Road, Yenagoa',
+    grade: 'SS1',
+    stream: 'Science',
+    programme: 'Senior Secondary Certificate (SSCE)',
+    parentName: 'Chief Nwosu',
+    parentPhone: '08031112233',
+    status: 'ACTIVE',
+    studyMode: 'Full Time',
+    gpa: '3.85',
+    attendance: '98%',
+    atRisk: false
+  }
+];
 
 const TIMETABLE: any[] = [];
 
@@ -90,7 +115,16 @@ export default function TeacherDashboard() {
   const [selectedSub, setSelectedSub] = useState<any>(null);
   const [gradeInput, setGradeInput] = useState('');
   const [feedbackInput, setFeedbackInput] = useState('');
-  const [roster, setRoster] = useState(STUDENT_ROSTER);
+  const [roster, setRoster] = useState<any[]>(() => {
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('tarepet_student_roster');
+      if (cached) {
+        try { return JSON.parse(cached); } catch (e) {}
+      }
+    }
+    return STUDENT_ROSTER;
+  });
+
   const [studentSearch, setStudentSearch] = useState('');
   const [attendanceState, setAttendanceState] = useState<Record<number, string>>({
     1: 'present', 2: 'present', 3: 'late', 4: 'present', 5: 'present'
@@ -100,12 +134,24 @@ export default function TeacherDashboard() {
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [showAddStudentModal, setShowAddStudentModal] = useState(false);
   const [addStudentForm, setAddStudentForm] = useState({
+    code: '',
     name: '',
     email: '',
-    grade: 'SS1',
+    gender: 'Male',
+    maritalStatus: 'Single',
+    dob: '',
+    phone: '',
+    country: 'Nigeria',
+    stateOfOrigin: '',
+    lga: '',
+    address: '',
+    grade: formClass || 'SS1',
     stream: 'Science',
+    programme: 'Senior Secondary Certificate (SSCE)',
     parentName: '',
-    parentPhone: ''
+    parentPhone: '',
+    status: 'ACTIVE',
+    studyMode: 'Full Time'
   });
 
   // Student management modal states
@@ -169,24 +215,58 @@ export default function TeacherDashboard() {
   };
 
   const handleAddStudentSubmit = () => {
-    if (!addStudentForm.name || !addStudentForm.email) return;
-    const generatedId = `TMS/${addStudentForm.grade}/${Math.floor(1000 + Math.random() * 9000)}`;
+    if (!addStudentForm.name || !addStudentForm.code || !addStudentForm.email) return;
     const newStudent = {
-      id: roster.length + 1,
-      name: addStudentForm.name,
-      code: generatedId,
-      email: addStudentForm.email,
-      grade: addStudentForm.grade,
+      id: Date.now(),
+      code: addStudentForm.code.trim(),
+      name: addStudentForm.name.trim(),
+      email: addStudentForm.email.trim(),
+      gender: addStudentForm.gender,
+      maritalStatus: addStudentForm.maritalStatus,
+      dob: addStudentForm.dob || 'Not Available',
+      phone: addStudentForm.phone || 'Not Available',
+      country: addStudentForm.country || 'Nigeria',
+      stateOfOrigin: addStudentForm.stateOfOrigin || 'Bayelsa',
+      lga: addStudentForm.lga || 'Yenagoa',
+      address: addStudentForm.address || 'Not Available',
+      grade: formClass || addStudentForm.grade,
       stream: addStudentForm.stream,
+      programme: addStudentForm.programme,
+      parentName: addStudentForm.parentName || 'Not Available',
+      parentPhone: addStudentForm.parentPhone || 'Not Available',
+      status: addStudentForm.status || 'ACTIVE',
+      studyMode: addStudentForm.studyMode || 'Full Time',
       gpa: '0.00',
       attendance: '100%',
-      status: 'ACTIVE',
       atRisk: false
     };
-    setRoster(prev => [newStudent, ...prev]);
+    const updated = [newStudent, ...roster];
+    setRoster(updated);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('tarepet_student_roster', JSON.stringify(updated));
+    }
     setShowAddStudentModal(false);
-    showToast(`Registered ${addStudentForm.name}! Student ID: ${generatedId}`);
-    setAddStudentForm({ name: '', email: '', grade: 'SS1', stream: 'Science', parentName: '', parentPhone: '' });
+    showToast(`Registered ${addStudentForm.name}! Student ID: ${addStudentForm.code}`);
+    setAddStudentForm({
+      code: '',
+      name: '',
+      email: '',
+      gender: 'Male',
+      maritalStatus: 'Single',
+      dob: '',
+      phone: '',
+      country: 'Nigeria',
+      stateOfOrigin: '',
+      lga: '',
+      address: '',
+      grade: formClass || 'SS1',
+      stream: 'Science',
+      programme: 'Senior Secondary Certificate (SSCE)',
+      parentName: '',
+      parentPhone: '',
+      status: 'ACTIVE',
+      studyMode: 'Full Time'
+    });
   };
 
   const filteredRoster = roster.filter(s => {
@@ -425,7 +505,7 @@ export default function TeacherDashboard() {
                   </div>
                   <div>
                     <span className="text-muted-foreground font-medium">{t('teacher.lbl_marital_status_prefix', 'Marital Status:')} </span>
-                    <strong className="text-foreground font-bold">{t('teacher.lbl_single', 'Single')}</strong>
+                    <strong className="text-foreground font-bold">{u.maritalStatus || 'Single'}</strong>
                   </div>
                   <div>
                     <span className="text-muted-foreground font-medium">{t('teacher.lbl_dob_prefix', 'Date of Birth:')} </span>
@@ -462,13 +542,13 @@ export default function TeacherDashboard() {
                   <div>
                     <span className="text-muted-foreground font-medium">{t('teacher.lbl_class_prefix', 'Class:')} </span>
                     <strong className="text-foreground font-bold">
-                      {u.grade} ({u.stream || 'General Stream'})
+                      {u.grade} ({u.stream || 'Science'})
                     </strong>
                   </div>
                   <div>
                     <span className="text-muted-foreground font-medium">{t('teacher.lbl_programme_prefix', 'Programme:')} </span>
                     <strong className="text-foreground font-bold">
-                      {u.grade?.startsWith('SS') ? 'Senior Secondary Certificate (SSCE)' : 'Basic Education Certificate (BECE)'}
+                      {u.programme || (u.grade?.startsWith('SS') ? 'Senior Secondary Certificate (SSCE)' : 'Basic Education Certificate (BECE)')}
                     </strong>
                   </div>
                   <div>
@@ -477,11 +557,11 @@ export default function TeacherDashboard() {
                   </div>
                   <div>
                     <span className="text-muted-foreground font-medium">{t('teacher.lbl_status_field_prefix', 'Status:')} </span>
-                    <strong className="text-emerald-600 font-bold">{t('teacher.lbl_active', 'Active')}</strong>
+                    <strong className="text-emerald-600 font-bold">{u.status || 'ACTIVE'}</strong>
                   </div>
                   <div>
                     <span className="text-muted-foreground font-medium">{t('teacher.lbl_study_mode_prefix', 'Study Mode:')} </span>
-                    <strong className="text-foreground font-bold">{t('teacher.lbl_full_time', 'Full Time')}</strong>
+                    <strong className="text-foreground font-bold">{u.studyMode || 'Full Time'}</strong>
                   </div>
                 </div>
               </div>
@@ -608,7 +688,7 @@ export default function TeacherDashboard() {
               </button>
             </div>
             <div className="space-y-2">
-              {roster.map(s => {
+              {filteredRoster.map(s => {
                 // Safe lookup without bracket notation to prevent prototype pollution
                 const currentAttendance = Object.entries(attendanceState).find(([k]) => Number(k) === s.id)?.[1] ?? 'present';
                 return (
@@ -638,110 +718,271 @@ export default function TeacherDashboard() {
 
         {/* Add Student Modal */}
         {showAddStudentModal && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4" onClick={() => setShowAddStudentModal(false)}>
-            <div className="bg-card rounded-2xl border border-border max-w-lg w-full p-6 space-y-4 shadow-2xl" onClick={e => e.stopPropagation()}>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={() => setShowAddStudentModal(false)}>
+            <div className="bg-card rounded-2xl border border-border max-w-2xl w-full p-6 space-y-4 shadow-2xl my-8" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between border-b border-border pb-3">
                 <div>
                   <h3 className="font-serif font-bold text-lg text-foreground">{t('teacher.register_new_student', 'Register New Student')}</h3>
-                  <p className="text-xs text-muted-foreground">{t('teacher.register_student_desc', 'Enter student credentials to generate their portal ID number.')}</p>
+                  <p className="text-xs text-muted-foreground">{t('teacher.register_student_desc_manual', 'Manually enter all student details. No fields are generated automatically.')}</p>
                 </div>
                 <button onClick={() => setShowAddStudentModal(false)} className="p-1 rounded-lg hover:bg-accent text-muted-foreground">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              {/* Login authentication notice */}
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3.5 text-xs text-blue-800 space-y-1">
-                <p className="font-bold flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0" />
-                  {t('teacher.auth_note_title', 'Portal Authentication Credentials')}
-                </p>
-                <p className="text-[11px] leading-relaxed text-blue-700">
-                  {t('teacher.auth_note_desc', 'When a student is registered, their official Student ID (Admission Number) is auto-generated. Students log into their student portal using their Email Address and Student ID Number.')}
-                </p>
-              </div>
+              {/* Class Scoping Notice for Form Teachers */}
+              {formClass && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-900 flex items-center justify-between gap-3">
+                  <p className="font-bold text-[11px] flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                    Form Class Scope Locked: Student will be assigned strictly to your class ({formClass}).
+                  </p>
+                  <span className="text-[10px] font-extrabold bg-emerald-600 text-white px-2 py-0.5 rounded uppercase">
+                    {formClass} Only
+                  </span>
+                </div>
+              )}
 
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.student_full_name', 'Student Full Name *')}</label>
-                  <input
-                    type="text"
-                    value={addStudentForm.name}
-                    onChange={e => setAddStudentForm({ ...addStudentForm, name: e.target.value })}
-                    placeholder="e.g. Chidi Nwosu"
-                    className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
-                  />
+              <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">STATUS *</label>
+                    <select
+                      value={addStudentForm.status}
+                      onChange={e => setAddStudentForm({ ...addStudentForm, status: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none font-bold text-emerald-600"
+                    >
+                      <option value="ACTIVE">ACTIVE</option>
+                      <option value="INACTIVE">INACTIVE</option>
+                      <option value="SUSPENDED">SUSPENDED</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Student ID (Manual Input) *</label>
+                    <input
+                      type="text"
+                      value={addStudentForm.code}
+                      onChange={e => setAddStudentForm({ ...addStudentForm, code: e.target.value })}
+                      placeholder="e.g. TMS/SS1/9927"
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs font-mono font-bold focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.email_address', 'Email Address *')}</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Student Full Name *</label>
+                    <input
+                      type="text"
+                      value={addStudentForm.name}
+                      onChange={e => setAddStudentForm({ ...addStudentForm, name: e.target.value })}
+                      placeholder="e.g. Civa Media"
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Gender *</label>
+                    <select
+                      value={addStudentForm.gender}
+                      onChange={e => setAddStudentForm({ ...addStudentForm, gender: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    >
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Marital Status *</label>
+                    <select
+                      value={addStudentForm.maritalStatus}
+                      onChange={e => setAddStudentForm({ ...addStudentForm, maritalStatus: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    >
+                      <option value="Single">Single</option>
+                      <option value="Married">Married</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Date of Birth *</label>
+                    <input
+                      type="date"
+                      value={addStudentForm.dob}
+                      onChange={e => setAddStudentForm({ ...addStudentForm, dob: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Phone Number</label>
+                    <input
+                      type="text"
+                      value={addStudentForm.phone}
+                      onChange={e => setAddStudentForm({ ...addStudentForm, phone: e.target.value })}
+                      placeholder="e.g. Not Available or +234..."
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Email Address *</label>
                     <input
                       type="email"
                       value={addStudentForm.email}
                       onChange={e => setAddStudentForm({ ...addStudentForm, email: e.target.value })}
-                      placeholder="chidi@tarepet.com"
-                      className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                      placeholder="media.civa@tarepet.edu.ng"
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
                     />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.class_level', 'Class Level *')}</label>
-                    <select
-                      value={addStudentForm.grade}
-                      onChange={e => setAddStudentForm({ ...addStudentForm, grade: e.target.value })}
-                      className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
-                    >
-                      {['JSS1', 'JSS2', 'JSS3', 'SS1', 'SS2', 'SS3'].map(g => <option key={g} value={g}>{g}</option>)}
-                    </select>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.stream', 'Department Stream')}</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Country</label>
+                    <input
+                      type="text"
+                      value={addStudentForm.country}
+                      onChange={e => setAddStudentForm({ ...addStudentForm, country: e.target.value })}
+                      placeholder="Nigeria"
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">State of Origin</label>
+                    <input
+                      type="text"
+                      value={addStudentForm.stateOfOrigin}
+                      onChange={e => setAddStudentForm({ ...addStudentForm, stateOfOrigin: e.target.value })}
+                      placeholder="e.g. Bayelsa"
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">L.G.A</label>
+                    <input
+                      type="text"
+                      value={addStudentForm.lga}
+                      onChange={e => setAddStudentForm({ ...addStudentForm, lga: e.target.value })}
+                      placeholder="e.g. Yenagoa"
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Residential Address</label>
+                  <input
+                    type="text"
+                    value={addStudentForm.address}
+                    onChange={e => setAddStudentForm({ ...addStudentForm, address: e.target.value })}
+                    placeholder="e.g. 12 Kpansia-Epje Road, Yenagoa"
+                    className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Class Level *</label>
+                    {formClass ? (
+                      <input
+                        type="text"
+                        disabled
+                        value={`${formClass} (Assigned Form Class)`}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-muted/50 text-xs font-bold text-emerald-700 outline-none cursor-not-allowed"
+                      />
+                    ) : (
+                      <select
+                        value={addStudentForm.grade}
+                        onChange={e => setAddStudentForm({ ...addStudentForm, grade: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                      >
+                        {['JSS1', 'JSS2', 'JSS3', 'SS1', 'SS2', 'SS3'].map(g => <option key={g} value={g}>{g}</option>)}
+                      </select>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Department Stream</label>
                     <select
                       value={addStudentForm.stream}
                       onChange={e => setAddStudentForm({ ...addStudentForm, stream: e.target.value })}
-                      className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
                     >
-                      <option value="General">{t('teacher.opt_general_junior')}</option>
-                      <option value="Science">{t('teacher.opt_science_stream')}</option>
-                      <option value="Art">{t('teacher.opt_art_humanities')}</option>
+                      <option value="Science">Science</option>
+                      <option value="Art">Art / Humanities</option>
+                      <option value="Commercial">Commercial</option>
+                      <option value="General">General Junior</option>
                     </select>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.parent_name', 'Parent Name')}</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Academic Programme</label>
+                    <select
+                      value={addStudentForm.programme}
+                      onChange={e => setAddStudentForm({ ...addStudentForm, programme: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    >
+                      <option value="Senior Secondary Certificate (SSCE)">Senior Secondary Certificate (SSCE)</option>
+                      <option value="Basic Education Certificate (BECE)">Basic Education Certificate (BECE)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Study Mode</label>
+                    <select
+                      value={addStudentForm.studyMode}
+                      onChange={e => setAddStudentForm({ ...addStudentForm, studyMode: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    >
+                      <option value="Full Time">Full Time</option>
+                      <option value="Part Time">Part Time</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Parent Name</label>
                     <input
                       type="text"
                       value={addStudentForm.parentName}
                       onChange={e => setAddStudentForm({ ...addStudentForm, parentName: e.target.value })}
-                      placeholder="Chief Nwosu"
-                      className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                      placeholder="e.g. Chief Nwosu"
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
                     />
                   </div>
+
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.parent_phone', 'Parent Phone')}</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Parent Phone</label>
                     <input
                       type="text"
                       value={addStudentForm.parentPhone}
                       onChange={e => setAddStudentForm({ ...addStudentForm, parentPhone: e.target.value })}
-                      placeholder="08031112233"
-                      className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                      placeholder="e.g. 08031112233"
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-3 pt-2 border-t border-border">
                 <button onClick={() => setShowAddStudentModal(false)} className="flex-1 py-2.5 rounded-xl border border-border text-xs font-bold hover:bg-accent">
                   {t('teacher.cancel', 'Cancel')}
                 </button>
                 <button
                   onClick={handleAddStudentSubmit}
-                  disabled={!addStudentForm.name || !addStudentForm.email}
+                  disabled={!addStudentForm.name || !addStudentForm.code || !addStudentForm.email}
                   className="flex-1 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 disabled:opacity-50 transition-colors shadow-sm"
                 >
                   {t('teacher.register_student_btn', 'Create & Register Student')}
@@ -820,59 +1061,249 @@ export default function TeacherDashboard() {
 
         {/* Edit Student Modal */}
         {editingStudent && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4" onClick={() => setEditingStudent(null)}>
-            <div className="bg-card rounded-2xl border border-border max-w-md w-full p-6 space-y-4 shadow-2xl" onClick={e => e.stopPropagation()}>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={() => setEditingStudent(null)}>
+            <div className="bg-card rounded-2xl border border-border max-w-2xl w-full p-6 space-y-4 shadow-2xl my-8" onClick={e => e.stopPropagation()}>
               <div className="flex items-center justify-between border-b border-border pb-3">
-                <h3 className="font-serif font-bold text-lg text-foreground">{t('teacher.edit_student')} — {editingStudent.code}</h3>
+                <h3 className="font-serif font-bold text-lg text-foreground">{t('teacher.edit_student', 'Edit Student Profile')} — {editingStudent.code}</h3>
                 <button onClick={() => setEditingStudent(null)} className="p-1 rounded-lg hover:bg-accent text-muted-foreground">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="space-y-3 text-xs">
+              <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">STATUS</label>
+                    <select
+                      value={editingStudent.status || 'ACTIVE'}
+                      onChange={e => setEditingStudent({ ...editingStudent, status: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none font-bold text-emerald-600"
+                    >
+                      <option value="ACTIVE">ACTIVE</option>
+                      <option value="INACTIVE">INACTIVE</option>
+                      <option value="SUSPENDED">SUSPENDED</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Student ID (Manual Input)</label>
+                    <input
+                      type="text"
+                      value={editingStudent.code || ''}
+                      onChange={e => setEditingStudent({ ...editingStudent, code: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs font-mono font-bold focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Student Full Name</label>
+                    <input
+                      type="text"
+                      value={editingStudent.name || ''}
+                      onChange={e => setEditingStudent({ ...editingStudent, name: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Gender</label>
+                    <select
+                      value={editingStudent.gender || 'Male'}
+                      onChange={e => setEditingStudent({ ...editingStudent, gender: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    >
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Marital Status</label>
+                    <select
+                      value={editingStudent.maritalStatus || 'Single'}
+                      onChange={e => setEditingStudent({ ...editingStudent, maritalStatus: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    >
+                      <option value="Single">Single</option>
+                      <option value="Married">Married</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Date of Birth</label>
+                    <input
+                      type="date"
+                      value={editingStudent.dob || ''}
+                      onChange={e => setEditingStudent({ ...editingStudent, dob: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Phone Number</label>
+                    <input
+                      type="text"
+                      value={editingStudent.phone || ''}
+                      onChange={e => setEditingStudent({ ...editingStudent, phone: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Email Address</label>
+                    <input
+                      type="email"
+                      value={editingStudent.email || ''}
+                      onChange={e => setEditingStudent({ ...editingStudent, email: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Country</label>
+                    <input
+                      type="text"
+                      value={editingStudent.country || ''}
+                      onChange={e => setEditingStudent({ ...editingStudent, country: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">State of Origin</label>
+                    <input
+                      type="text"
+                      value={editingStudent.stateOfOrigin || ''}
+                      onChange={e => setEditingStudent({ ...editingStudent, stateOfOrigin: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">L.G.A</label>
+                    <input
+                      type="text"
+                      value={editingStudent.lga || ''}
+                      onChange={e => setEditingStudent({ ...editingStudent, lga: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  <label className="font-bold text-muted-foreground uppercase block mb-1">{t('teacher.lbl_student_name')}</label>
+                  <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Residential Address</label>
                   <input
                     type="text"
-                    value={editingStudent.name}
-                    onChange={e => setEditingStudent({ ...editingStudent, name: e.target.value })}
+                    value={editingStudent.address || ''}
+                    onChange={e => setEditingStudent({ ...editingStudent, address: e.target.value })}
                     className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
                   />
                 </div>
-                <div>
-                  <label className="font-bold text-muted-foreground uppercase block mb-1">{t('teacher.lbl_email')}</label>
-                  <input
-                    type="email"
-                    value={editingStudent.email}
-                    onChange={e => setEditingStudent({ ...editingStudent, email: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
-                  />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Class Level</label>
+                    {formClass ? (
+                      <input
+                        type="text"
+                        disabled
+                        value={`${formClass} (Assigned Form Class)`}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-muted/50 text-xs font-bold text-emerald-700 outline-none cursor-not-allowed"
+                      />
+                    ) : (
+                      <select
+                        value={editingStudent.grade}
+                        onChange={e => setEditingStudent({ ...editingStudent, grade: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                      >
+                        {['JSS1', 'JSS2', 'JSS3', 'SS1', 'SS2', 'SS3'].map(g => <option key={g} value={g}>{g}</option>)}
+                      </select>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Department Stream</label>
+                    <select
+                      value={editingStudent.stream || 'Science'}
+                      onChange={e => setEditingStudent({ ...editingStudent, stream: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    >
+                      <option value="Science">Science</option>
+                      <option value="Art">Art / Humanities</option>
+                      <option value="Commercial">Commercial</option>
+                      <option value="General">General Junior</option>
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label className="font-bold text-muted-foreground uppercase block mb-1">{t('teacher.lbl_class_level')}</label>
-                  <select
-                    value={editingStudent.grade}
-                    onChange={e => setEditingStudent({ ...editingStudent, grade: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
-                  >
-                    {['JSS1', 'JSS2', 'JSS3', 'SS1', 'SS2', 'SS3'].map(g => <option key={g} value={g}>{g}</option>)}
-                  </select>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Academic Programme</label>
+                    <select
+                      value={editingStudent.programme || 'Senior Secondary Certificate (SSCE)'}
+                      onChange={e => setEditingStudent({ ...editingStudent, programme: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    >
+                      <option value="Senior Secondary Certificate (SSCE)">Senior Secondary Certificate (SSCE)</option>
+                      <option value="Basic Education Certificate (BECE)">Basic Education Certificate (BECE)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Study Mode</label>
+                    <select
+                      value={editingStudent.studyMode || 'Full Time'}
+                      onChange={e => setEditingStudent({ ...editingStudent, studyMode: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    >
+                      <option value="Full Time">Full Time</option>
+                      <option value="Part Time">Part Time</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Parent Name</label>
+                    <input
+                      type="text"
+                      value={editingStudent.parentName || ''}
+                      onChange={e => setEditingStudent({ ...editingStudent, parentName: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Parent Phone</label>
+                    <input
+                      type="text"
+                      value={editingStudent.parentPhone || ''}
+                      onChange={e => setEditingStudent({ ...editingStudent, parentPhone: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-3 pt-2 border-t border-border">
                 <button onClick={() => setEditingStudent(null)} className="flex-1 py-2.5 rounded-xl border border-border text-xs font-bold hover:bg-accent">
-                  {t('teacher.cancel')}
+                  {t('teacher.cancel', 'Cancel')}
                 </button>
                 <button
                   onClick={() => {
-                    setRoster(prev => prev.map(s => s.id === editingStudent.id ? editingStudent : s));
+                    const updated = roster.map(s => s.id === editingStudent.id ? editingStudent : s);
+                    setRoster(updated);
+                    if (typeof window !== 'undefined') {
+                      localStorage.setItem('tarepet_student_roster', JSON.stringify(updated));
+                    }
+                    if (selectedStudentProfile?.id === editingStudent.id) {
+                      setSelectedStudentProfile(editingStudent);
+                    }
                     setEditingStudent(null);
                     showToast(`Updated student profile for ${editingStudent.name}!`);
                   }}
                   className="flex-1 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-colors shadow-sm"
                 >
-                  {t('teacher.save_changes')}
+                  {t('teacher.save_changes', 'Save Changes')}
                 </button>
               </div>
             </div>

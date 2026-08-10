@@ -185,7 +185,7 @@ export default function SignIn() {
             <img 
               src={tarepetLogo} 
               alt="Tarepet Montessori School Logo" 
-              className="w-16 h-16 object-contain"
+              className="w-10 h-10 object-contain"
             />
             <div className="flex flex-col">
               <span className="font-serif font-bold text-3xl text-white leading-none tracking-tight">
@@ -282,7 +282,7 @@ export default function SignIn() {
             <img 
               src={tarepetLogo} 
               alt="Tarepet Montessori School Logo" 
-              className="w-14 h-14 object-contain"
+              className="w-9 h-9 object-contain"
             />
             <div className="flex flex-col">
               <span className="font-serif font-bold text-2xl text-primary leading-none tracking-tight">

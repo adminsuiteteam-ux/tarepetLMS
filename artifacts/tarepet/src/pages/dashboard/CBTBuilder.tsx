@@ -88,7 +88,7 @@ const getStatusBadgeStyle = (status: string) => {
   }
 };
 
-import { getStoredExams, saveCBTExam, updateExamStatus, getStoredSubmissions, subscribeToCBTStore, SENIOR_COURSES, JUNIOR_COURSES, getCoursesForClass } from '@/lib/cbt-store';
+import { getStoredExams, saveCBTExam, updateExamStatus, getStoredSubmissions, subscribeToCBTStore, SENIOR_COURSES, JUNIOR_COURSES, getCoursesForClass, setExamResultsReleased } from '@/lib/cbt-store';
 
 const SS_CLASSES = [
   {
@@ -540,13 +540,32 @@ export default function CBTBuilder() {
                         </button>
                       )}
                       {(exam.status === 'APPROVED' || exam.status === 'ACTIVE' || exam.status === 'PUBLISHED') && (
-                        <button
-                          onClick={() => { setSelectedExamId(exam.id); fetchAttempts(exam.id); setView('attempts'); }}
-                          className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-primary/10 text-primary hover:bg-primary/20 transition flex items-center gap-1"
-                        >
-                          <Users className="w-3.5 h-3.5" /> View Submitted Exams
-                        </button>
+                        <>
+                          <button
+                            onClick={() => { setSelectedExamId(exam.id); fetchAttempts(exam.id); setView('attempts'); }}
+                            className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-primary/10 text-primary hover:bg-primary/20 transition flex items-center gap-1"
+                          >
+                            <Users className="w-3.5 h-3.5" /> View Submitted Exams
+                          </button>
+                          <button
+                            onClick={() => {
+                              const examObj = getStoredExams().find(e => e.id === exam.id);
+                              const nextState = !examObj?.results_released;
+                              setExamResultsReleased(exam.id, nextState);
+                              alert(nextState ? `Results for "${exam.title}" have been released to students!` : `Results for "${exam.title}" are now withheld from students.`);
+                              fetchExams();
+                            }}
+                            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                              (exam as any).results_released
+                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                : 'bg-amber-100 text-amber-800 border border-amber-300 hover:bg-amber-200'
+                            }`}
+                          >
+                            {(exam as any).results_released ? '✓ Results Released' : '🔒 Release Results'}
+                          </button>
+                        </>
                       )}
+
                     </div>
                   </div>
                 </div>

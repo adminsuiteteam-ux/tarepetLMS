@@ -40,11 +40,12 @@ interface AvailableExam {
   questions_count: number;
   questions_per_page: number;
   teacher_name: string;
+  results_released?: boolean;
 }
 
 type Phase = 'list' | 'confirm' | 'exam' | 'result';
 
-import { getStoredExams, submitStudentCBTAttempt, subscribeToCBTStore } from '@/lib/cbt-store';
+import { getStoredExams, submitStudentCBTAttempt, subscribeToCBTStore, hasStudentSubmittedExam, getStudentSubmission } from '@/lib/cbt-store';
 
 function getQuestionOption(q: Question, opt: 'A' | 'B' | 'C' | 'D'): string {
   switch (opt) {
@@ -152,6 +153,13 @@ export default function StudentCBTExam() {
 
   const handleStartExam = async () => {
     if (!selectedExam) return;
+    const studentIdentifier = user?.email || (user?.profile as any)?.studentId || 'TMS-2024-101';
+    if (hasStudentSubmittedExam(selectedExam.id, studentIdentifier)) {
+      alert('Security Notice: You have already completed this examination. Re-entry is restricted to a single attempt per student.');
+      setPhase('list');
+      return;
+    }
+
     setLoading(true);
     try {
       const fullEx = getStoredExams().find(e => e.id === selectedExam.id);
@@ -192,14 +200,22 @@ export default function StudentCBTExam() {
     try {
       const studentName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Emeka Amadi' : 'Emeka Amadi';
       const studentEmail = user?.email || 'emeka.amadi@tarepet.edu.ng';
+      const studentId = (user?.profile as any)?.studentId || 'TMS-2024-101';
 
       const subResult = submitStudentCBTAttempt(selectedExam.id, answers, {
         name: studentName,
         email: studentEmail,
-        student_id: 'TMS-2024-101',
+        student_id: studentId,
       });
 
+      const isReleased = Boolean(selectedExam.results_released);
+
       setResult({
+        exam_title: selectedExam.title,
+        course_name: selectedExam.course_detail?.name || selectedExam.title,
+        submitted_at: subResult.submitted_at,
+        auto_submitted: auto,
+        results_released: isReleased,
         score: subResult.score,
         total_possible: subResult.total_possible,
         percentage: subResult.percentage,
@@ -228,6 +244,8 @@ export default function StudentCBTExam() {
 
   // ============ EXAM LIST ============
   if (phase === 'list') {
+    const studentIdentifier = user?.email || (user?.profile as any)?.studentId || 'TMS-2024-101';
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8">
         <div className="max-w-4xl mx-auto">
@@ -249,38 +267,85 @@ export default function StudentCBTExam() {
             </div>
           ) : (
             <div className="grid gap-4">
-              {exams.map(exam => (
-                <motion.div
-                  key={exam.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6 hover:shadow-xl transition-shadow cursor-pointer"
-                  onClick={() => { setSelectedExam(exam); setPhase('confirm'); }}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                          exam.assessment_type === 'TEST' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
-                        }`}>
-                          {exam.assessment_type === 'TEST' ? 'C.A. Test' : 'Final Exam'}
-                        </span>
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                          {exam.term.replace('_', ' ')}
-                        </span>
+              {exams.map(exam => {
+                const submitted = hasStudentSubmittedExam(exam.id, studentIdentifier);
+                const isReleased = Boolean(exam.results_released);
+                const subData = submitted ? getStudentSubmission(exam.id, studentIdentifier) : null;
+
+                return (
+                  <motion.div
+                    key={exam.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`bg-white rounded-2xl shadow-lg border border-slate-100 p-6 transition-all ${
+                      submitted && !isReleased ? 'opacity-90 bg-slate-50/70 border-amber-200 cursor-default' : 'hover:shadow-xl cursor-pointer'
+                    }`}
+                    onClick={() => {
+                      if (submitted) {
+                        if (isReleased && subData) {
+                          setSelectedExam(exam);
+                          setResult({
+                            ...subData,
+                            exam_title: exam.title,
+                            course_name: exam.course_detail?.name || exam.title,
+                            results_released: true,
+                            passed: subData.percentage >= 50,
+                          });
+                          setPhase('result');
+                        } else {
+                          alert('Security Notice: You have already completed this examination. Single attempt restriction is enforced. Results are currently withheld until released by school administration.');
+                        }
+                      } else {
+                        setSelectedExam(exam);
+                        setPhase('confirm');
+                      }
+                    }}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                            exam.assessment_type === 'TEST' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
+                          }`}>
+                            {exam.assessment_type === 'TEST' ? 'C.A. Test' : 'Final Exam'}
+                          </span>
+                          <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                            {exam.term.replace('_', ' ')}
+                          </span>
+                          {submitted && !isReleased && (
+                            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1">
+                              <Shield className="w-3.5 h-3.5 text-amber-600" /> Submitted (Results Withheld)
+                            </span>
+                          )}
+                          {submitted && isReleased && (
+                            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Completed (Results Released)
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-900 mb-1">{exam.title}</h3>
+                        <p className="text-sm text-slate-500 mb-3">{exam.course_detail?.name} ({exam.course_detail?.code})</p>
+                        <div className="flex items-center gap-4 text-xs text-slate-400">
+                          <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {exam.duration_minutes} mins</span>
+                          <span className="flex items-center gap-1"><BookOpen className="w-3.5 h-3.5" /> {exam.questions_count} questions</span>
+                          <span>By: {exam.teacher_name}</span>
+                        </div>
                       </div>
-                      <h3 className="text-lg font-bold text-slate-900 mb-1">{exam.title}</h3>
-                      <p className="text-sm text-slate-500 mb-3">{exam.course_detail?.name} ({exam.course_detail?.code})</p>
-                      <div className="flex items-center gap-4 text-xs text-slate-400">
-                        <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {exam.duration_minutes} mins</span>
-                        <span className="flex items-center gap-1"><BookOpen className="w-3.5 h-3.5" /> {exam.questions_count} questions</span>
-                        <span>By: {exam.teacher_name}</span>
+                      <div className="mt-2">
+                        {submitted ? (
+                          isReleased ? (
+                            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200">View Score</span>
+                          ) : (
+                            <span className="text-xs font-bold text-amber-700 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200">1 Attempt Used</span>
+                          )
+                        ) : (
+                          <ArrowRight className="w-5 h-5 text-slate-300" />
+                        )}
                       </div>
                     </div>
-                    <ArrowRight className="w-5 h-5 text-slate-300 mt-2" />
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -694,41 +759,100 @@ export default function StudentCBTExam() {
     );
   }
 
-  // ============ RESULT ============
+  // ============ RESULT / CONFIRMATION PHASE ============
   if (phase === 'result' && result) {
+    const isReleased = Boolean(result.results_released);
     const pct = result.percentage || 0;
     const passed = pct >= 50;
+
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 text-center"
+          className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-8 text-center"
         >
-          <div className={`w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center ${passed ? 'bg-green-100' : 'bg-red-100'}`}>
-            {passed ? <CheckCircle2 className="w-10 h-10 text-green-600" /> : <AlertTriangle className="w-10 h-10 text-red-500" />}
-          </div>
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">
-            {result.auto_submitted ? "Time's Up!" : "Exam Submitted!"}
-          </h2>
-          <p className="text-slate-500 text-sm mb-6">
-            {result.auto_submitted ? 'Your exam was automatically submitted when the timer expired.' : 'Your exam has been submitted and graded.'}
-          </p>
+          {!isReleased ? (
+            // SECURE SUBMISSION CONFIRMATION (WITHHELD RESULTS)
+            <>
+              <div className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center bg-emerald-100 text-emerald-600 shadow-inner">
+                <Shield className="w-10 h-10" />
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900 mb-2">
+                {result.auto_submitted ? "Time Expired — Exam Auto-Submitted!" : "Exam Submitted Successfully!"}
+              </h2>
+              <p className="text-slate-500 text-sm mb-6">
+                Your examination responses have been logged securely.
+              </p>
 
-          <div className="bg-slate-50 rounded-2xl p-6 mb-6">
-            <div className="text-5xl font-black mb-2" style={{ color: passed ? '#16a34a' : '#dc2626' }}>
-              {pct}%
-            </div>
-            <p className="text-slate-500 text-sm">
-              Score: {result.score} / {result.total_possible}
-            </p>
-          </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 text-left space-y-2">
+                <div className="flex items-center gap-2 text-amber-800 font-bold text-xs">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>Results Withheld Policy</span>
+                </div>
+                <p className="text-amber-700 text-xs leading-relaxed">
+                  To protect exam confidentiality and maintain academic standards, student scores are not displayed immediately after submission. Your official result will be viewable once released by your teacher or school administrator.
+                </p>
+              </div>
 
-          <Link href="/dashboard/student">
-            <button className="w-full h-12 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition">
-              Back to Dashboard
-            </button>
-          </Link>
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 mb-6 text-left space-y-2 text-xs">
+                <div className="flex justify-between py-1 border-b border-slate-200">
+                  <span className="text-slate-500 font-medium">Exam Title:</span>
+                  <span className="font-bold text-slate-800 truncate max-w-[200px]">{result.exam_title || selectedExam?.title}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-slate-200">
+                  <span className="text-slate-500 font-medium">Submitted At:</span>
+                  <span className="font-mono text-slate-700">{result.submitted_at ? new Date(result.submitted_at).toLocaleTimeString() : new Date().toLocaleTimeString()}</span>
+                </div>
+                <div className="flex justify-between py-1">
+                  <span className="text-slate-500 font-medium">Attempt Status:</span>
+                  <span className="font-bold text-emerald-600">✓ 1 of 1 Attempt Recorded (Locked)</span>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setPhase('list')}
+                  className="flex-1 h-12 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition cursor-pointer"
+                >
+                  Back to Exams
+                </button>
+                <Link href="/dashboard/student" className="flex-1">
+                  <button className="w-full h-12 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition cursor-pointer">
+                    Dashboard
+                  </button>
+                </Link>
+              </div>
+            </>
+          ) : (
+            // RELEASED RESULTS VIEW
+            <>
+              <div className={`w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center ${passed ? 'bg-green-100' : 'bg-red-100'}`}>
+                {passed ? <CheckCircle2 className="w-10 h-10 text-green-600" /> : <AlertTriangle className="w-10 h-10 text-red-500" />}
+              </div>
+              <h2 className="text-2xl font-bold text-slate-900 mb-2">
+                Official Results Released
+              </h2>
+              <p className="text-slate-500 text-sm mb-6">
+                {result.exam_title || selectedExam?.title}
+              </p>
+
+              <div className="bg-slate-50 rounded-2xl p-6 mb-6">
+                <div className="text-5xl font-black mb-2" style={{ color: passed ? '#16a34a' : '#dc2626' }}>
+                  {pct}%
+                </div>
+                <p className="text-slate-500 text-sm">
+                  Score: {result.score} / {result.total_possible}
+                </p>
+              </div>
+
+              <Link href="/dashboard/student">
+                <button className="w-full h-12 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition cursor-pointer">
+                  Back to Dashboard
+                </button>
+              </Link>
+            </>
+          )}
         </motion.div>
       </div>
     );
@@ -736,3 +860,4 @@ export default function StudentCBTExam() {
 
   return null;
 }
+

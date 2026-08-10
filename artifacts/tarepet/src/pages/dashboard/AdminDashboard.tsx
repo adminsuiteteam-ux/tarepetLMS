@@ -1976,7 +1976,7 @@ export default function AdminDashboard() {
       const quickActionButtons = [
         { label: 'Add Student', icon: UserPlus, color: 'bg-primary/10 text-primary hover:bg-primary/20 border-primary/20', action: () => { setActiveSection('users'); setUserSubPage('STUDENT'); } },
         { label: 'Add Teacher', icon: GraduationCap, color: 'bg-secondary/10 text-secondary hover:bg-secondary/20 border-secondary/20', action: () => { setActiveSection('users'); setUserSubPage('TEACHER'); } },
-        { label: 'Create Announcement', icon: Megaphone, color: 'bg-primary/10 text-primary hover:bg-primary/20 border-primary/20', action: () => setActiveSection('announcements') },
+        { label: 'Manage Exams', icon: ClipboardList, color: 'bg-primary/10 text-primary hover:bg-primary/20 border-primary/20', action: () => setActiveSection('exams') },
         { label: 'Upload Results', icon: FileSpreadsheet, color: 'bg-secondary/10 text-secondary hover:bg-secondary/20 border-secondary/20', action: () => setActiveSection('results') },
         { label: 'View Attendance', icon: CalendarCheck, color: 'bg-primary/10 text-primary hover:bg-primary/20 border-primary/20', action: () => setActiveSection('attendance') },
         { label: 'Generate Reports', icon: BarChart2, color: 'bg-secondary/10 text-secondary hover:bg-secondary/20 border-secondary/20', action: () => setActiveSection('reports') },
@@ -6961,13 +6961,10 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
         </div>
       );
     }
-    if (activeSection === 'announcements' || activeSection === 'finance') {
-      const isFinance = activeSection === 'finance';
-      const title = isFinance ? 'School Finance & Bursary Management' : 'Announcements & Communication Center';
-      const desc = isFinance
-        ? 'Comprehensive financial tracking, tuition fee billing, expense approvals, and bursary audit reports.'
-        : 'Publish, broadcast, and manage official notices to all school stakeholders via SMS and portal notifications.';
-      const IconComponent = isFinance ? DollarSign : Megaphone;
+    if (activeSection === 'finance') {
+      const title = 'School Finance & Bursary Management';
+      const desc = 'Comprehensive financial tracking, tuition fee billing, expense approvals, and bursary audit reports.';
+      const IconComponent = DollarSign;
 
       return (
         <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
@@ -6995,10 +6992,10 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                 Update Coming Out Soon
               </span>
               <h3 className="font-serif font-bold text-2xl sm:text-3xl text-foreground pt-2">
-                {isFinance ? 'Finance Module Update In Progress' : 'Announcements Module Update In Progress'}
+                Finance Module Update In Progress
               </h3>
               <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-                Our team is actively building enhanced tools for {isFinance ? 'automated billing, payment reconciliation, and ledger analytics' : 'instant SMS broadcasting, targeted notifications, and parent communication'}. Stay tuned!
+                Our team is actively building enhanced tools for automated billing, payment reconciliation, and ledger analytics. Stay tuned!
               </p>
             </div>
 
