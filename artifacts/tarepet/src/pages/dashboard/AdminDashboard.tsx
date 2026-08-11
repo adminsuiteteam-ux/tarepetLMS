@@ -1601,6 +1601,7 @@ export default function AdminDashboard() {
   const [selectedSubjectPreview, setSelectedSubjectPreview] = useState<any>(null);
   const [subjectFilterTab, setSubjectFilterTab] = useState<'ALL' | 'JUNIOR' | 'SENIOR' | 'SCIENCE' | 'ART'>('ALL');
   const [subjectSearch, setSubjectSearch] = useState('');
+  const [selectedSubjectDivision, setSelectedSubjectDivision] = useState<string | null>(null);
   const [settingsTab, setSettingsTab] = useState<'general' | 'academic' | 'notify' | 'access' | 'fees' | 'portal'>('general');
   const [settingsSaved, setSettingsSaved] = useState(false);
   const triggerSave = () => {
@@ -5962,205 +5963,254 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
       );
     }
     if (activeSection === 'subjects') {
+      // ── Subject division categories ───────────────────────────
+      const SUBJECT_DIVISIONS = [
+        {
+          key: 'NURSERY_PRIMARY',
+          title: 'Nursery & Primary Subjects',
+          subtitle: 'Nursery 1–3, Primary 1–5',
+          description: 'Core foundational subjects covering early childhood literacy, numeracy, and basic sciences.',
+          icon: School,
+          filterFn: (s: any) => s.grade?.startsWith('NUR') || s.grade?.startsWith('PRI'),
+        },
+        {
+          key: 'JSS',
+          title: 'Junior Secondary Subjects',
+          subtitle: 'JSS 1, JSS 2, JSS 3',
+          description: 'Comprehensive curriculum subjects for the Junior Secondary School levels, covering all streams.',
+          icon: BookMarked,
+          filterFn: (s: any) => s.grade?.startsWith('JSS'),
+        },
+        {
+          key: 'SS_SCIENCE',
+          title: 'Senior Secondary — Science',
+          subtitle: 'SS 1–3 Science Stream',
+          description: 'Mathematics, Physics, Chemistry, Biology and other STEM subjects for the Science stream.',
+          icon: FlaskConical,
+          filterFn: (s: any) => s.grade?.startsWith('SS') && (s.stream === 'Science' || s.category === 'Science' || s.category === 'STEM'),
+        },
+        {
+          key: 'SS_ART',
+          title: 'Senior Secondary — Art',
+          subtitle: 'SS 1–3 Art & Humanities Stream',
+          description: 'Literature, Government, Economics, CRS and Art & Humanities subjects for the Art stream.',
+          icon: Palette,
+          filterFn: (s: any) => s.grade?.startsWith('SS') && (s.stream === 'Art' || s.category === 'Art' || s.category === 'Languages'),
+        },
+      ];
+
+      const activeSubjectDivision = SUBJECT_DIVISIONS.find(d => d.key === selectedSubjectDivision);
+
       const filteredSubjects = subjectsListState.filter(sub => {
         const q = subjectSearch.toLowerCase();
         const matchSearch = !q || sub.title.toLowerCase().includes(q) || sub.code.toLowerCase().includes(q) || sub.grade.toLowerCase().includes(q) || sub.teacher.toLowerCase().includes(q);
-        
         let matchFilter = true;
-        if (subjectFilterTab === 'JUNIOR') {
-          matchFilter = sub.grade.startsWith('JSS');
-        } else if (subjectFilterTab === 'SENIOR') {
-          matchFilter = sub.grade.startsWith('SS');
-        } else if (subjectFilterTab === 'SCIENCE') {
-          matchFilter = sub.stream === 'Science' || sub.category === 'Science' || sub.category === 'STEM';
-        } else if (subjectFilterTab === 'ART') {
-          matchFilter = sub.stream === 'Art' || sub.category === 'Art' || sub.category === 'Languages';
+        if (activeSubjectDivision) {
+          matchFilter = activeSubjectDivision.filterFn(sub);
         }
-
         return matchSearch && matchFilter;
       });
 
-      const SUBJECT_FILTERS: { key: 'ALL' | 'JUNIOR' | 'SENIOR' | 'SCIENCE' | 'ART'; label: string; icon: React.ElementType }[] = [
-        { key: 'ALL',     label: 'All Subjects',        icon: BookOpen },
-        { key: 'JUNIOR',  label: 'Junior (JSS1 - JSS3)',icon: BookMarked },
-        { key: 'SENIOR',  label: 'Senior (SS1 - SS3)',  icon: GraduationCap },
-        { key: 'SCIENCE', label: 'Science Stream',      icon: FlaskConical },
-        { key: 'ART',     label: 'Art & Humanities',    icon: Palette },
-      ];
-
       return (
         <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
-          {/* Header Banner */}
-          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                <BookOpen className="w-6 h-6" />
-              </div>
-              <div>
-                <h2 className="font-bold text-xl text-foreground mb-1">School Curriculum & Subjects Directory</h2>
-                <p className="text-xs text-muted-foreground">Comprehensive overview of all JSS & SS subjects, course codes, assigned educators, and student rosters.</p>
-              </div>
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+            <div>
+              {selectedSubjectDivision && (
+                <div className="flex items-center gap-2 mb-2 text-xs">
+                  <button
+                    onClick={() => { setSelectedSubjectDivision(null); setSubjectSearch(''); }}
+                    className="text-primary font-bold hover:underline flex items-center gap-1"
+                  >
+                    <ChevronLeft className="w-4 h-4" /> All Subject Categories
+                  </button>
+                  <span className="text-muted-foreground">/</span>
+                  <span className="font-semibold text-foreground">{activeSubjectDivision?.title}</span>
+                </div>
+              )}
+              <h2 className="font-bold text-xl text-foreground">
+                {selectedSubjectDivision ? activeSubjectDivision?.title : 'School Curriculum & Subjects Directory'}
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                {selectedSubjectDivision
+                  ? activeSubjectDivision?.description
+                  : 'Select a curriculum category to browse all subjects, course codes, and assigned educators.'}
+              </p>
             </div>
-            <button
-              onClick={() => setShowCreateSubjectModal(true)}
-              className="bg-primary text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2 shadow-sm shrink-0"
-            >
-              <Plus className="w-4 h-4" /> Add New Subject
-            </button>
+            <div className="flex items-center gap-2">
+              {selectedSubjectDivision && (
+                <button
+                  onClick={() => { setSelectedSubjectDivision(null); setSubjectSearch(''); }}
+                  className="px-3.5 py-2.5 border border-border rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors flex items-center gap-1.5"
+                >
+                  <ChevronLeft className="w-4 h-4" /> Back to Categories
+                </button>
+              )}
+              <button
+                onClick={() => setShowCreateSubjectModal(true)}
+                className="bg-primary text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2 shadow-sm shrink-0"
+              >
+                <Plus className="w-4 h-4" /> Add New Subject
+              </button>
+            </div>
           </div>
 
-          {/* Metric Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Summary Metrics */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total Subjects</p>
                 <h3 className="text-2xl font-serif font-bold text-foreground mt-1">{subjectsListState.length}</h3>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Active curriculum offerings</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Active curriculum</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                <BookOpen className="w-5 h-5" />
-              </div>
+              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><BookOpen className="w-5 h-5" /></div>
             </div>
-
             <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Junior Subjects</p>
-                <h3 className="text-2xl font-serif font-bold text-blue-600 mt-1">{subjectsListState.filter(s => s.grade.startsWith('JSS')).length}</h3>
-                <p className="text-[11px] text-blue-600 mt-0.5">JSS1 — JSS3 Classes</p>
+                <h3 className="text-2xl font-serif font-bold text-primary mt-1">{subjectsListState.filter(s => s.grade?.startsWith('JSS')).length}</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">JSS 1–3 classes</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
-                <BookMarked className="w-5 h-5" />
-              </div>
+              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><BookMarked className="w-5 h-5" /></div>
             </div>
-
             <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Senior Subjects</p>
-                <h3 className="text-2xl font-serif font-bold text-emerald-600 mt-1">{subjectsListState.filter(s => s.grade.startsWith('SS')).length}</h3>
-                <p className="text-[11px] text-emerald-600 mt-0.5">SS1 — SS3 Classes</p>
+                <h3 className="text-2xl font-serif font-bold text-primary mt-1">{subjectsListState.filter(s => s.grade?.startsWith('SS')).length}</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">SS 1–3 classes</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
-                <GraduationCap className="w-5 h-5" />
-              </div>
+              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><GraduationCap className="w-5 h-5" /></div>
             </div>
-
             <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Science & STEM</p>
-                <h3 className="text-2xl font-serif font-bold text-secondary mt-1">{subjectsListState.filter(s => s.stream === 'Science' || s.category === 'Science' || s.category === 'STEM').length}</h3>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Laboratory & Practical</p>
+                <h3 className="text-2xl font-serif font-bold text-primary mt-1">{subjectsListState.filter(s => s.stream === 'Science' || s.category === 'Science' || s.category === 'STEM').length}</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Lab & Practical</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center">
-                <FlaskConical className="w-5 h-5" />
-              </div>
+              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><FlaskConical className="w-5 h-5" /></div>
             </div>
           </div>
 
-          {/* Search & Filter Bar */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <input
-                type="text"
-                value={subjectSearch}
-                onChange={e => setSubjectSearch(e.target.value)}
-                placeholder="Search subject by title, code (e.g. MTH-101), grade, teacher..."
-                className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-muted/20 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0">
-              {SUBJECT_FILTERS.map(f => {
-                const Icon = f.icon;
-                const isActive = subjectFilterTab === f.key;
+          {/* LEVEL 1: Category Cards */}
+          {!selectedSubjectDivision ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+              {SUBJECT_DIVISIONS.map(div => {
+                const Icon = div.icon;
+                const count = subjectsListState.filter(div.filterFn).length;
                 return (
-                  <button
-                    key={f.key}
-                    onClick={() => setSubjectFilterTab(f.key)}
-                    className={`px-3.5 py-2 rounded-xl text-xs font-bold border whitespace-nowrap transition-colors flex items-center gap-1.5 ${
-                      isActive
-                        ? 'bg-primary text-white border-primary shadow-sm'
-                        : 'bg-card border-border text-muted-foreground hover:bg-muted/40'
-                    }`}
+                  <div
+                    key={div.key}
+                    onClick={() => setSelectedSubjectDivision(div.key)}
+                    className="group bg-card border-2 border-primary/20 hover:border-primary/50 bg-primary/5 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer space-y-4 flex flex-col justify-between"
                   >
-                    <Icon className="w-3.5 h-3.5" />
-                    {f.label}
-                  </button>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+                          <Icon className="w-6 h-6" />
+                        </div>
+                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+                          {count} Subject{count !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      <div>
+                        <h3 className="font-serif font-bold text-lg text-foreground group-hover:text-primary transition-colors">
+                          {div.title}
+                        </h3>
+                        <p className="text-[11px] font-semibold text-primary/80 mt-0.5">{div.subtitle}</p>
+                        <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{div.description}</p>
+                      </div>
+                    </div>
+                    <div className="pt-3 border-t border-primary/15 flex items-center justify-between text-xs font-bold text-primary">
+                      <span>Browse {count} Subject{count !== 1 ? 's' : ''}</span>
+                      <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
                 );
               })}
             </div>
-          </div>
+          ) : (
+            /* LEVEL 2: Filtered Subjects Table */
+            <div className="space-y-4">
+              {/* Search bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <input
+                  type="text"
+                  value={subjectSearch}
+                  onChange={e => setSubjectSearch(e.target.value)}
+                  placeholder={`Search ${activeSubjectDivision?.title} by title, code, grade, teacher...`}
+                  className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-muted/20 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
 
-          {/* Subjects Table */}
-          <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
-            <table className="w-full text-xs text-left">
-              <thead className="bg-muted/30 text-muted-foreground uppercase text-[10px] tracking-wider">
-                <tr>
-                  <th className="py-3.5 px-4">Subject Code & Title</th>
-                  <th className="py-3.5 px-4">Grade Level</th>
-                  <th className="py-3.5 px-4">Stream / Category</th>
-                  <th className="py-3.5 px-4">Assigned Educator</th>
-                  <th className="py-3.5 px-4">Students Enrolled</th>
-                  <th className="py-3.5 px-4 text-right">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {filteredSubjects.length > 0 ? (
-                  filteredSubjects.map(sub => (
-                    <tr
-                      key={sub.id}
-                      className="hover:bg-primary/5 transition-colors cursor-pointer"
-                      onClick={() => setSelectedSubjectPreview(sub)}
-                    >
-                      <td className="py-3.5 px-4">
-                        <div className="flex items-center gap-3">
-                          <span className="text-xs font-mono font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-lg border border-primary/20">
-                            {sub.code}
-                          </span>
-                          <div>
-                            <p className="font-bold text-foreground text-sm">{sub.title}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className={`inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
-                          sub.grade.startsWith('JSS') ? 'bg-blue-500/10 text-blue-600 border-blue-200' : 'bg-emerald-500/10 text-emerald-600 border-emerald-200'
-                        }`}>
-                          {sub.grade}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 font-medium text-foreground">
-                        <span className={`inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
-                          sub.stream === 'Science' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200' :
-                          sub.stream === 'Art' ? 'bg-purple-500/10 text-purple-600 border-purple-200' :
-                          'bg-muted text-muted-foreground border-border'
-                        }`}>
-                          {sub.stream || 'General'}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 font-semibold text-foreground">
-                        {sub.teacher}
-                      </td>
-                      <td className="py-3.5 px-4 font-bold text-foreground">
-                        {sub.studentsCount || sub.enrolled || 30} Students
-                      </td>
-                      <td className="py-3.5 px-4 text-right">
-                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-200">
-                          Active Course
-                        </span>
-                      </td>
+              {/* Subjects Table */}
+              <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-muted/30 text-muted-foreground uppercase text-[10px] tracking-wider">
+                    <tr>
+                      <th className="py-3.5 px-4">Subject Code & Title</th>
+                      <th className="py-3.5 px-4">Grade Level</th>
+                      <th className="py-3.5 px-4">Stream / Category</th>
+                      <th className="py-3.5 px-4">Assigned Educator</th>
+                      <th className="py-3.5 px-4">Students Enrolled</th>
+                      <th className="py-3.5 px-4 text-right">Status</th>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={6} className="py-12 text-center text-muted-foreground">
-                      <BookOpen className="w-8 h-8 mx-auto mb-2 opacity-30 text-primary" />
-                      <p className="text-xs font-medium">No subjects found matching your filter criteria.</p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {filteredSubjects.length > 0 ? (
+                      filteredSubjects.map(sub => (
+                        <tr
+                          key={sub.id}
+                          className="hover:bg-primary/5 transition-colors cursor-pointer group"
+                          onClick={() => setSelectedSubjectPreview(sub)}
+                        >
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs font-mono font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-lg border border-primary/20">
+                                {sub.code}
+                              </span>
+                              <div>
+                                <p className="font-bold text-foreground text-sm group-hover:text-primary transition-colors">{sub.title}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <span className="inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full border bg-primary/10 text-primary border-primary/20">
+                              {sub.grade}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 font-medium text-foreground">
+                            <span className={`inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                              sub.stream === 'Science' ? 'bg-primary/10 text-primary border-primary/20' :
+                              sub.stream === 'Art' ? 'bg-primary/10 text-primary border-primary/20' :
+                              'bg-muted text-muted-foreground border-border'
+                            }`}>
+                              {sub.stream || 'General'}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 font-semibold text-foreground">{sub.teacher}</td>
+                          <td className="py-3.5 px-4 font-bold text-foreground">{sub.studentsCount || sub.enrolled || 0} Students</td>
+                          <td className="py-3.5 px-4 text-right">
+                            <span className="text-[10px] font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full border border-primary/20">
+                              Active Course
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={6} className="py-12 text-center text-muted-foreground">
+                          <BookOpen className="w-8 h-8 mx-auto mb-2 opacity-30 text-primary" />
+                          <p className="text-sm font-semibold">No subjects found in this category.</p>
+                          <p className="text-xs mt-1">Try adding subjects or adjusting your search.</p>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       );
     }
