@@ -42,6 +42,7 @@ jobs:
           BASE_PATH: /
           NODE_ENV: production
           VITE_API_URL: https://tarepet-backend-4iw6.onrender.com/api/v1
+          VITE_PAYSTACK_PUBLIC_KEY: pk_test_0cebdc3e1ca9d0ef71d0aa988c85be3675a7a675
 
       - name: Deploy to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4

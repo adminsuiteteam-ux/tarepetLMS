@@ -415,7 +415,7 @@ export async function processPaystackPayment({
   onError: (msg: string) => void;
   onClose: () => void;
 }) {
-  const paystackKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || '';
+  const paystackKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_0cebdc3e1ca9d0ef71d0aa988c85be3675a7a675';
 
   const ref = `TRP_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
 
