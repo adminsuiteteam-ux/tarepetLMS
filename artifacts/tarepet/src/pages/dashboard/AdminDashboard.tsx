@@ -1781,6 +1781,7 @@ export default function AdminDashboard() {
   const [selectedTeacher, setSelectedTeacher] = useState<any>(null);
   const [teacherSearch, setTeacherSearch] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('ALL');
+  const [selectedTeacherDivision, setSelectedTeacherDivision] = useState<string | null>(null);
   const [showAddTeacherModal, setShowAddTeacherModal] = useState(false);
   const [showTeacherIDCardModal, setShowTeacherIDCardModal] = useState<any>(null);
   const [showTeacherActionsDropdown, setShowTeacherActionsDropdown] = useState(false);
@@ -5097,208 +5098,271 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
         );
       }
 
-      // Nigerian secondary school filter helpers
-      const teachesJSS = (t: any) => t.subjectsAssigned?.some((s: any) => s.grade?.startsWith('JSS'));
-      const teachesSS  = (t: any) => t.subjectsAssigned?.some((s: any) => s.grade?.startsWith('SS'));
-      const teachesScience = (t: any) => t.subjectsAssigned?.some((s: any) => s.grade?.toLowerCase().includes('science'));
-      const teachesArt = (t: any) => t.subjectsAssigned?.some((s: any) => s.grade?.toLowerCase().includes('art'));
-      const isFormTeacher = (t: any) => t.formTeacherOf && t.formTeacherOf !== 'None' && t.formTeacherOf !== '';
+      // ── Define teacher division categories ───────────────────────
+      const TEACHER_DIVISIONS = [
+        {
+          key: 'NURSERY_PRIMARY',
+          title: 'Nursery & Primary Teachers',
+          subtitle: 'Nursery 1–3, Primary 1–5',
+          description: 'Early childhood and elementary educators teaching foundational curriculum levels.',
+          filterFn: (t: any) => t.subjectsAssigned?.some((s: any) => s.grade?.startsWith('NUR') || s.grade?.startsWith('PRI')),
+          icon: School,
+          filterKey: 'NURSERY_PRIMARY',
+        },
+        {
+          key: 'JSS',
+          title: 'Junior Secondary Teachers',
+          subtitle: 'JSS 1, JSS 2, JSS 3',
+          description: 'Teachers handling the Junior Secondary School basic education curriculum and BECE prep.',
+          filterFn: (t: any) => t.subjectsAssigned?.some((s: any) => s.grade?.startsWith('JSS')),
+          icon: BookOpen,
+          filterKey: 'JUNIOR',
+        },
+        {
+          key: 'SS',
+          title: 'Senior Secondary Teachers',
+          subtitle: 'SS 1, SS 2, SS 3',
+          description: 'Senior educators managing WAEC/NECO streams in Science and Art departments.',
+          filterFn: (t: any) => t.subjectsAssigned?.some((s: any) => s.grade?.startsWith('SS')),
+          icon: GraduationCap,
+          filterKey: 'SENIOR',
+        },
+        {
+          key: 'FORM',
+          title: 'Form Teachers',
+          subtitle: 'Class & Homeroom Teachers',
+          description: 'All designated form teachers responsible for class pastoral and administrative duties.',
+          filterFn: (t: any) => t.formTeacherOf && t.formTeacherOf !== 'None' && t.formTeacherOf !== '',
+          icon: ClipboardList,
+          filterKey: 'FORM',
+        },
+      ];
 
+      const activeDivision = TEACHER_DIVISIONS.find(d => d.key === selectedTeacherDivision);
+
+      // Apply filters based on selected division
       const filteredTeachers = teachersList.filter(t => {
         const q = teacherSearch.toLowerCase();
         const matchSearch = !q || t.name.toLowerCase().includes(q) || t.email.toLowerCase().includes(q) || t.staffId.toLowerCase().includes(q) || (t.specialization && t.specialization.toLowerCase().includes(q)) || (t.formTeacherOf && t.formTeacherOf.toLowerCase().includes(q));
         let matchFilter = true;
-        if (selectedDepartment === 'JUNIOR') matchFilter = teachesJSS(t);
-        else if (selectedDepartment === 'SENIOR') matchFilter = teachesSS(t);
-        else if (selectedDepartment === 'FORM') matchFilter = isFormTeacher(t);
-        else if (selectedDepartment === 'SCIENCE') matchFilter = teachesScience(t);
-        else if (selectedDepartment === 'ART') matchFilter = teachesArt(t);
-        // 'ALL' → matchFilter stays true
+        if (activeDivision) {
+          matchFilter = activeDivision.filterFn(t);
+        }
         return matchSearch && matchFilter;
       });
-
-      const TEACHER_FILTERS: { key: string; label: string; icon: React.ElementType }[] = [
-        { key: 'ALL',     label: 'All Staff',       icon: Users },
-        { key: 'JUNIOR',  label: 'Junior Teachers',  icon: BookOpen },
-        { key: 'SENIOR',  label: 'Senior Teachers',  icon: GraduationCap },
-        { key: 'FORM',    label: 'Form Teachers',    icon: ClipboardList },
-        { key: 'SCIENCE', label: 'Science Stream',   icon: FlaskConical },
-        { key: 'ART',     label: 'Art Stream',       icon: Palette },
-      ];
 
       return (
         <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
           {/* Header Banner */}
-          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
-                <GraduationCap className="w-6 h-6" />
-              </div>
-              <div>
-                <h2 className="font-bold text-xl text-foreground mb-1">Teaching Staff & Faculty Directory</h2>
-                <p className="text-xs text-muted-foreground">Overview of all Montessori educators, subject workloads, and faculty profiles.</p>
-              </div>
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+            <div>
+              {selectedTeacherDivision && (
+                <div className="flex items-center gap-2 mb-2 text-xs">
+                  <button
+                    onClick={() => { setSelectedTeacherDivision(null); setTeacherSearch(''); }}
+                    className="text-primary font-bold hover:underline flex items-center gap-1"
+                  >
+                    <ChevronLeft className="w-4 h-4" /> All Staff Departments
+                  </button>
+                  <span className="text-muted-foreground">/</span>
+                  <span className="font-semibold text-foreground">{activeDivision?.title}</span>
+                </div>
+              )}
+              <h2 className="font-bold text-xl text-foreground">
+                {selectedTeacherDivision ? activeDivision?.title : 'Teaching Staff & Faculty Directory'}
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                {selectedTeacherDivision
+                  ? activeDivision?.description
+                  : 'Select a staff department to browse educators, subject workloads, and faculty profiles.'}
+              </p>
             </div>
-            <button
-              onClick={() => setShowAddTeacherModal(true)}
-              className="bg-primary text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2 shadow-sm shrink-0"
-            >
-              <UserPlus className="w-4 h-4" /> Add New Teacher
-            </button>
+            <div className="flex items-center gap-2">
+              {selectedTeacherDivision && (
+                <button
+                  onClick={() => { setSelectedTeacherDivision(null); setTeacherSearch(''); }}
+                  className="px-3.5 py-2.5 border border-border rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors flex items-center gap-1.5"
+                >
+                  <ChevronLeft className="w-4 h-4" /> Back to Departments
+                </button>
+              )}
+              <button
+                onClick={() => setShowAddTeacherModal(true)}
+                className="bg-primary text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2 shadow-sm shrink-0"
+              >
+                <UserPlus className="w-4 h-4" /> Add New Teacher
+              </button>
+            </div>
           </div>
 
-          {/* Summary Metrics Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Summary Metrics */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total Faculty</p>
                 <h3 className="text-2xl font-serif font-bold text-foreground mt-1">{teachersList.length}</h3>
-                <p className="text-[11px] text-muted-foreground mt-0.5">Active educators</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">All staff</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
-                <GraduationCap className="w-5 h-5" />
-              </div>
+              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><GraduationCap className="w-5 h-5" /></div>
             </div>
-
             <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Active Duty</p>
-                <h3 className="text-2xl font-serif font-bold text-emerald-600 mt-1">{teachersList.filter(t => t.status === 'Active').length}</h3>
-                <p className="text-[11px] text-emerald-600 mt-0.5">100% Present today</p>
+                <h3 className="text-2xl font-serif font-bold text-primary mt-1">{teachersList.filter(t => t.status === 'Active').length}</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Present today</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
-                <CheckCircle2 className="w-5 h-5" />
-              </div>
+              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><CheckCircle2 className="w-5 h-5" /></div>
             </div>
-
             <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Form Teachers</p>
                 <h3 className="text-2xl font-serif font-bold text-primary mt-1">{teachersList.filter(t => t.formTeacherOf && t.formTeacherOf !== 'None').length}</h3>
                 <p className="text-[11px] text-muted-foreground mt-0.5">Class educators</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                <School className="w-5 h-5" />
-              </div>
+              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><School className="w-5 h-5" /></div>
             </div>
-
             <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Senior Teachers</p>
-                <h3 className="text-2xl font-serif font-bold text-secondary mt-1">{teachersList.filter(t => t.subjectsAssigned?.some((s: any) => s.grade?.startsWith('SS'))).length}</h3>
+                <h3 className="text-2xl font-serif font-bold text-primary mt-1">{teachersList.filter(t => t.subjectsAssigned?.some((s: any) => s.grade?.startsWith('SS'))).length}</h3>
                 <p className="text-[11px] text-muted-foreground mt-0.5">Teaching SS classes</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center">
-                <GraduationCap className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><GraduationCap className="w-5 h-5" /></div>
+            </div>
+          </div>
+
+          {/* LEVEL 1: Department Category Cards */}
+          {!selectedTeacherDivision ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+              {TEACHER_DIVISIONS.map(div => {
+                const Icon = div.icon;
+                const count = teachersList.filter(div.filterFn).length;
+                return (
+                  <div
+                    key={div.key}
+                    onClick={() => setSelectedTeacherDivision(div.key)}
+                    className="group bg-card border-2 border-primary/20 hover:border-primary/50 bg-primary/5 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer space-y-4 flex flex-col justify-between"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+                          <Icon className="w-6 h-6" />
+                        </div>
+                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+                          {count} Teachers
+                        </span>
+                      </div>
+                      <div>
+                        <h3 className="font-serif font-bold text-lg text-foreground group-hover:text-primary transition-colors">
+                          {div.title}
+                        </h3>
+                        <p className="text-[11px] font-semibold text-primary/80 mt-0.5">{div.subtitle}</p>
+                        <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{div.description}</p>
+                      </div>
+                    </div>
+                    <div className="pt-3 border-t border-primary/15 flex items-center justify-between text-xs font-bold text-primary">
+                      <span>Browse {count} Staff Member{count !== 1 ? 's' : ''}</span>
+                      <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            /* LEVEL 2: Filtered Teacher Table */
+            <div className="space-y-4">
+              {/* Search bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <input
+                  type="text"
+                  value={teacherSearch}
+                  onChange={e => setTeacherSearch(e.target.value)}
+                  placeholder={`Search ${activeDivision?.title} by name, staff ID, subject, email...`}
+                  className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-muted/20 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              {/* Teacher table */}
+              <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-muted/30 text-muted-foreground uppercase text-[10px] tracking-wider">
+                    <tr>
+                      <th className="py-3.5 px-4">Teacher / Staff ID</th>
+                      <th className="py-3.5 px-4">Specialization & Qualification</th>
+                      <th className="py-3.5 px-4">Form Teacher Of</th>
+                      <th className="py-3.5 px-4">Email / Phone</th>
+                      <th className="py-3.5 px-4">Workload</th>
+                      <th className="py-3.5 px-4">Status</th>
+                      <th className="py-3.5 px-4 text-right text-[10px]">Click to View Profile</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {filteredTeachers.length > 0 ? (
+                      filteredTeachers.map(tchr => (
+                        <tr
+                          key={tchr.id}
+                          onClick={() => setSelectedTeacher(tchr)}
+                          className="hover:bg-primary/5 cursor-pointer transition-colors group"
+                        >
+                          <td className="py-4 px-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl font-bold text-sm bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20">
+                                {tchr.profileImage ? (
+                                  <img src={tchr.profileImage} alt={tchr.name} className="w-full h-full object-cover rounded-xl" />
+                                ) : (
+                                  tchr.name[0]
+                                )}
+                              </div>
+                              <div>
+                                <p className="font-bold text-foreground group-hover:text-primary transition-colors text-sm">{tchr.name}</p>
+                                <p className="text-[10px] font-mono text-muted-foreground">{tchr.staffId}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-4 px-4">
+                            <p className="font-bold text-foreground">{tchr.specialization || 'Subject Educator'}</p>
+                            <p className="text-[10px] text-muted-foreground truncate max-w-[180px]">{tchr.qualification || 'B.Sc. Education'}</p>
+                          </td>
+                          <td className="py-4 px-4 font-semibold text-primary">
+                            {tchr.formTeacherOf || 'None'}
+                          </td>
+                          <td className="py-4 px-4 text-muted-foreground">
+                            <p className="text-foreground font-medium">{tchr.email}</p>
+                            <p className="text-[10px]">{tchr.phone}</p>
+                          </td>
+                          <td className="py-4 px-4 text-muted-foreground">
+                            <p className="font-bold text-foreground">{tchr.subjectsAssigned?.length || 0} Subjects</p>
+                            <p className="text-[10px]">{tchr.studentsCount || 0} Students</p>
+                          </td>
+                          <td className="py-4 px-4">
+                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
+                              tchr.status === 'Active' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-amber-500/10 text-amber-600 border-amber-200'
+                            }`}>
+                              {tchr.status}
+                            </span>
+                          </td>
+                          <td className="py-4 px-4 text-right">
+                            <span className="text-[10px] text-primary font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-end gap-1">
+                              View Profile <ArrowUpRight className="w-3.5 h-3.5" />
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={7} className="py-12 text-center text-muted-foreground">
+                          <GraduationCap className="w-10 h-10 mx-auto mb-2 opacity-30 text-primary" />
+                          <p className="text-sm font-semibold">No teachers found in this department.</p>
+                          <p className="text-xs mt-1">Try adding teachers or adjusting the search.</p>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
-          </div>
-
-          {/* Filter & Search Bar */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <input
-                type="text"
-                value={teacherSearch}
-                onChange={e => setTeacherSearch(e.target.value)}
-                placeholder="Search teacher by name, staff ID, subject, email..."
-                className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-muted/20 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0">
-              {TEACHER_FILTERS.map(f => (
-                <button
-                  key={f.key}
-                  onClick={() => setSelectedDepartment(f.key)}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold border whitespace-nowrap transition-colors flex items-center gap-1.5 ${
-                    selectedDepartment === f.key
-                      ? 'bg-primary text-white border-primary shadow-sm'
-                      : 'bg-card border-border text-muted-foreground hover:bg-muted/40'
-                  }`}
-                >{(() => { const Icon = f.icon; return <Icon className="w-3.5 h-3.5" />; })()} {f.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Clickable Teachers Table */}
-          <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
-            <table className="w-full text-xs text-left">
-              <thead className="bg-muted/30 text-muted-foreground uppercase text-[10px] tracking-wider">
-                <tr>
-                  <th className="py-3.5 px-4">Teacher / Staff ID</th>
-                  <th className="py-3.5 px-4">Specialization & Qualification</th>
-                  <th className="py-3.5 px-4">Form Teacher Of</th>
-                  <th className="py-3.5 px-4">Email / Phone</th>
-                  <th className="py-3.5 px-4">Workload</th>
-                  <th className="py-3.5 px-4">Status</th>
-                  <th className="py-3.5 px-4 text-right text-[10px]">Click to View Profile</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {filteredTeachers.length > 0 ? (
-                  filteredTeachers.map(tchr => (
-                    <tr
-                      key={tchr.id}
-                      onClick={() => setSelectedTeacher(tchr)}
-                      className="hover:bg-emerald-500/5 cursor-pointer transition-colors group"
-                    >
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl font-bold text-sm bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-500/20">
-                            {tchr.profileImage ? (
-                              <img src={tchr.profileImage} alt={tchr.name} className="w-full h-full object-cover rounded-xl" />
-                            ) : (
-                              tchr.name[0]
-                            )}
-                          </div>
-                          <div>
-                            <p className="font-bold text-foreground group-hover:text-emerald-600 transition-colors text-sm">{tchr.name}</p>
-                            <p className="text-[10px] font-mono text-muted-foreground">{tchr.staffId}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <p className="font-bold text-foreground">{tchr.specialization || 'Subject Educator'}</p>
-                        <p className="text-[10px] text-muted-foreground truncate max-w-[180px]">{tchr.qualification || 'B.Sc. Education'}</p>
-                      </td>
-                      <td className="py-4 px-4 font-semibold text-primary">
-                        {tchr.formTeacherOf || 'None'}
-                      </td>
-                      <td className="py-4 px-4 text-muted-foreground">
-                        <p className="text-foreground font-medium">{tchr.email}</p>
-                        <p className="text-[10px]">{tchr.phone}</p>
-                      </td>
-                      <td className="py-4 px-4 text-muted-foreground">
-                        <p className="font-bold text-foreground">{tchr.subjectsAssigned?.length || 0} Subjects</p>
-                        <p className="text-[10px]">{tchr.studentsCount || 0} Students</p>
-                      </td>
-                      <td className="py-4 px-4">
-                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
-                          tchr.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200' : 'bg-amber-500/10 text-amber-600 border-amber-200'
-                        }`}>
-                          {tchr.status}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 text-right">
-                        <span className="text-[10px] text-emerald-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-end gap-1">
-                          View Profile <ArrowUpRight className="w-3.5 h-3.5" />
-                        </span>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={7} className="py-12 text-center text-muted-foreground">
-                      <GraduationCap className="w-10 h-10 mx-auto mb-2 opacity-30 text-emerald-600" />
-                      <p className="text-sm font-semibold">No teachers found matching search parameters.</p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          )}
 
           {showAddTeacherModal && (
             <AddTeacherWizardModal
