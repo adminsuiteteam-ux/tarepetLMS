@@ -5,6 +5,7 @@ import { authClient } from '@/lib/api-auth';
 import { PortalLayout } from '@/components/layout/PortalLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, deleteStudent, syncStudentsWithBackend } from '@/lib/cbt-store';
+import { AdminManagementPanel } from '@/components/dashboard/AdminManagementPanel';
 
 import {
   Users, BookOpen, Server, CheckCircle2,
@@ -278,7 +279,7 @@ const WIZARD_STEPS = [
   { step: 5, label: 'Review & Save',     sub: 'Confirm Profile' },
 ];
 
-const GRADE_OPTIONS = ['JSS 1', 'JSS 2', 'JSS 3', 'SS 1 Science', 'SS 1 Art', 'SS 2 Science', 'SS 2 Art', 'SS 3 Science', 'SS 3 Art'];
+const GRADE_OPTIONS = ['Nursery 1', 'Nursery 2', 'Nursery 3', 'Primary 1', 'Primary 2', 'Primary 3', 'Primary 4', 'Primary 5', 'JSS 1', 'JSS 2', 'JSS 3', 'SS 1 Science', 'SS 1 Art', 'SS 2 Science', 'SS 2 Art', 'SS 3 Science', 'SS 3 Art'];
 
 const EMPTY_TEACHER_FORM = {
   // Step 1 — Personal Details
@@ -1141,6 +1142,14 @@ const CreateSubjectModal = ({ onClose, onCreated, defaultClass, defaultStream }:
               <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('addSubject.classLevel')}</label>
               <select value={form.grade} onChange={e => setForm({ ...form, grade: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
+                <option value="NUR1">Nursery 1</option>
+                <option value="NUR2">Nursery 2</option>
+                <option value="NUR3">Nursery 3</option>
+                <option value="PRI1">Primary 1</option>
+                <option value="PRI2">Primary 2</option>
+                <option value="PRI3">Primary 3</option>
+                <option value="PRI4">Primary 4</option>
+                <option value="PRI5">Primary 5</option>
                 <option value="JSS1">JSS 1</option>
                 <option value="JSS2">JSS 2</option>
                 <option value="JSS3">JSS 3</option>
@@ -1368,6 +1377,14 @@ const CreateUserForTypeModal = ({
                     <select value={form.department} onChange={e => setForm({ ...form, department: e.target.value })}
                       className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary">
                       <option value="">None / Subject Teacher Only</option>
+                      <option value="NUR1 General">Nursery 1 Form Teacher</option>
+                      <option value="NUR2 General">Nursery 2 Form Teacher</option>
+                      <option value="NUR3 General">Nursery 3 Form Teacher</option>
+                      <option value="PRI1 General">Primary 1 Form Teacher</option>
+                      <option value="PRI2 General">Primary 2 Form Teacher</option>
+                      <option value="PRI3 General">Primary 3 Form Teacher</option>
+                      <option value="PRI4 General">Primary 4 Form Teacher</option>
+                      <option value="PRI5 General">Primary 5 Form Teacher</option>
                       <option value="JSS1 General">JSS 1 Form Teacher</option>
                       <option value="JSS2 General">JSS 2 Form Teacher</option>
                       <option value="JSS3 General">JSS 3 Form Teacher</option>
@@ -1425,6 +1442,14 @@ const CreateUserForTypeModal = ({
                       <select value={form.grade} onChange={e => setForm({ ...form, grade: e.target.value })}
                         className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary">
                         <option value="">{t('createStaff.selectGrade')}</option>
+                        <option value="NUR1">Nursery 1</option>
+                        <option value="NUR2">Nursery 2</option>
+                        <option value="NUR3">Nursery 3</option>
+                        <option value="PRI1">Primary 1</option>
+                        <option value="PRI2">Primary 2</option>
+                        <option value="PRI3">Primary 3</option>
+                        <option value="PRI4">Primary 4</option>
+                        <option value="PRI5">Primary 5</option>
                         <option value="JSS1">JSS 1</option>
                         <option value="JSS2">JSS 2</option>
                         <option value="JSS3">JSS 3</option>
@@ -1911,6 +1936,22 @@ export default function AdminDashboard() {
   });
 
   const STUDENT_CLASSES = [
+    { label: 'Nursery 1', key: 'NUR1', hasStreams: false, color: 'border-pink-500/30 bg-pink-500/5', iconBg: 'bg-pink-500/10 text-pink-600', accent: 'text-pink-600',
+      totalCount: studentsList.filter(s => s.grade === 'NUR1').length },
+    { label: 'Nursery 2', key: 'NUR2', hasStreams: false, color: 'border-rose-500/30 bg-rose-500/5', iconBg: 'bg-rose-500/10 text-rose-600', accent: 'text-rose-600',
+      totalCount: studentsList.filter(s => s.grade === 'NUR2').length },
+    { label: 'Nursery 3', key: 'NUR3', hasStreams: false, color: 'border-fuchsia-500/30 bg-fuchsia-500/5', iconBg: 'bg-fuchsia-500/10 text-fuchsia-600', accent: 'text-fuchsia-600',
+      totalCount: studentsList.filter(s => s.grade === 'NUR3').length },
+    { label: 'Primary 1', key: 'PRI1', hasStreams: false, color: 'border-orange-500/30 bg-orange-500/5', iconBg: 'bg-orange-500/10 text-orange-600', accent: 'text-orange-600',
+      totalCount: studentsList.filter(s => s.grade === 'PRI1').length },
+    { label: 'Primary 2', key: 'PRI2', hasStreams: false, color: 'border-yellow-500/30 bg-yellow-500/5', iconBg: 'bg-yellow-500/10 text-yellow-600', accent: 'text-yellow-600',
+      totalCount: studentsList.filter(s => s.grade === 'PRI2').length },
+    { label: 'Primary 3', key: 'PRI3', hasStreams: false, color: 'border-lime-500/30 bg-lime-500/5', iconBg: 'bg-lime-500/10 text-lime-600', accent: 'text-lime-600',
+      totalCount: studentsList.filter(s => s.grade === 'PRI3').length },
+    { label: 'Primary 4', key: 'PRI4', hasStreams: false, color: 'border-emerald-500/30 bg-emerald-500/5', iconBg: 'bg-emerald-500/10 text-emerald-600', accent: 'text-emerald-600',
+      totalCount: studentsList.filter(s => s.grade === 'PRI4').length },
+    { label: 'Primary 5', key: 'PRI5', hasStreams: false, color: 'border-cyan-500/30 bg-cyan-500/5', iconBg: 'bg-cyan-500/10 text-cyan-600', accent: 'text-cyan-600',
+      totalCount: studentsList.filter(s => s.grade === 'PRI5').length },
     { label: 'JSS 1', key: 'JSS1', hasStreams: false, color: 'border-blue-500/30 bg-blue-500/5', iconBg: 'bg-blue-500/10 text-blue-600', accent: 'text-blue-600',
       totalCount: studentsList.filter(s => s.grade === 'JSS1').length },
     { label: 'JSS 2', key: 'JSS2', hasStreams: false, color: 'border-indigo-500/30 bg-indigo-500/5', iconBg: 'bg-indigo-500/10 text-indigo-600', accent: 'text-indigo-600',
@@ -7009,56 +7050,6 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
       );
     }
     if (activeSection === 'finance') {
-      const title = 'School Finance & Bursary Management';
-      const desc = 'Comprehensive financial tracking, tuition fee billing, expense approvals, and bursary audit reports.';
-      const IconComponent = DollarSign;
-
-      return (
-        <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
-          {/* Page Header */}
-          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                <IconComponent className="w-6 h-6" />
-              </div>
-              <div>
-                <h2 className="font-bold text-xl text-foreground mb-1">{title}</h2>
-                <p className="text-xs text-muted-foreground">{desc}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Update Coming Out Soon Notice Card */}
-          <div className="bg-card border border-border rounded-3xl p-12 text-center shadow-sm max-w-2xl mx-auto space-y-6 my-8">
-            <div className="w-20 h-20 rounded-3xl bg-amber-500/10 text-amber-600 border border-amber-500/20 flex items-center justify-center mx-auto shadow-inner animate-pulse">
-              <Sparkles className="w-10 h-10" />
-            </div>
-            
-            <div className="space-y-2">
-              <span className="inline-block px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-amber-500/10 text-amber-600 border border-amber-500/20">
-                Update Coming Out Soon
-              </span>
-              <h3 className="font-serif font-bold text-2xl sm:text-3xl text-foreground pt-2">
-                Finance Module Update In Progress
-              </h3>
-              <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-                Our team is actively building enhanced tools for automated billing, payment reconciliation, and ledger analytics. Stay tuned!
-              </p>
-            </div>
-
-            <div className="pt-4 flex items-center justify-center gap-3">
-              <button
-                onClick={() => setActiveSection('overview')}
-                className="px-6 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-all shadow-md"
-              >
-                Back to Control Center
-              </button>
-            </div>
-          </div>
-        </div>
-      );
-    }
-    if (activeSection === 'finance') {
       const totalIncome = financeIncome.reduce((s: number, r: any) => s + r.amount, 0);
       const totalExpenses = financeExpenses.reduce((s: number, r: any) => s + r.amount, 0);
       const netBalance = totalIncome - totalExpenses;
@@ -7515,6 +7506,9 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
           )}
         </div>
       );
+    }
+    if (activeSection === 'manage_admins') {
+      return <AdminManagementPanel />;
     }
     if (activeSection === 'calendar') {
       const filteredEvents = calendarEventsState.filter(ev => calendarFilter === 'All' || ev.category === calendarFilter);

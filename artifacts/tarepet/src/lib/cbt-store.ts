@@ -120,6 +120,18 @@ export function formatStudentEmail(fullName: string): string {
 
 export function generateAdmissionNumber(className: string, stream?: string | null): string {
   let classCode = className.trim().toUpperCase();
+  // Nursery classes: NUR1, NUR2, NUR3
+  if (classCode.startsWith('NUR') || classCode.startsWith('NURSERY')) {
+    const num = classCode.replace(/[^0-9]/g, '') || '1';
+    const randomDigits = Math.floor(1000 + Math.random() * 9000).toString();
+    return `TMS/NUR${num}/${randomDigits}`;
+  }
+  // Primary classes: PRI1-PRI5
+  if (classCode.startsWith('PRI') || classCode.startsWith('PRIMARY')) {
+    const num = classCode.replace(/[^0-9]/g, '') || '1';
+    const randomDigits = Math.floor(1000 + Math.random() * 9000).toString();
+    return `TMS/PRI${num}/${randomDigits}`;
+  }
   if (classCode.startsWith('JSS')) {
     classCode = classCode.replace('JSS', 'JS');
   }

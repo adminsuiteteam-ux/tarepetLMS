@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 
 import { getStoredExams, getStoredSubmissions, subscribeToCBTStore } from '@/lib/cbt-store';
+import { StudentPaymentPanel } from '@/components/dashboard/StudentPaymentPanel';
 
 // ─── Initial Seed Data (SS1 Science) ─────────────────────────
 const MY_COURSES: any[] = [];
@@ -415,7 +416,17 @@ export default function StudentDashboard() {
       </div>
     );
 
-
+    // =========================================================
+    // 5. PAYMENTS & FEES
+    // =========================================================
+    if (activeSection === 'payments') return (
+      <StudentPaymentPanel
+        studentId={user?.id || profileForm.studentId}
+        studentName={`${user?.first_name || profileForm.firstName} ${user?.last_name || profileForm.lastName}`}
+        studentEmail={user?.email || profileForm.email}
+        gradeLevel={(user?.profile as any)?.grade || 'SS1'}
+      />
+    );
 
     // =========================================================
     // 6. CALENDAR & TIMETABLE

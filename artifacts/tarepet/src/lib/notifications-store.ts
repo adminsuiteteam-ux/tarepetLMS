@@ -1,4 +1,4 @@
-﻿// ─── Notifications Store ─────────────────────────────────────────────────────
+// ─── Notifications Store ─────────────────────────────────────────────────────
 // Pure API-backed notification store. No localStorage. In-memory state only.
 // ─────────────────────────────────────────────────────────────────────────────
 import { authClient } from './api-auth';
@@ -126,4 +126,19 @@ export function addNotification(notif: Omit<Notification, 'id' | 'read' | 'time'
   setAll([newNotif, ...getAll()]);
   notifyListeners();
   authClient.post(`/notifications`, notif).catch(() => {});
+}
+
+export function addRealtimeNotification(options: {
+  title: string;
+  message: string;
+  category?: string;
+  type?: 'info' | 'success' | 'warning' | 'exam' | 'fee' | 'attendance';
+  recipientRole?: NotifRole;
+}) {
+  addNotification({
+    title: options.title,
+    message: options.message,
+    type: options.type === 'fee' || options.type === 'exam' || options.type === 'warning' || options.type === 'success' ? options.type : 'info',
+    role: options.recipientRole || 'ADMIN'
+  });
 }

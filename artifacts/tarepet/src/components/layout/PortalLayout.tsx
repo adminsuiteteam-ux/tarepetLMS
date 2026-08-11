@@ -38,6 +38,7 @@ const ROLE_NAV: Record<string, NavSection[]> = {
     { id: 'attendance',     label: 'Attendance',        icon: CalendarCheck },
     { id: 'exams',          label: 'Manage Exams',      icon: ClipboardList },
     { id: 'finance',        label: 'Finance',           icon: DollarSign },
+    { id: 'manage_admins',  label: 'Manage Sub-Admins', icon: ShieldAlert },
     { id: 'calendar',       label: 'School Calendar',   icon: Calendar },
     { id: 'reports',        label: 'Reports',           icon: BarChart2 },
     { id: 'profile',        label: 'My Profile',        icon: UserCheck },
@@ -55,8 +56,8 @@ const ROLE_NAV: Record<string, NavSection[]> = {
     { id: 'overview',  label: 'Overview',        icon: LayoutDashboard },
     { id: 'courses',   label: 'My Subjects',     icon: BookOpen },
     { id: 'exams',     label: 'Exams/Test',      icon: ClipboardList },
-
     { id: 'results',   label: 'Check Results',   icon: BarChart2 },
+    { id: 'payments',  label: 'Payments & Fees', icon: CreditCard },
     { id: 'calendar',  label: 'Calendar',        icon: Calendar },
     { id: 'settings',  label: 'Setting/profile', icon: Settings },
   ],
