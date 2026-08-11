@@ -1537,6 +1537,7 @@ export default function AdminDashboard() {
   };
   const [userSubPage, setUserSubPage] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedDivision, setSelectedDivision] = useState<string | null>(null);
   const [userSearch, setUserSearch] = useState('');
   const [idCardUser, setIdCardUser] = useState<any>(null);
   const [showBulkImport, setShowBulkImport] = useState(false);
@@ -2316,129 +2317,226 @@ export default function AdminDashboard() {
     if (activeSection === 'users') {
 
 
-      // ── LEVEL S1: Student class picker (JSS1 - SS3) ─────────
+      // ── LEVEL S1: Student class & division picker ─────────
       if ((!userSubPage || userSubPage === 'STUDENT') && !selectedClass && !selectedUser) {
+        const SCHOOL_DIVISIONS = [
+          {
+            key: 'NURSERY',
+            title: 'Nursery Division',
+            subtitle: 'Nursery 1, Nursery 2, Nursery 3',
+            description: 'Early Childhood Montessori Education & Developmental Foundation',
+            levelsPrefix: 'NUR',
+            count: studentsList.filter(s => s.grade?.startsWith('NUR')).length,
+            classes: STUDENT_CLASSES.filter(c => c.key.startsWith('NUR')),
+            icon: School
+          },
+          {
+            key: 'PRIMARY',
+            title: 'Primary Division',
+            subtitle: 'Primary 1 through Primary 5',
+            description: 'Foundational Elementary Curriculum & Basic Quantitative Skills',
+            levelsPrefix: 'PRI',
+            count: studentsList.filter(s => s.grade?.startsWith('PRI')).length,
+            classes: STUDENT_CLASSES.filter(c => c.key.startsWith('PRI')),
+            icon: BookOpen
+          },
+          {
+            key: 'JSS',
+            title: 'Junior Secondary School',
+            subtitle: 'JSS 1, JSS 2, JSS 3',
+            description: 'Basic Education Curriculum & State BECE Examination Prep',
+            levelsPrefix: 'JSS',
+            count: studentsList.filter(s => s.grade?.startsWith('JSS')).length,
+            classes: STUDENT_CLASSES.filter(c => c.key.startsWith('JSS')),
+            icon: GraduationCap
+          },
+          {
+            key: 'SS',
+            title: 'Senior Secondary School',
+            subtitle: 'SS 1, SS 2, SS 3 (Science & Art)',
+            description: 'Senior Secondary Academic Programs, WAEC & NECO Streams',
+            levelsPrefix: 'SS',
+            count: studentsList.filter(s => s.grade?.startsWith('SS')).length,
+            classes: STUDENT_CLASSES.filter(c => c.key.startsWith('SS')),
+            icon: Award
+          }
+        ];
+
+        const activeDivisionData = SCHOOL_DIVISIONS.find(d => d.key === selectedDivision);
+        const visibleClasses = selectedDivision ? activeDivisionData?.classes || [] : [];
+
         return (
           <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-foreground font-semibold">{t('students.selectClass')}</span>
-            </div>
-
+            {/* Header / Breadcrumb */}
             <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
               <div>
-                <h2 className="text-xl font-serif font-bold text-foreground">{t('students.juniorSenior')}</h2>
-                <p className="text-xs text-muted-foreground mt-1">{t('students.selectInstruction')}</p>
-              </div>
-              <button
-                onClick={() => {
-                  setWizardStep(1);
-                  setNewStudentForm({
-                    name: '', dob: '', gender: 'Male', grade: 'JSS1', stream: 'General', country: 'Nigeria', stateOfOrigin: 'Bayelsa', lga: 'Yenagoa', address: '', phone: '', parentName: '', parentPhone: '', profileImage: ''
-                  });
-                  setShowAddStudentModal(true);
-                }}
-                className="px-4 py-2.5 bg-primary text-primary-foreground font-bold rounded-xl text-xs flex items-center gap-2 shadow-sm hover:opacity-90 transition-opacity"
-              >
-                <UserPlus className="w-4 h-4" /> {t('students.addStudent')}
-              </button>
-            </div>
-
-            {/* Summary bar */}
-            <div className="bg-card border border-border rounded-2xl p-4 shadow-sm flex flex-wrap gap-6 items-center">
-              <div className="text-center">
-                <p className="text-2xl font-serif font-bold text-foreground">{studentsList.length}</p>
-                <p className="text-[10px] text-muted-foreground">{t('students.totalStudents')}</p>
-              </div>
-              {STUDENT_CLASSES.map(c => {
-                const count = c.hasStreams ? (c.sciCount! + c.artCount!) : c.totalCount!;
-                return (
-                  <div key={c.key} className="text-center">
-                    <p className={`text-xl font-serif font-bold ${c.accent}`}>{count}</p>
-                    <p className="text-[10px] text-muted-foreground">{c.label}</p>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Class Cards grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-              {STUDENT_CLASSES.map(cls => {
-                const totalStudents = cls.hasStreams ? (cls.sciCount! + cls.artCount!) : cls.totalCount!;
-                return (
-                  <div key={cls.key} className="relative">
-                    {/* Card */}
+                {selectedDivision ? (
+                  <div className="flex items-center gap-2 mb-2 text-xs">
                     <button
-                      onClick={() => {
-                        if (!cls.hasStreams) {
-                          setSelectedClass(cls.key);
-                          setSelectedStream(null);
-                          setOpenClassDropdown(null);
-                        } else {
-                          setOpenClassDropdown(prev => prev === cls.key ? null : cls.key);
-                        }
-                      }}
-                      className={`group w-full text-left rounded-2xl border-2 p-6 shadow-sm transition-all duration-200 hover:shadow-md hover:scale-[1.02] active:scale-100 ${cls.color} ${openClassDropdown === cls.key ? 'ring-2 ring-primary/40' : ''}`}
+                      onClick={() => setSelectedDivision(null)}
+                      className="text-primary font-bold hover:underline flex items-center gap-1"
                     >
-                      <div className="flex items-start justify-between mb-4">
-                        <div className={`p-3 rounded-2xl ${cls.iconBg}`}>
-                          <GraduationCap className="w-6 h-6" />
+                      <ChevronLeft className="w-4 h-4" /> All School Divisions
+                    </button>
+                    <span className="text-muted-foreground">/</span>
+                    <span className="font-semibold text-foreground">{activeDivisionData?.title}</span>
+                  </div>
+                ) : null}
+
+                <h2 className="text-xl font-serif font-bold text-foreground">
+                  {selectedDivision ? activeDivisionData?.title : 'School Academic Divisions & Classes'}
+                </h2>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {selectedDivision
+                    ? `Showing active class levels under ${activeDivisionData?.title}`
+                    : 'Select a school division below to view its specific class rosters and student records.'}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {selectedDivision && (
+                  <button
+                    onClick={() => setSelectedDivision(null)}
+                    className="px-3.5 py-2.5 border border-border rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors flex items-center gap-1.5"
+                  >
+                    <ChevronLeft className="w-4 h-4" /> Back to Divisions
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setWizardStep(1);
+                    setNewStudentForm({
+                      name: '', dob: '', gender: 'Male', grade: 'JSS1', stream: 'General', country: 'Nigeria', stateOfOrigin: 'Bayelsa', lga: 'Yenagoa', address: '', phone: '', parentName: '', parentPhone: '', profileImage: ''
+                    });
+                    setShowAddStudentModal(true);
+                  }}
+                  className="px-4 py-2.5 bg-primary text-primary-foreground font-bold rounded-xl text-xs flex items-center gap-2 shadow-sm hover:opacity-90 transition-opacity"
+                >
+                  <UserPlus className="w-4 h-4" /> {t('students.addStudent')}
+                </button>
+              </div>
+            </div>
+
+            {/* LEVEL 1: TOP 4 DIVISION CARDS VIEW */}
+            {!selectedDivision ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                {SCHOOL_DIVISIONS.map(div => {
+                  const Icon = div.icon;
+                  return (
+                    <div
+                      key={div.key}
+                      onClick={() => setSelectedDivision(div.key)}
+                      className="group bg-card border-2 border-primary/20 hover:border-primary/50 bg-primary/5 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer space-y-4 flex flex-col justify-between"
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold">
+                            <Icon className="w-6 h-6" />
+                          </div>
+                          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+                            {div.count} Students
+                          </span>
                         </div>
-                        <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${cls.iconBg}`}>
-                          {totalStudents} {t('students.title')}
-                        </span>
+
+                        <div>
+                          <h3 className="font-serif font-bold text-lg text-foreground group-hover:text-primary transition-colors">
+                            {div.title}
+                          </h3>
+                          <p className="text-[11px] font-semibold text-primary/80 mt-0.5">{div.subtitle}</p>
+                          <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{div.description}</p>
+                        </div>
                       </div>
-                      <h3 className="font-serif font-bold text-xl text-foreground mb-1">{cls.label}</h3>
-                      {cls.hasStreams ? (
-                        <div className="flex gap-4 text-xs mt-2">
-                          <span className="text-muted-foreground">{t('students.scienceLabel')}<strong className={cls.accent}>{cls.sciCount}</strong></span>
-                          <span className="text-muted-foreground">{t('students.artLabel')}<strong className={cls.accent}>{cls.artCount}</strong></span>
-                        </div>
-                      ) : (
-                        <p className="text-xs text-muted-foreground mt-2 font-medium">{t('students.generalCurriculum')}</p>
-                      )}
-                      <div className={`flex items-center gap-1.5 text-xs font-bold mt-3 ${cls.accent}`}>
-                        <span>{cls.hasStreams ? t('students.chooseStream') : t('students.viewProfile')}</span>
-                        {cls.hasStreams ? (
-                          <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${openClassDropdown === cls.key ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                          </svg>
-                        ) : (
-                          <ChevronRight className="w-3.5 h-3.5" />
+
+                      <div className="pt-3 border-t border-primary/15 flex items-center justify-between text-xs font-bold text-primary">
+                        <span>Explore {div.classes.length} Class Levels</span>
+                        <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              /* LEVEL 2: DETAILED CLASS CARDS FOR SELECTED DIVISION */
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                  {visibleClasses.map(cls => {
+                    const totalStudents = cls.hasStreams ? (cls.sciCount! + cls.artCount!) : cls.totalCount!;
+                    return (
+                      <div key={cls.key} className="relative">
+                        {/* Card */}
+                        <button
+                          onClick={() => {
+                            if (!cls.hasStreams) {
+                              setSelectedClass(cls.key);
+                              setSelectedStream(null);
+                              setOpenClassDropdown(null);
+                            } else {
+                              setOpenClassDropdown(prev => prev === cls.key ? null : cls.key);
+                            }
+                          }}
+                          className={`group w-full text-left rounded-2xl border-2 p-6 shadow-sm transition-all duration-200 hover:shadow-md hover:scale-[1.02] active:scale-100 ${cls.color} ${openClassDropdown === cls.key ? 'ring-2 ring-primary/40' : ''}`}
+                        >
+                          <div className="flex items-start justify-between mb-4">
+                            <div className={`p-3 rounded-2xl ${cls.iconBg}`}>
+                              <GraduationCap className="w-6 h-6" />
+                            </div>
+                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${cls.iconBg}`}>
+                              {totalStudents} {t('students.title')}
+                            </span>
+                          </div>
+                          <h3 className="font-serif font-bold text-xl text-foreground mb-1">{cls.label}</h3>
+                          {cls.hasStreams ? (
+                            <div className="flex gap-4 text-xs mt-2">
+                              <span className="text-muted-foreground">{t('students.scienceLabel')}<strong className={cls.accent}>{cls.sciCount}</strong></span>
+                              <span className="text-muted-foreground">{t('students.artLabel')}<strong className={cls.accent}>{cls.artCount}</strong></span>
+                            </div>
+                          ) : (
+                            <p className="text-xs text-muted-foreground mt-2 font-medium">{t('students.generalCurriculum')}</p>
+                          )}
+                          <div className={`flex items-center gap-1.5 text-xs font-bold mt-3 ${cls.accent}`}>
+                            <span>{cls.hasStreams ? t('students.chooseStream') : t('students.viewProfile')}</span>
+                            {cls.hasStreams ? (
+                              <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${openClassDropdown === cls.key ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                              </svg>
+                            ) : (
+                              <ChevronRight className="w-3.5 h-3.5" />
+                            )}
+                          </div>
+                        </button>
+
+                        {/* Stream Dropdown for SS classes */}
+                        {cls.hasStreams && openClassDropdown === cls.key && (
+                          <div className="absolute left-0 right-0 mt-2 bg-card border border-border rounded-2xl shadow-2xl z-40 py-2">
+                            <p className="px-4 pt-1 pb-2 text-[10px] uppercase font-bold text-muted-foreground tracking-wider">{t('students.chooseStream')}</p>
+                            <button
+                              onClick={() => { setSelectedClass(cls.key); setSelectedStream('Science'); setOpenClassDropdown(null); }}
+                              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-foreground hover:bg-primary/5 hover:text-primary transition-colors text-left"
+                            >
+                              <span className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                                <FlaskConical className="w-4 h-4" />
+                              </span>
+                              {t('addSubject.science')}
+                              <span className="ml-auto text-xs text-muted-foreground">{cls.sciCount} {t('students.title').toLowerCase()}</span>
+                            </button>
+                            <button
+                              onClick={() => { setSelectedClass(cls.key); setSelectedStream('Art'); setOpenClassDropdown(null); }}
+                              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-foreground hover:bg-secondary/5 hover:text-secondary transition-colors text-left"
+                            >
+                              <span className="w-8 h-8 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary">
+                                <Palette className="w-4 h-4" />
+                              </span>
+                              {t('addSubject.art')}
+                              <span className="ml-auto text-xs text-muted-foreground">{cls.artCount} {t('students.title').toLowerCase()}</span>
+                            </button>
+                          </div>
                         )}
                       </div>
-                    </button>
-
-                    {/* Stream Dropdown for SS classes */}
-                    {cls.hasStreams && openClassDropdown === cls.key && (
-                      <div className="absolute left-0 right-0 mt-2 bg-card border border-border rounded-2xl shadow-2xl z-40 py-2">
-                        <p className="px-4 pt-1 pb-2 text-[10px] uppercase font-bold text-muted-foreground tracking-wider">{t('students.chooseStream')}</p>
-                        <button
-                          onClick={() => { setSelectedClass(cls.key); setSelectedStream('Science'); setOpenClassDropdown(null); }}
-                          className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-foreground hover:bg-primary/5 hover:text-primary transition-colors text-left"
-                        >
-                          <span className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                            <FlaskConical className="w-4 h-4" />
-                          </span>
-                          {t('addSubject.science')}
-                          <span className="ml-auto text-xs text-muted-foreground">{cls.sciCount} {t('students.title').toLowerCase()}</span>
-                        </button>
-                        <button
-                          onClick={() => { setSelectedClass(cls.key); setSelectedStream('Art'); setOpenClassDropdown(null); }}
-                          className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-foreground hover:bg-secondary/5 hover:text-secondary transition-colors text-left"
-                        >
-                          <span className="w-8 h-8 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary">
-                            <Palette className="w-4 h-4" />
-                          </span>
-                          {t('addSubject.art')}
-                          <span className="ml-auto text-xs text-muted-foreground">{cls.artCount} {t('students.title').toLowerCase()}</span>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         );
       }
