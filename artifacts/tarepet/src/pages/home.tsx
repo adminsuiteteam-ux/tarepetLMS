@@ -119,32 +119,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Motto / Philosophy Banner */}
-      <section className="bg-gradient-to-r from-primary via-primary/95 to-primary/90 py-12 relative overflow-hidden shadow-inner">
-        <div className="absolute inset-0 glass-shimmer pointer-events-none opacity-20" />
-        <div className="container mx-auto px-4 md:px-6 relative z-10">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-            <motion.h2 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              className="text-3xl md:text-4xl font-serif text-white text-center md:text-left"
-            >
-              "Not to Knowledge <span className="italic font-light">is Power."</span>
-            </motion.h2>
-            <motion.p 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.15 }}
-              className="text-white/90 max-w-xl text-center md:text-right text-lg font-sans"
-            >
-              Our guiding principle emphasizes that true power comes not just from holding knowledge, but from seeking it actively and applying it thoughtfully.
-            </motion.p>
-          </div>
-        </div>
-      </section>
 
       {/* Programs Preview section with 5 School Programs */}
       <section className="py-24 bg-background relative overflow-hidden">
