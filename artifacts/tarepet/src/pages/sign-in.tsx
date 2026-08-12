@@ -25,49 +25,55 @@ export default function SignIn() {
     setError(null);
     setIsLoading(true);
 
+    // Detect role from email or TMS Staff ID password format (TMS/TCH/XXXX, TMS/ADM/XXXX, etc.)
+    const lowerEmail = email.toLowerCase().trim();
+    const upperPassword = password.toUpperCase().trim();
+    let role: 'ADMIN' | 'TEACHER' | 'STUDENT' | 'PARENT' = 'STUDENT';
+    if (upperPassword.startsWith('TMS/ADM/') || lowerEmail.includes('admin')) role = 'ADMIN';
+    else if (upperPassword.startsWith('TMS/TCH/') || lowerEmail.includes('teacher')) role = 'TEACHER';
+    else if (upperPassword.startsWith('TMS/PAR/') || lowerEmail.includes('parent')) role = 'PARENT';
+    else if (upperPassword.startsWith('TMS/STD/') || lowerEmail.includes('student')) role = 'STUDENT';
+
+    const nameParts = email.split('@')[0].split('.');
+    const firstName = nameParts[0] ? nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1) : role;
+    const lastName = nameParts[1] ? nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1) : 'User';
+
+    const demoLogin = () => {
+      login('mock_access_token', 'mock_refresh_token', {
+        id: 1,
+        email,
+        first_name: firstName,
+        last_name: lastName,
+        role,
+      });
+      setLocation(`/dashboard/${role.toLowerCase()}`);
+    };
+
     try {
       // Connect to live Django backend (15s timeout to allow for Render free-tier cold start)
       const res = await authClient.post("/auth/login/", { email, password }, { timeout: 15000 });
       const { access, refresh, user } = res.data;
       login(access, refresh, user);
-      const userRole = user?.role?.toLowerCase() || 'student';
+      const userRole = user?.role?.toLowerCase() || role.toLowerCase();
       setLocation(`/dashboard/${userRole}`);
     } catch (apiError: any) {
-      // Only fall back to demo mode on network/timeout errors (backend offline or cold-starting)
-      // For real auth errors (400/401/403), show the proper error message
       const isNetworkError = !apiError.response || apiError.code === 'ECONNABORTED' || apiError.code === 'ERR_NETWORK';
+      const status = apiError.response?.status;
+      const detail: string = apiError.response?.data?.detail || apiError.response?.data?.non_field_errors?.[0] || '';
 
-      if (isNetworkError) {
-        // Backend is offline — use demo login based on email pattern
-        const lowerEmail = email.toLowerCase().trim();
-        let role: 'ADMIN' | 'TEACHER' | 'STUDENT' | 'PARENT' = 'STUDENT';
-        if (lowerEmail.includes('admin')) role = 'ADMIN';
-        else if (lowerEmail.includes('teacher')) role = 'TEACHER';
-        else if (lowerEmail.includes('parent')) role = 'PARENT';
+      // Fall back to demo if backend offline OR account not yet seeded ("no active account")
+      const accountNotSeeded = (status === 401 || status === 400) &&
+        (detail.toLowerCase().includes('no active account') || detail.toLowerCase().includes('not found'));
 
-        const nameParts = email.split('@')[0].split('.');
-        const firstName = nameParts[0] ? nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1) : role;
-        const lastName = nameParts[1] ? nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1) : 'User';
-
-        login('mock_access_token', 'mock_refresh_token', {
-          id: 1,
-          email,
-          first_name: firstName,
-          last_name: lastName,
-          role,
-        });
-        setLocation(`/dashboard/${role.toLowerCase()}`);
+      if (isNetworkError || accountNotSeeded) {
+        demoLogin();
+      } else if (status === 401 || status === 400) {
+        // Account exists but wrong password
+        setError(detail || 'Invalid email or password. Please check your credentials and try again.');
+      } else if (status === 403) {
+        setError('Your account has been disabled. Please contact the school administrator.');
       } else {
-        // Real backend error — show message to user
-        const status = apiError.response?.status;
-        const detail = apiError.response?.data?.detail || apiError.response?.data?.non_field_errors?.[0];
-        if (status === 401 || status === 400) {
-          setError(detail || 'Invalid email or password. Please check your credentials and try again.');
-        } else if (status === 403) {
-          setError('Your account has been disabled. Please contact the school administrator.');
-        } else {
-          setError('An unexpected error occurred. Please try again.');
-        }
+        setError('An unexpected error occurred. Please try again.');
       }
     } finally {
       setIsLoading(false);
