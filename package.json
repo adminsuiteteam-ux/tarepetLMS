@@ -3,9 +3,9 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "build": "pnpm -r --filter \"./artifacts/**\" run build",
-    "typecheck:libs": "pnpm -r --filter \"./artifacts/**\" run typecheck",
-    "typecheck": "pnpm -r --filter \"./artifacts/**\" run typecheck"
+    "build": "pnpm --filter \"@workspace/tarepet\" run build",
+    "typecheck:libs": "pnpm --filter \"@workspace/tarepet\" run typecheck",
+    "typecheck": "pnpm --filter \"@workspace/tarepet\" run typecheck"
   },
   "private": true,
   "dependencies": {
