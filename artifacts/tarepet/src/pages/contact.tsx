@@ -94,11 +94,11 @@ export default function Contact() {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="flex flex-wrap items-center justify-center gap-3 md:gap-4 text-xs md:text-sm font-sans"
           >
-            <span className="px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
-              📍 47 Chief John Obi Str., Kpansia, Yenagoa
+            <span className="flex items-center gap-2 px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
+              <MapPin className="w-4 h-4 text-red-400" /> 47 Chief John Obi Str., Kpansia, Yenagoa
             </span>
-            <span className="px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
-              📞 0803 789 0628 / 0703 830 2292
+            <span className="flex items-center gap-2 px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
+              <Phone className="w-4 h-4 text-emerald-400" /> 0803 789 0628 / 0703 830 2292
             </span>
           </motion.div>
         </div>

@@ -16,5 +16,5 @@ export const notificationsTable = pgTable("notifications", {
 export const insertNotificationSchema = createInsertSchema(notificationsTable).omit({ id: true });
 export const selectNotificationSchema = createSelectSchema(notificationsTable);
 
-export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+export type InsertNotification = typeof insertNotificationSchema._output;
 export type NotificationItem = typeof notificationsTable.$inferSelect;

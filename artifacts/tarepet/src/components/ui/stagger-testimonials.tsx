@@ -115,15 +115,8 @@ const TestimonialCard: React.FC<TestimonialCardProps> = ({
           height: 2
         }}
       />
-      <img
-        src={testimonial.imgSrc}
-        alt={`${testimonial.by.split(',')[0]}`}
-        loading="lazy"
-        decoding="async"
-        className="mb-4 h-14 w-14 rounded-full border-2 border-white/80 object-cover object-top shadow-md"
-      />
       <h3 className={cn(
-        "text-base sm:text-lg font-serif font-semibold leading-snug line-clamp-4",
+        "text-base sm:text-lg font-serif font-semibold leading-snug line-clamp-5 mt-2",
         isCenter ? "text-primary-foreground" : "text-foreground"
       )}>
         "{testimonial.testimonial}"

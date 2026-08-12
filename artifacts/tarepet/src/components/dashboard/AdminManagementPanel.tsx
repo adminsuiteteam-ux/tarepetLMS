@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Shield, UserPlus, Users, Lock, KeyRound, Clock, Laptop, AlertCircle,
-  CheckCircle2, Eye, ShieldAlert, Sparkles, Building2, Smartphone, Monitor
+  CheckCircle2, Eye, ShieldAlert, Sparkles, Building2, Smartphone, Monitor, Info
 } from 'lucide-react';
 import { authClient } from '@/lib/api-auth';
 import { addRealtimeNotification } from '@/lib/notifications-store';

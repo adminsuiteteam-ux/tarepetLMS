@@ -261,7 +261,7 @@ export default function TeacherDashboard() {
         {/* Welcome Header */}
         <div className="bg-gradient-to-r from-emerald-700 via-emerald-800 to-teal-900 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
           <p className="text-xs font-bold uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full inline-block mb-3">{t('teacher.management_portal', 'Teacher Management Portal')}</p>
-          <h2 className="text-2xl sm:text-3xl font-serif font-bold mb-1">{t('teacher.welcome_back', 'Welcome back,')} {user?.first_name ?? 'Teacher'}! 👋</h2>
+          <h2 className="text-2xl sm:text-3xl font-serif font-bold mb-1">{t('teacher.welcome_back', 'Welcome back,')} {user?.first_name ?? 'Teacher'}!</h2>
           <p className="text-emerald-100 text-sm">{t('teacher.manage_subtitle', 'Manage classes, CBT assessments, and student progress.')}</p>
         </div>
 
@@ -558,7 +558,7 @@ export default function TeacherDashboard() {
           <div className="bg-emerald-500/10 border border-emerald-200 rounded-2xl p-4 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
-                🎓
+                <GraduationCap className="w-5 h-5 text-white" />
               </div>
               <div>
                 <h4 className="font-bold text-sm text-emerald-950">{`Assigned Form Class: `}<span className="text-emerald-700 font-mono font-bold">{formClass}</span></h4>
@@ -1311,7 +1311,7 @@ export default function TeacherDashboard() {
                 <button
                   onClick={() => {
                     saveStudent({ ...promotingStudent, grade: targetPromotionClass });
-                    showToast(`Promoted ${promotingStudent.name} from ${promotingStudent.grade} to ${targetPromotionClass}! 🎉`);
+                    showToast(`Promoted ${promotingStudent.name} from ${promotingStudent.grade} to ${targetPromotionClass}!`);
                     setPromotingStudent(null);
                   }}
                   className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors shadow-sm"
@@ -1527,7 +1527,9 @@ export default function TeacherDashboard() {
                 {activeExams.map(ex => (
                   <div key={ex.id} className="p-4 rounded-xl border border-emerald-200 bg-emerald-500/5 flex items-center justify-between">
                     <div>
-                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">🟢 Live in Student Portal</span>
+                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 flex items-center gap-1.5 w-fit">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" /> Live in Student Portal
+                      </span>
                       <h4 className="font-bold text-foreground text-sm mt-1">{ex.title}</h4>
                       <p className="text-xs text-muted-foreground">{ex.course_code} · {ex.duration_minutes} mins · {ex.class || 'SS1'} {ex.stream || 'Science'} Students</p>
                     </div>

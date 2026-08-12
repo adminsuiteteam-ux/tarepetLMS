@@ -277,26 +277,22 @@ export default function Home() {
       <section className="py-24 overflow-hidden relative bg-[#0b140d] text-white">
         <BackgroundNoiseEffect variant="dark" />
         <div className="container mx-auto px-4 md:px-6 relative z-10">
-          <div className="text-center max-w-3xl mx-auto mb-16">
+          <div className="text-center max-w-5xl mx-auto mb-16">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/25 border border-primary/50 text-white text-xs font-bold uppercase tracking-wider mb-4 shadow-sm"
+              className="flex flex-wrap items-center justify-center gap-3 md:gap-4 mb-6"
             >
-              <Sparkles className="w-4 h-4 text-white" />
-              <span>The Tare Pet Experience</span>
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/25 border border-primary/50 text-white text-xs font-bold uppercase tracking-wider shadow-sm shrink-0">
+                <Sparkles className="w-4 h-4 text-white" />
+                <span>The Tare Pet Experience</span>
+              </div>
+              <h3 className="text-2xl sm:text-4xl md:text-5xl font-serif font-bold text-white tracking-tight drop-shadow-md">
+                Where Excellence Meets Wonder
+              </h3>
             </motion.div>
-            <motion.h3
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-4xl md:text-6xl font-serif font-bold text-white mb-6 tracking-tight drop-shadow-md"
-            >
-              Where Excellence Meets Wonder
-            </motion.h3>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -308,13 +304,14 @@ export default function Home() {
             </motion.p>
           </div>
 
-          <div className="flex flex-col md:flex-row items-center justify-center gap-10 flex-wrap">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-center justify-items-center max-w-6xl mx-auto">
             {/* Card 1 — Slide in from Left */}
             <motion.div
               initial={{ opacity: 0, x: -80 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: false, margin: "-50px" }}
               transition={{ duration: 0.7 }}
+              className="w-full flex justify-center"
             >
               <GlareCard className="flex flex-col items-center justify-center gap-5 p-8">
                 <div className="w-16 h-16 rounded-full flex items-center justify-center border" style={{ background: "rgba(196,30,58,0.3)", borderColor: "rgba(255,255,255,0.4)" }}>
@@ -336,6 +333,7 @@ export default function Home() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false, margin: "-50px" }}
               transition={{ duration: 0.7, delay: 0.15 }}
+              className="w-full flex justify-center"
             >
               <GlareCard className="flex flex-col items-center justify-center relative overflow-hidden">
                 <img
@@ -360,6 +358,7 @@ export default function Home() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: false, margin: "-50px" }}
               transition={{ duration: 0.7, delay: 0.3 }}
+              className="w-full flex justify-center"
             >
               <GlareCard className="flex flex-col items-start justify-end py-8 px-7 gap-3">
                 <div className="w-14 h-14 rounded-full flex items-center justify-center border mb-2" style={{ background: "rgba(45,122,70,0.4)", borderColor: "rgba(255,255,255,0.4)" }}>

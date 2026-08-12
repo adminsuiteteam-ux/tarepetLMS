@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Calendar, Clock, MapPin, Sparkles } from "lucide-react";
 import { Link } from "wouter";
 import eventsImg from "@assets/events_hero.jpg";
+import { useTranslation } from "@/i18n";
 
 const UPCOMING_EVENTS = [
   {
@@ -68,6 +69,8 @@ const UPCOMING_EVENTS = [
 ];
 
 export default function Events() {
+  const { t } = useTranslation();
+
   return (
     <PageTransition>
       {/* Hero Header */}
@@ -94,7 +97,7 @@ export default function Events() {
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-button text-white text-xs font-semibold uppercase tracking-wider mb-6 shadow-lg border border-white/20"
           >
             <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
-            <span>School Calendar & Celebrations</span>
+            <span>{t('events.heroTag', 'School Calendar & Celebrations')}</span>
           </motion.div>
 
           <motion.h1 
@@ -103,7 +106,10 @@ export default function Events() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-4xl sm:text-5xl md:text-6xl font-serif font-bold text-white mb-6 tracking-tight drop-shadow-md leading-[1.15]"
           >
-            Upcoming Events & <span className="text-white/90 italic font-light">Campus Gatherings</span>
+            {t('events.heroTitlePrefix', 'Upcoming Events & ')}
+            <span className="text-white/90 italic font-light">
+              {t('events.heroTitleSuffix', 'Campus Gatherings')}
+            </span>
           </motion.h1>
 
           <motion.p 
@@ -112,7 +118,7 @@ export default function Events() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-lg md:text-xl text-white/90 max-w-3xl mx-auto font-sans leading-relaxed font-normal"
           >
-            Join us for upcoming academic, sports competitions, science fairs, cultural celebrations, and parent-teacher conferences at Tare Pet Montessori School.
+            {t('events.heroDesc', 'Join us for upcoming academic, sports competitions, science fairs, cultural celebrations, and parent-teacher conferences at Tare Pet Montessori School.')}
           </motion.p>
         </div>
       </section>
@@ -127,8 +133,8 @@ export default function Events() {
             transition={{ duration: 0.6 }}
             className="text-center max-w-3xl mx-auto mb-16"
           >
-            <h2 className="text-4xl font-serif font-bold text-foreground mb-4">Upcoming Gatherings</h2>
-            <p className="text-muted-foreground text-lg">Mark your calendar and participate in our vibrant school life.</p>
+            <h2 className="text-4xl font-serif font-bold text-foreground mb-4">{t('events.sectionTitle', 'Upcoming Gatherings')}</h2>
+            <p className="text-muted-foreground text-lg">{t('events.sectionSubtitle', 'Mark your calendar and participate in our vibrant school life.')}</p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -144,7 +150,7 @@ export default function Events() {
               >
                 <div className={`h-32 ${event.colorClass} p-6 flex flex-col justify-between relative`}>
                   <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-white/80 text-foreground self-start shadow-sm">
-                    Upcoming
+                    {t('events.upcomingBadge', 'Upcoming')}
                   </span>
                   <h3 className="font-serif font-bold text-2xl text-foreground group-hover:text-primary transition-colors leading-tight">
                     {event.title}
@@ -175,7 +181,7 @@ export default function Events() {
                     href="/contact"
                     className="inline-flex items-center justify-center rounded-full py-2.5 px-5 text-xs font-bold uppercase tracking-wider text-white bg-gradient-to-r from-primary to-primary/90 shadow-md hover:scale-105 active:scale-95 transition-all mt-auto"
                   >
-                    RSVP / Inquire
+                    {t('events.rsvpBtn', 'RSVP / Inquire')}
                   </Link>
                 </div>
               </motion.div>

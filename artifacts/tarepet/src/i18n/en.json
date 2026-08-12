@@ -502,5 +502,15 @@
     "email_notifications": "Email Notifications",
     "email_notifications_desc": "Receive email alerts for published CBT exams and graded results.",
     "save_settings": "Save Profile Settings"
+  },
+  "events": {
+    "heroTag": "School Calendar & Celebrations",
+    "heroTitlePrefix": "Upcoming Events & ",
+    "heroTitleSuffix": "Campus Gatherings",
+    "heroDesc": "Join us for upcoming academic, sports competitions, science fairs, cultural celebrations, and parent-teacher conferences at Tare Pet Montessori School.",
+    "sectionTitle": "Upcoming Gatherings",
+    "sectionSubtitle": "Mark your calendar and participate in our vibrant school life.",
+    "upcomingBadge": "Upcoming",
+    "rsvpBtn": "RSVP / Inquire"
   }
 }

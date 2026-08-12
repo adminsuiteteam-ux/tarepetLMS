@@ -4,7 +4,7 @@ import { authClient } from '@/lib/api-auth';
 import { motion } from 'framer-motion';
 import { 
   Plus, Trash2, Send, BookOpen, Clock, ChevronLeft, CheckCircle2,
-  FileText, AlertTriangle, Eye, Users, FlaskConical, Palette, ClipboardList
+  FileText, AlertTriangle, Eye, Users, FlaskConical, Palette, ClipboardList, Rocket, Lightbulb
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { useTranslation } from '@/lib/i18n';
@@ -509,8 +509,8 @@ export default function CBTBuilder() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${getStatusBadgeStyle(exam.status)}`}>
-                          {exam.status === 'APPROVED' ? t("Approved by Admin") : exam.status === 'PUBLISHED' ? t("🚀 Live for Students") : exam.status}
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1 w-fit ${getStatusBadgeStyle(exam.status)}`}>
+                          {exam.status === 'APPROVED' ? t("Approved by Admin") : exam.status === 'PUBLISHED' ? <><Rocket className="w-3 h-3 text-purple-600" /> {t("Live for Students")}</> : exam.status}
                         </span>
                         <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
                           {exam.class || 'SS1'} {exam.stream || 'Science'} • {exam.assessment_type === 'TEST' ? t("C.A. Test") : t("Final Exam")}
@@ -784,8 +784,8 @@ export default function CBTBuilder() {
                         ))}
                       </div>
                       {q.explanation && (
-                        <p className="text-[11px] text-emerald-700 bg-emerald-50 p-2 rounded-lg border border-emerald-100">
-                          💡 <strong>Explanation:</strong> {q.explanation}
+                        <p className="text-[11px] text-emerald-700 bg-emerald-50 p-2 rounded-lg border border-emerald-100 flex items-center gap-1.5">
+                          <Lightbulb className="w-3.5 h-3.5 text-amber-500 shrink-0" /> <strong>Explanation:</strong> {q.explanation}
                         </p>
                       )}
                     </div>

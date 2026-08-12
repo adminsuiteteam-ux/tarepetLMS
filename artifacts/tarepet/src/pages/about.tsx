@@ -5,7 +5,7 @@ import vicePrincipalImg from "@assets/vice_principal.jpg";
 import headMistressImg from "@assets/head_mistress.jpg";
 import nurseryHeadImg from "@assets/nursery_head.jpg";
 import proprietressImg from "@assets/proprietress.jpg";
-import { CheckCircle, Award, Target, Eye, Sparkles } from "lucide-react";
+import { CheckCircle, Award, Target, Eye, Sparkles, Trophy, Sprout, MapPin } from "lucide-react";
 
 export default function About() {
   return (
@@ -62,14 +62,14 @@ export default function About() {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="flex flex-wrap items-center justify-center gap-3 md:gap-4 text-xs md:text-sm font-sans"
           >
-            <span className="px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
-              🏆 Established October 1, 2002
+            <span className="flex items-center gap-2 px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
+              <Trophy className="w-4 h-4 text-yellow-400" /> Established October 1, 2002
             </span>
-            <span className="px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
-              🌱 Montessori & Erdkinder Method
+            <span className="flex items-center gap-2 px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
+              <Sprout className="w-4 h-4 text-green-400" /> Montessori & Erdkinder Method
             </span>
-            <span className="px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
-              📍 47 Chief John Obi Str., Kpansia, Yenagoa
+            <span className="flex items-center gap-2 px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
+              <MapPin className="w-4 h-4 text-red-400" /> 47 Chief John Obi Str., Kpansia, Yenagoa
             </span>
           </motion.div>
         </div>

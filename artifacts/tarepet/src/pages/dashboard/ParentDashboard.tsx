@@ -430,8 +430,8 @@ export default function ParentDashboard() {
       <div className="space-y-5">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-serif font-bold text-foreground">{t('Teacher Messaging & Conferences')}</h2>
-          <button onClick={() => setShowConferenceModal(true)} className="bg-primary text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors">
-            📅 {t('Book Parent-Teacher Conference')}
+          <button onClick={() => setShowConferenceModal(true)} className="bg-primary text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors flex items-center gap-1.5">
+            <Calendar className="w-4 h-4" /> {t('Book Parent-Teacher Conference')}
           </button>
         </div>
 
@@ -501,7 +501,9 @@ export default function ParentDashboard() {
         <h2 className="text-xl font-serif font-bold text-foreground">{t('House System & Character Growth')}</h2>
         <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-3">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold">🦅</div>
+            <div className="w-12 h-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold">
+              <Award className="w-6 h-6 text-primary-foreground" />
+            </div>
             <div>
               <h3 className="font-serif font-bold text-foreground text-lg">{activeChild.name} — Blue House (Eagle)</h3>
               <p className="text-xs text-muted-foreground">{t('Rank: ')}<strong>#1 Overall</strong> &middot; Motto: &quot;Wisdom &amp; Integrity&quot;</p>

@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle2, FileText, Calendar, GraduationCap, Sparkles } from "lucide-react";
+import { CheckCircle2, FileText, Calendar, GraduationCap, Sparkles, Building } from "lucide-react";
 import { motion } from "framer-motion";
 import admissionsImg from "@assets/admissions_hero.jpg";
 
@@ -98,14 +98,14 @@ export default function Admissions() {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="flex flex-wrap items-center justify-center gap-3 md:gap-4 text-xs md:text-sm font-sans"
           >
-            <span className="px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
-              📝 Simple 3-Step Process
+            <span className="flex items-center gap-2 px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
+              <FileText className="w-4 h-4 text-blue-400" /> Simple 3-Step Process
             </span>
-            <span className="px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
-              🎓 Entrance Assessment
+            <span className="flex items-center gap-2 px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
+              <GraduationCap className="w-4 h-4 text-emerald-400" /> Entrance Assessment
             </span>
-            <span className="px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
-              🏫 Schedule Campus Visit
+            <span className="flex items-center gap-2 px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
+              <Building className="w-4 h-4 text-amber-400" /> Schedule Campus Visit
             </span>
           </motion.div>
         </div>

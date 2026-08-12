@@ -4,7 +4,7 @@ import { authClient } from '@/lib/api-auth';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Clock, CheckCircle2, AlertTriangle, ArrowLeft, ArrowRight, 
-  BookOpen, Timer, Send, Shield, ChevronLeft
+  BookOpen, Timer, Send, Shield, ChevronLeft, Calculator, Flag
 } from 'lucide-react';
 import { Link } from 'wouter';
 
@@ -457,7 +457,7 @@ export default function StudentCBTExam() {
           )}
 
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
-            <p className="text-red-700 text-xs font-medium">⚠️ Once you start, the timer begins immediately. If the timer runs out, your exam will be <strong>automatically submitted</strong>.</p>
+            <p className="text-red-700 text-xs font-medium flex items-center gap-1.5"><AlertTriangle className="w-4 h-4 text-red-600 shrink-0" /> Once you start, the timer begins immediately. If the timer runs out, your exam will be <strong>automatically submitted</strong>.</p>
           </div>
 
           <div className="flex gap-3">
@@ -510,11 +510,11 @@ export default function StudentCBTExam() {
 
             <div className="flex items-center gap-3">
               <button
-                onClick={() => setShowCalculator(prev => !prev)}
-                className="bg-teal-700 hover:bg-teal-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg border border-teal-500/50 shadow-xs flex items-center gap-1.5 transition cursor-pointer"
+                onClick={() => setShowCalculator(!showCalculator)}
+                className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-teal-300 font-bold text-xs transition border border-teal-500/30 flex items-center gap-1.5"
                 title="Toggle Calculator"
               >
-                🧮 Calculator
+                <Calculator className="w-3.5 h-3.5 text-teal-400" /> Calculator
               </button>
               {warningCount > 0 && (
                 <span className="bg-amber-500/20 text-amber-300 text-[11px] font-bold px-2.5 py-1 rounded-lg border border-amber-400/30 flex items-center gap-1">
@@ -539,7 +539,7 @@ export default function StudentCBTExam() {
           {showCalculator && (
             <div className="absolute right-6 top-6 z-40 bg-slate-900 text-white p-4 rounded-2xl shadow-2xl border border-slate-700 w-64 animate-in fade-in duration-150">
               <div className="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
-                <span className="text-xs font-bold text-teal-400 flex items-center gap-1.5">🧮 Exam Calculator</span>
+                <span className="text-xs font-bold text-teal-400 flex items-center gap-1.5"><Calculator className="w-3.5 h-3.5" /> Exam Calculator</span>
                 <button onClick={() => setShowCalculator(false)} className="text-slate-400 hover:text-white text-xs font-bold px-1.5 py-0.5 rounded">✕</button>
               </div>
               <div className="bg-slate-950 p-3 rounded-xl mb-3 text-right font-mono font-bold text-xl text-emerald-400 overflow-x-auto min-h-[44px] flex items-center justify-end border border-slate-800">
@@ -734,7 +734,7 @@ export default function StudentCBTExam() {
                         }`}
                         title="Flag for Review"
                       >
-                        🚩 {flaggedQuestions[currentQ.id] ? 'Flagged' : 'Flag'}
+                        <Flag className="w-3.5 h-3.5" /> {flaggedQuestions[currentQ.id] ? 'Flagged' : 'Flag'}
                       </button>
                     </div>
 

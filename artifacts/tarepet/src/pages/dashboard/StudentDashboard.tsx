@@ -140,7 +140,7 @@ export default function StudentDashboard() {
             </div>
           </div>
           <h2 className="text-2xl sm:text-3xl font-serif font-bold mb-1">
-            {t('student.welcome_greeting', 'Good morning,')} {user?.first_name ?? t('student.role_student', 'Student')}! 👋
+            {t('student.welcome_greeting', 'Good morning,')} {user?.first_name ?? t('student.role_student', 'Student')}!
           </h2>
           <p className="text-rose-100 text-sm mb-3">
             {t('student.welcome_sub', 'Welcome to your student portal. Check your active subjects and upcoming CBT exams.')}
@@ -284,8 +284,12 @@ export default function StudentDashboard() {
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-[10px] font-bold uppercase text-primary bg-primary/10 px-2 py-0.5 rounded-full">{ex.course_code}</span>
                       <span className="text-xs text-muted-foreground">{ex.assessment_type === 'TEST' ? 'C.A. Test' : 'Final Exam'} • {ex.duration_minutes} mins • {ex.questions_count || ex.questions?.length || 4} Qs</span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600">
-                        {ex.status === 'ACTIVE' ? '🟢 Live & Activated' : 'Ready to Start'}
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center gap-1">
+                        {ex.status === 'ACTIVE' ? (
+                          <>
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live & Activated
+                          </>
+                        ) : 'Ready to Start'}
                       </span>
                     </div>
                     <h4 className="font-bold text-foreground text-sm">{ex.title}</h4>
