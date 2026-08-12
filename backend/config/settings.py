@@ -29,7 +29,21 @@ def get_secret_key():
 
 SECRET_KEY = get_secret_key()
 DEBUG = env.bool('DEBUG', default=False)
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['.onrender.com', 'localhost', '127.0.0.1'])
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[
+    '.onrender.com',
+    'localhost',
+    '127.0.0.1',
+    'tarepetmontessorischool.com',
+    'www.tarepetmontessorischool.com',
+])
+
+# Trust the production domain for CSRF in production
+CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[
+    'https://tarepetmontessorischool.com',
+    'https://www.tarepetmontessorischool.com',
+    'https://tarepet-backend-4iw6.onrender.com',
+    'https://*.onrender.com',
+])
 
 # Application definition
 INSTALLED_APPS = [
@@ -207,3 +221,16 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Production Security Headers (applied when DEBUG=False)
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = False  # Render handles SSL termination
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
+    X_FRAME_OPTIONS = 'DENY'

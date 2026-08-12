@@ -8,7 +8,8 @@ export const DashboardRedirect: React.FC = () => {
 
   useEffect(() => {
     if (!isLoading && user) {
-      switch (user.role) {
+      const roleUpper = (user.role || '').toUpperCase();
+      switch (roleUpper) {
         case 'ADMIN':
           setLocation('/dashboard/admin');
           break;
@@ -22,7 +23,7 @@ export const DashboardRedirect: React.FC = () => {
           setLocation('/dashboard/parent');
           break;
         default:
-          setLocation('/dashboard/student');
+          setLocation('/dashboard/admin');
       }
     } else if (!isLoading && !user) {
       setLocation('/sign-in');

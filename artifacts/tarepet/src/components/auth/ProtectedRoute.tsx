@@ -41,7 +41,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return null;
   }
 
-  if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+  const userRoleUpper = (user?.role || '').toUpperCase();
+  const allowedUpper = allowedRoles?.map(r => r.toUpperCase());
+
+  if (allowedUpper && user && !allowedUpper.includes(userRoleUpper)) {
     return (
       <div className="flex min-h-[70vh] items-center justify-center p-6 text-center">
         <div className="max-w-md rounded-2xl bg-card p-8 shadow-xl border border-border">

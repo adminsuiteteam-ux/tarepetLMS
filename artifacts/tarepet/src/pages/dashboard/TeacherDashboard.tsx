@@ -10,10 +10,10 @@ import {
   Search, Filter, Upload, Download, Send, Eye, Edit2, Trash2, X,
   TrendingUp, Play, Lock, MessageSquare, ChevronDown, ChevronRight, ChevronLeft,
   CheckSquare, XCircle, RefreshCw, PenLine, Globe, Layers, ArrowUpRight,
-  ClipboardList, Settings, ShieldCheck, User, Bell, Printer, CreditCard
+  ClipboardList, Settings, ShieldCheck, User, Bell, Printer, CreditCard, GraduationCap
 } from 'lucide-react';
 
-import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, saveStudent, deleteStudent, subscribeToCBTStore, syncStudentsWithBackend } from '@/lib/cbt-store';
+import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, saveStudent, deleteStudent, subscribeToCBTStore, syncStudentsWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord } from '@/lib/cbt-store';
 import { useTranslation } from '@/lib/i18n';
 
 // ─── Initial Seed Data (Form Teacher & Subject Teacher) ───────
@@ -87,6 +87,8 @@ export default function TeacherDashboard() {
 
   const [selectedExamClass, setSelectedExamClass] = useState<string>('ALL');
   const [selectedExamStream, setSelectedExamStream] = useState<string>('ALL');
+  const [selectedAttendanceExam, setSelectedAttendanceExam] = useState<any | null>(null);
+  const [examAttendanceState, setExamAttendanceState] = useState<CBTAttendanceRecord[]>([]);
 
   // Data states
   const [submissions, setSubmissions] = useState(PENDING_SUBMISSIONS);
@@ -1469,8 +1471,8 @@ export default function TeacherDashboard() {
                     </div>
                     <button
                       onClick={() => {
-                        updateExamStatus(ex.id, 'APPROVED');
-                        showToast(`Reviewed & forwarded "${ex.title}" to Admin for final approval.`);
+                        updateExamStatus(ex.id, 'PENDING');
+                        showToast(`Reviewed & submitted "${ex.title}" to Admin for approval.`);
                       }}
                       className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-colors shadow-md flex items-center gap-1.5 self-start sm:self-auto"
                     >
@@ -1489,10 +1491,18 @@ export default function TeacherDashboard() {
                 <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                 <span>{t('teacher.approved_exams_ready', 'Admin Approved — Ready to Upload to Students')} ({approvedExams.length})</span>
               </div>
-              <p className="text-xs text-emerald-700">{t('teacher.approved_exams_desc', 'Admin has approved these exams. Click')} <strong>{t('teacher.upload_activate', '"Upload & Activate for Students"')}</strong> {t('teacher.approved_exams_desc2', 'to publish to the student portal.')}</p>
+              <p className="text-xs text-emerald-700">{t('teacher.approved_exams_desc', 'Admin has approved these exams. Click an exam card or')} <strong>{t('teacher.upload_activate', '"Manage Student Attendance & Activate"')}</strong> {t('teacher.approved_exams_desc2', 'to mark present students and publish.')}</p>
               <div className="space-y-3 pt-1">
                 {approvedExams.map(ex => (
-                  <div key={ex.id} className="bg-white p-4 rounded-xl border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                  <div
+                    key={ex.id}
+                    onClick={() => {
+                      const records = getExamAttendance(ex.id, ex.class || 'SS1', ex.stream || 'Science');
+                      setExamAttendanceState(records);
+                      setSelectedAttendanceExam(ex);
+                    }}
+                    className="bg-white p-4 rounded-xl border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs hover:border-emerald-400 cursor-pointer transition-all"
+                  >
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">{ex.course_code}</span>
@@ -1502,13 +1512,15 @@ export default function TeacherDashboard() {
                       <p className="text-xs text-muted-foreground">{ex.duration_minutes} mins · {ex.questions_count || ex.questions?.length} Questions</p>
                     </div>
                     <button
-                      onClick={() => {
-                        updateExamStatus(ex.id, 'ACTIVE');
-                        showToast(`Activated "${ex.title}"! ${ex.class || 'SS1'} ${ex.stream || 'Science'} students can now take this exam.`);
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const records = getExamAttendance(ex.id, ex.class || 'SS1', ex.stream || 'Science');
+                        setExamAttendanceState(records);
+                        setSelectedAttendanceExam(ex);
                       }}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-colors shadow-md flex items-center gap-1.5 self-start sm:self-auto ring-2 ring-emerald-400/50 animate-pulse"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-colors shadow-md flex items-center gap-1.5 self-start sm:self-auto ring-2 ring-emerald-400/50"
                     >
-                      <Send className="w-4 h-4" /> Upload and Activate for Students
+                      <UserCheck className="w-4 h-4" /> Manage Student Attendance & Activate
                     </button>
                   </div>
                 ))}
@@ -1525,7 +1537,15 @@ export default function TeacherDashboard() {
               </h3>
               <div className="space-y-2">
                 {activeExams.map(ex => (
-                  <div key={ex.id} className="p-4 rounded-xl border border-emerald-200 bg-emerald-500/5 flex items-center justify-between">
+                  <div
+                    key={ex.id}
+                    onClick={() => {
+                      const records = getExamAttendance(ex.id, ex.class || 'SS1', ex.stream || 'Science');
+                      setExamAttendanceState(records);
+                      setSelectedAttendanceExam(ex);
+                    }}
+                    className="p-4 rounded-xl border border-emerald-200 bg-emerald-500/5 flex items-center justify-between cursor-pointer hover:bg-emerald-500/10 transition-colors"
+                  >
                     <div>
                       <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 flex items-center gap-1.5 w-fit">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" /> Live in Student Portal
@@ -1533,9 +1553,17 @@ export default function TeacherDashboard() {
                       <h4 className="font-bold text-foreground text-sm mt-1">{ex.title}</h4>
                       <p className="text-xs text-muted-foreground">{ex.course_code} · {ex.duration_minutes} mins · {ex.class || 'SS1'} {ex.stream || 'Science'} Students</p>
                     </div>
-                    <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-3 py-1.5 rounded-xl">
-                      {t('teacher.receiving_submissions', 'Receiving Submissions...')}
-                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const records = getExamAttendance(ex.id, ex.class || 'SS1', ex.stream || 'Science');
+                        setExamAttendanceState(records);
+                        setSelectedAttendanceExam(ex);
+                      }}
+                      className="text-xs font-bold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 px-3 py-1.5 rounded-xl flex items-center gap-1 transition-colors"
+                    >
+                      <UserCheck className="w-3.5 h-3.5" /> View / Edit Attendance
+                    </button>
                   </div>
                 ))}
               </div>
@@ -2084,6 +2112,153 @@ export default function TeacherDashboard() {
                     <Download className="w-4 h-4" /> {t('teacher.btn_download_pdf')}
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── CBT STUDENT ATTENDANCE & INVIGILATION MODAL ── */}
+        {selectedAttendanceExam && (
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+            <div className="bg-card border border-border rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              <div className="p-5 border-b border-border flex items-center justify-between bg-muted/20">
+                <div>
+                  <h3 className="font-serif font-bold text-base text-foreground flex items-center gap-2">
+                    <UserCheck className="w-5 h-5 text-emerald-600" /> Student Attendance & Exam Invigilation
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Exam: <span className="font-bold text-foreground">{selectedAttendanceExam.title}</span> ({selectedAttendanceExam.course_name || selectedAttendanceExam.course_code} — {selectedAttendanceExam.class || 'SS1'} {selectedAttendanceExam.stream || 'Science'})
+                  </p>
+                </div>
+                <button onClick={() => setSelectedAttendanceExam(null)} className="p-2 rounded-xl text-muted-foreground hover:bg-muted/50 transition-colors"><X className="w-5 h-5" /></button>
+              </div>
+
+              <div className="p-5 overflow-y-auto space-y-4 flex-1">
+                {/* Header Info & Bulk Actions */}
+                <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                  <div>
+                    <span className="font-bold text-emerald-900 block text-sm">Attendance Clearance Policy</span>
+                    <p className="text-emerald-700 text-[11px] mt-0.5">Only students marked <strong className="text-emerald-900">PRESENT</strong> below will be granted access to start this examination in their student portal.</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => {
+                        const updated = examAttendanceState.map(r => ({ ...r, markedPresent: true }));
+                        setExamAttendanceState(updated);
+                        markAllStudentsAttendance(
+                          selectedAttendanceExam.id,
+                          updated.map(u => ({ studentId: u.studentId, studentName: u.studentName, class: u.class, stream: u.stream })),
+                          true,
+                          user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Teacher Invigilator' : 'Teacher Invigilator'
+                        );
+                      }}
+                      className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-[11px] font-bold hover:bg-emerald-700 transition-colors"
+                    >
+                      ✓ Mark All Present
+                    </button>
+                    <button
+                      onClick={() => {
+                        const updated = examAttendanceState.map(r => ({ ...r, markedPresent: false }));
+                        setExamAttendanceState(updated);
+                        markAllStudentsAttendance(
+                          selectedAttendanceExam.id,
+                          updated.map(u => ({ studentId: u.studentId, studentName: u.studentName, class: u.class, stream: u.stream })),
+                          false,
+                          user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Teacher Invigilator' : 'Teacher Invigilator'
+                        );
+                      }}
+                      className="px-3 py-1.5 bg-muted text-foreground border border-border rounded-lg text-[11px] font-semibold hover:bg-muted/70 transition-colors"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                </div>
+
+                {/* Attendance Count Badge */}
+                <div className="flex items-center justify-between px-1 text-xs">
+                  <span className="font-bold text-muted-foreground uppercase text-[10px] tracking-wider">
+                    Class Roster ({examAttendanceState.length} Students)
+                  </span>
+                  <span className="font-bold text-emerald-600 bg-emerald-100 px-3 py-0.5 rounded-full text-[11px]">
+                    {examAttendanceState.filter(r => r.markedPresent).length} / {examAttendanceState.length} Present & Cleared
+                  </span>
+                </div>
+
+                {/* Student Roster List */}
+                <div className="space-y-2">
+                  {examAttendanceState.map(student => (
+                    <div
+                      key={student.studentId}
+                      className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
+                        student.markedPresent
+                          ? 'bg-emerald-500/5 border-emerald-200'
+                          : 'bg-card border-border hover:bg-muted/30'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-base ${
+                          student.markedPresent ? 'bg-emerald-100 text-emerald-800' : 'bg-muted text-muted-foreground'
+                        }`}>
+                          👨‍🎓
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-xs text-foreground">{student.studentName}</h4>
+                            <span className="text-[10px] font-mono text-muted-foreground px-1.5 py-0.5 rounded bg-muted">{student.studentId}</span>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground">{student.class} {student.stream} Student</p>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          const newPresent = !student.markedPresent;
+                          const updated = examAttendanceState.map(r => r.studentId === student.studentId ? { ...r, markedPresent: newPresent } : r);
+                          setExamAttendanceState(updated);
+                          setStudentExamAttendance(
+                            selectedAttendanceExam.id,
+                            student.studentId,
+                            student.studentName,
+                            student.class,
+                            student.stream,
+                            newPresent,
+                            user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Teacher Invigilator' : 'Teacher Invigilator'
+                          );
+                        }}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                          student.markedPresent
+                            ? 'bg-emerald-600 text-white shadow-xs hover:bg-emerald-700'
+                            : 'bg-muted border border-border text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        {student.markedPresent ? (
+                          <>
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Present & Cleared
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="w-3.5 h-3.5 text-rose-500" /> Mark Present
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-5 border-t border-border bg-muted/20 flex items-center justify-between">
+                <button onClick={() => setSelectedAttendanceExam(null)} className="px-4 py-2 rounded-xl border border-border text-xs font-semibold hover:bg-muted transition-colors">Close</button>
+                <button
+                  onClick={() => {
+                    updateExamStatus(selectedAttendanceExam.id, 'ACTIVE');
+                    const presentCount = examAttendanceState.filter(r => r.markedPresent).length;
+                    showToast(`Activated "${selectedAttendanceExam.title}"! ${presentCount} students marked PRESENT and cleared to begin test.`);
+                    setSelectedAttendanceExam(null);
+                  }}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 shadow-md transition-colors"
+                >
+                  <Send className="w-4 h-4" /> Upload & Activate Exam for Cleared Students
+                </button>
               </div>
             </div>
           </div>

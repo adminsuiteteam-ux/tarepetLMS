@@ -4,7 +4,7 @@ import { authClient } from '@/lib/api-auth';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Clock, CheckCircle2, AlertTriangle, ArrowLeft, ArrowRight, 
-  BookOpen, Timer, Send, Shield, ChevronLeft, Calculator, Flag
+  BookOpen, Timer, Send, Shield, ChevronLeft, Calculator, Flag, GraduationCap
 } from 'lucide-react';
 import { Link } from 'wouter';
 
@@ -45,7 +45,7 @@ interface AvailableExam {
 
 type Phase = 'list' | 'confirm' | 'exam' | 'result';
 
-import { getStoredExams, submitStudentCBTAttempt, subscribeToCBTStore, hasStudentSubmittedExam, getStudentSubmission } from '@/lib/cbt-store';
+import { getStoredExams, submitStudentCBTAttempt, subscribeToCBTStore, hasStudentSubmittedExam, getStudentSubmission, isStudentMarkedPresent } from '@/lib/cbt-store';
 
 function getQuestionOption(q: Question, opt: 'A' | 'B' | 'C' | 'D'): string {
   switch (opt) {
@@ -117,6 +117,7 @@ function safeEval(expr: string): number {
   if (pos !== expr.length) throw new Error('Unexpected character');
   return result;
 }
+
 export default function StudentCBTExam() {
   const { user } = useAuth();
   const [phase, setPhase] = useState<Phase>('list');
@@ -134,6 +135,7 @@ export default function StudentCBTExam() {
   const [calcInput, setCalcInput] = useState('0');
   const [warningCount, setWarningCount] = useState(0);
   const [showWarningModal, setShowWarningModal] = useState(false);
+  const [showAttendanceNoticeModal, setShowAttendanceNoticeModal] = useState(false);
 
   useEffect(() => {
     if (phase !== 'exam') return;
@@ -201,8 +203,6 @@ export default function StudentCBTExam() {
     if (val === 'C') { setCalcInput('0'); return; }
     if (val === '=') {
       try {
-        // Safe arithmetic evaluator — allows only digits and + - * / . ( ) whitespace
-        // No eval() or Function() used — prevents code injection.
         const expr = calcInput.replace(/[^0-9+\-*/.() ]/g, '');
         if (!expr.trim()) { setCalcInput('Error'); return; }
         const result = safeEval(expr);
@@ -217,10 +217,17 @@ export default function StudentCBTExam() {
 
   const handleStartExam = async () => {
     if (!selectedExam) return;
-    const studentIdentifier = user?.email || (user?.profile as any)?.studentId || 'TMS-2024-101';
+    const studentIdentifier = user?.email || (user?.profile as any)?.studentId || 'TMS/SS1/SCI/4821';
+    const studentName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Emeka Amadi' : 'Emeka Amadi';
+
     if (hasStudentSubmittedExam(selectedExam.id, studentIdentifier)) {
       alert('Security Notice: You have already completed this examination. Re-entry is restricted to a single attempt per student.');
       setPhase('list');
+      return;
+    }
+
+    if (!isStudentMarkedPresent(selectedExam.id, studentIdentifier) && !isStudentMarkedPresent(selectedExam.id, studentName)) {
+      setShowAttendanceNoticeModal(true);
       return;
     }
 
@@ -475,6 +482,32 @@ export default function StudentCBTExam() {
               {loading ? 'Starting...' : 'Start Exam'}
             </button>
           </div>
+
+          {/* Attendance Clearance Notice Modal */}
+          {showAttendanceNoticeModal && (
+            <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+              <div className="bg-card border-2 border-rose-500/30 rounded-3xl shadow-2xl w-full max-w-md p-6 text-center space-y-5 animate-in fade-in zoom-in-95 duration-200">
+                <div className="w-16 h-16 rounded-full bg-rose-500/10 border-2 border-rose-500/20 text-rose-600 flex items-center justify-center mx-auto">
+                  <Shield className="w-8 h-8" />
+                </div>
+                <div>
+                  <h3 className="font-serif font-bold text-lg text-foreground">Attendance Verification Required</h3>
+                  <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                    You have not yet been marked <strong className="text-rose-600">PRESENT</strong> by your exam invigilator/subject teacher for this CBT session.
+                  </p>
+                  <div className="mt-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-700 text-left">
+                    <strong>📌 Instructions:</strong> Please report to your class invigilator in the CBT exam hall to verify your physical presence and mark your attendance before clicking Start Examination.
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowAttendanceNoticeModal(false)}
+                  className="w-full py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs shadow-md transition-colors"
+                >
+                  Understand & Dismiss
+                </button>
+              </div>
+            </div>
+          )}
         </motion.div>
       </div>
     );
@@ -596,7 +629,7 @@ export default function StudentCBTExam() {
             <div>
               <div className="flex items-center gap-3 mb-8 px-2">
                 <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center font-bold text-lg text-white shadow-inner">
-                  🎓
+                  <GraduationCap className="w-5 h-5 text-white" />
                 </div>
                 <div>
                   <h2 className="font-serif font-bold text-base leading-tight text-white">Tarepet Montessori</h2>

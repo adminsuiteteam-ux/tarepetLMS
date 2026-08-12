@@ -83,11 +83,8 @@ authClient.interceptors.response.use(
           originalRequest.headers.Authorization = `Bearer ${access}`;
           return authClient(originalRequest);
         } catch (refreshError) {
-          // Refresh token expired — clear memory and force re-login
+          // Token refresh failed — clear in-memory tokens silently without forcing browser redirect
           clearTokens();
-          const baseUrl = import.meta.env.BASE_URL || '/';
-          const target = baseUrl.endsWith('/') ? `${baseUrl}sign-in` : `${baseUrl}/sign-in`;
-          safeRedirect(target);
           return Promise.reject(refreshError);
         }
       }

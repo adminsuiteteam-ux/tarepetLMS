@@ -4,7 +4,7 @@ import { authClient } from '@/lib/api-auth';
 import { motion } from 'framer-motion';
 import { 
   Plus, Trash2, Send, BookOpen, Clock, ChevronLeft, CheckCircle2,
-  FileText, AlertTriangle, Eye, Users, FlaskConical, Palette, ClipboardList, Rocket, Lightbulb
+  FileText, AlertTriangle, Eye, Users, FlaskConical, Palette, ClipboardList, Rocket, Lightbulb, Lock
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { useTranslation } from '@/lib/i18n';
@@ -91,30 +91,6 @@ const getStatusBadgeStyle = (status: string) => {
 import { getStoredExams, saveCBTExam, updateExamStatus, getStoredSubmissions, subscribeToCBTStore, SENIOR_COURSES, JUNIOR_COURSES, getCoursesForClass, setExamResultsReleased } from '@/lib/cbt-store';
 
 const SS_CLASSES = [
-  {
-    key: 'JSS1',
-    label: 'JSS1 (Junior Secondary 1)',
-    hasStreams: false,
-    color: 'bg-sky-50/50 border-sky-200 hover:border-sky-400',
-    iconBg: 'bg-sky-100 text-sky-700',
-    accent: 'text-sky-700',
-  },
-  {
-    key: 'JSS2',
-    label: 'JSS2 (Junior Secondary 2)',
-    hasStreams: false,
-    color: 'bg-indigo-50/50 border-indigo-200 hover:border-indigo-400',
-    iconBg: 'bg-indigo-100 text-indigo-700',
-    accent: 'text-indigo-700',
-  },
-  {
-    key: 'JSS3',
-    label: 'JSS3 (Junior Secondary 3)',
-    hasStreams: false,
-    color: 'bg-teal-50/50 border-teal-200 hover:border-teal-400',
-    iconBg: 'bg-teal-100 text-teal-700',
-    accent: 'text-teal-700',
-  },
   {
     key: 'SS1',
     label: 'SS1 (Senior Secondary 1)',
@@ -561,7 +537,7 @@ export default function CBTBuilder() {
                                 : 'bg-amber-100 text-amber-800 border border-amber-300 hover:bg-amber-200'
                             }`}
                           >
-                            {(exam as any).results_released ? '✓ Results Released' : '🔒 Release Results'}
+                            {(exam as any).results_released ? '✓ Results Released' : <span className="flex items-center gap-1"><Lock className="w-3.5 h-3.5" /> Release Results</span>}
                           </button>
                         </>
                       )}
@@ -579,16 +555,22 @@ export default function CBTBuilder() {
 
   // ============ CREATE EXAM ============
   if (view === 'create') {
+    const inputClass = 'w-full border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all';
+    const labelClass = 'text-[10px] font-extrabold uppercase tracking-wider text-slate-600 block mb-1.5';
+
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-emerald-50 p-4 md:p-8">
+      <div className="min-h-screen bg-slate-50/50 p-4 md:p-8">
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center gap-3 mb-8">
-            <button onClick={() => setView('list')} className="p-2 rounded-lg bg-white shadow hover:bg-slate-50 transition"><ChevronLeft className="w-5 h-5" /></button>
-            <h1 className="text-2xl font-bold text-slate-900">{t("Create New CBT Exam")}</h1>
-          </div>
-          <div className="bg-white rounded-2xl shadow-lg p-6 space-y-4">
+            <button onClick={() => setView('list')} className="p-2 rounded-xl bg-white border border-slate-200 shadow-xs hover:bg-slate-50 transition"><ChevronLeft className="w-5 h-5 text-slate-700" /></button>
             <div>
-              <label className={labelClass}>{t("Exam Title")}</label>
+              <h1 className="text-2xl font-serif font-bold text-slate-900">{t("Create New CBT Exam")}</h1>
+              <p className="text-xs text-slate-500">Configure exam parameters and target student grade level.</p>
+            </div>
+          </div>
+          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xl p-6 md:p-8 space-y-5">
+            <div>
+              <label className={labelClass}>{t("Exam Title")} <span className="text-rose-500">*</span></label>
               <input
                 className={inputClass}
                 value={form.title}
@@ -617,9 +599,6 @@ export default function CBTBuilder() {
                     });
                   }}
                 >
-                  <option value="JSS1">{t("JSS1 (Junior Secondary 1)")}</option>
-                  <option value="JSS2">{t("JSS2 (Junior Secondary 2)")}</option>
-                  <option value="JSS3">{t("JSS3 (Junior Secondary 3)")}</option>
                   <option value="SS1">{t("SS1 (Senior Secondary 1)")}</option>
                   <option value="SS2">{t("SS2 (Senior Secondary 2)")}</option>
                   <option value="SS3">{t("SS3 (Senior Secondary 3)")}</option>
@@ -693,7 +672,7 @@ export default function CBTBuilder() {
             <button
               onClick={handleCreateExam}
               disabled={!form.title || !form.course || loading}
-              className="w-full h-12 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition disabled:opacity-50 cursor-pointer shadow-md"
+              className="w-full h-12 rounded-xl bg-primary text-white font-bold hover:bg-primary/90 transition disabled:opacity-50 cursor-pointer shadow-md flex items-center justify-center gap-2"
             >
               {loading ? 'Creating...' : 'Create & Add Questions →'}
             </button>

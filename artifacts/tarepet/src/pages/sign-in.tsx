@@ -26,23 +26,27 @@ export default function SignIn() {
     setIsLoading(true);
 
     try {
-      // Connect directly to backend database via Django REST API
-      const res = await authClient.post("/auth/login/", { email, password });
+      // Connect to live Django backend (15s timeout to allow for Render free-tier cold start)
+      const res = await authClient.post("/auth/login/", { email, password }, { timeout: 15000 });
       const { access, refresh, user } = res.data;
       login(access, refresh, user);
-      const role = user?.role?.toLowerCase() || 'student';
-      setLocation(`/dashboard/${role}`);
+      const userRole = user?.role?.toLowerCase() || 'student';
+      setLocation(`/dashboard/${userRole}`);
     } catch (apiError: any) {
-      if (!apiError.response) {
-        // Fallback for offline/local development when backend API is unreachable
-        const lowerEmail = email.toLowerCase();
+      // Only fall back to demo mode on network/timeout errors (backend offline or cold-starting)
+      // For real auth errors (400/401/403), show the proper error message
+      const isNetworkError = !apiError.response || apiError.code === 'ECONNABORTED' || apiError.code === 'ERR_NETWORK';
+
+      if (isNetworkError) {
+        // Backend is offline — use demo login based on email pattern
+        const lowerEmail = email.toLowerCase().trim();
         let role: 'ADMIN' | 'TEACHER' | 'STUDENT' | 'PARENT' = 'STUDENT';
         if (lowerEmail.includes('admin')) role = 'ADMIN';
         else if (lowerEmail.includes('teacher')) role = 'TEACHER';
         else if (lowerEmail.includes('parent')) role = 'PARENT';
 
         const nameParts = email.split('@')[0].split('.');
-        const firstName = nameParts[0] ? nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1) : 'Student';
+        const firstName = nameParts[0] ? nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1) : role;
         const lastName = nameParts[1] ? nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1) : 'User';
 
         login('mock_access_token', 'mock_refresh_token', {
@@ -53,11 +57,17 @@ export default function SignIn() {
           role,
         });
         setLocation(`/dashboard/${role.toLowerCase()}`);
-        return;
-      } else if (apiError.response?.status === 401 || apiError.response?.status === 400) {
-        setError("Invalid email or password. Email format: firstname.surname@tarepet.com, Password: TMS/CLASS/FOUR DIGIT.");
       } else {
-        setError(apiError.response?.data?.detail || "An unexpected error occurred during authentication.");
+        // Real backend error — show message to user
+        const status = apiError.response?.status;
+        const detail = apiError.response?.data?.detail || apiError.response?.data?.non_field_errors?.[0];
+        if (status === 401 || status === 400) {
+          setError(detail || 'Invalid email or password. Please check your credentials and try again.');
+        } else if (status === 403) {
+          setError('Your account has been disabled. Please contact the school administrator.');
+        } else {
+          setError('An unexpected error occurred. Please try again.');
+        }
       }
     } finally {
       setIsLoading(false);

@@ -1,5 +1,6 @@
 // Central CBT & LMS Engine for Tare Pet Montessori School
-// All data lives in module-level memory. No localStorage. Syncs with backend API.
+// All data lives in module-level memory and localStorage sync. Syncs with backend API.
+import { addRealtimeNotification } from './notifications-store';
 
 export interface CBTQuestion {
   id: number;
@@ -171,8 +172,103 @@ export interface StudentRecord {
   house?: string;
 }
 
-// ── In-memory cache (no localStorage) ─────────────────────────────────────────
-let _exams: CBTExam[] = [];
+// ── Persistent CBT Exams Storage ──────────────────────────────────────────────
+const DEFAULT_CBT_EXAMS: CBTExam[] = [
+  {
+    id: 1001,
+    title: '1st Term Senior Mathematics Assessment',
+    description: 'Algebra, Quadratic Equations, and Trigonometry C.A. Test',
+    instructions: 'Select the best option for each question. Time limit is 45 minutes.',
+    course_code: 'MTH-101',
+    course_name: 'Mathematics',
+    class: 'SS1',
+    stream: 'Science',
+    assessment_type: 'TEST',
+    term: '1ST_TERM',
+    duration_minutes: 45,
+    questions_count: 5,
+    questions_per_page: 2,
+    teacher_name: 'Mr. Okonkwo Paul',
+    status: 'PENDING',
+    created_at: new Date().toISOString(),
+    questions: [
+      {
+        id: 1,
+        question_text: 'Solve for x in equation: 2x + 6 = 14',
+        option_a: 'x = 3',
+        option_b: 'x = 4',
+        option_c: 'x = 5',
+        option_d: 'x = 6',
+        correct_option: 'B',
+        points: 5,
+        explanation: '2x = 14 - 6 = 8, so x = 4'
+      },
+      {
+        id: 2,
+        question_text: 'What is the derivative of x^2 with respect to x?',
+        option_a: 'x',
+        option_b: '2x',
+        option_c: 'x^2',
+        option_d: '2',
+        correct_option: 'B',
+        points: 5,
+        explanation: 'd/dx(x^n) = n*x^(n-1), so d/dx(x^2) = 2x'
+      }
+    ]
+  },
+  {
+    id: 1002,
+    title: 'Senior Chemistry Mid-Term CBT Exam',
+    description: 'Periodic Table, Chemical Bonding, and Stoichiometric Calculations',
+    instructions: 'Read questions carefully. Answer all objective questions.',
+    course_code: 'CHM-101',
+    course_name: 'Chemistry',
+    class: 'SS2',
+    stream: 'Science',
+    assessment_type: 'EXAM',
+    term: '1ST_TERM',
+    duration_minutes: 60,
+    questions_count: 4,
+    questions_per_page: 2,
+    teacher_name: 'Mrs. Chioma Okafor',
+    status: 'PENDING',
+    created_at: new Date().toISOString(),
+    questions: [
+      {
+        id: 1,
+        question_text: 'Which element has atomic number 6?',
+        option_a: 'Nitrogen',
+        option_b: 'Carbon',
+        option_c: 'Oxygen',
+        option_d: 'Boron',
+        correct_option: 'B',
+        points: 5,
+        explanation: 'Carbon has atomic number 6.'
+      }
+    ]
+  }
+];
+
+function loadSavedExams(): CBTExam[] {
+  if (typeof window === 'undefined') return DEFAULT_CBT_EXAMS;
+  try {
+    const saved = localStorage.getItem('tarepet_cbt_exams');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {}
+  return DEFAULT_CBT_EXAMS;
+}
+
+function persistExams(exams: CBTExam[]) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem('tarepet_cbt_exams', JSON.stringify(exams));
+  } catch (e) {}
+}
+
+let _exams: CBTExam[] = loadSavedExams();
 let _submissions: CBTSubmission[] = [];
 let _activities: LMSActivity[] = [];
 let _students: StudentRecord[] = [
@@ -363,15 +459,18 @@ export function clearCBTStoreCache() {
 // ── Exam CRUD ─────────────────────────────────────────────────────────────────
 
 export function getStoredExams(): CBTExam[] {
+  _exams = loadSavedExams();
   return _exams;
 }
 
 export function saveStoredExams(exams: CBTExam[]) {
   _exams = exams;
+  persistExams(_exams);
   broadcastRealtimeEvent();
 }
 
 export function saveCBTExam(examData: Partial<CBTExam> & { title: string; course_code?: string }): CBTExam {
+  _exams = loadSavedExams();
   const foundCourse = SENIOR_COURSES.find(c => c.code === examData.course_code || c.name === examData.course_name) || SENIOR_COURSES[0];
 
   const newExam: CBTExam = {
@@ -401,12 +500,25 @@ export function saveCBTExam(examData: Partial<CBTExam> & { title: string; course
     _exams = [newExam, ..._exams];
   }
 
+  persistExams(_exams);
   broadcastRealtimeEvent();
+
   addRealtimeActivity('EXAM_CREATED', `CBT Exam Created: ${newExam.title}`, `Subject: ${newExam.course_name} (${newExam.class} ${newExam.stream})`, newExam.teacher_name);
+
+  // Send real-time notification alert to Admin
+  addRealtimeNotification({
+    title: '📝 Exam Pending Approval',
+    message: `${newExam.teacher_name} submitted "${newExam.title}" (${newExam.course_name} - ${newExam.class}) for Admin approval.`,
+    category: 'ACADEMICS',
+    type: 'exam',
+    recipientRole: 'ADMIN'
+  });
+
   return newExam;
 }
 
 export function updateExamStatus(examId: number, status: CBTExam['status'], reason?: string): CBTExam | null {
+  _exams = loadSavedExams();
   const exam = _exams.find(e => e.id === examId);
   if (!exam) return null;
 
@@ -416,21 +528,36 @@ export function updateExamStatus(examId: number, status: CBTExam['status'], reas
     addRealtimeActivity('EXAM_ACTIVATED', `Exam Activated for Students: ${exam.title}`, `Now live for ${exam.class} ${exam.stream} students.`, exam.teacher_name);
   } else if (status === 'APPROVED') {
     addRealtimeActivity('EXAM_APPROVED', `Admin Approved CBT Exam: ${exam.title}`, `Approved for ${exam.course_name} by Admin Suite.`, 'School Principal / Admin');
+    addRealtimeNotification({
+      title: '✅ Exam Approved',
+      message: `Admin approved CBT Exam "${exam.title}" (${exam.course_name} - ${exam.class}).`,
+      category: 'ACADEMICS',
+      type: 'exam',
+      recipientRole: 'TEACHER'
+    });
   } else if (status === 'REJECTED') {
     exam.rejection_reason = reason;
     addRealtimeActivity('EXAM_REJECTED', `Exam Returned for Revision: ${exam.title}`, `Reason: ${reason || 'Revision needed'}`, 'School Principal / Admin');
+    addRealtimeNotification({
+      title: '⚠️ Exam Returned for Revision',
+      message: `Exam "${exam.title}" was returned by Admin. Reason: ${reason || 'Revision needed'}`,
+      category: 'ACADEMICS',
+      type: 'exam',
+      recipientRole: 'TEACHER'
+    });
   }
 
-  _exams = [..._exams];
+  persistExams(_exams);
   broadcastRealtimeEvent();
   return exam;
 }
 
 export function setExamResultsReleased(examId: number, released: boolean): CBTExam | null {
+  _exams = loadSavedExams();
   const exam = _exams.find(e => e.id === examId);
   if (!exam) return null;
   exam.results_released = released;
-  _exams = [..._exams];
+  persistExams(_exams);
   broadcastRealtimeEvent();
   addRealtimeActivity(
     'EXAM_APPROVED',
@@ -539,25 +666,191 @@ export function getStudentSubmission(examId: number, studentIdentifier?: string)
   );
 }
 
+// ── Student CBT Attendance System ──────────────────────────────────────────────
+
+export interface CBTAttendanceRecord {
+  examId: number;
+  studentId: string;
+  studentName: string;
+  class: string;
+  stream: string;
+  markedPresent: boolean;
+  markedAt?: string;
+  markedBy?: string;
+}
+
+export interface CBTStudentInfo {
+  studentId: string;
+  studentName: string;
+  class: string;
+  stream: string;
+  regNo: string;
+  avatar?: string;
+}
+
+function loadSavedAttendance(): Record<string, CBTAttendanceRecord[]> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem('tarepet_cbt_attendance');
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return {};
+}
+
+let _examAttendance: Record<string, CBTAttendanceRecord[]> = loadSavedAttendance();
+
+function persistAttendance(att: Record<string, CBTAttendanceRecord[]>) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem('tarepet_cbt_attendance', JSON.stringify(att));
+  } catch (e) {}
+}
+
+export function getStudentsForClass(className: string = 'SS1', stream: string = 'Science'): CBTStudentInfo[] {
+  const c = className || 'SS1';
+  const s = stream || 'Science';
+
+  return [
+    { studentId: 'TMS/SS1/SCI/4821', studentName: 'Emeka Amadi', class: c, stream: s, regNo: '2025/4821', avatar: '👨‍🎓' },
+    { studentId: 'TMS/SS1/SCI/4822', studentName: 'Chisom Okeke', class: c, stream: s, regNo: '2025/4822', avatar: '👩‍🎓' },
+    { studentId: 'TMS/SS1/SCI/4823', studentName: 'Fatimah Bello', class: c, stream: s, regNo: '2025/4823', avatar: '👩‍🎓' },
+    { studentId: 'TMS/SS1/SCI/4824', studentName: 'Chidi Eze', class: c, stream: s, regNo: '2025/4824', avatar: '👨‍🎓' },
+    { studentId: 'TMS/SS1/SCI/4825', studentName: 'Grace Adebayo', class: c, stream: s, regNo: '2025/4825', avatar: '👩‍🎓' },
+    { studentId: 'TMS/SS1/SCI/4826', studentName: 'Tunde Bakare', class: c, stream: s, regNo: '2025/4826', avatar: '👨‍🎓' },
+    { studentId: 'TMS/SS1/SCI/4827', studentName: 'Nneka Nwosu', class: c, stream: s, regNo: '2025/4827', avatar: '👩‍🎓' },
+    { studentId: 'TMS/SS1/SCI/4828', studentName: 'Kofi Mensah', class: c, stream: s, regNo: '2025/4828', avatar: '👨‍🎓' },
+  ];
+}
+
+export function getExamAttendance(examId: number, className: string = 'SS1', stream: string = 'Science'): CBTAttendanceRecord[] {
+  _examAttendance = loadSavedAttendance();
+  const list = _examAttendance[String(examId)];
+  if (list && list.length > 0) return list;
+
+  // If no attendance saved yet for this exam, seed default attendance list
+  const defaultStudents = getStudentsForClass(className, stream);
+  const seeded: CBTAttendanceRecord[] = defaultStudents.map((s, idx) => ({
+    examId,
+    studentId: s.studentId,
+    studentName: s.studentName,
+    class: s.class,
+    stream: s.stream,
+    markedPresent: idx === 0, // Emeka Amadi marked present by default for demo
+    markedAt: new Date().toISOString(),
+    markedBy: 'Teacher Invigilator'
+  }));
+
+  _examAttendance[String(examId)] = seeded;
+  persistAttendance(_examAttendance);
+  return seeded;
+}
+
+export function setStudentExamAttendance(
+  examId: number,
+  studentId: string,
+  studentName: string,
+  className: string,
+  stream: string,
+  markedPresent: boolean,
+  markedBy: string = 'Teacher Invigilator'
+) {
+  _examAttendance = loadSavedAttendance();
+  const key = String(examId);
+  const list = getExamAttendance(examId, className, stream);
+  const existingIdx = list.findIndex(r => r.studentId.toLowerCase() === studentId.toLowerCase() || r.studentName.toLowerCase() === studentName.toLowerCase());
+
+  const rec: CBTAttendanceRecord = {
+    examId,
+    studentId,
+    studentName,
+    class: className,
+    stream,
+    markedPresent,
+    markedAt: new Date().toISOString(),
+    markedBy
+  };
+
+  if (existingIdx >= 0) {
+    list[existingIdx] = rec;
+  } else {
+    list.push(rec);
+  }
+
+  _examAttendance[key] = list;
+  persistAttendance(_examAttendance);
+  broadcastRealtimeEvent();
+}
+
+export function markAllStudentsAttendance(
+  examId: number,
+  students: { studentId: string; studentName: string; class: string; stream: string }[],
+  markedPresent: boolean,
+  markedBy: string = 'Teacher Invigilator'
+) {
+  _examAttendance = loadSavedAttendance();
+  const key = String(examId);
+  const list: CBTAttendanceRecord[] = students.map(s => ({
+    examId,
+    studentId: s.studentId,
+    studentName: s.studentName,
+    class: s.class,
+    stream: s.stream,
+    markedPresent,
+    markedAt: new Date().toISOString(),
+    markedBy
+  }));
+
+  _examAttendance[key] = list;
+  persistAttendance(_examAttendance);
+  broadcastRealtimeEvent();
+}
+
+export function isStudentMarkedPresent(examId: number, studentIdentifier: string): boolean {
+  _examAttendance = loadSavedAttendance();
+  const list = _examAttendance[String(examId)];
+  if (!list || list.length === 0) {
+    const seeded = getExamAttendance(examId);
+    const lower = studentIdentifier.trim().toLowerCase();
+    const found = seeded.find(r => r.studentId.toLowerCase() === lower || r.studentName.toLowerCase() === lower || lower.includes('emeka') || lower === 'student');
+    return found ? found.markedPresent : false;
+  }
+
+  const lower = studentIdentifier.trim().toLowerCase();
+  const record = list.find(
+    r => r.studentId.toLowerCase() === lower ||
+         r.studentName.toLowerCase() === lower ||
+         (lower.includes('emeka') && r.studentName.toLowerCase().includes('emeka')) ||
+         (lower === 'student' && r.studentName.toLowerCase().includes('emeka'))
+  );
+  return record ? record.markedPresent : false;
+}
+
 // ── Event subscription ────────────────────────────────────────────────────────
 
 export function subscribeToCBTStore(callback: () => void) {
   if (typeof window === 'undefined') return () => {};
 
+  const handleUpdate = () => {
+    _exams = loadSavedExams();
+    callback();
+  };
+
   const handleBcMessage = (event: MessageEvent) => {
     if (event.data && event.data.type === 'CBT_STORE_MUTATED') {
-      callback();
+      handleUpdate();
     }
   };
 
-  window.addEventListener('cbt_store_updated', callback);
+  window.addEventListener('cbt_store_updated', handleUpdate);
+  window.addEventListener('storage', handleUpdate);
 
   if (broadcastChannel) {
     try { broadcastChannel.addEventListener('message', handleBcMessage); } catch (e) { /* silence */ }
   }
 
   return () => {
-    window.removeEventListener('cbt_store_updated', callback);
+    window.removeEventListener('cbt_store_updated', handleUpdate);
+    window.removeEventListener('storage', handleUpdate);
     if (broadcastChannel) {
       try { broadcastChannel.removeEventListener('message', handleBcMessage); } catch (e) { /* silence */ }
     }

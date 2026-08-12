@@ -309,74 +309,116 @@ export function AdminManagementPanel() {
 
       {/* Add Sub-Admin Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-card w-full max-w-md rounded-2xl border border-border shadow-xl p-6 space-y-5">
-            <div className="flex items-center justify-between border-b border-border pb-3">
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-2xl w-full max-w-3xl flex flex-col md:flex-row overflow-hidden min-h-[480px]">
+            
+            {/* LEFT VERTICAL SIDEBAR STEPPER (Primary Palette DNB Pattern) */}
+            <div className="w-full md:w-64 bg-gradient-to-b from-primary/10 via-primary/5 to-slate-50 border-r border-primary/20 p-6 flex flex-col justify-between shrink-0">
               <div>
-                <h3 className="font-serif font-bold text-lg text-foreground">Create Sub-Admin Account</h3>
-                <p className="text-xs text-muted-foreground">Default password will be set to their Staff ID</p>
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="w-10 h-10 rounded-2xl bg-primary text-white flex items-center justify-center font-bold text-lg shadow-md shadow-primary/20">
+                    <Shield className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h2 className="font-serif font-bold text-sm text-slate-900 leading-tight">Tarepet Montessori</h2>
+                    <p className="text-[10px] font-extrabold uppercase tracking-wider text-primary">Sub-Admin Setup</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-7 h-7 rounded-full bg-primary text-white font-bold text-xs flex items-center justify-center ring-4 ring-primary/20 shadow-sm">1</div>
+                    <div>
+                      <p className="text-xs font-extrabold text-primary">Admin Details</p>
+                      <p className="text-[10px] text-slate-500">Name & Credentials</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-7 h-7 rounded-full bg-slate-100 text-slate-400 font-bold text-xs flex items-center justify-center border border-slate-200">2</div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-700">Privilege Level</p>
+                      <p className="text-[10px] text-slate-500">Access Scope</p>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <button onClick={() => setShowAddModal(false)} className="text-muted-foreground text-sm font-bold">✕</button>
+
+              <div className="pt-4 border-t border-primary/20 text-[11px] text-slate-600 font-medium">
+                Step <span className="font-bold text-primary">1</span> of 1
+              </div>
             </div>
 
-            <form onSubmit={handleCreateSubAdmin} className="space-y-4 text-xs">
+            {/* RIGHT FORM WORKSPACE */}
+            <div className="flex-1 flex flex-col justify-between bg-white p-6 md:p-8">
               <div>
-                <label className="font-bold text-foreground block mb-1">Full Name</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Mrs. Cynthia Egbe"
-                  value={form.name}
-                  onChange={e => setForm({ ...form, name: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
-                />
+                <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
+                  <div>
+                    <h3 className="font-serif font-bold text-xl text-slate-900">Create Sub-Admin Account</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">Default password will be set to their auto-generated Staff ID</p>
+                  </div>
+                  <button onClick={() => setShowAddModal(false)} className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition cursor-pointer">✕</button>
+                </div>
+
+                <form id="subAdminForm" onSubmit={handleCreateSubAdmin} className="space-y-5 text-xs">
+                  <div>
+                    <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-600 block mb-1.5">Full Name & Title <span className="text-rose-500">*</span></label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Mrs. Cynthia Egbe"
+                      value={form.name}
+                      onChange={e => setForm({ ...form, name: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-600 block mb-1.5">Official Email Address <span className="text-rose-500">*</span></label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="e.g. finance.bursar@tarepet.com"
+                      value={form.email}
+                      onChange={e => setForm({ ...form, email: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-extrabold uppercase tracking-wider text-slate-600 block mb-1.5">Access Role Privilege</label>
+                    <select
+                      value={form.role}
+                      onChange={e => setForm({ ...form, role: e.target.value as SubAdminUser['role'] })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                    >
+                      <option value="FINANCIAL_MANAGER">Financial Manager (Bursary & Finance Only)</option>
+                      <option value="PRINCIPAL">Principal (Academic & Student Records Only)</option>
+                      <option value="ADMIN_ASSISTANT">Admin Assistant (General Operations)</option>
+                    </select>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-800 text-[11px] leading-relaxed flex items-start gap-2">
+                    <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <span>User will receive credentials automatically and must update default password upon initial sign-in.</span>
+                  </div>
+                </form>
               </div>
 
-              <div>
-                <label className="font-bold text-foreground block mb-1">Official Email Address</label>
-                <input
-                  type="email"
-                  required
-                  placeholder="e.g. finance.bursar@tarepet.com"
-                  value={form.email}
-                  onChange={e => setForm({ ...form, email: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="font-bold text-foreground block mb-1">Access Role Privilege</label>
-                <select
-                  value={form.role}
-                  onChange={e => setForm({ ...form, role: e.target.value as SubAdminUser['role'] })}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-xs font-semibold focus:ring-2 focus:ring-primary outline-none"
-                >
-                  <option value="FINANCIAL_MANAGER">Financial Manager (Bursary & Finance Only)</option>
-                  <option value="PRINCIPAL">Principal (Academic & Student Records Only)</option>
-                  <option value="ADMIN_ASSISTANT">Admin Assistant (General Operations)</option>
-                </select>
-              </div>
-
-              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 text-[11px] leading-relaxed">
-                ℹ️ <strong>First Login Security:</strong> Sub-admins log in using their email & auto-generated Staff ID as default password. They will be immediately forced to configure their private password.
-              </div>
-
-              <div className="pt-2 flex justify-end gap-2 border-t border-border">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 border border-border rounded-xl font-bold hover:bg-muted"
-                >
+              <div className="pt-6 border-t border-slate-100 flex items-center justify-end gap-3 mt-6">
+                <button type="button" onClick={() => setShowAddModal(false)} className="px-4 py-2.5 border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition cursor-pointer">
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700"
+                  form="subAdminForm"
+                  disabled={!form.name || !form.email}
+                  className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl text-xs font-bold shadow-md transition disabled:opacity-50 cursor-pointer flex items-center gap-2"
                 >
-                  Create Sub-Admin
+                  <UserPlus className="w-4 h-4" /> Create Sub-Admin Account
                 </button>
               </div>
-            </form>
+            </div>
+
           </div>
         </div>
       )}

@@ -28,21 +28,48 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Session state lives entirely in memory — no localStorage
-  const [user, setUser] = useState<User | null>(null);
+  // Session state persisted in localStorage + sessionStorage to prevent unexpected logouts
+  const [user, setUser] = useState<User | null>(() => {
+    try {
+      const stored = localStorage.getItem('tarepet_auth_user') || sessionStorage.getItem('tarepet_auth_user');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.role) {
+          parsed.role = parsed.role.toUpperCase() as UserRole;
+        }
+        return parsed;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  });
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  // No localStorage restore on mount.
-  // If tokens exist in memory (same tab session), verify with /auth/me/.
-  // On page refresh tokens are cleared (by design — no localStorage).
   useEffect(() => {
-    setIsLoading(false);
-  }, []);
+    if (user) {
+      const normalizedUser = { ...user, role: user.role.toUpperCase() as UserRole };
+      localStorage.setItem('tarepet_auth_user', JSON.stringify(normalizedUser));
+      sessionStorage.setItem('tarepet_auth_user', JSON.stringify(normalizedUser));
+    } else {
+      localStorage.removeItem('tarepet_auth_user');
+      sessionStorage.removeItem('tarepet_auth_user');
+    }
+  }, [user]);
 
   const login = (accessToken: string, refreshToken: string, userData: User) => {
-    // Store tokens in memory only — never in localStorage
+    const normalizedUser = {
+      ...userData,
+      role: (userData.role || 'STUDENT').toUpperCase() as UserRole,
+    };
     setTokens(accessToken, refreshToken);
-    setUser(userData);
+    setUser(normalizedUser);
+    try {
+      localStorage.setItem('tarepet_auth_user', JSON.stringify(normalizedUser));
+      sessionStorage.setItem('tarepet_auth_user', JSON.stringify(normalizedUser));
+    } catch (err) {
+      console.warn('Could not persist auth session', err);
+    }
   };
 
   const logout = () => {
@@ -52,6 +79,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     clearTokens();
     setUser(null);
+    try {
+      localStorage.removeItem('tarepet_auth_user');
+      sessionStorage.removeItem('tarepet_auth_user');
+    } catch (err) {
+      console.warn('Could not clear auth storage', err);
+    }
     // safeRedirect ensures we only ever navigate within the same origin.
     const baseUrl = import.meta.env.BASE_URL || '/';
     const cleanBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
@@ -59,10 +92,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     safeRedirect(target);
   };
 
-  const isAdmin = user?.role === 'ADMIN';
-  const isTeacher = user?.role === 'TEACHER';
-  const isStudent = user?.role === 'STUDENT';
-  const isParent = user?.role === 'PARENT';
+  const roleUpper = (user?.role || '').toUpperCase();
+  const isAdmin = roleUpper === 'ADMIN';
+  const isTeacher = roleUpper === 'TEACHER';
+  const isStudent = roleUpper === 'STUDENT';
+  const isParent = roleUpper === 'PARENT';
 
   return (
     <AuthContext.Provider

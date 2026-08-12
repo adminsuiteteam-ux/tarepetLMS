@@ -12,7 +12,7 @@ services:
       - key: DEBUG
         value: "False"
       - key: ALLOWED_HOSTS
-        value: ".onrender.com,localhost,127.0.0.1"
+        value: ".onrender.com,localhost,127.0.0.1,tarepetmontessorischool.com,www.tarepetmontessorischool.com"
       - key: DATABASE_URL
         sync: false   # Set this manually in Render dashboard - paste your Layerbase PostgreSQL URL
       - key: ACCESS_TOKEN_LIFETIME_MINUTES
@@ -34,5 +34,7 @@ services:
     envVars:
       - key: VITE_API_URL
         value: "https://tarepet-backend-4iw6.onrender.com/api/v1"
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://tarepetmontessorischool.com,https://www.tarepetmontessorischool.com,https://tarepet-frontend.onrender.com,http://localhost:5173,http://localhost:3000"
       - key: NODE_VERSION
         value: "20.18.0"

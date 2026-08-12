@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from '@/i18n';
 import { Link } from 'wouter';
 import { authClient } from '@/lib/api-auth';
@@ -6,6 +6,19 @@ import { PortalLayout } from '@/components/layout/PortalLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, deleteStudent, syncStudentsWithBackend } from '@/lib/cbt-store';
 import { AdminManagementPanel } from '@/components/dashboard/AdminManagementPanel';
+import {
+  getPaymentItems,
+  getPaymentTransactions,
+  getStudentTransactions,
+  getStudentItemStatus,
+  getItemAmountForGrade,
+  updateFeeItemAmount,
+  savePaymentItem,
+  recordTransaction,
+  subscribeToPaymentStore,
+  PaymentItem,
+  PaymentTransaction
+} from '@/lib/payments-store';
 
 import {
   Users, BookOpen, Server, CheckCircle2,
@@ -19,7 +32,7 @@ import {
   Mail, Phone, MapPin, Calendar, Shield, GraduationCap, Award,
   Briefcase, UserCog, BookMarked, MessageSquare, KeyRound,
   BadgeCheck, Ban, RotateCcw, FileDown, Send, FlaskConical, Palette,
-  School, CalendarCheck, Megaphone, UserPlus, FileSpreadsheet, TrendingUp, Sparkles, ChevronRight, Eye, Layers, ShieldCheck, Bell, AlertTriangle, Key, Trophy, BarChart3, TrendingDown, XCircle
+  School, CalendarCheck, Megaphone, UserPlus, FileSpreadsheet, TrendingUp, Sparkles, ChevronRight, Eye, Layers, ShieldCheck, Bell, AlertTriangle, Key, Trophy, BarChart3, TrendingDown, XCircle, UploadCloud, Camera
 } from 'lucide-react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, LineChart, Line, CartesianGrid,
@@ -36,7 +49,21 @@ import {
 interface TabProps { id: string; label: string; icon: React.ReactNode; badge?: number }
 
 const MOCK_USERS: any[] = [];
-const MOCK_STUDENTS: any[] = [];
+const MOCK_STUDENTS: any[] = [
+  { id: 1, admissionNo: 'TMS/2026/NUR1/001', name: 'Amina Bello', grade: 'NUR1', gender: 'Female', stream: 'Nursery A', house: 'Blue House', parentPhone: '08031112233', parentName: 'Alhaji Bello' },
+  { id: 2, admissionNo: 'TMS/2026/NUR2/002', name: 'David Okon', grade: 'NUR2', gender: 'Male', stream: 'Nursery B', house: 'Green House', parentPhone: '08032223344', parentName: 'Mr. Okon' },
+  { id: 3, admissionNo: 'TMS/2026/PRI1/003', name: 'Chidi Eze', grade: 'PRI1', gender: 'Male', stream: 'Primary 1 Gold', house: 'Red House', parentPhone: '08033334455', parentName: 'Mrs. Eze' },
+  { id: 4, admissionNo: 'TMS/2026/PRI2/004', name: 'Zainab Usman', grade: 'PRI2', gender: 'Female', stream: 'Primary 2 Silver', house: 'Purple House', parentPhone: '08034445566', parentName: 'Mallam Usman' },
+  { id: 5, admissionNo: 'TMS/2026/PRI3/005', name: 'Kufre Akpan', grade: 'PRI3', gender: 'Male', stream: 'Primary 3 Diamond', house: 'Blue House', parentPhone: '08035556677', parentName: 'Chief Akpan' },
+  { id: 6, admissionNo: 'TMS/2026/PRI4/006', name: 'Emeka Nnamdi', grade: 'PRI4', gender: 'Male', stream: 'Primary 4 Pearl', house: 'Green House', parentPhone: '08036667788', parentName: 'Dr. Nnamdi' },
+  { id: 7, admissionNo: 'TMS/2026/PRI5/007', name: 'Blessing Adebayo', grade: 'PRI5', gender: 'Female', stream: 'Primary 5 Ruby', house: 'Red House', parentPhone: '08037778899', parentName: 'Pastor Adebayo' },
+  { id: 8, admissionNo: 'TMS/2026/JSS1/008', name: 'Chinedu Orji', grade: 'JSS1', gender: 'Male', stream: 'JSS 1 Alpha', house: 'Purple House', parentPhone: '08038889900', parentName: 'Mr. Orji' },
+  { id: 9, admissionNo: 'TMS/2026/JSS2/009', name: 'Fatima Danjuma', grade: 'JSS2', gender: 'Female', stream: 'JSS 2 Beta', house: 'Blue House', parentPhone: '08039990011', parentName: 'Mrs. Danjuma' },
+  { id: 10, admissionNo: 'TMS/2026/JSS3/010', name: 'Daniel Briggs', grade: 'JSS3', gender: 'Male', stream: 'JSS 3 Gamma', house: 'Green House', parentPhone: '08030001122', parentName: 'Engr. Briggs' },
+  { id: 11, admissionNo: 'TMS/2026/SS1/011', name: 'Tari Emmanuel', grade: 'SS1', gender: 'Male', stream: 'SS 1 Science', house: 'Red House', parentPhone: '08031234567', parentName: 'Prof. Emmanuel' },
+  { id: 12, admissionNo: 'TMS/2026/SS2/012', name: 'Grace Okereke', grade: 'SS2', gender: 'Female', stream: 'SS 2 Commercial', house: 'Purple House', parentPhone: '08032345678', parentName: 'Barr. Okereke' },
+  { id: 13, admissionNo: 'TMS/2026/SS3/013', name: 'Kenechukwu Obi', grade: 'SS3', gender: 'Male', stream: 'SS 3 Arts', house: 'Blue House', parentPhone: '08033456789', parentName: 'Chief Obi' },
+];
 const MOCK_SS_STUDENTS = MOCK_STUDENTS;
 const MOCK_TEACHERS: any[] = [];
 
@@ -367,24 +394,24 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
     onSave(created);
   };
 
-  const inputCls = 'w-full border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all';
-  const labelCls = 'text-[10px] font-extrabold uppercase tracking-wider text-slate-500 block mb-1.5';
+  const inputCls = 'w-full border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all';
+  const labelCls = 'text-[10px] font-extrabold uppercase tracking-wider text-slate-600 block mb-1.5';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
       <div className="bg-white rounded-3xl border border-slate-100 shadow-2xl w-full max-w-4xl flex flex-col md:flex-row overflow-hidden max-h-[92vh] min-h-[580px]">
 
-        {/* LEFT VERTICAL SIDEBAR STEPPER (DNB Design Pattern) */}
-        <div className="w-full md:w-72 bg-gradient-to-b from-[#ECFDF5] via-[#F4FBF7] to-[#E6F4ED] border-r border-teal-100/60 p-6 flex flex-col justify-between shrink-0">
+        {/* LEFT VERTICAL SIDEBAR STEPPER (Primary Palette DNB Pattern) */}
+        <div className="w-full md:w-72 bg-gradient-to-b from-primary/10 via-primary/5 to-slate-50 border-r border-primary/20 p-6 flex flex-col justify-between shrink-0">
           <div>
             {/* Header Brand */}
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-10 h-10 rounded-2xl bg-teal-600 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-teal-600/20">
-                🎓
+              <div className="w-10 h-10 rounded-2xl bg-primary text-white flex items-center justify-center font-bold text-lg shadow-md shadow-primary/20">
+                <GraduationCap className="w-5 h-5 text-white" />
               </div>
               <div>
                 <h2 className="font-serif font-bold text-sm text-slate-900 leading-tight">Tarepet Montessori</h2>
-                <p className="text-[10px] font-extrabold uppercase tracking-wider text-teal-700">Teacher Registration</p>
+                <p className="text-[10px] font-extrabold uppercase tracking-wider text-primary">Teacher Registration</p>
               </div>
             </div>
 
@@ -399,16 +426,16 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                     {/* Connecting Vertical Line */}
                     {idx < WIZARD_STEPS.length - 1 && (
                       <div className={`absolute left-4 top-8 bottom-0 w-0.5 transition-colors ${
-                        isCompleted ? 'bg-teal-600' : 'bg-slate-200'
+                        isCompleted ? 'bg-primary' : 'bg-slate-200'
                       }`} />
                     )}
 
                     {/* Step Icon Badge */}
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-all z-10 ${
                       isActive
-                        ? 'bg-teal-600 text-white ring-4 ring-teal-100 shadow-sm'
+                        ? 'bg-primary text-white ring-4 ring-primary/20 shadow-sm'
                         : isCompleted
-                          ? 'bg-teal-600 text-white'
+                          ? 'bg-primary text-white'
                           : 'bg-white text-slate-400 border border-slate-200'
                     }`}>
                       {isCompleted ? '✓' : s.step}
@@ -417,7 +444,7 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                     {/* Step Text Label */}
                     <div className="min-w-0 pt-0.5">
                       <p className={`text-xs font-bold transition-colors ${
-                        isActive ? 'text-teal-900 font-extrabold' : isCompleted ? 'text-slate-800 font-semibold' : 'text-slate-400'
+                        isActive ? 'text-primary font-extrabold' : isCompleted ? 'text-slate-800 font-semibold' : 'text-slate-400'
                       }`}>
                         {s.label}
                       </p>
@@ -429,8 +456,8 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
             </div>
           </div>
 
-          <div className="pt-4 border-t border-teal-200/40 text-[11px] text-teal-800/80 font-medium">
-            Step <span className="font-bold text-teal-900">{step}</span> of 5
+          <div className="pt-4 border-t border-primary/20 text-[11px] text-slate-600 font-medium">
+            Step <span className="font-bold text-primary">{step}</span> of 5
           </div>
         </div>
 
@@ -455,58 +482,87 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
             {step === 1 && (
               <div className="space-y-4">
 
-                {/* Profile Photo Uploader Section */}
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 flex items-center gap-5">
-                  <div className="relative shrink-0">
-                    <div className="w-20 h-20 rounded-2xl bg-white border-2 border-teal-200 shadow-sm flex items-center justify-center overflow-hidden">
-                      {form.profileImage ? (
-                        <img src={form.profileImage} alt="Teacher Avatar" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-teal-50 text-teal-700 font-serif font-bold text-xl flex items-center justify-center">
-                          {form.name ? form.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() : 'TC'}
-                        </div>
-                      )}
+                {/* Modern Drag & Drop Profile Photo Uploader Section */}
+                <div className="bg-slate-50/80 p-5 rounded-3xl border border-slate-200/80 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Teacher Profile Photo</h4>
+                      <p className="text-[11px] text-slate-500">Upload a high-resolution headshot or paste an image URL.</p>
                     </div>
-                    <label htmlFor="wizardPhotoUpload" className="absolute -bottom-1 -right-1 w-7 h-7 bg-teal-600 hover:bg-teal-700 text-white rounded-full flex items-center justify-center shadow-md cursor-pointer transition">
-                      <Upload className="w-3.5 h-3.5" />
-                    </label>
+                    {form.profileImage && (
+                      <button
+                        type="button"
+                        onClick={() => setF('profileImage', '')}
+                        className="px-3 py-1 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition border border-rose-200 cursor-pointer"
+                      >
+                        Remove Photo
+                      </button>
+                    )}
                   </div>
 
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <label htmlFor="wizardPhotoUpload" className="px-3.5 py-1.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl cursor-pointer shadow-xs transition inline-flex items-center gap-1.5">
-                        <Upload className="w-3.5 h-3.5" /> Upload Teacher Photo
-                      </label>
-                      {form.profileImage && (
-                        <button type="button" onClick={() => setF('profileImage', '')} className="px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl transition">
-                          Remove
-                        </button>
-                      )}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
+                    {/* Left Live Avatar Preview Card */}
+                    <div className="flex flex-col items-center justify-center p-4 bg-white rounded-2xl border border-slate-200/80 shadow-xs">
+                      <div className="relative group">
+                        <div className="w-24 h-24 rounded-2xl bg-gradient-to-tr from-primary/20 via-primary/5 to-slate-100 ring-4 ring-primary/20 shadow-md flex items-center justify-center overflow-hidden transition-transform group-hover:scale-105">
+                          {form.profileImage ? (
+                            <img src={form.profileImage} alt="Teacher Preview" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="text-primary font-serif font-bold text-2xl tracking-wider">
+                              {form.name ? form.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() : 'TC'}
+                            </div>
+                          )}
+                        </div>
+                        <label
+                          htmlFor="wizardPhotoUpload"
+                          className="absolute -bottom-1.5 -right-1.5 w-8 h-8 bg-primary hover:bg-primary/90 text-white rounded-full flex items-center justify-center shadow-lg cursor-pointer transition-transform hover:scale-110"
+                        >
+                          <Camera className="w-4 h-4" />
+                        </label>
+                      </div>
+                      <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400 mt-2.5">
+                        {form.profileImage ? 'Photo Attached' : 'No Photo Selected'}
+                      </span>
                     </div>
-                    <input
-                      type="file"
-                      id="wizardPhotoUpload"
-                      accept="image/jpeg,image/png,image/webp,image/svg+xml"
-                      className="hidden"
-                      onChange={e => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          if (file.size > 5 * 1024 * 1024) { alert('Image size exceeds 5MB'); return; }
-                          const reader = new FileReader();
-                          reader.onloadend = () => setF('profileImage', reader.result as string);
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                    />
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-semibold text-slate-400">Or Image URL:</span>
+
+                    {/* Right Modern Drag-and-Drop Dropzone */}
+                    <div className="sm:col-span-2 space-y-3">
+                      <label
+                        htmlFor="wizardPhotoUpload"
+                        className="border-2 border-dashed border-primary/30 hover:border-primary bg-primary/5 hover:bg-primary/10 transition-all rounded-2xl p-4 text-center cursor-pointer block group shadow-2xs"
+                      >
+                        <UploadCloud className="w-8 h-8 text-primary mx-auto mb-1.5 group-hover:scale-110 transition-transform" />
+                        <p className="text-xs font-bold text-slate-800">
+                          Click to browse <span className="text-primary">or drag & drop photo here</span>
+                        </p>
+                        <p className="text-[10px] text-slate-500 mt-0.5 font-medium">Supports PNG, JPG, WEBP or SVG (Max 5MB)</p>
+                      </label>
                       <input
-                        type="url"
-                        className="flex-1 border border-slate-200 rounded-lg px-2.5 py-1 text-xs bg-white focus:outline-none focus:border-teal-500"
-                        value={form.profileImage.startsWith('data:') ? '' : form.profileImage}
-                        onChange={e => setF('profileImage', e.target.value)}
-                        placeholder="https://example.com/photo.jpg"
+                        type="file"
+                        id="wizardPhotoUpload"
+                        accept="image/jpeg,image/png,image/webp,image/svg+xml"
+                        className="hidden"
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            if (file.size > 5 * 1024 * 1024) { alert('Image size exceeds 5MB'); return; }
+                            const reader = new FileReader();
+                            reader.onloadend = () => setF('profileImage', reader.result as string);
+                            reader.readAsDataURL(file);
+                          }
+                        }}
                       />
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 shrink-0">Or Image URL:</span>
+                        <input
+                          type="url"
+                          className="flex-1 border border-slate-200 rounded-xl px-3 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                          value={form.profileImage.startsWith('data:') ? '' : form.profileImage}
+                          onChange={e => setF('profileImage', e.target.value)}
+                          placeholder="https://example.com/photo.jpg"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -579,7 +635,7 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                         onChange={e => setF('isFormTeacher', e.target.value)}
                         className="w-4 h-4 text-teal-600 focus:ring-teal-500"
                       />
-                      <span>🔘 Yes, Form Teacher</span>
+                      <span>Yes, Form Teacher</span>
                     </label>
 
                     <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-800">
@@ -591,7 +647,7 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                         onChange={e => setF('isFormTeacher', e.target.value)}
                         className="w-4 h-4 text-teal-600 focus:ring-teal-500"
                       />
-                      <span>🔘 No, Subject Teacher Only</span>
+                      <span>No, Subject Teacher Only</span>
                     </label>
                   </div>
 
@@ -735,7 +791,7 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                 <button
                   onClick={() => setStep(s => s + 1)}
                   disabled={step === 1 && (!form.name || !form.email)}
-                  className="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold shadow-md transition disabled:opacity-50 cursor-pointer"
+                  className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl text-xs font-bold shadow-md transition disabled:opacity-50 cursor-pointer"
                 >
                   Next Step →
                 </button>
@@ -743,7 +799,7 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                 <button
                   onClick={handleSave}
                   disabled={!form.name || !form.email}
-                  className="px-7 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold shadow-md transition flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+                  className="px-7 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl text-xs font-bold shadow-md transition flex items-center gap-2 disabled:opacity-50 cursor-pointer"
                 >
                   <CheckCircle2 className="w-4 h-4" /> Complete Registration
                 </button>
@@ -956,8 +1012,8 @@ const AwardPointsModal = ({ house, onClose }: { house: any; onClose: () => void 
             </div>
           </>
         ) : (
-          <div className="text-center py-4">
-            <div className="text-5xl mb-4">🏆</div>
+          <div className="text-center py-4 flex flex-col items-center justify-center">
+            <Trophy className="w-12 h-12 text-amber-500 mb-4" />
             <h4 className="font-serif font-bold text-xl text-foreground">{pts} Points Awarded!</h4>
             <p className="text-muted-foreground text-sm mt-1">{house.name} now has {house.points + parseInt(pts)} total points.</p>
             <button onClick={onClose} className="mt-5 bg-primary text-white px-8 py-2.5 rounded-xl font-medium hover:bg-primary/90 transition-colors">{t('housePoints.done')}</button>
@@ -1658,14 +1714,31 @@ export default function AdminDashboard() {
   });
   const [marksheetSaveAlert, setMarksheetSaveAlert] = useState(false);
 
-  // Fee Ledger & Payment State
-  const [feeLedgerState, setFeeLedgerState] = useState<any[]>(() => {
-    const saved = null;
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) {}
-    }
-    return [];
-  });
+  // Fee Ledger & Payment Real-time State
+  const [adminPaymentItems, setAdminPaymentItems] = useState<PaymentItem[]>(() => getPaymentItems());
+  const [adminTransactions, setAdminTransactions] = useState<PaymentTransaction[]>(() => getPaymentTransactions());
+  const [selectedReviewStudent, setSelectedReviewStudent] = useState<any | null>(null);
+  const [bursaryClassFilter, setBursaryClassFilter] = useState<string>('ALL');
+  const [bursaryStatusFilter, setBursaryStatusFilter] = useState<string>('ALL');
+  const [bursarySearchQuery, setBursarySearchQuery] = useState<string>('');
+  const [selectedFeeToEdit, setSelectedFeeToEdit] = useState<string>('school_fees');
+  const [feeTargetGrade, setFeeTargetGrade] = useState<string>('ALL');
+  const [feeEditAmountInput, setFeeEditAmountInput] = useState<number>(0);
+  const [feeUpdateSuccessAlert, setFeeUpdateSuccessAlert] = useState<string | null>(null);
+  const [showAddFeePricesModal, setShowAddFeePricesModal] = useState(false);
+  const [feePricesModalClass, setFeePricesModalClass] = useState<string>('ALL');
+  const [feePricesInputs, setFeePricesInputs] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    const syncPayments = () => {
+      setAdminPaymentItems(getPaymentItems());
+      setAdminTransactions(getPaymentTransactions());
+    };
+    syncPayments();
+    const unsub = subscribeToPaymentStore(syncPayments);
+    return () => unsub();
+  }, []);
+
   const [showAddPaymentModal, setShowAddPaymentModal] = useState(false);
   const [paymentForm, setPaymentForm] = useState({ studentId: 1, amount: 0, method: 'Bank Transfer', reference: '' });
   const [receiptModalData, setReceiptModalData] = useState<any>(null);
@@ -1685,13 +1758,21 @@ export default function AdminDashboard() {
   // Finance & Bursary State
   const [financeTab, setFinanceTab] = useState<'overview' | 'income' | 'expenses' | 'budget'>('overview');
   const [financeExpenses, setFinanceExpenses] = useState<any[]>(() => {
-    const saved = null;
-    if (saved) { try { return JSON.parse(saved); } catch (e) {} }
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('tarepet_finance_expenses');
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+    }
     return [];
   });
   const [financeIncome, setFinanceIncome] = useState<any[]>(() => {
-    const saved = null;
-    if (saved) { try { return JSON.parse(saved); } catch (e) {} }
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('tarepet_finance_income');
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+    }
     return [];
   });
   const [showAddExpenseModal, setShowAddExpenseModal] = useState(false);
@@ -3078,26 +3159,10 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
       if (!selectedExamClass || !selectedExamStream) {
         const EXAM_DIVISIONS = [
           {
-            key: 'NURSERY_PRIMARY',
-            title: 'Nursery & Primary Exams',
-            subtitle: 'Nursery 1–3, Primary 1–5',
-            description: 'Formative assessments and class tests for early childhood and elementary levels.',
-            icon: School,
-            classes: STUDENT_CLASSES.filter(c => c.key.startsWith('NUR') || c.key.startsWith('PRI')),
-          },
-          {
-            key: 'JSS',
-            title: 'Junior Secondary Exams',
-            subtitle: 'JSS 1, JSS 2, JSS 3',
-            description: 'C.A. Tests, mock examinations, and BECE prep assessments for JSS levels.',
-            icon: BookOpen,
-            classes: STUDENT_CLASSES.filter(c => c.key.startsWith('JSS')),
-          },
-          {
             key: 'SS',
-            title: 'Senior Secondary Exams',
+            title: 'Senior Secondary CBT Exams',
             subtitle: 'SS 1, SS 2, SS 3 (Science & Art)',
-            description: 'Terminal examinations, WAEC/NECO mock tests, and science/art stream assessments.',
+            description: 'Exclusive CBT examinations, WAEC/NECO mock tests, and science/art stream assessments for Senior Secondary students (SS1–SS3).',
             icon: GraduationCap,
             classes: STUDENT_CLASSES.filter(c => c.key.startsWith('SS')),
           },
@@ -6567,184 +6632,300 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
 
             {/* ── TAB C: Bursary & Fee Payment Ledger ── */}
             {resultsViewTab === 'fees' && (
-              <div className="bg-card rounded-2xl border border-border shadow-sm p-6 space-y-5">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border">
-                  <div>
-                    <h4 className="font-bold text-base text-foreground">Bursary & Fee Payment Ledger</h4>
-                    <p className="text-xs text-muted-foreground">Track tuition payments, balances, and print receipts for {resultsSelectedClass}.</p>
-                  </div>
-                  <button
-                    onClick={() => setShowAddPaymentModal(true)}
-                    className="px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition-colors flex items-center gap-1.5 shadow-sm"
-                  >
-                    <DollarSign className="w-4 h-4" /> Log Student Fee Payment
-                  </button>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs text-left">
-                    <thead className="bg-muted/40 text-muted-foreground uppercase text-[10px] tracking-wider">
-                      <tr>
-                        <th className="py-3 px-3">Admission No & Name</th>
-                        <th className="py-3 px-3 text-right">Term Fee</th>
-                        <th className="py-3 px-3 text-right">Amount Paid</th>
-                        <th className="py-3 px-3 text-right">Balance Due</th>
-                        <th className="py-3 px-3 text-center">Status</th>
-                        <th className="py-3 px-3 text-right">Receipt & Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {classStudents.map(std => {
-                        const feeRec = feeLedgerState.find(f => f.studentId === std.id) || {
-                          totalAmount: resultsSelectedClass.startsWith('JSS') ? 53000 : 65000,
-                          paidAmount: 0,
-                          status: 'UNPAID',
-                          lastDate: '—',
-                          method: '—',
-                          receiptNo: '—',
-                        };
-                        const balance = feeRec.totalAmount - feeRec.paidAmount;
-
-                        return (
-                          <tr key={std.id} className="hover:bg-muted/10">
-                            <td className="py-3.5 px-3">
-                              <p className="font-mono font-bold text-primary">{std.admissionNo}</p>
-                              <p className="font-bold text-foreground text-sm">{std.name}</p>
-                            </td>
-                            <td className="py-3.5 px-3 text-right font-mono font-bold text-foreground">₦{feeRec.totalAmount.toLocaleString()}</td>
-                            <td className="py-3.5 px-3 text-right font-mono font-bold text-emerald-600">₦{feeRec.paidAmount.toLocaleString()}</td>
-                            <td className="py-3.5 px-3 text-right font-mono font-bold text-rose-600">₦{balance.toLocaleString()}</td>
-                            <td className="py-3.5 px-3 text-center">
-                              <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${
-                                feeRec.status === 'PAID' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200' :
-                                feeRec.status === 'PARTIAL' ? 'bg-amber-500/10 text-amber-600 border-amber-200' :
-                                'bg-rose-500/10 text-rose-600 border-rose-200'
-                              }`}>
-                                {feeRec.status}
-                              </span>
-                            </td>
-                            <td className="py-3.5 px-3 text-right">
-                              {feeRec.paidAmount > 0 ? (
-                                <button
-                                  onClick={() => setReceiptModalData({ ...feeRec, studentName: std.name, admissionNo: std.admissionNo, grade: std.grade })}
-                                  className="px-3 py-1.5 bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-white rounded-xl font-bold text-[11px] transition-all inline-flex items-center gap-1"
-                                >
-                                  <Printer className="w-3.5 h-3.5" /> Print Receipt
-                                </button>
-                              ) : (
-                                <span className="text-[11px] text-muted-foreground italic">No Payment Yet</span>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Add Payment Modal */}
-                {showAddPaymentModal && (
-                  <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-                    <div className="bg-card rounded-2xl border border-border p-6 shadow-2xl max-w-md w-full space-y-5 animate-in fade-in zoom-in duration-200">
-                      <div className="flex items-center justify-between pb-3 border-b border-border">
-                        <h3 className="font-serif font-bold text-lg text-foreground">Log Student Fee Payment</h3>
-                        <button onClick={() => setShowAddPaymentModal(false)} className="p-1 rounded-lg text-muted-foreground hover:bg-accent">
-                          <X className="w-5 h-5" />
-                        </button>
+              <div className="space-y-6">
+                {/* 1. ADMIN FEE AMOUNT SETUP FORM */}
+                <div className="bg-card rounded-2xl border border-border shadow-sm p-6 space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border">
+                    <div>
+                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold mb-1">
+                        <Settings className="w-3.5 h-3.5" /> Admin Financial Control
                       </div>
+                      <h4 className="font-serif font-bold text-lg text-foreground">Configure Individual Fee Amounts</h4>
+                      <p className="text-xs text-muted-foreground">Set official amounts for tuition, boarding, exams, uniform, bus, and lab fees. Changes update student portals in real-time.</p>
+                    </div>
+                  </div>
 
-                      <div className="space-y-4 text-xs">
-                        <div>
-                          <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Select Student</label>
-                          <select
-                            value={paymentForm.studentId}
-                            onChange={e => setPaymentForm({ ...paymentForm, studentId: Number(e.target.value) })}
-                            className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground font-bold focus:ring-2 focus:ring-primary"
-                          >
-                            {classStudents.map(s => (
-                              <option key={s.id} value={s.id}>{s.name} ({s.admissionNo})</option>
-                            ))}
-                          </select>
+                  {feeUpdateSuccessAlert && (
+                    <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-xs font-bold flex items-center justify-between animate-in fade-in">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>{feeUpdateSuccessAlert}</span>
+                      </div>
+                      <button onClick={() => setFeeUpdateSuccessAlert(null)} className="text-xs">✕</button>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-muted/20 p-4 rounded-2xl border border-border">
+                    <div>
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Target Class / Level</label>
+                      <select
+                        value={feeTargetGrade}
+                        onChange={e => {
+                          const targetG = e.target.value;
+                          setFeeTargetGrade(targetG);
+                          const it = adminPaymentItems.find(i => i.id === selectedFeeToEdit);
+                          if (it) {
+                            const val = getItemAmountForGrade(it, targetG);
+                            setFeeEditAmountInput(val);
+                          }
+                        }}
+                        className="w-full border border-border rounded-xl px-3 py-2.5 bg-card text-foreground text-xs font-bold focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="ALL">🌐 All Classes (Default Fallback)</option>
+                        <option value="NUR1">🧸 Nursery 1</option>
+                        <option value="NUR2">🧸 Nursery 2</option>
+                        <option value="PRI1">🎒 Primary 1</option>
+                        <option value="PRI2">🎒 Primary 2</option>
+                        <option value="PRI3">🎒 Primary 3</option>
+                        <option value="PRI4">🎒 Primary 4</option>
+                        <option value="PRI5">🎒 Primary 5</option>
+                        <option value="JSS1">📘 JSS 1</option>
+                        <option value="JSS2">📘 JSS 2</option>
+                        <option value="JSS3">📘 JSS 3</option>
+                        <option value="SS1">🎓 SS 1</option>
+                        <option value="SS2">🎓 SS 2</option>
+                        <option value="SS3">🎓 SS 3</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Select Fee Category / Item</label>
+                      <select
+                        value={selectedFeeToEdit}
+                        onChange={e => {
+                          const itemId = e.target.value;
+                          setSelectedFeeToEdit(itemId);
+                          const it = adminPaymentItems.find(i => i.id === itemId);
+                          if (it) {
+                            const val = getItemAmountForGrade(it, feeTargetGrade);
+                            setFeeEditAmountInput(val);
+                          }
+                        }}
+                        className="w-full border border-border rounded-xl px-3 py-2.5 bg-card text-foreground text-xs font-bold focus:ring-2 focus:ring-primary"
+                      >
+                        {adminPaymentItems.map(item => {
+                          const currentVal = getItemAmountForGrade(item, feeTargetGrade);
+                          return (
+                            <option key={item.id} value={item.id}>
+                              {item.name} ({item.category}) — {feeTargetGrade === 'ALL' ? 'General' : feeTargetGrade}: ₦{currentVal.toLocaleString()}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Set Amount (₦ NGN)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="Enter amount e.g. 85000"
+                        value={feeEditAmountInput || ''}
+                        onChange={e => setFeeEditAmountInput(Number(e.target.value))}
+                        className="w-full border border-border rounded-xl px-3 py-2.5 bg-card text-foreground text-xs font-bold focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+
+                    <div className="flex items-end">
+                      <button
+                        onClick={() => {
+                          const targetItem = adminPaymentItems.find(i => i.id === selectedFeeToEdit);
+                          if (!targetItem) return;
+                          updateFeeItemAmount(selectedFeeToEdit, feeEditAmountInput, feeTargetGrade);
+                          const targetLabel = feeTargetGrade === 'ALL' ? 'All Classes' : `Class ${feeTargetGrade}`;
+                          setFeeUpdateSuccessAlert(`Updated amount for "${targetItem.name}" (${targetLabel}) to ₦${feeEditAmountInput.toLocaleString()} across all portals!`);
+                          setTimeout(() => setFeeUpdateSuccessAlert(null), 4000);
+                        }}
+                        className="w-full py-2.5 px-3 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                      >
+                        <CheckCircle2 className="w-4 h-4" /> Save & Publish Amount
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Summary grid of all configured fee items */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 pt-2">
+                    {adminPaymentItems.map(item => {
+                      const displayVal = getItemAmountForGrade(item, feeTargetGrade);
+                      const hasOverrides = item.gradeAmounts && Object.keys(item.gradeAmounts).length > 0;
+                      return (
+                        <div key={item.id} className={`p-3 rounded-xl border text-xs transition-all ${displayVal > 0 ? 'bg-card border-border' : 'bg-amber-500/5 border-amber-500/20'}`}>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold text-muted-foreground block truncate">{item.name}</span>
+                            {hasOverrides && (
+                              <span className="text-[8px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-primary/10 text-primary">By Class</span>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between mt-1">
+                            <span className={`font-serif font-bold ${displayVal > 0 ? 'text-foreground' : 'text-amber-600'}`}>
+                              {displayVal > 0 ? `₦${displayVal.toLocaleString()}` : 'Not Configured'}
+                            </span>
+                            <button
+                              onClick={() => {
+                                setSelectedFeeToEdit(item.id);
+                                setFeeEditAmountInput(displayVal);
+                              }}
+                              className="text-[10px] font-bold text-primary hover:underline"
+                            >
+                              Edit
+                            </button>
+                          </div>
                         </div>
+                      );
+                    })}
+                  </div>
+                </div>
 
-                        <div>
-                          <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Amount Paid (₦)</label>
-                          <input
-                            type="number"
-                            placeholder="e.g. 53000"
-                            value={paymentForm.amount || ''}
-                            onChange={e => setPaymentForm({ ...paymentForm, amount: Number(e.target.value) })}
-                            className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground font-bold focus:ring-2 focus:ring-primary"
-                          />
-                        </div>
+                {/* 2. ALL-STUDENTS FINANCIAL STATUS LEDGER (NURSERY TO SS3) */}
+                <div className="bg-card rounded-2xl border border-border shadow-sm p-6 space-y-5">
+                  <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-border">
+                    <div>
+                      <h4 className="font-serif font-bold text-lg text-foreground">All-Students Financial Status Ledger</h4>
+                      <p className="text-xs text-muted-foreground">Monitor payment statuses, inspect student balances, and review financial profiles from Nursery to SS3.</p>
+                    </div>
+                    <button
+                      onClick={() => setShowAddPaymentModal(true)}
+                      className="px-4 py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition-colors flex items-center gap-1.5 shadow-sm"
+                    >
+                      <DollarSign className="w-4 h-4" /> Log Manual Payment
+                    </button>
+                  </div>
 
-                        <div>
-                          <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Payment Method</label>
-                          <select
-                            value={paymentForm.method}
-                            onChange={e => setPaymentForm({ ...paymentForm, method: e.target.value })}
-                            className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground font-bold focus:ring-2 focus:ring-primary"
-                          >
-                            <option value="Bank Transfer">Bank Transfer</option>
-                            <option value="Cash">Cash (Bursar Office)</option>
-                            <option value="Online (Flutterwave)">Online (Flutterwave)</option>
-                            <option value="POS Terminal">POS Terminal</option>
-                          </select>
-                        </div>
+                  {/* Filters & Search Toolbar */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <div>
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Filter Class / Grade</label>
+                      <select
+                        value={bursaryClassFilter}
+                        onChange={e => setBursaryClassFilter(e.target.value)}
+                        className="w-full border border-border rounded-xl px-3 py-2 bg-card text-foreground font-bold focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="ALL">All Classes (Nursery to SS3)</option>
+                        <option value="NUR1">Nursery 1</option>
+                        <option value="NUR2">Nursery 2</option>
+                        <option value="PRI1">Primary 1</option>
+                        <option value="PRI2">Primary 2</option>
+                        <option value="PRI3">Primary 3</option>
+                        <option value="PRI4">Primary 4</option>
+                        <option value="PRI5">Primary 5</option>
+                        <option value="JSS1">JSS 1</option>
+                        <option value="JSS2">JSS 2</option>
+                        <option value="JSS3">JSS 3</option>
+                        <option value="SS1">SS 1</option>
+                        <option value="SS2">SS 2</option>
+                        <option value="SS3">SS 3</option>
+                      </select>
+                    </div>
 
-                        <div className="flex gap-3 pt-2">
-                          <button
-                            onClick={() => {
-                              const std = classStudents.find(s => s.id === paymentForm.studentId);
-                              if (std && paymentForm.amount > 0) {
-                                const totalAmt = resultsSelectedClass.startsWith('JSS') ? 53000 : 65000;
-                                const existingIndex = feeLedgerState.findIndex(f => f.studentId === std.id);
-                                const newPaid = (existingIndex >= 0 ? feeLedgerState[existingIndex].paidAmount : 0) + paymentForm.amount;
-                                const newStatus = newPaid >= totalAmt ? 'PAID' : newPaid > 0 ? 'PARTIAL' : 'UNPAID';
+                    <div>
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Filter Financial Status</label>
+                      <select
+                        value={bursaryStatusFilter}
+                        onChange={e => setBursaryStatusFilter(e.target.value)}
+                        className="w-full border border-border rounded-xl px-3 py-2 bg-card text-foreground font-bold focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="ALL">All Financial Statuses</option>
+                        <option value="PAID">Fully Paid</option>
+                        <option value="PARTIAL">Partially Paid</option>
+                        <option value="OWING">Owing / Unpaid</option>
+                      </select>
+                    </div>
 
-                                const newRecord = {
-                                  id: Date.now(),
-                                  studentId: std.id,
-                                  name: std.name,
-                                  admissionNo: std.admissionNo,
-                                  class: resultsSelectedClass,
-                                  totalAmount: totalAmt,
-                                  paidAmount: newPaid,
-                                  status: newStatus,
-                                  lastDate: new Date().toISOString().split('T')[0],
-                                  method: paymentForm.method,
-                                  receiptNo: `RCP-2026-${Math.floor(100 + Math.random() * 900)}`,
-                                };
-
-                                let updatedLedger;
-                                if (existingIndex >= 0) {
-                                  updatedLedger = [...feeLedgerState];
-                                  updatedLedger[existingIndex] = newRecord;
-                                } else {
-                                  updatedLedger = [...feeLedgerState, newRecord];
-                                }
-                                setFeeLedgerState(updatedLedger);
-                                
-                                setShowAddPaymentModal(false);
-                              } else {
-                                alert('Please enter a valid amount!');
-                              }
-                            }}
-                            className="flex-1 py-3 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition-all"
-                          >
-                            Record Payment & Save
-                          </button>
-                          <button
-                            onClick={() => setShowAddPaymentModal(false)}
-                            className="px-5 py-3 border border-border rounded-xl text-xs font-bold hover:bg-accent transition-all"
-                          >
-                            Cancel
-                          </button>
-                        </div>
+                    <div>
+                      <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Search Student</label>
+                      <div className="relative">
+                        <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-muted-foreground" />
+                        <input
+                          type="text"
+                          placeholder="Search name or admission no…"
+                          value={bursarySearchQuery}
+                          onChange={e => setBursarySearchQuery(e.target.value)}
+                          className="w-full border border-border rounded-xl pl-9 pr-3 py-2 bg-card text-foreground font-bold focus:ring-2 focus:ring-primary"
+                        />
                       </div>
                     </div>
                   </div>
-                )}
+
+                  {/* Student Financial Ledger Table */}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-muted/40 text-muted-foreground uppercase text-[10px] tracking-wider">
+                        <tr>
+                          <th className="py-3 px-3">Admission No & Name</th>
+                          <th className="py-3 px-3">Class</th>
+                          <th className="py-3 px-3 text-right">Total Fee Configured</th>
+                          <th className="py-3 px-3 text-right">Amount Paid</th>
+                          <th className="py-3 px-3 text-right">Balance Due</th>
+                          <th className="py-3 px-3 text-center">Status</th>
+                          <th className="py-3 px-3 text-right">Financial Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {MOCK_STUDENTS.filter(std => {
+                          if (bursaryClassFilter !== 'ALL' && std.grade !== bursaryClassFilter) return false;
+                          if (bursarySearchQuery) {
+                            const q = bursarySearchQuery.toLowerCase();
+                            const matchName = std.name.toLowerCase().includes(q);
+                            const matchAdm = std.admissionNo.toLowerCase().includes(q);
+                            if (!matchName && !matchAdm) return false;
+                          }
+                          // Compute status
+                          const reqItems = adminPaymentItems.filter(i => i.isRequired);
+                          const totalFeeAssigned = reqItems.reduce((s, i) => s + i.amount, 0);
+                          const stdTxs = getStudentTransactions(std.id).filter(t => t.status === 'SUCCESS');
+                          const paidAmt = stdTxs.reduce((s, t) => s + t.amount, 0);
+                          const balance = Math.max(0, totalFeeAssigned - paidAmt);
+                          const status = totalFeeAssigned === 0 ? 'UNCONFIGURED' : balance === 0 ? 'PAID' : paidAmt > 0 ? 'PARTIAL' : 'OWING';
+
+                          if (bursaryStatusFilter !== 'ALL' && status !== bursaryStatusFilter) return false;
+                          return true;
+                        }).map(std => {
+                          const reqItems = adminPaymentItems.filter(i => i.isRequired);
+                          const totalFeeAssigned = reqItems.reduce((s, i) => s + i.amount, 0);
+                          const stdTxs = getStudentTransactions(std.id).filter(t => t.status === 'SUCCESS');
+                          const paidAmt = stdTxs.reduce((s, t) => s + t.amount, 0);
+                          const balance = Math.max(0, totalFeeAssigned - paidAmt);
+                          const status = totalFeeAssigned === 0 ? 'UNCONFIGURED' : balance === 0 ? 'PAID' : paidAmt > 0 ? 'PARTIAL' : 'OWING';
+
+                          return (
+                            <tr key={std.id} className="hover:bg-muted/10">
+                              <td className="py-3.5 px-3">
+                                <p className="font-mono font-bold text-primary">{std.admissionNo}</p>
+                                <p className="font-bold text-foreground text-sm">{std.name}</p>
+                              </td>
+                              <td className="py-3.5 px-3 font-semibold text-muted-foreground">{std.grade} ({std.stream})</td>
+                              <td className="py-3.5 px-3 text-right font-mono font-bold text-foreground">
+                                {totalFeeAssigned > 0 ? `₦${totalFeeAssigned.toLocaleString()}` : <span className="text-amber-600 text-[10px]">Unset</span>}
+                              </td>
+                              <td className="py-3.5 px-3 text-right font-mono font-bold text-emerald-600">₦{paidAmt.toLocaleString()}</td>
+                              <td className="py-3.5 px-3 text-right font-mono font-bold text-rose-600">₦{balance.toLocaleString()}</td>
+                              <td className="py-3.5 px-3 text-center">
+                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${
+                                  status === 'PAID' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200' :
+                                  status === 'PARTIAL' ? 'bg-amber-500/10 text-amber-600 border-amber-200' :
+                                  status === 'OWING' ? 'bg-rose-500/10 text-rose-600 border-rose-200' :
+                                  'bg-slate-500/10 text-slate-600 border-slate-200'
+                                }`}>
+                                  {status}
+                                </span>
+                              </td>
+                              <td className="py-3.5 px-3 text-right">
+                                <button
+                                  onClick={() => setSelectedReviewStudent(std)}
+                                  className="px-3 py-1.5 bg-primary text-white hover:bg-primary/90 rounded-xl font-bold text-[11px] transition-all inline-flex items-center gap-1 shadow-sm"
+                                >
+                                  <Eye className="w-3.5 h-3.5" /> Review Financial Status
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
 
                 {/* Printable Receipt Modal */}
                 {receiptModalData && (
@@ -6825,8 +7006,6 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                   </div>
                 )}
               </div>
-            )}
-          </div>
         );
       }
 
@@ -7328,28 +7507,81 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
       );
     }
     if (activeSection === 'finance') {
-      const totalIncome = financeIncome.reduce((s: number, r: any) => s + r.amount, 0);
-      const totalExpenses = financeExpenses.reduce((s: number, r: any) => s + r.amount, 0);
+      const feeIncomeTotal = adminTransactions
+        .filter(t => t.status === 'SUCCESS')
+        .reduce((s: number, t: any) => s + (Number(t.amount) || 0), 0);
+      const manualIncomeTotal = financeIncome.reduce((s: number, r: any) => s + (Number(r.amount) || 0), 0);
+      const totalIncome = feeIncomeTotal + manualIncomeTotal;
+
+      const totalExpenses = financeExpenses.reduce((s: number, r: any) => s + (Number(r.amount) || 0), 0);
       const netBalance = totalIncome - totalExpenses;
-      const pendingExp = financeExpenses.filter((e: any) => e.status === 'PENDING').reduce((s: number, r: any) => s + r.amount, 0);
+      const pendingExp = financeExpenses.filter((e: any) => e.status === 'PENDING').reduce((s: number, r: any) => s + (Number(r.amount) || 0), 0);
 
       const EXPENSE_CATEGORIES = ['Salaries', 'Utilities', 'Infrastructure', 'Academic', 'Sports', 'Transport', 'Admin', 'Other'];
       const INCOME_CATEGORIES = ['School Fees', 'Levies', 'Exam Fees', 'Donations', 'Grants', 'Other'];
 
-      const chartData = [
-        { month: 'Sep', income: 4200000, expenses: 3100000 },
-        { month: 'Oct', income: 3800000, expenses: 3400000 },
-        { month: 'Nov', income: 2100000, expenses: 2800000 },
-        { month: 'Dec', income: 1200000, expenses: 1950000 },
-        { month: 'Jan', income: totalIncome, expenses: totalExpenses },
-      ];
+      // Dynamic real-time chart data calculation for the last 5 months
+      const chartData = (() => {
+        const months: { month: string; income: number; expenses: number }[] = [];
+        const now = new Date();
+        for (let i = 4; i >= 0; i--) {
+          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+          const mName = d.toLocaleString('default', { month: 'short' });
+          const targetMonth = d.getMonth();
+          const targetYear = d.getFullYear();
 
-      const fmtCurrency = (v: number) => '₦' + v.toLocaleString();
+          const monthIncomeRecs = financeIncome
+            .filter((r: any) => {
+              if (!r.date) return false;
+              const rd = new Date(r.date);
+              return rd.getMonth() === targetMonth && rd.getFullYear() === targetYear;
+            })
+            .reduce((s: number, r: any) => s + (Number(r.amount) || 0), 0);
+
+          const monthFeeTxs = adminTransactions
+            .filter((t: any) => {
+              if (t.status !== 'SUCCESS' || !t.paidAt) return false;
+              const td = new Date(t.paidAt);
+              return td.getMonth() === targetMonth && td.getFullYear() === targetYear;
+            })
+            .reduce((s: number, t: any) => s + (Number(t.amount) || 0), 0);
+
+          const monthExpenses = financeExpenses
+            .filter((e: any) => {
+              if (!e.date) return false;
+              const ed = new Date(e.date);
+              return ed.getMonth() === targetMonth && ed.getFullYear() === targetYear;
+            })
+            .reduce((s: number, e: any) => s + (Number(e.amount) || 0), 0);
+
+          months.push({
+            month: mName,
+            income: monthIncomeRecs + monthFeeTxs,
+            expenses: monthExpenses
+          });
+        }
+        return months;
+      })();
+
+      const fmtCurrency = (v: number) => '₦' + (v || 0).toLocaleString();
 
       const expCatBreakdown = EXPENSE_CATEGORIES.map(cat => ({
         cat,
-        total: financeExpenses.filter((e: any) => e.category === cat).reduce((s: number, r: any) => s + r.amount, 0),
+        total: financeExpenses.filter((e: any) => e.category === cat).reduce((s: number, r: any) => s + (Number(r.amount) || 0), 0),
       })).filter(c => c.total > 0);
+
+      const combinedIncomeRecords = [
+        ...adminTransactions.filter(t => t.status === 'SUCCESS').map((t: any) => ({
+          id: t.id,
+          ref: t.reference || t.id,
+          description: `Fee Payment: ${t.studentName} (${t.itemName})`,
+          category: 'School Fees',
+          date: t.paidAt ? t.paidAt.split('T')[0] : new Date().toISOString().split('T')[0],
+          status: 'RECEIVED',
+          amount: t.amount
+        })),
+        ...financeIncome
+      ].sort((a: any, b: any) => (b.date || '').localeCompare(a.date || ''));
 
       return (
         <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
@@ -7361,7 +7593,21 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
               </h2>
               <p className="text-xs text-muted-foreground mt-0.5">Track school revenue, expenditure, fee collections, and budget planning.</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => {
+                  const currentItems = getPaymentItems();
+                  const initialMap: Record<string, number> = {};
+                  currentItems.forEach(item => {
+                    initialMap[item.id] = getItemAmountForGrade(item, feePricesModalClass);
+                  });
+                  setFeePricesInputs(initialMap);
+                  setShowAddFeePricesModal(true);
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary/90 shadow-sm transition-all"
+              >
+                <Settings className="w-4 h-4" /> Set All Fee Prices
+              </button>
               <button
                 onClick={() => { setShowAddIncomeModal(true); setIncomeForm({ description: '', category: 'School Fees', amount: '', status: 'RECEIVED' }); }}
                 className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 shadow-sm transition-colors"
@@ -7387,8 +7633,8 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
           {/* KPI Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label: 'Total Income', value: fmtCurrency(totalIncome), sub: 'This term', color: 'text-emerald-600', bg: 'bg-emerald-500/5', border: 'border-emerald-200', icon: <TrendingUp className="w-5 h-5" />, arrow: true },
-              { label: 'Total Expenses', value: fmtCurrency(totalExpenses), sub: 'This term', color: 'text-rose-600', bg: 'bg-rose-500/5', border: 'border-rose-200', icon: <ArrowDownRight className="w-5 h-5" />, arrow: false },
+              { label: 'Total Income', value: fmtCurrency(totalIncome), sub: 'Real-time revenue', color: 'text-emerald-600', bg: 'bg-emerald-500/5', border: 'border-emerald-200', icon: <TrendingUp className="w-5 h-5" />, arrow: true },
+              { label: 'Total Expenses', value: fmtCurrency(totalExpenses), sub: 'Recorded expenses', color: 'text-rose-600', bg: 'bg-rose-500/5', border: 'border-rose-200', icon: <ArrowDownRight className="w-5 h-5" />, arrow: false },
               { label: 'Net Balance', value: fmtCurrency(netBalance), sub: netBalance >= 0 ? 'Surplus' : 'Deficit', color: netBalance >= 0 ? 'text-primary' : 'text-orange-600', bg: 'bg-primary/5', border: 'border-primary/20', icon: <DollarSign className="w-5 h-5" />, arrow: netBalance >= 0 },
               { label: 'Pending Payments', value: fmtCurrency(pendingExp), sub: `${financeExpenses.filter((e: any) => e.status === 'PENDING').length} items`, color: 'text-amber-600', bg: 'bg-amber-500/5', border: 'border-amber-200', icon: <Clock className="w-5 h-5" />, arrow: false },
             ].map(kpi => (
@@ -7430,7 +7676,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                   <BarChart data={chartData} barGap={4}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                    <YAxis tick={{ fontSize: 10 }} tickFormatter={(v: number) => '₦' + (v / 1000000).toFixed(1) + 'M'} />
+                    <YAxis tick={{ fontSize: 10 }} tickFormatter={(v: number) => '₦' + (v >= 1000000 ? (v / 1000000).toFixed(1) + 'M' : (v / 1000).toFixed(0) + 'k')} />
                     <Tooltip formatter={(v: number) => fmtCurrency(v)} />
                     <Bar dataKey="income" fill="hsl(142 76% 36%)" name="Income" radius={[4, 4, 0, 0]} />
                     <Bar dataKey="expenses" fill="hsl(0 84% 60%)" name="Expenses" radius={[4, 4, 0, 0]} />
@@ -7441,51 +7687,59 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
               {/* Expense breakdown table */}
               <div className="bg-card rounded-2xl border border-border p-5 shadow-sm">
                 <h3 className="font-serif font-bold text-sm text-foreground mb-4">Expense Category Breakdown</h3>
-                <div className="space-y-2">
-                  {expCatBreakdown.map(({ cat, total }) => (
-                    <div key={cat} className="flex items-center gap-3">
-                      <span className="text-xs font-semibold text-muted-foreground w-28 shrink-0">{cat}</span>
-                      <div className="flex-1 bg-muted/30 rounded-full h-2 overflow-hidden">
-                        <div
-                          className="h-full bg-primary/70 rounded-full"
-                          style={{ width: `${Math.min(100, (total / totalExpenses) * 100).toFixed(1)}%` }}
-                        />
+                {expCatBreakdown.length > 0 ? (
+                  <div className="space-y-2">
+                    {expCatBreakdown.map(({ cat, total }) => (
+                      <div key={cat} className="flex items-center gap-3">
+                        <span className="text-xs font-semibold text-muted-foreground w-28 shrink-0">{cat}</span>
+                        <div className="flex-1 bg-muted/30 rounded-full h-2 overflow-hidden">
+                          <div
+                            className="h-full bg-primary/70 rounded-full"
+                            style={{ width: `${Math.min(100, (total / (totalExpenses || 1)) * 100).toFixed(1)}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-bold text-foreground w-28 text-right shrink-0">{fmtCurrency(total)}</span>
+                        <span className="text-[10px] text-muted-foreground w-10 text-right shrink-0">{((total / (totalExpenses || 1)) * 100).toFixed(0)}%</span>
                       </div>
-                      <span className="text-xs font-bold text-foreground w-28 text-right shrink-0">{fmtCurrency(total)}</span>
-                      <span className="text-[10px] text-muted-foreground w-10 text-right shrink-0">{((total / totalExpenses) * 100).toFixed(0)}%</span>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground italic py-4 text-center">No expense categories logged yet. Click 'Add Expense' above to record school expenditures.</p>
+                )}
               </div>
 
               {/* Recent transactions */}
               <div className="bg-card rounded-2xl border border-border p-5 shadow-sm">
                 <h3 className="font-serif font-bold text-sm text-foreground mb-4">Recent Transactions</h3>
-                <div className="space-y-2">
-                  {[...financeIncome.slice(0, 3).map((r: any) => ({ ...r, type: 'income' })), ...financeExpenses.slice(0, 3).map((r: any) => ({ ...r, type: 'expense' }))]
-                    .sort((a, b) => b.date.localeCompare(a.date))
-                    .map((tx: any) => (
-                      <div key={tx.ref} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
-                            tx.type === 'income' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'
+                {combinedIncomeRecords.length > 0 || financeExpenses.length > 0 ? (
+                  <div className="space-y-2">
+                    {[...combinedIncomeRecords.slice(0, 3).map((r: any) => ({ ...r, type: 'income' })), ...financeExpenses.slice(0, 3).map((r: any) => ({ ...r, type: 'expense' }))]
+                      .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
+                      .map((tx: any) => (
+                        <div key={tx.ref} className="flex items-center justify-between py-2.5 border-b border-border/50 last:border-0">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                              tx.type === 'income' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'
+                            }`}>
+                              {tx.type === 'income' ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-foreground">{tx.description}</p>
+                              <p className="text-[10px] text-muted-foreground">{tx.ref} · {tx.date}</p>
+                            </div>
+                          </div>
+                          <span className={`text-sm font-bold font-serif ${
+                            tx.type === 'income' ? 'text-emerald-600' : 'text-rose-600'
                           }`}>
-                            {tx.type === 'income' ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
-                          </div>
-                          <div>
-                            <p className="text-xs font-bold text-foreground">{tx.description}</p>
-                            <p className="text-[10px] text-muted-foreground">{tx.ref} · {tx.date}</p>
-                          </div>
+                            {tx.type === 'income' ? '+' : '-'}{fmtCurrency(tx.amount)}
+                          </span>
                         </div>
-                        <span className={`text-sm font-bold font-serif ${
-                          tx.type === 'income' ? 'text-emerald-600' : 'text-rose-600'
-                        }`}>
-                          {tx.type === 'income' ? '+' : '-'}{fmtCurrency(tx.amount)}
-                        </span>
-                      </div>
-                    ))
-                  }
-                </div>
+                      ))
+                    }
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground italic py-4 text-center">No recent financial transactions recorded yet.</p>
+                )}
               </div>
             </div>
           )}
@@ -7498,40 +7752,48 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                 <span className="text-xs font-bold text-emerald-600 bg-emerald-500/10 px-3 py-1 rounded-full">Total: {fmtCurrency(totalIncome)}</span>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-muted/30 text-muted-foreground uppercase text-[10px] tracking-wider">
-                    <tr>
-                      <th className="py-3 px-4">Ref No.</th>
-                      <th className="py-3 px-4">Description</th>
-                      <th className="py-3 px-4">Category</th>
-                      <th className="py-3 px-4">Date</th>
-                      <th className="py-3 px-4">Status</th>
-                      <th className="py-3 px-4 text-right">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {financeIncome.map((row: any) => (
-                      <tr key={row.id} className="hover:bg-muted/20">
-                        <td className="py-3 px-4 font-mono font-bold text-primary text-[10px]">{row.ref}</td>
-                        <td className="py-3 px-4 font-semibold text-foreground">{row.description}</td>
-                        <td className="py-3 px-4 text-muted-foreground">{row.category}</td>
-                        <td className="py-3 px-4 text-muted-foreground">{row.date}</td>
-                        <td className="py-3 px-4">
-                          <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-200">
-                            {row.status}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-right font-bold text-emerald-600 font-serif">{fmtCurrency(row.amount)}</td>
+                {combinedIncomeRecords.length > 0 ? (
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-muted/30 text-muted-foreground uppercase text-[10px] tracking-wider">
+                      <tr>
+                        <th className="py-3 px-4">Ref No.</th>
+                        <th className="py-3 px-4">Description</th>
+                        <th className="py-3 px-4">Category</th>
+                        <th className="py-3 px-4">Date</th>
+                        <th className="py-3 px-4">Status</th>
+                        <th className="py-3 px-4 text-right">Amount</th>
                       </tr>
-                    ))}
-                  </tbody>
-                  <tfoot className="bg-muted/30">
-                    <tr>
-                      <td colSpan={5} className="py-3 px-4 text-xs font-bold text-foreground text-right">Total Income</td>
-                      <td className="py-3 px-4 text-right font-bold text-emerald-700 font-serif text-sm">{fmtCurrency(totalIncome)}</td>
-                    </tr>
-                  </tfoot>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {combinedIncomeRecords.map((row: any) => (
+                        <tr key={row.id} className="hover:bg-muted/20">
+                          <td className="py-3 px-4 font-mono font-bold text-primary text-[10px]">{row.ref}</td>
+                          <td className="py-3 px-4 font-semibold text-foreground">{row.description}</td>
+                          <td className="py-3 px-4 text-muted-foreground">{row.category}</td>
+                          <td className="py-3 px-4 text-muted-foreground">{row.date}</td>
+                          <td className="py-3 px-4">
+                            <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-200">
+                              {row.status}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-right font-bold text-emerald-600 font-serif">{fmtCurrency(row.amount)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot className="bg-muted/30">
+                      <tr>
+                        <td colSpan={5} className="py-3 px-4 text-xs font-bold text-foreground text-right">Total Income</td>
+                        <td className="py-3 px-4 text-right font-bold text-emerald-700 font-serif text-sm">{fmtCurrency(totalIncome)}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                ) : (
+                  <div className="p-8 text-center space-y-2">
+                    <DollarSign className="w-8 h-8 text-muted-foreground/30 mx-auto" />
+                    <p className="text-xs font-bold text-foreground">No income records logged yet</p>
+                    <p className="text-[11px] text-muted-foreground">Student fee payments and added income will appear here automatically.</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -7544,61 +7806,71 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                 <span className="text-xs font-bold text-rose-600 bg-rose-500/10 px-3 py-1 rounded-full">Total: {fmtCurrency(totalExpenses)}</span>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-muted/30 text-muted-foreground uppercase text-[10px] tracking-wider">
-                    <tr>
-                      <th className="py-3 px-4">Ref No.</th>
-                      <th className="py-3 px-4">Description</th>
-                      <th className="py-3 px-4">Category</th>
-                      <th className="py-3 px-4">Date</th>
-                      <th className="py-3 px-4">Status</th>
-                      <th className="py-3 px-4 text-right">Amount</th>
-                      <th className="py-3 px-4 text-center">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {financeExpenses.map((row: any) => (
-                      <tr key={row.id} className="hover:bg-muted/20">
-                        <td className="py-3 px-4 font-mono font-bold text-primary text-[10px]">{row.ref}</td>
-                        <td className="py-3 px-4 font-semibold text-foreground">{row.description}</td>
-                        <td className="py-3 px-4 text-muted-foreground">{row.category}</td>
-                        <td className="py-3 px-4 text-muted-foreground">{row.date}</td>
-                        <td className="py-3 px-4">
-                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
-                            row.status === 'PAID'
-                              ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200'
-                              : 'bg-amber-500/10 text-amber-600 border-amber-200'
-                          }`}>
-                            {row.status}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-right font-bold text-rose-600 font-serif">{fmtCurrency(row.amount)}</td>
-                        <td className="py-3 px-4 text-center">
-                          <button
-                            onClick={() => {
-                              if (row.status === 'PENDING') {
-                                const updated = financeExpenses.map((e: any) => e.id === row.id ? { ...e, status: 'PAID' } : e);
-                                setFinanceExpenses(updated);
-                                
-                              }
-                            }}
-                            disabled={row.status === 'PAID'}
-                            className="text-[10px] font-bold px-2.5 py-1 rounded-lg border border-border hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                          >
-                            {row.status === 'PAID' ? '✓ Settled' : 'Mark Paid'}
-                          </button>
-                        </td>
+                {financeExpenses.length > 0 ? (
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-muted/30 text-muted-foreground uppercase text-[10px] tracking-wider">
+                      <tr>
+                        <th className="py-3 px-4">Ref No.</th>
+                        <th className="py-3 px-4">Description</th>
+                        <th className="py-3 px-4">Category</th>
+                        <th className="py-3 px-4">Date</th>
+                        <th className="py-3 px-4">Status</th>
+                        <th className="py-3 px-4 text-right">Amount</th>
+                        <th className="py-3 px-4 text-center">Action</th>
                       </tr>
-                    ))}
-                  </tbody>
-                  <tfoot className="bg-muted/30">
-                    <tr>
-                      <td colSpan={5} className="py-3 px-4 text-xs font-bold text-foreground text-right">Total Expenses</td>
-                      <td className="py-3 px-4 text-right font-bold text-rose-700 font-serif text-sm">{fmtCurrency(totalExpenses)}</td>
-                      <td />
-                    </tr>
-                  </tfoot>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {financeExpenses.map((row: any) => (
+                        <tr key={row.id} className="hover:bg-muted/20">
+                          <td className="py-3 px-4 font-mono font-bold text-primary text-[10px]">{row.ref}</td>
+                          <td className="py-3 px-4 font-semibold text-foreground">{row.description}</td>
+                          <td className="py-3 px-4 text-muted-foreground">{row.category}</td>
+                          <td className="py-3 px-4 text-muted-foreground">{row.date}</td>
+                          <td className="py-3 px-4">
+                            <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                              row.status === 'PAID'
+                                ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200'
+                                : 'bg-amber-500/10 text-amber-600 border-amber-200'
+                            }`}>
+                              {row.status}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-right font-bold text-rose-600 font-serif">{fmtCurrency(row.amount)}</td>
+                          <td className="py-3 px-4 text-center">
+                            <button
+                              onClick={() => {
+                                if (row.status === 'PENDING') {
+                                  const updated = financeExpenses.map((e: any) => e.id === row.id ? { ...e, status: 'PAID' } : e);
+                                  setFinanceExpenses(updated);
+                                  if (typeof window !== 'undefined') {
+                                    localStorage.setItem('tarepet_finance_expenses', JSON.stringify(updated));
+                                  }
+                                }
+                              }}
+                              disabled={row.status === 'PAID'}
+                              className="text-[10px] font-bold px-2.5 py-1 rounded-lg border border-border hover:bg-muted/50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            >
+                              {row.status === 'PAID' ? '✓ Settled' : 'Mark Paid'}
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot className="bg-muted/30">
+                      <tr>
+                        <td colSpan={5} className="py-3 px-4 text-xs font-bold text-foreground text-right">Total Expenses</td>
+                        <td className="py-3 px-4 text-right font-bold text-rose-700 font-serif text-sm">{fmtCurrency(totalExpenses)}</td>
+                        <td />
+                      </tr>
+                    </tfoot>
+                  </table>
+                ) : (
+                  <div className="p-8 text-center space-y-2">
+                    <TrendingDown className="w-8 h-8 text-muted-foreground/30 mx-auto" />
+                    <p className="text-xs font-bold text-foreground">No expense records logged yet</p>
+                    <p className="text-[11px] text-muted-foreground">Click 'Add Expense' above to record school expenditures.</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -7637,6 +7909,112 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                       </div>
                     );
                   })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── SET ALL FEE PRICES MODAL ── */}
+          {showAddFeePricesModal && (
+            <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+              <div className="bg-card border border-border rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                <div className="p-5 border-b border-border flex items-center justify-between bg-muted/20">
+                  <div>
+                    <h3 className="font-serif font-bold text-lg text-foreground flex items-center gap-2">
+                      <Settings className="w-5 h-5 text-primary" /> Configure All School Fee Prices
+                    </h3>
+                    <p className="text-xs text-muted-foreground">Set and publish amounts for all school fees (Tuition, Boarding, WAEC, NECO, Uniform, Books, Bus, etc.).</p>
+                  </div>
+                  <button onClick={() => setShowAddFeePricesModal(false)} className="p-2 rounded-xl text-muted-foreground hover:bg-muted/50 transition-colors"><X className="w-5 h-5" /></button>
+                </div>
+
+                <div className="p-6 overflow-y-auto space-y-6 flex-1">
+                  {/* Class Target Selector */}
+                  <div className="bg-primary/5 p-4 rounded-2xl border border-primary/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <label className="text-xs font-bold uppercase text-primary block mb-0.5">Target Class Level</label>
+                      <p className="text-[11px] text-muted-foreground">Select a specific class to set custom fees or select 'All Classes' for general fallback.</p>
+                    </div>
+                    <select
+                      value={feePricesModalClass}
+                      onChange={e => {
+                        const targetG = e.target.value;
+                        setFeePricesModalClass(targetG);
+                        const currentItems = getPaymentItems();
+                        const map: Record<string, number> = {};
+                        currentItems.forEach(item => {
+                          map[item.id] = getItemAmountForGrade(item, targetG);
+                        });
+                        setFeePricesInputs(map);
+                      }}
+                      className="border border-border rounded-xl px-3 py-2 bg-card text-foreground text-xs font-bold focus:ring-2 focus:ring-primary shrink-0 min-w-[200px]"
+                    >
+                      <option value="ALL">🌐 All Classes (Default Fallback)</option>
+                      <option value="NUR1">🧸 Nursery 1</option>
+                      <option value="NUR2">🧸 Nursery 2</option>
+                      <option value="PRI1">🎒 Primary 1</option>
+                      <option value="PRI2">🎒 Primary 2</option>
+                      <option value="PRI3">🎒 Primary 3</option>
+                      <option value="PRI4">🎒 Primary 4</option>
+                      <option value="PRI5">🎒 Primary 5</option>
+                      <option value="JSS1">📘 JSS 1</option>
+                      <option value="JSS2">📘 JSS 2</option>
+                      <option value="JSS3">📘 JSS 3</option>
+                      <option value="SS1">🎓 SS 1</option>
+                      <option value="SS2">🎓 SS 2</option>
+                      <option value="SS3">🎓 SS 3</option>
+                    </select>
+                  </div>
+
+                  {/* Fee Items List Form */}
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Fee Schedule Items ({adminPaymentItems.length})</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {adminPaymentItems.map(item => {
+                        const currentVal = feePricesInputs[item.id] ?? 0;
+                        return (
+                          <div key={item.id} className="p-3.5 rounded-xl border border-border bg-muted/10 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-xs text-foreground truncate">{item.name}</span>
+                              <span className="text-[9px] font-mono px-2 py-0.5 rounded bg-muted text-muted-foreground">{item.category}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-muted-foreground font-mono">₦</span>
+                              <input
+                                type="number"
+                                min="0"
+                                placeholder="0"
+                                value={currentVal || ''}
+                                onChange={e => {
+                                  const val = Number(e.target.value);
+                                  setFeePricesInputs(prev => ({ ...prev, [item.id]: val }));
+                                }}
+                                className="w-full px-3 py-1.5 rounded-lg border border-border bg-card text-xs font-mono font-bold focus:ring-2 focus:ring-primary focus:outline-none"
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-5 border-t border-border bg-muted/20 flex items-center justify-between">
+                  <button onClick={() => setShowAddFeePricesModal(false)} className="px-4 py-2 rounded-xl border border-border text-xs font-semibold hover:bg-muted transition-colors">Cancel</button>
+                  <button
+                    onClick={() => {
+                      Object.entries(feePricesInputs).forEach(([itemId, amount]) => {
+                        updateFeeItemAmount(itemId, Number(amount) || 0, feePricesModalClass);
+                      });
+                      const targetName = feePricesModalClass === 'ALL' ? 'All Classes' : `Class ${feePricesModalClass}`;
+                      setFinanceSaveAlert(`Successfully published updated fee prices for ${targetName}!`);
+                      setShowAddFeePricesModal(false);
+                      setTimeout(() => setFinanceSaveAlert(''), 4000);
+                    }}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary/90 shadow-sm transition-colors"
+                  >
+                    <CheckCircle2 className="w-4 h-4" /> Save & Publish All Prices
+                  </button>
                 </div>
               </div>
             </div>
@@ -7691,7 +8069,9 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                       };
                       const updated = [newRec, ...financeIncome];
                       setFinanceIncome(updated);
-                      
+                      if (typeof window !== 'undefined') {
+                        try { localStorage.setItem('tarepet_finance_income', JSON.stringify(updated)); } catch (e) {}
+                      }
                       setShowAddIncomeModal(false);
                       setFinanceSaveAlert('Income record saved successfully!');
                       setTimeout(() => setFinanceSaveAlert(''), 4000);
@@ -7769,7 +8149,9 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                       };
                       const updated = [newRec, ...financeExpenses];
                       setFinanceExpenses(updated);
-                      
+                      if (typeof window !== 'undefined') {
+                        try { localStorage.setItem('tarepet_finance_expenses', JSON.stringify(updated)); } catch (e) {}
+                      }
                       setShowAddExpenseModal(false);
                       setFinanceSaveAlert('Expense record saved successfully!');
                       setTimeout(() => setFinanceSaveAlert(''), 4000);
@@ -8345,6 +8727,149 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                     <CheckCircle2 className="w-4 h-4" /> Save & Register Student
                   </button>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+        {/* REVIEW FINANCIAL STATUS MODAL */}
+        {selectedReviewStudent && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-card w-full max-w-2xl rounded-2xl border border-border shadow-2xl p-6 space-y-6 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in duration-200">
+              <div className="flex items-center justify-between border-b border-border pb-4">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold mb-1">
+                    <ShieldCheck className="w-3.5 h-3.5" /> Official Bursary Financial Record
+                  </div>
+                  <h3 className="font-serif font-bold text-xl text-foreground">{selectedReviewStudent.name}</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Admission No: <span className="font-mono font-bold text-primary">{selectedReviewStudent.admissionNo}</span> · Class: <span className="font-semibold text-foreground">{selectedReviewStudent.grade}</span>
+                  </p>
+                </div>
+                <button
+                  onClick={() => setSelectedReviewStudent(null)}
+                  className="p-1.5 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Financial Metrics Cards */}
+              {(() => {
+                const reqItems = adminPaymentItems.filter(i => i.isRequired);
+                const totalAssigned = reqItems.reduce((s, i) => s + i.amount, 0);
+                const stdTxs = getStudentTransactions(selectedReviewStudent.id).filter(t => t.status === 'SUCCESS');
+                const totalPaid = stdTxs.reduce((s, t) => s + t.amount, 0);
+                const balance = Math.max(0, totalAssigned - totalPaid);
+                const status = totalAssigned === 0 ? 'UNCONFIGURED' : balance === 0 ? 'PAID' : totalPaid > 0 ? 'PARTIAL' : 'OWING';
+
+                return (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                      <div className="p-3.5 rounded-xl bg-primary/5 border border-primary/20 text-center">
+                        <span className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Total Fee Assigned</span>
+                        <span className="text-lg font-serif font-bold text-foreground">
+                          {totalAssigned > 0 ? `₦${totalAssigned.toLocaleString()}` : 'Unconfigured'}
+                        </span>
+                      </div>
+                      <div className="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-center">
+                        <span className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Total Paid</span>
+                        <span className="text-lg font-serif font-bold text-emerald-600">₦{totalPaid.toLocaleString()}</span>
+                      </div>
+                      <div className="p-3.5 rounded-xl bg-rose-500/5 border border-rose-500/20 text-center">
+                        <span className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Outstanding Balance</span>
+                        <span className="text-lg font-serif font-bold text-rose-600">₦{balance.toLocaleString()}</span>
+                      </div>
+                      <div className="p-3.5 rounded-xl bg-muted/40 border border-border text-center flex flex-col justify-center items-center">
+                        <span className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Status</span>
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase border ${
+                          status === 'PAID' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/30' :
+                          status === 'PARTIAL' ? 'bg-amber-500/10 text-amber-600 border-amber-500/30' :
+                          status === 'OWING' ? 'bg-rose-500/10 text-rose-600 border-rose-500/30' :
+                          'bg-slate-500/10 text-slate-600 border-slate-500/30'
+                        }`}>
+                          {status}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Itemized Fee Breakdown Table */}
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Itemized Fee Breakdown</h4>
+                      <div className="overflow-x-auto border border-border rounded-xl">
+                        <table className="w-full text-xs text-left">
+                          <thead className="bg-muted/40 text-muted-foreground uppercase text-[9px] tracking-wider">
+                            <tr>
+                              <th className="py-2.5 px-3">Fee Item</th>
+                              <th className="py-2.5 px-3">Category</th>
+                              <th className="py-2.5 px-3 text-right">Configured Amount</th>
+                              <th className="py-2.5 px-3 text-right">Paid Amount</th>
+                              <th className="py-2.5 px-3 text-center">Item Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border">
+                            {adminPaymentItems.map(item => {
+                              const s = getStudentItemStatus(selectedReviewStudent.id, item.id);
+                              return (
+                                <tr key={item.id} className="hover:bg-muted/10">
+                                  <td className="py-2.5 px-3 font-bold text-foreground">{item.name}</td>
+                                  <td className="py-2.5 px-3 text-muted-foreground">{item.category}</td>
+                                  <td className="py-2.5 px-3 text-right font-mono font-bold text-foreground">
+                                    {item.amount > 0 ? `₦${item.amount.toLocaleString()}` : <span className="text-amber-600 text-[10px]">Unset</span>}
+                                  </td>
+                                  <td className="py-2.5 px-3 text-right font-mono font-bold text-emerald-600">₦{s.paidAmount.toLocaleString()}</td>
+                                  <td className="py-2.5 px-3 text-center">
+                                    <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
+                                      s.status === 'PAID' ? 'bg-emerald-500/10 text-emerald-600' :
+                                      s.status === 'PARTIAL' ? 'bg-amber-500/10 text-amber-600' :
+                                      'bg-rose-500/10 text-rose-600'
+                                    }`}>
+                                      {s.status}
+                                    </span>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Verified Transaction History */}
+                    {stdTxs.length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Payment Audit Log & Receipts</h4>
+                        <div className="space-y-2 max-h-40 overflow-y-auto">
+                          {stdTxs.map(tx => (
+                            <div key={tx.id} className="p-3 rounded-xl border border-border bg-card flex items-center justify-between text-xs">
+                              <div>
+                                <p className="font-bold text-foreground">{tx.itemName}</p>
+                                <p className="text-[10px] font-mono text-muted-foreground">Ref: {tx.reference} · {new Date(tx.paidAt).toLocaleString()}</p>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <span className="font-serif font-bold text-emerald-600">₦{tx.amount.toLocaleString()}</span>
+                                <button
+                                  onClick={() => setReceiptModalData({ ...tx, studentName: selectedReviewStudent.name, admissionNo: selectedReviewStudent.admissionNo })}
+                                  className="px-2.5 py-1 bg-primary/10 text-primary rounded-lg text-[10px] font-bold hover:bg-primary hover:text-white transition-all flex items-center gap-1"
+                                >
+                                  <Printer className="w-3.5 h-3.5" /> Receipt
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+
+              <div className="flex justify-end pt-2 border-t border-border">
+                <button
+                  onClick={() => setSelectedReviewStudent(null)}
+                  className="px-6 py-2.5 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all"
+                >
+                  Close Profile
+                </button>
               </div>
             </div>
           </div>
