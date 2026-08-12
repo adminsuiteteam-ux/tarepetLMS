@@ -140,7 +140,7 @@ export default function SignIn() {
           className="relative z-10"
         >
           <p className="text-white/60 text-sm italic font-serif">
-            &ldquo;Not to Knowledge is Power.&rdquo;
+            &ldquo;Nurturing Minds, Shaping Character, Empowering Excellence.&rdquo;
           </p>
           <p className="text-white/80 text-xs mt-2 uppercase tracking-wider">
             {t('signin.guiding_principle')}

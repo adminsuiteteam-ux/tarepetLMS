@@ -64,7 +64,7 @@ export function Footer() {
               Est. October 1, 2002 · A premier Montessori institution in Yenagoa dedicated to raising creative, God-fearing leaders.
             </p>
             <p className="font-serif italic text-base text-white/90">
-              "Knowledge is Power"
+              "Nurturing Minds, Shaping Character, Empowering Excellence."
             </p>
           </div>
 

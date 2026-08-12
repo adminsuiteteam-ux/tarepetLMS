@@ -146,7 +146,7 @@ export default function StudentDashboard() {
             {t('student.welcome_sub', 'Welcome to your student portal. Check your active subjects and upcoming CBT exams.')}
           </p>
           <p className="text-xs italic text-rose-200/90 font-serif border-t border-white/10 pt-2.5">
-            "{t('student.motto', 'Knowledge is Power.')}" — {t('student.motto_author', 'Tarepet Guiding Principle')}
+            "{t('student.motto', 'Nurturing Minds, Shaping Character, Empowering Excellence.')}" — {t('student.motto_author', 'Tarepet Guiding Principle')}
           </p>
         </div>
 
