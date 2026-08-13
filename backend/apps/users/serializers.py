@@ -168,6 +168,17 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'email', 'first_name', 'last_name', 'phone', 'role', 'date_joined', 'is_active', 'profile']
         read_only_fields = ['id', 'date_joined', 'is_active']
 
+    def get_profile(self, obj):
+        if obj.role == User.Role.STUDENT and hasattr(obj, 'student_profile'):
+            return StudentProfileSerializer(obj.student_profile).data
+        elif obj.role == User.Role.TEACHER and hasattr(obj, 'teacher_profile'):
+            return TeacherProfileSerializer(obj.teacher_profile).data
+        elif obj.role == User.Role.PARENT and hasattr(obj, 'parent_profile'):
+            return ParentProfileSerializer(obj.parent_profile).data
+        elif obj.role == User.Role.ADMIN and hasattr(obj, 'admin_profile'):
+            return AdminProfileSerializer(obj.admin_profile).data
+        return None
+
     def update(self, instance, validated_data):
         profile_data = self.initial_data.get('profile', {})
         instance.first_name = validated_data.get('first_name', instance.first_name)
