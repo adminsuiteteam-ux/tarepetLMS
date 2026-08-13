@@ -122,7 +122,7 @@ if _db_config.get('ENGINE') != 'django.db.backends.sqlite3':
             'keepalives_idle': 60,
             'keepalives_interval': 10,
             'keepalives_count': 5,
-            'connect_timeout': 30,  # allow 30s for Layerbase cold-start wake-up
+            'connect_timeout': 60,  # allow 60s for Layerbase cold-start wake-up
         },
     })
 DATABASES = {'default': _db_config}
