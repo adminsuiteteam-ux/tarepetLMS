@@ -16,6 +16,7 @@ import {
   PaymentItem,
   PaymentTransaction
 } from '@/lib/payments-store';
+import { useTranslation } from '@/lib/i18n';
 
 interface StudentPaymentPanelProps {
   studentId: string | number;
@@ -69,6 +70,7 @@ const EXTRA_ITEMS: PaymentItem[] = [
 ];
 
 export function StudentPaymentPanel({ studentId, studentName, studentEmail, gradeLevel = 'SS1' }: StudentPaymentPanelProps) {
+  const { t } = useTranslation();
   const [storeItems, setStoreItems] = useState<PaymentItem[]>(() => getPaymentItems());
   const [transactions, setTransactions] = useState<PaymentTransaction[]>(() => getStudentTransactions(studentId));
   const [activeSection, setActiveSection] = useState<string>('school_fees');
@@ -130,15 +132,15 @@ export function StudentPaymentPanel({ studentId, studentName, studentEmail, grad
           <div className="flex items-center gap-3 border-b border-border pb-4">
             <History className="w-5 h-5 text-primary" />
             <div>
-              <h3 className="font-serif font-bold text-lg text-foreground">Payment History</h3>
-              <p className="text-xs text-muted-foreground">All verified transactions for {studentName}</p>
+              <h3 className="font-serif font-bold text-lg text-foreground">{t('Payment History', 'Payment History')}</h3>
+              <p className="text-xs text-muted-foreground">{t('All verified transactions for ', 'All verified transactions for ')}{studentName}</p>
             </div>
           </div>
           {successTxs.length === 0 ? (
             <div className="text-center py-16 border-2 border-dashed border-border rounded-2xl">
               <LayoutList className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-              <p className="text-sm font-semibold text-muted-foreground">No payment records yet</p>
-              <p className="text-xs text-muted-foreground mt-1">Completed payments will appear here</p>
+              <p className="text-sm font-semibold text-muted-foreground">{t('No payment records yet', 'No payment records yet')}</p>
+              <p className="text-xs text-muted-foreground mt-1">{t('Completed payments will appear here', 'Completed payments will appear here')}</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -150,15 +152,15 @@ export function StudentPaymentPanel({ studentId, studentName, studentEmail, grad
                     </div>
                     <div>
                       <p className="font-bold text-sm text-foreground">{tx.itemName}</p>
-                      <p className="text-[10px] font-mono text-muted-foreground">Ref: {tx.reference}</p>
+                      <p className="text-[10px] font-mono text-muted-foreground">{t('Ref: ', 'Ref: ')}{tx.reference}</p>
                       <p className="text-[10px] text-muted-foreground">{new Date(tx.paidAt).toLocaleString()}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 pl-12 sm:pl-0">
                     <span className="font-serif font-bold text-base text-emerald-600">₦{tx.amount.toLocaleString()}</span>
-                    <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">Verified</span>
+                    <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">{t('Verified', 'Verified')}</span>
                     <button onClick={() => setReceiptModal(tx)} className="flex items-center gap-1 text-[10px] font-bold text-primary hover:underline">
-                      <Receipt className="w-3.5 h-3.5" /> Receipt
+                      <Receipt className="w-3.5 h-3.5" /> {t('Receipt', 'Receipt')}
                     </button>
                   </div>
                 </div>
@@ -175,15 +177,15 @@ export function StudentPaymentPanel({ studentId, studentName, studentEmail, grad
           <div className="flex items-center gap-3 border-b border-border pb-4">
             <XCircle className="w-5 h-5 text-destructive" />
             <div>
-              <h3 className="font-serif font-bold text-lg text-foreground">Failed Transactions</h3>
-              <p className="text-xs text-muted-foreground">Payments that could not be processed</p>
+              <h3 className="font-serif font-bold text-lg text-foreground">{t('Failed Transactions', 'Failed Transactions')}</h3>
+              <p className="text-xs text-muted-foreground">{t('Payments that could not be processed', 'Payments that could not be processed')}</p>
             </div>
           </div>
           {failedTxs.length === 0 ? (
             <div className="text-center py-16 border-2 border-dashed border-border rounded-2xl">
               <CheckCircle2 className="w-10 h-10 text-emerald-500/30 mx-auto mb-3" />
-              <p className="text-sm font-semibold text-muted-foreground">No failed transactions</p>
-              <p className="text-xs text-muted-foreground mt-1">All your payments have been successful</p>
+              <p className="text-sm font-semibold text-muted-foreground">{t('No failed transactions', 'No failed transactions')}</p>
+              <p className="text-xs text-muted-foreground mt-1">{t('All your payments have been successful', 'All your payments have been successful')}</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -195,13 +197,13 @@ export function StudentPaymentPanel({ studentId, studentName, studentEmail, grad
                     </div>
                     <div>
                       <p className="font-bold text-sm text-foreground">{tx.itemName}</p>
-                      <p className="text-[10px] font-mono text-muted-foreground">Ref: {tx.reference}</p>
+                      <p className="text-[10px] font-mono text-muted-foreground">{t('Ref: ', 'Ref: ')}{tx.reference}</p>
                       <p className="text-[10px] text-muted-foreground">{new Date(tx.paidAt).toLocaleString()}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 pl-12 sm:pl-0">
                     <span className="font-serif font-bold text-base text-destructive">₦{tx.amount.toLocaleString()}</span>
-                    <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-destructive/10 text-destructive border border-destructive/20">Failed</span>
+                    <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded-full bg-destructive/10 text-destructive border border-destructive/20">{t('Failed', 'Failed')}</span>
                   </div>
                 </div>
               ))}
@@ -218,7 +220,7 @@ export function StudentPaymentPanel({ studentId, studentName, studentEmail, grad
       return (
         <div className="text-center py-20 border-2 border-dashed border-border rounded-2xl">
           <LayoutList className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground font-medium">Select a payment item from the sidebar</p>
+          <p className="text-sm text-muted-foreground font-medium">{t('Select a payment item from the sidebar', 'Select a payment item from the sidebar')}</p>
         </div>
       );
     }
@@ -237,14 +239,14 @@ export function StudentPaymentPanel({ studentId, studentName, studentEmail, grad
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-serif font-bold text-xl text-foreground">{item.name}</h3>
               {item.isRequired && (
-                <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-rose-500/10 text-rose-600 border border-rose-500/20">Required</span>
+                <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-rose-500/10 text-rose-600 border border-rose-500/20">{t('Required', 'Required')}</span>
               )}
             </div>
             <p className="text-sm text-muted-foreground">{item.description}</p>
             <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-muted-foreground font-mono">
-              <span>Category: <span className="font-semibold text-foreground">{item.category}</span></span>
-              <span>Due: <span className="font-semibold text-foreground">{item.dueDate}</span></span>
-              <span>Term: <span className="font-semibold text-foreground">{item.term.replace('_', ' ')}</span></span>
+              <span>{t('Category: ', 'Category: ')}<span className="font-semibold text-foreground">{item.category}</span></span>
+              <span>{t('Due: ', 'Due: ')}<span className="font-semibold text-foreground">{item.dueDate}</span></span>
+              <span>{t('Term: ', 'Term: ')}<span className="font-semibold text-foreground">{item.term.replace('_', ' ')}</span></span>
             </div>
           </div>
           {!hasChildren && effectiveAmount > 0 && (
@@ -278,7 +280,7 @@ export function StudentPaymentPanel({ studentId, studentName, studentEmail, grad
               onClick={() => setExpandedExam(p => !p)}
               className="w-full flex items-center justify-between p-4 rounded-xl border border-border bg-muted/30 hover:bg-muted/50 transition"
             >
-              <span className="text-sm font-bold text-foreground">Available Examination Boards / Options</span>
+              <span className="text-sm font-bold text-foreground">{t('Available Examination Boards / Options', 'Available Examination Boards / Options')}</span>
               {expandedExam ? <ChevronDown className="w-4 h-4 text-primary" /> : <ChevronRight className="w-4 h-4 text-primary" />}
             </button>
             {expandedExam && (
@@ -290,7 +292,7 @@ export function StudentPaymentPanel({ studentId, studentName, studentEmail, grad
                       <div>
                         <h5 className="font-bold text-sm text-foreground">{child.name}</h5>
                         <p className="text-xs text-muted-foreground mt-0.5">{child.description}</p>
-                        <span className="text-[10px] font-mono text-muted-foreground">Due: {child.dueDate}</span>
+                        <span className="text-[10px] font-mono text-muted-foreground">{t('Due: ', 'Due: ')}{child.dueDate}</span>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
                         <div className="text-right">
@@ -303,7 +305,7 @@ export function StudentPaymentPanel({ studentId, studentName, studentEmail, grad
                           className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${cStatus.status === 'PAID' ? 'bg-muted text-muted-foreground cursor-not-allowed' : 'bg-primary text-white hover:bg-primary/90'}`}
                         >
                           <CreditCard className="w-3.5 h-3.5" />
-                          {isProcessing === child.id ? 'Connecting…' : cStatus.status === 'PAID' ? 'Paid ✓' : 'Pay Now'}
+                          {isProcessing === child.id ? t('Connecting…', 'Connecting…') : cStatus.status === 'PAID' ? t('Paid ✓', 'Paid ✓') : t('Pay Now', 'Pay Now')}
                         </button>
                       </div>
                     </div>
@@ -318,10 +320,10 @@ export function StudentPaymentPanel({ studentId, studentName, studentEmail, grad
           <div className="p-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300 space-y-2">
             <div className="flex items-center gap-2 font-bold text-sm">
               <AlertCircle className="w-5 h-5 shrink-0 text-amber-600" />
-              <span>Fee Amount Pending Admin Setup</span>
+              <span>{t('Fee Amount Pending Admin Setup', 'Fee Amount Pending Admin Setup')}</span>
             </div>
             <p className="text-xs text-amber-700 dark:text-amber-400">
-              The school administration has not configured the price for {item.name} yet. Once the Bursar sets the official fee amount in the Financial Management portal, the payment option will appear here automatically.
+              {t('The school administration has not configured the price for ', 'The school administration has not configured the price for ')}{item.name}{t(' yet. Once the Bursar sets the official fee amount in the Financial Management portal, the payment option will appear here automatically.', ' yet. Once the Bursar sets the official fee amount in the Financial Management portal, the payment option will appear here automatically.')}
             </p>
           </div>
         )}
@@ -329,15 +331,15 @@ export function StudentPaymentPanel({ studentId, studentName, studentEmail, grad
         {!hasChildren && effectiveAmount > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 text-center">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Total Due</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">{t('Total Due', 'Total Due')}</p>
               <p className="text-xl font-serif font-bold text-foreground">₦{effectiveAmount.toLocaleString()}</p>
             </div>
             <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-center">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Amount Paid</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">{t('Amount Paid', 'Amount Paid')}</p>
               <p className="text-xl font-serif font-bold text-emerald-600">₦{itemStatus.paidAmount.toLocaleString()}</p>
             </div>
             <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/20 text-center">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Balance</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">{t('Balance', 'Balance')}</p>
               <p className="text-xl font-serif font-bold text-amber-600">₦{Math.max(remaining, 0).toLocaleString()}</p>
             </div>
           </div>
@@ -355,20 +357,20 @@ export function StudentPaymentPanel({ studentId, studentName, studentEmail, grad
               }`}
             >
               <CreditCard className="w-4 h-4" />
-              {isProcessing === item.id ? 'Connecting to Paystack…' : itemStatus.status === 'PAID' ? 'Payment Completed ✓' : `Pay ₦${Math.max(remaining, 0).toLocaleString()} via Paystack`}
+              {isProcessing === item.id ? t('Connecting to Paystack…', 'Connecting to Paystack…') : itemStatus.status === 'PAID' ? t('Payment Completed ✓', 'Payment Completed ✓') : `${t('Pay ', 'Pay ')}₦${Math.max(remaining, 0).toLocaleString()}${t(' via Paystack', ' via Paystack')}`}
             </button>
             <button
               onClick={() => setActiveSection('payment_history')}
               className="px-5 py-3.5 rounded-2xl text-sm font-bold border border-border text-muted-foreground hover:bg-muted transition flex items-center gap-2"
             >
-              <History className="w-4 h-4" /> View Receipt Log
+              <History className="w-4 h-4" /> {t('View Receipt Log', 'View Receipt Log')}
             </button>
           </div>
         )}
 
         {!hasChildren && itemTxs.length > 0 && (
           <div className="space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Recent Payments for This Item</h4>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t('Recent Payments for This Item', 'Recent Payments for This Item')}</h4>
             <div className="space-y-2">
               {itemTxs.slice(0, 5).map(tx => (
                 <div key={tx.id} className="p-3.5 rounded-xl border border-border bg-card/60 flex items-center justify-between">
@@ -378,12 +380,12 @@ export function StudentPaymentPanel({ studentId, studentName, studentEmail, grad
                     </div>
                     <div>
                       <p className="text-xs font-bold text-foreground">₦{tx.amount.toLocaleString()}</p>
-                      <p className="text-[9px] font-mono text-muted-foreground">Ref: {tx.reference}</p>
+                      <p className="text-[9px] font-mono text-muted-foreground">{t('Ref: ', 'Ref: ')}{tx.reference}</p>
                       <p className="text-[9px] text-muted-foreground">{new Date(tx.paidAt).toLocaleString()}</p>
                     </div>
                   </div>
                   <button onClick={() => setReceiptModal(tx)} className="flex items-center gap-1 text-[10px] font-bold text-primary hover:underline">
-                    <Receipt className="w-3 h-3" /> Receipt
+                    <Receipt className="w-3 h-3" /> {t('Receipt', 'Receipt')}
                   </button>
                 </div>
               ))}
@@ -401,15 +403,15 @@ export function StudentPaymentPanel({ studentId, studentName, studentEmail, grad
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 text-primary text-xs font-semibold mb-2">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Paystack Secure Payment Portal · Session 2026/2027</span>
+            <span>{t('Paystack Secure Payment Portal · Session 2026/2027', 'Paystack Secure Payment Portal · Session 2026/2027')}</span>
           </div>
-          <h2 className="text-2xl font-serif font-bold text-foreground">Payments & Fee Schedules</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">Manage fees & payments for <span className="font-semibold text-foreground">{studentName}</span> ({gradeLevel})</p>
+          <h2 className="text-2xl font-serif font-bold text-foreground">{t('Payments & Fee Schedules', 'Payments & Fee Schedules')}</h2>
+          <p className="text-sm text-muted-foreground mt-0.5">{t('Manage fees & payments for ', 'Manage fees & payments for ')}<span className="font-semibold text-foreground">{studentName}</span> ({gradeLevel})</p>
         </div>
         <div className="flex items-center gap-3 bg-card p-4 rounded-xl border border-border shrink-0 shadow-sm">
           <ShieldCheck className="w-8 h-8 text-emerald-600 shrink-0" />
           <div>
-            <span className="text-[10px] font-bold uppercase text-muted-foreground block">Total Verified Payments</span>
+            <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('Total Verified Payments', 'Total Verified Payments')}</span>
             <span className="text-xl font-serif font-bold text-emerald-600">₦{totalPaid.toLocaleString()}</span>
           </div>
         </div>
@@ -420,7 +422,7 @@ export function StudentPaymentPanel({ studentId, studentName, studentEmail, grad
         {/* Sidebar */}
         <aside className="w-full lg:w-64 shrink-0 bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
           <div className="p-3 border-b border-border">
-            <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-muted-foreground px-2 py-1">Payment Page</h4>
+            <h4 className="text-[10px] font-extrabold uppercase tracking-widest text-muted-foreground px-2 py-1">{t('Payment Page', 'Payment Page')}</h4>
           </div>
           <nav className="p-2 space-y-0.5 max-h-[70vh] overflow-y-auto">
             {SIDEBAR_MENU.map(section => {
@@ -471,22 +473,22 @@ export function StudentPaymentPanel({ studentId, studentName, studentEmail, grad
           <div className="bg-card w-full max-w-md rounded-2xl border border-border shadow-2xl p-6 space-y-5">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <div>
-                <h3 className="font-serif font-bold text-lg text-foreground">Official Receipt</h3>
-                <p className="text-xs text-muted-foreground">Tarepet Montessori School — Fee Clearance</p>
+                <h3 className="font-serif font-bold text-lg text-foreground">{t('Official Receipt', 'Official Receipt')}</h3>
+                <p className="text-xs text-muted-foreground">{t('Tarepet Montessori School — Fee Clearance', 'Tarepet Montessori School — Fee Clearance')}</p>
               </div>
               <button onClick={() => setReceiptModal(null)} className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
             </div>
             <div className="space-y-2.5">
               {[
-                ['Student', studentName],
-                ['Item', receiptModal.itemName],
-                ['Amount Paid', `₦${receiptModal.amount.toLocaleString()}`],
-                ['Reference', receiptModal.reference],
-                ['Channel', receiptModal.channel.toUpperCase()],
-                ['Date', new Date(receiptModal.paidAt).toLocaleString()],
-                ['Session', receiptModal.session],
-                ['Term', receiptModal.term.replace('_', ' ')],
-                ['Status', receiptModal.status],
+                [t('Student', 'Student'), studentName],
+                [t('Item', 'Item'), receiptModal.itemName],
+                [t('Amount Paid', 'Amount Paid'), `₦${receiptModal.amount.toLocaleString()}`],
+                [t('Reference', 'Reference'), receiptModal.reference],
+                [t('Channel', 'Channel'), receiptModal.channel.toUpperCase()],
+                [t('Date', 'Date'), new Date(receiptModal.paidAt).toLocaleString()],
+                [t('Session', 'Session'), receiptModal.session],
+                [t('Term', 'Term'), receiptModal.term.replace('_', ' ')],
+                [t('Status', 'Status'), receiptModal.status],
               ].map(([label, value]) => (
                 <div key={label} className="flex justify-between gap-4 py-1.5 border-b border-border/50">
                   <span className="text-muted-foreground text-xs font-medium">{label}</span>
@@ -499,9 +501,9 @@ export function StudentPaymentPanel({ studentId, studentName, studentEmail, grad
                 onClick={() => alert(`TAREPET MONTESSORI SCHOOL\nFEE PAYMENT RECEIPT\n\nStudent: ${studentName}\nItem: ${receiptModal.itemName}\nAmount: ₦${receiptModal.amount.toLocaleString()}\nRef: ${receiptModal.reference}\nDate: ${new Date(receiptModal.paidAt).toLocaleString()}\nStatus: ${receiptModal.status}`)}
                 className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted transition"
               >
-                <Download className="w-3.5 h-3.5" /> Download
+                <Download className="w-3.5 h-3.5" /> {t('Download', 'Download')}
               </button>
-              <button onClick={() => setReceiptModal(null)} className="flex-1 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition">Close</button>
+              <button onClick={() => setReceiptModal(null)} className="flex-1 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition">{t('Close', 'Close')}</button>
             </div>
           </div>
         </div>
