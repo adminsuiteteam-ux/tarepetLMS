@@ -13,7 +13,7 @@ import {
   ClipboardList, Settings, ShieldCheck, User, Bell, Printer, CreditCard, GraduationCap
 } from 'lucide-react';
 
-import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, saveStudent, deleteStudent, subscribeToCBTStore, syncStudentsWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord } from '@/lib/cbt-store';
+import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, saveStudent, deleteStudent, subscribeToCBTStore, syncStudentsWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, CourseBroadsheetScore } from '@/lib/cbt-store';
 import { useTranslation } from '@/lib/i18n';
 
 // ─── Initial Seed Data (Form Teacher & Subject Teacher) ───────
@@ -144,6 +144,55 @@ export default function TeacherDashboard() {
   const [showActionsDropdown, setShowActionsDropdown] = useState(false);
   const [showIDCardModal, setShowIDCardModal] = useState<any>(null);
   const [showStaffIdModal, setShowStaffIdModal] = useState<boolean>(false);
+
+  // Broadsheet & Detailed Student Score Table State
+  const [selectedBroadsheetStudent, setSelectedBroadsheetStudent] = useState<any | null>(null);
+  const [broadsheetScores, setBroadsheetScores] = useState<Record<string, CourseBroadsheetScore>>({});
+
+  const handleOpenStudentBroadsheet = (student: any) => {
+    setSelectedBroadsheetStudent(student);
+    const courses = getCoursesForClass(student.grade || 'SS1', student.stream || 'Science');
+    const saved = getStudentBroadsheet(student.id);
+
+    const initialScores: Record<string, CourseBroadsheetScore> = {};
+    courses.forEach(c => {
+      const cbtAuto = getAutomaticCBTScore(student.code || student.email || student.name, c.code);
+      const existing = saved[c.code];
+      initialScores[c.code] = {
+        ca1: existing?.ca1 ?? 8,
+        ca2: existing?.ca2 ?? 8,
+        assignment: existing?.assignment ?? 9,
+        cbtScore: existing?.cbtScore !== undefined ? existing.cbtScore : cbtAuto,
+        paperExam: existing?.paperExam ?? 32,
+        remark: existing?.remark || 'Good progress & steady academic effort'
+      };
+    });
+
+    setBroadsheetScores(initialScores);
+  };
+
+  const handleUpdateScoreInput = (courseCode: string, field: keyof CourseBroadsheetScore, val: any) => {
+    setBroadsheetScores(prev => {
+      const current = prev[courseCode] || { ca1: 0, ca2: 0, assignment: 0, cbtScore: 0, paperExam: 0, remark: '' };
+      let numVal = typeof val === 'number' ? val : parseFloat(val);
+      if (isNaN(numVal)) numVal = 0;
+
+      if (field === 'ca1' || field === 'ca2' || field === 'assignment') numVal = Math.min(10, Math.max(0, numVal));
+      if (field === 'paperExam') numVal = Math.min(40, Math.max(0, numVal));
+      if (field === 'cbtScore') numVal = Math.min(30, Math.max(0, numVal));
+
+      const updated = {
+        ...current,
+        [field]: field === 'remark' ? val : numVal
+      };
+      const nextState = { ...prev, [courseCode]: updated };
+
+      if (selectedBroadsheetStudent) {
+        saveStudentBroadsheet(selectedBroadsheetStudent.id, nextState);
+      }
+      return nextState;
+    });
+  };
 
   // Settings & Profile State (in-memory only)
   const [profileForm, setProfileForm] = useState(() => ({
@@ -874,22 +923,27 @@ export default function TeacherDashboard() {
                         onChange={e => setAddStudentForm({ ...addStudentForm, grade: e.target.value })}
                         className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
                       >
-                        {['JSS1', 'JSS2', 'JSS3', 'SS1', 'SS2', 'SS3'].map(g => <option key={g} value={g}>{g}</option>)}
+                        {SCHOOL_CLASSES.map(cls => (
+                          <option key={cls.id} value={cls.id}>
+                            {cls.label}
+                          </option>
+                        ))}
                       </select>
                     )}
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Department Stream`}</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{`Class Arm / Stream`}</label>
                     <select
                       value={addStudentForm.stream}
                       onChange={e => setAddStudentForm({ ...addStudentForm, stream: e.target.value })}
                       className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
                     >
-                      <option value="Science">{`Science`}</option>
-                      <option value="Art">{`Art / Humanities`}</option>
-                      <option value="Commercial">{`Commercial`}</option>
-                      <option value="General">{`General Junior`}</option>
+                      {getClassArms(addStudentForm.grade).map(arm => (
+                        <option key={arm} value={arm}>
+                          {arm} Arm
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -1699,57 +1753,395 @@ export default function TeacherDashboard() {
           </div>
         )}
 
-        {/* Sub-tab 2: Term Gradebook */}
+        {/* Sub-tab 2: Interactive Class Broadsheet & Scores */}
         {resultsSubTab === 'gradebook' && (
-          <div className="bg-card rounded-2xl border border-border shadow-sm p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-serif font-bold text-foreground">{t('teacher.class_broadsheet', 'Class Broadsheet — MTH-101')}</h3>
-                <p className="text-xs text-muted-foreground">{t('teacher.broadsheet_desc', 'Record and review CA1 (10%), CA2 (10%), Midterm (20%), and Final Exam (60%) scores for your class.')}</p>
-              </div>
-              <button onClick={() => showToast('Gradebook scores saved & synced to student report cards!')} className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 transition-colors">
-                {t('teacher.sync_report_cards', 'Sync Scores to Report Cards')}
-              </button>
-            </div>
+          <div>
+            {selectedBroadsheetStudent ? (
+              /* =========================================================
+                 INDIVIDUAL STUDENT DETAILED BROADSHEET VIEW
+                 ========================================================= */
+              <div className="space-y-6">
+                {/* Header & Back Button */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setSelectedBroadsheetStudent(null)}
+                      className="p-2 rounded-xl bg-card border border-border hover:bg-accent text-foreground transition-all flex items-center gap-1.5 text-xs font-bold shadow-xs cursor-pointer"
+                    >
+                      <ChevronLeft className="w-4 h-4" /> Back to Full Class Broadsheet
+                    </button>
+                    <div>
+                      <h3 className="font-serif font-bold text-lg text-foreground flex items-center gap-2">
+                        Official Student Broadsheet — <span className="text-primary">{selectedBroadsheetStudent.name}</span>
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        Fill 1st CA, 2nd CA, Assignment & Paper exam marks below. CBT test scores are automatically filled.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      onClick={() => {
+                        saveStudentBroadsheet(selectedBroadsheetStudent.id, broadsheetScores);
+                        showToast(`Saved and synced terminal scores for ${selectedBroadsheetStudent.name}!`);
+                      }}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <ShieldCheck className="w-4 h-4" /> Save & Sync to Report Card
+                    </button>
+                    <button
+                      onClick={() => window.print()}
+                      className="bg-muted hover:bg-accent text-foreground font-bold text-xs px-3 py-2 rounded-xl border border-border transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Printer className="w-3.5 h-3.5" /> Print Broadsheet
+                    </button>
+                  </div>
+                </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left">
-                <thead className="bg-muted/40 uppercase text-[10px] text-muted-foreground tracking-wider border-b border-border">
-                  <tr>
-                    <th className="p-3">{t('teacher.col_student', 'Student')}</th>
-                    <th className="p-3 text-center">{t('teacher.col_ca1', 'CA 1 (10%)')}</th>
-                    <th className="p-3 text-center">{t('teacher.col_ca2', 'CA 2 (10%)')}</th>
-                    <th className="p-3 text-center">{t('teacher.col_midterm', 'Midterm (20%)')}</th>
-                    <th className="p-3 text-center">{t('teacher.col_final', 'Final Exam (60%)')}</th>
-                    <th className="p-3 text-center">{t('teacher.col_total', 'Total (100%)')}</th>
-                    <th className="p-3 text-center">{t('teacher.col_grade', 'Grade')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {roster.map(s => {
-                    // Safe lookup without bracket notation to prevent prototype pollution
-                    const sc = Object.entries(gradebookScores).find(([k]) => Number(k) === s.id)?.[1] ?? { ca1: 0, ca2: 0, midterm: 0, exam: 0 };
-                    const total = sc.ca1 + sc.ca2 + sc.midterm + sc.exam;
-                    const letter = total >= 90 ? 'A+' : total >= 80 ? 'A' : total >= 70 ? 'B' : total >= 60 ? 'C' : total >= 50 ? 'D' : 'F';
+                {/* Student Profile Card */}
+                <div className="bg-card rounded-2xl border border-border p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center font-serif font-bold text-2xl text-primary border-2 border-primary/20 shrink-0">
+                      {selectedBroadsheetStudent.name?.[0] || 'S'}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-500/10 text-rose-600 border border-rose-200 px-2.5 py-0.5 rounded-md font-mono">
+                          {selectedBroadsheetStudent.code}
+                        </span>
+                        <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-md">
+                          {selectedBroadsheetStudent.grade} ({selectedBroadsheetStudent.stream || 'Science'})
+                        </span>
+                        <span className="text-[10px] font-extrabold uppercase bg-blue-500/10 text-blue-600 border border-blue-200 px-2 py-0.5 rounded-md flex items-center gap-1">
+                          ⚡ CBT Results Auto-Filled
+                        </span>
+                      </div>
+                      <h4 className="font-serif font-bold text-lg text-foreground">{selectedBroadsheetStudent.name}</h4>
+                      <p className="text-xs text-muted-foreground">Parent / Guardian: <strong>{selectedBroadsheetStudent.parentName || 'Chief Nwosu'}</strong> ({selectedBroadsheetStudent.parentPhone || '08031112233'})</p>
+                    </div>
+                  </div>
+
+                  {/* Summary Score Pills */}
+                  {(() => {
+                    const courses = getCoursesForClass(selectedBroadsheetStudent.grade || 'SS1', selectedBroadsheetStudent.stream || 'Science');
+                    let grandTotal = 0;
+                    courses.forEach(c => {
+                      const sc = broadsheetScores[c.code] || { ca1: 0, ca2: 0, assignment: 0, cbtScore: 0, paperExam: 0 };
+                      grandTotal += (sc.ca1 + sc.ca2 + sc.assignment + sc.cbtScore + sc.paperExam);
+                    });
+                    const avgScore = courses.length > 0 ? Math.round(grandTotal / courses.length) : 0;
+                    const overallGrade = calculateWAECGrade(avgScore);
+
                     return (
-                      <tr key={s.id} className="hover:bg-muted/10">
-                        <td className="p-3 font-bold text-foreground">{s.name}</td>
-                        <td className="p-3 text-center font-mono">{sc.ca1}</td>
-                        <td className="p-3 text-center font-mono">{sc.ca2}</td>
-                        <td className="p-3 text-center font-mono">{sc.midterm}</td>
-                        <td className="p-3 text-center font-mono">{sc.exam}</td>
-                        <td className="p-3 text-center font-bold text-foreground">{total}%</td>
-                        <td className="p-3 text-center">
-                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${total >= 70 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                            {letter}
+                      <div className="flex items-center gap-3 border-t md:border-t-0 md:border-l border-border pt-3 md:pt-0 md:pl-5">
+                        <div className="text-center px-3 py-1 bg-muted/20 rounded-xl border border-border">
+                          <span className="text-[10px] uppercase font-bold text-muted-foreground block">Term Average</span>
+                          <span className="text-xl font-serif font-bold text-foreground">{avgScore}%</span>
+                        </div>
+                        <div className="text-center px-3 py-1 bg-muted/20 rounded-xl border border-border">
+                          <span className="text-[10px] uppercase font-bold text-muted-foreground block">Overall Grade</span>
+                          <span className={`text-sm font-extrabold px-2.5 py-0.5 rounded-full inline-block mt-0.5 ${overallGrade.color}`}>
+                            {overallGrade.grade} ({overallGrade.label})
                           </span>
-                        </td>
-                      </tr>
+                        </div>
+                      </div>
                     );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                  })()}
+                </div>
+
+                {/* Fillable Student Score Sheet Table */}
+                <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden p-5 space-y-4">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                      <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
+                        <BarChart2 className="w-4 h-4 text-primary" /> Subject Assessment Breakdown
+                      </h4>
+                      <p className="text-xs text-muted-foreground">Fill 1st CA (10), 2nd CA (10), Assignment (10), and Paper Exam (40). CBT Exam (30) is auto-populated from CBT results.</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        const courses = getCoursesForClass(selectedBroadsheetStudent.grade || 'SS1', selectedBroadsheetStudent.stream || 'Science');
+                        courses.forEach(c => {
+                          const cbtAuto = getAutomaticCBTScore(selectedBroadsheetStudent.code || selectedBroadsheetStudent.email, c.code);
+                          handleUpdateScoreInput(c.code, 'ca1', 8);
+                          handleUpdateScoreInput(c.code, 'ca2', 9);
+                          handleUpdateScoreInput(c.code, 'assignment', 8);
+                          handleUpdateScoreInput(c.code, 'cbtScore', cbtAuto);
+                          handleUpdateScoreInput(c.code, 'paperExam', 32);
+                        });
+                        showToast('Populated sample marks for all subjects!');
+                      }}
+                      className="text-xs font-bold text-primary hover:underline bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20 transition-colors cursor-pointer"
+                    >
+                      ⚡ Auto-Fill Sample Marks
+                    </button>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs text-left border-collapse">
+                      <thead className="bg-muted/40 uppercase text-[10px] text-muted-foreground tracking-wider border-b border-border">
+                        <tr>
+                          <th className="p-3 min-w-[200px]">Course / Subject</th>
+                          <th className="p-3 text-center min-w-[90px]">1st CA (10%)</th>
+                          <th className="p-3 text-center min-w-[90px]">2nd CA (10%)</th>
+                          <th className="p-3 text-center min-w-[90px]">Assignment (10%)</th>
+                          <th className="p-3 text-center min-w-[120px] bg-blue-500/10 text-blue-700">CBT Exam (30%) ⚡</th>
+                          <th className="p-3 text-center min-w-[100px]">Paper Exam (40%)</th>
+                          <th className="p-3 text-center min-w-[90px]">Total (100%)</th>
+                          <th className="p-3 text-center min-w-[80px]">Grade</th>
+                          <th className="p-3 min-w-[200px]">Teacher Remarks</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {getCoursesForClass(selectedBroadsheetStudent.grade || 'SS1', selectedBroadsheetStudent.stream || 'Science').map(course => {
+                          const sc = broadsheetScores[course.code] || {
+                            ca1: 0, ca2: 0, assignment: 0,
+                            cbtScore: getAutomaticCBTScore(selectedBroadsheetStudent.code || selectedBroadsheetStudent.email, course.code),
+                            paperExam: 0, remark: ''
+                          };
+                          const total = sc.ca1 + sc.ca2 + sc.assignment + sc.cbtScore + sc.paperExam;
+                          const waec = calculateWAECGrade(total);
+
+                          return (
+                            <tr key={course.code} className="hover:bg-muted/20 transition-colors">
+                              <td className="p-3 font-bold text-foreground">
+                                <div>
+                                  <span className="font-bold text-foreground text-xs block">{course.name}</span>
+                                  <span className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{course.code}</span>
+                                </div>
+                              </td>
+
+                              {/* 1st CA Input */}
+                              <td className="p-3 text-center">
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={10}
+                                  value={sc.ca1}
+                                  onChange={e => handleUpdateScoreInput(course.code, 'ca1', e.target.value)}
+                                  className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-primary outline-none"
+                                />
+                              </td>
+
+                              {/* 2nd CA Input */}
+                              <td className="p-3 text-center">
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={10}
+                                  value={sc.ca2}
+                                  onChange={e => handleUpdateScoreInput(course.code, 'ca2', e.target.value)}
+                                  className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-primary outline-none"
+                                />
+                              </td>
+
+                              {/* Assignment Input */}
+                              <td className="p-3 text-center">
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={10}
+                                  value={sc.assignment}
+                                  onChange={e => handleUpdateScoreInput(course.code, 'assignment', e.target.value)}
+                                  className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-primary outline-none"
+                                />
+                              </td>
+
+                              {/* CBT Exam (AUTOMATICALLY POPULATED & HIGHLIGHTED) */}
+                              <td className="p-3 text-center bg-blue-500/5 border-x border-blue-200/50">
+                                <div className="flex flex-col items-center justify-center">
+                                  <span className="font-mono font-bold text-xs text-blue-700 bg-blue-100/80 px-2.5 py-1 rounded-md border border-blue-200">
+                                    {sc.cbtScore} / 30
+                                  </span>
+                                  <span className="text-[9px] font-bold text-blue-600 uppercase tracking-wider mt-1 flex items-center gap-0.5">
+                                    ⚡ CBT Auto-Synced
+                                  </span>
+                                </div>
+                              </td>
+
+                              {/* Paper Exam Input */}
+                              <td className="p-3 text-center">
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={40}
+                                  value={sc.paperExam}
+                                  onChange={e => handleUpdateScoreInput(course.code, 'paperExam', e.target.value)}
+                                  className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-primary outline-none"
+                                />
+                              </td>
+
+                              {/* Total Score */}
+                              <td className="p-3 text-center font-bold text-sm text-foreground font-serif">
+                                {total}%
+                              </td>
+
+                              {/* Grade Badge */}
+                              <td className="p-3 text-center">
+                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${waec.color}`}>
+                                  {waec.grade}
+                                </span>
+                              </td>
+
+                              {/* Teacher Remark */}
+                              <td className="p-3">
+                                <input
+                                  type="text"
+                                  value={sc.remark || ''}
+                                  onChange={e => handleUpdateScoreInput(course.code, 'remark', e.target.value)}
+                                  placeholder="Enter subject remark..."
+                                  className="w-full text-xs py-1.5 px-2.5 rounded-lg border border-border bg-card focus:ring-2 focus:ring-primary outline-none"
+                                />
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Save Footer Bar */}
+                  <div className="flex items-center justify-between pt-4 border-t border-border flex-wrap gap-3">
+                    <p className="text-xs text-muted-foreground font-medium">
+                      All changes are saved automatically in real-time. Click below to publish to official terminal report cards.
+                    </p>
+                    <button
+                      onClick={() => {
+                        saveStudentBroadsheet(selectedBroadsheetStudent.id, broadsheetScores);
+                        showToast(`Successfully saved and published report card for ${selectedBroadsheetStudent.name}!`);
+                      }}
+                      className="bg-primary hover:bg-primary/90 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <ShieldCheck className="w-4 h-4" /> Publish Broadsheet to Report Cards
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* =========================================================
+                 MAIN CLASS BROADSHEET TABLE VIEW (ALL STUDENTS LIST)
+                 ========================================================= */
+              <div className="bg-card rounded-2xl border border-border shadow-sm p-5 space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h3 className="font-serif font-bold text-foreground text-lg flex items-center gap-2">
+                      <BarChart2 className="w-5 h-5 text-primary" /> Class Broadsheet & Terminal Master Register
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Click any student row below to open their individual fillable broadsheet (1st CA, 2nd CA, Assignment, CBT Exam & Paper Exam).
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => showToast('All class broadsheet scores synced to student report cards!')}
+                    className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 transition-colors shadow-sm cursor-pointer"
+                  >
+                    {t('teacher.sync_report_cards', 'Sync All Scores to Report Cards')}
+                  </button>
+                </div>
+
+                {/* Class Overview Banner */}
+                <div className="bg-muted/20 border border-border rounded-xl p-4 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">Enrolled Students</span>
+                    <strong className="text-lg font-bold text-foreground font-serif">{filteredRoster.length} Pupils</strong>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">Assessment Scheme</span>
+                    <strong className="text-xs font-bold text-primary">CA1(10) + CA2(10) + Assign(10) + CBT(30) + Paper(40)</strong>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">CBT Integration</span>
+                    <strong className="text-xs font-bold text-emerald-600 flex items-center justify-center gap-1">⚡ Auto-Synced</strong>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">Academic Term</span>
+                    <strong className="text-xs font-bold text-foreground">1st Term 2026/2027</strong>
+                  </div>
+                </div>
+
+                {/* All Students Broadsheet Table */}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs text-left border-collapse">
+                    <thead className="bg-muted/40 uppercase text-[10px] text-muted-foreground tracking-wider border-b border-border">
+                      <tr>
+                        <th className="p-3">Student Name</th>
+                        <th className="p-3">Admission ID</th>
+                        <th className="p-3">Class & Arm</th>
+                        <th className="p-3 text-center">CBT Sync Status</th>
+                        <th className="p-3 text-center">Cumulative Average</th>
+                        <th className="p-3 text-center">WAEC Grade</th>
+                        <th className="p-3 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {filteredRoster.map(s => {
+                        const courses = getCoursesForClass(s.grade || 'SS1', s.stream || 'Science');
+                        const saved = getStudentBroadsheet(s.id);
+                        let sumTotal = 0;
+
+                        courses.forEach(c => {
+                          const sc = saved[c.code] || {
+                            ca1: 8, ca2: 8, assignment: 9,
+                            cbtScore: getAutomaticCBTScore(s.code || s.email, c.code),
+                            paperExam: 32
+                          };
+                          sumTotal += (sc.ca1 + sc.ca2 + sc.assignment + sc.cbtScore + sc.paperExam);
+                        });
+
+                        const avg = courses.length > 0 ? Math.round(sumTotal / courses.length) : 0;
+                        const waec = calculateWAECGrade(avg);
+
+                        return (
+                          <tr
+                            key={s.id}
+                            onClick={() => handleOpenStudentBroadsheet(s)}
+                            className="hover:bg-primary/5 cursor-pointer transition-colors group"
+                            title="Click row to open individual student broadsheet"
+                          >
+                            <td className="p-3">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-xs flex items-center justify-center font-serif">
+                                  {s.name?.[0] || 'S'}
+                                </div>
+                                <span className="font-bold text-foreground group-hover:text-primary transition-colors text-xs">{s.name}</span>
+                              </div>
+                            </td>
+                            <td className="p-3 text-muted-foreground font-mono font-bold text-xs">{s.code}</td>
+                            <td className="p-3">
+                              <span className="font-bold text-primary text-xs">{s.grade} ({s.stream || 'Science'})</span>
+                            </td>
+                            <td className="p-3 text-center">
+                              <span className="text-[10px] font-extrabold uppercase bg-blue-500/10 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-full inline-block">
+                                ⚡ Auto-Synced
+                              </span>
+                            </td>
+                            <td className="p-3 text-center font-bold text-foreground font-serif text-sm">
+                              {avg}%
+                            </td>
+                            <td className="p-3 text-center">
+                              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${waec.color}`}>
+                                {waec.grade}
+                              </span>
+                            </td>
+                            <td className="p-3 text-right">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenStudentBroadsheet(s);
+                                }}
+                                className="bg-primary/10 group-hover:bg-primary text-primary group-hover:text-white px-3 py-1.5 rounded-xl font-bold text-xs transition-colors inline-flex items-center gap-1 cursor-pointer"
+                              >
+                                Fill Broadsheet <ArrowUpRight className="w-3.5 h-3.5" />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

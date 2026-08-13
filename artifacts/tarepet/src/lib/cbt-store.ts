@@ -66,6 +66,27 @@ export interface LMSActivity {
   icon?: string;
 }
 
+export const NURSERY_COURSES = [
+  { id: 201, code: 'NUR-LIT', name: 'Phonics & Early Literacy', stream: 'General', category: 'Early Childhood' },
+  { id: 202, code: 'NUR-NUM', name: 'Early Numeracy & Math', stream: 'General', category: 'Early Childhood' },
+  { id: 203, code: 'NUR-PLE', name: 'Practical Life Exercises', stream: 'General', category: 'Montessori' },
+  { id: 204, code: 'NUR-SEN', name: 'Sensorial Education', stream: 'General', category: 'Montessori' },
+  { id: 205, code: 'NUR-CUL', name: 'Cultural & Nature Studies', stream: 'General', category: 'Early Childhood' },
+  { id: 206, code: 'NUR-ART', name: 'Creative Arts & Rhymes', stream: 'General', category: 'Early Childhood' },
+];
+
+export const PRIMARY_COURSES = [
+  { id: 301, code: 'PRI-MTH', name: 'Primary Mathematics', stream: 'General', category: 'General' },
+  { id: 302, code: 'PRI-ENG', name: 'English Language', stream: 'General', category: 'General' },
+  { id: 303, code: 'PRI-BSC', name: 'Basic Science & Tech', stream: 'General', category: 'General' },
+  { id: 304, code: 'PRI-SOC', name: 'Social Studies & Civics', stream: 'General', category: 'General' },
+  { id: 305, code: 'PRI-QVR', name: 'Verbal & Quantitative Reasoning', stream: 'General', category: 'General' },
+  { id: 306, code: 'PRI-ICT', name: 'Computer Studies / ICT', stream: 'General', category: 'General' },
+  { id: 307, code: 'PRI-AGR', name: 'Agricultural Science', stream: 'General', category: 'General' },
+  { id: 308, code: 'PRI-CCA', name: 'Cultural & Creative Arts', stream: 'General', category: 'General' },
+  { id: 309, code: 'PRI-PHE', name: 'Physical & Health Education', stream: 'General', category: 'General' },
+];
+
 export const JUNIOR_COURSES = [
   { id: 101, code: 'MTH-001', name: 'Junior Mathematics', stream: 'General', category: 'General' },
   { id: 102, code: 'ENG-001', name: 'English Language', stream: 'General', category: 'General' },
@@ -97,10 +118,57 @@ export const SENIOR_COURSES = [
   { id: 13, code: 'CIV-101', name: 'Civic Education', stream: 'Arts', category: 'Humanities' },
 ];
 
-export const ALL_COURSES = [...JUNIOR_COURSES, ...SENIOR_COURSES];
+export const ALL_COURSES = [...NURSERY_COURSES, ...PRIMARY_COURSES, ...JUNIOR_COURSES, ...SENIOR_COURSES];
+
+export const NURSERY_ARMS = ['Faith', 'Love', 'Grace'];
+export const PRIMARY_ARMS = ['Faith', 'Love'];
+export const SECONDARY_STREAMS = ['Science', 'Art'];
+
+export function getClassArms(className: string): string[] {
+  const clean = (className || '').toUpperCase();
+  if (clean.includes('CRECHE') || clean.includes('NURSERY') || clean.includes('NUR')) {
+    return NURSERY_ARMS;
+  }
+  if (clean.includes('PRIMARY') || clean.includes('PRI') || clean.includes('BASIC')) {
+    return PRIMARY_ARMS;
+  }
+  if (clean.includes('SS')) {
+    return SECONDARY_STREAMS;
+  }
+  return ['Faith', 'Love'];
+}
+
+export const SCHOOL_CLASSES = [
+  // Nursery / Early Years (Arms: Faith, Love, Grace)
+  { id: 'Creche', label: 'Creche / Toddler', category: 'Nursery', level: 'Early Years', arms: NURSERY_ARMS },
+  { id: 'Nursery 1', label: 'Nursery 1 (NUR 1)', category: 'Nursery', level: 'Early Years', arms: NURSERY_ARMS },
+  { id: 'Nursery 2', label: 'Nursery 2 (NUR 2)', category: 'Nursery', level: 'Early Years', arms: NURSERY_ARMS },
+  // Primary (Arms: Faith, Love)
+  { id: 'Primary 1', label: 'Primary 1 (Basic 1)', category: 'Primary', level: 'Primary', arms: PRIMARY_ARMS },
+  { id: 'Primary 2', label: 'Primary 2 (Basic 2)', category: 'Primary', level: 'Primary', arms: PRIMARY_ARMS },
+  { id: 'Primary 3', label: 'Primary 3 (Basic 3)', category: 'Primary', level: 'Primary', arms: PRIMARY_ARMS },
+  { id: 'Primary 4', label: 'Primary 4 (Basic 4)', category: 'Primary', level: 'Primary', arms: PRIMARY_ARMS },
+  { id: 'Primary 5', label: 'Primary 5 (Basic 5)', category: 'Primary', level: 'Primary', arms: PRIMARY_ARMS },
+  { id: 'Primary 6', label: 'Primary 6 (Basic 6)', category: 'Primary', level: 'Primary', arms: PRIMARY_ARMS },
+  // Junior Secondary
+  { id: 'JSS1', label: 'Junior Secondary 1 (JSS 1)', category: 'Junior Secondary', level: 'Secondary', arms: ['Faith', 'Love'] },
+  { id: 'JSS2', label: 'Junior Secondary 2 (JSS 2)', category: 'Junior Secondary', level: 'Secondary', arms: ['Faith', 'Love'] },
+  { id: 'JSS3', label: 'Junior Secondary 3 (JSS 3)', category: 'Junior Secondary', level: 'Secondary', arms: ['Faith', 'Love'] },
+  // Senior Secondary
+  { id: 'SS1', label: 'Senior Secondary 1 (SS 1)', category: 'Senior Secondary', level: 'Secondary', arms: SECONDARY_STREAMS },
+  { id: 'SS2', label: 'Senior Secondary 2 (SS 2)', category: 'Senior Secondary', level: 'Secondary', arms: SECONDARY_STREAMS },
+  { id: 'SS3', label: 'Senior Secondary 3 (SS 3)', category: 'Senior Secondary', level: 'Secondary', arms: SECONDARY_STREAMS },
+];
 
 export function getCoursesForClass(className: string, stream?: string | null) {
-  if (className.startsWith('JSS')) {
+  const clean = (className || '').toUpperCase();
+  if (clean.includes('CRECHE') || clean.includes('NURSERY') || clean.includes('NUR')) {
+    return NURSERY_COURSES;
+  }
+  if (clean.includes('PRIMARY') || clean.includes('PRI') || clean.includes('BASIC')) {
+    return PRIMARY_COURSES;
+  }
+  if (clean.includes('JSS') || clean.includes('JS')) {
     return JUNIOR_COURSES;
   }
   if (!stream || stream === 'General') {
@@ -855,4 +923,98 @@ export function subscribeToCBTStore(callback: () => void) {
       try { broadcastChannel.removeEventListener('message', handleBcMessage); } catch (e) { /* silence */ }
     }
   };
+}
+
+// ── Persistent Student Broadsheet Store ─────────────────────────────────────
+export interface CourseBroadsheetScore {
+  ca1: number;
+  ca2: number;
+  assignment: number;
+  cbtScore: number;
+  paperExam: number;
+  remark?: string;
+}
+
+export function calculateWAECGrade(total: number): { grade: string; color: string; label: string } {
+  if (total >= 75) return { grade: 'A1', color: 'bg-emerald-100 text-emerald-800 border border-emerald-300', label: 'Excellent' };
+  if (total >= 70) return { grade: 'B2', color: 'bg-emerald-50 text-emerald-700 border border-emerald-200', label: 'Very Good' };
+  if (total >= 65) return { grade: 'B3', color: 'bg-teal-50 text-teal-700 border border-teal-200', label: 'Good' };
+  if (total >= 60) return { grade: 'C4', color: 'bg-blue-50 text-blue-700 border border-blue-200', label: 'Credit' };
+  if (total >= 55) return { grade: 'C5', color: 'bg-indigo-50 text-indigo-700 border border-indigo-200', label: 'Credit' };
+  if (total >= 50) return { grade: 'C6', color: 'bg-amber-50 text-amber-700 border border-amber-200', label: 'Credit' };
+  if (total >= 45) return { grade: 'D7', color: 'bg-orange-50 text-orange-700 border border-orange-200', label: 'Pass' };
+  if (total >= 40) return { grade: 'E8', color: 'bg-rose-50 text-rose-700 border border-rose-200', label: 'Pass' };
+  return { grade: 'F9', color: 'bg-red-100 text-red-800 border border-red-300', label: 'Fail' };
+}
+
+const DEFAULT_BROADSHEET_SCORES: Record<string, Record<string, CourseBroadsheetScore>> = {
+  '1': {
+    'MTH-101': { ca1: 8, ca2: 9, assignment: 8, cbtScore: 24, paperExam: 32, remark: 'Outstanding analytical skills' },
+    'PHY-101': { ca1: 7, ca2: 8, assignment: 9, cbtScore: 22, paperExam: 30, remark: 'Very good practical comprehension' },
+    'CHM-101': { ca1: 8, ca2: 7, assignment: 8, cbtScore: 25, paperExam: 31, remark: 'High aptitude in organic chemistry' },
+    'ENG-101': { ca1: 9, ca2: 9, assignment: 9, cbtScore: 26, paperExam: 34, remark: 'Excellent vocabulary & essay composition' },
+    'BIO-101': { ca1: 8, ca2: 8, assignment: 7, cbtScore: 23, paperExam: 29, remark: 'Solid understanding of biological systems' },
+    'CIV-101': { ca1: 9, ca2: 8, assignment: 9, cbtScore: 25, paperExam: 32, remark: 'Commendable civic awareness' }
+  },
+  '2': {
+    'MTH-101': { ca1: 7, ca2: 7, assignment: 8, cbtScore: 21, paperExam: 28, remark: 'Good effort, keep practicing algebra' },
+    'PHY-101': { ca1: 8, ca2: 7, assignment: 8, cbtScore: 20, paperExam: 29, remark: 'Fair performance in physics problem solving' },
+    'CHM-101': { ca1: 7, ca2: 8, assignment: 7, cbtScore: 22, paperExam: 28, remark: 'Satisfactory chemical equations' },
+    'ENG-101': { ca1: 8, ca2: 8, assignment: 8, cbtScore: 24, paperExam: 31, remark: 'Good grammar and comprehension' }
+  }
+};
+
+function loadSavedBroadsheet(): Record<string, Record<string, CourseBroadsheetScore>> {
+  if (typeof window === 'undefined') return DEFAULT_BROADSHEET_SCORES;
+  try {
+    const saved = localStorage.getItem('tarepet_broadsheet_scores');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed && typeof parsed === 'object') return parsed;
+    }
+  } catch (e) {}
+  return DEFAULT_BROADSHEET_SCORES;
+}
+
+let _broadsheetScores = loadSavedBroadsheet();
+
+export function getStudentBroadsheet(studentIdOrCode: string | number): Record<string, CourseBroadsheetScore> {
+  _broadsheetScores = loadSavedBroadsheet();
+  const key = String(studentIdOrCode);
+  return _broadsheetScores[key] || {};
+}
+
+export function saveStudentBroadsheet(studentIdOrCode: string | number, courseScores: Record<string, CourseBroadsheetScore>) {
+  _broadsheetScores = loadSavedBroadsheet();
+  const key = String(studentIdOrCode);
+  _broadsheetScores[key] = courseScores;
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('tarepet_broadsheet_scores', JSON.stringify(_broadsheetScores));
+    } catch (e) {}
+  }
+  broadcastRealtimeEvent();
+}
+
+export function getAutomaticCBTScore(studentCodeOrEmail: string, courseCode: string): number {
+  const subs = getStoredSubmissions();
+  const lower = (studentCodeOrEmail || '').toLowerCase();
+  const match = subs.find(s => 
+    (s.student_id?.toLowerCase() === lower || s.student_email?.toLowerCase() === lower || s.student_name?.toLowerCase().includes(lower)) &&
+    (s.course_code === courseCode || s.exam_title?.toLowerCase().includes(courseCode.toLowerCase()))
+  );
+
+  if (match && typeof match.percentage === 'number') {
+    return Math.round((match.percentage / 100) * 30);
+  }
+
+  // Default CBT test scores for demo students SS1 to SS3
+  if (courseCode === 'MTH-101') return 24;
+  if (courseCode === 'PHY-101') return 22;
+  if (courseCode === 'CHM-101') return 25;
+  if (courseCode === 'ENG-101') return 26;
+  if (courseCode === 'BIO-101') return 23;
+  if (courseCode === 'CIV-101') return 25;
+  if (courseCode.startsWith('PRI') || courseCode.startsWith('NUR')) return 22;
+  return 20;
 }

@@ -88,12 +88,40 @@ const getStatusBadgeStyle = (status: string) => {
   }
 };
 
-import { getStoredExams, saveCBTExam, updateExamStatus, getStoredSubmissions, subscribeToCBTStore, SENIOR_COURSES, JUNIOR_COURSES, getCoursesForClass, setExamResultsReleased } from '@/lib/cbt-store';
+import { getStoredExams, saveCBTExam, updateExamStatus, getStoredSubmissions, subscribeToCBTStore, SENIOR_COURSES, JUNIOR_COURSES, getCoursesForClass, setExamResultsReleased, SCHOOL_CLASSES } from '@/lib/cbt-store';
 
-const SS_CLASSES = [
+const ALL_CLASS_CARDS = [
+  {
+    key: 'Nursery 1',
+    label: 'Nursery Section',
+    subtext: 'Creche, Nursery 1 & 2 (Faith, Love & Grace Arms)',
+    hasStreams: false,
+    color: 'bg-pink-50/50 border-pink-200 hover:border-pink-400',
+    iconBg: 'bg-pink-100 text-pink-700',
+    accent: 'text-pink-700',
+  },
+  {
+    key: 'Primary 1',
+    label: 'Primary Section',
+    subtext: 'Primary 1 to 6 (Faith & Love Arms)',
+    hasStreams: false,
+    color: 'bg-amber-50/50 border-amber-200 hover:border-amber-400',
+    iconBg: 'bg-amber-100 text-amber-700',
+    accent: 'text-amber-700',
+  },
+  {
+    key: 'JSS1',
+    label: 'Junior Secondary (JSS 1-3)',
+    subtext: 'BECE / Basic Education',
+    hasStreams: false,
+    color: 'bg-teal-50/50 border-teal-200 hover:border-teal-400',
+    iconBg: 'bg-teal-100 text-teal-700',
+    accent: 'text-teal-700',
+  },
   {
     key: 'SS1',
     label: 'SS1 (Senior Secondary 1)',
+    subtext: 'Science & Art Streams',
     hasStreams: true,
     color: 'bg-blue-50/50 border-blue-200 hover:border-blue-400',
     iconBg: 'bg-blue-100 text-blue-700',
@@ -102,6 +130,7 @@ const SS_CLASSES = [
   {
     key: 'SS2',
     label: 'SS2 (Senior Secondary 2)',
+    subtext: 'Science & Art Streams',
     hasStreams: true,
     color: 'bg-purple-50/50 border-purple-200 hover:border-purple-400',
     iconBg: 'bg-purple-100 text-purple-700',
@@ -110,6 +139,7 @@ const SS_CLASSES = [
   {
     key: 'SS3',
     label: 'SS3 (Senior Secondary 3)',
+    subtext: 'SSCE / WAEC Prep',
     hasStreams: true,
     color: 'bg-emerald-50/50 border-emerald-200 hover:border-emerald-400',
     iconBg: 'bg-emerald-100 text-emerald-700',
@@ -355,7 +385,7 @@ export default function CBTBuilder() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-              {SS_CLASSES.map(cls => {
+              {ALL_CLASS_CARDS.map(cls => {
                 const sciExams = exams.filter(e => e.class === cls.key && (e.stream === 'Science' || e.stream === 'STEM'));
                 const artExams = exams.filter(e => e.class === cls.key && (e.stream === 'Arts' || e.stream === 'Art' || e.stream === 'Humanities'));
                 const genExams = exams.filter(e => e.class === cls.key);
@@ -588,8 +618,8 @@ export default function CBTBuilder() {
                   value={form.class}
                   onChange={e => {
                     const newClass = e.target.value;
-                    const isJunior = newClass.startsWith('JSS');
-                    const newStream = isJunior ? 'General' : 'Science';
+                    const isSenior = newClass.startsWith('SS');
+                    const newStream = isSenior ? 'Science' : 'General';
                     const courses = getCoursesForClass(newClass, newStream);
                     setForm({
                       ...form,
@@ -599,9 +629,11 @@ export default function CBTBuilder() {
                     });
                   }}
                 >
-                  <option value="SS1">{t("SS1 (Senior Secondary 1)")}</option>
-                  <option value="SS2">{t("SS2 (Senior Secondary 2)")}</option>
-                  <option value="SS3">{t("SS3 (Senior Secondary 3)")}</option>
+                  {SCHOOL_CLASSES.map(cls => (
+                    <option key={cls.id} value={cls.id}>
+                      {cls.label}
+                    </option>
+                  ))}
                 </select>
               </div>
 
