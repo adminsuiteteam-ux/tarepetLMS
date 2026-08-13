@@ -28,8 +28,9 @@ def get_secret_key():
     return secrets.token_hex(32)
 
 SECRET_KEY = get_secret_key()
-DEBUG = env.bool('DEBUG', default=False)
+DEBUG = env.bool('DEBUG', default=True)
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[
+    '*',
     '.onrender.com',
     'localhost',
     '127.0.0.1',
@@ -37,8 +38,14 @@ ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[
     'www.tarepetmontessorischool.com',
 ])
 
-# Trust the production domain for CSRF in production
+# Trust local and production origins for CSRF
 CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
     'https://tarepetmontessorischool.com',
     'https://www.tarepetmontessorischool.com',
     'https://tarepet-backend-4iw6.onrender.com',
