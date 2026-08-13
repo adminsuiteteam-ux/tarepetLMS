@@ -9,6 +9,7 @@ from .views import (
     AdminAnalyticsView,
     BulkUserImportView,
     SystemAuditLogView,
+    LoginActivityLogView,
 )
 
 router = DefaultRouter()
@@ -25,6 +26,7 @@ urlpatterns = [
     path('admin-analytics/', AdminAnalyticsView.as_view(), name='admin_analytics'),
     path('bulk-import/', BulkUserImportView.as_view(), name='bulk_user_import'),
     path('audit-logs/', SystemAuditLogView.as_view(), name='system_audit_logs'),
+    path('login-activities/', LoginActivityLogView.as_view(), name='login_activities'),
 
     path('', include(router.urls)),
 ]

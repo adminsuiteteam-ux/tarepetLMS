@@ -128,3 +128,21 @@ class AdminProfile(models.Model):
 
     def __str__(self):
         return f"Admin: {self.user.get_full_name()} ({self.role_type})"
+
+
+class LoginActivityLog(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='login_logs')
+    email = models.CharField(max_length=255)
+    role = models.CharField(max_length=50, default='UNKNOWN')
+    ip_address = models.CharField(max_length=100, blank=True, null=True)
+    user_agent = models.TextField(blank=True, null=True)
+    device_info = models.CharField(max_length=255, blank=True, null=True)
+    status = models.CharField(max_length=20, default='SUCCESS')
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"{self.email} ({self.role}) - {self.status} at {self.timestamp}"
+

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import CustomUser, StudentProfile, TeacherProfile, ParentProfile, AdminProfile
+from .models import CustomUser, StudentProfile, TeacherProfile, ParentProfile, AdminProfile, LoginActivityLog
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
@@ -20,6 +20,13 @@ class CustomUserAdmin(UserAdmin):
             'fields': ('email', 'password', 'first_name', 'last_name', 'phone', 'role', 'is_staff', 'is_active'),
         }),
     )
+
+@admin.register(LoginActivityLog)
+class LoginActivityLogAdmin(admin.ModelAdmin):
+    list_display = ('email', 'role', 'ip_address', 'device_info', 'status', 'timestamp')
+    list_filter = ('role', 'status', 'timestamp')
+    search_fields = ('email', 'ip_address', 'device_info', 'user_agent')
+    ordering = ('-timestamp',)
 
 admin.site.register(StudentProfile)
 admin.site.register(TeacherProfile)

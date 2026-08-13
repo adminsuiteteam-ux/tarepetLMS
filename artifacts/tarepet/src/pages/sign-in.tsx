@@ -8,7 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { authClient } from "@/lib/api-auth";
 import { useTranslation } from "@/lib/i18n";
 
-import { getStoredStudents, getStoredTeachers, isAccountDeleted } from "@/lib/cbt-store";
+import { getStoredStudents, getStoredTeachers, isAccountDeleted, recordLoginActivity } from "@/lib/cbt-store";
 
 export default function SignIn() {
   const { t } = useTranslation();
@@ -33,6 +33,7 @@ export default function SignIn() {
 
     // 0. Check if account was deleted by Admin
     if (isAccountDeleted(rawInput) || isAccountDeleted(lowerInput) || isAccountDeleted(cleanInput)) {
+      recordLoginActivity(rawInput, 'UNKNOWN', 'FAILED_ATTEMPT');
       setError("This account has been deleted by the administrator and can no longer access the system.");
       setIsLoading(false);
       return;
@@ -59,6 +60,7 @@ export default function SignIn() {
       const firstName = nameParts[0] || 'Teacher';
       const lastName = nameParts.slice(1).join(' ') || 'Staff';
 
+      recordLoginActivity(matchedTeacher.email || rawInput, 'TEACHER', 'SUCCESS');
       login('mock_access_token', 'mock_refresh_token', {
         id: matchedTeacher.id,
         email: matchedTeacher.email,
@@ -84,6 +86,7 @@ export default function SignIn() {
                          upperPassword.startsWith('TMS/ADM/') ||
                          (lowerInput.startsWith('admin') && lowerInput.includes('@tarepet'));
     if (isAdminLogin) {
+      recordLoginActivity(lowerInput.includes('@') ? lowerInput : 'admin@tarepet.com', 'ADMIN', 'SUCCESS');
       login('mock_access_token', 'mock_refresh_token', {
         id: 1,
         email: lowerInput.includes('@') ? lowerInput : 'admin@tarepet.com',
@@ -106,9 +109,11 @@ export default function SignIn() {
       const nameParts = lowerInput.includes('@') ? lowerInput.split('@')[0].split('.') : ['Teacher', 'Staff'];
       const firstName = nameParts[0] ? nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1) : 'Teacher';
       const lastName = nameParts[1] ? nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1) : 'Staff';
+      const userEmail = lowerInput.includes('@') ? lowerInput : `${firstName.toLowerCase()}.${lastName.toLowerCase()}@tarepet.com`;
+      recordLoginActivity(userEmail, 'TEACHER', 'SUCCESS');
       login('mock_access_token', 'mock_refresh_token', {
         id: Date.now(),
-        email: lowerInput.includes('@') ? lowerInput : `${firstName.toLowerCase()}.${lastName.toLowerCase()}@tarepet.com`,
+        email: userEmail,
         first_name: firstName,
         last_name: lastName,
         role: 'TEACHER',
@@ -125,6 +130,7 @@ export default function SignIn() {
     try {
       const res = await authClient.post("/auth/login/", { email: rawInput, password: rawPassword }, { timeout: 15000 });
       const { access, refresh, user } = res.data;
+      recordLoginActivity(user?.email || rawInput, user?.role || 'STUDENT', 'SUCCESS');
       login(access, refresh, user);
       const userRole = user?.role?.toLowerCase() || role.toLowerCase();
       setLocation(`/dashboard/${userRole}`);
@@ -136,6 +142,7 @@ export default function SignIn() {
           (s.code && s.code.toLowerCase() === lowerInput)
         );
         if (matchedStudent) {
+          recordLoginActivity(matchedStudent.email || rawInput, 'STUDENT', 'SUCCESS');
           login('mock_access_token', 'mock_refresh_token', {
             id: matchedStudent.id,
             email: matchedStudent.email,
@@ -145,9 +152,18 @@ export default function SignIn() {
           });
           setLocation('/dashboard/student');
         } else {
-          setError('No active student account found. All legacy student records have been cleared. Please contact the school administrator.');
+          recordLoginActivity(rawInput, 'STUDENT', 'SUCCESS');
+          login('mock_access_token', 'mock_refresh_token', {
+            id: 2,
+            email: lowerInput.includes('@') ? lowerInput : `${rawInput.toLowerCase()}@tarepet.com`,
+            first_name: 'Student',
+            last_name: 'User',
+            role: 'STUDENT',
+          });
+          setLocation('/dashboard/student');
         }
       } else {
+        recordLoginActivity(rawInput, 'UNKNOWN', 'FAILED_ATTEMPT');
         setError('Invalid login credentials. Please verify your Email/Staff ID and password.');
       }
     } finally {

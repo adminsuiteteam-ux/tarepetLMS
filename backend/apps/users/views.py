@@ -23,7 +23,17 @@ from apps.courses.models import Course
 # pyrefly: ignore [missing-import]
 from apps.assessments.models import Attendance, BehaviorLog, House, Submission, Assignment
 
+from .models import CustomUser, StudentProfile, TeacherProfile, ParentProfile, AdminProfile, LoginActivityLog
+
 User = get_user_model()
+
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0].strip()
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip or '127.0.0.1'
 
 
 class CustomTokenObtainPairView(APIView):
@@ -32,8 +42,74 @@ class CustomTokenObtainPairView(APIView):
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data, context={'request': request})
-        serializer.is_valid(raise_exception=True)
-        return Response(serializer.validated_data, status=status.HTTP_200_OK)
+        try:
+            serializer.is_valid(raise_exception=True)
+            data = serializer.validated_data
+            user_data = data.get('user', {})
+            email = request.data.get('email', user_data.get('email', ''))
+            role = user_data.get('role', 'UNKNOWN')
+            ip = get_client_ip(request)
+            ua = request.META.get('HTTP_USER_AGENT', 'Unknown')
+
+            LoginActivityLog.objects.create(
+                email=email,
+                role=role,
+                ip_address=ip,
+                user_agent=ua,
+                device_info=ua[:150] if ua else 'Unknown Browser/Device',
+                status='SUCCESS'
+            )
+            return Response(data, status=status.HTTP_200_OK)
+        except Exception as e:
+            email = request.data.get('email', '')
+            ip = get_client_ip(request)
+            ua = request.META.get('HTTP_USER_AGENT', 'Unknown')
+            LoginActivityLog.objects.create(
+                email=email,
+                role='UNKNOWN',
+                ip_address=ip,
+                user_agent=ua,
+                device_info=ua[:150] if ua else 'Unknown Browser/Device',
+                status='FAILED_ATTEMPT'
+            )
+            raise e
+
+
+class LoginActivityLogView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        logs = LoginActivityLog.objects.all()[:100]
+        data = [{
+            'id': l.id,
+            'email': l.email,
+            'role': l.role,
+            'ip_address': l.ip_address,
+            'user_agent': l.user_agent,
+            'device_info': l.device_info,
+            'status': l.status,
+            'timestamp': l.timestamp.isoformat()
+        } for l in logs]
+        return Response(data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        data = request.data
+        email = data.get('email', 'Unknown')
+        role = data.get('role', 'UNKNOWN')
+        ip = data.get('ip_address', get_client_ip(request))
+        ua = data.get('user_agent', request.META.get('HTTP_USER_AGENT', ''))
+        device_info = data.get('device_info', ua[:150] if ua else 'Client Browser')
+        status_val = data.get('status', 'SUCCESS')
+
+        log = LoginActivityLog.objects.create(
+            email=email,
+            role=role,
+            ip_address=ip,
+            user_agent=ua,
+            device_info=device_info,
+            status=status_val
+        )
+        return Response({'status': 'logged', 'id': log.id}, status=status.HTTP_201_CREATED)
 
 
 class RegisterView(generics.CreateAPIView):
