@@ -8,7 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { authClient } from "@/lib/api-auth";
 import { useTranslation } from "@/lib/i18n";
 
-import { getStoredStudents, getStoredTeachers } from "@/lib/cbt-store";
+import { getStoredStudents, getStoredTeachers, isAccountDeleted } from "@/lib/cbt-store";
 
 export default function SignIn() {
   const { t } = useTranslation();
@@ -30,6 +30,13 @@ export default function SignIn() {
     const cleanInput = lowerInput.replace(/[^a-z0-9]/g, '');
     const rawPassword = password.trim();
     const upperPassword = rawPassword.toUpperCase();
+
+    // 0. Check if account was deleted by Admin
+    if (isAccountDeleted(rawInput) || isAccountDeleted(lowerInput) || isAccountDeleted(cleanInput)) {
+      setError("This account has been deleted by the administrator and can no longer access the system.");
+      setIsLoading(false);
+      return;
+    }
 
     // 1. Check persistent Teacher accounts created by Admin on the Admin Page
     const storedTeachers = getStoredTeachers();

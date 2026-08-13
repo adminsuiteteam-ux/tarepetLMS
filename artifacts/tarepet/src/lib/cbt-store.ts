@@ -369,8 +369,59 @@ export function saveStoredTeachers(teachers: TeacherRecord[]) {
   teachers.forEach(t => saveTeacher(t));
 }
 
+function loadDeletedAccounts(): string[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem('tarepet_deleted_accounts');
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function recordDeletedAccount(identifiers: (string | number | undefined | null)[]) {
+  const current = loadDeletedAccounts();
+  const next = new Set(current);
+  identifiers.forEach(id => {
+    if (id !== undefined && id !== null && String(id).trim().length > 0) {
+      const val = String(id).trim().toLowerCase();
+      next.add(val);
+      const clean = val.replace(/[^a-z0-9]/g, '');
+      if (clean) next.add(clean);
+    }
+  });
+  const arr = Array.from(next);
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('tarepet_deleted_accounts', JSON.stringify(arr));
+    } catch {}
+  }
+}
+
+export function isAccountDeleted(input: string): boolean {
+  if (!input) return false;
+  const list = loadDeletedAccounts();
+  const lower = input.trim().toLowerCase();
+  const clean = lower.replace(/[^a-z0-9]/g, '');
+  return list.some(item => {
+    const itemLower = item.toLowerCase();
+    const itemClean = itemLower.replace(/[^a-z0-9]/g, '');
+    return (
+      itemLower === lower ||
+      (clean.length > 2 && itemClean === clean)
+    );
+  });
+}
+
 export function deleteTeacher(teacherIdOrStaffId: number | string): boolean {
   _teachers = loadSavedTeachers();
+  const target = _teachers.find(t => t.id === teacherIdOrStaffId || t.staffId === teacherIdOrStaffId || t.email === teacherIdOrStaffId);
+  if (target) {
+    recordDeletedAccount([target.id, target.staffId, target.email, target.name]);
+  } else {
+    recordDeletedAccount([teacherIdOrStaffId]);
+  }
+
   _teachers = _teachers.filter(t => t.id !== teacherIdOrStaffId && t.staffId !== teacherIdOrStaffId && t.email !== teacherIdOrStaffId);
   if (typeof window !== 'undefined') {
     try {
@@ -483,7 +534,14 @@ export function saveStoredStudents(students: StudentRecord[]) {
 }
 
 export function deleteStudent(studentId: number | string): boolean {
-  _students = _students.filter(s => s.id !== studentId && s.code !== studentId && s.admissionNo !== studentId);
+  const target = _students.find(s => s.id === studentId || s.code === studentId || s.admissionNo === studentId || s.email === studentId);
+  if (target) {
+    recordDeletedAccount([target.id, target.code, target.admissionNo, target.email, target.name]);
+  } else {
+    recordDeletedAccount([studentId]);
+  }
+
+  _students = _students.filter(s => s.id !== studentId && s.code !== studentId && s.admissionNo !== studentId && s.email !== studentId);
   broadcastRealtimeEvent();
   return true;
 }
