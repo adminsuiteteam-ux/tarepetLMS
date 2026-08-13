@@ -10,7 +10,7 @@ import {
   Search, Filter, Upload, Download, Send, Eye, Edit2, Trash2, X,
   TrendingUp, Play, Lock, MessageSquare, ChevronDown, ChevronRight, ChevronLeft,
   CheckSquare, XCircle, RefreshCw, PenLine, Globe, Layers, ArrowUpRight,
-  ClipboardList, Settings, ShieldCheck, User, Bell, Printer, CreditCard, GraduationCap
+  ClipboardList, Settings, ShieldCheck, User, Bell, Printer, CreditCard, GraduationCap, Zap
 } from 'lucide-react';
 
 import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, saveStudent, deleteStudent, subscribeToCBTStore, syncStudentsWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, CourseBroadsheetScore } from '@/lib/cbt-store';
@@ -1813,7 +1813,7 @@ export default function TeacherDashboard() {
                           {selectedBroadsheetStudent.grade} ({selectedBroadsheetStudent.stream || 'Science'})
                         </span>
                         <span className="text-[10px] font-extrabold uppercase bg-blue-500/10 text-blue-600 border border-blue-200 px-2 py-0.5 rounded-md flex items-center gap-1">
-                          ⚡ CBT Results Auto-Filled
+                          <Zap className="w-3 h-3 text-blue-600 shrink-0" /> CBT Results Auto-Filled
                         </span>
                       </div>
                       <h4 className="font-serif font-bold text-lg text-foreground">{selectedBroadsheetStudent.name}</h4>
@@ -1871,9 +1871,9 @@ export default function TeacherDashboard() {
                         });
                         showToast('Populated sample marks for all subjects!');
                       }}
-                      className="text-xs font-bold text-primary hover:underline bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20 transition-colors cursor-pointer"
+                      className="text-xs font-bold text-primary hover:underline bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20 transition-colors cursor-pointer flex items-center gap-1.5"
                     >
-                      ⚡ Auto-Fill Sample Marks
+                      <Zap className="w-3.5 h-3.5 text-primary shrink-0" /> Auto-Fill Sample Marks
                     </button>
                   </div>
 
@@ -1885,7 +1885,9 @@ export default function TeacherDashboard() {
                           <th className="p-3 text-center min-w-[90px]">1st CA (10%)</th>
                           <th className="p-3 text-center min-w-[90px]">2nd CA (10%)</th>
                           <th className="p-3 text-center min-w-[90px]">Assignment (10%)</th>
-                          <th className="p-3 text-center min-w-[120px] bg-blue-500/10 text-blue-700">CBT Exam (30%) ⚡</th>
+                          <th className="p-3 text-center min-w-[120px] bg-blue-500/10 text-blue-700">
+                            <span className="flex items-center justify-center gap-1">CBT Exam (30%) <Zap className="w-3.5 h-3.5 text-blue-600 shrink-0" /></span>
+                          </th>
                           <th className="p-3 text-center min-w-[100px]">Paper Exam (40%)</th>
                           <th className="p-3 text-center min-w-[90px]">Total (100%)</th>
                           <th className="p-3 text-center min-w-[80px]">Grade</th>
@@ -1954,7 +1956,7 @@ export default function TeacherDashboard() {
                                     {sc.cbtScore} / 30
                                   </span>
                                   <span className="text-[9px] font-bold text-blue-600 uppercase tracking-wider mt-1 flex items-center gap-0.5">
-                                    ⚡ CBT Auto-Synced
+                                    <Zap className="w-2.5 h-2.5 text-blue-600 shrink-0" /> CBT Auto-Synced
                                   </span>
                                 </div>
                               </td>
@@ -2051,7 +2053,7 @@ export default function TeacherDashboard() {
                   </div>
                   <div>
                     <span className="text-[10px] font-bold uppercase text-muted-foreground block">CBT Integration</span>
-                    <strong className="text-xs font-bold text-emerald-600 flex items-center justify-center gap-1">⚡ Auto-Synced</strong>
+                    <strong className="text-xs font-bold text-emerald-600 flex items-center justify-center gap-1"><Zap className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Auto-Synced</strong>
                   </div>
                   <div>
                     <span className="text-[10px] font-bold uppercase text-muted-foreground block">Academic Term</span>
@@ -2111,8 +2113,8 @@ export default function TeacherDashboard() {
                               <span className="font-bold text-primary text-xs">{s.grade} ({s.stream || 'Science'})</span>
                             </td>
                             <td className="p-3 text-center">
-                              <span className="text-[10px] font-extrabold uppercase bg-blue-500/10 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-full inline-block">
-                                ⚡ Auto-Synced
+                              <span className="text-[10px] font-extrabold uppercase bg-blue-500/10 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
+                                <Zap className="w-3 h-3 text-blue-600 shrink-0" /> Auto-Synced
                               </span>
                             </td>
                             <td className="p-3 text-center font-bold text-foreground font-serif text-sm">
