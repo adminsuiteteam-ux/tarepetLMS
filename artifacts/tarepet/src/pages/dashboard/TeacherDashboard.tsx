@@ -1682,81 +1682,9 @@ export default function TeacherDashboard() {
           </div>
         </div>
 
-        {/* Sub-tab Switcher */}
-        <div className="flex border-b border-border gap-2">
-          {[
-            { id: 'queue', label: `Pending Submissions (${submissions.length})`, icon: FileText },
-            { id: 'gradebook', label: 'Class Broadsheet & Scores', icon: BarChart2 },
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setResultsSubTab(tab.id as any)}
-              className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold border-b-2 transition-all ${
-                resultsSubTab === tab.id ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <tab.icon className="w-3.5 h-3.5" /> {tab.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Sub-tab 1: Grading Queue */}
-        {resultsSubTab === 'queue' && (
-          <div className="space-y-4">
-            {submissions.length === 0 ? (
-              <div className="bg-card rounded-2xl border border-border p-12 text-center">
-                <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
-                <h4 className="font-serif font-bold text-foreground text-lg">{t('teacher.all_graded', 'All Submissions Graded!')}</h4>
-                <p className="text-xs text-muted-foreground">{t('teacher.all_graded_desc', 'There are no pending student submissions requiring evaluation.')}</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {submissions.map(s => (
-                  <div key={s.id} className="bg-card rounded-2xl border border-border p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[10px] font-bold uppercase text-primary bg-primary/10 px-2 py-0.5 rounded-full">{s.classCode}</span>
-                        <span className="text-xs text-muted-foreground">{s.submittedAt}</span>
-                      </div>
-                      <h4 className="font-bold text-foreground text-sm">{s.title}</h4>
-                      <p className="text-xs text-muted-foreground mt-0.5">{t('teacher.submitted_by', 'Submitted by:')} <strong>{s.student}</strong> • {t('teacher.file_label', 'File:')} <span className="font-mono text-primary">{s.file}</span></p>
-                    </div>
-                    <button onClick={() => setSelectedSub(s)} className="bg-primary text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors self-start md:self-auto">
-                      {t('teacher.grade_submission', 'Grade Submission')}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Grading Modal */}
-            {selectedSub && (
-              <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setSelectedSub(null)}>
-                <div className="bg-card rounded-2xl border border-border max-w-md w-full p-6 space-y-4 shadow-2xl" onClick={e => e.stopPropagation()}>
-                  <h3 className="font-serif font-bold text-lg text-foreground">{t('teacher.grade_label', 'Grade:')} {selectedSub.student}</h3>
-                  <p className="text-xs text-muted-foreground">{selectedSub.title} ({selectedSub.classCode})</p>
-                  <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.score_out_of', 'Score (out of 100)')}</label>
-                    <input type="number" min={0} max={100} value={gradeInput} onChange={e => setGradeInput(e.target.value)} placeholder="e.g. 85" className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-sm focus:ring-2 focus:ring-primary outline-none" />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.feedback_comments', 'Feedback Comments')}</label>
-                    <textarea rows={3} value={feedbackInput} onChange={e => setFeedbackInput(e.target.value)} placeholder="Provide constructive feedback for student..." className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-sm focus:ring-2 focus:ring-primary outline-none" />
-                  </div>
-                  <div className="flex gap-3">
-                    <button onClick={() => setSelectedSub(null)} className="flex-1 py-2.5 rounded-xl border border-border text-xs font-bold hover:bg-accent">{t('teacher.cancel', 'Cancel')}</button>
-                    <button onClick={handleGradeSubmit} disabled={!gradeInput} className="flex-1 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 disabled:opacity-50">{t('teacher.submit_grade', 'Submit Grade')}</button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Sub-tab 2: Interactive Class Broadsheet & Scores */}
-        {resultsSubTab === 'gradebook' && (
-          <div>
-            {selectedBroadsheetStudent ? (
+        {/* Interactive Class Broadsheet & Scores */}
+        <div>
+          {selectedBroadsheetStudent ? (
               /* =========================================================
                  INDIVIDUAL STUDENT DETAILED BROADSHEET VIEW
                  ========================================================= */
@@ -2145,7 +2073,6 @@ export default function TeacherDashboard() {
               </div>
             )}
           </div>
-        )}
       </div>
     );
 
