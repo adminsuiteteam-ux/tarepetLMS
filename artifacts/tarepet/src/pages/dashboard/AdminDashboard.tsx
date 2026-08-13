@@ -650,9 +650,12 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                     <div className="pt-2 animate-in fade-in">
                       <label className={labelCls}>Teaching Division Level</label>
                       <select className={inputCls} value={form.teachingDivision} onChange={e => setF('teachingDivision', e.target.value)}>
+                        <option>Nursery & Early Years (Nursery 1 - Nursery 3)</option>
+                        <option>Primary Education (Primary 1 - Primary 5)</option>
                         <option>Junior Secondary (JSS 1 - JSS 3)</option>
                         <option>Senior Secondary (SS 1 - SS 3)</option>
-                        <option>Both Junior & Senior Secondary</option>
+                        <option>All Primary & Secondary Levels</option>
+                        <option>Entire School (Nursery, Primary & Secondary)</option>
                       </select>
                     </div>
                   )}
