@@ -4,7 +4,7 @@ import { Link } from 'wouter';
 import { authClient } from '@/lib/api-auth';
 import { PortalLayout } from '@/components/layout/PortalLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, deleteStudent, syncStudentsWithBackend } from '@/lib/cbt-store';
+import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, deleteStudent, syncStudentsWithBackend, getStoredTeachers, saveTeacher, saveStoredTeachers, deleteTeacher } from '@/lib/cbt-store';
 import { AdminManagementPanel } from '@/components/dashboard/AdminManagementPanel';
 import {
   getPaymentItems,
@@ -49,22 +49,8 @@ import {
 interface TabProps { id: string; label: string; icon: React.ReactNode; badge?: number }
 
 const MOCK_USERS: any[] = [];
-const MOCK_STUDENTS: any[] = [
-  { id: 1, admissionNo: 'TMS/2026/NUR1/001', name: 'Amina Bello', grade: 'NUR1', gender: 'Female', stream: 'Nursery A', house: 'Blue House', parentPhone: '08031112233', parentName: 'Alhaji Bello' },
-  { id: 2, admissionNo: 'TMS/2026/NUR2/002', name: 'David Okon', grade: 'NUR2', gender: 'Male', stream: 'Nursery B', house: 'Green House', parentPhone: '08032223344', parentName: 'Mr. Okon' },
-  { id: 3, admissionNo: 'TMS/2026/PRI1/003', name: 'Chidi Eze', grade: 'PRI1', gender: 'Male', stream: 'Primary 1 Gold', house: 'Red House', parentPhone: '08033334455', parentName: 'Mrs. Eze' },
-  { id: 4, admissionNo: 'TMS/2026/PRI2/004', name: 'Zainab Usman', grade: 'PRI2', gender: 'Female', stream: 'Primary 2 Silver', house: 'Purple House', parentPhone: '08034445566', parentName: 'Mallam Usman' },
-  { id: 5, admissionNo: 'TMS/2026/PRI3/005', name: 'Kufre Akpan', grade: 'PRI3', gender: 'Male', stream: 'Primary 3 Diamond', house: 'Blue House', parentPhone: '08035556677', parentName: 'Chief Akpan' },
-  { id: 6, admissionNo: 'TMS/2026/PRI4/006', name: 'Emeka Nnamdi', grade: 'PRI4', gender: 'Male', stream: 'Primary 4 Pearl', house: 'Green House', parentPhone: '08036667788', parentName: 'Dr. Nnamdi' },
-  { id: 7, admissionNo: 'TMS/2026/PRI5/007', name: 'Blessing Adebayo', grade: 'PRI5', gender: 'Female', stream: 'Primary 5 Ruby', house: 'Red House', parentPhone: '08037778899', parentName: 'Pastor Adebayo' },
-  { id: 8, admissionNo: 'TMS/2026/JSS1/008', name: 'Chinedu Orji', grade: 'JSS1', gender: 'Male', stream: 'JSS 1 Alpha', house: 'Purple House', parentPhone: '08038889900', parentName: 'Mr. Orji' },
-  { id: 9, admissionNo: 'TMS/2026/JSS2/009', name: 'Fatima Danjuma', grade: 'JSS2', gender: 'Female', stream: 'JSS 2 Beta', house: 'Blue House', parentPhone: '08039990011', parentName: 'Mrs. Danjuma' },
-  { id: 10, admissionNo: 'TMS/2026/JSS3/010', name: 'Daniel Briggs', grade: 'JSS3', gender: 'Male', stream: 'JSS 3 Gamma', house: 'Green House', parentPhone: '08030001122', parentName: 'Engr. Briggs' },
-  { id: 11, admissionNo: 'TMS/2026/SS1/011', name: 'Tari Emmanuel', grade: 'SS1', gender: 'Male', stream: 'SS 1 Science', house: 'Red House', parentPhone: '08031234567', parentName: 'Prof. Emmanuel' },
-  { id: 12, admissionNo: 'TMS/2026/SS2/012', name: 'Grace Okereke', grade: 'SS2', gender: 'Female', stream: 'SS 2 Commercial', house: 'Purple House', parentPhone: '08032345678', parentName: 'Barr. Okereke' },
-  { id: 13, admissionNo: 'TMS/2026/SS3/013', name: 'Kenechukwu Obi', grade: 'SS3', gender: 'Male', stream: 'SS 3 Arts', house: 'Blue House', parentPhone: '08033456789', parentName: 'Chief Obi' },
-];
-const MOCK_SS_STUDENTS = MOCK_STUDENTS;
+const MOCK_STUDENTS: any[] = [];
+const MOCK_SS_STUDENTS: any[] = [];
 const MOCK_TEACHERS: any[] = [];
 
 const MOCK_SUBJECTS: any[] = [];
@@ -391,6 +377,7 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
       teacher_id: staffId,
     }).catch(() => {});
 
+    saveTeacher(created);
     onSave(created);
   };
 
@@ -1781,8 +1768,8 @@ export default function AdminDashboard() {
   const [incomeForm, setIncomeForm] = useState({ description: '', category: 'School Fees', amount: '', status: 'RECEIVED' });
   const [financeSaveAlert, setFinanceSaveAlert] = useState('');
 
-  // Teacher management state — always starts empty; populated from live backend API
-  const [teachersList, setTeachersList] = useState<any[]>([]);
+  // Teacher management state — loaded from persistent teacher store and live backend
+  const [teachersList, setTeachersList] = useState<any[]>(() => getStoredTeachers());
 
   // Sync teachers & users from live Django REST API backend
   React.useEffect(() => {
@@ -5066,7 +5053,8 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                         <button
                           onClick={() => {
                             const newStatus = tchr.status === 'Active' ? 'On Leave' : 'Active';
-                            setTeachersList(prev => prev.map(t => t.id === tchr.id ? { ...t, status: newStatus } : t));
+                            saveTeacher({ ...tchr, status: newStatus });
+                            setTeachersList(getStoredTeachers());
                             setSelectedTeacher({ ...tchr, status: newStatus });
                             setShowTeacherActionsDropdown(false);
                           }}
@@ -5092,7 +5080,8 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                         <button
                           onClick={() => {
                             if (confirm(`Are you sure you want to permanently delete ${tchr.name}'s profile? This action cannot be undone.`)) {
-                              setTeachersList(prev => prev.filter(t => t.id !== tchr.id));
+                              deleteTeacher(tchr.id);
+                              setTeachersList(getStoredTeachers());
                               setSelectedTeacher(null);
                               setShowTeacherActionsDropdown(false);
                             }
@@ -5501,11 +5490,8 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
             <AddTeacherWizardModal
               onClose={() => setShowAddTeacherModal(false)}
               onSave={(created) => {
-                setTeachersList(prev => {
-                  const updated = [created, ...prev];
-                  
-                  return updated;
-                });
+                saveTeacher(created);
+                setTeachersList(getStoredTeachers());
                 setShowAddTeacherModal(false);
               }}
             />

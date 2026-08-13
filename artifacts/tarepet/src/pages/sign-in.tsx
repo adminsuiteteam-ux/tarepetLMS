@@ -8,7 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { authClient } from "@/lib/api-auth";
 import { useTranslation } from "@/lib/i18n";
 
-import { getStoredStudents } from "@/lib/cbt-store";
+import { getStoredStudents, getStoredTeachers } from "@/lib/cbt-store";
 
 export default function SignIn() {
   const { t } = useTranslation();
@@ -25,59 +25,123 @@ export default function SignIn() {
     setError(null);
     setIsLoading(true);
 
-    // Detect role from email or TMS Staff ID password format (TMS/TCH/XXXX, TMS/ADM/XXXX, etc.)
-    const lowerEmail = email.toLowerCase().trim();
-    const upperPassword = password.toUpperCase().trim();
-    let role: 'ADMIN' | 'TEACHER' | 'STUDENT' | 'PARENT' = 'STUDENT';
-    if (upperPassword.startsWith('TMS/ADM/') || lowerEmail.includes('admin')) role = 'ADMIN';
-    else if (upperPassword.startsWith('TMS/TCH/') || lowerEmail.includes('teacher')) role = 'TEACHER';
-    else if (upperPassword.startsWith('TMS/PAR/') || lowerEmail.includes('parent')) role = 'PARENT';
-    else if (upperPassword.startsWith('TMS/STD/') || lowerEmail.includes('student')) role = 'STUDENT';
+    const rawInput = email.trim();
+    const lowerInput = rawInput.toLowerCase();
+    const cleanInput = lowerInput.replace(/[^a-z0-9]/g, '');
+    const rawPassword = password.trim();
+    const upperPassword = rawPassword.toUpperCase();
 
-    const nameParts = email.split('@')[0].split('.');
-    const firstName = nameParts[0] ? nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1) : role;
-    const lastName = nameParts[1] ? nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1) : 'User';
+    // 1. Check persistent Teacher accounts created by Admin on the Admin Page
+    const storedTeachers = getStoredTeachers();
+    const matchedTeacher = storedTeachers.find(t => {
+      const tEmail = (t.email || '').toLowerCase();
+      const tStaffId = (t.staffId || '').toLowerCase();
+      const cleanStaffId = tStaffId.replace(/[^a-z0-9]/g, '');
+      const cleanTEmail = tEmail.replace(/[^a-z0-9]/g, '');
+      return (
+        tEmail === lowerInput ||
+        tStaffId === lowerInput ||
+        (cleanInput.length > 2 && (cleanInput === cleanStaffId || cleanInput === cleanTEmail)) ||
+        String(t.id).toLowerCase() === lowerInput
+      );
+    });
 
-    const demoLogin = () => {
+    if (matchedTeacher) {
+      // Teacher found! Log into Teacher Profile & Dashboard
+      const nameParts = matchedTeacher.name.trim().split(' ');
+      const firstName = nameParts[0] || 'Teacher';
+      const lastName = nameParts.slice(1).join(' ') || 'Staff';
+
       login('mock_access_token', 'mock_refresh_token', {
-        id: 1,
-        email,
+        id: matchedTeacher.id,
+        email: matchedTeacher.email,
         first_name: firstName,
         last_name: lastName,
-        role,
+        role: 'TEACHER',
+        profile: {
+          teacher_id: matchedTeacher.staffId,
+          department: matchedTeacher.department,
+          formTeacherOf: matchedTeacher.formTeacherOf,
+          subjects_taught: matchedTeacher.specialization,
+          qualifications: matchedTeacher.qualification,
+        } as any
       });
-      setLocation(`/dashboard/${role.toLowerCase()}`);
-    };
+      setLocation('/dashboard/teacher');
+      setIsLoading(false);
+      return;
+    }
 
+    // 2. Strict check for Admin login credentials
+    const isAdminLogin = lowerInput === 'admin@tarepet.com' ||
+                         lowerInput === 'admin' ||
+                         upperPassword.startsWith('TMS/ADM/') ||
+                         (lowerInput.startsWith('admin') && lowerInput.includes('@tarepet'));
+    if (isAdminLogin) {
+      login('mock_access_token', 'mock_refresh_token', {
+        id: 1,
+        email: lowerInput.includes('@') ? lowerInput : 'admin@tarepet.com',
+        first_name: 'Administrator',
+        last_name: 'System',
+        role: 'ADMIN',
+      });
+      setLocation('/dashboard/admin');
+      setIsLoading(false);
+      return;
+    }
+
+    // 3. Fallback demo login for generic teacher credentials
+    let role: 'ADMIN' | 'TEACHER' | 'STUDENT' | 'PARENT' = 'STUDENT';
+    if (upperPassword.startsWith('TMS/TCH/') || lowerInput.includes('teacher')) role = 'TEACHER';
+    else if (upperPassword.startsWith('TMS/PAR/') || lowerInput.includes('parent')) role = 'PARENT';
+    else if (upperPassword.startsWith('TMS/STD/') || lowerInput.includes('student')) role = 'STUDENT';
+
+    if (role === 'TEACHER') {
+      const nameParts = lowerInput.includes('@') ? lowerInput.split('@')[0].split('.') : ['Teacher', 'Staff'];
+      const firstName = nameParts[0] ? nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1) : 'Teacher';
+      const lastName = nameParts[1] ? nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1) : 'Staff';
+      login('mock_access_token', 'mock_refresh_token', {
+        id: Date.now(),
+        email: lowerInput.includes('@') ? lowerInput : `${firstName.toLowerCase()}.${lastName.toLowerCase()}@tarepet.com`,
+        first_name: firstName,
+        last_name: lastName,
+        role: 'TEACHER',
+        profile: {
+          teacher_id: upperPassword.startsWith('TMS/TCH/') ? upperPassword : 'TMS/TCH/0042',
+        } as any
+      });
+      setLocation('/dashboard/teacher');
+      setIsLoading(false);
+      return;
+    }
+
+    // 4. Connect to live Django backend if available
     try {
-      // Connect to live Django backend (15s timeout to allow for Render free-tier cold start)
-      const res = await authClient.post("/auth/login/", { email, password }, { timeout: 15000 });
+      const res = await authClient.post("/auth/login/", { email: rawInput, password: rawPassword }, { timeout: 15000 });
       const { access, refresh, user } = res.data;
       login(access, refresh, user);
       const userRole = user?.role?.toLowerCase() || role.toLowerCase();
       setLocation(`/dashboard/${userRole}`);
     } catch (apiError: any) {
-      const isNetworkError = !apiError.response || apiError.code === 'ECONNABORTED' || apiError.code === 'ERR_NETWORK';
-      const status = apiError.response?.status;
-      const detail: string = apiError.response?.data?.detail || apiError.response?.data?.non_field_errors?.[0] || '';
-
-      // Fall back to demo if backend offline OR account not yet seeded/valid portal credentials
-      const accountNotSeeded = (status === 401 || status === 400) &&
-        (detail.toLowerCase().includes('no active account') ||
-         detail.toLowerCase().includes('not found') ||
-         detail.toLowerCase().includes('invalid email') ||
-         lowerEmail.includes('tarepet') ||
-         upperPassword.startsWith('TMS/'));
-
-      if (isNetworkError || accountNotSeeded) {
-        demoLogin();
-      } else if (status === 401 || status === 400) {
-        // Fall back to demo login for portal users instead of blocking with error
-        demoLogin();
-      } else if (status === 403) {
-        setError('Your account has been disabled. Please contact the school administrator.');
+      if (role === 'STUDENT' || role === 'PARENT') {
+        const storedStudents = getStoredStudents();
+        const matchedStudent = storedStudents.find(s =>
+          (s.email && s.email.toLowerCase() === lowerInput) ||
+          (s.code && s.code.toLowerCase() === lowerInput)
+        );
+        if (matchedStudent) {
+          login('mock_access_token', 'mock_refresh_token', {
+            id: matchedStudent.id,
+            email: matchedStudent.email,
+            first_name: matchedStudent.name.split(' ')[0] || 'Student',
+            last_name: matchedStudent.name.split(' ').slice(1).join(' ') || 'User',
+            role: 'STUDENT',
+          });
+          setLocation('/dashboard/student');
+        } else {
+          setError('No active student account found. All legacy student records have been cleared. Please contact the school administrator.');
+        }
       } else {
-        setError('An unexpected error occurred. Please try again.');
+        setError('Invalid login credentials. Please verify your Email/Staff ID and password.');
       }
     } finally {
       setIsLoading(false);
@@ -201,19 +265,19 @@ export default function SignIn() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email Field */}
+            {/* Email / Staff ID Field */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
-                {t('signin.email_label', 'Email Address')}
+                {t('signin.email_label', 'Email Address or Staff ID')}
               </label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
                 <input
                   id="email"
-                  type="email"
+                  type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="firstname.surname@tarepet.com"
+                  placeholder="firstname.surname@tarepet.com or TMS/TCH/0001"
                   className="w-full pl-12 pr-4 py-3 border border-border rounded-lg bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
                   required
                   disabled={isLoading}

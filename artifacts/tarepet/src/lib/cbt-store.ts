@@ -265,59 +265,126 @@ function persistExams(exams: CBTExam[]) {
   } catch (e) {}
 }
 
+export interface TeacherRecord {
+  id: number;
+  staffId: string;
+  name: string;
+  email: string;
+  phone?: string;
+  gender?: string;
+  department?: string;
+  specialization?: string;
+  qualification?: string;
+  status?: string;
+  joined?: string;
+  formTeacherOf?: string;
+  subjectsAssigned?: any[];
+  classesCount?: number;
+  studentsCount?: number;
+  address?: string;
+  dob?: string;
+  cbtExamsCount?: number;
+  attendanceRate?: string;
+  profileImage?: string;
+  salary?: string;
+  bankName?: string;
+  accountNumber?: string;
+  password?: string;
+}
+
+function loadSavedTeachers(): TeacherRecord[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const saved = localStorage.getItem('tarepet_teachers_list');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (e) {}
+  return [];
+}
+
+let _teachers: TeacherRecord[] = loadSavedTeachers();
+
+export function getStoredTeachers(): TeacherRecord[] {
+  _teachers = loadSavedTeachers();
+  return _teachers;
+}
+
+export function saveTeacher(teacherData: Partial<TeacherRecord> & { name: string }): TeacherRecord {
+  _teachers = loadSavedTeachers();
+  const serial = String(Math.floor(1 + Math.random() * 9999)).padStart(4, '0');
+  const staffId = teacherData.staffId || `TMS/TCH/${serial}`;
+  const email = teacherData.email || formatStudentEmail(teacherData.name);
+
+  const existingIdx = _teachers.findIndex(t => 
+    (teacherData.id && t.id === teacherData.id) ||
+    (teacherData.email && t.email && t.email.toLowerCase() === teacherData.email.toLowerCase()) ||
+    (staffId && t.staffId && t.staffId.toLowerCase() === staffId.toLowerCase())
+  );
+
+  const newTeacher: TeacherRecord = {
+    id: teacherData.id || (existingIdx >= 0 ? _teachers[existingIdx].id : Date.now()),
+    staffId: staffId,
+    name: teacherData.name.trim(),
+    email: email,
+    phone: teacherData.phone || '+234 800 000 0000',
+    gender: teacherData.gender || 'Male',
+    department: teacherData.department || 'Academic Department',
+    specialization: teacherData.specialization || 'General Education',
+    qualification: teacherData.qualification || 'B.Sc. Education',
+    status: teacherData.status || 'Active',
+    joined: teacherData.joined || new Date().toISOString().split('T')[0],
+    formTeacherOf: teacherData.formTeacherOf || 'None',
+    subjectsAssigned: teacherData.subjectsAssigned || [],
+    classesCount: teacherData.classesCount || 0,
+    studentsCount: teacherData.studentsCount || 0,
+    address: teacherData.address || 'Tarepet School Campus',
+    dob: teacherData.dob || '1990-01-01',
+    cbtExamsCount: teacherData.cbtExamsCount || 0,
+    attendanceRate: teacherData.attendanceRate || '100%',
+    profileImage: teacherData.profileImage || '',
+    salary: teacherData.salary || '₦180,000',
+    bankName: teacherData.bankName || 'First Bank Nigeria',
+    accountNumber: teacherData.accountNumber || '3089182391',
+    password: teacherData.password || staffId,
+  };
+
+  if (existingIdx >= 0) {
+    _teachers[existingIdx] = { ..._teachers[existingIdx], ...newTeacher };
+  } else {
+    _teachers = [newTeacher, ..._teachers];
+  }
+
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('tarepet_teachers_list', JSON.stringify(_teachers));
+    } catch (e) {}
+  }
+  broadcastRealtimeEvent();
+  return _teachers[existingIdx >= 0 ? existingIdx : 0];
+}
+
+export function saveStoredTeachers(teachers: TeacherRecord[]) {
+  teachers.forEach(t => saveTeacher(t));
+}
+
+export function deleteTeacher(teacherIdOrStaffId: number | string): boolean {
+  _teachers = loadSavedTeachers();
+  _teachers = _teachers.filter(t => t.id !== teacherIdOrStaffId && t.staffId !== teacherIdOrStaffId && t.email !== teacherIdOrStaffId);
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('tarepet_teachers_list', JSON.stringify(_teachers));
+    } catch (e) {}
+  }
+  broadcastRealtimeEvent();
+  return true;
+}
+
 let _exams: CBTExam[] = loadSavedExams();
 let _submissions: CBTSubmission[] = [];
 let _activities: LMSActivity[] = [];
-let _students: StudentRecord[] = [
-  {
-    id: 1,
-    code: 'TMS/SS1/SCI/9927',
-    admissionNo: 'TMS/SS1/SCI/9927',
-    name: 'Civa Media',
-    email: 'civa.media@tarepet.com',
-    gender: 'Male',
-    maritalStatus: 'Single',
-    dob: '2012-05-14',
-    phone: 'Not Available',
-    country: 'Nigeria',
-    stateOfOrigin: 'Bayelsa',
-    lga: 'Yenagoa',
-    address: '12 Kpansia-Epje Road, Yenagoa',
-    grade: 'SS1',
-    stream: 'Science',
-    programme: 'Senior Secondary Certificate (SSCE)',
-    parentName: 'Chief Nwosu',
-    parentPhone: '08031112233',
-    status: 'ACTIVE',
-    studyMode: 'Full Time',
-    attendance: '98%',
-    atRisk: false
-  },
-  {
-    id: 2,
-    code: 'TMS/SS1/SCI/4821',
-    admissionNo: 'TMS/SS1/SCI/4821',
-    name: 'Kelechi Amadi',
-    email: 'kelechi.amadi@tarepet.com',
-    gender: 'Male',
-    maritalStatus: 'Single',
-    dob: '2011-09-20',
-    phone: '+234 812 345 6789',
-    country: 'Nigeria',
-    stateOfOrigin: 'Bayelsa',
-    lga: 'Yenagoa',
-    address: 'Azikoro Village, Yenagoa',
-    grade: 'SS1',
-    stream: 'Science',
-    programme: 'Senior Secondary Certificate (SSCE)',
-    parentName: 'Ayaebi Dimaro',
-    parentPhone: '08031234567',
-    status: 'ACTIVE',
-    studyMode: 'Full Time',
-    attendance: '99%',
-    atRisk: false
-  }
-];
+let _students: StudentRecord[] = [];
 
 import { authClient } from './api-auth';
 
@@ -889,22 +956,7 @@ export function calculateWAECGrade(total: number): { grade: string; color: strin
   return { grade: 'F9', color: 'bg-red-100 text-red-800 border border-red-300', label: 'Fail' };
 }
 
-const DEFAULT_BROADSHEET_SCORES: Record<string, Record<string, CourseBroadsheetScore>> = {
-  '1': {
-    'MTH-101': { ca1: 8, ca2: 9, assignment: 8, cbtScore: 24, paperExam: 32, remark: 'Outstanding analytical skills' },
-    'PHY-101': { ca1: 7, ca2: 8, assignment: 9, cbtScore: 22, paperExam: 30, remark: 'Very good practical comprehension' },
-    'CHM-101': { ca1: 8, ca2: 7, assignment: 8, cbtScore: 25, paperExam: 31, remark: 'High aptitude in organic chemistry' },
-    'ENG-101': { ca1: 9, ca2: 9, assignment: 9, cbtScore: 26, paperExam: 34, remark: 'Excellent vocabulary & essay composition' },
-    'BIO-101': { ca1: 8, ca2: 8, assignment: 7, cbtScore: 23, paperExam: 29, remark: 'Solid understanding of biological systems' },
-    'CIV-101': { ca1: 9, ca2: 8, assignment: 9, cbtScore: 25, paperExam: 32, remark: 'Commendable civic awareness' }
-  },
-  '2': {
-    'MTH-101': { ca1: 7, ca2: 7, assignment: 8, cbtScore: 21, paperExam: 28, remark: 'Good effort, keep practicing algebra' },
-    'PHY-101': { ca1: 8, ca2: 7, assignment: 8, cbtScore: 20, paperExam: 29, remark: 'Fair performance in physics problem solving' },
-    'CHM-101': { ca1: 7, ca2: 8, assignment: 7, cbtScore: 22, paperExam: 28, remark: 'Satisfactory chemical equations' },
-    'ENG-101': { ca1: 8, ca2: 8, assignment: 8, cbtScore: 24, paperExam: 31, remark: 'Good grammar and comprehension' }
-  }
-};
+const DEFAULT_BROADSHEET_SCORES: Record<string, Record<string, CourseBroadsheetScore>> = {};
 
 function loadSavedBroadsheet(): Record<string, Record<string, CourseBroadsheetScore>> {
   if (typeof window === 'undefined') return DEFAULT_BROADSHEET_SCORES;

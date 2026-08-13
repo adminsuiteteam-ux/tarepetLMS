@@ -16,6 +16,13 @@ import {
 import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, saveStudent, deleteStudent, subscribeToCBTStore, syncStudentsWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, CourseBroadsheetScore } from '@/lib/cbt-store';
 import { useTranslation } from '@/lib/i18n';
 
+function getSafeProperty<T>(obj: Record<string | number, T> | null | undefined, key: string | number): T | undefined {
+  if (obj && typeof obj === 'object' && Object.prototype.hasOwnProperty.call(obj, key)) {
+    return Reflect.get(obj, key);
+  }
+  return undefined;
+}
+
 // ─── Initial Seed Data (Form Teacher & Subject Teacher) ───────
 const TEACHER_CLASSES: any[] = [];
 
@@ -162,7 +169,7 @@ export default function TeacherDashboard() {
     const initialScores: Record<string, CourseBroadsheetScore> = {};
     courses.forEach(c => {
       const cbtAuto = getAutomaticCBTScore(student.code || student.email || student.name, c.code);
-      const existing = saved[c.code];
+      const existing = getSafeProperty(saved, c.code);
       initialScores[c.code] = {
         ca1: existing?.ca1 ?? 8,
         ca2: existing?.ca2 ?? 8,
@@ -178,7 +185,7 @@ export default function TeacherDashboard() {
 
   const handleUpdateScoreInput = (courseCode: string, field: keyof CourseBroadsheetScore, val: any) => {
     setBroadsheetScores(prev => {
-      const current = prev[courseCode] || { ca1: 0, ca2: 0, assignment: 0, cbtScore: 0, paperExam: 0, remark: '' };
+      const current = getSafeProperty(prev, courseCode) || { ca1: 0, ca2: 0, assignment: 0, cbtScore: 0, paperExam: 0, remark: '' };
       let numVal = typeof val === 'number' ? val : parseFloat(val);
       if (isNaN(numVal)) numVal = 0;
 
@@ -199,29 +206,45 @@ export default function TeacherDashboard() {
     });
   };
 
-  // Settings & Profile State (in-memory only)
+  // Settings & Profile State (synced with logged-in user)
   const [profileForm, setProfileForm] = useState(() => ({
-    firstName: user?.first_name || 'Dr. Victoria',
-    lastName: user?.last_name || 'Adeyemi',
-    email: user?.email || 'v.adeyemi@tarepet.edu.ng',
-      phone: '+234 803 456 7890',
-      staffId: 'TMS/TCH/0042',
-      roleTitle: 'Senior Subject Specialist & SS1 Form Teacher',
-      department: 'Science & Mathematics Department',
-      qualification: 'M.Sc. Industrial Mathematics (UI), TRCN Certified',
-      experience: '8 Years Teaching Experience',
-      joiningDate: 'September 2018',
-      gender: 'Female',
-      dob: '1989-08-24',
-      specialization: 'Physics, Mathematics & STEM Education',
-      address: '14 Montessori Crescent, GRA, Yenagoa, Bayelsa State',
-      bio: 'Passionate Montessori secondary educator dedicated to analytical problem solving, digital CBT integration, and scientific research excellence.',
-      emergencyContactName: 'Chief O. Adeyemi',
-      emergencyContactPhone: '+234 802 333 4455',
-      officeHours: 'Monday - Thursday: 2:00 PM - 4:00 PM',
-      emailAlerts: true,
-      cbtAlerts: true,
-    }));
+    firstName: user?.first_name || 'Teacher',
+    lastName: user?.last_name || 'Staff',
+    email: user?.email || 'teacher@tarepet.com',
+    phone: user?.phone || '+234 800 000 0000',
+    staffId: (user?.profile as any)?.teacher_id || (user as any)?.staffId || 'TMS/TCH/0001',
+    roleTitle: (user?.profile as any)?.department || 'Senior Subject Specialist & Form Teacher',
+    department: (user?.profile as any)?.department || 'Academic Department',
+    qualification: (user?.profile as any)?.qualifications || 'B.Sc. Education',
+    experience: '5 Years Teaching Experience',
+    joiningDate: 'September 2021',
+    gender: 'Male',
+    dob: '1990-01-01',
+    specialization: (user?.profile as any)?.subjects_taught || 'General Education & STEM',
+    address: 'Tarepet School Campus, Yenagoa, Bayelsa State',
+    bio: 'Passionate Montessori educator dedicated to analytical problem solving and digital learning excellence.',
+    emergencyContactName: 'School Administrator',
+    emergencyContactPhone: '+234 800 000 0000',
+    officeHours: 'Monday - Thursday: 2:00 PM - 4:00 PM',
+    emailAlerts: true,
+    cbtAlerts: true,
+  }));
+
+  React.useEffect(() => {
+    if (user) {
+      setProfileForm(prev => ({
+        ...prev,
+        firstName: user.first_name || prev.firstName,
+        lastName: user.last_name || prev.lastName,
+        email: user.email || prev.email,
+        phone: user.phone || prev.phone,
+        staffId: (user.profile as any)?.teacher_id || (user as any)?.staffId || prev.staffId,
+        department: (user.profile as any)?.department || prev.department,
+        specialization: (user.profile as any)?.subjects_taught || prev.specialization,
+        qualification: (user.profile as any)?.qualifications || prev.qualification,
+      }));
+    }
+  }, [user]);
 
   const [gradebookScores, setGradebookScores] = useState<Record<number, { ca1: number; ca2: number; midterm: number; exam: number }>>({});
 
@@ -1726,10 +1749,10 @@ export default function TeacherDashboard() {
                     </button>
                     <div>
                       <h3 className="font-serif font-bold text-lg text-foreground flex items-center gap-2">
-                        Official Student Broadsheet — <span className="text-primary">{selectedBroadsheetStudent.name}</span>
+                        {t('teacher.official_student_broadsheet', 'Official Student Broadsheet — ')}<span className="text-primary">{selectedBroadsheetStudent.name}</span>
                       </h3>
                       <p className="text-xs text-muted-foreground">
-                        Fill 1st CA, 2nd CA, Assignment & Paper exam marks below. CBT test scores are automatically filled.
+                        {t('teacher.fill_ca_marks_desc', 'Fill 1st CA, 2nd CA, Assignment & Paper exam marks below. CBT test scores are automatically filled.')}
                       </p>
                     </div>
                   </div>
@@ -1771,7 +1794,7 @@ export default function TeacherDashboard() {
                         </span>
                       </div>
                       <h4 className="font-serif font-bold text-lg text-foreground">{selectedBroadsheetStudent.name}</h4>
-                      <p className="text-xs text-muted-foreground">Parent / Guardian: <strong>{selectedBroadsheetStudent.parentName || 'Chief Nwosu'}</strong> ({selectedBroadsheetStudent.parentPhone || '08031112233'})</p>
+                      <p className="text-xs text-muted-foreground">{t('teacher.parent_guardian_prefix', 'Parent / Guardian: ')}<strong>{selectedBroadsheetStudent.parentName || 'Chief Nwosu'}</strong> ({selectedBroadsheetStudent.parentPhone || '08031112233'})</p>
                     </div>
                   </div>
 
@@ -1780,7 +1803,7 @@ export default function TeacherDashboard() {
                     const courses = getCoursesForClass(selectedBroadsheetStudent.grade || 'SS1', selectedBroadsheetStudent.stream || 'Science');
                     let grandTotal = 0;
                     courses.forEach(c => {
-                      const sc = broadsheetScores[c.code] || { ca1: 0, ca2: 0, assignment: 0, cbtScore: 0, paperExam: 0 };
+                      const sc = getSafeProperty(broadsheetScores, c.code) || { ca1: 0, ca2: 0, assignment: 0, cbtScore: 0, paperExam: 0 };
                       grandTotal += (sc.ca1 + sc.ca2 + sc.assignment + sc.cbtScore + sc.paperExam);
                     });
                     const avgScore = courses.length > 0 ? Math.round(grandTotal / courses.length) : 0;
@@ -1789,11 +1812,11 @@ export default function TeacherDashboard() {
                     return (
                       <div className="flex items-center gap-3 border-t md:border-t-0 md:border-l border-border pt-3 md:pt-0 md:pl-5">
                         <div className="text-center px-3 py-1 bg-muted/20 rounded-xl border border-border">
-                          <span className="text-[10px] uppercase font-bold text-muted-foreground block">Term Average</span>
+                          <span className="text-[10px] uppercase font-bold text-muted-foreground block">{t('teacher.term_average', 'Term Average')}</span>
                           <span className="text-xl font-serif font-bold text-foreground">{avgScore}%</span>
                         </div>
                         <div className="text-center px-3 py-1 bg-muted/20 rounded-xl border border-border">
-                          <span className="text-[10px] uppercase font-bold text-muted-foreground block">Overall Grade</span>
+                          <span className="text-[10px] uppercase font-bold text-muted-foreground block">{t('teacher.overall_grade', 'Overall Grade')}</span>
                           <span className={`text-sm font-extrabold px-2.5 py-0.5 rounded-full inline-block mt-0.5 ${overallGrade.color}`}>
                             {overallGrade.grade} ({overallGrade.label})
                           </span>
@@ -1810,7 +1833,7 @@ export default function TeacherDashboard() {
                       <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
                         <BarChart2 className="w-4 h-4 text-primary" /> Subject Assessment Breakdown
                       </h4>
-                      <p className="text-xs text-muted-foreground">Fill 1st CA (10), 2nd CA (10), Assignment (10), and Paper Exam (40). CBT Exam (30) is auto-populated from CBT results.</p>
+                      <p className="text-xs text-muted-foreground">{t('teacher.fill_marks_breakdown_desc', 'Fill 1st CA (10), 2nd CA (10), Assignment (10), and Paper Exam (40). CBT Exam (30) is auto-populated from CBT results.')}</p>
                     </div>
                     <button
                       onClick={() => {
@@ -1835,22 +1858,22 @@ export default function TeacherDashboard() {
                     <table className="w-full text-xs text-left border-collapse">
                       <thead className="bg-muted/40 uppercase text-[10px] text-muted-foreground tracking-wider border-b border-border">
                         <tr>
-                          <th className="p-3 min-w-[200px]">Course / Subject</th>
+                          <th className="p-3 min-w-[200px]">{t('teacher.course_subject', 'Course / Subject')}</th>
                           <th className="p-3 text-center min-w-[90px]">1st CA (10%)</th>
                           <th className="p-3 text-center min-w-[90px]">2nd CA (10%)</th>
-                          <th className="p-3 text-center min-w-[90px]">Assignment (10%)</th>
+                          <th className="p-3 text-center min-w-[90px]">{t('teacher.assignment_10_percent', 'Assignment (10%)')}</th>
                           <th className="p-3 text-center min-w-[120px] bg-blue-500/10 text-blue-700">
-                            <span className="flex items-center justify-center gap-1">CBT Exam (30%) <Zap className="w-3.5 h-3.5 text-blue-600 shrink-0" /></span>
+                            <span className="flex items-center justify-center gap-1">{t('teacher.cbt_exam_30_percent', 'CBT Exam (30%) ')}<Zap className="w-3.5 h-3.5 text-blue-600 shrink-0" /></span>
                           </th>
-                          <th className="p-3 text-center min-w-[100px]">Paper Exam (40%)</th>
-                          <th className="p-3 text-center min-w-[90px]">Total (100%)</th>
-                          <th className="p-3 text-center min-w-[80px]">Grade</th>
-                          <th className="p-3 min-w-[200px]">Teacher Remarks</th>
+                          <th className="p-3 text-center min-w-[100px]">{t('teacher.paper_exam_40_percent', 'Paper Exam (40%)')}</th>
+                          <th className="p-3 text-center min-w-[90px]">{t('teacher.total_100_percent', 'Total (100%)')}</th>
+                          <th className="p-3 text-center min-w-[80px]">{t('teacher.grade_col', 'Grade')}</th>
+                          <th className="p-3 min-w-[200px]">{t('teacher.teacher_remarks_col', 'Teacher Remarks')}</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border">
                         {getCoursesForClass(selectedBroadsheetStudent.grade || 'SS1', selectedBroadsheetStudent.stream || 'Science').map(course => {
-                          const sc = broadsheetScores[course.code] || {
+                          const sc = getSafeProperty(broadsheetScores, course.code) || {
                             ca1: 0, ca2: 0, assignment: 0,
                             cbtScore: getAutomaticCBTScore(selectedBroadsheetStudent.code || selectedBroadsheetStudent.email, course.code),
                             paperExam: 0, remark: ''
@@ -1988,7 +2011,7 @@ export default function TeacherDashboard() {
                     </p>
                   </div>
                   <button
-                    onClick={() => showToast('All class broadsheet scores synced to student report cards!')}
+                    onClick={() => showToast(t('teacher.sync_success', 'All class broadsheet scores synced to student report cards!'))}
                     className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 transition-colors shadow-sm cursor-pointer"
                   >
                     {t('teacher.sync_report_cards', 'Sync All Scores to Report Cards')}
@@ -1998,19 +2021,19 @@ export default function TeacherDashboard() {
                 {/* Class Overview Banner */}
                 <div className="bg-muted/20 border border-border rounded-xl p-4 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
                   <div>
-                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">Enrolled Students</span>
+                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.enrolled_students', 'Enrolled Students')}</span>
                     <strong className="text-lg font-bold text-foreground font-serif">{filteredRoster.length} Pupils</strong>
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">Assessment Scheme</span>
+                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.assessment_scheme', 'Assessment Scheme')}</span>
                     <strong className="text-xs font-bold text-primary">CA1(10) + CA2(10) + Assign(10) + CBT(30) + Paper(40)</strong>
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">CBT Integration</span>
-                    <strong className="text-xs font-bold text-emerald-600 flex items-center justify-center gap-1"><Zap className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Auto-Synced</strong>
+                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.cbt_integration', 'CBT Integration')}</span>
+                    <strong className="text-xs font-bold text-emerald-600 flex items-center justify-center gap-1"><Zap className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> {t('teacher.auto_synced', 'Auto-Synced')}</strong>
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">Academic Term</span>
+                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.academic_term', 'Academic Term')}</span>
                     <strong className="text-xs font-bold text-foreground">1st Term 2026/2027</strong>
                   </div>
                 </div>
@@ -2020,13 +2043,13 @@ export default function TeacherDashboard() {
                   <table className="w-full text-xs text-left border-collapse">
                     <thead className="bg-muted/40 uppercase text-[10px] text-muted-foreground tracking-wider border-b border-border">
                       <tr>
-                        <th className="p-3">Student Name</th>
-                        <th className="p-3">Admission ID</th>
-                        <th className="p-3">Class & Arm</th>
-                        <th className="p-3 text-center">CBT Sync Status</th>
-                        <th className="p-3 text-center">Cumulative Average</th>
-                        <th className="p-3 text-center">WAEC Grade</th>
-                        <th className="p-3 text-right">Action</th>
+                        <th className="p-3">{t('teacher.student_name_col', 'Student Name')}</th>
+                        <th className="p-3">{t('teacher.admission_id_col', 'Admission ID')}</th>
+                        <th className="p-3">{t('teacher.class_arm_col', 'Class & Arm')}</th>
+                        <th className="p-3 text-center">{t('teacher.cbt_sync_status', 'CBT Sync Status')}</th>
+                        <th className="p-3 text-center">{t('teacher.cumulative_average', 'Cumulative Average')}</th>
+                        <th className="p-3 text-center">{t('teacher.waec_grade_col', 'WAEC Grade')}</th>
+                        <th className="p-3 text-right">{t('teacher.action_col', 'Action')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
@@ -2036,7 +2059,7 @@ export default function TeacherDashboard() {
                         let sumTotal = 0;
 
                         courses.forEach(c => {
-                          const sc = saved[c.code] || {
+                          const sc = getSafeProperty(saved, c.code) || {
                             ca1: 8, ca2: 8, assignment: 9,
                             cbtScore: getAutomaticCBTScore(s.code || s.email, c.code),
                             paperExam: 32
@@ -2052,7 +2075,7 @@ export default function TeacherDashboard() {
                             key={s.id}
                             onClick={() => handleOpenStudentBroadsheet(s)}
                             className="hover:bg-primary/5 cursor-pointer transition-colors group"
-                            title="Click row to open individual student broadsheet"
+                            title={t('teacher.click_row_tooltip', 'Click row to open individual student broadsheet')}
                           >
                             <td className="p-3">
                               <div className="flex items-center gap-3">
@@ -2068,7 +2091,7 @@ export default function TeacherDashboard() {
                             </td>
                             <td className="p-3 text-center">
                               <span className="text-[10px] font-extrabold uppercase bg-blue-500/10 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
-                                <Zap className="w-3 h-3 text-blue-600 shrink-0" /> Auto-Synced
+                                <Zap className="w-3 h-3 text-blue-600 shrink-0" /> {t('teacher.auto_synced', 'Auto-Synced')}
                               </span>
                             </td>
                             <td className="p-3 text-center font-bold text-foreground font-serif text-sm">
@@ -2087,7 +2110,7 @@ export default function TeacherDashboard() {
                                 }}
                                 className="bg-primary/10 group-hover:bg-primary text-primary group-hover:text-white px-3 py-1.5 rounded-xl font-bold text-xs transition-colors inline-flex items-center gap-1 cursor-pointer"
                               >
-                                Fill Broadsheet <ArrowUpRight className="w-3.5 h-3.5" />
+                                {t('teacher.fill_broadsheet_btn', 'Fill Broadsheet')} <ArrowUpRight className="w-3.5 h-3.5" />
                               </button>
                             </td>
                           </tr>
@@ -2767,12 +2790,12 @@ export default function TeacherDashboard() {
                 </div>
 
                 <h4 className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground px-1">
-                  Question-by-Question Response Audit ({previewSubmissionModal.exam?.questions?.length || 0} Questions)
+                  {t('teacher.question_response_audit_prefix', 'Question-by-Question Response Audit (')}{previewSubmissionModal.exam?.questions?.length || 0} Questions)
                 </h4>
 
                 <div className="space-y-3">
                   {(previewSubmissionModal.exam?.questions || []).map((q: any, idx: number) => {
-                    const studentAns = previewSubmissionModal.submission.answers?.[q.id] || 'Not Answered';
+                    const studentAns = getSafeProperty(previewSubmissionModal.submission.answers || {}, q.id) || 'Not Answered';
                     const isCorrect = studentAns === q.correct_option;
                     return (
                       <div key={q.id || idx} className={`p-4 rounded-2xl border transition-all ${isCorrect ? 'bg-emerald-500/5 border-emerald-200' : 'bg-rose-500/5 border-rose-200'}`}>
@@ -2788,7 +2811,8 @@ export default function TeacherDashboard() {
 
                         <div className="grid grid-cols-2 gap-2 mt-3 text-xs">
                           {['A', 'B', 'C', 'D'].map(optKey => {
-                            const optText = q[`option_${optKey.toLowerCase()}`];
+                            const optProp = `option_${optKey.toLowerCase()}`;
+                            const optText = getSafeProperty(q, optProp);
                             const isSelected = studentAns === optKey;
                             const isCorrectOpt = q.correct_option === optKey;
                             return (
@@ -2804,7 +2828,7 @@ export default function TeacherDashboard() {
                               >
                                 <span><strong className="mr-1">{optKey}.</strong> {optText}</span>
                                 {isCorrectOpt && <span className="text-[10px] font-bold text-emerald-700">✓ Correct</span>}
-                                {isSelected && !isCorrectOpt && <span className="text-[10px] font-bold text-rose-700">Selected ❌</span>}
+                                {isSelected && !isCorrectOpt && <span className="text-[10px] font-bold text-rose-700">{t('teacher.selected_incorrect', 'Selected ❌')}</span>}
                               </div>
                             );
                           })}
@@ -2812,7 +2836,7 @@ export default function TeacherDashboard() {
 
                         {q.explanation && (
                           <div className="mt-2.5 p-2.5 rounded-xl bg-muted/20 border border-border/50 text-[11px] text-muted-foreground">
-                            <strong className="text-foreground">Solution Explanation:</strong> {q.explanation}
+                            <strong className="text-foreground">{t('teacher.solution_explanation_prefix', 'Solution Explanation:')}</strong> {q.explanation}
                           </div>
                         )}
                       </div>
@@ -2823,7 +2847,7 @@ export default function TeacherDashboard() {
 
               <div className="p-5 border-t border-border bg-muted/20 flex items-center justify-between">
                 <button onClick={() => setPreviewSubmissionModal(null)} className="px-5 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition shadow-sm">
-                  Close Audit Preview
+                  {t('teacher.close_audit_preview_btn', 'Close Audit Preview')}
                 </button>
                 <button
                   onClick={() => {

@@ -26,32 +26,49 @@ export default function TeacherProfile() {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
-  // Teacher Profile Form State (in-memory only)
+  // Teacher Profile Form State (synced with logged-in user)
   const [profileForm, setProfileForm] = useState(() => ({
-    firstName: user?.first_name || 'Dr. Victoria',
-    lastName: user?.last_name || 'Adeyemi',
-    email: user?.email || 'v.adeyemi@tarepet.edu.ng',
-    phone: '+234 803 456 7890',
-    staffId: (user?.profile as any)?.teacher_id || 'TMS/TCH/0042',
-    roleTitle: 'Senior Subject Specialist & SS1 Form Teacher',
-    department: 'Science & Mathematics Department',
-    qualification: 'M.Sc. Industrial Mathematics (UI), TRCN Certified',
-    experience: '8 Years Teaching Experience',
-    joiningDate: 'September 2018',
-    gender: 'Female',
-    dob: '1989-08-24',
-    specialization: 'Physics, Mathematics & STEM Education',
-    address: '14 Montessori Crescent, GRA, Yenagoa, Bayelsa State',
-    bio: 'Passionate Montessori secondary educator dedicated to analytical problem solving, digital CBT integration, and scientific research excellence.',
-    emergencyContactName: 'Chief O. Adeyemi',
-    emergencyContactPhone: '+234 802 333 4455',
+    firstName: user?.first_name || 'Teacher',
+    lastName: user?.last_name || 'Staff',
+    email: user?.email || 'teacher@tarepet.com',
+    phone: user?.phone || '+234 800 000 0000',
+    staffId: (user?.profile as any)?.teacher_id || (user as any)?.staffId || 'TMS/TCH/0001',
+    roleTitle: (user?.profile as any)?.department || 'Senior Subject Specialist & Form Teacher',
+    department: (user?.profile as any)?.department || 'Academic Department',
+    qualification: (user?.profile as any)?.qualifications || 'B.Sc. Education',
+    experience: '5 Years Teaching Experience',
+    joiningDate: 'September 2021',
+    gender: 'Male',
+    dob: '1990-01-01',
+    specialization: (user?.profile as any)?.subjects_taught || 'General Education & STEM',
+    address: 'Tarepet School Campus, Yenagoa, Bayelsa State',
+    bio: 'Passionate Montessori educator dedicated to analytical problem solving and digital learning excellence.',
+    emergencyContactName: 'School Administrator',
+    emergencyContactPhone: '+234 800 000 0000',
     officeHours: 'Monday - Thursday: 2:00 PM - 4:00 PM',
-    formClass: (user?.profile as any)?.formTeacherOf || 'SS1 Science',
+    formClass: (user?.profile as any)?.formTeacherOf || 'SS1',
     emailAlerts: true,
     cbtAlerts: true,
     smsAlerts: false,
     profileImage: '',
   }));
+
+  useEffect(() => {
+    if (user) {
+      setProfileForm(prev => ({
+        ...prev,
+        firstName: user.first_name || prev.firstName,
+        lastName: user.last_name || prev.lastName,
+        email: user.email || prev.email,
+        phone: user.phone || prev.phone,
+        staffId: (user.profile as any)?.teacher_id || (user as any)?.staffId || prev.staffId,
+        department: (user.profile as any)?.department || prev.department,
+        formClass: (user.profile as any)?.formTeacherOf || prev.formClass,
+        specialization: (user.profile as any)?.subjects_taught || prev.specialization,
+        qualification: (user.profile as any)?.qualifications || prev.qualification,
+      }));
+    }
+  }, [user]);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -122,7 +139,7 @@ export default function TeacherProfile() {
             className="inline-flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-primary transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Back to Teacher Dashboard</span>
+            <span>{t('teacher.back_to_dashboard', 'Back to Teacher Dashboard')}</span>
           </button>
         </div>
 
@@ -261,7 +278,7 @@ export default function TeacherProfile() {
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                Account Settings & Preferences
+                {t('teacher.account_settings', 'Account Settings & Preferences')}
               </button>
             </div>
 
@@ -372,17 +389,17 @@ export default function TeacherProfile() {
                 <div className="p-4 rounded-xl bg-primary/5 border border-primary/15 space-y-1">
                   <span className="text-[10px] uppercase font-bold text-primary block">{t('teacher.form_teacher_class')}</span>
                   <p className="font-serif font-bold text-foreground text-base">{profileForm.formClass}</p>
-                  <p className="text-[11px] text-muted-foreground">Main pastoral & gradebook oversight</p>
+                  <p className="text-[11px] text-muted-foreground">{t('teacher.main_pastoral', 'Main pastoral & gradebook oversight')}</p>
                 </div>
                 <div className="p-4 rounded-xl bg-muted/20 border border-border space-y-1">
                   <span className="text-[10px] uppercase font-bold text-muted-foreground block">{t('teacher.assigned_subjects')}</span>
                   <p className="font-semibold text-foreground text-sm">{profileForm.specialization}</p>
-                  <p className="text-[11px] text-muted-foreground">Physics, Further Math, STEM Lab</p>
+                  <p className="text-[11px] text-muted-foreground">{t('teacher.assigned_subjects_desc', 'Physics, Further Math, STEM Lab')}</p>
                 </div>
                 <div className="p-4 rounded-xl bg-muted/20 border border-border space-y-1">
                   <span className="text-[10px] uppercase font-bold text-muted-foreground block">{t('teacher.consultation_hours')}</span>
                   <p className="font-semibold text-foreground text-sm">{profileForm.officeHours}</p>
-                  <p className="text-[11px] text-muted-foreground">Available for parents & student counseling</p>
+                  <p className="text-[11px] text-muted-foreground">{t('teacher.available_for_parents', 'Available for parents & student counseling')}</p>
                 </div>
               </div>
             </div>
@@ -417,7 +434,7 @@ export default function TeacherProfile() {
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">First Name</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.first_name_label', 'First Name')}</label>
                     <input
                       type="text"
                       value={profileForm.firstName}
@@ -426,7 +443,7 @@ export default function TeacherProfile() {
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Last Name</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.last_name_label', 'Last Name')}</label>
                     <input
                       type="text"
                       value={profileForm.lastName}
@@ -435,7 +452,7 @@ export default function TeacherProfile() {
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Email Address</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.email_address_label', 'Email Address')}</label>
                     <input
                       type="email"
                       value={profileForm.email}
@@ -444,7 +461,7 @@ export default function TeacherProfile() {
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Phone Number</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.phone_number_label', 'Phone Number')}</label>
                     <input
                       type="text"
                       value={profileForm.phone}
@@ -453,7 +470,7 @@ export default function TeacherProfile() {
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Subject Specialization</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.subject_specialization_label', 'Subject Specialization')}</label>
                     <input
                       type="text"
                       value={profileForm.specialization}
@@ -462,7 +479,7 @@ export default function TeacherProfile() {
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Residential Address</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.residential_address_label', 'Residential Address')}</label>
                     <input
                       type="text"
                       value={profileForm.address}
@@ -471,7 +488,7 @@ export default function TeacherProfile() {
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Professional Bio / Philosophy</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.professional_bio_label', 'Professional Bio / Philosophy')}</label>
                     <textarea
                       rows={3}
                       value={profileForm.bio}
@@ -484,10 +501,10 @@ export default function TeacherProfile() {
 
               <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
                 <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-primary" /> Security & Account Password
+                  <Lock className="w-4 h-4 text-primary" /> {t('teacher.security_password_title', 'Security & Account Password')}
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  Default initial password is your <strong>Staff ID</strong> (e.g., <code className="font-mono bg-muted px-1.5 py-0.5 rounded text-primary">{profileForm.staffId}</code>). Change your password below to set a custom personal password.
+                  {t('teacher.default_password_notice_prefix', 'Default initial password is your ')}<strong>{t('teacher.staff_id_bold', 'Staff ID')}</strong> (e.g., <code className="font-mono bg-muted px-1.5 py-0.5 rounded text-primary">{profileForm.staffId}</code>). Change your password below to set a custom personal password.
                 </p>
 
                 {passwordError && (
@@ -498,7 +515,7 @@ export default function TeacherProfile() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Current Password / Staff ID</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.current_password_label', 'Current Password / Staff ID')}</label>
                     <input
                       type="password"
                       value={passwordForm.currentPassword}
@@ -508,7 +525,7 @@ export default function TeacherProfile() {
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">New Custom Password</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.new_password_label', 'New Custom Password')}</label>
                     <input
                       type="password"
                       value={passwordForm.newPassword}
@@ -518,7 +535,7 @@ export default function TeacherProfile() {
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Confirm New Password</label>
+                    <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.confirm_password_label', 'Confirm New Password')}</label>
                     <input
                       type="password"
                       value={passwordForm.confirmPassword}
@@ -544,13 +561,13 @@ export default function TeacherProfile() {
 
               <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
                 <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
-                  <Bell className="w-4 h-4 text-primary" /> Notification Alerts
+                  <Bell className="w-4 h-4 text-primary" /> {t('teacher.notification_alerts_title', 'Notification Alerts')}
                 </h3>
                 <div className="space-y-3">
                   <label className="flex items-center justify-between p-3 rounded-xl border border-border bg-muted/10 cursor-pointer">
                     <div>
-                      <p className="font-bold text-xs text-foreground">CBT Exam Submission Alerts</p>
-                      <p className="text-[10px] text-muted-foreground">Receive notifications when students submit CBT exams.</p>
+                      <p className="font-bold text-xs text-foreground">{t('teacher.cbt_alerts_title', 'CBT Exam Submission Alerts')}</p>
+                      <p className="text-[10px] text-muted-foreground">{t('teacher.cbt_alerts_desc', 'Receive notifications when students submit CBT exams.')}</p>
                     </div>
                     <input
                       type="checkbox"
@@ -561,8 +578,8 @@ export default function TeacherProfile() {
                   </label>
                   <label className="flex items-center justify-between p-3 rounded-xl border border-border bg-muted/10 cursor-pointer">
                     <div>
-                      <p className="font-bold text-xs text-foreground">Admin Approval Notifications</p>
-                      <p className="text-[10px] text-muted-foreground">Get notified when exams are approved by principal/admin.</p>
+                      <p className="font-bold text-xs text-foreground">{t('teacher.approval_notif_title', 'Admin Approval Notifications')}</p>
+                      <p className="text-[10px] text-muted-foreground">{t('teacher.approval_notif_desc', 'Get notified when exams are approved by principal/admin.')}</p>
                     </div>
                     <input
                       type="checkbox"
@@ -580,7 +597,7 @@ export default function TeacherProfile() {
                   className="bg-primary text-white px-8 py-3 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors shadow-sm flex items-center gap-2"
                 >
                   <Save className="w-4 h-4" />
-                  <span>Save Profile & Preferences</span>
+                  <span>{t('teacher.save_profile_btn', 'Save Profile & Preferences')}</span>
                 </button>
               </div>
             </form>

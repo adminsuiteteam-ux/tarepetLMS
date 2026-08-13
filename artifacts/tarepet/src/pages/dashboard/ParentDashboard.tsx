@@ -15,45 +15,10 @@ import {
 import { getStoredExams, getStoredSubmissions, subscribeToCBTStore, getCoursesForClass, getStudentBroadsheet, calculateWAECGrade } from '@/lib/cbt-store';
 import { RealTimeSyncStatus } from '@/components/cbt/RealTimeSyncStatus';
 
-// ── Data Definitions (SS1 Science) ────────────────────────────
-const CHILDREN = [
-  {
-    id: 1,
-    name: 'Emeka Amadi',
-    grade: 'SS1 Science',
-    house: 'Blue House (Eagle)',
-    houseColor: 'hsl(var(--primary))',
-    gpa: '3.85',
-    rank: 2,
-    classSize: 24,
-    attendance: '98%',
-    absences: 1,
-    teacher: 'Mrs. Okafor Chioma',
-    avatar: 'E',
-  },
-  {
-    id: 2,
-    name: 'Nneka Amadi',
-    grade: 'JSS2 General',
-    house: 'Purple House (Phoenix)',
-    houseColor: 'hsl(var(--secondary))',
-    gpa: '3.92',
-    rank: 1,
-    classSize: 24,
-    attendance: '100%',
-    absences: 0,
-    teacher: 'Mr. Okonkwo Paul',
-    avatar: 'N',
-  },
-];
+// ── Data Definitions ────────────────────────────
+const CHILDREN: any[] = [];
 
-const SUBJECTS_EMEKA = [
-  { code: 'MTH-101', name: 'SS1 Senior Secondary Mathematics I', teacher: 'Mrs. Okafor Chioma', score: 95, grade: 'A+', trend: 'up' },
-  { code: 'PHY-101', name: 'SS1 Senior Secondary Physics I', teacher: 'Mr. Okonkwo Paul', score: 85, grade: 'A', trend: 'up' },
-  { code: 'CHM-101', name: 'SS1 Senior Secondary Chemistry I', teacher: 'Mrs. Okafor Chioma', score: 87, grade: 'A', trend: 'up' },
-  { code: 'BIO-101', name: 'SS1 Senior Secondary Biology I', teacher: 'Mr. Okonkwo Paul', score: 92, grade: 'A+', trend: 'up' },
-  { code: 'AGR-101', name: 'SS1 Senior Secondary Agricultural Science I', teacher: 'Mrs. Okafor Chioma', score: 81, grade: 'B+', trend: 'neutral' },
-];
+const SUBJECTS_EMEKA: any[] = [];
 
 const MONTESSORI_SKILLS = [
   { area: 'Practical Life Competencies', mastery: 'Exemplary', score: 94, color: 'hsl(var(--secondary))' },
