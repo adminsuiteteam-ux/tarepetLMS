@@ -20,4 +20,7 @@ python3 manage.py collectstatic --no-input || python manage.py collectstatic --n
 echo "==> Running database migrations..."
 python3 manage.py migrate --no-input || python manage.py migrate --no-input
 
+echo "==> Seeding Django Super Admin and initial LMS data..."
+python3 manage.py seed_lms_data || python manage.py seed_lms_data || true
+
 echo "==> Build complete!"

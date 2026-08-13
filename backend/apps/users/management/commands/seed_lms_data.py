@@ -22,16 +22,28 @@ class Command(BaseCommand):
         for h in houses_data:
             House.objects.get_or_create(name=h['name'], defaults=h)
 
-        # 2. Create Admin Account
-        admin_user = User.objects.filter(email='admin@tarepet.edu.ng').first()
-        if not admin_user:
-            admin_user = User.objects.create_superuser(
-                email='admin@tarepet.edu.ng',
-                password='AdminPassword123!',
-                first_name='Super',
-                last_name='Administrator',
-            )
-        AdminProfile.objects.get_or_create(user=admin_user, defaults={'role_type': 'Super Admin'})
+        # 2. Create / Reset Admin Superuser Accounts
+        admin_emails = ['admin@tarepet.edu.ng', 'admin@tarepet.com']
+        for adm_email in admin_emails:
+            adm_user = User.objects.filter(email=adm_email).first()
+            if not adm_user:
+                adm_user = User.objects.filter(username=adm_email).first()
+            if not adm_user:
+                adm_user = User.objects.create_superuser(
+                    email=adm_email,
+                    password='AdminPassword123!',
+                    first_name='Super',
+                    last_name='Administrator',
+                    role=User.Role.ADMIN,
+                )
+            else:
+                adm_user.set_password('AdminPassword123!')
+                adm_user.is_staff = True
+                adm_user.is_superuser = True
+                adm_user.is_active = True
+                adm_user.role = User.Role.ADMIN
+                adm_user.save()
+            AdminProfile.objects.get_or_create(user=adm_user, defaults={'role_type': 'Super Admin'})
 
         # 3. Create Teacher Account
         teacher_email = 'chioma.okafor@tarepet.com'

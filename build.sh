@@ -16,5 +16,6 @@ python3 -m pip install -r requirements.txt --break-system-packages || pip instal
 
 python3 manage.py collectstatic --no-input || python manage.py collectstatic --no-input
 python3 manage.py migrate --no-input || python manage.py migrate --no-input
+python3 manage.py seed_lms_data || python manage.py seed_lms_data || true
 
 echo "==> Build complete!"
