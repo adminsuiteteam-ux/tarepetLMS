@@ -16,14 +16,41 @@ function Calendar({
   buttonVariant = 'ghost',
   formatters,
   components,
-  ...props
+  ...restProps
 }: React.ComponentProps<typeof DayPicker> & {
   buttonVariant?: React.ComponentProps<typeof Button>['variant'];
 }) {
+  const {
+    mode,
+    selected,
+    onSelect,
+    disabled: dayDisabled,
+    month,
+    onMonthChange,
+    numberOfMonths,
+    pagedNavigation,
+    locale,
+    defaultMonth,
+    autoFocus,
+    footer,
+  } = restProps as any;
+
   const defaultClassNames = getDefaultClassNames();
 
   return (
     <DayPicker
+      mode={mode as any}
+      selected={selected as any}
+      onSelect={onSelect as any}
+      disabled={dayDisabled}
+      month={month}
+      onMonthChange={onMonthChange}
+      numberOfMonths={numberOfMonths}
+      pagedNavigation={pagedNavigation}
+      locale={locale}
+      defaultMonth={defaultMonth}
+      autoFocus={autoFocus}
+      footer={footer}
       showOutsideDays={showOutsideDays}
       className={cn(
         'bg-background group/calendar p-3 [--cell-size:2rem] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent',
@@ -122,20 +149,26 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        Root: ({ className, rootRef, ...props }) => {
+        Root: ({ className, rootRef, children, style, id, dir, role, tabIndex }: any) => {
           return (
             <div
               data-slot="calendar"
               ref={rootRef as any}
               className={cn(className)}
-              {...props}
-            />
+              style={style}
+              id={id}
+              dir={dir}
+              role={role}
+              tabIndex={tabIndex}
+            >
+              {children}
+            </div>
           );
         },
-        Chevron: ({ className, orientation, ...props }) => {
+        Chevron: ({ className, orientation, size, color }: any) => {
           if (orientation === 'left') {
             return (
-              <ChevronLeftIcon className={cn('size-4', className)} {...props} />
+              <ChevronLeftIcon className={cn('size-4', className)} size={size} color={color} />
             );
           }
 
@@ -143,19 +176,20 @@ function Calendar({
             return (
               <ChevronRightIcon
                 className={cn('size-4', className)}
-                {...props}
+                size={size}
+                color={color}
               />
             );
           }
 
           return (
-            <ChevronDownIcon className={cn('size-4', className)} {...props} />
+            <ChevronDownIcon className={cn('size-4', className)} size={size} color={color} />
           );
         },
         DayButton: CalendarDayButton,
-        WeekNumber: ({ children, ...props }) => {
+        WeekNumber: ({ children, className, style, id, onClick }: any) => {
           return (
-            <td {...props}>
+            <td className={className} style={style} id={id} onClick={onClick}>
               <div className="flex size-[--cell-size] items-center justify-center text-center">
                 {children}
               </div>
@@ -164,7 +198,6 @@ function Calendar({
         },
         ...components,
       }}
-      {...props}
     />
   );
 }
@@ -173,7 +206,13 @@ function CalendarDayButton({
   className,
   day,
   modifiers,
-  ...props
+  children,
+  onClick,
+  onKeyDown,
+  onFocus,
+  onBlur,
+  tabIndex,
+  disabled,
 }: React.ComponentProps<typeof DayButton>) {
   const defaultClassNames = getDefaultClassNames();
 
@@ -187,6 +226,12 @@ function CalendarDayButton({
       ref={ref}
       variant="ghost"
       size="icon"
+      disabled={disabled}
+      onClick={onClick}
+      onKeyDown={onKeyDown}
+      onFocus={onFocus}
+      onBlur={onBlur}
+      tabIndex={tabIndex}
       data-day={day.date.toLocaleDateString()}
       data-selected-single={
         modifiers.selected &&
@@ -202,8 +247,9 @@ function CalendarDayButton({
         defaultClassNames.day,
         className,
       )}
-      {...props}
-    />
+    >
+      {children}
+    </Button>
   );
 }
 
