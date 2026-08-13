@@ -87,8 +87,6 @@ export default function TeacherDashboard() {
 
   const [selectedExamClass, setSelectedExamClass] = useState<string>('ALL');
   const [selectedExamStream, setSelectedExamStream] = useState<string>('ALL');
-  const [selectedAttendanceExam, setSelectedAttendanceExam] = useState<any | null>(null);
-  const [examAttendanceState, setExamAttendanceState] = useState<CBTAttendanceRecord[]>([]);
 
   // Data states
   const [submissions, setSubmissions] = useState(PENDING_SUBMISSIONS);
@@ -144,6 +142,13 @@ export default function TeacherDashboard() {
   const [showActionsDropdown, setShowActionsDropdown] = useState(false);
   const [showIDCardModal, setShowIDCardModal] = useState<any>(null);
   const [showStaffIdModal, setShowStaffIdModal] = useState<boolean>(false);
+
+  // CBT Exam Launch & Attendance & Preview State
+  const [selectedAttendanceExam, setSelectedAttendanceExam] = useState<any | null>(null);
+  const [examAttendanceState, setExamAttendanceState] = useState<any[]>([]);
+  const [examStartMode, setExamStartMode] = useState<'GENERAL' | 'INDIVIDUAL'>('GENERAL');
+  const [selectedStudentForIndividual, setSelectedStudentForIndividual] = useState<string>('TMS/SS1/SCI/4821');
+  const [previewSubmissionModal, setPreviewSubmissionModal] = useState<any | null>(null);
 
   // Broadsheet & Detailed Student Score Table State
   const [selectedBroadsheetStudent, setSelectedBroadsheetStudent] = useState<any | null>(null);
@@ -1503,14 +1508,17 @@ export default function TeacherDashboard() {
             </div>
           </div>
 
-          {/* Panel 1: Pending Form Teacher Review */}
+          {/* Panel 1: Pending Form Teacher Review & Sent for Approval */}
           {pendingExams.length > 0 && (
             <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-5 shadow-sm space-y-3">
               <div className="flex items-center gap-2 text-amber-800 font-bold text-sm">
                 <Clock className="w-5 h-5 text-amber-600" />
-                <span>{t('teacher.pending_review', 'Pending Form Teacher Review')} ({pendingExams.length})</span>
+                <span>{t('teacher.pending_review', 'Sent for Approval / Pending Admin Review')} ({pendingExams.length})</span>
+                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 ml-auto">
+                  🕒 Awaiting Admin Review
+                </span>
               </div>
-              <p className="text-xs text-amber-700">{t('teacher.pending_review_desc', 'These exams were submitted by Subject Teachers and are awaiting Form Teacher review before forwarding to Admin.')}</p>
+              <p className="text-xs text-amber-700">{t('teacher.pending_review_desc', 'These exams have been submitted for approval and are currently awaiting Admin review. You will receive a notification once approved.')}</p>
               <div className="space-y-3 pt-1">
                 {pendingExams.map(ex => (
                   <div key={ex.id} className="bg-white p-4 rounded-xl border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
@@ -1518,19 +1526,21 @@ export default function TeacherDashboard() {
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">{ex.course_code}</span>
                         <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">{ex.class || 'SS1'} {ex.stream || 'Science'}</span>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">{t('teacher.by', 'by')} {ex.teacher_name || t('teacher.subject_teacher', 'Subject Teacher')}</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+                          🕒 Sent for Approval
+                        </span>
                       </div>
                       <h4 className="font-bold text-foreground text-sm">{ex.title}</h4>
-                      <p className="text-xs text-muted-foreground">{ex.duration_minutes} mins · {ex.questions_count || ex.questions?.length} Questions</p>
+                      <p className="text-xs text-muted-foreground">{ex.duration_minutes} mins · {ex.questions_count || ex.questions?.length} Questions · Created by {ex.teacher_name || 'Teacher'}</p>
                     </div>
                     <button
                       onClick={() => {
                         updateExamStatus(ex.id, 'PENDING');
-                        showToast(`Reviewed & submitted "${ex.title}" to Admin for approval.`);
+                        showToast(`Re-sent "${ex.title}" to School Admin for approval!`);
                       }}
                       className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-colors shadow-md flex items-center gap-1.5 self-start sm:self-auto"
                     >
-                      <Send className="w-4 h-4" /> Review and Forward to Admin
+                      <Send className="w-4 h-4" /> Re-send to Admin
                     </button>
                   </div>
                 ))}
@@ -1543,9 +1553,9 @@ export default function TeacherDashboard() {
             <div className="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-5 shadow-sm space-y-3">
               <div className="flex items-center gap-2 text-emerald-800 font-bold text-sm">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                <span>{t('teacher.approved_exams_ready', 'Admin Approved — Ready to Upload to Students')} ({approvedExams.length})</span>
+                <span>{t('teacher.approved_exams_ready', 'Admin Approved — Ready to Launch General or Individual Exam')} ({approvedExams.length})</span>
               </div>
-              <p className="text-xs text-emerald-700">{t('teacher.approved_exams_desc', 'Admin has approved these exams. Click an exam card or')} <strong>{t('teacher.upload_activate', '"Manage Student Attendance & Activate"')}</strong> {t('teacher.approved_exams_desc2', 'to mark present students and publish.')}</p>
+              <p className="text-xs text-emerald-700">{t('teacher.approved_exams_desc', 'Admin has approved these exams. Form Teacher must certify hall attendance before starting a General or Individual exam.')}</p>
               <div className="space-y-3 pt-1">
                 {approvedExams.map(ex => (
                   <div
@@ -1561,6 +1571,9 @@ export default function TeacherDashboard() {
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">{ex.course_code}</span>
                         <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">{ex.class || 'SS1'} {ex.stream || 'Science'}</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                          ✓ Approved by Admin
+                        </span>
                       </div>
                       <h4 className="font-bold text-foreground text-sm">{ex.title}</h4>
                       <p className="text-xs text-muted-foreground">{ex.duration_minutes} mins · {ex.questions_count || ex.questions?.length} Questions</p>
@@ -1574,7 +1587,7 @@ export default function TeacherDashboard() {
                       }}
                       className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-colors shadow-md flex items-center gap-1.5 self-start sm:self-auto ring-2 ring-emerald-400/50"
                     >
-                      <UserCheck className="w-4 h-4" /> Manage Student Attendance & Activate
+                      <UserCheck className="w-4 h-4" /> Certify Attendance & Start Exam
                     </button>
                   </div>
                 ))}
@@ -1644,14 +1657,27 @@ export default function TeacherDashboard() {
                       <h4 className="font-semibold text-foreground text-xs">{sub.exam_title} ({sub.course_code})</h4>
                       <p className="text-[10px] text-muted-foreground mt-0.5">{t('teacher.submitted_at', 'Submitted:')} {new Date(sub.submitted_at).toLocaleTimeString()} · {t('teacher.score_label', 'Score:')} <strong>{sub.score} / {sub.total_possible}</strong></p>
                     </div>
-                    <div className="flex items-center gap-3 self-start sm:self-auto">
-                      <div className="text-right">
+                    <div className="flex items-center gap-2.5 self-start sm:self-auto">
+                      <div className="text-right mr-1">
                         <span className="text-lg font-serif font-bold text-emerald-600">{sub.percentage}%</span>
                         <p className="text-[9px] font-bold uppercase text-emerald-700">{t('teacher.auto_graded', 'Auto-Graded')}</p>
                       </div>
                       <button
+                        onClick={() => {
+                          const examsList = getStoredExams();
+                          const ex = examsList.find(e => e.id === sub.exam_id) || examsList[0];
+                          setPreviewSubmissionModal({
+                            submission: sub,
+                            exam: ex
+                          });
+                        }}
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-2 rounded-xl text-xs transition flex items-center gap-1 shadow-sm"
+                      >
+                        <Eye className="w-3.5 h-3.5" /> Preview Answer Sheet
+                      </button>
+                      <button
                         onClick={() => showToast(`Recorded ${sub.student_name}'s score (${sub.percentage}%) to class broadsheet!`)}
-                        className="bg-primary text-white font-bold px-3.5 py-2 rounded-xl text-xs hover:bg-primary/90 transition-colors"
+                        className="bg-primary text-white font-bold px-3 py-2 rounded-xl text-xs hover:bg-primary/90 transition-colors"
                       >
                         {t('teacher.record_broadsheet', 'Record to Broadsheet')}
                       </button>
@@ -2455,10 +2481,117 @@ export default function TeacherDashboard() {
               </div>
 
               <div className="p-5 overflow-y-auto space-y-4 flex-1">
-                {/* Header Info & Bulk Actions */}
+                {/* Launch Mode Switcher */}
+                <div className="bg-card border border-border rounded-2xl p-1.5 flex gap-1 shadow-xs">
+                  <button
+                    onClick={() => setExamStartMode('GENERAL')}
+                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                      examStartMode === 'GENERAL'
+                        ? 'bg-primary text-white shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <Users className="w-4 h-4" /> 👥 Start General Exam (Whole Class)
+                  </button>
+                  <button
+                    onClick={() => setExamStartMode('INDIVIDUAL')}
+                    className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                      examStartMode === 'INDIVIDUAL'
+                        ? 'bg-primary text-white shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <UserCheck className="w-4 h-4" /> 👤 Start Individual Student Exam
+                  </button>
+                </div>
+
+                {/* Individual Student Controls */}
+                {examStartMode === 'INDIVIDUAL' && (
+                  <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200 text-blue-900 space-y-3">
+                    <h4 className="font-bold text-xs uppercase tracking-wider text-blue-900">Configure Individual Student Exam</h4>
+                    <p className="text-xs text-blue-800">Select a specific student to grant individual exam authorization (e.g. for re-take or makeup test).</p>
+
+                    <div>
+                      <label className="text-[10px] font-extrabold uppercase text-blue-800 block mb-1">Select Target Pupil</label>
+                      <select
+                        value={selectedStudentForIndividual}
+                        onChange={e => setSelectedStudentForIndividual(e.target.value)}
+                        className="w-full p-2.5 rounded-xl bg-white border border-blue-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      >
+                        {examAttendanceState.map(st => (
+                          <option key={st.studentId} value={st.studentId}>
+                            {st.studentName} ({st.studentId}) — {st.markedPresent ? '✓ Certified Present' : '❌ Marked Absent'}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {(() => {
+                      const targetSt = examAttendanceState.find(r => r.studentId === selectedStudentForIndividual) || examAttendanceState[0];
+                      if (!targetSt) return null;
+
+                      if (!targetSt.markedPresent) {
+                        return (
+                          <div className="p-3.5 rounded-xl bg-amber-100 border border-amber-300 text-amber-900 text-xs space-y-2">
+                            <div className="flex items-center gap-2 font-bold">
+                              <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
+                              <span>Attendance Warning: Student Marked Absent</span>
+                            </div>
+                            <p className="text-[11px] text-amber-800">
+                              Form Teacher must certify that <strong>{targetSt.studentName}</strong> is Present in the Examination Hall before starting this individual exam.
+                            </p>
+                            <button
+                              onClick={() => {
+                                const updated = examAttendanceState.map(r => r.studentId === targetSt.studentId ? { ...r, markedPresent: true } : r);
+                                setExamAttendanceState(updated);
+                                setStudentExamAttendance(
+                                  selectedAttendanceExam.id,
+                                  targetSt.studentId,
+                                  targetSt.studentName,
+                                  targetSt.class,
+                                  targetSt.stream,
+                                  true,
+                                  user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Teacher Invigilator' : 'Teacher Invigilator'
+                                );
+                                showToast(`Certified ${targetSt.studentName} PRESENT in examination hall!`);
+                              }}
+                              className="px-3.5 py-2 rounded-xl bg-amber-600 text-white font-bold text-xs hover:bg-amber-700 transition shadow-sm"
+                            >
+                              ✓ Certify {targetSt.studentName} Present & Enable Exam
+                            </button>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="p-3.5 rounded-xl bg-emerald-100 border border-emerald-300 text-emerald-900 text-xs space-y-2">
+                          <div className="flex items-center gap-2 font-bold">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
+                            <span>Student Certified Present in Hall</span>
+                          </div>
+                          <p className="text-[11px] text-emerald-800">
+                            <strong>{targetSt.studentName}</strong> has been certified Present. You may now launch their individual CBT exam session.
+                          </p>
+                          <button
+                            onClick={() => {
+                              updateExamStatus(selectedAttendanceExam.id, 'ACTIVE');
+                              showToast(`Launched individual CBT exam session for ${targetSt.studentName}!`);
+                              setSelectedAttendanceExam(null);
+                            }}
+                            className="px-4 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 transition shadow-md flex items-center gap-1.5"
+                          >
+                            <Send className="w-3.5 h-3.5" /> Start Individual Exam for {targetSt.studentName}
+                          </button>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+
+                {/* Hall Attendance Policy */}
                 <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
                   <div>
-                    <span className="font-bold text-emerald-900 block text-sm">Attendance Clearance Policy</span>
+                    <span className="font-bold text-emerald-900 block text-sm">Hall Attendance Clearance Policy</span>
                     <p className="text-emerald-700 text-[11px] mt-0.5">Only students marked <strong className="text-emerald-900">PRESENT</strong> below will be granted access to start this examination in their student portal.</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
@@ -2472,6 +2605,7 @@ export default function TeacherDashboard() {
                           true,
                           user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Teacher Invigilator' : 'Teacher Invigilator'
                         );
+                        showToast('Certified all students PRESENT in examination hall!');
                       }}
                       className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-[11px] font-bold hover:bg-emerald-700 transition-colors"
                     >
@@ -2569,16 +2703,136 @@ export default function TeacherDashboard() {
 
               <div className="p-5 border-t border-border bg-muted/20 flex items-center justify-between">
                 <button onClick={() => setSelectedAttendanceExam(null)} className="px-4 py-2 rounded-xl border border-border text-xs font-semibold hover:bg-muted transition-colors">Close</button>
+                {examStartMode === 'GENERAL' && (
+                  <button
+                    onClick={() => {
+                      const presentCount = examAttendanceState.filter(r => r.markedPresent).length;
+                      if (presentCount === 0) {
+                        alert('Please mark at least 1 student as Present in the examination hall before starting the exam.');
+                        return;
+                      }
+                      updateExamStatus(selectedAttendanceExam.id, 'ACTIVE');
+                      showToast(`Activated General Exam "${selectedAttendanceExam.title}"! ${presentCount} students marked PRESENT and cleared to begin.`);
+                      setSelectedAttendanceExam(null);
+                    }}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 shadow-md transition-colors"
+                  >
+                    <Send className="w-4 h-4" /> Start General Exam for All Present Students
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── PREVIEW STUDENT CBT ANSWER SHEET MODAL ── */}
+        {previewSubmissionModal && (
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+            <div className="bg-card border border-border rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+              <div className="p-5 border-b border-border flex items-center justify-between bg-muted/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
+                    👨‍🎓
+                  </div>
+                  <div>
+                    <h3 className="font-serif font-bold text-base text-foreground">
+                      {previewSubmissionModal.submission.student_name}'s Answer Sheet Preview
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      Exam: <span className="font-bold text-foreground">{previewSubmissionModal.submission.exam_title}</span> ({previewSubmissionModal.submission.course_code})
+                    </p>
+                  </div>
+                </div>
+                <button onClick={() => setPreviewSubmissionModal(null)} className="p-2 rounded-xl text-muted-foreground hover:bg-muted/50 transition-colors"><X className="w-5 h-5" /></button>
+              </div>
+
+              <div className="p-5 overflow-y-auto space-y-4 flex-1">
+                {/* Performance Summary Banner */}
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-500/20 flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 block">Student Information</span>
+                    <h4 className="font-bold text-sm text-foreground">{previewSubmissionModal.submission.student_name}</h4>
+                    <p className="text-xs text-muted-foreground">ID: {previewSubmissionModal.submission.student_id} • Class: {previewSubmissionModal.submission.class} {previewSubmissionModal.submission.stream}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">Submitted: {new Date(previewSubmissionModal.submission.submitted_at).toLocaleString()}</p>
+                  </div>
+                  <div className="flex items-center gap-3 bg-card p-3 rounded-xl border border-border shadow-xs">
+                    <div className="text-right">
+                      <span className="text-[10px] font-bold uppercase text-muted-foreground block">Verified Score</span>
+                      <span className="text-2xl font-serif font-bold text-emerald-600">{previewSubmissionModal.submission.score} / {previewSubmissionModal.submission.total_possible}</span>
+                    </div>
+                    <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center font-bold text-emerald-600 text-lg border border-emerald-500/20">
+                      {previewSubmissionModal.submission.percentage}%
+                    </div>
+                  </div>
+                </div>
+
+                <h4 className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground px-1">
+                  Question-by-Question Response Audit ({previewSubmissionModal.exam?.questions?.length || 0} Questions)
+                </h4>
+
+                <div className="space-y-3">
+                  {(previewSubmissionModal.exam?.questions || []).map((q: any, idx: number) => {
+                    const studentAns = previewSubmissionModal.submission.answers?.[q.id] || 'Not Answered';
+                    const isCorrect = studentAns === q.correct_option;
+                    return (
+                      <div key={q.id || idx} className={`p-4 rounded-2xl border transition-all ${isCorrect ? 'bg-emerald-500/5 border-emerald-200' : 'bg-rose-500/5 border-rose-200'}`}>
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                          <h5 className="font-bold text-xs text-foreground flex items-center gap-1.5">
+                            <span className="w-5 h-5 rounded-md bg-muted flex items-center justify-center text-[10px] shrink-0 font-mono">{idx + 1}</span>
+                            {q.question_text}
+                          </h5>
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase shrink-0 ${isCorrect ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-rose-100 text-rose-800 border border-rose-300'}`}>
+                            {isCorrect ? '✓ Correct (+1 pt)' : '❌ Incorrect (0 pt)'}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 mt-3 text-xs">
+                          {['A', 'B', 'C', 'D'].map(optKey => {
+                            const optText = q[`option_${optKey.toLowerCase()}`];
+                            const isSelected = studentAns === optKey;
+                            const isCorrectOpt = q.correct_option === optKey;
+                            return (
+                              <div
+                                key={optKey}
+                                className={`p-2.5 rounded-xl border text-xs flex items-center justify-between ${
+                                  isCorrectOpt
+                                    ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-900 font-bold'
+                                    : isSelected
+                                    ? 'bg-rose-500/10 border-rose-500/40 text-rose-900 font-bold'
+                                    : 'bg-card border-border text-muted-foreground'
+                                }`}
+                              >
+                                <span><strong className="mr-1">{optKey}.</strong> {optText}</span>
+                                {isCorrectOpt && <span className="text-[10px] font-bold text-emerald-700">✓ Correct</span>}
+                                {isSelected && !isCorrectOpt && <span className="text-[10px] font-bold text-rose-700">Selected ❌</span>}
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {q.explanation && (
+                          <div className="mt-2.5 p-2.5 rounded-xl bg-muted/20 border border-border/50 text-[11px] text-muted-foreground">
+                            <strong className="text-foreground">Solution Explanation:</strong> {q.explanation}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="p-5 border-t border-border bg-muted/20 flex items-center justify-between">
+                <button onClick={() => setPreviewSubmissionModal(null)} className="px-5 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition shadow-sm">
+                  Close Audit Preview
+                </button>
                 <button
                   onClick={() => {
-                    updateExamStatus(selectedAttendanceExam.id, 'ACTIVE');
-                    const presentCount = examAttendanceState.filter(r => r.markedPresent).length;
-                    showToast(`Activated "${selectedAttendanceExam.title}"! ${presentCount} students marked PRESENT and cleared to begin test.`);
-                    setSelectedAttendanceExam(null);
+                    showToast(`Student CBT Answer sheet for ${previewSubmissionModal.submission.student_name} verified!`);
+                    setPreviewSubmissionModal(null);
                   }}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 shadow-md transition-colors"
+                  className="px-5 py-2.5 rounded-xl border border-border text-xs font-bold hover:bg-muted transition"
                 >
-                  <Send className="w-4 h-4" /> Upload & Activate Exam for Cleared Students
+                  ✓ Confirm & Sync Score
                 </button>
               </div>
             </div>

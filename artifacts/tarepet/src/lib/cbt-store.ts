@@ -708,6 +708,12 @@ export function submitStudentCBTAttempt(
     `Scored ${score}/${total_possible} (${percentage}%) in ${exam.course_name}. Gradebook auto-synced.`,
     sName
   );
+  addRealtimeNotification({
+    title: `CBT Submission Received: ${sName}`,
+    message: `${sName} (${exam.class} ${exam.stream}) completed ${exam.title} (${exam.course_code}). Score: ${score}/${total_possible} (${percentage}%). Click to preview.`,
+    type: 'exam',
+    recipientRole: 'TEACHER'
+  });
   broadcastRealtimeEvent();
   return newSub;
 }
