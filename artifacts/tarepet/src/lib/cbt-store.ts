@@ -241,92 +241,21 @@ export interface StudentRecord {
 }
 
 // ── Persistent CBT Exams Storage ──────────────────────────────────────────────
-const DEFAULT_CBT_EXAMS: CBTExam[] = [
-  {
-    id: 1001,
-    title: '1st Term Senior Mathematics Assessment',
-    description: 'Algebra, Quadratic Equations, and Trigonometry C.A. Test',
-    instructions: 'Select the best option for each question. Time limit is 45 minutes.',
-    course_code: 'MTH-101',
-    course_name: 'Mathematics',
-    class: 'SS1',
-    stream: 'Science',
-    assessment_type: 'TEST',
-    term: '1ST_TERM',
-    duration_minutes: 45,
-    questions_count: 5,
-    questions_per_page: 2,
-    teacher_name: 'Mr. Okonkwo Paul',
-    status: 'PENDING',
-    created_at: new Date().toISOString(),
-    questions: [
-      {
-        id: 1,
-        question_text: 'Solve for x in equation: 2x + 6 = 14',
-        option_a: 'x = 3',
-        option_b: 'x = 4',
-        option_c: 'x = 5',
-        option_d: 'x = 6',
-        correct_option: 'B',
-        points: 5,
-        explanation: '2x = 14 - 6 = 8, so x = 4'
-      },
-      {
-        id: 2,
-        question_text: 'What is the derivative of x^2 with respect to x?',
-        option_a: 'x',
-        option_b: '2x',
-        option_c: 'x^2',
-        option_d: '2',
-        correct_option: 'B',
-        points: 5,
-        explanation: 'd/dx(x^n) = n*x^(n-1), so d/dx(x^2) = 2x'
-      }
-    ]
-  },
-  {
-    id: 1002,
-    title: 'Senior Chemistry Mid-Term CBT Exam',
-    description: 'Periodic Table, Chemical Bonding, and Stoichiometric Calculations',
-    instructions: 'Read questions carefully. Answer all objective questions.',
-    course_code: 'CHM-101',
-    course_name: 'Chemistry',
-    class: 'SS2',
-    stream: 'Science',
-    assessment_type: 'EXAM',
-    term: '1ST_TERM',
-    duration_minutes: 60,
-    questions_count: 4,
-    questions_per_page: 2,
-    teacher_name: 'Mrs. Chioma Okafor',
-    status: 'PENDING',
-    created_at: new Date().toISOString(),
-    questions: [
-      {
-        id: 1,
-        question_text: 'Which element has atomic number 6?',
-        option_a: 'Nitrogen',
-        option_b: 'Carbon',
-        option_c: 'Oxygen',
-        option_d: 'Boron',
-        correct_option: 'B',
-        points: 5,
-        explanation: 'Carbon has atomic number 6.'
-      }
-    ]
-  }
-];
+const DEFAULT_CBT_EXAMS: CBTExam[] = [];
 
 function loadSavedExams(): CBTExam[] {
-  if (typeof window === 'undefined') return DEFAULT_CBT_EXAMS;
+  if (typeof window === 'undefined') return [];
   try {
     const saved = localStorage.getItem('tarepet_cbt_exams');
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed)) {
+        // Filter out legacy default seed exams (1001, 1002) if previously stored
+        return parsed.filter((e: any) => e.id !== 1001 && e.id !== 1002);
+      }
     }
   } catch (e) {}
-  return DEFAULT_CBT_EXAMS;
+  return [];
 }
 
 function persistExams(exams: CBTExam[]) {
@@ -516,11 +445,18 @@ function broadcastRealtimeEvent() {
 // No-op: kept for compatibility (initCBTStore calls are safe to leave in place)
 export function initCBTStore() { /* data is loaded from API, not localStorage */ }
 
-// Clear in-memory cache only (no localStorage to clear)
+// Clear in-memory cache and localStorage
 export function clearCBTStoreCache() {
   _exams = [];
   _submissions = [];
   _activities = [];
+  persistExams([]);
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.removeItem('tarepet_cbt_exams');
+      localStorage.removeItem('tarepet_cbt_submissions');
+    } catch (e) {}
+  }
   broadcastRealtimeEvent();
 }
 
