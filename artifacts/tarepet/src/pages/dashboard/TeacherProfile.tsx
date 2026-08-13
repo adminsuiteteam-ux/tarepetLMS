@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 
 import { authClient } from '@/lib/api-auth';
-import { getStoredTeachers } from '@/lib/cbt-store';
+import { getStoredTeachers, saveTeacher } from '@/lib/cbt-store';
 
 export default function TeacherProfile() {
   const { t } = useTranslation();
@@ -50,7 +50,8 @@ export default function TeacherProfile() {
     const gen = prof.gender || stored?.gender || 'Male';
     const dobVal = prof.dob || stored?.dob || '1990-01-01';
     const addr = prof.address || stored?.address || 'Tarepet School Campus, Yenagoa, Bayelsa State';
-    const formCls = prof.formTeacherOf || prof.form_teacher_of || stored?.formTeacherOf || 'SS1';
+    const rawFormCls = prof.formTeacherOf || prof.form_teacher_of || stored?.formTeacherOf;
+    const formCls = (rawFormCls && rawFormCls !== 'None' && !rawFormCls.startsWith('No')) ? rawFormCls : 'None';
     const joinDate = prof.hire_date || stored?.joined || 'September 2021';
     const sal = prof.salary || stored?.salary || '';
     const bank = prof.bank_name || stored?.bankName || '';
@@ -62,7 +63,7 @@ export default function TeacherProfile() {
       email: email,
       phone: phone,
       staffId: staffId,
-      roleTitle: dept || 'Senior Subject Specialist & Form Teacher',
+      roleTitle: formCls !== 'None' ? `Form Teacher (${formCls})` : (dept || 'Subject Teacher'),
       department: dept,
       qualification: qual,
       experience: '5 Years Teaching Experience',
@@ -99,6 +100,8 @@ export default function TeacherProfile() {
       if (res.data && res.data.profile) {
         const p = res.data.profile;
         const subs = Array.isArray(p.subjects_taught) ? p.subjects_taught.map((s: any) => typeof s === 'string' ? s : s.name).join(', ') : p.subjects_taught;
+        const rawF = p.form_teacher_of || p.formTeacherOf;
+        const cleanF = (rawF && rawF !== 'None' && !rawF.startsWith('No')) ? rawF : 'None';
         setProfileForm(prev => ({
           ...prev,
           firstName: res.data.first_name || prev.firstName,
@@ -107,7 +110,8 @@ export default function TeacherProfile() {
           phone: res.data.phone || p.phone || prev.phone,
           staffId: p.teacher_id || prev.staffId,
           department: p.department || prev.department,
-          formClass: p.form_teacher_of || p.formTeacherOf || prev.formClass,
+          formClass: cleanF,
+          roleTitle: cleanF !== 'None' ? `Form Teacher (${cleanF})` : (p.department || 'Subject Teacher'),
           specialization: p.specialization || subs || prev.specialization,
           qualification: p.qualifications || prev.qualification,
           gender: p.gender || prev.gender,
@@ -158,7 +162,47 @@ export default function TeacherProfile() {
 
   const handleSaveProfile = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    showToast(t('teacher.profile_saved_success', 'Teacher profile updated successfully!'));
+
+    // 1. Update cbt-store for local persistence
+    saveTeacher({
+      staffId: profileForm.staffId,
+      name: `${profileForm.firstName} ${profileForm.lastName}`,
+      email: profileForm.email,
+      phone: profileForm.phone,
+      department: profileForm.department,
+      specialization: profileForm.specialization,
+      qualification: profileForm.qualification,
+      gender: profileForm.gender,
+      dob: profileForm.dob,
+      address: profileForm.address,
+      bio: profileForm.bio,
+      formTeacherOf: profileForm.formClass,
+      salary: profileForm.salary,
+      bankName: profileForm.bankName,
+      accountNumber: profileForm.accountNumber,
+    });
+
+    // 2. Patch live user profile in Django backend API (/auth/me/)
+    authClient.patch('/auth/me/', {
+      first_name: profileForm.firstName,
+      last_name: profileForm.lastName,
+      phone: profileForm.phone,
+      profile: {
+        specialization: profileForm.specialization,
+        qualifications: profileForm.qualification,
+        gender: profileForm.gender,
+        dob: profileForm.dob,
+        address: profileForm.address,
+        bio: profileForm.bio,
+        salary: profileForm.salary,
+        bank_name: profileForm.bankName,
+        account_number: profileForm.accountNumber,
+      }
+    }).then(() => {
+      showToast(t('teacher.profile_saved_success', 'Teacher profile updated & synced successfully!'));
+    }).catch(() => {
+      showToast(t('teacher.profile_saved_success', 'Teacher profile updated successfully!'));
+    });
   };
 
   const handleNavigate = (sectionId: string) => {

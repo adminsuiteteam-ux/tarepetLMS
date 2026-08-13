@@ -337,7 +337,7 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
 
     const formTeacherDisplay = form.isFormTeacher === 'Yes'
       ? form.formTeacherClass
-      : `No (${form.teachingDivision})`;
+      : 'None';
 
     const created = {
       id: Date.now(),
@@ -5347,7 +5347,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
           title: 'Form Teachers',
           subtitle: 'Class & Homeroom Teachers',
           description: 'All designated form teachers responsible for class pastoral and administrative duties.',
-          filterFn: (t: any) => t.isFormTeacher === 'Yes' || (t.formTeacherOf && t.formTeacherOf !== 'None' && t.formTeacherOf !== ''),
+          filterFn: (t: any) => t.isFormTeacher === 'Yes' || (t.formTeacherOf && t.formTeacherOf !== 'None' && t.formTeacherOf !== '' && !t.formTeacherOf.startsWith('No')),
           icon: ClipboardList,
           filterKey: 'FORM',
         },
