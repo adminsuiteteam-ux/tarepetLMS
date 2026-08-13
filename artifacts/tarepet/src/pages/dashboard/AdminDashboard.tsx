@@ -4,7 +4,7 @@ import { Link } from 'wouter';
 import { authClient } from '@/lib/api-auth';
 import { PortalLayout } from '@/components/layout/PortalLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, deleteStudent, syncStudentsWithBackend, getStoredTeachers, saveTeacher, saveStoredTeachers, deleteTeacher } from '@/lib/cbt-store';
+import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, deleteStudent, syncStudentsWithBackend, getStoredTeachers, saveTeacher, saveStoredTeachers, deleteTeacher, listenToRealtimeEvents } from '@/lib/cbt-store';
 import { AdminManagementPanel } from '@/components/dashboard/AdminManagementPanel';
 import {
   getPaymentItems,
@@ -1774,8 +1774,25 @@ export default function AdminDashboard() {
   // Teacher management state — loaded from persistent teacher store and live backend
   const [teachersList, setTeachersList] = useState<any[]>(() => getStoredTeachers());
 
-  // Sync teachers & users from live Django REST API backend
+  // Sync teachers & users from live Django REST API backend & real-time store
   React.useEffect(() => {
+    const handleSyncFromStore = () => {
+      setTeachersList(getStoredTeachers());
+      setStudentsList(getStoredStudents());
+    };
+
+    // 1. Initial sync
+    handleSyncFromStore();
+
+    // 2. Real-time event subscription for multi-admin tabs & windows
+    const unsubscribe = listenToRealtimeEvents(() => {
+      handleSyncFromStore();
+    });
+
+    window.addEventListener('storage', handleSyncFromStore);
+    window.addEventListener('cbt_store_updated', handleSyncFromStore);
+
+    // 3. Periodic backend polling
     const fetchBackendUsers = async () => {
       try {
         const res = await authClient.get('/auth/users/');
@@ -1829,7 +1846,6 @@ export default function AdminDashboard() {
                   combined.push(t);
                 }
               });
-              
               return combined;
             });
           }
@@ -1842,7 +1858,6 @@ export default function AdminDashboard() {
                   combined.push(s);
                 }
               });
-              
               return combined;
             });
           }
@@ -1851,7 +1866,16 @@ export default function AdminDashboard() {
         // Backend offline or user not admin — fallback to local storage
       }
     };
+
     fetchBackendUsers();
+    const intervalId = setInterval(fetchBackendUsers, 8000);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener('storage', handleSyncFromStore);
+      window.removeEventListener('cbt_store_updated', handleSyncFromStore);
+      clearInterval(intervalId);
+    };
   }, []);
   const [selectedTeacher, setSelectedTeacher] = useState<any>(null);
   const [teacherSearch, setTeacherSearch] = useState('');
@@ -5230,7 +5254,16 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
           title: 'Nursery & Primary Teachers',
           subtitle: 'Nursery 1–3, Primary 1–5',
           description: 'Early childhood and elementary educators teaching foundational curriculum levels.',
-          filterFn: (t: any) => t.subjectsAssigned?.some((s: any) => s.grade?.startsWith('NUR') || s.grade?.startsWith('PRI')),
+          filterFn: (t: any) => {
+            const div = (t.teachingDivision || t.department || '').toLowerCase();
+            const formOf = (t.formTeacherOf || t.formTeacherClass || '').toLowerCase();
+            const hasSub = t.subjectsAssigned?.some((s: any) => {
+              const g = (s.grade || '').toUpperCase();
+              const n = (s.name || '').toLowerCase();
+              return g.startsWith('NUR') || g.startsWith('PRI') || n.includes('nursery') || n.includes('primary');
+            });
+            return div.includes('nursery') || div.includes('primary') || formOf.includes('nur') || formOf.includes('pri') || hasSub || div.includes('entire');
+          },
           icon: School,
           filterKey: 'NURSERY_PRIMARY',
         },
@@ -5239,7 +5272,15 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
           title: 'Junior Secondary Teachers',
           subtitle: 'JSS 1, JSS 2, JSS 3',
           description: 'Teachers handling the Junior Secondary School basic education curriculum and BECE prep.',
-          filterFn: (t: any) => t.subjectsAssigned?.some((s: any) => s.grade?.startsWith('JSS')),
+          filterFn: (t: any) => {
+            const div = (t.teachingDivision || t.department || '').toLowerCase();
+            const formOf = (t.formTeacherOf || t.formTeacherClass || '').toLowerCase();
+            const hasSub = t.subjectsAssigned?.some((s: any) => {
+              const g = (s.grade || '').toUpperCase();
+              return g.startsWith('JSS');
+            });
+            return div.includes('junior') || div.includes('jss') || formOf.includes('jss') || hasSub || div.includes('entire') || div.includes('all primary');
+          },
           icon: BookOpen,
           filterKey: 'JUNIOR',
         },
@@ -5248,7 +5289,15 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
           title: 'Senior Secondary Teachers',
           subtitle: 'SS 1, SS 2, SS 3',
           description: 'Senior educators managing WAEC/NECO streams in Science and Art departments.',
-          filterFn: (t: any) => t.subjectsAssigned?.some((s: any) => s.grade?.startsWith('SS')),
+          filterFn: (t: any) => {
+            const div = (t.teachingDivision || t.department || '').toLowerCase();
+            const formOf = (t.formTeacherOf || t.formTeacherClass || '').toLowerCase();
+            const hasSub = t.subjectsAssigned?.some((s: any) => {
+              const g = (s.grade || '').toUpperCase();
+              return g.startsWith('SS');
+            });
+            return div.includes('senior') || div.includes('ss') || formOf.includes('ss') || hasSub || div.includes('entire') || div.includes('all primary');
+          },
           icon: GraduationCap,
           filterKey: 'SENIOR',
         },
@@ -5257,7 +5306,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
           title: 'Form Teachers',
           subtitle: 'Class & Homeroom Teachers',
           description: 'All designated form teachers responsible for class pastoral and administrative duties.',
-          filterFn: (t: any) => t.formTeacherOf && t.formTeacherOf !== 'None' && t.formTeacherOf !== '',
+          filterFn: (t: any) => t.isFormTeacher === 'Yes' || (t.formTeacherOf && t.formTeacherOf !== 'None' && t.formTeacherOf !== ''),
           icon: ClipboardList,
           filterKey: 'FORM',
         },

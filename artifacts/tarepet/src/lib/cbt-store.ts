@@ -992,6 +992,8 @@ export function subscribeToCBTStore(callback: () => void) {
   };
 }
 
+export const listenToRealtimeEvents = subscribeToCBTStore;
+
 // ── Persistent Student Broadsheet Store ─────────────────────────────────────
 export interface CourseBroadsheetScore {
   ca1: number;
