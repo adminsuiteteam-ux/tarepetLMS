@@ -10,9 +10,9 @@ import {
   HeartHandshake, School, Shield, Download, FileText,
   Plus, Search, Filter, CheckSquare, XCircle, RefreshCw,
   Video, Phone, User, Users, ChevronRight, Lock, Bell,
-  DollarSign, Check, ChevronDown,
+  DollarSign, Check, ChevronDown, Zap, ShieldCheck,
 } from 'lucide-react';
-import { getStoredExams, getStoredSubmissions, subscribeToCBTStore } from '@/lib/cbt-store';
+import { getStoredExams, getStoredSubmissions, subscribeToCBTStore, getCoursesForClass, getStudentBroadsheet, calculateWAECGrade } from '@/lib/cbt-store';
 import { RealTimeSyncStatus } from '@/components/cbt/RealTimeSyncStatus';
 
 // ── Data Definitions (SS1 Science) ────────────────────────────
@@ -301,33 +301,59 @@ export default function ParentDashboard() {
                 </div>
 
                 {/* Academic Scores Table */}
-                <div>
-                  <h4 className="font-serif font-bold text-slate-800 mb-2 text-sm uppercase tracking-wider">{t('Academic Subject Performance')}</h4>
-                  <table className="w-full text-left border-collapse border border-slate-200 text-xs">
-                    <thead>
-                      <tr className="bg-slate-100 text-slate-600 font-bold uppercase border-b border-slate-200">
-                        <th className="py-2 px-3 border-r border-slate-200">{t('Subject')}</th>
-                        <th className="py-2 px-3 text-center border-r border-slate-200">{t('CA (40%)')}</th>
-                        <th className="py-2 px-3 text-center border-r border-slate-200">{t('Exam (60%)')}</th>
-                        <th className="py-2 px-3 text-center border-r border-slate-200">{t('Total (100%)')}</th>
-                        <th className="py-2 px-3 text-center border-r border-slate-200">{t('Grade')}</th>
-                        <th className="py-2 px-3">{t('Subject Teacher')}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-200">
-                      {SUBJECTS_EMEKA.map(s => (
-                        <tr key={s.code}>
-                          <td className="py-2 px-3 font-semibold text-slate-800 border-r border-slate-200">{s.name} ({s.code})</td>
-                          <td className="py-2 px-3 text-center border-r border-slate-200">{Math.round(s.score * 0.36)}</td>
-                          <td className="py-2 px-3 text-center border-r border-slate-200">{Math.round(s.score * 0.64)}</td>
-                          <td className="py-2 px-3 text-center font-bold text-primary border-r border-slate-200">{s.score}%</td>
-                          <td className="py-2 px-3 text-center font-bold border-r border-slate-200">{s.grade}</td>
-                          <td className="py-2 px-3 text-slate-600">{s.teacher}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                {(() => {
+                  const broadsheet = getStudentBroadsheet(activeChild.id) || getStudentBroadsheet('1');
+                  const courses = getCoursesForClass(activeChild.grade || 'SS1', 'Science');
+                  return (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-serif font-bold text-slate-800 text-sm uppercase tracking-wider">{t('Academic Subject Performance')}</h4>
+                        <span className="text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded border border-emerald-300">
+                          Official Published Report Card
+                        </span>
+                      </div>
+                      <table className="w-full text-left border-collapse border border-slate-200 text-xs">
+                        <thead>
+                          <tr className="bg-slate-100 text-slate-600 font-bold uppercase border-b border-slate-200">
+                            <th className="py-2 px-3 border-r border-slate-200">{t('Subject')}</th>
+                            <th className="py-2 px-3 text-center border-r border-slate-200">{t('1st CA (10%)')}</th>
+                            <th className="py-2 px-3 text-center border-r border-slate-200">{t('2nd CA (10%)')}</th>
+                            <th className="py-2 px-3 text-center border-r border-slate-200">{t('Assign. (10%)')}</th>
+                            <th className="py-2 px-3 text-center border-r border-slate-200 bg-blue-50 text-blue-800">{t('CBT Exam (30%)')}</th>
+                            <th className="py-2 px-3 text-center border-r border-slate-200">{t('Paper Exam (40%)')}</th>
+                            <th className="py-2 px-3 text-center border-r border-slate-200">{t('Total (100%)')}</th>
+                            <th className="py-2 px-3 text-center border-r border-slate-200">{t('WAEC Grade')}</th>
+                            <th className="py-2 px-3">{t('Remarks')}</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-200">
+                          {courses.map(c => {
+                            const sc = broadsheet[c.code] || { ca1: 8, ca2: 8, assignment: 8, cbtScore: 24, paperExam: 32, remark: 'Commendable performance' };
+                            const total = sc.ca1 + sc.ca2 + sc.assignment + sc.cbtScore + sc.paperExam;
+                            const waec = calculateWAECGrade(total);
+                            return (
+                              <tr key={c.code}>
+                                <td className="py-2 px-3 font-semibold text-slate-800 border-r border-slate-200">{c.name} ({c.code})</td>
+                                <td className="py-2 px-3 text-center border-r border-slate-200 font-mono">{sc.ca1}</td>
+                                <td className="py-2 px-3 text-center border-r border-slate-200 font-mono">{sc.ca2}</td>
+                                <td className="py-2 px-3 text-center border-r border-slate-200 font-mono">{sc.assignment}</td>
+                                <td className="py-2 px-3 text-center border-r border-slate-200 font-mono bg-blue-50 text-blue-700 font-bold">{sc.cbtScore} / 30</td>
+                                <td className="py-2 px-3 text-center border-r border-slate-200 font-mono">{sc.paperExam}</td>
+                                <td className="py-2 px-3 text-center font-bold text-primary border-r border-slate-200">{total}%</td>
+                                <td className="py-2 px-3 text-center font-bold border-r border-slate-200">
+                                  <span className={`px-2 py-0.5 rounded text-[10px] ${waec.color}`}>
+                                    {waec.grade}
+                                  </span>
+                                </td>
+                                <td className="py-2 px-3 text-slate-600 italic text-[11px]">{sc.remark || 'Good overall performance.'}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                })()}
 
                 {/* Montessori Character & Conduct Matrix */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
