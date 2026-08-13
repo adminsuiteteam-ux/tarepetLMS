@@ -375,6 +375,18 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
       phone: form.phone,
       role: 'TEACHER',
       teacher_id: staffId,
+      department: form.isFormTeacher === 'Yes' ? 'Form Teacher' : 'Subject Teacher',
+      specialization: form.specialization,
+      qualifications: form.qualification,
+      subjects_taught: form.subjectsAssigned.filter((s: any) => s.name),
+      hire_date: form.joined || null,
+      gender: form.gender,
+      dob: form.dob || null,
+      address: form.address,
+      salary: form.salary,
+      bank_name: form.bankName,
+      account_number: form.accountNumber,
+      form_teacher_of: formTeacherDisplay,
     }).catch(() => {});
 
     saveTeacher(created);
@@ -1800,28 +1812,39 @@ export default function AdminDashboard() {
         if (users.length > 0) {
           const liveTeachers = users
             .filter((u: any) => u.role === 'TEACHER')
-            .map((u: any) => ({
-              id: u.id,
-              staffId: u.profile?.teacher_id || u.teacher_id || `TMS/TCH/${String(u.id).padStart(4, '0')}`,
-              name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
-              email: u.email,
-              phone: u.phone || '+234 800 000 0000',
-              gender: 'Male',
-              department: u.profile?.department || 'Mathematics & STEM',
-              specialization: u.profile?.subjects_taught || 'General Education',
-              qualification: u.profile?.qualifications || 'B.Sc. Education',
-              status: u.is_active ? 'Active' : 'Inactive',
-              joined: u.date_joined ? u.date_joined.split('T')[0] : '2026-01-01',
-              formTeacherOf: 'None',
-              subjectsAssigned: [],
-              classesCount: 1,
-              studentsCount: 30,
-              address: 'Tarepet School Campus',
-              dob: '1990-01-01',
-              cbtExamsCount: 0,
-              attendanceRate: '100%',
-              profileImage: '',
-            }));
+            .map((u: any) => {
+              const prof = u.profile || {};
+              const subs = Array.isArray(prof.subjects_taught) ? prof.subjects_taught : [];
+              const spec = typeof prof.specialization === 'string' && prof.specialization
+                ? prof.specialization
+                : (subs.length > 0 ? (typeof subs[0] === 'string' ? subs[0] : subs[0].name) : 'General Education');
+
+              return {
+                id: u.id,
+                staffId: prof.teacher_id || u.teacher_id || `TMS/TCH/${String(u.id).padStart(4, '0')}`,
+                name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
+                email: u.email,
+                phone: u.phone || prof.phone || '+234 800 000 0000',
+                gender: prof.gender || 'Male',
+                department: prof.department || 'Academic Department',
+                specialization: spec,
+                qualification: prof.qualifications || 'B.Sc. Education',
+                status: u.is_active ? 'Active' : 'Inactive',
+                joined: prof.hire_date || (u.date_joined ? u.date_joined.split('T')[0] : '2026-01-01'),
+                formTeacherOf: prof.form_teacher_of || 'None',
+                subjectsAssigned: subs,
+                classesCount: subs.length || 1,
+                studentsCount: 30,
+                address: prof.address || 'Tarepet School Campus',
+                dob: prof.dob || '1990-01-01',
+                salary: prof.salary || '',
+                bankName: prof.bank_name || '',
+                accountNumber: prof.account_number || '',
+                cbtExamsCount: 0,
+                attendanceRate: '100%',
+                profileImage: '',
+              };
+            });
 
           const liveStudents = users
             .filter((u: any) => u.role === 'STUDENT')
@@ -1840,13 +1863,31 @@ export default function AdminDashboard() {
 
           if (liveTeachers.length > 0) {
             setTeachersList(prev => {
-              const combined = [...liveTeachers];
+              const combinedMap = new Map();
+              // First add local stored teachers
               prev.forEach(t => {
-                if (!combined.some(c => c.email?.toLowerCase() === t.email?.toLowerCase())) {
-                  combined.push(t);
+                if (t.email) combinedMap.set(t.email.toLowerCase(), t);
+              });
+              // Merge live backend teachers keeping existing non-empty local fields if live is default/blank
+              liveTeachers.forEach((lt: any) => {
+                const key = lt.email?.toLowerCase();
+                const existing = combinedMap.get(key);
+                if (existing) {
+                  const merged = { ...existing };
+                  Object.keys(lt).forEach(k => {
+                    const val = (lt as any)[k];
+                    if (val !== undefined && val !== null && val !== '' && val !== 'Academic Department' && val !== 'General Education' && val !== 'B.Sc. Education' && val !== 'Tarepet School Campus' && val !== 'None') {
+                      (merged as any)[k] = val;
+                    } else if (!(merged as any)[k]) {
+                      (merged as any)[k] = val;
+                    }
+                  });
+                  combinedMap.set(key, merged);
+                } else {
+                  combinedMap.set(key, lt);
                 }
               });
-              return combined;
+              return Array.from(combinedMap.values());
             });
           }
 

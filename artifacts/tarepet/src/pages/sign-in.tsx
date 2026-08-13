@@ -66,13 +66,23 @@ export default function SignIn() {
         email: matchedTeacher.email,
         first_name: firstName,
         last_name: lastName,
+        phone: matchedTeacher.phone,
         role: 'TEACHER',
         profile: {
           teacher_id: matchedTeacher.staffId,
           department: matchedTeacher.department,
           formTeacherOf: matchedTeacher.formTeacherOf,
-          subjects_taught: matchedTeacher.specialization,
+          form_teacher_of: matchedTeacher.formTeacherOf,
+          specialization: matchedTeacher.specialization,
+          subjects_taught: matchedTeacher.subjectsAssigned || matchedTeacher.specialization,
           qualifications: matchedTeacher.qualification,
+          gender: matchedTeacher.gender,
+          dob: matchedTeacher.dob,
+          address: matchedTeacher.address,
+          salary: matchedTeacher.salary,
+          bank_name: matchedTeacher.bankName,
+          account_number: matchedTeacher.accountNumber,
+          hire_date: matchedTeacher.joined,
         } as any
       });
       setLocation('/dashboard/teacher');

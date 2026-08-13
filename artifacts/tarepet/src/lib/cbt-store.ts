@@ -290,6 +290,7 @@ export interface TeacherRecord {
   bankName?: string;
   accountNumber?: string;
   password?: string;
+  bio?: string;
 }
 
 function loadSavedTeachers(): TeacherRecord[] {
@@ -323,31 +324,33 @@ export function saveTeacher(teacherData: Partial<TeacherRecord> & { name: string
     (staffId && t.staffId && t.staffId.toLowerCase() === staffId.toLowerCase())
   );
 
+  const existing = existingIdx >= 0 ? _teachers[existingIdx] : null;
+
   const newTeacher: TeacherRecord = {
-    id: teacherData.id || (existingIdx >= 0 ? _teachers[existingIdx].id : Date.now()),
+    id: teacherData.id || (existing ? existing.id : Date.now()),
     staffId: staffId,
     name: teacherData.name.trim(),
     email: email,
-    phone: teacherData.phone || '+234 800 000 0000',
-    gender: teacherData.gender || 'Male',
-    department: teacherData.department || 'Academic Department',
-    specialization: teacherData.specialization || 'General Education',
-    qualification: teacherData.qualification || 'B.Sc. Education',
-    status: teacherData.status || 'Active',
-    joined: teacherData.joined || new Date().toISOString().split('T')[0],
-    formTeacherOf: teacherData.formTeacherOf || 'None',
-    subjectsAssigned: teacherData.subjectsAssigned || [],
-    classesCount: teacherData.classesCount || 0,
-    studentsCount: teacherData.studentsCount || 0,
-    address: teacherData.address || 'Tarepet School Campus',
-    dob: teacherData.dob || '1990-01-01',
-    cbtExamsCount: teacherData.cbtExamsCount || 0,
-    attendanceRate: teacherData.attendanceRate || '100%',
-    profileImage: teacherData.profileImage || '',
-    salary: teacherData.salary || '₦180,000',
-    bankName: teacherData.bankName || 'First Bank Nigeria',
-    accountNumber: teacherData.accountNumber || '3089182391',
-    password: teacherData.password || staffId,
+    phone: teacherData.phone || (existing?.phone) || '+234 800 000 0000',
+    gender: teacherData.gender || (existing?.gender) || 'Male',
+    department: teacherData.department || (existing?.department) || 'Academic Department',
+    specialization: teacherData.specialization || (existing?.specialization) || 'General Education',
+    qualification: teacherData.qualification || (existing?.qualification) || 'B.Sc. Education',
+    status: teacherData.status || (existing?.status) || 'Active',
+    joined: teacherData.joined || (existing?.joined) || new Date().toISOString().split('T')[0],
+    formTeacherOf: teacherData.formTeacherOf || (existing?.formTeacherOf) || 'None',
+    subjectsAssigned: teacherData.subjectsAssigned || (existing?.subjectsAssigned) || [],
+    classesCount: teacherData.classesCount || (existing?.classesCount) || 0,
+    studentsCount: teacherData.studentsCount || (existing?.studentsCount) || 0,
+    address: teacherData.address || (existing?.address) || 'Tarepet School Campus',
+    dob: teacherData.dob || (existing?.dob) || '1990-01-01',
+    cbtExamsCount: teacherData.cbtExamsCount || (existing?.cbtExamsCount) || 0,
+    attendanceRate: teacherData.attendanceRate || (existing?.attendanceRate) || '100%',
+    profileImage: teacherData.profileImage || (existing?.profileImage) || '',
+    salary: teacherData.salary || (existing?.salary) || '',
+    bankName: teacherData.bankName || (existing?.bankName) || '',
+    accountNumber: teacherData.accountNumber || (existing?.accountNumber) || '',
+    password: teacherData.password || (existing?.password) || staffId,
   };
 
   if (existingIdx >= 0) {

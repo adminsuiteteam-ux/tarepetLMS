@@ -10,10 +10,10 @@ import {
   Search, Filter, Upload, Download, Send, Eye, Edit2, Trash2, X,
   TrendingUp, Play, Lock, MessageSquare, ChevronDown, ChevronRight, ChevronLeft,
   CheckSquare, XCircle, RefreshCw, PenLine, Globe, Layers, ArrowUpRight,
-  ClipboardList, Settings, ShieldCheck, User, Bell, Printer, CreditCard, GraduationCap, Zap
+  ClipboardList, Settings, ShieldCheck, User, Bell, Printer, CreditCard, GraduationCap, Zap, School
 } from 'lucide-react';
 
-import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, saveStudent, deleteStudent, subscribeToCBTStore, syncStudentsWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, CourseBroadsheetScore } from '@/lib/cbt-store';
+import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, getStoredTeachers, saveStudent, deleteStudent, subscribeToCBTStore, syncStudentsWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, CourseBroadsheetScore } from '@/lib/cbt-store';
 import { useTranslation } from '@/lib/i18n';
 
 function getSafeProperty<T>(obj: Record<string | number, T> | null | undefined, key: string | number): T | undefined {
@@ -77,9 +77,17 @@ export default function TeacherDashboard() {
     }
   };
 
-  // Form Teacher designation
-  const isFormTeacher = Boolean(user?.role === 'TEACHER' || user?.role === 'ADMIN');
-  const formClass = (user?.profile as any)?.formTeacherOf || 'SS1';
+  const matchedStoredTeacher = React.useMemo(() => {
+    if (!user) return null;
+    const uEmail = (user.email || '').toLowerCase();
+    const uStaffId = ((user.profile as any)?.teacher_id || (user as any).staffId || '').toLowerCase();
+    return getStoredTeachers().find((t: any) =>
+      (t.email && t.email.toLowerCase() === uEmail) ||
+      (t.staffId && t.staffId.toLowerCase() === uStaffId)
+    );
+  }, [user]);
+
+  const formClass = (user?.profile as any)?.formTeacherOf || (user?.profile as any)?.form_teacher_of || matchedStoredTeacher?.formTeacherOf || 'SS1';
 
   // Sub-tab states
   const [studentSubTab, setStudentSubTabState] = useState<'roster' | 'attendance'>('roster');
@@ -262,11 +270,19 @@ export default function TeacherDashboard() {
     showToast(`Graded submission for ${selectedSub.student} successfully!`);
   };
 
-  const handleAddStudentSubmit = () => {
+  const handleAddStudentSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!addStudentForm.name.trim()) return;
-    const assignedGrade = formClass || addStudentForm.grade || 'SS1';
-    const autoCode = addStudentForm.code.trim() || generateAdmissionNumber(assignedGrade, addStudentForm.stream);
+    const selectedGrade = addStudentForm.grade || formClass || 'Nursery 1';
+    const autoCode = addStudentForm.code.trim() || generateAdmissionNumber(selectedGrade, addStudentForm.stream);
     const autoEmail = addStudentForm.email.trim() || formatStudentEmail(addStudentForm.name);
+
+    let defaultProg = 'Montessori Early Childhood Education';
+    if (selectedGrade.startsWith('Primary') || selectedGrade.startsWith('PRI')) {
+      defaultProg = 'Montessori Primary Education';
+    } else if (selectedGrade.startsWith('JSS') || selectedGrade.startsWith('SS')) {
+      defaultProg = 'Senior Secondary Certificate (SSCE)';
+    }
 
     saveStudent({
       id: Date.now(),
@@ -283,9 +299,9 @@ export default function TeacherDashboard() {
       stateOfOrigin: addStudentForm.stateOfOrigin || 'Bayelsa',
       lga: addStudentForm.lga || 'Yenagoa',
       address: addStudentForm.address || 'Not Available',
-      grade: assignedGrade,
+      grade: selectedGrade,
       stream: addStudentForm.stream,
-      programme: addStudentForm.programme,
+      programme: addStudentForm.programme || defaultProg,
       parentName: addStudentForm.parentName || 'Not Available',
       parentPhone: addStudentForm.parentPhone || 'Not Available',
       status: addStudentForm.status || 'ACTIVE',
@@ -293,8 +309,9 @@ export default function TeacherDashboard() {
       attendance: '100%',
       atRisk: false
     });
+    setRoster(getStoredStudents());
     setShowAddStudentModal(false);
-    showToast(`Registered ${addStudentForm.name}! Email: ${autoEmail} | Password (School ID): ${autoCode}`);
+    showToast(`Registered ${addStudentForm.name} (${selectedGrade})! Student ID: ${autoCode}`);
     setAddStudentForm({
       code: '',
       name: '',
@@ -304,12 +321,12 @@ export default function TeacherDashboard() {
       dob: '',
       phone: '',
       country: 'Nigeria',
-      stateOfOrigin: '',
-      lga: '',
+      stateOfOrigin: 'Bayelsa',
+      lga: 'Yenagoa',
       address: '',
-      grade: formClass || 'SS1',
-      stream: 'Science',
-      programme: 'Senior Secondary Certificate (SSCE)',
+      grade: formClass || 'Nursery 1',
+      stream: 'General / Early Years',
+      programme: 'Montessori Early Childhood Education',
       parentName: '',
       parentPhone: '',
       status: 'ACTIVE',
@@ -2487,6 +2504,191 @@ export default function TeacherDashboard() {
           </div>
         )}
 
+        {/* ── REGISTER NEW STUDENT MODAL (NURSERY, PRIMARY & SECONDARY) ── */}
+        {showAddStudentModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in zoom-in duration-150" onClick={() => setShowAddStudentModal(false)}>
+            <div className="bg-card rounded-3xl border border-border shadow-2xl w-full max-w-2xl overflow-hidden max-h-[92vh] flex flex-col" onClick={e => e.stopPropagation()}>
+              <div className="p-5 border-b border-border bg-gradient-to-r from-primary/10 via-primary/5 to-transparent flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-primary text-white flex items-center justify-center font-bold text-lg shadow-sm">
+                    <GraduationCap className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-serif font-bold text-base text-foreground">Register New Pupil / Student</h3>
+                    <p className="text-xs text-muted-foreground">Complete student registration across Nursery, Primary, or Secondary classes.</p>
+                  </div>
+                </div>
+                <button onClick={() => setShowAddStudentModal(false)} className="text-muted-foreground hover:text-foreground p-1 rounded-xl hover:bg-accent">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleAddStudentSubmit} className="p-6 overflow-y-auto space-y-4 flex-1 text-xs">
+                {/* 1. Class & Stream Placement */}
+                <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20 space-y-3">
+                  <h4 className="font-bold text-xs uppercase tracking-wider text-primary flex items-center gap-1.5">
+                    <School className="w-4 h-4" /> Academic Placement & Grade Level
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-extrabold uppercase text-muted-foreground block mb-1">Target Class / Grade Level *</label>
+                      <select
+                        value={addStudentForm.grade}
+                        onChange={e => setAddStudentForm({ ...addStudentForm, grade: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-xs font-semibold text-foreground focus:ring-2 focus:ring-primary outline-none"
+                      >
+                        <optgroup label="🧸 Nursery & Early Years">
+                          <option value="Nursery 1">🧸 Nursery 1</option>
+                          <option value="Nursery 2">🧸 Nursery 2</option>
+                          <option value="Nursery 3">🧸 Nursery 3</option>
+                          <option value="Creche / Toddler">👶 Creche / Toddler</option>
+                        </optgroup>
+                        <optgroup label="🎒 Primary Education">
+                          <option value="Primary 1">🎒 Primary 1</option>
+                          <option value="Primary 2">🎒 Primary 2</option>
+                          <option value="Primary 3">🎒 Primary 3</option>
+                          <option value="Primary 4">🎒 Primary 4</option>
+                          <option value="Primary 5">🎒 Primary 5</option>
+                        </optgroup>
+                        <optgroup label="📚 Junior Secondary">
+                          <option value="JSS 1">📚 JSS 1</option>
+                          <option value="JSS 2">📚 JSS 2</option>
+                          <option value="JSS 3">📚 JSS 3</option>
+                        </optgroup>
+                        <optgroup label="🎓 Senior Secondary">
+                          <option value="SS 1">🎓 SS 1</option>
+                          <option value="SS 2">🎓 SS 2</option>
+                          <option value="SS 3">🎓 SS 3</option>
+                        </optgroup>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-extrabold uppercase text-muted-foreground block mb-1">Class Arm / Stream</label>
+                      <select
+                        value={addStudentForm.stream}
+                        onChange={e => setAddStudentForm({ ...addStudentForm, stream: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-xs font-semibold text-foreground focus:ring-2 focus:ring-primary outline-none"
+                      >
+                        <option value="General / Early Years">General / Early Years (Nursery)</option>
+                        <option value="Faith Arm">Faith Arm (Montessori)</option>
+                        <option value="Love Arm">Love Arm (Montessori)</option>
+                        <option value="Grace Arm">Grace Arm (Montessori)</option>
+                        <option value="Science">Science Stream (Secondary)</option>
+                        <option value="Arts & Humanities">Arts & Humanities (Secondary)</option>
+                        <option value="Commercial">Commercial Stream (Secondary)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Personal Details */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-extrabold uppercase text-muted-foreground block mb-1">Student Full Name *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Chukwuemeka Amadi"
+                      value={addStudentForm.name}
+                      onChange={e => setAddStudentForm({ ...addStudentForm, name: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-xs text-foreground focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-extrabold uppercase text-muted-foreground block mb-1">Gender</label>
+                    <select
+                      value={addStudentForm.gender}
+                      onChange={e => setAddStudentForm({ ...addStudentForm, gender: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-xs text-foreground focus:ring-2 focus:ring-primary outline-none"
+                    >
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-extrabold uppercase text-muted-foreground block mb-1">Date of Birth</label>
+                    <input
+                      type="date"
+                      value={addStudentForm.dob}
+                      onChange={e => setAddStudentForm({ ...addStudentForm, dob: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-xs text-foreground focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-extrabold uppercase text-muted-foreground block mb-1">Student Email (Optional)</label>
+                    <input
+                      type="email"
+                      placeholder="Auto-generated if left blank"
+                      value={addStudentForm.email}
+                      onChange={e => setAddStudentForm({ ...addStudentForm, email: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-xs text-foreground focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* 3. Parent & Guardian Contact */}
+                <div className="p-4 rounded-2xl bg-muted/20 border border-border space-y-3">
+                  <h4 className="font-bold text-xs uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                    <User className="w-4 h-4 text-emerald-600" /> Parent / Guardian Information
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] font-extrabold uppercase text-muted-foreground block mb-1">Parent / Guardian Name</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Dr. & Mrs. Amadi"
+                        value={addStudentForm.parentName}
+                        onChange={e => setAddStudentForm({ ...addStudentForm, parentName: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-xs text-foreground focus:ring-2 focus:ring-primary outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-extrabold uppercase text-muted-foreground block mb-1">Parent Contact Phone</label>
+                      <input
+                        type="text"
+                        placeholder="+234 800 000 0000"
+                        value={addStudentForm.parentPhone}
+                        onChange={e => setAddStudentForm({ ...addStudentForm, parentPhone: e.target.value })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-xs text-foreground focus:ring-2 focus:ring-primary outline-none"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-extrabold uppercase text-muted-foreground block mb-1">Residential Address</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 12 Kpansia-Epie Road, Yenagoa, Bayelsa State"
+                      value={addStudentForm.address}
+                      onChange={e => setAddStudentForm({ ...addStudentForm, address: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-xs text-foreground focus:ring-2 focus:ring-primary outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddStudentModal(false)}
+                    className="px-5 py-2.5 rounded-xl border border-border text-xs font-semibold hover:bg-muted transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <CheckCircle2 className="w-4 h-4" /> Save Student Record
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
         {/* ── CBT STUDENT ATTENDANCE & INVIGILATION MODAL ── */}
         {selectedAttendanceExam && (
           <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
@@ -2826,7 +3028,7 @@ export default function TeacherDashboard() {
                                     : 'bg-card border-border text-muted-foreground'
                                 }`}
                               >
-                                <span><strong className="mr-1">{optKey}.</strong> {optText}</span>
+                                <span><strong className="mr-1">{optKey}.</strong> {String(optText || '')}</span>
                                 {isCorrectOpt && <span className="text-[10px] font-bold text-emerald-700">✓ Correct</span>}
                                 {isSelected && !isCorrectOpt && <span className="text-[10px] font-bold text-rose-700">{t('teacher.selected_incorrect', 'Selected ❌')}</span>}
                               </div>

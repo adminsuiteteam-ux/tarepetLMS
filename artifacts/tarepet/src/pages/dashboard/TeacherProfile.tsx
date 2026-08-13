@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 
 import { authClient } from '@/lib/api-auth';
+import { getStoredTeachers } from '@/lib/cbt-store';
 
 export default function TeacherProfile() {
   const { t } = useTranslation();
@@ -26,48 +27,99 @@ export default function TeacherProfile() {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
-  // Teacher Profile Form State (synced with logged-in user)
-  const [profileForm, setProfileForm] = useState(() => ({
-    firstName: user?.first_name || 'Teacher',
-    lastName: user?.last_name || 'Staff',
-    email: user?.email || 'teacher@tarepet.com',
-    phone: user?.phone || '+234 800 000 0000',
-    staffId: (user?.profile as any)?.teacher_id || (user as any)?.staffId || 'TMS/TCH/0001',
-    roleTitle: (user?.profile as any)?.department || 'Senior Subject Specialist & Form Teacher',
-    department: (user?.profile as any)?.department || 'Academic Department',
-    qualification: (user?.profile as any)?.qualifications || 'B.Sc. Education',
-    experience: '5 Years Teaching Experience',
-    joiningDate: 'September 2021',
-    gender: 'Male',
-    dob: '1990-01-01',
-    specialization: (user?.profile as any)?.subjects_taught || 'General Education & STEM',
-    address: 'Tarepet School Campus, Yenagoa, Bayelsa State',
-    bio: 'Passionate Montessori educator dedicated to analytical problem solving and digital learning excellence.',
-    emergencyContactName: 'School Administrator',
-    emergencyContactPhone: '+234 800 000 0000',
-    officeHours: 'Monday - Thursday: 2:00 PM - 4:00 PM',
-    formClass: (user?.profile as any)?.formTeacherOf || 'SS1',
-    emailAlerts: true,
-    cbtAlerts: true,
-    smsAlerts: false,
-    profileImage: '',
-  }));
+  const getInitialProfile = () => {
+    const prof = (user?.profile as any) || {};
+    const uEmail = (user?.email || '').toLowerCase();
+    const uStaffId = (prof.teacher_id || (user as any)?.staffId || '').toLowerCase();
+
+    // Check if matching teacher created by Admin exists in cbt-store
+    const stored = getStoredTeachers().find(t =>
+      (t.email && t.email.toLowerCase() === uEmail) ||
+      (t.staffId && t.staffId.toLowerCase() === uStaffId)
+    );
+
+    const fName = user?.first_name || (stored ? stored.name.split(' ')[0] : 'Teacher');
+    const lName = user?.last_name || (stored ? stored.name.split(' ').slice(1).join(' ') : 'Staff');
+    const email = user?.email || stored?.email || 'teacher@tarepet.com';
+    const phone = user?.phone || prof.phone || stored?.phone || '+234 800 000 0000';
+    const staffId = prof.teacher_id || (user as any)?.staffId || stored?.staffId || 'TMS/TCH/0001';
+    const dept = prof.department || stored?.department || 'Academic Department';
+    const qual = prof.qualifications || stored?.qualification || 'B.Sc. Education';
+    const rawSpec = prof.specialization || prof.subjects_taught || stored?.specialization;
+    const spec = typeof rawSpec === 'string' ? rawSpec : Array.isArray(rawSpec) ? rawSpec.map((s: any) => typeof s === 'string' ? s : s.name).join(', ') : 'General Education & STEM';
+    const gen = prof.gender || stored?.gender || 'Male';
+    const dobVal = prof.dob || stored?.dob || '1990-01-01';
+    const addr = prof.address || stored?.address || 'Tarepet School Campus, Yenagoa, Bayelsa State';
+    const formCls = prof.formTeacherOf || prof.form_teacher_of || stored?.formTeacherOf || 'SS1';
+    const joinDate = prof.hire_date || stored?.joined || 'September 2021';
+    const sal = prof.salary || stored?.salary || '';
+    const bank = prof.bank_name || stored?.bankName || '';
+    const acct = prof.account_number || stored?.accountNumber || '';
+
+    return {
+      firstName: fName,
+      lastName: lName,
+      email: email,
+      phone: phone,
+      staffId: staffId,
+      roleTitle: dept || 'Senior Subject Specialist & Form Teacher',
+      department: dept,
+      qualification: qual,
+      experience: '5 Years Teaching Experience',
+      joiningDate: joinDate,
+      gender: gen,
+      dob: dobVal,
+      specialization: spec,
+      address: addr,
+      bio: prof.bio || stored?.bio || 'Passionate Montessori educator dedicated to analytical problem solving and digital learning excellence.',
+      emergencyContactName: 'School Administrator',
+      emergencyContactPhone: '+234 800 000 0000',
+      officeHours: 'Monday - Thursday: 2:00 PM - 4:00 PM',
+      formClass: formCls,
+      salary: sal,
+      bankName: bank,
+      accountNumber: acct,
+      emailAlerts: true,
+      cbtAlerts: true,
+      smsAlerts: false,
+      profileImage: prof.profileImage || stored?.profileImage || '',
+    };
+  };
+
+  // Teacher Profile Form State (synced with logged-in user & admin store)
+  const [profileForm, setProfileForm] = useState(getInitialProfile);
 
   useEffect(() => {
-    if (user) {
-      setProfileForm(prev => ({
-        ...prev,
-        firstName: user.first_name || prev.firstName,
-        lastName: user.last_name || prev.lastName,
-        email: user.email || prev.email,
-        phone: user.phone || prev.phone,
-        staffId: (user.profile as any)?.teacher_id || (user as any)?.staffId || prev.staffId,
-        department: (user.profile as any)?.department || prev.department,
-        formClass: (user.profile as any)?.formTeacherOf || prev.formClass,
-        specialization: (user.profile as any)?.subjects_taught || prev.specialization,
-        qualification: (user.profile as any)?.qualifications || prev.qualification,
-      }));
-    }
+    // 1. Sync from local auth & stored teacher records
+    const updated = getInitialProfile();
+    setProfileForm(updated);
+
+    // 2. Fetch live user profile from Django REST API backend (/auth/me/)
+    authClient.get('/auth/me/').then(res => {
+      if (res.data && res.data.profile) {
+        const p = res.data.profile;
+        const subs = Array.isArray(p.subjects_taught) ? p.subjects_taught.map((s: any) => typeof s === 'string' ? s : s.name).join(', ') : p.subjects_taught;
+        setProfileForm(prev => ({
+          ...prev,
+          firstName: res.data.first_name || prev.firstName,
+          lastName: res.data.last_name || prev.lastName,
+          email: res.data.email || prev.email,
+          phone: res.data.phone || p.phone || prev.phone,
+          staffId: p.teacher_id || prev.staffId,
+          department: p.department || prev.department,
+          formClass: p.form_teacher_of || p.formTeacherOf || prev.formClass,
+          specialization: p.specialization || subs || prev.specialization,
+          qualification: p.qualifications || prev.qualification,
+          gender: p.gender || prev.gender,
+          dob: p.dob || prev.dob,
+          address: p.address || prev.address,
+          joiningDate: p.hire_date || prev.joiningDate,
+          salary: p.salary || prev.salary,
+          bankName: p.bank_name || prev.bankName,
+          accountNumber: p.account_number || prev.accountNumber,
+        }));
+      }
+    }).catch(() => {});
   }, [user]);
 
   const showToast = (msg: string) => {

@@ -121,19 +121,14 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
         student_id = getattr(getattr(user, 'student_profile', None), 'student_id', None)
         teacher_id = getattr(getattr(user, 'teacher_profile', None), 'teacher_id', None)
 
+        user_data = UserSerializer(user).data
+        user_data['student_id'] = student_id
+        user_data['teacher_id'] = teacher_id
+
         return {
             'refresh': str(refresh),
             'access': str(refresh.access_token),
-            'user': {
-                'id': user.id,
-                'email': user.email,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
-                'role': user.role,
-                'phone': user.phone,
-                'student_id': student_id,
-                'teacher_id': teacher_id,
-            }
+            'user': user_data
         }
 
 
@@ -152,7 +147,11 @@ class StudentProfileSerializer(serializers.ModelSerializer):
 class TeacherProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeacherProfile
-        fields = ['id', 'teacher_id', 'department', 'subjects_taught', 'hire_date', 'qualifications', 'bio']
+        fields = [
+            'id', 'teacher_id', 'department', 'specialization', 'subjects_taught',
+            'hire_date', 'qualifications', 'gender', 'dob', 'address', 'salary',
+            'bank_name', 'account_number', 'form_teacher_of', 'bio'
+        ]
 
 
 class AdminProfileSerializer(serializers.ModelSerializer):
@@ -186,16 +185,46 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     role = serializers.ChoiceField(choices=User.Role.choices, default=User.Role.STUDENT)
     student_id = serializers.CharField(write_only=True, required=False, allow_blank=True)
     teacher_id = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    department = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    specialization = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    qualifications = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    subjects_taught = serializers.JSONField(write_only=True, required=False, default=list)
+    hire_date = serializers.DateField(write_only=True, required=False, allow_null=True)
+    gender = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    dob = serializers.DateField(write_only=True, required=False, allow_null=True)
+    address = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    salary = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    bank_name = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    account_number = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    form_teacher_of = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model = User
-        fields = ['email', 'password', 'first_name', 'last_name', 'phone', 'role', 'student_id', 'teacher_id']
+        fields = [
+            'email', 'password', 'first_name', 'last_name', 'phone', 'role', 'student_id', 'teacher_id',
+            'department', 'specialization', 'qualifications', 'subjects_taught', 'hire_date', 'gender',
+            'dob', 'address', 'salary', 'bank_name', 'account_number', 'form_teacher_of'
+        ]
 
     def create(self, validated_data):
         role = validated_data.get('role', User.Role.STUDENT)
         first_name = validated_data.get('first_name', '').strip()
         last_name = validated_data.get('last_name', '').strip()
         email = validated_data.get('email', '').strip().lower()
+
+        # Extract teacher profile extra fields
+        dept = validated_data.pop('department', 'Academic Department')
+        spec = validated_data.pop('specialization', '')
+        qual = validated_data.pop('qualifications', '')
+        subs = validated_data.pop('subjects_taught', [])
+        hire = validated_data.pop('hire_date', None)
+        gen = validated_data.pop('gender', '')
+        dob_val = validated_data.pop('dob', None)
+        addr = validated_data.pop('address', '')
+        sal = validated_data.pop('salary', '')
+        bank = validated_data.pop('bank_name', '')
+        acct = validated_data.pop('account_number', '')
+        form_tch = validated_data.pop('form_teacher_of', '')
 
         # Enforce email format: firstname.surname@tarepet.com for Student & Teacher
         if not email or '@' not in email:
@@ -239,11 +268,26 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             role=role,
         )
 
-        # Create role profile with strictly assigned ID
+        # Create role profile with strictly assigned ID and individual fields
         if role == User.Role.STUDENT:
             StudentProfile.objects.create(user=user, student_id=custom_stu_id)
         elif role == User.Role.TEACHER:
-            TeacherProfile.objects.create(user=user, teacher_id=custom_tch_id)
+            TeacherProfile.objects.create(
+                user=user,
+                teacher_id=custom_tch_id,
+                department=dept or 'Academic Department',
+                specialization=spec,
+                qualifications=qual,
+                subjects_taught=subs,
+                hire_date=hire,
+                gender=gen,
+                dob=dob_val,
+                address=addr,
+                salary=sal,
+                bank_name=bank,
+                account_number=acct,
+                form_teacher_of=form_tch,
+            )
         elif role == User.Role.PARENT:
             ParentProfile.objects.create(user=user)
         elif role == User.Role.ADMIN:

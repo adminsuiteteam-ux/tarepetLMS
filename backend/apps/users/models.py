@@ -110,9 +110,17 @@ class TeacherProfile(models.Model):
     )
     teacher_id = models.CharField(max_length=50, unique=True, null=True, blank=True)
     department = models.CharField(max_length=100, default='Montessori Primary')
+    specialization = models.CharField(max_length=100, blank=True, null=True)
     subjects_taught = models.JSONField(default=list, blank=True)
     hire_date = models.DateField(blank=True, null=True)
     qualifications = models.TextField(blank=True, null=True)
+    gender = models.CharField(max_length=20, blank=True, null=True)
+    dob = models.DateField(blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    salary = models.CharField(max_length=50, blank=True, null=True)
+    bank_name = models.CharField(max_length=100, blank=True, null=True)
+    account_number = models.CharField(max_length=50, blank=True, null=True)
+    form_teacher_of = models.CharField(max_length=100, blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
 
     def __str__(self):
