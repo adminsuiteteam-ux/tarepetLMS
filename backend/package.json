@@ -1,0 +1,18 @@
+{
+  "name": "tarepet-api",
+  "version": "1.0.0",
+  "description": "Tarepet Montessori Django REST API Service for Render",
+  "main": "server.js",
+  "scripts": {
+    "build": "./build.sh",
+    "start": "node server.js"
+  },
+  "keywords": [
+    "django",
+    "python",
+    "render",
+    "tarepet"
+  ],
+  "author": "Tarepet Team",
+  "license": "MIT"
+}

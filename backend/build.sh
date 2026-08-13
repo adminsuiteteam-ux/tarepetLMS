@@ -3,13 +3,13 @@
 set -o errexit
 
 echo "==> Installing Python dependencies..."
-pip install --upgrade pip
-pip install -r requirements.txt
+python3 -m pip install --upgrade pip || pip install --upgrade pip
+python3 -m pip install -r requirements.txt || pip install -r requirements.txt
 
 echo "==> Collecting static files..."
-python manage.py collectstatic --no-input
+python3 manage.py collectstatic --no-input || python manage.py collectstatic --no-input
 
 echo "==> Running database migrations..."
-python manage.py migrate --no-input
+python3 manage.py migrate --no-input || python manage.py migrate --no-input
 
 echo "==> Build complete!"
