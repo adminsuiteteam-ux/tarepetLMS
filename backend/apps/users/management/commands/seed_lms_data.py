@@ -197,6 +197,153 @@ class Command(BaseCommand):
                 ],
                 'bio': 'Senior English Language and Literature in English educator for SS 2 and SS 3.'
             },
+            {
+                'first_name': 'Agatha',
+                'last_name': 'Joseph',
+                'email': 'agathajoseph@gmail.com',
+                'teacher_id': 'TMS/TCH/0037',
+                'gender': 'Female',
+                'department': 'Nursery & Early Childhood Department',
+                'specialization': 'Early Years Montessori (All Subjects)',
+                'class_assigned': 'Nursery 1',
+                'subjects_taught': [
+                    {'name': 'All Subjects (Early Years)', 'grade': 'Nursery 1'},
+                    {'name': 'Numeracy & Shapes', 'grade': 'Nursery 1'},
+                    {'name': 'Literacy & Phonics', 'grade': 'Nursery 1'},
+                    {'name': 'Practical Life & Sensorial', 'grade': 'Nursery 1'},
+                ],
+                'bio': 'Nursery 1 Lead Educator specializing in Montessori foundational numeracy and phonics.'
+            },
+            {
+                'first_name': 'Excellent A.',
+                'last_name': 'Marvellous',
+                'email': 'mexcellent78@gmail.com',
+                'teacher_id': 'TMS/TCH/0030',
+                'gender': 'Female',
+                'department': 'Nursery & Early Childhood Department',
+                'specialization': 'Early Years Montessori (All Subjects)',
+                'class_assigned': 'Nursery 2',
+                'subjects_taught': [
+                    {'name': 'All Subjects (Early Years)', 'grade': 'Nursery 2'},
+                    {'name': 'Numeracy & Arithmetic', 'grade': 'Nursery 2'},
+                    {'name': 'Literacy & Phonics', 'grade': 'Nursery 2'},
+                    {'name': 'Montessori Sensorial', 'grade': 'Nursery 2'},
+                ],
+                'bio': 'Nursery 2 Educator focused on experiential early learning and language development.'
+            },
+            {
+                'first_name': 'Joy',
+                'last_name': 'Pullah',
+                'email': 'pullahjoy@tarepet.com',
+                'teacher_id': 'TMS/TCH/0055',
+                'gender': 'Female',
+                'department': 'Creche & Reception Department',
+                'specialization': 'Early Childhood & Toddler Care (All Subjects)',
+                'class_assigned': 'Reception (Creche)',
+                'subjects_taught': [
+                    {'name': 'All Subjects (Reception / Creche)', 'grade': 'Reception'},
+                    {'name': 'Sensorial & Motor Development', 'grade': 'Reception'},
+                    {'name': 'Language & Rhymes', 'grade': 'Reception'},
+                ],
+                'bio': 'Reception & Creche Specialist nurturing toddler sensory exploration and communication.'
+            },
+            {
+                'first_name': 'Ayibaiteimodei',
+                'last_name': 'Godknows',
+                'email': 'godknowsayibaiteimodei15@gmail.com',
+                'teacher_id': 'TMS/TCH/0046',
+                'gender': 'Female',
+                'department': 'Nursery & Early Childhood Department',
+                'specialization': 'Early Years Montessori (All Subjects)',
+                'class_assigned': 'Nursery 2',
+                'subjects_taught': [
+                    {'name': 'All Subjects (Early Years)', 'grade': 'Nursery 2'},
+                    {'name': 'Numeracy & Counting', 'grade': 'Nursery 2'},
+                    {'name': 'Literacy & Handwriting', 'grade': 'Nursery 2'},
+                ],
+                'bio': 'Nursery 2 Classroom Educator dedicated to Montessori motor and cognitive development.'
+            },
+            {
+                'first_name': 'Oviezibe',
+                'last_name': 'Jude',
+                'email': 'oviezibejude99@gmail.com',
+                'teacher_id': 'TMS/TCH/0042',
+                'gender': 'Female',
+                'department': 'Nursery & Early Childhood Department',
+                'specialization': 'Early Years Montessori (All Subjects)',
+                'class_assigned': 'Nursery 1',
+                'subjects_taught': [
+                    {'name': 'All Subjects (Early Years)', 'grade': 'Nursery 1'},
+                    {'name': 'Phonics & Speech', 'grade': 'Nursery 1'},
+                    {'name': 'Numeracy & Logic', 'grade': 'Nursery 1'},
+                ],
+                'bio': 'Nursery 1 Educator with expertise in speech articulation and phonics readiness.'
+            },
+            {
+                'first_name': 'Emmanuella',
+                'last_name': 'Albert',
+                'email': 'albertbogilizibe@gmail.com',
+                'teacher_id': 'TMS/TCH/0020',
+                'gender': 'Female',
+                'department': 'Nursery & Early Childhood Department',
+                'specialization': 'Early Years Montessori (All Subjects)',
+                'class_assigned': 'Nursery 1',
+                'subjects_taught': [
+                    {'name': 'All Subjects (Early Years)', 'grade': 'Nursery 1'},
+                    {'name': 'Early Montessori Science & Arts', 'grade': 'Nursery 1'},
+                    {'name': 'Literacy & Rhymes', 'grade': 'Nursery 1'},
+                ],
+                'bio': 'Nursery 1 Creative Learning and Early Science Educator.'
+            },
+            {
+                'first_name': 'Vivian',
+                'last_name': 'Ugwuorah',
+                'email': 'viviangariga@gmail.com',
+                'teacher_id': 'TMS/TCH/0045',
+                'gender': 'Female',
+                'department': 'Advance Nursery & Transition Department',
+                'specialization': 'Advance Nursery (Nursery 3 - All Subjects)',
+                'class_assigned': 'Advance Nursery (Nursery 3)',
+                'subjects_taught': [
+                    {'name': 'All Subjects (Advance Nursery)', 'grade': 'Nursery 3'},
+                    {'name': 'Advanced Numeracy & Mental Math', 'grade': 'Nursery 3'},
+                    {'name': 'Advanced Literacy & Grammar', 'grade': 'Nursery 3'},
+                    {'name': 'Basic Science & Nature Study', 'grade': 'Nursery 3'},
+                ],
+                'bio': 'Advance Nursery (Nursery 3) Specialist preparing pupils for seamless Primary 1 transition.'
+            },
+            {
+                'first_name': 'Marian',
+                'last_name': 'Ewaen',
+                'email': 'ewaenmarian@gmail.com',
+                'teacher_id': 'TMS/TCH/0041',
+                'gender': 'Female',
+                'department': 'Advance Nursery & Transition Department',
+                'specialization': 'Advance Nursery (Nursery 3 - All Subjects)',
+                'class_assigned': 'Advance Nursery (Nursery 3)',
+                'subjects_taught': [
+                    {'name': 'All Subjects (Advance Nursery)', 'grade': 'Nursery 3'},
+                    {'name': 'Reading & Phonics Comprehension', 'grade': 'Nursery 3'},
+                    {'name': 'Quantitative & Verbal Reasoning', 'grade': 'Nursery 3'},
+                ],
+                'bio': 'Advance Nursery (Nursery 3) Lead Teacher focused on literacy mastery and verbal reasoning.'
+            },
+            {
+                'first_name': 'Deborah',
+                'last_name': 'Eletu Sean',
+                'email': 'deboraheletusean@tarepet.com',
+                'teacher_id': 'TMS/TCH/0056',
+                'gender': 'Female',
+                'department': 'Creche & Reception Department',
+                'specialization': 'Creche & Reception (All Subjects)',
+                'class_assigned': 'Reception (Creche)',
+                'subjects_taught': [
+                    {'name': 'All Subjects (Reception / Creche)', 'grade': 'Reception'},
+                    {'name': 'Sensorial & Cognitive Activities', 'grade': 'Reception'},
+                    {'name': 'Early Montessori Social Skills', 'grade': 'Reception'},
+                ],
+                'bio': 'Reception & Creche Educator specialized in early sensory coordination and social development.'
+            },
         ]
 
         for tr in teachers_roster:
@@ -222,7 +369,7 @@ class Command(BaseCommand):
             t_prof.subjects_taught = tr['subjects_taught']
             t_prof.bio = tr['bio']
             t_prof.gender = tr['gender']
-            t_prof.form_teacher_of = 'None'
+            t_prof.form_teacher_of = tr.get('class_assigned', 'None')
             t_prof.save()
 
         # 4. Create Parent Account
