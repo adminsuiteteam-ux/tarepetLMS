@@ -39,29 +39,7 @@ export default function SignIn() {
       return;
     }
 
-    // 1. Strict check for Admin login credentials
-    const isAdminLogin = lowerInput === 'adminpass@tarepet.com' ||
-                         lowerInput === 'adminpass' ||
-                         lowerInput === 'admin@tarepet.com' ||
-                         lowerInput === 'admin' ||
-                         upperPassword.startsWith('TMS/ADM/') ||
-                         (lowerInput.startsWith('admin') && lowerInput.includes('@tarepet'));
-
-    if (isAdminLogin) {
-      recordLoginActivity(lowerInput.includes('@') ? lowerInput : 'adminpass@tarepet.com', 'ADMIN', 'SUCCESS');
-      login('mock_access_token', 'mock_refresh_token', {
-        id: 1,
-        email: lowerInput.includes('@') ? lowerInput : 'adminpass@tarepet.com',
-        first_name: 'Administrator',
-        last_name: 'System',
-        role: 'ADMIN',
-      });
-      setLocation('/dashboard/admin');
-      setIsLoading(false);
-      return;
-    }
-
-    // 2. Connect to live Django backend if available
+    // 1. First, try live Django REST API backend
     try {
       const res = await authClient.post("/auth/login/", { email: rawInput, password: rawPassword }, { timeout: 8000 });
       const { access, refresh, user } = res.data;
@@ -74,7 +52,29 @@ export default function SignIn() {
         return;
       }
     } catch (apiError: any) {
-      // Backend unavailable or rejected credentials — fallback to stored local accounts created by Admin
+      // Backend offline or API rejection — fallback to strict verified credentials
+    }
+
+    // 2. Strict local Admin verification (ONLY adminpass / adminpass@tarepet.com with password Admin@12345)
+    const isAdminEmail = lowerInput === 'adminpass@tarepet.com' || lowerInput === 'adminpass';
+    if (isAdminEmail) {
+      if (rawPassword !== 'Admin@12345') {
+        recordLoginActivity('adminpass@tarepet.com', 'ADMIN', 'FAILED_ATTEMPT');
+        setError('Incorrect password. Access denied.');
+        setIsLoading(false);
+        return;
+      }
+      recordLoginActivity('adminpass@tarepet.com', 'ADMIN', 'SUCCESS');
+      login('mock_access_token', 'mock_refresh_token', {
+        id: 1,
+        email: 'adminpass@tarepet.com',
+        first_name: 'Administrator',
+        last_name: 'System',
+        role: 'ADMIN',
+      });
+      setLocation('/dashboard/admin');
+      setIsLoading(false);
+      return;
     }
 
     // 3. Authenticate against stored Teacher records created by Admin
