@@ -2150,7 +2150,7 @@ export default function AdminDashboard() {
       const calculatedAttendancePercent = totalAttCount > 0 ? Math.round((presentAttCount / totalAttCount) * 100) : 0;
 
       // Count only class levels that actually have enrolled students
-      const activeClassesCount = STUDENT_CLASSES.filter(cls => {
+      const activeClassesCount = studentsList.length === 0 ? 0 : STUDENT_CLASSES.filter(cls => {
         if (cls.hasStreams) {
           return ((cls as any).sciCount || 0) + ((cls as any).artCount || 0) > 0;
         }
