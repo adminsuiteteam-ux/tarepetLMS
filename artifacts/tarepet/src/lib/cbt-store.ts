@@ -299,7 +299,15 @@ function loadSavedTeachers(): TeacherRecord[] {
     const saved = localStorage.getItem('tarepet_teachers_list');
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed)) return parsed;
+      if (Array.isArray(parsed)) {
+        // Filter out legacy mock seed teachers (staffId TMS/TCH/0001 to TMS/TCH/0018)
+        const liveOnly = parsed.filter((t: any) => {
+          const sId = String(t.staffId || t.teacher_id || '');
+          const isMockSeed = sId.startsWith('TMS/TCH/0') || sId.startsWith('TMS/TCH/00');
+          return !isMockSeed;
+        });
+        return liveOnly;
+      }
     }
   } catch (e) {}
   return [];

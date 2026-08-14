@@ -4247,8 +4247,8 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                   {[
                     { role: 'Principal / Administrator', desc: 'Full access to all modules, settings, finance, and reports.', users: 2, badge: 'Full Access', color: 'primary' },
                     { role: 'Vice Principal (Academics)', desc: 'Access to timetables, results, attendance, and subjects.', users: 1, badge: 'Academic Access', color: 'emerald' },
-                    { role: 'Subject Teacher', desc: 'Mark attendance, input scores, manage CBT exams for assigned classes.', users: 18, badge: 'Class Access', color: 'blue' },
-                    { role: 'Form Teacher', desc: 'View and manage class roster, attendance, and student remarks.', users: 9, badge: 'Class Access', color: 'blue' },
+                    { role: 'Subject Teacher', desc: 'Mark attendance, input scores, manage CBT exams for assigned classes.', users: teachersList.length, badge: 'Class Access', color: 'blue' },
+                    { role: 'Form Teacher', desc: 'View and manage class roster, attendance, and student remarks.', users: teachersList.filter(t => t.formTeacherOf && t.formTeacherOf !== 'None').length, badge: 'Class Access', color: 'blue' },
                     { role: 'Bursar / Finance Officer', desc: 'Manage fee records, payment tracking, and financial reports.', users: 1, badge: 'Finance Access', color: 'amber' },
                     { role: 'Librarian', desc: 'Manage library records, book loans, and student reading logs.', users: 1, badge: 'Library Access', color: 'violet' },
                   ].map((r, i) => (
