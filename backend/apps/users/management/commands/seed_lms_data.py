@@ -61,7 +61,8 @@ class Command(BaseCommand):
                     {'name': 'Physics', 'grade': 'SS 3'},
                     {'name': 'Basic Science', 'grade': 'JSS 1'},
                 ],
-                'bio': 'Physics and Basic Science educator for Junior and Senior Secondary levels.'
+                'bio': 'Physics and Basic Science educator for Junior and Senior Secondary levels.',
+                'class_assigned': 'SS 1 Love'
             },
             {
                 'first_name': 'Eli',
@@ -77,7 +78,8 @@ class Command(BaseCommand):
                     {'name': 'Further Mathematics', 'grade': 'SS 2'},
                     {'name': 'Further Mathematics', 'grade': 'SS 3'},
                 ],
-                'bio': 'Senior Mathematics & Further Mathematics specialist.'
+                'bio': 'Senior Mathematics & Further Mathematics specialist.',
+                'class_assigned': 'SS 1 Art'
             },
             {
                 'first_name': 'Amos',
@@ -92,7 +94,8 @@ class Command(BaseCommand):
                     {'name': 'Civic Education', 'grade': 'SS 2'},
                     {'name': 'Civic Education', 'grade': 'SS 3'},
                 ],
-                'bio': 'Civic Education specialist across all Senior Secondary classes (SS1 - SS3).'
+                'bio': 'Civic Education specialist across all Senior Secondary classes (SS1 - SS3).',
+                'class_assigned': 'JSS 3 Faith'
             },
             {
                 'first_name': 'Goodluck',
@@ -180,7 +183,8 @@ class Command(BaseCommand):
                     {'name': 'Senior Secondary Studies', 'grade': 'SS 2'},
                     {'name': 'Senior Secondary Studies', 'grade': 'SS 3'},
                 ],
-                'bio': 'Senior Secondary faculty educator across SS 1, SS 2, and SS 3 classes.'
+                'bio': 'Senior Secondary faculty educator across SS 1, SS 2, and SS 3 classes.',
+                'class_assigned': 'JSS 2 Love'
             },
             {
                 'first_name': 'Timi',
@@ -197,6 +201,121 @@ class Command(BaseCommand):
                 ],
                 'bio': 'Senior English Language and Literature in English educator for SS 2 and SS 3.'
             },
+            {
+                'first_name': 'Ngozi',
+                'last_name': 'Okwor',
+                'email': 'okworngozi@tarepet.com',
+                'teacher_id': 'TMS/TCH/0057',
+                'gender': 'Female',
+                'department': 'Primary Section',
+                'specialization': 'Primary 3 Curriculum & Pastoral Care',
+                'class_assigned': 'Basic 3 Faith',
+                'subjects_taught': [
+                    {'name': 'All Subjects (Primary)', 'grade': 'Basic 3'},
+                ],
+                'bio': 'Form Teacher for Basic 3 Faith guiding pupil academic progress and character development.'
+            },
+            {
+                'first_name': 'Faith',
+                'last_name': 'Johnson',
+                'email': 'johnsonhecter2019@gmail.com',
+                'teacher_id': 'TMS/TCH/0015',
+                'gender': 'Female',
+                'department': 'Primary Section',
+                'specialization': 'Primary 4 Curriculum & Pastoral Care',
+                'class_assigned': 'Basic 4',
+                'subjects_taught': [
+                    {'name': 'All Subjects (Primary)', 'grade': 'Basic 4'},
+                ],
+                'bio': 'Form Teacher for Basic 4 overseeing student leadership and elementary syllabus.'
+            },
+            {
+                'first_name': 'Glory',
+                'last_name': 'Albert',
+                'email': 'albertglory@gmail.com',
+                'teacher_id': 'TMS/TCH/0038',
+                'gender': 'Female',
+                'department': 'Primary Section',
+                'specialization': 'Primary 2 Curriculum & Pastoral Care',
+                'class_assigned': 'Basic 2',
+                'subjects_taught': [
+                    {'name': 'All Subjects (Primary)', 'grade': 'Basic 2'},
+                ],
+                'bio': 'Form Teacher for Basic 2 focused on foundational numeracy and reading fluency.'
+            },
+            {
+                'first_name': 'Tina',
+                'last_name': 'Maku',
+                'email': 'tinamaku@tarepet.com',
+                'teacher_id': 'TMS/TCH/0058',
+                'gender': 'Female',
+                'department': 'Primary Section',
+                'specialization': 'Primary 1 Grace Curriculum & Pastoral Care',
+                'class_assigned': 'Basic 1 Grace',
+                'subjects_taught': [
+                    {'name': 'All Subjects (Primary)', 'grade': 'Basic 1'},
+                ],
+                'bio': 'Form Teacher for Basic 1 Grace facilitating early primary transition and active learning.'
+            },
+            {
+                'first_name': 'Azibaolonami',
+                'last_name': 'Wariboko',
+                'email': 'aziwariboko@gmail.com',
+                'teacher_id': 'TMS/TCH/0035',
+                'gender': 'Female',
+                'department': 'Primary Section',
+                'specialization': 'Primary 1 Love Curriculum & Pastoral Care',
+                'class_assigned': 'Basic 1 Love',
+                'subjects_taught': [
+                    {'name': 'All Subjects (Primary)', 'grade': 'Basic 1'},
+                ],
+                'bio': 'Form Teacher for Basic 1 Love nurturing young learners in literacy and character.'
+            },
+            {
+                'first_name': 'Juliet',
+                'last_name': 'Shedrack',
+                'email': 'ogbenejuliet02@gmail.com',
+                'teacher_id': 'TMS/TCH/0028',
+                'gender': 'Female',
+                'department': 'Primary Section',
+                'specialization': 'Primary 5 Curriculum & Primary School Leaving Prep',
+                'class_assigned': 'Basic 5',
+                'subjects_taught': [
+                    {'name': 'All Subjects (Primary)', 'grade': 'Basic 5'},
+                ],
+                'bio': 'Form Teacher for Basic 5 preparing senior primary pupils for secondary school entrance.'
+            },
+            {
+                'first_name': 'Anita Oyinbrakemi',
+                'last_name': 'Oyinki',
+                'email': 'oyinkianita6@gmail.com',
+                'teacher_id': 'TMS/TCH/0026',
+                'gender': 'Female',
+                'department': 'Junior Secondary Section',
+                'specialization': 'Junior Secondary Academic & Examination Oversight',
+                'class_assigned': 'JSS 3 Love',
+                'subjects_taught': [
+                    {'name': 'English Language', 'grade': 'JSS 3'},
+                    {'name': 'Verbal Reasoning', 'grade': 'JSS 3'},
+                ],
+                'bio': 'Form Teacher for JSS 3 Love guiding final year junior secondary students to BECE excellence.'
+            },
+            {
+                'first_name': 'Jane Chidubem',
+                'last_name': 'Eze',
+                'email': 'ukachukwuchidubem223@gmail.com',
+                'teacher_id': 'TMS/TCH/0044',
+                'gender': 'Female',
+                'department': 'Junior Secondary Section',
+                'specialization': 'Junior Secondary Academic & Pastoral Oversight',
+                'class_assigned': 'JSS 2 Faith',
+                'subjects_taught': [
+                    {'name': 'Business Studies', 'grade': 'JSS 2'},
+                    {'name': 'Home Economics', 'grade': 'JSS 2'},
+                ],
+                'bio': 'Form Teacher for JSS 2 Faith supporting students in character and academic growth.'
+            },
+
             {
                 'first_name': 'Agatha',
                 'last_name': 'Joseph',
