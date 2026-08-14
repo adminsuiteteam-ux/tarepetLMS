@@ -27,31 +27,7 @@ function getSafeProperty<T>(obj: Record<string | number, T> | null | undefined, 
 const TEACHER_CLASSES: any[] = [];
 
 const PENDING_SUBMISSIONS: any[] = [];
-const STUDENT_ROSTER: any[] = [
-  {
-    id: 1,
-    code: 'TMS/SS1/SCI/9927',
-    name: 'Civa Media',
-    email: 'civa.media@tarepet.com',
-    gender: 'Male',
-    maritalStatus: 'Single',
-    dob: '2012-05-14',
-    phone: 'Not Available',
-    country: 'Nigeria',
-    stateOfOrigin: 'Bayelsa',
-    lga: 'Yenagoa',
-    address: '12 Kpansia-Epje Road, Yenagoa',
-    grade: 'SS1',
-    stream: 'Science',
-    programme: 'Senior Secondary Certificate (SSCE)',
-    parentName: 'Chief Nwosu',
-    parentPhone: '08031112233',
-    status: 'ACTIVE',
-    studyMode: 'Full Time',
-    attendance: '98%',
-    atRisk: false
-  }
-];
+const STUDENT_ROSTER: any[] = [];
 
 const TIMETABLE: any[] = [];
 

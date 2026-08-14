@@ -459,14 +459,36 @@ export function deleteTeacher(teacherIdOrStaffId: number | string): boolean {
   return true;
 }
 
+function loadSavedStudents(): StudentRecord[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const saved = localStorage.getItem('tarepet_students_list');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) {
+        // Filter out legacy mock seed student (Civa Media / 9927 / id 1)
+        const liveOnly = parsed.filter((s: any) => {
+          const sCode = String(s.code || s.admissionNo || s.studentId || '');
+          const sName = String(s.name || '').toLowerCase();
+          const isMockSeed = sCode.includes('9927') || sName.includes('civa media') || s.id === 1;
+          return !isMockSeed;
+        });
+        return liveOnly;
+      }
+    }
+  } catch (e) {}
+  return [];
+}
+
 let _exams: CBTExam[] = loadSavedExams();
 let _submissions: CBTSubmission[] = [];
 let _activities: LMSActivity[] = [];
-let _students: StudentRecord[] = [];
+let _students: StudentRecord[] = loadSavedStudents();
 
 import { authClient } from './api-auth';
 
 export function getStoredStudents(): StudentRecord[] {
+  _students = loadSavedStudents();
   return _students;
 }
 
