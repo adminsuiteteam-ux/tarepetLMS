@@ -40,16 +40,18 @@ export default function SignIn() {
     }
 
     // 1. Strict check for Admin login credentials
-    const isAdminLogin = lowerInput === 'admin@tarepet.com' ||
+    const isAdminLogin = lowerInput === 'adminpass@tarepet.com' ||
+                         lowerInput === 'adminpass' ||
+                         lowerInput === 'admin@tarepet.com' ||
                          lowerInput === 'admin' ||
                          upperPassword.startsWith('TMS/ADM/') ||
                          (lowerInput.startsWith('admin') && lowerInput.includes('@tarepet'));
 
     if (isAdminLogin) {
-      recordLoginActivity(lowerInput.includes('@') ? lowerInput : 'admin@tarepet.com', 'ADMIN', 'SUCCESS');
+      recordLoginActivity(lowerInput.includes('@') ? lowerInput : 'adminpass@tarepet.com', 'ADMIN', 'SUCCESS');
       login('mock_access_token', 'mock_refresh_token', {
         id: 1,
-        email: lowerInput.includes('@') ? lowerInput : 'admin@tarepet.com',
+        email: lowerInput.includes('@') ? lowerInput : 'adminpass@tarepet.com',
         first_name: 'Administrator',
         last_name: 'System',
         role: 'ADMIN',
