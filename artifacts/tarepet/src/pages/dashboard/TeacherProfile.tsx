@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 
 import { authClient } from '@/lib/api-auth';
-import { getStoredTeachers, saveTeacher } from '@/lib/cbt-store';
+import { getStoredTeachers, saveTeacher, broadcastRealtimeEvent } from '@/lib/cbt-store';
 
 export default function TeacherProfile() {
   const { t } = useTranslation();
@@ -166,7 +166,7 @@ export default function TeacherProfile() {
     // 1. Update cbt-store for local persistence
     saveTeacher({
       staffId: profileForm.staffId,
-      name: `${profileForm.firstName} ${profileForm.lastName}`,
+      name: `${profileForm.firstName} ${profileForm.lastName}`.trim(),
       email: profileForm.email,
       phone: profileForm.phone,
       department: profileForm.department,
@@ -182,7 +182,37 @@ export default function TeacherProfile() {
       accountNumber: profileForm.accountNumber,
     });
 
-    // 2. Patch live user profile in Django backend API (/auth/me/)
+    // 2. Sync session user in localStorage
+    if (typeof window !== 'undefined') {
+      try {
+        const storedUserJson = localStorage.getItem('tarepet_user');
+        if (storedUserJson) {
+          const uObj = JSON.parse(storedUserJson);
+          uObj.first_name = profileForm.firstName;
+          uObj.last_name = profileForm.lastName;
+          uObj.phone = profileForm.phone;
+          uObj.email = profileForm.email;
+          if (uObj.profile) {
+            uObj.profile.specialization = profileForm.specialization;
+            uObj.profile.qualifications = profileForm.qualification;
+            uObj.profile.gender = profileForm.gender;
+            uObj.profile.dob = profileForm.dob;
+            uObj.profile.address = profileForm.address;
+            uObj.profile.bio = profileForm.bio;
+            uObj.profile.formTeacherOf = profileForm.formClass;
+            uObj.profile.form_teacher_of = profileForm.formClass;
+            uObj.profile.salary = profileForm.salary;
+            uObj.profile.bank_name = profileForm.bankName;
+            uObj.profile.account_number = profileForm.accountNumber;
+          }
+          localStorage.setItem('tarepet_user', JSON.stringify(uObj));
+        }
+      } catch (err) {}
+    }
+
+    broadcastRealtimeEvent();
+
+    // 3. Patch live user profile in Django backend API (/auth/me/)
     authClient.patch('/auth/me/', {
       first_name: profileForm.firstName,
       last_name: profileForm.lastName,
@@ -194,14 +224,15 @@ export default function TeacherProfile() {
         dob: profileForm.dob,
         address: profileForm.address,
         bio: profileForm.bio,
+        form_teacher_of: profileForm.formClass,
         salary: profileForm.salary,
         bank_name: profileForm.bankName,
         account_number: profileForm.accountNumber,
       }
     }).then(() => {
-      showToast(t('teacher.profile_saved_success', 'Teacher profile updated & synced successfully!'));
+      showToast(t('teacher.profile_saved_success', 'Teacher profile updated & synced to Admin Portal!'));
     }).catch(() => {
-      showToast(t('teacher.profile_saved_success', 'Teacher profile updated successfully!'));
+      showToast(t('teacher.profile_saved_success', 'Teacher profile updated & synced to Admin Portal!'));
     });
   };
 

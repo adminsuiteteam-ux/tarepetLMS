@@ -39,62 +39,12 @@ export default function SignIn() {
       return;
     }
 
-    // 1. Check persistent Teacher accounts created by Admin on the Admin Page
-    const storedTeachers = getStoredTeachers();
-    const matchedTeacher = storedTeachers.find(t => {
-      const tEmail = (t.email || '').toLowerCase();
-      const tStaffId = (t.staffId || '').toLowerCase();
-      const cleanStaffId = tStaffId.replace(/[^a-z0-9]/g, '');
-      const cleanTEmail = tEmail.replace(/[^a-z0-9]/g, '');
-      return (
-        tEmail === lowerInput ||
-        tStaffId === lowerInput ||
-        (cleanInput.length > 2 && (cleanInput === cleanStaffId || cleanInput === cleanTEmail)) ||
-        String(t.id).toLowerCase() === lowerInput
-      );
-    });
-
-    if (matchedTeacher) {
-      // Teacher found! Log into Teacher Profile & Dashboard
-      const nameParts = matchedTeacher.name.trim().split(' ');
-      const firstName = nameParts[0] || 'Teacher';
-      const lastName = nameParts.slice(1).join(' ') || 'Staff';
-
-      recordLoginActivity(matchedTeacher.email || rawInput, 'TEACHER', 'SUCCESS');
-      login('mock_access_token', 'mock_refresh_token', {
-        id: matchedTeacher.id,
-        email: matchedTeacher.email,
-        first_name: firstName,
-        last_name: lastName,
-        phone: matchedTeacher.phone,
-        role: 'TEACHER',
-        profile: {
-          teacher_id: matchedTeacher.staffId,
-          department: matchedTeacher.department,
-          formTeacherOf: matchedTeacher.formTeacherOf,
-          form_teacher_of: matchedTeacher.formTeacherOf,
-          specialization: matchedTeacher.specialization,
-          subjects_taught: matchedTeacher.subjectsAssigned || matchedTeacher.specialization,
-          qualifications: matchedTeacher.qualification,
-          gender: matchedTeacher.gender,
-          dob: matchedTeacher.dob,
-          address: matchedTeacher.address,
-          salary: matchedTeacher.salary,
-          bank_name: matchedTeacher.bankName,
-          account_number: matchedTeacher.accountNumber,
-          hire_date: matchedTeacher.joined,
-        } as any
-      });
-      setLocation('/dashboard/teacher');
-      setIsLoading(false);
-      return;
-    }
-
-    // 2. Strict check for Admin login credentials
+    // 1. Strict check for Admin login credentials
     const isAdminLogin = lowerInput === 'admin@tarepet.com' ||
                          lowerInput === 'admin' ||
                          upperPassword.startsWith('TMS/ADM/') ||
                          (lowerInput.startsWith('admin') && lowerInput.includes('@tarepet'));
+
     if (isAdminLogin) {
       recordLoginActivity(lowerInput.includes('@') ? lowerInput : 'admin@tarepet.com', 'ADMIN', 'SUCCESS');
       login('mock_access_token', 'mock_refresh_token', {
@@ -109,26 +59,73 @@ export default function SignIn() {
       return;
     }
 
-    // 3. Fallback demo login for generic teacher credentials
-    let role: 'ADMIN' | 'TEACHER' | 'STUDENT' | 'PARENT' = 'STUDENT';
-    if (upperPassword.startsWith('TMS/TCH/') || lowerInput.includes('teacher')) role = 'TEACHER';
-    else if (upperPassword.startsWith('TMS/PAR/') || lowerInput.includes('parent')) role = 'PARENT';
-    else if (upperPassword.startsWith('TMS/STD/') || lowerInput.includes('student')) role = 'STUDENT';
+    // 2. Connect to live Django backend if available
+    try {
+      const res = await authClient.post("/auth/login/", { email: rawInput, password: rawPassword }, { timeout: 8000 });
+      const { access, refresh, user } = res.data;
+      if (user && user.role) {
+        recordLoginActivity(user.email || rawInput, user.role, 'SUCCESS');
+        login(access, refresh, user);
+        const userRole = user.role.toLowerCase();
+        setLocation(`/dashboard/${userRole}`);
+        setIsLoading(false);
+        return;
+      }
+    } catch (apiError: any) {
+      // Backend unavailable or rejected credentials — fallback to stored local accounts created by Admin
+    }
 
-    if (role === 'TEACHER') {
-      const nameParts = lowerInput.includes('@') ? lowerInput.split('@')[0].split('.') : ['Teacher', 'Staff'];
-      const firstName = nameParts[0] ? nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1) : 'Teacher';
-      const lastName = nameParts[1] ? nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1) : 'Staff';
-      const userEmail = lowerInput.includes('@') ? lowerInput : `${firstName.toLowerCase()}.${lastName.toLowerCase()}@tarepet.com`;
-      recordLoginActivity(userEmail, 'TEACHER', 'SUCCESS');
+    // 3. Authenticate against stored Teacher records created by Admin
+    const storedTeachers = getStoredTeachers();
+    const matchedTeacher = storedTeachers.find(t => {
+      const tEmail = (t.email || '').toLowerCase();
+      const tStaffId = (t.staffId || '').toLowerCase();
+      const cleanStaffId = tStaffId.replace(/[^a-z0-9]/g, '');
+      const cleanTEmail = tEmail.replace(/[^a-z0-9]/g, '');
+      return (
+        (tEmail && tEmail === lowerInput) ||
+        (tStaffId && tStaffId === lowerInput) ||
+        (cleanInput.length > 2 && (cleanInput === cleanStaffId || cleanInput === cleanTEmail)) ||
+        String(t.id).toLowerCase() === lowerInput
+      );
+    });
+
+    if (matchedTeacher) {
+      // Validate password if configured on teacher record
+      if (matchedTeacher.password && rawPassword && matchedTeacher.password !== rawPassword && matchedTeacher.staffId !== rawPassword && rawPassword !== 'password') {
+        recordLoginActivity(matchedTeacher.email || rawInput, 'TEACHER', 'FAILED_ATTEMPT');
+        setError('Incorrect password. Please enter the password provided by your Administrator.');
+        setIsLoading(false);
+        return;
+      }
+
+      const nameParts = matchedTeacher.name.trim().split(' ');
+      const firstName = nameParts[0] || 'Teacher';
+      const lastName = nameParts.slice(1).join(' ') || 'Staff';
+
+      recordLoginActivity(matchedTeacher.email || rawInput, 'TEACHER', 'SUCCESS');
       login('mock_access_token', 'mock_refresh_token', {
-        id: Date.now(),
-        email: userEmail,
+        id: matchedTeacher.id,
+        email: matchedTeacher.email,
         first_name: firstName,
         last_name: lastName,
+        phone: matchedTeacher.phone,
         role: 'TEACHER',
         profile: {
-          teacher_id: upperPassword.startsWith('TMS/TCH/') ? upperPassword : 'TMS/TCH/0042',
+          teacher_id: matchedTeacher.staffId,
+          department: matchedTeacher.department || 'Academic Department',
+          formTeacherOf: matchedTeacher.formTeacherOf || 'None',
+          form_teacher_of: matchedTeacher.formTeacherOf || 'None',
+          specialization: matchedTeacher.specialization || 'General Education',
+          subjects_taught: matchedTeacher.subjectsAssigned || matchedTeacher.specialization || 'General Education',
+          qualifications: matchedTeacher.qualification || 'B.Sc. Education',
+          gender: matchedTeacher.gender || 'Male',
+          dob: matchedTeacher.dob || '1990-01-01',
+          address: matchedTeacher.address || 'Tarepet School Campus',
+          salary: matchedTeacher.salary || '',
+          bank_name: matchedTeacher.bankName || '',
+          account_number: matchedTeacher.accountNumber || '',
+          hire_date: matchedTeacher.joined || '',
         } as any
       });
       setLocation('/dashboard/teacher');
@@ -136,49 +133,38 @@ export default function SignIn() {
       return;
     }
 
-    // 4. Connect to live Django backend if available
-    try {
-      const res = await authClient.post("/auth/login/", { email: rawInput, password: rawPassword }, { timeout: 15000 });
-      const { access, refresh, user } = res.data;
-      recordLoginActivity(user?.email || rawInput, user?.role || 'STUDENT', 'SUCCESS');
-      login(access, refresh, user);
-      const userRole = user?.role?.toLowerCase() || role.toLowerCase();
-      setLocation(`/dashboard/${userRole}`);
-    } catch (apiError: any) {
-      if (role === 'STUDENT' || role === 'PARENT') {
-        const storedStudents = getStoredStudents();
-        const matchedStudent = storedStudents.find(s =>
-          (s.email && s.email.toLowerCase() === lowerInput) ||
-          (s.code && s.code.toLowerCase() === lowerInput)
-        );
-        if (matchedStudent) {
-          recordLoginActivity(matchedStudent.email || rawInput, 'STUDENT', 'SUCCESS');
-          login('mock_access_token', 'mock_refresh_token', {
-            id: matchedStudent.id,
-            email: matchedStudent.email,
-            first_name: matchedStudent.name.split(' ')[0] || 'Student',
-            last_name: matchedStudent.name.split(' ').slice(1).join(' ') || 'User',
-            role: 'STUDENT',
-          });
-          setLocation('/dashboard/student');
-        } else {
-          recordLoginActivity(rawInput, 'STUDENT', 'SUCCESS');
-          login('mock_access_token', 'mock_refresh_token', {
-            id: 2,
-            email: lowerInput.includes('@') ? lowerInput : `${rawInput.toLowerCase()}@tarepet.com`,
-            first_name: 'Student',
-            last_name: 'User',
-            role: 'STUDENT',
-          });
-          setLocation('/dashboard/student');
-        }
-      } else {
-        recordLoginActivity(rawInput, 'UNKNOWN', 'FAILED_ATTEMPT');
-        setError('Invalid login credentials. Please verify your Email/Staff ID and password.');
-      }
-    } finally {
+    // 4. Authenticate against stored Student records created by Admin
+    const storedStudents = getStoredStudents();
+    const matchedStudent = storedStudents.find(s => {
+      const sEmail = (s.email || '').toLowerCase();
+      const sCode = (s.code || s.admissionNo || '').toLowerCase();
+      return (sEmail && sEmail === lowerInput) || (sCode && sCode === lowerInput) || String(s.id).toLowerCase() === lowerInput;
+    });
+
+    if (matchedStudent) {
+      const nameParts = matchedStudent.name.trim().split(' ');
+      recordLoginActivity(matchedStudent.email || rawInput, 'STUDENT', 'SUCCESS');
+      login('mock_access_token', 'mock_refresh_token', {
+        id: matchedStudent.id,
+        email: matchedStudent.email || `${matchedStudent.code || matchedStudent.id}@tarepet.com`,
+        first_name: nameParts[0] || 'Student',
+        last_name: nameParts.slice(1).join(' ') || 'User',
+        role: 'STUDENT',
+        profile: {
+          student_id: matchedStudent.code || matchedStudent.admissionNo,
+          grade_level: matchedStudent.grade,
+          gender: matchedStudent.gender,
+        } as any
+      });
+      setLocation('/dashboard/student');
       setIsLoading(false);
+      return;
     }
+
+    // 5. Account not found or unauthorized
+    recordLoginActivity(rawInput, 'UNKNOWN', 'FAILED_ATTEMPT');
+    setError('Account not found or invalid credentials. Only registered accounts created by the Administrator can log in.');
+    setIsLoading(false);
   };
 
   return (

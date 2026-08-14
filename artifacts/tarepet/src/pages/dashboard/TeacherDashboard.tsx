@@ -80,14 +80,30 @@ export default function TeacherDashboard() {
   const matchedStoredTeacher = React.useMemo(() => {
     if (!user) return null;
     const uEmail = (user.email || '').toLowerCase();
-    const uStaffId = ((user.profile as any)?.teacher_id || (user as any).staffId || '').toLowerCase();
-    return getStoredTeachers().find((t: any) =>
-      (t.email && t.email.toLowerCase() === uEmail) ||
-      (t.staffId && t.staffId.toLowerCase() === uStaffId)
-    );
+    const uStaffId = ((user.profile as any)?.teacher_id || (user as any).staffId || (user as any).id || '').toString().toLowerCase();
+    const cleanUStaffId = uStaffId.replace(/[^a-z0-9]/g, '');
+    const cleanUEmail = uEmail.replace(/[^a-z0-9]/g, '');
+
+    return getStoredTeachers().find((t: any) => {
+      const tEmail = (t.email || '').toLowerCase();
+      const tStaffId = (t.staffId || '').toLowerCase();
+      const tId = String(t.id || '').toLowerCase();
+      const cleanTStaffId = tStaffId.replace(/[^a-z0-9]/g, '');
+      const cleanTEmail = tEmail.replace(/[^a-z0-9]/g, '');
+
+      return (
+        (tEmail && tEmail === uEmail) ||
+        (tStaffId && tStaffId === uStaffId) ||
+        (cleanUStaffId.length > 2 && cleanUStaffId === cleanTStaffId) ||
+        (cleanUEmail.length > 2 && cleanUEmail === cleanTEmail) ||
+        (tId && tId === uEmail) ||
+        (tId && tId === uStaffId)
+      );
+    });
   }, [user]);
 
-  const formClass = (user?.profile as any)?.formTeacherOf || (user?.profile as any)?.form_teacher_of || matchedStoredTeacher?.formTeacherOf || 'SS1';
+  const rawFormClass = (user?.profile as any)?.formTeacherOf || (user?.profile as any)?.form_teacher_of || matchedStoredTeacher?.formTeacherOf;
+  const formClass = (rawFormClass && rawFormClass !== 'None' && !rawFormClass.startsWith('No')) ? rawFormClass : '';
 
   // Sub-tab states
   const [studentSubTab, setStudentSubTabState] = useState<'roster' | 'attendance'>('roster');

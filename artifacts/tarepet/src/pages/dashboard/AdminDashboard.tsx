@@ -4,7 +4,7 @@ import { Link } from 'wouter';
 import { authClient } from '@/lib/api-auth';
 import { PortalLayout } from '@/components/layout/PortalLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, deleteStudent, syncStudentsWithBackend, getStoredTeachers, saveTeacher, saveStoredTeachers, deleteTeacher, listenToRealtimeEvents } from '@/lib/cbt-store';
+import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, clearAllStoredStudents, deleteStudent, syncStudentsWithBackend, getStoredTeachers, saveTeacher, saveStoredTeachers, clearAllStoredTeachers, deleteTeacher, listenToRealtimeEvents } from '@/lib/cbt-store';
 import { AdminManagementPanel } from '@/components/dashboard/AdminManagementPanel';
 import {
   getPaymentItems,
@@ -1808,8 +1808,8 @@ export default function AdminDashboard() {
     const fetchBackendUsers = async () => {
       try {
         const res = await authClient.get('/auth/users/');
-        const users = Array.isArray(res.data?.results) ? res.data.results : Array.isArray(res.data) ? res.data : [];
-        if (users.length > 0) {
+        if (res.status === 200) {
+          const users = Array.isArray(res.data?.results) ? res.data.results : Array.isArray(res.data) ? res.data : [];
           const liveTeachers = users
             .filter((u: any) => u.role === 'TEACHER')
             .map((u: any) => {
@@ -1833,15 +1833,15 @@ export default function AdminDashboard() {
                 joined: prof.hire_date || (u.date_joined ? u.date_joined.split('T')[0] : '2026-01-01'),
                 formTeacherOf: prof.form_teacher_of || 'None',
                 subjectsAssigned: subs,
-                classesCount: subs.length || 1,
-                studentsCount: 30,
+                classesCount: subs.length || 0,
+                studentsCount: prof.students_count ?? (prof.studentsCount ?? 0),
                 address: prof.address || 'Tarepet School Campus',
                 dob: prof.dob || '1990-01-01',
                 salary: prof.salary || '',
                 bankName: prof.bank_name || '',
                 accountNumber: prof.account_number || '',
                 cbtExamsCount: 0,
-                attendanceRate: '100%',
+                attendanceRate: prof.attendance_rate || prof.attendanceRate || '0%',
                 profileImage: '',
               };
             });
@@ -1861,47 +1861,12 @@ export default function AdminDashboard() {
               joined: u.date_joined ? u.date_joined.split('T')[0] : '2026-01-01',
             }));
 
-          if (liveTeachers.length > 0) {
-            setTeachersList(prev => {
-              const combinedMap = new Map();
-              // First add local stored teachers
-              prev.forEach(t => {
-                if (t.email) combinedMap.set(t.email.toLowerCase(), t);
-              });
-              // Merge live backend teachers keeping existing non-empty local fields if live is default/blank
-              liveTeachers.forEach((lt: any) => {
-                const key = lt.email?.toLowerCase();
-                const existing = combinedMap.get(key);
-                if (existing) {
-                  const merged = { ...existing };
-                  Object.keys(lt).forEach(k => {
-                    const val = (lt as any)[k];
-                    if (val !== undefined && val !== null && val !== '' && val !== 'Academic Department' && val !== 'General Education' && val !== 'B.Sc. Education' && val !== 'Tarepet School Campus' && val !== 'None') {
-                      (merged as any)[k] = val;
-                    } else if (!(merged as any)[k]) {
-                      (merged as any)[k] = val;
-                    }
-                  });
-                  combinedMap.set(key, merged);
-                } else {
-                  combinedMap.set(key, lt);
-                }
-              });
-              return Array.from(combinedMap.values());
-            });
-          }
+          // Sync local storage & state directly with live backend database results
+          saveStoredTeachers(liveTeachers);
+          setTeachersList(liveTeachers);
 
-          if (liveStudents.length > 0) {
-            setStudentsList(prev => {
-              const combined = [...liveStudents];
-              prev.forEach(s => {
-                if (!combined.some(c => c.email?.toLowerCase() === s.email?.toLowerCase())) {
-                  combined.push(s);
-                }
-              });
-              return combined;
-            });
-          }
+          saveStoredStudents(liveStudents);
+          setStudentsList(liveStudents);
         }
       } catch (e) {
         // Backend offline or user not admin — fallback to local storage
@@ -5401,6 +5366,18 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                   <ChevronLeft className="w-4 h-4" /> Back to Departments
                 </button>
               )}
+              <button
+                onClick={() => {
+                  clearAllStoredTeachers();
+                  clearAllStoredStudents();
+                  setTeachersList([]);
+                  setStudentsList([]);
+                }}
+                className="px-3 py-2.5 border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 shrink-0"
+                title="Purge cached teachers & students data to sync with backend"
+              >
+                <Trash2 className="w-4 h-4" /> Reset / Clear Local Cache
+              </button>
               <button
                 onClick={() => setShowAddTeacherModal(true)}
                 className="bg-primary text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2 shadow-sm shrink-0"

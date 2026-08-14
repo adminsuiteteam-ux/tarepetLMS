@@ -345,7 +345,7 @@ export function saveTeacher(teacherData: Partial<TeacherRecord> & { name: string
     address: teacherData.address || (existing?.address) || 'Tarepet School Campus',
     dob: teacherData.dob || (existing?.dob) || '1990-01-01',
     cbtExamsCount: teacherData.cbtExamsCount || (existing?.cbtExamsCount) || 0,
-    attendanceRate: teacherData.attendanceRate || (existing?.attendanceRate) || '100%',
+    attendanceRate: teacherData.attendanceRate || (existing?.attendanceRate) || '0%',
     profileImage: teacherData.profileImage || (existing?.profileImage) || '',
     salary: teacherData.salary || (existing?.salary) || '',
     bankName: teacherData.bankName || (existing?.bankName) || '',
@@ -369,7 +369,23 @@ export function saveTeacher(teacherData: Partial<TeacherRecord> & { name: string
 }
 
 export function saveStoredTeachers(teachers: TeacherRecord[]) {
-  teachers.forEach(t => saveTeacher(t));
+  _teachers = teachers;
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('tarepet_teachers_list', JSON.stringify(_teachers));
+    } catch (e) {}
+  }
+  broadcastRealtimeEvent();
+}
+
+export function clearAllStoredTeachers() {
+  _teachers = [];
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.removeItem('tarepet_teachers_list');
+    } catch (e) {}
+  }
+  broadcastRealtimeEvent();
 }
 
 function loadDeletedAccounts(): string[] {
@@ -449,8 +465,9 @@ export function getStoredStudents(): StudentRecord[] {
 export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
   try {
     const res = await authClient.get('/auth/users/?role=STUDENT');
-    if (res.data && Array.isArray(res.data)) {
-      const fetched: StudentRecord[] = res.data.map((u: any) => ({
+    if (res.data) {
+      const dataArr = Array.isArray(res.data?.results) ? res.data.results : Array.isArray(res.data) ? res.data : [];
+      const fetched: StudentRecord[] = dataArr.map((u: any) => ({
         id: u.id,
         code: u.student_id || u.profile?.student_id || `TMS/SS1/SCI/${u.id}`,
         admissionNo: u.student_id || u.profile?.student_id || `TMS/SS1/SCI/${u.id}`,
@@ -474,10 +491,8 @@ export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
         attendance: '100%',
         atRisk: false
       }));
-      if (fetched.length > 0) {
-        _students = fetched;
-        broadcastRealtimeEvent();
-      }
+      _students = fetched;
+      broadcastRealtimeEvent();
     }
   } catch (err) {
     // Graceful fallback to in-memory records if backend API is not serving /users/
@@ -531,9 +546,23 @@ export function saveStudent(studentData: Partial<StudentRecord> & { name: string
 }
 
 export function saveStoredStudents(students: StudentRecord[]) {
-  students.forEach(s => {
-    saveStudent(s);
-  });
+  _students = students;
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('tarepet_students_list', JSON.stringify(_students));
+    } catch (e) {}
+  }
+  broadcastRealtimeEvent();
+}
+
+export function clearAllStoredStudents() {
+  _students = [];
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.removeItem('tarepet_students_list');
+    } catch (e) {}
+  }
+  broadcastRealtimeEvent();
 }
 
 export function deleteStudent(studentId: number | string): boolean {
@@ -560,7 +589,7 @@ if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
   }
 }
 
-function broadcastRealtimeEvent() {
+export function broadcastRealtimeEvent() {
   if (typeof window === 'undefined') return;
   window.dispatchEvent(new Event('cbt_store_updated'));
   if (broadcastChannel) {

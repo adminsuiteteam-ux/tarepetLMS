@@ -162,4 +162,5 @@ overrides:
   "@esbuild-kit/esm-loader": "npm:tsx@^4.21.0"
 
 allowBuilds:
+  '@tailwindcss/oxide': set this to true or false
   esbuild: true
