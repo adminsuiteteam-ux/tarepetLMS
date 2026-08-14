@@ -84,7 +84,7 @@ export default function Contact() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-lg md:text-xl text-white/90 max-w-3xl mx-auto font-sans leading-relaxed font-normal mb-10"
           >
-            Located at Kpansia-Epje, Yenagoa, Bayelsa State. Reach out for admissions inquiries, campus tours, or general questions.
+            Located at Kpansia-Epie, Yenagoa, Bayelsa State. Reach out for admissions inquiries, campus tours, or general questions.
           </motion.p>
 
           {/* Location & Contact Pills */}

@@ -133,7 +133,7 @@ export default function Admissions() {
                   <div>
                     <h3 className="text-xl font-bold text-foreground mb-2">1. Application Form</h3>
                     <p className="text-muted-foreground leading-relaxed">
-                      Obtain an admission form from the school office at Kpansia-Epje or fill out the online inquiry form below to initiate the process. A non-refundable application fee is required.
+                      Obtain an admission form from the school office at Kpansia-Epie or fill out the online inquiry form below to initiate the process. A non-refundable application fee is required.
                     </p>
                   </div>
                 </div>
@@ -309,7 +309,7 @@ export default function Admissions() {
           >
             <h2 className="text-3xl md:text-4xl font-serif font-bold mb-6">Experience Tare Pet</h2>
             <p className="text-white/80 max-w-2xl mx-auto mb-10 text-lg">
-              Can't make it to Kpansia-Epje right now? Take a glimpse into our classrooms, laboratories, and play areas.
+              Can't make it to Kpansia-Epie right now? Take a glimpse into our classrooms, laboratories, and play areas.
             </p>
             <Button variant="outline" className="h-14 px-8 rounded-full text-base bg-transparent text-white border-white hover:bg-white hover:text-secondary font-bold hover:scale-105 active:scale-95 transition-all">
               Take Virtual Tour

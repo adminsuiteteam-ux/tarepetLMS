@@ -594,7 +594,7 @@ export default function TeacherDashboard() {
                 <div className="md:col-span-5 space-y-3 text-xs leading-relaxed border-t md:border-t-0 md:border-l border-border pt-4 md:pt-0 md:pl-6">
                   <div>
                     <span className="text-muted-foreground font-medium">{t('teacher.lbl_address_prefix', 'Address:')} </span>
-                    <strong className="text-foreground font-bold">{u.address || (u.name.includes('Chidi') ? '12 Swali Road, Yenagoa' : '12 Kpansia-Epje Road, Yenagoa')}</strong>
+                    <strong className="text-foreground font-bold">{u.address || (u.name.includes('Chidi') ? '12 Swali Road, Yenagoa' : '12 Kpansia-Epie Road, Yenagoa')}</strong>
                   </div>
                   <div>
                     <span className="text-muted-foreground font-medium">{t('teacher.lbl_class_prefix', 'Class:')} </span>
@@ -939,7 +939,7 @@ export default function TeacherDashboard() {
                     type="text"
                     value={addStudentForm.address}
                     onChange={e => setAddStudentForm({ ...addStudentForm, address: e.target.value })}
-                    placeholder="e.g. 12 Kpansia-Epje Road, Yenagoa"
+                    placeholder="e.g. 12 Kpansia-Epie Road, Yenagoa"
                     className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
                   />
                 </div>

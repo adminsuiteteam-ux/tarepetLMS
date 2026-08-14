@@ -27,7 +27,7 @@ export const testimonials = [
   },
   {
     tempId: 3,
-    testimonial: "The residential boarding facilities at Kpansia-Epje are top-notch. With 24/7 care, structured evening prep, and tight security, I sleep with complete peace of mind.",
+    testimonial: "The residential boarding facilities at Kpansia-Epie are top-notch. With 24/7 care, structured evening prep, and tight security, I sleep with complete peace of mind.",
     by: "Mrs. Preye Ogbonna, Boarding Parent",
     imgSrc: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=300&auto=format&fit=crop"
   },

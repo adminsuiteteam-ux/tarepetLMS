@@ -1690,7 +1690,7 @@ export default function AdminDashboard() {
     id: 'TMS/ADM/2018/001',
     email: 'admin@tarepet.edu.ng',
     phone: '+234 803 123 4567',
-    address: '12 Kpansia-Epje Road, Yenagoa, Bayelsa State',
+    address: '12 Kpansia-Epie Road, Yenagoa, Bayelsa State',
     dob: '1978-08-15',
     gender: 'Male',
     department: 'Executive Governance & Academics',
@@ -4014,7 +4014,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                   </div>
                   <div className="md:col-span-2">
                     <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">School Physical Address</label>
-                    <input type="text" defaultValue="12 Kpansia-Epje Road, Yenagoa, Bayelsa State, Nigeria" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <input type="text" defaultValue="12 Kpansia-Epie Road, Yenagoa, Bayelsa State, Nigeria" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
                   </div>
                   <div>
                     <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Registration / Ministry Number</label>
@@ -6998,7 +6998,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                       <div className="border border-border p-6 rounded-xl space-y-4 text-xs bg-muted/10 print:border-none">
                         <div className="text-center space-y-1 pb-3 border-b border-border">
                           <h2 className="font-serif font-extrabold text-xl uppercase tracking-wider text-foreground">Tare Pet Montessori School</h2>
-                          <p className="text-[10px] text-muted-foreground">12 Kpansia-Epje Road, Yenagoa, Bayelsa State · Tel: +234 803 123 4567</p>
+                          <p className="text-[10px] text-muted-foreground">12 Kpansia-Epie Road, Yenagoa, Bayelsa State · Tel: +234 803 123 4567</p>
                           <span className="inline-block font-mono font-bold text-primary text-xs pt-1">RECEIPT NO: {receiptModalData.receiptNo}</span>
                         </div>
 
@@ -7205,7 +7205,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
               <h1 className="text-2xl sm:text-3xl font-serif font-extrabold uppercase tracking-wide text-foreground">
                 Tare Pet Montessori School
               </h1>
-              <p className="text-xs font-medium text-muted-foreground">12 Kpansia-Epje Road, Yenagoa, Bayelsa State, Nigeria · Tel: +234 803 123 4567</p>
+              <p className="text-xs font-medium text-muted-foreground">12 Kpansia-Epie Road, Yenagoa, Bayelsa State, Nigeria · Tel: +234 803 123 4567</p>
               <p className="text-xs font-bold text-primary uppercase tracking-widest pt-1">
                 OFFICIAL TERMINAL ACADEMIC REPORT CARD ({resultsYear} — {resultsTerm})
               </p>

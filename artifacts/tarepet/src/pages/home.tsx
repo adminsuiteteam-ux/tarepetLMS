@@ -479,7 +479,7 @@ export default function Home() {
           >
             <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-24 h-24 bg-primary/10 rounded-full blur-xl pointer-events-none" />
             <h2 className="text-4xl md:text-5xl font-serif font-bold text-foreground mb-6">Begin Your Child's Journey</h2>
-            <p className="text-muted-foreground text-lg mb-10 leading-relaxed">We invite you to visit our campus in Kpansia-Epje to see our Montessori classrooms in action.</p>
+            <p className="text-muted-foreground text-lg mb-10 leading-relaxed">We invite you to visit our campus in Kpansia-Epie to see our Montessori classrooms in action.</p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Link 
                 href="/sign-in" 
