@@ -4,7 +4,7 @@ import { Link } from 'wouter';
 import { authClient } from '@/lib/api-auth';
 import { PortalLayout } from '@/components/layout/PortalLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, clearAllStoredStudents, deleteStudent, syncStudentsWithBackend, getStoredTeachers, saveTeacher, saveStoredTeachers, clearAllStoredTeachers, deleteTeacher, listenToRealtimeEvents } from '@/lib/cbt-store';
+import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, clearAllStoredStudents, deleteStudent, syncStudentsWithBackend, getStoredTeachers, saveTeacher, saveStoredTeachers, clearAllStoredTeachers, deleteTeacher, listenToRealtimeEvents, clearCBTStoreCache } from '@/lib/cbt-store';
 import { AdminManagementPanel } from '@/components/dashboard/AdminManagementPanel';
 import {
   getPaymentItems,
@@ -5370,11 +5370,13 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                 onClick={() => {
                   clearAllStoredTeachers();
                   clearAllStoredStudents();
+                  clearCBTStoreCache();
                   setTeachersList([]);
                   setStudentsList([]);
+                  setExamsList([]);
                 }}
                 className="px-3 py-2.5 border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 shrink-0"
-                title="Purge cached teachers & students data to sync with backend"
+                title="Purge cached teachers, students, and exams data to sync with backend"
               >
                 <Trash2 className="w-4 h-4" /> Reset / Clear Local Cache
               </button>

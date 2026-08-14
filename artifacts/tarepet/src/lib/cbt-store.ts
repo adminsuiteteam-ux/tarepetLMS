@@ -250,8 +250,13 @@ function loadSavedExams(): CBTExam[] {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed)) {
-        // Filter out legacy default seed exams (1001, 1002) if previously stored
-        return parsed.filter((e: any) => e.id !== 1001 && e.id !== 1002);
+        // Filter out legacy default seed exams (1001, 1002, or SS1 Science Assessment demo title)
+        const liveOnly = parsed.filter((e: any) => {
+          const t = String(e.title || '').toLowerCase();
+          const isLegacyDemo = e.id === 1001 || e.id === 1002 || t.includes('ss1 science assessment');
+          return !isLegacyDemo;
+        });
+        return liveOnly;
       }
     }
   } catch (e) {}
