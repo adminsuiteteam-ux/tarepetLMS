@@ -11,13 +11,54 @@ const Label = React.forwardRef<
   React.ElementRef<typeof LabelPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> &
     VariantProps<typeof labelVariants>
->(({ className, ...props }, ref) => (
-  <LabelPrimitive.Root
-    ref={ref}
-    className={cn(labelVariants(), className)}
-    {...props}
-  />
-));
+>(
+  (
+    {
+      className,
+      children,
+      htmlFor,
+      id,
+      style,
+      title,
+      onClick,
+      onMouseDown,
+      onMouseLeave,
+      onPointerDown,
+      asChild,
+      dir,
+      tabIndex,
+      'aria-label': ariaLabel,
+      'aria-labelledby': ariaLabelledBy,
+      'aria-describedby': ariaDescribedBy,
+      'aria-hidden': ariaHidden,
+      role,
+    },
+    ref,
+  ) => (
+    <LabelPrimitive.Root
+      ref={ref}
+      className={cn(labelVariants(), className)}
+      children={children}
+      htmlFor={htmlFor}
+      id={id}
+      style={style}
+      title={title}
+      onClick={onClick}
+      onMouseDown={onMouseDown}
+      onMouseLeave={onMouseLeave}
+      onPointerDown={onPointerDown}
+      asChild={asChild}
+      dir={dir}
+      tabIndex={tabIndex}
+      aria-label={ariaLabel}
+      aria-labelledby={ariaLabelledBy}
+      aria-describedby={ariaDescribedBy}
+      aria-hidden={ariaHidden}
+      role={role}
+    />
+  ),
+);
 Label.displayName = LabelPrimitive.Root.displayName;
 
 export { Label };
+

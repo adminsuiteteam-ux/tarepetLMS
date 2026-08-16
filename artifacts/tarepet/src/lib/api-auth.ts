@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { layerbaseAuth } from './layerbase-auth';
 
-// Enterprise API Client for Django JWT Authentication
+// Enterprise API Client for Django / Layerbase JWT Authentication
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://tarepet-backend-4iw6.onrender.com/api/v1';
 
 // ── In-memory token store ─────────────────────────────────────────────────────
@@ -12,11 +13,13 @@ let _refreshToken: string | null = null;
 export function setTokens(access: string, refresh: string): void {
   _accessToken = access;
   _refreshToken = refresh;
+  layerbaseAuth.setSessionTokens(access, refresh);
 }
 
 export function clearTokens(): void {
   _accessToken = null;
   _refreshToken = null;
+  layerbaseAuth.clearSessionTokens();
 }
 
 export function getAccessToken(): string | null {
@@ -29,18 +32,29 @@ export function getRefreshToken(): string | null {
 
 /**
  * Redirect to a same-origin path only.
- * Throws if the target is not a relative path (starts with '/'), preventing
- * open redirect attacks from misconfigured environment variables.
+ * Rejects non-relative paths and scheme-relative URLs ('//' or '/\')
+ * to prevent open redirect vulnerabilities (CWE-601).
  */
 export function safeRedirect(target: string): void {
-  // Strip any leading whitespace and ensure the path starts with '/'
   const safe = target.trimStart();
-  if (!safe.startsWith('/')) {
+  if (!safe.startsWith('/') || safe.startsWith('//') || safe.startsWith('/\\')) {
     console.error('[Auth] Blocked unsafe redirect to:', target);
     window.location.href = '/sign-in';
     return;
   }
   window.location.href = safe;
+}
+
+/**
+ * Sanitize an email address for safe mailto: link usage.
+ * Rejects control characters, spaces, and dangerous URI injection sequences.
+ */
+export function sanitizeMailto(email: string): string {
+  const cleanEmail = email.trim().replace(/[\r\n\s]/g, '');
+  if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+    return 'mailto:';
+  }
+  return `mailto:${encodeURIComponent(cleanEmail)}`;
 }
 // ─────────────────────────────────────────────────────────────────────────────
 

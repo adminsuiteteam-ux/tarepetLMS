@@ -636,3 +636,16 @@ export async function processPaystackPayment({
     onClose();
   }
 }
+
+/**
+ * Purge cached payment transactions and fee item overrides from local storage and memory.
+ */
+export function clearPaymentStoreData(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem('tarepet_fee_items');
+    localStorage.removeItem('tarepet_fee_transactions');
+  } catch {}
+  _transactions = [];
+  broadcastPaymentMutation();
+}

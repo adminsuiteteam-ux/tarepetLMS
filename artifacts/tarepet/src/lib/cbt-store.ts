@@ -1267,3 +1267,38 @@ export function recordLoginActivity(email: string, role: string, status: 'SUCCES
 
   return newActivity;
 }
+
+/**
+ * Purge all cached default mock data keys from browser localStorage and reset memory state.
+ */
+export function clearAllSiteDefaultData(): void {
+  if (typeof window === 'undefined') return;
+  const keysToPurge = [
+    'tarepet_cbt_exams',
+    'tarepet_cbt_submissions',
+    'tarepet_teachers_list',
+    'tarepet_students_list',
+    'tarepet_cbt_attendance',
+    'tarepet_broadsheet_scores',
+    'tarepet_login_activities',
+    'tarepet_deleted_accounts',
+    'tarepet_finance_expenses',
+    'tarepet_finance_income',
+    'tarepet_fee_items',
+    'tarepet_fee_transactions',
+  ];
+
+  keysToPurge.forEach((key) => {
+    try {
+      localStorage.removeItem(key);
+    } catch {}
+  });
+
+  _exams = [];
+  _submissions = [];
+  _activities = [];
+  _teachers = [];
+  _students = [];
+
+  broadcastRealtimeEvent();
+}

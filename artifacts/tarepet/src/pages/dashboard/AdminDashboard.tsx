@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from '@/i18n';
 import { Link } from 'wouter';
-import { authClient } from '@/lib/api-auth';
+import { authClient, sanitizeMailto } from '@/lib/api-auth';
 import { PortalLayout } from '@/components/layout/PortalLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, clearAllStoredStudents, deleteStudent, syncStudentsWithBackend, getStoredTeachers, saveTeacher, saveStoredTeachers, clearAllStoredTeachers, deleteTeacher, listenToRealtimeEvents, clearCBTStoreCache } from '@/lib/cbt-store';
+import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, clearAllStoredStudents, deleteStudent, syncStudentsWithBackend, getStoredTeachers, saveTeacher, saveStoredTeachers, clearAllStoredTeachers, deleteTeacher, listenToRealtimeEvents, clearCBTStoreCache, clearAllSiteDefaultData } from '@/lib/cbt-store';
 import { AdminManagementPanel } from '@/components/dashboard/AdminManagementPanel';
 import {
   getPaymentItems,
@@ -5074,7 +5074,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                         </button>
                         {/* Send Email */}
                         <button
-                          onClick={() => { window.location.href = `mailto:${tchr.email}`; setShowTeacherActionsDropdown(false); }}
+                          onClick={() => { window.location.href = sanitizeMailto(tchr.email); setShowTeacherActionsDropdown(false); }}
                           className="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold text-foreground hover:bg-accent transition-colors text-left"
                         >
                           <span className="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">

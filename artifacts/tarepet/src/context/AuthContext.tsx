@@ -4,7 +4,7 @@ import { authClient, setTokens, clearTokens, getRefreshToken, safeRedirect } fro
 export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT' | 'PARENT';
 
 export interface User {
-  id: number;
+  id: number | string;
   email: string;
   first_name: string;
   last_name: string;

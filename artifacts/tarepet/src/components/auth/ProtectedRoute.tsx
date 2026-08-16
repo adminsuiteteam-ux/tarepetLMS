@@ -16,7 +16,8 @@ const translations: Record<string, string> = {
   return_to_homepage: 'Return to Homepage',
 };
 
-const t = (key: string): string => translations[key] || key;
+const t = (key: string): string =>
+  Object.prototype.hasOwnProperty.call(translations, key) ? translations[key] : key;
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,

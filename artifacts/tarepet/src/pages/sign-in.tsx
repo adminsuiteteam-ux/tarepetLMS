@@ -6,6 +6,7 @@ import tarepetLogo from "@assets/tarepet__1784835204178.png";
 import heroImg from "@assets/classroom_hero.jpg";
 import { useAuth } from "@/context/AuthContext";
 import { authClient } from "@/lib/api-auth";
+import { layerbaseAuth } from "@/lib/layerbase-auth";
 import { useTranslation } from "@/lib/i18n";
 
 import { getStoredStudents, getStoredTeachers, isAccountDeleted, recordLoginActivity } from "@/lib/cbt-store";
@@ -17,6 +18,9 @@ export default function SignIn() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [mfaToken, setMfaToken] = useState("");
+  const [mfaCode, setMfaCode] = useState("");
   const [, setLocation] = useLocation();
   const { login } = useAuth();
 
@@ -39,7 +43,28 @@ export default function SignIn() {
       return;
     }
 
-    // 1. First, try live Django REST API backend
+    // 1. Try Layerbase Auth client first
+    try {
+      const lbRes = await layerbaseAuth.login(rawInput, rawPassword);
+      if (lbRes.mfaRequired && lbRes.mfaToken) {
+        setMfaRequired(true);
+        setMfaToken(lbRes.mfaToken);
+        setIsLoading(false);
+        return;
+      }
+      if (lbRes.success && lbRes.access && lbRes.user) {
+        recordLoginActivity(lbRes.user.email || rawInput, lbRes.user.role, 'SUCCESS');
+        login(lbRes.access, lbRes.refresh || '', lbRes.user);
+        const userRole = lbRes.user.role.toLowerCase();
+        setLocation(`/dashboard/${userRole}`);
+        setIsLoading(false);
+        return;
+      }
+    } catch {
+      // Continue to fallback
+    }
+
+    // 1b. Try live Django REST API backend
     try {
       const res = await authClient.post("/auth/login/", { email: rawInput, password: rawPassword }, { timeout: 8000 });
       const { access, refresh, user } = res.data;
@@ -370,6 +395,84 @@ export default function SignIn() {
           </p>
         </motion.div>
       </div>
+
+      {/* Layerbase Multi-Factor Authentication Modal */}
+      {mfaRequired && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-sm rounded-2xl bg-card p-6 shadow-2xl border border-border"
+          >
+            <div className="flex items-center gap-3 mb-4 text-primary">
+              <Lock className="w-6 h-6 shrink-0" />
+              <h3 className="text-lg font-serif font-bold text-foreground">
+                {t('mfa.title', 'Multi-Factor Authentication')}
+              </h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-6">
+              {t('mfa.description', 'Layerbase Auth requires step-up verification. Please enter the 6-digit authenticator code from your app.')}
+            </p>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setIsLoading(true);
+                setError(null);
+                const res = await layerbaseAuth.verifyMFA(mfaToken, mfaCode);
+                if (res.success && res.access && res.user) {
+                  login(res.access, res.refresh || '', res.user);
+                  setMfaRequired(false);
+                  setLocation(`/dashboard/${res.user.role.toLowerCase()}`);
+                } else {
+                  setError(res.message || t('mfa.failed', 'MFA verification failed.'));
+                }
+                setIsLoading(false);
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                  {t('mfa.code_label', '6-Digit Authenticator Code')}
+                </label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={mfaCode}
+                  onChange={(e) => setMfaCode(e.target.value.replace(/[^0-9]/g, ''))}
+                  placeholder="123456"
+                  className="w-full text-center text-2xl tracking-[0.4em] font-mono py-3 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  required
+                  autoFocus
+                />
+              </div>
+
+              {error && (
+                <div className="flex items-center gap-2 p-2 rounded bg-destructive/10 text-destructive text-xs">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setMfaRequired(false); setMfaCode(''); setError(null); }}
+                  className="flex-1 px-4 py-2.5 rounded-lg border border-border text-sm font-medium hover:bg-accent text-foreground transition-colors"
+                >
+                  {t('mfa.cancel', 'Cancel')}
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading || mfaCode.length < 6}
+                  className="flex-1 px-4 py-2.5 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                >
+                  {isLoading ? t('mfa.verifying', 'Verifying...') : t('mfa.verify_code', 'Verify Code')}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
