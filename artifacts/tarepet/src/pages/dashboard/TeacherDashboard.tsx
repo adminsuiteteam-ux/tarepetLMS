@@ -13,8 +13,10 @@ import {
   ClipboardList, Settings, ShieldCheck, User, Bell, Printer, CreditCard, GraduationCap, Zap, School
 } from 'lucide-react';
 
-import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, getStoredTeachers, saveStudent, deleteStudent, subscribeToCBTStore, syncStudentsWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, CourseBroadsheetScore } from '@/lib/cbt-store';
+import { authClient } from '@/lib/api-auth';
+import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, getStoredTeachers, saveTeacher, saveStudent, deleteStudent, subscribeToCBTStore, syncStudentsWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, CourseBroadsheetScore } from '@/lib/cbt-store';
 import { useTranslation } from '@/lib/i18n';
+import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
 
 function getSafeProperty<T>(obj: Record<string | number, T> | null | undefined, key: string | number): T | undefined {
   if (obj && typeof obj === 'object' && Object.prototype.hasOwnProperty.call(obj, key)) {
@@ -33,7 +35,26 @@ const TIMETABLE: any[] = [];
 
 export default function TeacherDashboard() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, isTeacher, isAdmin } = useAuth();
+
+  if (!user || (!isTeacher && !isAdmin) || (user.role !== 'TEACHER' && user.role !== 'ADMIN')) {
+    return (
+      <div className="flex min-h-[70vh] items-center justify-center p-6 text-center">
+        <div className="max-w-md rounded-2xl bg-card p-8 shadow-xl border border-border">
+          <h2 className="text-2xl font-serif font-bold text-destructive mb-3">{t('teacher.access_denied', 'Access Denied')}</h2>
+          <p className="text-muted-foreground mb-6">
+            {t('teacher.access_denied_desc_prefix', 'Your account (')}{user?.role || 'Guest'}{t('teacher.access_denied_desc_suffix', ') does not have permission to view the Teacher Portal.')}
+          </p>
+          <button
+            onClick={() => { window.location.href = '/sign-in'; }}
+            className="rounded-md bg-primary px-6 py-2.5 text-sm font-medium text-white hover:bg-primary/90 transition-colors"
+          >
+            {t('teacher.return_to_signin', 'Return to Sign In')}
+          </button>
+        </div>
+      </div>
+    );
+  }
   // Active section & tab persistence
   const [activeSection, setActiveSectionState] = useState<string>(() => {
     if (typeof window !== 'undefined') {
@@ -150,6 +171,15 @@ export default function TeacherDashboard() {
   const [showIDCardModal, setShowIDCardModal] = useState<any>(null);
   const [showStaffIdModal, setShowStaffIdModal] = useState<boolean>(false);
 
+  // Post-login Password Prompt Modal state for Teachers
+  const [showPasswordPromptModal, setShowPasswordPromptModal] = useState<boolean>(() => {
+    return !!(user?.profile as any)?.needsPasswordChange;
+  });
+  const [newPasswordVal, setNewPasswordVal] = useState<string>('');
+  const [confirmPasswordVal, setConfirmPasswordVal] = useState<string>('');
+  const [pwdModalError, setPwdModalError] = useState<string | null>(null);
+  const [pwdModalLoading, setPwdModalLoading] = useState<boolean>(false);
+
   // CBT Exam Launch & Attendance & Preview State
   const [selectedAttendanceExam, setSelectedAttendanceExam] = useState<any | null>(null);
   const [examAttendanceState, setExamAttendanceState] = useState<any[]>([]);
@@ -170,14 +200,14 @@ export default function TeacherDashboard() {
     courses.forEach(c => {
       const cbtAuto = getAutomaticCBTScore(student.code || student.email || student.name, c.code);
       const existing = getSafeProperty(saved, c.code);
-      initialScores[c.code] = {
+      Reflect.set(initialScores, c.code, {
         ca1: existing?.ca1 ?? 8,
         ca2: existing?.ca2 ?? 8,
         assignment: existing?.assignment ?? 9,
         cbtScore: existing?.cbtScore !== undefined ? existing.cbtScore : cbtAuto,
         paperExam: existing?.paperExam ?? 32,
         remark: existing?.remark || 'Good progress & steady academic effort'
-      };
+      });
     });
 
     setBroadsheetScores(initialScores);
@@ -193,9 +223,13 @@ export default function TeacherDashboard() {
       if (field === 'paperExam') numVal = Math.min(40, Math.max(0, numVal));
       if (field === 'cbtScore') numVal = Math.min(30, Math.max(0, numVal));
 
-      const updated = {
-        ...current,
-        [field]: field === 'remark' ? val : numVal
+      const updated: CourseBroadsheetScore = {
+        ca1: field === 'ca1' ? numVal : current.ca1,
+        ca2: field === 'ca2' ? numVal : current.ca2,
+        assignment: field === 'assignment' ? numVal : current.assignment,
+        cbtScore: field === 'cbtScore' ? numVal : current.cbtScore,
+        paperExam: field === 'paperExam' ? numVal : current.paperExam,
+        remark: field === 'remark' ? String(val || '') : (current.remark || '')
       };
       const nextState = { ...prev, [courseCode]: updated };
 
@@ -1991,7 +2025,7 @@ export default function TeacherDashboard() {
                   {/* Save Footer Bar */}
                   <div className="flex items-center justify-between pt-4 border-t border-border flex-wrap gap-3">
                     <p className="text-xs text-muted-foreground font-medium">
-                      All changes are saved automatically in real-time. Click below to publish to official terminal report cards.
+                      {t('teacher.broadsheet_auto_save_notice', 'All changes are saved automatically in real-time. Click below to publish to official terminal report cards.')}
                     </p>
                     <button
                       onClick={() => {
@@ -2016,7 +2050,7 @@ export default function TeacherDashboard() {
                       <BarChart2 className="w-5 h-5 text-primary" /> Class Broadsheet & Terminal Master Register
                     </h3>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      Click any student row below to open their individual fillable broadsheet (1st CA, 2nd CA, Assignment, CBT Exam & Paper Exam).
+                      {t('teacher.broadsheet_click_row_desc', 'Click any student row below to open their individual fillable broadsheet (1st CA, 2nd CA, Assignment, CBT Exam & Paper Exam).')}
                     </p>
                   </div>
                   <button
@@ -2506,8 +2540,8 @@ export default function TeacherDashboard() {
                     <GraduationCap className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-serif font-bold text-base text-foreground">Register New Pupil / Student</h3>
-                    <p className="text-xs text-muted-foreground">Complete student registration across Nursery, Primary, or Secondary classes.</p>
+                    <h3 className="font-serif font-bold text-base text-foreground">{t('teacher.reg_new_pupil_title', 'Register New Pupil / Student')}</h3>
+                    <p className="text-xs text-muted-foreground">{t('teacher.reg_new_pupil_desc', 'Complete student registration across Nursery, Primary, or Secondary classes.')}</p>
                   </div>
                 </div>
                 <button onClick={() => setShowAddStudentModal(false)} className="text-muted-foreground hover:text-foreground p-1 rounded-xl hover:bg-accent">
@@ -2519,11 +2553,11 @@ export default function TeacherDashboard() {
                 {/* 1. Class & Stream Placement */}
                 <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20 space-y-3">
                   <h4 className="font-bold text-xs uppercase tracking-wider text-primary flex items-center gap-1.5">
-                    <School className="w-4 h-4" /> Academic Placement & Grade Level
+                    <School className="w-4 h-4" /> {t('teacher.academic_placement_header', 'Academic Placement & Grade Level')}
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="text-[10px] font-extrabold uppercase text-muted-foreground block mb-1">Target Class / Grade Level *</label>
+                      <label className="text-[10px] font-extrabold uppercase text-muted-foreground block mb-1">{t('teacher.target_class_label', 'Target Class / Grade Level *')}</label>
                       <select
                         value={addStudentForm.grade}
                         onChange={e => setAddStudentForm({ ...addStudentForm, grade: e.target.value })}
@@ -2556,19 +2590,19 @@ export default function TeacherDashboard() {
                     </div>
 
                     <div>
-                      <label className="text-[10px] font-extrabold uppercase text-muted-foreground block mb-1">Class Arm / Stream</label>
+                      <label className="text-[10px] font-extrabold uppercase text-muted-foreground block mb-1">{t('teacher.class_arm_label', 'Class Arm / Stream')}</label>
                       <select
                         value={addStudentForm.stream}
                         onChange={e => setAddStudentForm({ ...addStudentForm, stream: e.target.value })}
                         className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-xs font-semibold text-foreground focus:ring-2 focus:ring-primary outline-none"
                       >
-                        <option value="General / Early Years">General / Early Years (Nursery)</option>
-                        <option value="Faith Arm">Faith Arm (Montessori)</option>
-                        <option value="Love Arm">Love Arm (Montessori)</option>
-                        <option value="Grace Arm">Grace Arm (Montessori)</option>
-                        <option value="Science">Science Stream (Secondary)</option>
-                        <option value="Arts & Humanities">Arts & Humanities (Secondary)</option>
-                        <option value="Commercial">Commercial Stream (Secondary)</option>
+                        <option value="General / Early Years">{t('teacher.stream_general', 'General / Early Years (Nursery)')}</option>
+                        <option value="Faith Arm">{t('teacher.stream_faith', 'Faith Arm (Montessori)')}</option>
+                        <option value="Love Arm">{t('teacher.stream_love', 'Love Arm (Montessori)')}</option>
+                        <option value="Grace Arm">{t('teacher.stream_grace', 'Grace Arm (Montessori)')}</option>
+                        <option value="Science">{t('teacher.stream_science', 'Science Stream (Secondary)')}</option>
+                        <option value="Arts & Humanities">{t('teacher.stream_arts', 'Arts & Humanities (Secondary)')}</option>
+                        <option value="Commercial">{t('teacher.stream_commercial', 'Commercial Stream (Secondary)')}</option>
                       </select>
                     </div>
                   </div>
@@ -2577,32 +2611,32 @@ export default function TeacherDashboard() {
                 {/* 2. Personal Details */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[10px] font-extrabold uppercase text-muted-foreground block mb-1">Student Full Name *</label>
+                    <label className="text-[10px] font-extrabold uppercase text-muted-foreground block mb-1">{t('teacher.student_full_name_label', 'Student Full Name *')}</label>
                     <input
                       type="text"
                       required
-                      placeholder="e.g. Chukwuemeka Amadi"
+                      placeholder={t('teacher.student_full_name_placeholder', 'e.g. Chukwuemeka Amadi')}
                       value={addStudentForm.name}
                       onChange={e => setAddStudentForm({ ...addStudentForm, name: e.target.value })}
                       className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-xs text-foreground focus:ring-2 focus:ring-primary outline-none"
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-extrabold uppercase text-muted-foreground block mb-1">Gender</label>
+                    <label className="text-[10px] font-extrabold uppercase text-muted-foreground block mb-1">{t('teacher.gender_label', 'Gender')}</label>
                     <select
                       value={addStudentForm.gender}
                       onChange={e => setAddStudentForm({ ...addStudentForm, gender: e.target.value })}
                       className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-xs text-foreground focus:ring-2 focus:ring-primary outline-none"
                     >
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
+                      <option value="Male">{t('teacher.gender_male', 'Male')}</option>
+                      <option value="Female">{t('teacher.gender_female', 'Female')}</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[10px] font-extrabold uppercase text-muted-foreground block mb-1">Date of Birth</label>
+                    <label className="text-[10px] font-extrabold uppercase text-muted-foreground block mb-1">{t('teacher.dob_label', 'Date of Birth')}</label>
                     <input
                       type="date"
                       value={addStudentForm.dob}
@@ -2611,10 +2645,10 @@ export default function TeacherDashboard() {
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-extrabold uppercase text-muted-foreground block mb-1">Student Email (Optional)</label>
+                    <label className="text-[10px] font-extrabold uppercase text-muted-foreground block mb-1">{t('teacher.student_email_label', 'Student Email (Optional)')}</label>
                     <input
                       type="email"
-                      placeholder="Auto-generated if left blank"
+                      placeholder={t('teacher.student_email_placeholder', 'Auto-generated if left blank')}
                       value={addStudentForm.email}
                       onChange={e => setAddStudentForm({ ...addStudentForm, email: e.target.value })}
                       className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-xs text-foreground focus:ring-2 focus:ring-primary outline-none"
@@ -2625,21 +2659,21 @@ export default function TeacherDashboard() {
                 {/* 3. Parent & Guardian Contact */}
                 <div className="p-4 rounded-2xl bg-muted/20 border border-border space-y-3">
                   <h4 className="font-bold text-xs uppercase tracking-wider text-foreground flex items-center gap-1.5">
-                    <User className="w-4 h-4 text-emerald-600" /> Parent / Guardian Information
+                    <User className="w-4 h-4 text-emerald-600" /> {t('teacher.parent_info_header', 'Parent / Guardian Information')}
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="text-[10px] font-extrabold uppercase text-muted-foreground block mb-1">Parent / Guardian Name</label>
+                      <label className="text-[10px] font-extrabold uppercase text-muted-foreground block mb-1">{t('teacher.parent_name_label', 'Parent / Guardian Name')}</label>
                       <input
                         type="text"
-                        placeholder="e.g. Dr. & Mrs. Amadi"
+                        placeholder={t('teacher.parent_name_placeholder', 'e.g. Dr. & Mrs. Amadi')}
                         value={addStudentForm.parentName}
                         onChange={e => setAddStudentForm({ ...addStudentForm, parentName: e.target.value })}
                         className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-xs text-foreground focus:ring-2 focus:ring-primary outline-none"
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-extrabold uppercase text-muted-foreground block mb-1">Parent Contact Phone</label>
+                      <label className="text-[10px] font-extrabold uppercase text-muted-foreground block mb-1">{t('teacher.parent_phone_label', 'Parent Contact Phone')}</label>
                       <input
                         type="text"
                         placeholder="+234 800 000 0000"
@@ -2650,10 +2684,10 @@ export default function TeacherDashboard() {
                     </div>
                   </div>
                   <div>
-                    <label className="text-[10px] font-extrabold uppercase text-muted-foreground block mb-1">Residential Address</label>
+                    <label className="text-[10px] font-extrabold uppercase text-muted-foreground block mb-1">{t('teacher.res_address_label', 'Residential Address')}</label>
                     <input
                       type="text"
-                      placeholder="e.g. 12 Kpansia-Epie Road, Yenagoa, Bayelsa State"
+                      placeholder={t('teacher.res_address_placeholder', 'e.g. 12 Kpansia-Epie Road, Yenagoa, Bayelsa State')}
                       value={addStudentForm.address}
                       onChange={e => setAddStudentForm({ ...addStudentForm, address: e.target.value })}
                       className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-xs text-foreground focus:ring-2 focus:ring-primary outline-none"
@@ -2667,13 +2701,13 @@ export default function TeacherDashboard() {
                     onClick={() => setShowAddStudentModal(false)}
                     className="px-5 py-2.5 rounded-xl border border-border text-xs font-semibold hover:bg-muted transition-colors cursor-pointer"
                   >
-                    Cancel
+                    {t('teacher.cancel_btn', 'Cancel')}
                   </button>
                   <button
                     type="submit"
                     className="px-6 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
                   >
-                    <CheckCircle2 className="w-4 h-4" /> Save Student Record
+                    <CheckCircle2 className="w-4 h-4" /> {t('teacher.save_student_record_btn', 'Save Student Record')}
                   </button>
                 </div>
               </form>
@@ -2691,7 +2725,7 @@ export default function TeacherDashboard() {
                     <UserCheck className="w-5 h-5 text-emerald-600" /> Student Attendance & Exam Invigilation
                   </h3>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Exam: <span className="font-bold text-foreground">{selectedAttendanceExam.title}</span> ({selectedAttendanceExam.course_name || selectedAttendanceExam.course_code} — {selectedAttendanceExam.class || 'SS1'} {selectedAttendanceExam.stream || 'Science'})
+                    {t('teacher.exam_label', 'Exam:')} <span className="font-bold text-foreground">{selectedAttendanceExam.title}</span> ({selectedAttendanceExam.course_name || selectedAttendanceExam.course_code} — {selectedAttendanceExam.class || 'SS1'} {selectedAttendanceExam.stream || 'Science'})
                   </p>
                 </div>
                 <button onClick={() => setSelectedAttendanceExam(null)} className="p-2 rounded-xl text-muted-foreground hover:bg-muted/50 transition-colors"><X className="w-5 h-5" /></button>
@@ -2725,11 +2759,11 @@ export default function TeacherDashboard() {
                 {/* Individual Student Controls */}
                 {examStartMode === 'INDIVIDUAL' && (
                   <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200 text-blue-900 space-y-3">
-                    <h4 className="font-bold text-xs uppercase tracking-wider text-blue-900">Configure Individual Student Exam</h4>
-                    <p className="text-xs text-blue-800">Select a specific student to grant individual exam authorization (e.g. for re-take or makeup test).</p>
+                    <h4 className="font-bold text-xs uppercase tracking-wider text-blue-900">{t('teacher.config_ind_exam', 'Configure Individual Student Exam')}</h4>
+                    <p className="text-xs text-blue-800">{t('teacher.config_ind_exam_desc', 'Select a specific student to grant individual exam authorization (e.g. for re-take or makeup test).')}</p>
 
                     <div>
-                      <label className="text-[10px] font-extrabold uppercase text-blue-800 block mb-1">Select Target Pupil</label>
+                      <label className="text-[10px] font-extrabold uppercase text-blue-800 block mb-1">{t('teacher.select_target_pupil', 'Select Target Pupil')}</label>
                       <select
                         value={selectedStudentForIndividual}
                         onChange={e => setSelectedStudentForIndividual(e.target.value)}
@@ -2752,10 +2786,10 @@ export default function TeacherDashboard() {
                           <div className="p-3.5 rounded-xl bg-amber-100 border border-amber-300 text-amber-900 text-xs space-y-2">
                             <div className="flex items-center gap-2 font-bold">
                               <AlertCircle className="w-4 h-4 text-amber-700 shrink-0" />
-                              <span>Attendance Warning: Student Marked Absent</span>
+                              <span>{t('teacher.attendance_warning_absent', 'Attendance Warning: Student Marked Absent')}</span>
                             </div>
                             <p className="text-[11px] text-amber-800">
-                              Form Teacher must certify that <strong>{targetSt.studentName}</strong> is Present in the Examination Hall before starting this individual exam.
+                              {t('teacher.form_teacher_certify', 'Form Teacher must certify that ')} <strong>{targetSt.studentName}</strong> {t('teacher.present_in_hall_suffix', 'is Present in the Examination Hall before starting this individual exam.')}
                             </p>
                             <button
                               onClick={() => {
@@ -2784,7 +2818,7 @@ export default function TeacherDashboard() {
                         <div className="p-3.5 rounded-xl bg-emerald-100 border border-emerald-300 text-emerald-900 text-xs space-y-2">
                           <div className="flex items-center gap-2 font-bold">
                             <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
-                            <span>Student Certified Present in Hall</span>
+                            <span>{t('teacher.student_certified_present', 'Student Certified Present in Hall')}</span>
                           </div>
                           <p className="text-[11px] text-emerald-800">
                             <strong>{targetSt.studentName}</strong> has been certified Present. You may now launch their individual CBT exam session.
@@ -2808,8 +2842,8 @@ export default function TeacherDashboard() {
                 {/* Hall Attendance Policy */}
                 <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
                   <div>
-                    <span className="font-bold text-emerald-900 block text-sm">Hall Attendance Clearance Policy</span>
-                    <p className="text-emerald-700 text-[11px] mt-0.5">Only students marked <strong className="text-emerald-900">PRESENT</strong> below will be granted access to start this examination in their student portal.</p>
+                    <span className="font-bold text-emerald-900 block text-sm">{t('teacher.hall_attendance_policy', 'Hall Attendance Clearance Policy')}</span>
+                    <p className="text-emerald-700 text-[11px] mt-0.5">{t('teacher.only_students_marked', 'Only students marked ')}<strong className="text-emerald-900">{t('teacher.present_status')}</strong> {t('teacher.below_granted_access', 'below will be granted access to start this examination in their student portal.')}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <button
@@ -2826,7 +2860,7 @@ export default function TeacherDashboard() {
                       }}
                       className="px-3 py-1.5 bg-emerald-600 text-white rounded-lg text-[11px] font-bold hover:bg-emerald-700 transition-colors"
                     >
-                      ✓ Mark All Present
+                      ✓ {t('teacher.mark_all_present', 'Mark All Present')}
                     </button>
                     <button
                       onClick={() => {
@@ -2841,7 +2875,7 @@ export default function TeacherDashboard() {
                       }}
                       className="px-3 py-1.5 bg-muted text-foreground border border-border rounded-lg text-[11px] font-semibold hover:bg-muted/70 transition-colors"
                     >
-                      Clear All
+                      {t('teacher.clear_all', 'Clear All')}
                     </button>
                   </div>
                 </div>
@@ -2849,10 +2883,10 @@ export default function TeacherDashboard() {
                 {/* Attendance Count Badge */}
                 <div className="flex items-center justify-between px-1 text-xs">
                   <span className="font-bold text-muted-foreground uppercase text-[10px] tracking-wider">
-                    Class Roster ({examAttendanceState.length} Students)
+                    {t('teacher.class_roster_prefix', 'Class Roster (')}{examAttendanceState.length}{t('teacher.class_roster_suffix', ' Students)')}
                   </span>
                   <span className="font-bold text-emerald-600 bg-emerald-100 px-3 py-0.5 rounded-full text-[11px]">
-                    {examAttendanceState.filter(r => r.markedPresent).length} / {examAttendanceState.length} Present & Cleared
+                    {examAttendanceState.filter(r => r.markedPresent).length} / {examAttendanceState.length} {t('teacher.present_and_cleared', 'Present & Cleared')}
                   </span>
                 </div>
 
@@ -2878,7 +2912,7 @@ export default function TeacherDashboard() {
                             <h4 className="font-bold text-xs text-foreground">{student.studentName}</h4>
                             <span className="text-[10px] font-mono text-muted-foreground px-1.5 py-0.5 rounded bg-muted">{student.studentId}</span>
                           </div>
-                          <p className="text-[11px] text-muted-foreground">{student.class} {student.stream} Student</p>
+                          <p className="text-[11px] text-muted-foreground">{student.class} {student.stream} {t('teacher.student_label', 'Student')}</p>
                         </div>
                       </div>
 
@@ -2905,11 +2939,11 @@ export default function TeacherDashboard() {
                       >
                         {student.markedPresent ? (
                           <>
-                            <CheckCircle2 className="w-3.5 h-3.5" /> Present & Cleared
+                            <CheckCircle2 className="w-3.5 h-3.5" /> {t('teacher.present_and_cleared', 'Present & Cleared')}
                           </>
                         ) : (
                           <>
-                            <XCircle className="w-3.5 h-3.5 text-rose-500" /> Mark Present
+                            <XCircle className="w-3.5 h-3.5 text-rose-500" /> {t('teacher.mark_present_btn', 'Mark Present')}
                           </>
                         )}
                       </button>
@@ -2919,7 +2953,7 @@ export default function TeacherDashboard() {
               </div>
 
               <div className="p-5 border-t border-border bg-muted/20 flex items-center justify-between">
-                <button onClick={() => setSelectedAttendanceExam(null)} className="px-4 py-2 rounded-xl border border-border text-xs font-semibold hover:bg-muted transition-colors">Close</button>
+                <button onClick={() => setSelectedAttendanceExam(null)} className="px-4 py-2 rounded-xl border border-border text-xs font-semibold hover:bg-muted transition-colors">{t('teacher.close_btn', 'Close')}</button>
                 {examStartMode === 'GENERAL' && (
                   <button
                     onClick={() => {
@@ -2956,7 +2990,7 @@ export default function TeacherDashboard() {
                       {previewSubmissionModal.submission.student_name}'s Answer Sheet Preview
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      Exam: <span className="font-bold text-foreground">{previewSubmissionModal.submission.exam_title}</span> ({previewSubmissionModal.submission.course_code})
+                      {t('teacher.exam_label', 'Exam:')} <span className="font-bold text-foreground">{previewSubmissionModal.submission.exam_title}</span> ({previewSubmissionModal.submission.course_code})
                     </p>
                   </div>
                 </div>
@@ -2967,14 +3001,14 @@ export default function TeacherDashboard() {
                 {/* Performance Summary Banner */}
                 <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-500/20 flex flex-wrap items-center justify-between gap-4">
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 block">Student Information</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 block">{t('teacher.student_info_header', 'Student Information')}</span>
                     <h4 className="font-bold text-sm text-foreground">{previewSubmissionModal.submission.student_name}</h4>
                     <p className="text-xs text-muted-foreground">ID: {previewSubmissionModal.submission.student_id} • Class: {previewSubmissionModal.submission.class} {previewSubmissionModal.submission.stream}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">Submitted: {new Date(previewSubmissionModal.submission.submitted_at).toLocaleString()}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{t('teacher.submitted_label', 'Submitted: ')}{new Date(previewSubmissionModal.submission.submitted_at).toLocaleString()}</p>
                   </div>
                   <div className="flex items-center gap-3 bg-card p-3 rounded-xl border border-border shadow-xs">
                     <div className="text-right">
-                      <span className="text-[10px] font-bold uppercase text-muted-foreground block">Verified Score</span>
+                      <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.verified_score_label', 'Verified Score')}</span>
                       <span className="text-2xl font-serif font-bold text-emerald-600">{previewSubmissionModal.submission.score} / {previewSubmissionModal.submission.total_possible}</span>
                     </div>
                     <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center font-bold text-emerald-600 text-lg border border-emerald-500/20">
@@ -3053,6 +3087,106 @@ export default function TeacherDashboard() {
                   ✓ Confirm & Sync Score
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Post-Login Teacher Password Configuration Modal */}
+        {showPasswordPromptModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className="w-full max-w-md rounded-2xl bg-card p-6 shadow-2xl border border-border space-y-4">
+              <div className="flex items-center gap-3 text-primary border-b border-border pb-3">
+                <Lock className="w-6 h-6 shrink-0" />
+                <div>
+                  <h3 className="text-lg font-serif font-bold text-foreground">{t('teacher.pwd_modal_title', 'Teacher Password Configuration')}</h3>
+                  <p className="text-xs text-muted-foreground">{t('teacher.pwd_modal_sub', 'Configure main account security')}</p>
+                </div>
+              </div>
+
+              <div className="p-3 bg-amber-500/10 border border-amber-500/20 text-amber-900 rounded-xl text-xs space-y-1">
+                <p className="font-bold">🔑 {t('teacher.initial_creds_detected', 'Initial Credentials Detected')}</p>
+                <p className="text-[11px] leading-relaxed">
+                  {t('teacher.pwd_modal_desc', 'You logged in using your Staff ID. You can set a custom main password below, or choose to keep your Staff ID as your password.')}
+                </p>
+              </div>
+
+              {pwdModalError && (
+                <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-destructive text-xs font-semibold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{pwdModalError}</span>
+                </div>
+              )}
+
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                setPwdModalError(null);
+                if (!newPasswordVal || newPasswordVal.length < 6) {
+                  setPwdModalError('Password must be at least 6 characters long.');
+                  return;
+                }
+                if (newPasswordVal !== confirmPasswordVal) {
+                  setPwdModalError('Passwords do not match.');
+                  return;
+                }
+                setPwdModalLoading(true);
+                const sId = (user?.profile as any)?.teacher_id || (user as any)?.staffId || 'TMS/TCH/0001';
+                saveTeacher({
+                  staffId: sId,
+                  name: `${user?.first_name || ''} ${user?.last_name || ''}`.trim(),
+                  email: user?.email || '',
+                  password: newPasswordVal,
+                });
+                try {
+                  await authClient.post('/auth/change-password/', {
+                    old_password: sId,
+                    new_password: newPasswordVal,
+                  });
+                } catch {}
+                setPwdModalLoading(false);
+                setShowPasswordPromptModal(false);
+                showToast('Your new custom password has been set as your main password!');
+              }} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">{t('teacher.new_custom_password', 'New Custom Password')}</label>
+                  <input
+                    type="password"
+                    value={newPasswordVal}
+                    onChange={(e) => setNewPasswordVal(e.target.value)}
+                    placeholder="Min. 6 characters"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">{t('teacher.confirm_custom_password', 'Confirm Custom Password')}</label>
+                  <input
+                    type="password"
+                    value={confirmPasswordVal}
+                    onChange={(e) => setConfirmPasswordVal(e.target.value)}
+                    placeholder="Repeat new password"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+                  />
+                </div>
+
+                <div className="flex items-center gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPasswordPromptModal(false);
+                      showToast('Kept Staff ID as default password.');
+                    }}
+                    className="flex-1 px-4 py-2.5 rounded-xl border border-border text-xs font-bold hover:bg-muted text-foreground transition-colors"
+                  >
+                    {t('teacher.keep_staff_id', 'Keep Staff ID')}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={pwdModalLoading || !newPasswordVal}
+                    className="flex-1 px-4 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 disabled:opacity-50 transition-colors shadow-sm"
+                  >
+                    {pwdModalLoading ? t('teacher.saving', 'Saving...') : t('teacher.set_main_password', 'Set Main Password')}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

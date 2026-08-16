@@ -9,6 +9,116 @@ from apps.users.models import CustomUser, TeacherProfile
 
 form_teachers_roster = [
     {
+        'first_name': 'Ms Allison',
+        'last_name': 'Victoria',
+        'email': 'allison.victoria@tarepet.com',
+        'teacher_id': 'TMS/TCH/0060',
+        'gender': 'Female',
+        'form_class': 'Basic 3 Love',
+        'dept': 'Primary Section',
+        'spec': 'Primary Literacy & Language Arts',
+        'bio': 'Form Teacher for Basic 3 Love guiding literacy and primary education.'
+    },
+    {
+        'first_name': 'Nwachukwu (O)',
+        'last_name': 'Edirin',
+        'email': 'edirin.nwachukwu@tarepet.com',
+        'teacher_id': 'TMS/TCH/0061',
+        'gender': 'Female',
+        'form_class': 'SS 2 Science',
+        'dept': 'Senior Secondary Science Department',
+        'spec': 'Physics & Chemistry Education',
+        'bio': 'Form Teacher for SS 2 Science guiding senior STEM students.'
+    },
+    {
+        'first_name': 'Mrs Ozichi Nwando',
+        'last_name': 'Arinze',
+        'email': 'ozichi.arinze@tarepet.com',
+        'teacher_id': 'TMS/TCH/0062',
+        'gender': 'Female',
+        'form_class': 'Basic 4 Faith',
+        'dept': 'Primary Section',
+        'spec': 'Elementary Mathematics & Science',
+        'bio': 'Form Teacher for Basic 4 Faith nurturing young problem solvers.'
+    },
+    {
+        'first_name': 'Ogbe',
+        'last_name': 'Andrew',
+        'email': 'ogbe.andrew@tarepet.com',
+        'teacher_id': 'TMS/TCH/0063',
+        'gender': 'Male',
+        'form_class': 'SS 3 Art',
+        'dept': 'Senior Secondary Humanities Department',
+        'spec': 'Literature in English & History',
+        'bio': 'Form Teacher for SS 3 Art preparing final year students for SSCE.'
+    },
+    {
+        'first_name': 'Simeon Blessed',
+        'last_name': 'Chigozie',
+        'email': 'blessedsimeon6@gmail.com',
+        'teacher_id': 'TMS/TCH/0019',
+        'gender': 'Male',
+        'form_class': 'SS 1 Love',
+        'dept': 'Senior Secondary Section',
+        'spec': 'Physics & Basic Science',
+        'bio': 'Form Teacher for SS 1 Love guiding senior students in sciences and personal development.'
+    },
+    {
+        'first_name': 'Oyiniki Anita',
+        'last_name': 'Ojinbrakemi',
+        'email': 'oyinkianita6@gmail.com',
+        'teacher_id': 'TMS/TCH/0026',
+        'gender': 'Female',
+        'form_class': 'JSS 3 Love',
+        'dept': 'Junior Secondary Section',
+        'spec': 'English Language & Verbal Reasoning',
+        'bio': 'Form Teacher for JSS 3 Love guiding final year junior secondary students.'
+    },
+    {
+        'first_name': 'Mrs. Eze Chidubem',
+        'last_name': 'Janneth',
+        'email': 'ukachukwuchidubem223@gmail.com',
+        'teacher_id': 'TMS/TCH/0044',
+        'gender': 'Female',
+        'form_class': 'JSS 2 Faith',
+        'dept': 'Junior Secondary Section',
+        'spec': 'Business Studies & Home Economics',
+        'bio': 'Form Teacher for JSS 2 Faith supporting students in character and academic growth.'
+    },
+    {
+        'first_name': 'Amos',
+        'last_name': "God's power",
+        'email': 'amosgodspower360@mail.com',
+        'teacher_id': 'TMS/TCH/0054',
+        'gender': 'Male',
+        'form_class': 'JSS 3 Faith',
+        'dept': 'Junior Secondary Section',
+        'spec': 'Civic Education & BECE Examination Pastoral Oversight',
+        'bio': 'Form Teacher for JSS 3 Faith preparing students for Junior WAEC / BECE examinations.'
+    },
+    {
+        'first_name': 'Iwu',
+        'last_name': 'Adanma',
+        'email': 'iwu.adanma@tarepet.com',
+        'teacher_id': 'TMS/TCH/0064',
+        'gender': 'Female',
+        'form_class': 'Basic 2 Grace',
+        'dept': 'Primary Section',
+        'spec': 'Primary Social Studies & Cultural Arts',
+        'bio': 'Form Teacher for Basic 2 Grace fostering primary creativity and social education.'
+    },
+    {
+        'first_name': 'Mr. Joseph',
+        'last_name': 'Ekenebe',
+        'email': 'joebleszekenebe@gmail.com',
+        'teacher_id': 'TMS/TCH/0043',
+        'gender': 'Male',
+        'form_class': 'JSS 2 Love',
+        'dept': 'Junior Secondary Section',
+        'spec': 'Senior Secondary Studies & Cultural Studies',
+        'bio': 'Form Teacher for JSS 2 Love mentoring junior secondary students.'
+    },
+    {
         'first_name': 'Ngozi',
         'last_name': 'Okwor',
         'email': 'okworngozi@tarepet.com',
@@ -97,28 +207,6 @@ form_teachers_roster = [
         'bio': 'Form Teacher for Basic 5 preparing senior primary pupils for secondary school entrance.'
     },
     {
-        'first_name': 'Joseph',
-        'last_name': 'Ekenebe',
-        'email': 'joebleszekenebe@gmail.com',
-        'teacher_id': 'TMS/TCH/0043',
-        'gender': 'Male',
-        'form_class': 'JSS 2 Love',
-        'dept': 'Junior Secondary Section',
-        'spec': 'Junior Secondary Academic & Pastoral Oversight',
-        'bio': 'Form Teacher for JSS 2 Love mentoring junior secondary students.'
-    },
-    {
-        'first_name': 'Simeon Blessed',
-        'last_name': 'Chigozie',
-        'email': 'blessedsimeon6@gmail.com',
-        'teacher_id': 'TMS/TCH/0019',
-        'gender': 'Male',
-        'form_class': 'SS 1 Love',
-        'dept': 'Senior Secondary Section',
-        'spec': 'Physics, Science & Pastoral Oversight',
-        'bio': 'Form Teacher for SS 1 Love guiding senior students in sciences and personal development.'
-    },
-    {
         'first_name': 'Eli',
         'last_name': 'Idua',
         'email': 'eliidua@gmail.com',
@@ -128,28 +216,6 @@ form_teachers_roster = [
         'dept': 'Senior Secondary Section',
         'spec': 'Mathematics & Senior Pastoral Oversight',
         'bio': 'Form Teacher for SS 1 Art supporting students in academic excellence.'
-    },
-    {
-        'first_name': 'Amos',
-        'last_name': 'Godspower',
-        'email': 'amosgodspower360@mail.com',
-        'teacher_id': 'TMS/TCH/0054',
-        'gender': 'Male',
-        'form_class': 'JSS 3 Faith',
-        'dept': 'Junior Secondary Section',
-        'spec': 'Civic Education & BECE Examination Pastoral Oversight',
-        'bio': 'Form Teacher for JSS 3 Faith preparing students for Junior WAEC / BECE examinations.'
-    },
-    {
-        'first_name': 'Anita Oyinbrakemi',
-        'last_name': 'Oyinki',
-        'email': 'oyinkianita6@gmail.com',
-        'teacher_id': 'TMS/TCH/0026',
-        'gender': 'Female',
-        'form_class': 'JSS 3 Love',
-        'dept': 'Junior Secondary Section',
-        'spec': 'Junior Secondary Academic & Examination Oversight',
-        'bio': 'Form Teacher for JSS 3 Love guiding final year junior secondary students.'
     },
     {
         'first_name': 'Marian',
@@ -172,17 +238,6 @@ form_teachers_roster = [
         'dept': 'Nursery & Early Childhood Department',
         'spec': 'Nursery 1 Montessori Curriculum',
         'bio': 'Form Teacher for Nursery 1 fostering phonics awareness and social confidence.'
-    },
-    {
-        'first_name': 'Jane Chidubem',
-        'last_name': 'Eze',
-        'email': 'ukachukwuchidubem223@gmail.com',
-        'teacher_id': 'TMS/TCH/0044',
-        'gender': 'Female',
-        'form_class': 'JSS 2 Faith',
-        'dept': 'Junior Secondary Section',
-        'spec': 'Junior Secondary Academic & Pastoral Oversight',
-        'bio': 'Form Teacher for JSS 2 Faith supporting students in character and academic growth.'
     },
     {
         'first_name': 'Agatha',

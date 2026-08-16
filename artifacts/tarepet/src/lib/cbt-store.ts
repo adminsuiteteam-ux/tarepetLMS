@@ -298,24 +298,368 @@ export interface TeacherRecord {
   bio?: string;
 }
 
+export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [
+  {
+    id: 101,
+    staffId: 'TMS/TCH/0060',
+    name: 'Ms Allison Victoria',
+    email: 'allison.victoria@tarepet.com',
+    gender: 'Female',
+    phone: '08062577566',
+    formTeacherOf: 'SS 1',
+    department: 'Senior Secondary Section',
+    specialization: 'SS 1 Curriculum',
+    subjectsAssigned: ['Primary Literacy & Language Arts', 'SS1 General'],
+    status: 'Active',
+    joined: '2022-09-01',
+    password: 'TMS/TCH/0060',
+    address: 'Tarepet School Campus',
+    qualification: 'B.Ed. Literacy Education'
+  },
+  {
+    id: 102,
+    staffId: 'TMS/TCH/0016',
+    name: 'Mrs Timi Porbeni',
+    email: 'isaactimi16@gmail.com',
+    gender: 'Female',
+    phone: '07068523730',
+    formTeacherOf: 'None',
+    department: 'Languages & Literature',
+    specialization: 'English Language & Literature in English',
+    subjectsAssigned: ['English Language', 'Literature in English'],
+    status: 'Active',
+    joined: '2021-09-01',
+    password: 'TMS/TCH/0016',
+    address: 'Tarepet School Campus',
+    qualification: 'B.A. English'
+  },
+  {
+    id: 103,
+    staffId: 'TMS/TCH/0070',
+    name: 'Samuel Ogah',
+    email: 'samuel.ogah@tarepet.com',
+    gender: 'Male',
+    phone: '08062489432',
+    formTeacherOf: 'None',
+    department: 'Computer & ICT Department',
+    specialization: 'Coding (P1-SS2) & Digital Literacy (JSS1-3)',
+    subjectsAssigned: ['Computer Studies', 'Coding', 'Digital Literacy'],
+    status: 'Active',
+    joined: '2022-01-15',
+    password: 'TMS/TCH/0070',
+    address: 'Tarepet School Campus',
+    qualification: 'B.Sc. Computer Science'
+  },
+  {
+    id: 104,
+    staffId: 'TMS/TCH/0061',
+    name: 'Nwachukwu (O) Edirin',
+    email: 'edirin.nwachukwu@tarepet.com',
+    gender: 'Female',
+    phone: '07030356176',
+    formTeacherOf: 'SS 2',
+    department: 'Senior Secondary Science Department',
+    specialization: 'Physics & Chemistry Education',
+    subjectsAssigned: ['Physics', 'Chemistry'],
+    status: 'Active',
+    joined: '2021-09-01',
+    password: 'TMS/TCH/0061',
+    address: 'Tarepet School Campus',
+    qualification: 'B.Sc. Physics'
+  },
+  {
+    id: 105,
+    staffId: 'TMS/TCH/0062',
+    name: 'Mrs Ozichi Nwando Arinze',
+    email: 'ozichi.arinze@tarepet.com',
+    gender: 'Female',
+    phone: '08067102216',
+    formTeacherOf: 'Basic 4',
+    department: 'Primary Section',
+    specialization: 'Mathematics (Basic 4)',
+    subjectsAssigned: ['Elementary Mathematics', 'Basic Science'],
+    status: 'Active',
+    joined: '2022-01-15',
+    password: 'TMS/TCH/0062',
+    address: 'Tarepet School Campus',
+    qualification: 'B.Ed. Primary Education'
+  },
+  {
+    id: 106,
+    staffId: 'TMS/TCH/0063',
+    name: 'Ogbe Andrew',
+    email: 'ogbe.andrew@tarepet.com',
+    gender: 'Male',
+    phone: '080806976503',
+    formTeacherOf: 'SS 3',
+    department: 'Senior Secondary Humanities Department',
+    specialization: 'Literature in English & History',
+    subjectsAssigned: ['Literature in English', 'History'],
+    status: 'Active',
+    joined: '2020-09-01',
+    password: 'TMS/TCH/0063',
+    address: 'Tarepet School Campus',
+    qualification: 'B.A. Literature'
+  },
+  {
+    id: 107,
+    staffId: 'TMS/TCH/0017',
+    name: 'Abiola Adeniyi Adeyemo',
+    email: 'adeniyiabiola2@gmail.com',
+    gender: 'Male',
+    phone: '07030549799',
+    formTeacherOf: 'None',
+    department: 'Science Department',
+    specialization: 'Chemistry',
+    subjectsAssigned: ['Chemistry'],
+    status: 'Active',
+    joined: '2021-09-01',
+    password: 'TMS/TCH/0017',
+    address: 'Tarepet School Campus',
+    qualification: 'B.Sc. Chemistry'
+  },
+  {
+    id: 108,
+    staffId: 'TMS/TCH/0019',
+    name: 'Simeon Blessed Chigozie',
+    email: 'blessedsimeon6@gmail.com',
+    gender: 'Male',
+    phone: '08131251726',
+    formTeacherOf: 'SS 1 Love',
+    department: 'Senior Secondary Section',
+    specialization: 'Physics (JSS1-3 / SS1-3)',
+    subjectsAssigned: ['Physics', 'Basic Science'],
+    status: 'Active',
+    joined: '2021-09-01',
+    password: 'TMS/TCH/0019',
+    address: 'Tarepet School Campus',
+    qualification: 'B.Sc. Physics Education'
+  },
+  {
+    id: 109,
+    staffId: 'TMS/TCH/0071',
+    name: 'Egbe B. Austin',
+    email: 'egbe.austin@tarepet.com',
+    gender: 'Male',
+    phone: '08146783609',
+    formTeacherOf: 'None',
+    department: 'Physical Education Department',
+    specialization: 'JSS1-3 Physical & Health Education (PHE)',
+    subjectsAssigned: ['Physical & Health Education'],
+    status: 'Active',
+    joined: '2022-09-01',
+    password: 'TMS/TCH/0071',
+    address: 'Tarepet School Campus',
+    qualification: 'B.Sc. Physical Education'
+  },
+  {
+    id: 110,
+    staffId: 'TMS/TCH/0026',
+    name: 'Oyiniki Anita Ojinbrakemi',
+    email: 'oyinkianita6@gmail.com',
+    gender: 'Female',
+    phone: '08066154094',
+    formTeacherOf: 'JSS 3 Love',
+    department: 'Junior Secondary Section',
+    specialization: 'Home Economics & English Language',
+    subjectsAssigned: ['Home Economics', 'English Language'],
+    status: 'Active',
+    joined: '2022-09-01',
+    password: 'TMS/TCH/0026',
+    address: 'Tarepet School Campus',
+    qualification: 'B.A. English'
+  },
+  {
+    id: 111,
+    staffId: 'TMS/TCH/0044',
+    name: 'MRS EZE CHIDUBEM JANNETH',
+    email: 'ukachukwuchidubem223@gmail.com',
+    gender: 'Female',
+    phone: '08142417833',
+    formTeacherOf: 'JSS 2 Faith',
+    department: 'Junior Secondary Section',
+    specialization: 'JSS 2 Faith & Business Studies',
+    subjectsAssigned: ['Business Studies', 'Home Economics'],
+    status: 'Active',
+    joined: '2021-09-01',
+    password: 'TMS/TCH/0044',
+    address: 'Tarepet School Campus',
+    qualification: 'B.Sc. Business Education'
+  },
+  {
+    id: 112,
+    staffId: 'TMS/TCH/0072',
+    name: 'Agadaga Tari',
+    email: 'agadaga.tari@tarepet.com',
+    gender: 'Male',
+    phone: '08065008494',
+    formTeacherOf: 'None',
+    department: 'Creative & Fine Arts Department',
+    specialization: 'JSS 1-3 Fine Art',
+    subjectsAssigned: ['Fine Art', 'Cultural & Creative Arts'],
+    status: 'Active',
+    joined: '2022-09-01',
+    password: 'TMS/TCH/0072',
+    address: 'Tarepet School Campus',
+    qualification: 'B.A. Fine Arts'
+  },
+  {
+    id: 113,
+    staffId: 'TMS/TCH/0054',
+    name: 'Amos Godspower',
+    email: 'amosgodspower360@mail.com',
+    gender: 'Male',
+    phone: '07035339196',
+    formTeacherOf: 'JSS 3 Faith',
+    department: 'Junior Secondary Section',
+    specialization: 'Social Studies & Civic Education (JSS1-3)',
+    subjectsAssigned: ['Civic Education', 'Social Studies'],
+    status: 'Active',
+    joined: '2020-09-01',
+    password: 'TMS/TCH/0054',
+    address: 'Tarepet School Campus',
+    qualification: 'B.Sc. Political Science'
+  },
+  {
+    id: 114,
+    staffId: 'TMS/TCH/0064',
+    name: 'Iwu Adanma',
+    email: 'iwu.adanma@tarepet.com',
+    gender: 'Female',
+    phone: '08039341848',
+    formTeacherOf: 'JSS 1 Faith',
+    department: 'Junior Secondary Section',
+    specialization: 'JSS 1-2 Business Studies',
+    subjectsAssigned: ['Business Studies'],
+    status: 'Active',
+    joined: '2023-01-10',
+    password: 'TMS/TCH/0064',
+    address: 'Tarepet School Campus',
+    qualification: 'B.Ed. Primary Education'
+  },
+  {
+    id: 115,
+    staffId: 'TMS/TCH/0043',
+    name: 'Mr. Joseph Ekenebe',
+    email: 'joebleszekenebe@gmail.com',
+    gender: 'Male',
+    phone: '08137183618',
+    formTeacherOf: 'SS 2 Grace',
+    department: 'Senior Secondary Section',
+    specialization: 'SS 1-3 Marketing & Entrepreneurship',
+    subjectsAssigned: ['Marketing', 'Entrepreneurship', 'Senior Secondary Studies'],
+    status: 'Active',
+    joined: '2021-09-01',
+    password: 'TMS/TCH/0043',
+    address: 'Tarepet School Campus',
+    qualification: 'B.Sc. Education'
+  },
+  {
+    id: 116,
+    staffId: 'TMS/TCH/0027',
+    name: 'Goodluck Ufomba',
+    email: 'goodluckufomba2020@gmail.com',
+    gender: 'Male',
+    phone: '08032288883',
+    formTeacherOf: 'None',
+    department: 'Mathematics Department',
+    specialization: 'Mathematics (JSS 2 & SS 2)',
+    subjectsAssigned: ['Mathematics'],
+    status: 'Active',
+    joined: '2022-09-01',
+    password: 'TMS/TCH/0027',
+    address: 'Tarepet School Campus',
+    qualification: 'B.Sc. Mathematics'
+  },
+  {
+    id: 117,
+    staffId: 'TMS/TCH/0025',
+    name: 'ELI IDUA',
+    email: 'eliidua@gmail.com',
+    gender: 'Male',
+    phone: '08068583070',
+    formTeacherOf: 'None',
+    department: 'Mathematics Department',
+    specialization: 'Mathematics & Further Mathematics (JSS3, SS2, SS3)',
+    subjectsAssigned: ['Mathematics', 'Further Mathematics'],
+    status: 'Active',
+    joined: '2021-09-01',
+    password: 'TMS/TCH/0025',
+    address: 'Tarepet School Campus',
+    qualification: 'B.Sc. Mathematics'
+  },
+  {
+    id: 118,
+    staffId: 'TMS/TCH/0013',
+    name: 'ALEX T AKPOBULOKEMI MARIN',
+    email: 'alexakpobulokemi@gmail.com',
+    gender: 'Male',
+    phone: '09066984417',
+    formTeacherOf: 'None',
+    department: 'Geography & Marine Sciences',
+    specialization: 'Geography (SS 1 - SS 3)',
+    subjectsAssigned: ['Geography', 'Marine Geography'],
+    status: 'Active',
+    joined: '2020-09-01',
+    password: 'TMS/TCH/0013',
+    address: 'Tarepet School Campus',
+    qualification: 'B.Sc. Geography'
+  },
+  {
+    id: 119,
+    staffId: 'TMS/TCH/0022',
+    name: 'EMMANUEL U. JOSEPH',
+    email: 'joeugbede2024@gmail.com',
+    gender: 'Male',
+    phone: '08021472342',
+    formTeacherOf: 'None',
+    department: 'Biological Sciences',
+    specialization: 'Biology (SS 1 - SS 3)',
+    subjectsAssigned: ['Biology'],
+    status: 'Active',
+    joined: '2021-09-01',
+    password: 'TMS/TCH/0022',
+    address: 'Tarepet School Campus',
+    qualification: 'B.Sc. Biology'
+  }
+];
+
 function loadSavedTeachers(): TeacherRecord[] {
-  if (typeof window === 'undefined') return [];
-  try {
-    const saved = localStorage.getItem('tarepet_teachers_list');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed)) {
-        // Filter out legacy mock seed teachers (staffId TMS/TCH/0001 to TMS/TCH/0018)
-        const liveOnly = parsed.filter((t: any) => {
-          const sId = String(t.staffId || t.teacher_id || '');
-          const isMockSeed = sId.startsWith('TMS/TCH/0') || sId.startsWith('TMS/TCH/00');
-          return !isMockSeed;
-        });
-        return liveOnly;
+  let savedTeachers: TeacherRecord[] = [];
+  if (typeof window !== 'undefined') {
+    try {
+      const saved = localStorage.getItem('tarepet_teachers_list');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          savedTeachers = parsed;
+        }
       }
+    } catch (e) {}
+  }
+
+  // Merge DEFAULT_FORM_TEACHERS with saved edits, preserving exact official roster (19)
+  const defaultKeys = new Set(DEFAULT_FORM_TEACHERS.map(t => (t.email || t.staffId || '').toLowerCase()));
+  const mergedMap = new Map<string, TeacherRecord>();
+  
+  DEFAULT_FORM_TEACHERS.forEach(t => {
+    mergedMap.set((t.email || t.staffId || '').toLowerCase(), t);
+  });
+
+  savedTeachers.forEach(t => {
+    const key = (t.email || t.staffId || String(t.id)).toLowerCase();
+    if (defaultKeys.has(key)) {
+      const existing = mergedMap.get(key);
+      if (existing) {
+        mergedMap.set(key, { ...existing, ...t });
+      }
+    } else if (typeof t.id === 'number' && t.id >= 1000) {
+      // Allow newly created custom teachers (ID >= 1000)
+      mergedMap.set(key, t);
     }
-  } catch (e) {}
-  return [];
+  });
+
+  return Array.from(mergedMap.values());
 }
 
 let _teachers: TeacherRecord[] = loadSavedTeachers();

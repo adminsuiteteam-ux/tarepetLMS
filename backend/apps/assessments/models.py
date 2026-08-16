@@ -1,3 +1,4 @@
+from typing import Any, Optional, cast
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from apps.courses.models import Course
@@ -57,9 +58,13 @@ class Submission(models.Model):
         return self.submitted_at > self.assignment.due_date
 
     @property
-    def grade_percentage(self):
-        if self.grade is not None and self.assignment.max_score > 0:
-            return round((self.grade / self.assignment.max_score) * 100, 2)
+    def grade_percentage(self) -> Optional[float]:
+        grade_val = getattr(self, 'grade', None)
+        assignment_obj = getattr(self, 'assignment', None)
+        if grade_val is not None and assignment_obj is not None:
+            max_score = getattr(assignment_obj, 'max_score', 0)
+            if max_score and float(cast(Any, max_score)) > 0:
+                return round((float(cast(Any, grade_val)) / float(cast(Any, max_score))) * 100, 2)
         return None
 
 

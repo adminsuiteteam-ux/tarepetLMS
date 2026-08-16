@@ -45,84 +45,79 @@ class Command(BaseCommand):
                 adm_user.save()
             AdminProfile.objects.get_or_create(user=adm_user, defaults={'role_type': 'Super Admin'})
 
-        # 3. Seed Teachers from Official Roster
+        # 3. Seed Teachers from Official Paper Roster (Exact 19 Teachers)
         teachers_roster = [
             {
-                'first_name': 'Simeon Blessed',
-                'last_name': 'Chigozie',
-                'email': 'blessedsimeon6@gmail.com',
-                'teacher_id': 'TMS/TCH/0019',
-                'gender': 'Male',
-                'department': 'Physics & Science Department',
-                'specialization': 'Physics & Basic Science',
-                'subjects_taught': [
-                    {'name': 'Physics', 'grade': 'SS 1'},
-                    {'name': 'Physics', 'grade': 'SS 2'},
-                    {'name': 'Physics', 'grade': 'SS 3'},
-                    {'name': 'Basic Science', 'grade': 'JSS 1'},
-                ],
-                'bio': 'Physics and Basic Science educator for Junior and Senior Secondary levels.',
-                'class_assigned': 'SS 1 Love'
+                'first_name': 'Ms Allison',
+                'last_name': 'Victoria',
+                'email': 'allison.victoria@tarepet.com',
+                'teacher_id': 'TMS/TCH/0060',
+                'gender': 'Female',
+                'department': 'Senior Secondary Section',
+                'specialization': 'SS 1 Curriculum',
+                'class_assigned': 'SS 1',
+                'bio': 'Form Teacher for SS 1.',
+                'subjects_taught': [{'name': 'Primary Literacy & Language Arts', 'grade': 'SS 1'}]
             },
             {
-                'first_name': 'Eli',
-                'last_name': 'Idua',
-                'email': 'eliidua@gmail.com',
-                'teacher_id': 'TMS/TCH/0025',
-                'gender': 'Male',
-                'department': 'Mathematics Department',
-                'specialization': 'Mathematics & Further Mathematics',
-                'subjects_taught': [
-                    {'name': 'Mathematics', 'grade': 'JSS 3'},
-                    {'name': 'Mathematics', 'grade': 'SS 3'},
-                    {'name': 'Further Mathematics', 'grade': 'SS 2'},
-                    {'name': 'Further Mathematics', 'grade': 'SS 3'},
-                ],
-                'bio': 'Senior Mathematics & Further Mathematics specialist.',
-                'class_assigned': 'SS 1 Art'
+                'first_name': 'Timi',
+                'last_name': 'Porbeni',
+                'email': 'isaactimi16@gmail.com',
+                'teacher_id': 'TMS/TCH/0016',
+                'gender': 'Female',
+                'department': 'Languages & Literature',
+                'specialization': 'English Language & Literature in English (SS1-3)',
+                'class_assigned': 'None',
+                'bio': 'English Language and Literature in English educator for SS1 to SS3.',
+                'subjects_taught': [{'name': 'English Language', 'grade': 'SS 1'}, {'name': 'Literature in English', 'grade': 'SS 1'}]
             },
             {
-                'first_name': 'Amos',
-                'last_name': 'Godspower',
-                'email': 'amosgodspower360@mail.com',
-                'teacher_id': 'TMS/TCH/0054',
+                'first_name': 'Samuel',
+                'last_name': 'Ogah',
+                'email': 'samuel.ogah@tarepet.com',
+                'teacher_id': 'TMS/TCH/0070',
                 'gender': 'Male',
-                'department': 'Social Sciences',
-                'specialization': 'Civic Education',
-                'subjects_taught': [
-                    {'name': 'Civic Education', 'grade': 'SS 1'},
-                    {'name': 'Civic Education', 'grade': 'SS 2'},
-                    {'name': 'Civic Education', 'grade': 'SS 3'},
-                ],
-                'bio': 'Civic Education specialist across all Senior Secondary classes (SS1 - SS3).',
-                'class_assigned': 'JSS 3 Faith'
+                'department': 'Computer & ICT Department',
+                'specialization': 'Coding (P1-SS2) & Digital Literacy (JSS1-3)',
+                'class_assigned': 'None',
+                'bio': 'Coding and Digital Literacy instructor.',
+                'subjects_taught': [{'name': 'Computer Studies', 'grade': 'JSS 1'}, {'name': 'Coding', 'grade': 'Primary 1'}]
             },
             {
-                'first_name': 'Goodluck',
-                'last_name': 'Ufomba',
-                'email': 'goodluckufomba2020@gmail.com',
-                'teacher_id': 'TMS/TCH/0027',
-                'gender': 'Male',
-                'department': 'Mathematics Department',
-                'specialization': 'Mathematics',
-                'subjects_taught': [
-                    {'name': 'Mathematics', 'grade': 'SS 2'},
-                ],
-                'bio': 'Mathematics educator handling SS 2 curriculum.'
+                'first_name': 'Nwachukwu (O)',
+                'last_name': 'Edirin',
+                'email': 'edirin.nwachukwu@tarepet.com',
+                'teacher_id': 'TMS/TCH/0061',
+                'gender': 'Female',
+                'department': 'Senior Secondary Science Department',
+                'specialization': 'Physics & Chemistry Education',
+                'class_assigned': 'SS 2',
+                'bio': 'Form Teacher for SS 2.',
+                'subjects_taught': [{'name': 'Physics', 'grade': 'SS 2'}, {'name': 'Chemistry', 'grade': 'SS 2'}]
             },
             {
-                'first_name': 'Alfred-Eto',
-                'last_name': 'Eluan',
-                'email': 'alfredetoeluan16@gmail.com',
-                'teacher_id': 'TMS/TCH/0039',
+                'first_name': 'Ozichi Nwando',
+                'last_name': 'Arinze',
+                'email': 'ozichi.arinze@tarepet.com',
+                'teacher_id': 'TMS/TCH/0062',
+                'gender': 'Female',
+                'department': 'Primary Section',
+                'specialization': 'Basic 4 Mathematics',
+                'class_assigned': 'Basic 4',
+                'bio': 'Form Teacher for Basic 4.',
+                'subjects_taught': [{'name': 'Mathematics', 'grade': 'Basic 4'}]
+            },
+            {
+                'first_name': 'Ogbe',
+                'last_name': 'Andrew',
+                'email': 'ogbe.andrew@tarepet.com',
+                'teacher_id': 'TMS/TCH/0063',
                 'gender': 'Male',
-                'department': 'Science Department',
-                'specialization': 'Chemistry',
-                'subjects_taught': [
-                    {'name': 'Chemistry', 'grade': 'SS 2'},
-                    {'name': 'Chemistry', 'grade': 'SS 3'},
-                ],
-                'bio': 'Senior Chemistry specialist for SS 2 and SS 3.'
+                'department': 'Senior Secondary Humanities Department',
+                'specialization': 'Literature in English & History',
+                'class_assigned': 'SS 3',
+                'bio': 'Form Teacher for SS 3.',
+                'subjects_taught': [{'name': 'Literature in English', 'grade': 'SS 3'}, {'name': 'History', 'grade': 'SS 3'}]
             },
             {
                 'first_name': 'Abiola Adeniyi',
@@ -132,173 +127,45 @@ class Command(BaseCommand):
                 'gender': 'Male',
                 'department': 'Science Department',
                 'specialization': 'Chemistry',
-                'subjects_taught': [
-                    {'name': 'Chemistry', 'grade': 'SS 1'},
-                ],
-                'bio': 'Chemistry educator for Senior Secondary 1 (SS1).'
+                'class_assigned': 'None',
+                'bio': 'Chemistry specialist for SS 3.',
+                'subjects_taught': [{'name': 'Chemistry', 'grade': 'SS 3'}]
             },
             {
-                'first_name': 'Emmanuel',
-                'last_name': 'Joseph',
-                'email': 'joeugbede2024@gmail.com',
-                'teacher_id': 'TMS/TCH/0022',
+                'first_name': 'Simeon Blessed',
+                'last_name': 'Chigozie',
+                'email': 'blessedsimeon6@gmail.com',
+                'teacher_id': 'TMS/TCH/0019',
                 'gender': 'Male',
-                'department': 'Biological Sciences',
-                'specialization': 'Biology',
-                'subjects_taught': [
-                    {'name': 'Biology', 'grade': 'SS 1'},
-                    {'name': 'Biology', 'grade': 'SS 2'},
-                    {'name': 'Biology', 'grade': 'SS 3'},
-                ],
-                'bio': 'Senior Biology specialist for SS 1, SS 2, and SS 3.'
+                'department': 'Physics & Science Department',
+                'specialization': 'Physics (JSS1-3 / SS1-3)',
+                'class_assigned': 'SS 1 Love',
+                'bio': 'Form Teacher for SS 1 Love and Physics educator.',
+                'subjects_taught': [{'name': 'Physics', 'grade': 'SS 1'}, {'name': 'Basic Science', 'grade': 'JSS 1'}]
             },
             {
-                'first_name': 'Alex T.',
-                'last_name': 'Akpobulokemi',
-                'email': 'alexakpobulokemi@gmail.com',
-                'teacher_id': 'TMS/TCH/0013',
+                'first_name': 'Egbe B.',
+                'last_name': 'Austin',
+                'email': 'egbe.austin@tarepet.com',
+                'teacher_id': 'TMS/TCH/0071',
                 'gender': 'Male',
-                'department': 'Geography & Environmental Sciences',
-                'specialization': 'Geography & Marine Geography',
-                'subjects_taught': [
-                    {'name': 'Geography', 'grade': 'SS 1'},
-                    {'name': 'Geography', 'grade': 'SS 2'},
-                    {'name': 'Geography', 'grade': 'SS 3'},
-                    {'name': 'Marine Geography', 'grade': 'SS 1'},
-                    {'name': 'Marine Geography', 'grade': 'SS 2'},
-                    {'name': 'Marine Geography', 'grade': 'SS 3'},
-                ],
-                'bio': 'Geography and Marine Environmental Studies educator (SS 1 - SS 3).'
+                'department': 'Physical Education Department',
+                'specialization': 'JSS1-3 Physical & Health Education (PHE)',
+                'class_assigned': 'None',
+                'bio': 'Physical and Health Education instructor.',
+                'subjects_taught': [{'name': 'Physical & Health Education', 'grade': 'JSS 1'}]
             },
             {
-                'first_name': 'Joseph',
-                'last_name': 'Ekenebe',
-                'email': 'joebleszekenebe@gmail.com',
-                'teacher_id': 'TMS/TCH/0043',
-                'gender': 'Male',
-                'department': 'Senior Secondary Studies',
-                'specialization': 'Senior Secondary Studies',
-                'subjects_taught': [
-                    {'name': 'Senior Secondary Studies', 'grade': 'SS 1'},
-                    {'name': 'Senior Secondary Studies', 'grade': 'SS 2'},
-                    {'name': 'Senior Secondary Studies', 'grade': 'SS 3'},
-                ],
-                'bio': 'Senior Secondary faculty educator across SS 1, SS 2, and SS 3 classes.',
-                'class_assigned': 'JSS 2 Love'
-            },
-            {
-                'first_name': 'Timi',
-                'last_name': 'Porbeni',
-                'email': 'isaactimi16@gmail.com',
-                'teacher_id': 'TMS/TCH/0016',
-                'gender': 'Female',
-                'department': 'Languages & Literature',
-                'specialization': 'English Language & Literature in English',
-                'subjects_taught': [
-                    {'name': 'English Language', 'grade': 'SS 2'},
-                    {'name': 'English Language', 'grade': 'SS 3'},
-                    {'name': 'Literature in English', 'grade': 'SS 3'},
-                ],
-                'bio': 'Senior English Language and Literature in English educator for SS 2 and SS 3.'
-            },
-            {
-                'first_name': 'Ngozi',
-                'last_name': 'Okwor',
-                'email': 'okworngozi@tarepet.com',
-                'teacher_id': 'TMS/TCH/0057',
-                'gender': 'Female',
-                'department': 'Primary Section',
-                'specialization': 'Primary 3 Curriculum & Pastoral Care',
-                'class_assigned': 'Basic 3 Faith',
-                'subjects_taught': [
-                    {'name': 'All Subjects (Primary)', 'grade': 'Basic 3'},
-                ],
-                'bio': 'Form Teacher for Basic 3 Faith guiding pupil academic progress and character development.'
-            },
-            {
-                'first_name': 'Faith',
-                'last_name': 'Johnson',
-                'email': 'johnsonhecter2019@gmail.com',
-                'teacher_id': 'TMS/TCH/0015',
-                'gender': 'Female',
-                'department': 'Primary Section',
-                'specialization': 'Primary 4 Curriculum & Pastoral Care',
-                'class_assigned': 'Basic 4',
-                'subjects_taught': [
-                    {'name': 'All Subjects (Primary)', 'grade': 'Basic 4'},
-                ],
-                'bio': 'Form Teacher for Basic 4 overseeing student leadership and elementary syllabus.'
-            },
-            {
-                'first_name': 'Glory',
-                'last_name': 'Albert',
-                'email': 'albertglory@gmail.com',
-                'teacher_id': 'TMS/TCH/0038',
-                'gender': 'Female',
-                'department': 'Primary Section',
-                'specialization': 'Primary 2 Curriculum & Pastoral Care',
-                'class_assigned': 'Basic 2',
-                'subjects_taught': [
-                    {'name': 'All Subjects (Primary)', 'grade': 'Basic 2'},
-                ],
-                'bio': 'Form Teacher for Basic 2 focused on foundational numeracy and reading fluency.'
-            },
-            {
-                'first_name': 'Tina',
-                'last_name': 'Maku',
-                'email': 'tinamaku@tarepet.com',
-                'teacher_id': 'TMS/TCH/0058',
-                'gender': 'Female',
-                'department': 'Primary Section',
-                'specialization': 'Primary 1 Grace Curriculum & Pastoral Care',
-                'class_assigned': 'Basic 1 Grace',
-                'subjects_taught': [
-                    {'name': 'All Subjects (Primary)', 'grade': 'Basic 1'},
-                ],
-                'bio': 'Form Teacher for Basic 1 Grace facilitating early primary transition and active learning.'
-            },
-            {
-                'first_name': 'Azibaolonami',
-                'last_name': 'Wariboko',
-                'email': 'aziwariboko@gmail.com',
-                'teacher_id': 'TMS/TCH/0035',
-                'gender': 'Female',
-                'department': 'Primary Section',
-                'specialization': 'Primary 1 Love Curriculum & Pastoral Care',
-                'class_assigned': 'Basic 1 Love',
-                'subjects_taught': [
-                    {'name': 'All Subjects (Primary)', 'grade': 'Basic 1'},
-                ],
-                'bio': 'Form Teacher for Basic 1 Love nurturing young learners in literacy and character.'
-            },
-            {
-                'first_name': 'Juliet',
-                'last_name': 'Shedrack',
-                'email': 'ogbenejuliet02@gmail.com',
-                'teacher_id': 'TMS/TCH/0028',
-                'gender': 'Female',
-                'department': 'Primary Section',
-                'specialization': 'Primary 5 Curriculum & Primary School Leaving Prep',
-                'class_assigned': 'Basic 5',
-                'subjects_taught': [
-                    {'name': 'All Subjects (Primary)', 'grade': 'Basic 5'},
-                ],
-                'bio': 'Form Teacher for Basic 5 preparing senior primary pupils for secondary school entrance.'
-            },
-            {
-                'first_name': 'Anita Oyinbrakemi',
-                'last_name': 'Oyinki',
+                'first_name': 'Oyiniki Anita',
+                'last_name': 'Ojinbrakemi',
                 'email': 'oyinkianita6@gmail.com',
                 'teacher_id': 'TMS/TCH/0026',
                 'gender': 'Female',
                 'department': 'Junior Secondary Section',
-                'specialization': 'Junior Secondary Academic & Examination Oversight',
+                'specialization': 'Home Economics & English Language (JSS 1-3)',
                 'class_assigned': 'JSS 3 Love',
-                'subjects_taught': [
-                    {'name': 'English Language', 'grade': 'JSS 3'},
-                    {'name': 'Verbal Reasoning', 'grade': 'JSS 3'},
-                ],
-                'bio': 'Form Teacher for JSS 3 Love guiding final year junior secondary students to BECE excellence.'
+                'bio': 'Form Teacher for JSS 3 Love.',
+                'subjects_taught': [{'name': 'Home Economics', 'grade': 'JSS 3'}, {'name': 'English Language', 'grade': 'JSS 3'}]
             },
             {
                 'first_name': 'Jane Chidubem',
@@ -307,163 +174,113 @@ class Command(BaseCommand):
                 'teacher_id': 'TMS/TCH/0044',
                 'gender': 'Female',
                 'department': 'Junior Secondary Section',
-                'specialization': 'Junior Secondary Academic & Pastoral Oversight',
+                'specialization': 'JSS 2 Faith & Business Studies',
                 'class_assigned': 'JSS 2 Faith',
-                'subjects_taught': [
-                    {'name': 'Business Studies', 'grade': 'JSS 2'},
-                    {'name': 'Home Economics', 'grade': 'JSS 2'},
-                ],
-                'bio': 'Form Teacher for JSS 2 Faith supporting students in character and academic growth.'
+                'bio': 'Form Teacher for JSS 2 Faith.',
+                'subjects_taught': [{'name': 'Business Studies', 'grade': 'JSS 2'}, {'name': 'Home Economics', 'grade': 'JSS 2'}]
             },
-
             {
-                'first_name': 'Agatha',
+                'first_name': 'Agadaga',
+                'last_name': 'Tari',
+                'email': 'agadaga.tari@tarepet.com',
+                'teacher_id': 'TMS/TCH/0072',
+                'gender': 'Male',
+                'department': 'Creative & Fine Arts Department',
+                'specialization': 'JSS 1-3 Fine Art',
+                'class_assigned': 'None',
+                'bio': 'Fine Art instructor across JSS 1 to JSS 3.',
+                'subjects_taught': [{'name': 'Fine Art', 'grade': 'JSS 1'}]
+            },
+            {
+                'first_name': 'Amos',
+                'last_name': 'Godspower',
+                'email': 'amosgodspower360@mail.com',
+                'teacher_id': 'TMS/TCH/0054',
+                'gender': 'Male',
+                'department': 'Social Sciences',
+                'specialization': 'Social Studies / Civic Education (JSS 1-3)',
+                'class_assigned': 'JSS 3 Faith',
+                'bio': 'Form Teacher for JSS 3 Faith.',
+                'subjects_taught': [{'name': 'Civic Education', 'grade': 'JSS 3'}, {'name': 'Social Studies', 'grade': 'JSS 3'}]
+            },
+            {
+                'first_name': 'Iwu',
+                'last_name': 'Adanma',
+                'email': 'iwu.adanma@tarepet.com',
+                'teacher_id': 'TMS/TCH/0064',
+                'gender': 'Female',
+                'department': 'Junior Secondary Section',
+                'specialization': 'JSS 1-2 Business Studies',
+                'class_assigned': 'JSS 1 Faith',
+                'bio': 'Form Teacher for JSS 1 Faith.',
+                'subjects_taught': [{'name': 'Business Studies', 'grade': 'JSS 1'}]
+            },
+            {
+                'first_name': 'Joseph',
+                'last_name': 'Ekenebe',
+                'email': 'joebleszekenebe@gmail.com',
+                'teacher_id': 'TMS/TCH/0043',
+                'gender': 'Male',
+                'department': 'Senior Secondary Section',
+                'specialization': 'SS 1-3 Marketing & Entrepreneurship',
+                'class_assigned': 'SS 2 Grace',
+                'bio': 'Form Teacher for SS 2 Grace.',
+                'subjects_taught': [{'name': 'Marketing', 'grade': 'SS 2'}, {'name': 'Entrepreneurship', 'grade': 'SS 2'}]
+            },
+            {
+                'first_name': 'Goodluck',
+                'last_name': 'Ufomba',
+                'email': 'goodluckufomba2020@gmail.com',
+                'teacher_id': 'TMS/TCH/0027',
+                'gender': 'Male',
+                'department': 'Mathematics Department',
+                'specialization': 'Mathematics JSS 2 & SS 2',
+                'class_assigned': 'None',
+                'bio': 'Mathematics educator for JSS 2 and SS 2.',
+                'subjects_taught': [{'name': 'Mathematics', 'grade': 'SS 2'}, {'name': 'Mathematics', 'grade': 'JSS 2'}]
+            },
+            {
+                'first_name': 'Eli',
+                'last_name': 'Idua',
+                'email': 'eliidua@gmail.com',
+                'teacher_id': 'TMS/TCH/0025',
+                'gender': 'Male',
+                'department': 'Mathematics Department',
+                'specialization': 'Maths & Further Maths JSS 3, SS 2, SS 3',
+                'class_assigned': 'None',
+                'bio': 'Mathematics and Further Mathematics specialist.',
+                'subjects_taught': [{'name': 'Mathematics', 'grade': 'SS 3'}, {'name': 'Further Mathematics', 'grade': 'SS 2'}]
+            },
+            {
+                'first_name': 'Alex T.',
+                'last_name': 'Akpobulokemi',
+                'email': 'alexakpobulokemi@gmail.com',
+                'teacher_id': 'TMS/TCH/0013',
+                'gender': 'Male',
+                'department': 'Geography & Environmental Sciences',
+                'specialization': 'Geography SS 1 - SS 3',
+                'class_assigned': 'None',
+                'bio': 'Geography and Environmental Sciences instructor.',
+                'subjects_taught': [{'name': 'Geography', 'grade': 'SS 1'}, {'name': 'Marine Geography', 'grade': 'SS 1'}]
+            },
+            {
+                'first_name': 'Emmanuel U.',
                 'last_name': 'Joseph',
-                'email': 'agathajoseph@gmail.com',
-                'teacher_id': 'TMS/TCH/0037',
-                'gender': 'Female',
-                'department': 'Nursery & Early Childhood Department',
-                'specialization': 'Early Years Montessori (All Subjects)',
-                'class_assigned': 'Nursery 1',
-                'subjects_taught': [
-                    {'name': 'All Subjects (Early Years)', 'grade': 'Nursery 1'},
-                    {'name': 'Numeracy & Shapes', 'grade': 'Nursery 1'},
-                    {'name': 'Literacy & Phonics', 'grade': 'Nursery 1'},
-                    {'name': 'Practical Life & Sensorial', 'grade': 'Nursery 1'},
-                ],
-                'bio': 'Nursery 1 Lead Educator specializing in Montessori foundational numeracy and phonics.'
-            },
-            {
-                'first_name': 'Excellent A.',
-                'last_name': 'Marvellous',
-                'email': 'mexcellent78@gmail.com',
-                'teacher_id': 'TMS/TCH/0030',
-                'gender': 'Female',
-                'department': 'Nursery & Early Childhood Department',
-                'specialization': 'Early Years Montessori (All Subjects)',
-                'class_assigned': 'Nursery 2',
-                'subjects_taught': [
-                    {'name': 'All Subjects (Early Years)', 'grade': 'Nursery 2'},
-                    {'name': 'Numeracy & Arithmetic', 'grade': 'Nursery 2'},
-                    {'name': 'Literacy & Phonics', 'grade': 'Nursery 2'},
-                    {'name': 'Montessori Sensorial', 'grade': 'Nursery 2'},
-                ],
-                'bio': 'Nursery 2 Educator focused on experiential early learning and language development.'
-            },
-            {
-                'first_name': 'Joy',
-                'last_name': 'Pullah',
-                'email': 'pullahjoy@tarepet.com',
-                'teacher_id': 'TMS/TCH/0055',
-                'gender': 'Female',
-                'department': 'Creche & Reception Department',
-                'specialization': 'Early Childhood & Toddler Care (All Subjects)',
-                'class_assigned': 'Reception (Creche)',
-                'subjects_taught': [
-                    {'name': 'All Subjects (Reception / Creche)', 'grade': 'Reception'},
-                    {'name': 'Sensorial & Motor Development', 'grade': 'Reception'},
-                    {'name': 'Language & Rhymes', 'grade': 'Reception'},
-                ],
-                'bio': 'Reception & Creche Specialist nurturing toddler sensory exploration and communication.'
-            },
-            {
-                'first_name': 'Ayibaiteimodei',
-                'last_name': 'Godknows',
-                'email': 'godknowsayibaiteimodei15@gmail.com',
-                'teacher_id': 'TMS/TCH/0046',
-                'gender': 'Female',
-                'department': 'Nursery & Early Childhood Department',
-                'specialization': 'Early Years Montessori (All Subjects)',
-                'class_assigned': 'Nursery 2',
-                'subjects_taught': [
-                    {'name': 'All Subjects (Early Years)', 'grade': 'Nursery 2'},
-                    {'name': 'Numeracy & Counting', 'grade': 'Nursery 2'},
-                    {'name': 'Literacy & Handwriting', 'grade': 'Nursery 2'},
-                ],
-                'bio': 'Nursery 2 Classroom Educator dedicated to Montessori motor and cognitive development.'
-            },
-            {
-                'first_name': 'Oviezibe',
-                'last_name': 'Jude',
-                'email': 'oviezibejude99@gmail.com',
-                'teacher_id': 'TMS/TCH/0042',
-                'gender': 'Female',
-                'department': 'Nursery & Early Childhood Department',
-                'specialization': 'Early Years Montessori (All Subjects)',
-                'class_assigned': 'Nursery 1',
-                'subjects_taught': [
-                    {'name': 'All Subjects (Early Years)', 'grade': 'Nursery 1'},
-                    {'name': 'Phonics & Speech', 'grade': 'Nursery 1'},
-                    {'name': 'Numeracy & Logic', 'grade': 'Nursery 1'},
-                ],
-                'bio': 'Nursery 1 Educator with expertise in speech articulation and phonics readiness.'
-            },
-            {
-                'first_name': 'Emmanuella',
-                'last_name': 'Albert',
-                'email': 'albertbogilizibe@gmail.com',
-                'teacher_id': 'TMS/TCH/0020',
-                'gender': 'Female',
-                'department': 'Nursery & Early Childhood Department',
-                'specialization': 'Early Years Montessori (All Subjects)',
-                'class_assigned': 'Nursery 1',
-                'subjects_taught': [
-                    {'name': 'All Subjects (Early Years)', 'grade': 'Nursery 1'},
-                    {'name': 'Early Montessori Science & Arts', 'grade': 'Nursery 1'},
-                    {'name': 'Literacy & Rhymes', 'grade': 'Nursery 1'},
-                ],
-                'bio': 'Nursery 1 Creative Learning and Early Science Educator.'
-            },
-            {
-                'first_name': 'Vivian',
-                'last_name': 'Ugwuorah',
-                'email': 'viviangariga@gmail.com',
-                'teacher_id': 'TMS/TCH/0045',
-                'gender': 'Female',
-                'department': 'Advance Nursery & Transition Department',
-                'specialization': 'Advance Nursery (Nursery 3 - All Subjects)',
-                'class_assigned': 'Advance Nursery (Nursery 3)',
-                'subjects_taught': [
-                    {'name': 'All Subjects (Advance Nursery)', 'grade': 'Nursery 3'},
-                    {'name': 'Advanced Numeracy & Mental Math', 'grade': 'Nursery 3'},
-                    {'name': 'Advanced Literacy & Grammar', 'grade': 'Nursery 3'},
-                    {'name': 'Basic Science & Nature Study', 'grade': 'Nursery 3'},
-                ],
-                'bio': 'Advance Nursery (Nursery 3) Specialist preparing pupils for seamless Primary 1 transition.'
-            },
-            {
-                'first_name': 'Marian',
-                'last_name': 'Ewaen',
-                'email': 'ewaenmarian@gmail.com',
-                'teacher_id': 'TMS/TCH/0041',
-                'gender': 'Female',
-                'department': 'Advance Nursery & Transition Department',
-                'specialization': 'Advance Nursery (Nursery 3 - All Subjects)',
-                'class_assigned': 'Advance Nursery (Nursery 3)',
-                'subjects_taught': [
-                    {'name': 'All Subjects (Advance Nursery)', 'grade': 'Nursery 3'},
-                    {'name': 'Reading & Phonics Comprehension', 'grade': 'Nursery 3'},
-                    {'name': 'Quantitative & Verbal Reasoning', 'grade': 'Nursery 3'},
-                ],
-                'bio': 'Advance Nursery (Nursery 3) Lead Teacher focused on literacy mastery and verbal reasoning.'
-            },
-            {
-                'first_name': 'Deborah',
-                'last_name': 'Eletu Sean',
-                'email': 'deboraheletusean@tarepet.com',
-                'teacher_id': 'TMS/TCH/0056',
-                'gender': 'Female',
-                'department': 'Creche & Reception Department',
-                'specialization': 'Creche & Reception (All Subjects)',
-                'class_assigned': 'Reception (Creche)',
-                'subjects_taught': [
-                    {'name': 'All Subjects (Reception / Creche)', 'grade': 'Reception'},
-                    {'name': 'Sensorial & Cognitive Activities', 'grade': 'Reception'},
-                    {'name': 'Early Montessori Social Skills', 'grade': 'Reception'},
-                ],
-                'bio': 'Reception & Creche Educator specialized in early sensory coordination and social development.'
+                'email': 'joeugbede2024@gmail.com',
+                'teacher_id': 'TMS/TCH/0022',
+                'gender': 'Male',
+                'department': 'Biological Sciences',
+                'specialization': 'Biology SS 1 - SS 3',
+                'class_assigned': 'None',
+                'bio': 'Senior Biology specialist across SS 1 to SS 3.',
+                'subjects_taught': [{'name': 'Biology', 'grade': 'SS 1'}, {'name': 'Biology', 'grade': 'SS 2'}, {'name': 'Biology', 'grade': 'SS 3'}]
             },
         ]
+
+        # Variables to capture the first teacher for downstream use
+        teacher_prof = None
+        teacher_email = ''
+        teacher_id_val = ''
 
         for tr in teachers_roster:
             t_user = User.objects.filter(email=tr['email']).first()
@@ -490,6 +307,12 @@ class Command(BaseCommand):
             t_prof.gender = tr['gender']
             t_prof.form_teacher_of = tr.get('class_assigned', 'None')
             t_prof.save()
+
+            # Capture the first teacher's profile for Course FK and summary output
+            if teacher_prof is None:
+                teacher_prof = t_prof
+                teacher_email = tr['email']
+                teacher_id_val = tr['teacher_id']
 
         # 4. Create Parent Account
         parent_email = 'ebi.amadi@tarepet.com'

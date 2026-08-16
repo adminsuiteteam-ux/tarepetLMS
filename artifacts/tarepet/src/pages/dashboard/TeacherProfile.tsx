@@ -12,7 +12,8 @@ import {
 } from 'lucide-react';
 
 import { authClient } from '@/lib/api-auth';
-import { getStoredTeachers, saveTeacher, broadcastRealtimeEvent } from '@/lib/cbt-store';
+import { getStoredTeachers, saveTeacher, broadcastRealtimeEvent, addRealtimeActivity } from '@/lib/cbt-store';
+import { addRealtimeNotification } from '@/lib/notifications-store';
 
 export default function TeacherProfile() {
   const { t } = useTranslation();
@@ -45,9 +46,9 @@ export default function TeacherProfile() {
     const staffId = prof.teacher_id || (user as any)?.staffId || stored?.staffId || 'TMS/TCH/0001';
     const dept = prof.department || stored?.department || 'Academic Department';
     const qual = prof.qualifications || stored?.qualification || 'B.Sc. Education';
-    const rawSpec = prof.specialization || prof.subjects_taught || stored?.specialization;
-    const spec = typeof rawSpec === 'string' ? rawSpec : Array.isArray(rawSpec) ? rawSpec.map((s: any) => typeof s === 'string' ? s : s.name).join(', ') : 'General Education & STEM';
-    const gen = prof.gender || stored?.gender || 'Male';
+    const rawSpec = stored?.specialization || prof.specialization || prof.subjects_taught;
+    const spec = typeof rawSpec === 'string' ? rawSpec : Array.isArray(rawSpec) ? rawSpec.map((s: any) => typeof s === 'string' ? s : s.name).join(', ') : 'Primary Literacy & STEM Education';
+    const gen = prof.gender || stored?.gender || 'Female';
     const dobVal = prof.dob || stored?.dob || '1990-01-01';
     const addr = prof.address || stored?.address || 'Tarepet School Campus, Yenagoa, Bayelsa State';
     const rawFormCls = prof.formTeacherOf || prof.form_teacher_of || stored?.formTeacherOf;
@@ -181,6 +182,22 @@ export default function TeacherProfile() {
       bankName: profileForm.bankName,
       accountNumber: profileForm.accountNumber,
     });
+
+    // 2. Alert Admin via Real-Time Notification & Audit Activity Log
+    addRealtimeNotification({
+      title: '👤 Teacher Profile Updated',
+      message: `Teacher ${profileForm.firstName} ${profileForm.lastName} (${profileForm.staffId}) updated their personal profile details.`,
+      category: 'ACADEMICS',
+      type: 'info',
+      recipientRole: 'ADMIN'
+    });
+
+    addRealtimeActivity(
+      'EXAM_APPROVED',
+      `Teacher Profile Edited: ${profileForm.firstName} ${profileForm.lastName}`,
+      `Profile changes saved & synced to Admin Portal. Staff ID: ${profileForm.staffId}`,
+      `${profileForm.firstName} ${profileForm.lastName}`
+    );
 
     // 2. Sync session user in localStorage
     if (typeof window !== 'undefined') {

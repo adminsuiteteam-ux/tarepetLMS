@@ -58,6 +58,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [user]);
 
   const login = (accessToken: string, refreshToken: string, userData: User) => {
+    // 1. Forcefully purge any previous session state to ensure strict isolation
+    try {
+      localStorage.removeItem('tarepet_auth_user');
+      sessionStorage.removeItem('tarepet_auth_user');
+    } catch {}
+
     const normalizedUser = {
       ...userData,
       role: (userData.role || 'STUDENT').toUpperCase() as UserRole,

@@ -1,4 +1,8 @@
 {
   "css.lint.unknownAtRules": "ignore",
-  "scss.lint.unknownAtRules": "ignore"
+  "scss.lint.unknownAtRules": "ignore",
+  "less.lint.unknownAtRules": "ignore",
+  "css.customData": [
+    "${workspaceFolder}/artifacts/tarepet/.vscode/tailwind-custom-data.json"
+  ]
 }

@@ -14,6 +14,7 @@ import {
 
 import { getStoredExams, getStoredSubmissions, subscribeToCBTStore, getCoursesForClass, getStudentBroadsheet, calculateWAECGrade } from '@/lib/cbt-store';
 import { StudentPaymentPanel } from '@/components/dashboard/StudentPaymentPanel';
+import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
 
 // ─── Initial Seed Data (SS1 Science) ─────────────────────────
 const MY_COURSES: any[] = [];
@@ -57,8 +58,27 @@ function getTimetableForDay(day: DayKey) {
 }
 
 export default function StudentDashboard() {
-  const { user } = useAuth();
+  const { user, isStudent, isAdmin } = useAuth();
   const { t } = useTranslation();
+
+  if (!user || (!isStudent && !isAdmin) || (user.role !== 'STUDENT' && user.role !== 'ADMIN')) {
+    return (
+      <div className="flex min-h-[70vh] items-center justify-center p-6 text-center">
+        <div className="max-w-md rounded-2xl bg-card p-8 shadow-xl border border-border">
+          <h2 className="text-2xl font-serif font-bold text-destructive mb-3">Access Denied</h2>
+          <p className="text-muted-foreground mb-6">
+            Your account ({user?.role || 'Guest'}) does not have permission to view the Student Portal.
+          </p>
+          <button
+            onClick={() => { window.location.href = '/sign-in'; }}
+            className="rounded-md bg-primary px-6 py-2.5 text-sm font-medium text-white hover:bg-primary/90 transition-colors"
+          >
+            Return to Sign In
+          </button>
+        </div>
+      </div>
+    );
+  }
   const [activeSection, setActiveSectionState] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -106,6 +126,7 @@ export default function StudentDashboard() {
   }));
 
   const [selectedTerm, setSelectedTerm] = useState<'1st Term' | '2nd Term' | '3rd Term'>('1st Term');
+  const [showReportCardModal, setShowReportCardModal] = useState(false);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -125,18 +146,26 @@ export default function StudentDashboard() {
             <span className="text-[10px] font-bold uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full">
               {`SS1 SCIENCE · ${selectedTerm.toUpperCase()} 2026`}
             </span>
-            <div className="flex items-center gap-1 bg-black/20 p-1 rounded-xl">
-              {(['1st Term', '2nd Term', '3rd Term'] as const).map(term => (
-                <button
-                  key={term}
-                  onClick={() => setSelectedTerm(term)}
-                  className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
-                    selectedTerm === term ? 'bg-white text-rose-950 shadow-sm' : 'text-rose-100 hover:text-white'
-                  }`}
-                >
-                  {term}
-                </button>
-              ))}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowReportCardModal(true)}
+                className="bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-1 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
+              >
+                <Printer className="w-3.5 h-3.5" /> Official Report Card
+              </button>
+              <div className="flex items-center gap-1 bg-black/20 p-1 rounded-xl">
+                {(['1st Term', '2nd Term', '3rd Term'] as const).map(term => (
+                  <button
+                    key={term}
+                    onClick={() => setSelectedTerm(term)}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                      selectedTerm === term ? 'bg-white text-rose-950 shadow-sm' : 'text-rose-100 hover:text-white'
+                    }`}
+                  >
+                    {term}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
           <h2 className="text-2xl sm:text-3xl font-serif font-bold mb-1">
@@ -770,6 +799,11 @@ export default function StudentDashboard() {
         )}
 
         {renderSection()}
+
+        {/* Printable Official Terminal Report Card Modal */}
+        {showReportCardModal && (
+          <TerminalReportCard onClose={() => setShowReportCardModal(false)} />
+        )}
       </PortalLayout>
     </ProtectedRoute>
   );

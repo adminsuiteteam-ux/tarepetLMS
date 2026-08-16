@@ -4,8 +4,10 @@ import { Link } from 'wouter';
 import { authClient, sanitizeMailto } from '@/lib/api-auth';
 import { PortalLayout } from '@/components/layout/PortalLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { useAuth } from '@/context/AuthContext';
 import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, clearAllStoredStudents, deleteStudent, syncStudentsWithBackend, getStoredTeachers, saveTeacher, saveStoredTeachers, clearAllStoredTeachers, deleteTeacher, listenToRealtimeEvents, clearCBTStoreCache, clearAllSiteDefaultData } from '@/lib/cbt-store';
 import { AdminManagementPanel } from '@/components/dashboard/AdminManagementPanel';
+import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
 import {
   getPaymentItems,
   getPaymentTransactions,
@@ -1574,7 +1576,27 @@ const APP_DATA_VERSION = 'v2.0.0';
 
 // ── Main Component ───────────────────────────────────────────
 export default function AdminDashboard() {
+  const { user, isAdmin } = useAuth();
   const { t } = useTranslation();
+
+  if (!user || !isAdmin || user.role !== 'ADMIN') {
+    return (
+      <div className="flex min-h-[70vh] items-center justify-center p-6 text-center">
+        <div className="max-w-md rounded-2xl bg-card p-8 shadow-xl border border-border">
+          <h2 className="text-2xl font-serif font-bold text-destructive mb-3">Access Denied</h2>
+          <p className="text-muted-foreground mb-6">
+            Your account ({user?.role || 'Guest'}) does not have permission to view the Admin Dashboard.
+          </p>
+          <button
+            onClick={() => { window.location.href = '/sign-in'; }}
+            className="rounded-md bg-primary px-6 py-2.5 text-sm font-medium text-white hover:bg-primary/90 transition-colors"
+          >
+            Return to Sign In
+          </button>
+        </div>
+      </div>
+    );
+  }
   const [activeSection, setActiveSectionState] = useState(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
