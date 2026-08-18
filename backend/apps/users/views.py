@@ -76,7 +76,10 @@ class CustomTokenObtainPairView(APIView):
 
 
 class LoginActivityLogView(APIView):
-    permission_classes = [permissions.AllowAny]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [IsAdmin()]
+        return [permissions.AllowAny()]
 
     def get(self, request):
         logs = LoginActivityLog.objects.all()[:100]
@@ -129,7 +132,7 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all().order_by('-date_joined')
     serializer_class = UserSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [IsAdmin]
     filterset_fields = ['role', 'is_active']
     search_fields = ['email', 'first_name', 'last_name', 'phone']
 

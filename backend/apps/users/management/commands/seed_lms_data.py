@@ -22,28 +22,29 @@ class Command(BaseCommand):
         for h in houses_data:
             House.objects.get_or_create(name=h['name'], defaults=h)
 
-        # 2. Create / Reset Admin Superuser Accounts
-        admin_emails = ['admin@tarepet.edu.ng', 'admin@tarepet.com']
-        for adm_email in admin_emails:
-            adm_user = User.objects.filter(email=adm_email).first()
-            if not adm_user:
-                adm_user = User.objects.filter(username=adm_email).first()
-            if not adm_user:
-                adm_user = User.objects.create_superuser(
-                    email=adm_email,
-                    password='AdminPassword123!',
-                    first_name='Super',
-                    last_name='Administrator',
-                    role=User.Role.ADMIN,
-                )
-            else:
-                adm_user.set_password('AdminPassword123!')
-                adm_user.is_staff = True
-                adm_user.is_superuser = True
-                adm_user.is_active = True
-                adm_user.role = User.Role.ADMIN
-                adm_user.save()
-            AdminProfile.objects.get_or_create(user=adm_user, defaults={'role_type': 'Super Admin'})
+        # 2. Create / Reset Admin Superuser Account from Environment Variables
+        import os
+        adm_email = os.environ.get('ADMIN_EMAIL', 'admin@tarepetmontessorischool.com').strip().lower()
+        adm_password = os.environ.get('ADMIN_PASSWORD', 'ChangeMeInProd2026!')
+
+        adm_user = User.objects.filter(email=adm_email).first() or User.objects.filter(username=adm_email).first()
+        if not adm_user:
+            adm_user = User.objects.create_superuser(
+                email=adm_email,
+                password=adm_password,
+                first_name='Super',
+                last_name='Administrator',
+                role=User.Role.ADMIN,
+            )
+        else:
+            adm_user.set_password(adm_password)
+            adm_user.is_staff = True
+            adm_user.is_superuser = True
+            adm_user.is_active = True
+            adm_user.role = User.Role.ADMIN
+            adm_user.save()
+        AdminProfile.objects.get_or_create(user=adm_user, defaults={'role_type': 'Super Admin'})
+
 
         # 3. Seed Teachers from Official Paper Roster (Exact 19 Teachers)
         teachers_roster = [
@@ -405,7 +406,7 @@ class Command(BaseCommand):
         )
 
         self.stdout.write(self.style.SUCCESS('Successfully seeded Tarepet LMS demo accounts:'))
-        self.stdout.write('  - Admin: admin@tarepet.edu.ng (Pass: AdminPassword123!)')
+        self.stdout.write(f'  - Admin: {adm_email} (Pass: {adm_password})')
         self.stdout.write(f'  - Teacher: {teacher_email} (ID & Pass: {teacher_id_val})')
         self.stdout.write(f'  - Student: {student_email} (ID & Pass: {student_id_val})')
         self.stdout.write(f'  - Parent: {parent_email} (Pass: ParentPassword123!)')

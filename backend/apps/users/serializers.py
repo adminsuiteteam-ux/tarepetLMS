@@ -30,83 +30,13 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
         if not password:
             raise serializers.ValidationError({'password': 'Password is required.'})
 
-        identifier = identifier.strip()
-
-        # If identifier matches a student_id or teacher_id, resolve the associated user's email
-        from apps.users.models import StudentProfile, TeacherProfile
-        student_prof = StudentProfile.objects.filter(student_id__iexact=identifier).first()
-        if student_prof:
-            identifier = student_prof.user.email
-        else:
-            teacher_prof = TeacherProfile.objects.filter(teacher_id__iexact=identifier).first()
-            if teacher_prof:
-                identifier = teacher_prof.user.email
+        identifier = str(identifier).strip()
 
         from django.contrib.auth import authenticate
         from rest_framework_simplejwt.exceptions import AuthenticationFailed
         from rest_framework_simplejwt.tokens import RefreshToken
 
         user = authenticate(self.context.get('request'), username=identifier, password=password)
-
-        if not user:
-            # Check if user exists by email (case-insensitive) or username
-            existing_user = User.objects.filter(email__iexact=identifier).first() or User.objects.filter(username__iexact=identifier).first()
-            if existing_user:
-                # If user exists, update password to match entered password for smooth portal access
-                existing_user.set_password(password)
-                existing_user.save()
-                user = existing_user
-            else:
-                # User does not exist yet; auto-seed account for school portal credentials
-                lower_id = identifier.lower()
-                upper_pw = password.upper()
-                
-                role = User.Role.STUDENT
-                if 'admin' in lower_id or upper_pw.startswith('TMS/ADM/'):
-                    role = User.Role.ADMIN
-                elif 'teacher' in lower_id or upper_pw.startswith('TMS/TCH/'):
-                    role = User.Role.TEACHER
-                elif 'parent' in lower_id or upper_pw.startswith('TMS/PAR/'):
-                    role = User.Role.PARENT
-                elif 'student' in lower_id or upper_pw.startswith('TMS/STD/'):
-                    role = User.Role.STUDENT
-
-                email_domain = identifier if '@' in identifier else f"{identifier.replace('/', '_')}@tarepet.com"
-                name_parts = identifier.split('@')[0].split('.')
-                first_name = name_parts[0].capitalize() if name_parts[0] else role.capitalize()
-                last_name = name_parts[1].capitalize() if len(name_parts) > 1 else 'User'
-
-                user = User.objects.create_user(
-                    email=email_domain,
-                    password=password,
-                    first_name=first_name,
-                    last_name=last_name,
-                    role=role,
-                    is_staff=(role in [User.Role.ADMIN, User.Role.TEACHER]),
-                )
-
-                if role == User.Role.TEACHER:
-                    TeacherProfile.objects.get_or_create(
-                        user=user,
-                        defaults={
-                            'teacher_id': password if upper_pw.startswith('TMS/TCH/') else 'TMS/TCH/2506',
-                            'department': 'Montessori Primary & Secondary',
-                            'subjects_taught': ['Mathematics', 'Science'],
-                        }
-                    )
-                elif role == User.Role.STUDENT:
-                    StudentProfile.objects.get_or_create(
-                        user=user,
-                        defaults={
-                            'student_id': password if upper_pw.startswith('TMS/STD/') else 'TMS/STD/0001',
-                            'grade_level': 'Primary 5',
-                        }
-                    )
-                elif role == User.Role.PARENT:
-                    ParentProfile.objects.get_or_create(user=user)
-                elif role == User.Role.ADMIN:
-                    AdminProfile.objects.get_or_create(user=user, defaults={'role_type': 'Super Admin'})
-
         if not user or not user.is_active:
             raise AuthenticationFailed('Invalid email/ID or password credentials.')
 

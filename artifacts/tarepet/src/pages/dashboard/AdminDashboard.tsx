@@ -5,7 +5,7 @@ import { authClient, sanitizeMailto } from '@/lib/api-auth';
 import { PortalLayout } from '@/components/layout/PortalLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
-import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, clearAllStoredStudents, deleteStudent, syncStudentsWithBackend, getStoredTeachers, saveTeacher, saveStoredTeachers, clearAllStoredTeachers, deleteTeacher, listenToRealtimeEvents, clearCBTStoreCache, clearAllSiteDefaultData } from '@/lib/cbt-store';
+import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, clearAllStoredStudents, deleteStudent, syncStudentsWithBackend, getStoredTeachers, saveTeacher, saveStoredTeachers, clearAllStoredTeachers, deleteTeacher, listenToRealtimeEvents, clearCBTStoreCache, clearAllSiteDefaultData, isAccountDeleted, getAdminPassword, setAdminPassword } from '@/lib/cbt-store';
 import { AdminManagementPanel } from '@/components/dashboard/AdminManagementPanel';
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
 import {
@@ -1710,7 +1710,7 @@ export default function AdminDashboard() {
     name: 'Dr. T. Montessori',
     title: 'School Principal & Chief Administrator',
     id: 'TMS/ADM/2018/001',
-    email: 'admin@tarepet.edu.ng',
+    email: 'admin@tarepet.com',
     phone: '+234 803 123 4567',
     address: '12 Kpansia-Epie Road, Yenagoa, Bayelsa State',
     dob: '1978-08-15',
@@ -1725,6 +1725,8 @@ export default function AdminDashboard() {
   const [passwordForm, setPasswordForm] = useState({ current: '', newPass: '', confirm: '' });
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [profileUpdateSuccess, setProfileUpdateSuccess] = useState(false);
+  const [adminPasswordForm, setAdminPasswordForm] = useState({ current: '', newPass: '', confirm: '' });
+  const [adminPasswordStatus, setAdminPasswordStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // Class Marksheet / Score Entry State
   const [resultsViewTab, setResultsViewTab] = useState<'roster' | 'marksheet' | 'fees'>('roster');
@@ -1833,7 +1835,7 @@ export default function AdminDashboard() {
         if (res.status === 200) {
           const users = Array.isArray(res.data?.results) ? res.data.results : Array.isArray(res.data) ? res.data : [];
           const liveTeachers = users
-            .filter((u: any) => u.role === 'TEACHER')
+            .filter((u: any) => u.role === 'TEACHER' && !isAccountDeleted(u.email) && !isAccountDeleted(u.id) && !isAccountDeleted(u.profile?.teacher_id))
             .map((u: any) => {
               const prof = u.profile || {};
               const subs = Array.isArray(prof.subjects_taught) ? prof.subjects_taught : [];
@@ -1869,7 +1871,7 @@ export default function AdminDashboard() {
             });
 
           const liveStudents = users
-            .filter((u: any) => u.role === 'STUDENT')
+            .filter((u: any) => u.role === 'STUDENT' && !isAccountDeleted(u.email) && !isAccountDeleted(u.id) && !isAccountDeleted(u.profile?.student_id))
             .map((u: any) => ({
               id: u.id,
               studentId: u.profile?.student_id || u.student_id || `TP-STU-${String(u.id).padStart(3, '0')}`,
@@ -2057,6 +2059,9 @@ export default function AdminDashboard() {
 
   // SS student filter by class + stream
   const filteredSSStudents = studentsList.filter(s => {
+    if (isAccountDeleted(s.email) || isAccountDeleted(s.id) || isAccountDeleted(s.code) || isAccountDeleted(s.admissionNo) || isAccountDeleted(s.name)) {
+      return false;
+    }
     const q = userSearch.toLowerCase();
     const matchClass  = !selectedClass  || s.grade  === selectedClass;
     const matchStream = !selectedStream || s.stream === selectedStream;
@@ -2150,6 +2155,153 @@ export default function AdminDashboard() {
   const activeType = USER_TYPES.find(t => t.key === userSubPage);
 
   const renderSection = () => {
+    // MY PROFILE & PASSWORD SETTINGS SECTION
+    if (activeSection === 'profile' || activeSection === 'settings') {
+      return (
+        <div className="space-y-6 max-w-4xl mx-auto">
+          {/* Header Banner */}
+          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-600 flex items-center justify-center font-serif font-bold text-2xl">
+                A
+              </div>
+              <div>
+                <h2 className="text-xl font-serif font-bold text-foreground">Chief Administrator Account</h2>
+                <p className="text-xs text-muted-foreground">Official Admin Portal Profile & Security Controls</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="px-2.5 py-0.5 rounded-md bg-rose-500/10 text-rose-600 border border-rose-500/20 text-[10px] font-bold uppercase">
+                    Super Admin
+                  </span>
+                  <span className="text-xs font-mono font-bold text-primary">admin@tarepet.com</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Settings Card */}
+          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-6">
+            <div className="border-b border-border pb-4 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-serif font-bold text-foreground flex items-center gap-2">
+                  <Lock className="w-5 h-5 text-primary" /> Admin Password & Security Settings
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Update your official admin password. Your default portal login email is <strong className="text-foreground">admin@tarepet.com</strong>.
+                </p>
+              </div>
+            </div>
+
+            {/* Password Change Form */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                setAdminPasswordStatus(null);
+
+                const currentPass = getAdminPassword();
+                if (adminPasswordForm.current !== currentPass) {
+                  setAdminPasswordStatus({
+                    type: 'error',
+                    message: 'Current password is incorrect. Please enter your valid current password.'
+                  });
+                  return;
+                }
+
+                if (adminPasswordForm.newPass.length < 6) {
+                  setAdminPasswordStatus({
+                    type: 'error',
+                    message: 'New password must be at least 6 characters long.'
+                  });
+                  return;
+                }
+
+                if (adminPasswordForm.newPass !== adminPasswordForm.confirm) {
+                  setAdminPasswordStatus({
+                    type: 'error',
+                    message: 'New password and confirmation password do not match.'
+                  });
+                  return;
+                }
+
+                // Update stored password
+                setAdminPassword(adminPasswordForm.newPass);
+
+                // Notify & Show alert
+                setAdminPasswordStatus({
+                  type: 'success',
+                  message: 'Password changed successfully! You can now log into admin@tarepet.com with your new password.'
+                });
+
+                setAdminPasswordForm({ current: '', newPass: '', confirm: '' });
+              }}
+              className="space-y-4 max-w-md"
+            >
+              {adminPasswordStatus && (
+                <div className={`p-4 rounded-xl text-xs font-semibold flex items-center gap-2 border ${
+                  adminPasswordStatus.type === 'success'
+                    ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                    : 'bg-rose-500/10 text-rose-600 border-rose-500/20'
+                }`}>
+                  {adminPasswordStatus.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+                  <span>{adminPasswordStatus.message}</span>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-1.5">
+                  Current Admin Password
+                </label>
+                <input
+                  type="password"
+                  value={adminPasswordForm.current}
+                  onChange={(e) => setAdminPasswordForm(p => ({ ...p, current: e.target.value }))}
+                  placeholder="Enter current password"
+                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-xs focus:ring-2 focus:ring-primary focus:outline-none"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-1.5">
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  value={adminPasswordForm.newPass}
+                  onChange={(e) => setAdminPasswordForm(p => ({ ...p, newPass: e.target.value }))}
+                  placeholder="Enter new password (min 6 characters)"
+                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-xs focus:ring-2 focus:ring-primary focus:outline-none"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-1.5">
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  value={adminPasswordForm.confirm}
+                  onChange={(e) => setAdminPasswordForm(p => ({ ...p, confirm: e.target.value }))}
+                  placeholder="Confirm new password"
+                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-xs focus:ring-2 focus:ring-primary focus:outline-none"
+                  required
+                />
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary/90 transition-all shadow-sm flex items-center gap-2"
+                >
+                  <Lock className="w-4 h-4" /> Save New Password
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      );
+    }
+
     // 1. OVERVIEW & SCHOOL EXECUTIVE ANALYTICS
     if (activeSection === 'overview' || activeSection === 'analytics') {
       const classPerformanceData = STUDENT_CLASSES.map(cls => {
@@ -2836,6 +2988,9 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                         <button onClick={() => {
                           if (confirm(`Are you sure you want to delete student "${u.name}"?`)) {
                             deleteStudent(u.id);
+                            deleteStudent(u.email);
+                            deleteStudent(u.studentId);
+                            setStudentsList(prev => prev.filter(s => s.id !== u.id && s.email !== u.email && s.studentId !== u.studentId));
                             setSelectedUser(null);
                           }
                           setShowActionsDropdown(false);

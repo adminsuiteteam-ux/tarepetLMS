@@ -746,12 +746,14 @@ export function clearAllStoredTeachers() {
 }
 
 function loadDeletedAccounts(): string[] {
-  if (typeof window === 'undefined') return [];
+  const defaultBlacklist = ['hacker@evil.com', 'wronguser@fake.com', 'tp-stu-090', 'tp-stu-089', 'hacker user', 'wronguser user'];
+  if (typeof window === 'undefined') return defaultBlacklist;
   try {
     const raw = localStorage.getItem('tarepet_deleted_accounts');
-    return raw ? JSON.parse(raw) : [];
+    const custom = raw ? JSON.parse(raw) : [];
+    return Array.from(new Set([...defaultBlacklist, ...custom]));
   } catch {
-    return [];
+    return defaultBlacklist;
   }
 }
 
@@ -774,10 +776,10 @@ export function recordDeletedAccount(identifiers: (string | number | undefined |
   }
 }
 
-export function isAccountDeleted(input: string): boolean {
-  if (!input) return false;
+export function isAccountDeleted(input: string | number | undefined | null): boolean {
+  if (input === undefined || input === null) return false;
   const list = loadDeletedAccounts();
-  const lower = input.trim().toLowerCase();
+  const lower = String(input).trim().toLowerCase();
   const clean = lower.replace(/[^a-z0-9]/g, '');
   return list.some(item => {
     const itemLower = item.toLowerCase();
@@ -804,6 +806,12 @@ export function deleteTeacher(teacherIdOrStaffId: number | string): boolean {
       localStorage.setItem('tarepet_teachers_list', JSON.stringify(_teachers));
     } catch (e) {}
   }
+
+  // Attempt backend API deletion
+  authClient.delete(`/auth/users/${teacherIdOrStaffId}/`).catch(() => {
+    authClient.delete(`/api/users/${teacherIdOrStaffId}/`).catch(() => {});
+  });
+
   broadcastRealtimeEvent();
   return true;
 }
@@ -815,12 +823,14 @@ function loadSavedStudents(): StudentRecord[] {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed)) {
-        // Filter out legacy mock seed student (Civa Media / 9927 / id 1)
+        // Filter out legacy mock seed student (Civa Media / 9927 / id 1) and all deleted accounts
         const liveOnly = parsed.filter((s: any) => {
           const sCode = String(s.code || s.admissionNo || s.studentId || '');
           const sName = String(s.name || '').toLowerCase();
+          const sEmail = String(s.email || '').toLowerCase();
           const isMockSeed = sCode.includes('9927') || sName.includes('civa media') || s.id === 1;
-          return !isMockSeed;
+          const isDeleted = isAccountDeleted(sCode) || isAccountDeleted(sEmail) || isAccountDeleted(sName) || isAccountDeleted(s.id);
+          return !isMockSeed && !isDeleted;
         });
         return liveOnly;
       }
@@ -846,30 +856,36 @@ export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
     const res = await authClient.get('/auth/users/?role=STUDENT');
     if (res.data) {
       const dataArr = Array.isArray(res.data?.results) ? res.data.results : Array.isArray(res.data) ? res.data : [];
-      const fetched: StudentRecord[] = dataArr.map((u: any) => ({
-        id: u.id,
-        code: u.student_id || u.profile?.student_id || `TMS/SS1/SCI/${u.id}`,
-        admissionNo: u.student_id || u.profile?.student_id || `TMS/SS1/SCI/${u.id}`,
-        name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
-        email: u.email,
-        gender: u.profile?.gender || 'Male',
-        maritalStatus: 'Single',
-        dob: u.profile?.dob || 'Not Available',
-        phone: u.phone || 'Not Available',
-        country: 'Nigeria',
-        stateOfOrigin: u.profile?.stateOfOrigin || 'Bayelsa',
-        lga: u.profile?.lga || 'Yenagoa',
-        address: u.profile?.address || 'Not Available',
-        grade: u.profile?.grade || u.profile?.formTeacherOf || 'SS1',
-        stream: u.profile?.stream || 'Science',
-        programme: 'Senior Secondary Certificate (SSCE)',
-        parentName: u.profile?.parentName || 'Not Available',
-        parentPhone: u.profile?.parentPhone || 'Not Available',
-        status: 'ACTIVE',
-        studyMode: 'Full Time',
-        attendance: '100%',
-        atRisk: false
-      }));
+      const fetched: StudentRecord[] = dataArr
+        .filter((u: any) => {
+          const uCode = u.student_id || u.profile?.student_id || '';
+          const uName = `${u.first_name || ''} ${u.last_name || ''}`.trim();
+          return !isAccountDeleted(u.email) && !isAccountDeleted(u.id) && !isAccountDeleted(uCode) && !isAccountDeleted(uName);
+        })
+        .map((u: any) => ({
+          id: u.id,
+          code: u.student_id || u.profile?.student_id || `TMS/SS1/SCI/${u.id}`,
+          admissionNo: u.student_id || u.profile?.student_id || `TMS/SS1/SCI/${u.id}`,
+          name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
+          email: u.email,
+          gender: u.profile?.gender || 'Male',
+          maritalStatus: 'Single',
+          dob: u.profile?.dob || 'Not Available',
+          phone: u.phone || 'Not Available',
+          country: 'Nigeria',
+          stateOfOrigin: u.profile?.stateOfOrigin || 'Bayelsa',
+          lga: u.profile?.lga || 'Yenagoa',
+          address: u.profile?.address || 'Not Available',
+          grade: u.profile?.grade || u.profile?.formTeacherOf || 'SS1',
+          stream: u.profile?.stream || 'Science',
+          programme: 'Senior Secondary Certificate (SSCE)',
+          parentName: u.profile?.parentName || 'Not Available',
+          parentPhone: u.profile?.parentPhone || 'Not Available',
+          status: 'ACTIVE',
+          studyMode: 'Full Time',
+          attendance: '100%',
+          atRisk: false
+        }));
       _students = fetched;
       broadcastRealtimeEvent();
     }
@@ -945,14 +961,26 @@ export function clearAllStoredStudents() {
 }
 
 export function deleteStudent(studentId: number | string): boolean {
-  const target = _students.find(s => s.id === studentId || s.code === studentId || s.admissionNo === studentId || s.email === studentId);
+  const target = _students.find(s => s.id === studentId || s.code === studentId || s.admissionNo === studentId || s.email === studentId || s.studentId === studentId);
   if (target) {
-    recordDeletedAccount([target.id, target.code, target.admissionNo, target.email, target.name]);
+    recordDeletedAccount([target.id, target.code, target.admissionNo, target.email, target.name, target.studentId]);
   } else {
     recordDeletedAccount([studentId]);
   }
 
-  _students = _students.filter(s => s.id !== studentId && s.code !== studentId && s.admissionNo !== studentId && s.email !== studentId);
+  _students = _students.filter(s => s.id !== studentId && s.code !== studentId && s.admissionNo !== studentId && s.email !== studentId && s.studentId !== studentId);
+
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('tarepet_students_list', JSON.stringify(_students));
+    } catch (e) {}
+  }
+
+  // Attempt backend API deletion
+  authClient.delete(`/auth/users/${studentId}/`).catch(() => {
+    authClient.delete(`/api/users/${studentId}/`).catch(() => {});
+  });
+
   broadcastRealtimeEvent();
   return true;
 }
@@ -1645,4 +1673,24 @@ export function clearAllSiteDefaultData(): void {
   _students = [];
 
   broadcastRealtimeEvent();
+}
+
+/**
+ * Admin Password Storage & Management
+ */
+export function getAdminPassword(): string {
+  if (typeof window === 'undefined') return 'AdminPassword123!';
+  try {
+    const saved = localStorage.getItem('tarepet_admin_password');
+    if (saved && saved.trim()) return saved.trim();
+  } catch {}
+  return 'AdminPassword123!';
+}
+
+export function setAdminPassword(newPassword: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem('tarepet_admin_password', newPassword.trim());
+    broadcastRealtimeEvent();
+  } catch {}
 }

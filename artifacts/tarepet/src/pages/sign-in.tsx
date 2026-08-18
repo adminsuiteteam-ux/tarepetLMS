@@ -9,7 +9,7 @@ import { authClient } from "@/lib/api-auth";
 import { layerbaseAuth } from "@/lib/layerbase-auth";
 import { useTranslation } from "@/lib/i18n";
 
-import { getStoredStudents, getStoredTeachers, isAccountDeleted, recordLoginActivity } from "@/lib/cbt-store";
+import { getStoredStudents, getStoredTeachers, isAccountDeleted, recordLoginActivity, getAdminPassword } from "@/lib/cbt-store";
 
 export default function SignIn() {
   const { t } = useTranslation();
@@ -80,19 +80,20 @@ export default function SignIn() {
       // Backend offline or API rejection — fallback to strict verified credentials
     }
 
-    // 2. Strict Admin verification
-    const isAdminEmail = lowerInput === 'adminpass@tarepet.com' || lowerInput === 'adminpass' || lowerInput === 'admin@tarepet.edu.ng' || lowerInput === 'admin@tarepet.com';
-    if (isAdminEmail) {
-      if (rawPassword !== 'Admin@12345' && rawPassword !== 'AdminPassword123!') {
-        recordLoginActivity('adminpass@tarepet.com', 'ADMIN', 'FAILED_ATTEMPT');
-        setError('Incorrect email, user passcode or password.');
+    // 2. Verified Admin Portal Login (Default Email: admin@tarepet.com)
+    const isTargetAdminEmail = lowerInput === 'admin@tarepet.com' || lowerInput === 'adminpass@tarepet.com' || lowerInput === 'adminpass';
+    if (isTargetAdminEmail) {
+      const currentAdminPassword = getAdminPassword();
+      if (rawPassword !== currentAdminPassword) {
+        recordLoginActivity('admin@tarepet.com', 'ADMIN', 'FAILED_ATTEMPT');
+        setError('Incorrect email or password.');
         setIsLoading(false);
         return;
       }
-      recordLoginActivity('adminpass@tarepet.com', 'ADMIN', 'SUCCESS');
+      recordLoginActivity('admin@tarepet.com', 'ADMIN', 'SUCCESS');
       login('mock_access_token', 'mock_refresh_token', {
         id: 1,
-        email: 'adminpass@tarepet.com',
+        email: 'admin@tarepet.com',
         first_name: 'Administrator',
         last_name: 'System',
         role: 'ADMIN',
@@ -101,8 +102,6 @@ export default function SignIn() {
       setIsLoading(false);
       return;
     }
-
-    // 3. Check if input matches a Teacher account
     const storedTeachers = getStoredTeachers();
     const matchedTeacher = storedTeachers.find(t => {
       const tEmail = (t.email || '').toLowerCase();

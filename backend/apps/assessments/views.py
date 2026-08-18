@@ -194,7 +194,7 @@ class GradebookViewSet(viewsets.ReadOnlyModelViewSet):
         subjects_list = []
         total_sum = 0.0
         for code, sub in courses_dict.items():
-            tot = round(sub['ca_score'] + sub['cbt_exam_score'], 1)
+            tot = round(float(sub.get('ca_score', 0.0)) + float(sub.get('cbt_exam_score', 0.0)), 1)
             sub['total_score'] = tot
             sub['grade_letter'] = CBTAttemptViewSet._calculate_grade_letter(tot)
             total_sum += tot
