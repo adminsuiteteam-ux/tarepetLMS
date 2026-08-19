@@ -9,7 +9,7 @@ import {
   User, BookOpen, Award, ShieldCheck, CreditCard, Printer, Download,
   Edit2, Bell, Lock, CheckCircle2, X, Mail, Phone, MapPin, Calendar,
   Briefcase, GraduationCap, Save, ArrowLeft, Check, Star, Layers, Users,
-  Fingerprint, Smartphone, BarChart2
+  Fingerprint, Smartphone, BarChart2, ChevronDown
 } from 'lucide-react';
 
 import { authClient } from '@/lib/api-auth';
@@ -25,6 +25,7 @@ export default function TeacherProfile() {
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [showStaffIdModal, setShowStaffIdModal] = useState<boolean>(false);
   const [showEditModal, setShowEditModal] = useState<boolean>(false);
+  const [showActionsDropdown, setShowActionsDropdown] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'details' | 'teaching' | 'qualifications' | 'settings'>('details');
 
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -312,34 +313,57 @@ export default function TeacherProfile() {
         </div>
 
         <div className="space-y-6 max-w-5xl">
-          {/* Clean Page Title & Action Bar */}
+          {/* Clean Page Title & Single Action Button */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border">
             <div className="flex items-center gap-2.5">
               <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block shadow-xs ring-4 ring-emerald-500/20" />
               <h2 className="text-lg sm:text-xl font-bold font-serif text-foreground">Teacher Profile & Academic Records</h2>
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative">
               <button
-                onClick={() => setShowStaffIdModal(true)}
-                className="px-3.5 py-2 rounded-xl border border-border bg-card text-foreground hover:bg-muted text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs"
+                onClick={() => setShowActionsDropdown(prev => !prev)}
+                className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-sm"
               >
-                <CreditCard className="w-3.5 h-3.5 text-primary" />
-                <span>{t('teacher.view_staff_id', 'View Staff ID')}</span>
+                <span>Actions</span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showActionsDropdown ? 'rotate-180' : ''}`} />
               </button>
-              <button
-                onClick={() => window.print()}
-                className="px-3.5 py-2 rounded-xl border border-border bg-card text-foreground hover:bg-muted text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs"
-              >
-                <Printer className="w-3.5 h-3.5 text-muted-foreground" />
-                <span>{t('teacher.btn_print_profile', 'Print Profile')}</span>
-              </button>
-              <button
-                onClick={() => setShowEditModal(true)}
-                className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
-              >
-                <Edit2 className="w-3.5 h-3.5" />
-                <span>Actions / Edit Profile</span>
-              </button>
+              {showActionsDropdown && (
+                <>
+                  <div className="fixed inset-0 z-30" onClick={() => setShowActionsDropdown(false)} />
+                  <div className="absolute right-0 mt-2 w-52 bg-card border border-border rounded-xl shadow-xl z-40 py-1.5 text-xs overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+                    <button
+                      onClick={() => {
+                        setShowActionsDropdown(false);
+                        setShowEditModal(true);
+                      }}
+                      className="w-full px-4 py-2.5 text-left font-semibold text-foreground hover:bg-muted flex items-center gap-2.5 transition-colors"
+                    >
+                      <Edit2 className="w-4 h-4 text-emerald-600" />
+                      <span>{t('teacher.edit_profile', 'Edit Profile & Details')}</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowActionsDropdown(false);
+                        setShowStaffIdModal(true);
+                      }}
+                      className="w-full px-4 py-2.5 text-left font-semibold text-foreground hover:bg-muted flex items-center gap-2.5 transition-colors border-t border-border/50"
+                    >
+                      <CreditCard className="w-4 h-4 text-primary" />
+                      <span>{t('teacher.view_staff_id', 'View Staff ID Card')}</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowActionsDropdown(false);
+                        window.print();
+                      }}
+                      className="w-full px-4 py-2.5 text-left font-semibold text-foreground hover:bg-muted flex items-center gap-2.5 transition-colors border-t border-border/50"
+                    >
+                      <Printer className="w-4 h-4 text-muted-foreground" />
+                      <span>{t('teacher.btn_print_profile', 'Print Profile')}</span>
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
