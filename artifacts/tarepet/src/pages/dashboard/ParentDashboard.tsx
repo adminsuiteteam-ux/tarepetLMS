@@ -15,6 +15,7 @@ import {
 import { getStoredExams, getStoredSubmissions, subscribeToCBTStore, getCoursesForClass, getStudentBroadsheet, calculateWAECGrade } from '@/lib/cbt-store';
 import { RealTimeSyncStatus } from '@/components/cbt/RealTimeSyncStatus';
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
+import { getTimeGreeting } from '@/lib/utils';
 
 // ── Data Definitions ────────────────────────────
 const CHILDREN: any[] = [];
@@ -130,7 +131,7 @@ export default function ParentDashboard() {
               <span className="text-xs font-bold uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full text-white">{t('Parent Portal')}</span>
               <span className="text-xs text-white/80">{activeChild.house}</span>
             </div>
-            <h2 className="text-3xl font-serif font-bold mb-1 text-white">{t('Welcome, ')}{user?.first_name ?? 'Parent'}</h2>
+            <h2 className="text-3xl font-serif font-bold mb-1 text-white">{getTimeGreeting()}, {user?.first_name ?? 'Parent'}!</h2>
             <p className="text-white/90 text-sm">{t('Monitoring academic progress & development for ')}<strong className="underline">{activeChild.name}</strong> ({activeChild.grade})</p>
           </div>
         </div>
@@ -530,7 +531,13 @@ export default function ParentDashboard() {
       </div>
     );
 
-    return null;
+    // Fallback if section is not matched
+    return (
+      <div className="space-y-6">
+        <h2 className="text-xl font-bold text-foreground">Parent Portal</h2>
+        <p className="text-xs text-muted-foreground">Select an option from the sidebar to view your child's academic progress.</p>
+      </div>
+    );
   };
 
   return (

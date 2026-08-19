@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Lock, Mail, AlertCircle } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, AlertCircle, Fingerprint, Smartphone, CheckCircle2 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import tarepetLogo from "@assets/tarepet__1784835204178.png";
 import heroImg from "@assets/classroom_hero.jpg";
@@ -10,6 +10,7 @@ import { layerbaseAuth } from "@/lib/layerbase-auth";
 import { useTranslation } from "@/lib/i18n";
 
 import { getStoredStudents, getStoredTeachers, isAccountDeleted, recordLoginActivity, getAdminPassword } from "@/lib/cbt-store";
+import { isBiometricsSupported, getEnrolledBiometricUsers, verifyBiometricsPrompt } from "@/lib/biometrics";
 
 export default function SignIn() {
   const { t } = useTranslation();
@@ -17,12 +18,42 @@ export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isBiometricLoading, setIsBiometricLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mfaRequired, setMfaRequired] = useState(false);
   const [mfaToken, setMfaToken] = useState("");
   const [mfaCode, setMfaCode] = useState("");
   const [, setLocation] = useLocation();
   const { login } = useAuth();
+
+  const handleBiometricLogin = async () => {
+    setError(null);
+    setIsBiometricLoading(true);
+
+    const enrolled = getEnrolledBiometricUsers();
+    if (enrolled.length === 0) {
+      setError("No biometric credentials activated on this device yet. Please sign in with your password and activate Fingerprint / Face ID in your Profile.");
+      setIsBiometricLoading(false);
+      return;
+    }
+
+    try {
+      const res = await verifyBiometricsPrompt(email.trim());
+      if (res.success && res.user) {
+        recordLoginActivity(res.user.email, res.user.role, 'SUCCESS');
+        login('biometric_access_token', 'biometric_refresh_token', res.user);
+        const rolePath = res.user.role.toLowerCase();
+        setLocation(`/dashboard/${rolePath}`);
+        return;
+      } else {
+        setError(res.error || "Biometric verification failed. Please sign in with your password.");
+      }
+    } catch {
+      setError("Biometric verification was interrupted.");
+    } finally {
+      setIsBiometricLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -383,7 +414,7 @@ export default function SignIn() {
             {/* Sign In Button */}
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || isBiometricLoading}
               className="w-full bg-primary text-white hover:bg-primary/90 transition-colors rounded-lg py-3 text-base font-medium shadow-sm disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isLoading ? (
@@ -393,6 +424,35 @@ export default function SignIn() {
                 </>
               ) : (
                 t('signin.title')
+              )}
+            </button>
+
+            {/* Divider */}
+            <div className="relative flex items-center justify-center pt-2">
+              <div className="border-t border-border w-full" />
+              <span className="bg-card px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider shrink-0">
+                Or Biometric Access
+              </span>
+              <div className="border-t border-border w-full" />
+            </div>
+
+            {/* Biometric One-Touch Sign In Button (Fingerprint & Face ID) */}
+            <button
+              type="button"
+              disabled={isBiometricLoading || isLoading}
+              onClick={handleBiometricLogin}
+              className="w-full border border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary transition-all rounded-lg py-2.5 text-sm font-semibold flex items-center justify-center gap-2 shadow-xs group"
+            >
+              {isBiometricLoading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                  <span>Verifying Biometrics...</span>
+                </>
+              ) : (
+                <>
+                  <Fingerprint className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
+                  <span>Sign In with Fingerprint / Face ID</span>
+                </>
               )}
             </button>
           </form>

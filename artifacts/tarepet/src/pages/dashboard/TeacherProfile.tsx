@@ -8,12 +8,14 @@ import { useLocation } from 'wouter';
 import {
   User, BookOpen, Award, ShieldCheck, CreditCard, Printer, Download,
   Edit2, Bell, Lock, CheckCircle2, X, Mail, Phone, MapPin, Calendar,
-  Briefcase, GraduationCap, Save, ArrowLeft, Check, Star, Layers, Users
+  Briefcase, GraduationCap, Save, ArrowLeft, Check, Star, Layers, Users,
+  Fingerprint, Smartphone
 } from 'lucide-react';
 
 import { authClient } from '@/lib/api-auth';
 import { getStoredTeachers, saveTeacher, broadcastRealtimeEvent, addRealtimeActivity } from '@/lib/cbt-store';
 import { addRealtimeNotification } from '@/lib/notifications-store';
+import { isBiometricsSupported, isBiometricsEnabled, enrollBiometrics, unenrollBiometrics } from '@/lib/biometrics';
 
 export default function TeacherProfile() {
   const { t } = useTranslation();
@@ -27,6 +29,12 @@ export default function TeacherProfile() {
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+
+  const [biometricsEnabled, setBiometricsEnabled] = useState<boolean>(() => {
+    const email = user?.email || (user?.profile as any)?.teacher_id || '';
+    return isBiometricsEnabled(email);
+  });
+  const [biometricLoading, setBiometricLoading] = useState(false);
 
   const getInitialProfile = () => {
     const prof = (user?.profile as any) || {};
@@ -699,6 +707,75 @@ export default function TeacherProfile() {
                   >
                     <Lock className="w-3.5 h-3.5" />
                     <span>{passwordLoading ? 'Updating Password...' : 'Update Password'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Biometric Authentication Activation (Fingerprint & Face ID) */}
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
+                <div className="flex items-center justify-between border-b border-border pb-3">
+                  <h3 className="font-serif font-bold text-foreground text-base flex items-center gap-2">
+                    <Fingerprint className="w-5 h-5 text-primary" />
+                    <span>Biometric Authentication (Fingerprint & Face ID)</span>
+                  </h3>
+                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${biometricsEnabled ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' : 'bg-muted text-muted-foreground'}`}>
+                    {biometricsEnabled ? '● Active on this device' : '○ Not Activated'}
+                  </span>
+                </div>
+
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Activate biometric security to sign in instantly with <strong>Android Fingerprint</strong>, <strong>Apple Touch ID / Face ID</strong>, or <strong>Windows Hello</strong> without typing your password each time.
+                </p>
+
+                <div className="p-4 rounded-xl bg-primary/5 border border-primary/15 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                      <Smartphone className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-foreground">Device Biometrics (Fingerprint / Face ID)</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {biometricsEnabled 
+                          ? 'Your device credentials are registered for one-touch secure portal login.' 
+                          : 'Click activate below to scan your fingerprint or Face ID on this device.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    disabled={biometricLoading}
+                    onClick={async () => {
+                      setBiometricLoading(true);
+                      const emailVal = profileForm.email || (user?.email) || profileForm.staffId;
+                      if (biometricsEnabled) {
+                        unenrollBiometrics(emailVal);
+                        setBiometricsEnabled(false);
+                        setToastMsg('Biometric authentication has been deactivated for this device.');
+                      } else {
+                        const res = await enrollBiometrics({
+                          email: emailVal,
+                          name: `${profileForm.firstName} ${profileForm.lastName}`,
+                          role: 'TEACHER',
+                          staffId: profileForm.staffId,
+                        });
+                        if (res.success) {
+                          setBiometricsEnabled(true);
+                          setToastMsg(`Biometric login (${res.biometricType === 'FACE_ID' ? 'Face ID' : 'Fingerprint'}) activated successfully!`);
+                        } else {
+                          setToastMsg(res.error || 'Failed to activate biometric login.');
+                        }
+                      }
+                      setBiometricLoading(false);
+                    }}
+                    className={`px-5 py-2.5 rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-2 whitespace-nowrap ${
+                      biometricsEnabled 
+                        ? 'border border-destructive/30 text-destructive hover:bg-destructive/10' 
+                        : 'bg-primary text-white hover:bg-primary/90'
+                    }`}
+                  >
+                    <Fingerprint className="w-4 h-4" />
+                    <span>{biometricLoading ? 'Processing...' : biometricsEnabled ? 'Deactivate Biometrics' : 'Activate Fingerprint / Face ID'}</span>
                   </button>
                 </div>
               </div>

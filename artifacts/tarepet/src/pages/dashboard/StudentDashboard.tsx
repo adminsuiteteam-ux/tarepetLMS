@@ -15,6 +15,7 @@ import {
 import { getStoredExams, getStoredSubmissions, subscribeToCBTStore, getCoursesForClass, getStudentBroadsheet, calculateWAECGrade } from '@/lib/cbt-store';
 import { StudentPaymentPanel } from '@/components/dashboard/StudentPaymentPanel';
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
+import { getTimeGreeting } from '@/lib/utils';
 
 // ─── Initial Seed Data (SS1 Science) ─────────────────────────
 const MY_COURSES: any[] = [];
@@ -169,7 +170,7 @@ export default function StudentDashboard() {
             </div>
           </div>
           <h2 className="text-2xl sm:text-3xl font-serif font-bold mb-1">
-            {t('student.welcome_greeting', 'Good morning,')} {user?.first_name ?? t('student.role_student', 'Student')}!
+            {getTimeGreeting()}, {user?.first_name ?? t('student.role_student', 'Student')}!
           </h2>
           <p className="text-rose-100 text-sm mb-3">
             {t('student.welcome_sub', 'Welcome to your student portal. Check your active subjects and upcoming CBT exams.')}
@@ -672,7 +673,7 @@ export default function StudentDashboard() {
     // =========================================================
     // 7. SETTING / PROFILE
     // =========================================================
-    if (activeSection === 'settings') return (
+    if (activeSection === 'settings' || activeSection === 'profile') return (
       <div className="space-y-6 max-w-3xl">
         <div>
           <h2 className="text-2xl font-serif font-bold text-foreground">{t('student.settings_title', 'Setting/profile')}</h2>
@@ -780,7 +781,13 @@ export default function StudentDashboard() {
       </div>
     );
 
-    return null;
+    // Fallback if section is not matched
+    return (
+      <div className="space-y-6">
+        <h2 className="text-xl font-bold text-foreground">Student Portal</h2>
+        <p className="text-xs text-muted-foreground">Select a section from the sidebar menu to view your courses, exams, and results.</p>
+      </div>
+    );
   };
 
   return (

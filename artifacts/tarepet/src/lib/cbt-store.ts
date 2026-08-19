@@ -216,6 +216,7 @@ export interface StudentRecord {
   id: number;
   code: string;
   admissionNo?: string;
+  studentId?: string;
   name: string;
   email: string;
   password?: string;

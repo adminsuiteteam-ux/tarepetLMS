@@ -17,6 +17,7 @@ import { authClient } from '@/lib/api-auth';
 import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, getStoredTeachers, saveTeacher, saveStudent, deleteStudent, subscribeToCBTStore, syncStudentsWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, CourseBroadsheetScore } from '@/lib/cbt-store';
 import { useTranslation } from '@/lib/i18n';
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
+import { getTimeGreeting } from '@/lib/utils';
 
 function getSafeProperty<T>(obj: Record<string | number, T> | null | undefined, key: string | number): T | undefined {
   if (obj && typeof obj === 'object' && Object.prototype.hasOwnProperty.call(obj, key)) {
@@ -171,14 +172,27 @@ export default function TeacherDashboard() {
   const [showIDCardModal, setShowIDCardModal] = useState<any>(null);
   const [showStaffIdModal, setShowStaffIdModal] = useState<boolean>(false);
 
-  // Post-login Password Prompt Modal state for Teachers
+  // Post-login Password Prompt Modal state for Teachers (Shows once on first new login)
   const [showPasswordPromptModal, setShowPasswordPromptModal] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const userIdentifier = (user?.email || (user?.profile as any)?.teacher_id || '').toLowerCase().trim();
+    if (!userIdentifier) return false;
+    const alreadySeen = localStorage.getItem(`tarepet_pwd_modal_seen_${userIdentifier}`);
+    if (alreadySeen === 'true') return false;
     return !!(user?.profile as any)?.needsPasswordChange;
   });
   const [newPasswordVal, setNewPasswordVal] = useState<string>('');
   const [confirmPasswordVal, setConfirmPasswordVal] = useState<string>('');
   const [pwdModalError, setPwdModalError] = useState<string | null>(null);
   const [pwdModalLoading, setPwdModalLoading] = useState<boolean>(false);
+
+  const markPasswordModalSeen = () => {
+    if (typeof window === 'undefined') return;
+    const userIdentifier = (user?.email || (user?.profile as any)?.teacher_id || '').toLowerCase().trim();
+    if (userIdentifier) {
+      localStorage.setItem(`tarepet_pwd_modal_seen_${userIdentifier}`, 'true');
+    }
+  };
 
   // CBT Exam Launch & Attendance & Preview State
   const [selectedAttendanceExam, setSelectedAttendanceExam] = useState<any | null>(null);
@@ -383,7 +397,7 @@ export default function TeacherDashboard() {
         {/* Welcome Header */}
         <div className="bg-gradient-to-r from-emerald-700 via-emerald-800 to-teal-900 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
           <p className="text-xs font-bold uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full inline-block mb-3">{t('teacher.management_portal', 'Teacher Management Portal')}</p>
-          <h2 className="text-2xl sm:text-3xl font-serif font-bold mb-1">{t('teacher.welcome_back', 'Welcome back,')} {user?.first_name ?? 'Teacher'}!</h2>
+          <h2 className="text-2xl sm:text-3xl font-serif font-bold mb-1">{getTimeGreeting()}, {user?.first_name ?? 'Teacher'}!</h2>
           <p className="text-emerald-100 text-sm">{t('teacher.manage_subtitle', 'Manage classes, CBT assessments, and student progress.')}</p>
         </div>
 
@@ -3142,6 +3156,7 @@ export default function TeacherDashboard() {
                     new_password: newPasswordVal,
                   });
                 } catch {}
+                markPasswordModalSeen();
                 setPwdModalLoading(false);
                 setShowPasswordPromptModal(false);
                 showToast('Your new custom password has been set as your main password!');
@@ -3171,6 +3186,7 @@ export default function TeacherDashboard() {
                   <button
                     type="button"
                     onClick={() => {
+                      markPasswordModalSeen();
                       setShowPasswordPromptModal(false);
                       showToast('Kept Staff ID as default password.');
                     }}

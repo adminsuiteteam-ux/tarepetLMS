@@ -53,17 +53,17 @@ function Router() {
         </ProtectedRoute>
       </Route>
       <Route path="/dashboard/teacher">
-        <ProtectedRoute allowedRoles={['TEACHER']}>
+        <ProtectedRoute allowedRoles={['TEACHER', 'ADMIN']}>
           <TeacherDashboard />
         </ProtectedRoute>
       </Route>
       <Route path="/dashboard/teacher/profile">
-        <ProtectedRoute allowedRoles={['TEACHER']}>
+        <ProtectedRoute allowedRoles={['TEACHER', 'ADMIN']}>
           <TeacherProfile />
         </ProtectedRoute>
       </Route>
       <Route path="/teacher-profile">
-        <ProtectedRoute allowedRoles={['TEACHER']}>
+        <ProtectedRoute allowedRoles={['TEACHER', 'ADMIN']}>
           <TeacherProfile />
         </ProtectedRoute>
       </Route>
