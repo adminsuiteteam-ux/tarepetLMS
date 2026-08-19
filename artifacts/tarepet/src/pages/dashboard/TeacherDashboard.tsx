@@ -304,6 +304,7 @@ export default function TeacherDashboard() {
   const [profileForm, setProfileForm] = useState(getTeacherProfileData);
 
   const [profileActiveTab, setProfileActiveTab] = useState<'details' | 'teaching' | 'qualifications' | 'settings'>('details');
+  const [showEditModal, setShowEditModal] = useState(false);
   const [biometricsEnabled, setBiometricsEnabled] = useState<boolean>(() => {
     const email = user?.email || (user?.profile as any)?.teacher_id || '';
     return isBiometricsEnabled(email);
@@ -2204,53 +2205,56 @@ export default function TeacherDashboard() {
 
     // =========================================================
     // 5. TEACHER PROFILE
-    // =========================================================
     if (activeSection === 'profile') return (
       <div className="space-y-6 max-w-5xl">
-        {/* Profile Banner & Header Card */}
-        <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
-          {/* Top Banner Gradient */}
-          <div className="h-40 bg-gradient-to-r from-primary via-primary/90 to-secondary p-6 relative flex items-end justify-between">
-            <div className="absolute inset-0 bg-black/10" />
-            <div className="relative z-10 text-white flex items-center gap-2 text-xs font-semibold uppercase tracking-wider opacity-90">
-              <ShieldCheck className="w-4 h-4 text-emerald-400" />
-              <span>{t('teacher.official_staff_account', 'Tarepet Montessori School — Official Staff Account')}</span>
-            </div>
-            <div className="relative z-10 flex gap-2">
-              <button
-                onClick={() => setShowStaffIdModal(true)}
-                className="bg-white/20 hover:bg-white/30 text-white backdrop-blur-xs px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all border border-white/30 shadow-xs"
-              >
-                <CreditCard className="w-3.5 h-3.5" />
-                <span>{t('teacher.view_staff_id', 'View Staff ID Card')}</span>
-              </button>
-              <button
-                onClick={() => window.print()}
-                className="bg-white text-primary hover:bg-white/90 px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                <span>{t('teacher.btn_print_profile', 'Print Profile')}</span>
-              </button>
-            </div>
+        {/* Clean Page Title & Action Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border">
+          <div className="flex items-center gap-2.5">
+            <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block shadow-xs ring-4 ring-emerald-500/20" />
+            <h2 className="text-lg sm:text-xl font-bold font-serif text-foreground">Teacher Profile & Academic Records</h2>
           </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => setShowStaffIdModal(true)}
+              className="px-3.5 py-2 rounded-xl border border-border bg-card text-foreground hover:bg-muted text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs"
+            >
+              <CreditCard className="w-3.5 h-3.5 text-primary" />
+              <span>{t('teacher.view_staff_id', 'View Staff ID')}</span>
+            </button>
+            <button
+              onClick={() => window.print()}
+              className="px-3.5 py-2 rounded-xl border border-border bg-card text-foreground hover:bg-muted text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs"
+            >
+              <Printer className="w-3.5 h-3.5 text-muted-foreground" />
+              <span>{t('teacher.btn_print_profile', 'Print Profile')}</span>
+            </button>
+            <button
+              onClick={() => setShowEditModal(true)}
+              className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+            >
+              <Edit2 className="w-3.5 h-3.5" />
+              <span>Actions / Edit Profile</span>
+            </button>
+          </div>
+        </div>
 
-          {/* Profile Header Details */}
-          <div className="p-6 pt-0 relative flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-border">
-            <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4 -mt-12 relative z-20">
+        {/* Single Clean Profile Card (Identical to Admin Preview Card) */}
+        <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            {/* Column 1: Avatar Badge */}
+            <div className="md:col-span-3 flex flex-col items-center justify-start text-center space-y-3 border-b md:border-b-0 md:border-r border-border pb-6 md:pb-0 md:pr-6">
               <div className="relative group">
-                <div className="w-24 h-24 rounded-2xl bg-card border-4 border-card shadow-lg flex items-center justify-center text-primary font-bold text-3xl font-serif overflow-hidden">
+                <div className="w-28 h-28 rounded-2xl bg-emerald-500/10 border-2 border-emerald-500/20 flex items-center justify-center font-serif font-bold text-4xl text-emerald-600 shadow-sm overflow-hidden">
                   {profileForm.profileImage ? (
-                    <img src={profileForm.profileImage} alt="Teacher" className="w-full h-full object-cover" />
+                    <img src={profileForm.profileImage} alt="Teacher Avatar" className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full bg-primary/10 flex items-center justify-center text-primary">
-                      {profileForm.firstName?.[0]}{profileForm.lastName?.[0]}
-                    </div>
+                    profileForm.firstName?.[0] || 'A'
                   )}
                 </div>
                 <input
                   type="file"
                   accept="image/jpeg,image/png,image/webp,image/svg+xml"
-                  id="teacherAvatarPickerMain"
+                  id="teacherAvatarPickerClean"
                   className="hidden"
                   onChange={e => {
                     const file = e.target.files?.[0];
@@ -2263,550 +2267,319 @@ export default function TeacherDashboard() {
                       reader.onloadend = () => {
                         const updated = { ...profileForm, profileImage: reader.result as string };
                         setProfileForm(updated);
+                        saveTeacher({
+                          staffId: profileForm.staffId,
+                          name: profileForm.fullName || `${profileForm.firstName} ${profileForm.lastName}`,
+                          profileImage: reader.result as string,
+                        });
                         showToast('Profile photo updated in real time!');
                       };
                       reader.readAsDataURL(file);
                     }
                   }}
                 />
-                <label htmlFor="teacherAvatarPickerMain" className="absolute -bottom-1 -right-1 p-2 bg-primary text-white rounded-xl shadow-md cursor-pointer hover:scale-105 transition-all border-2 border-card" title="Upload Photo">
-                  <Edit2 className="w-3.5 h-3.5" />
+                <label
+                  htmlFor="teacherAvatarPickerClean"
+                  className="absolute -bottom-1 -right-1 p-1.5 bg-emerald-700 text-white rounded-lg shadow cursor-pointer hover:scale-105 transition-all border border-card"
+                  title="Upload Photo"
+                >
+                  <Edit2 className="w-3 h-3" />
                 </label>
-                <span className="absolute bottom-1 right-1 w-4 h-4 bg-emerald-500 border-2 border-card rounded-full" title="Active Staff" />
               </div>
               <div className="space-y-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-2xl font-serif font-bold text-foreground">{profileForm.firstName} {profileForm.lastName}</h2>
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">
-                    {profileForm.staffId}
-                  </span>
-                </div>
-                <p className="text-xs font-semibold text-primary">{profileForm.roleTitle}</p>
-                <p className="text-xs text-muted-foreground flex items-center gap-2">
-                  <span>{profileForm.department}</span>
-                  <span>•</span>
-                  <span>{t('teacher.form_teacher_prefix', 'Form Teacher of ')}{formClass || 'Academic Dept'}</span>
-                </p>
+                <span className="px-3 py-1 rounded-full text-[10px] font-extrabold bg-emerald-500/15 text-emerald-700 border border-emerald-500/30 uppercase tracking-wider block">
+                  ACTIVE
+                </span>
+                <p className="text-xs font-bold text-muted-foreground">Faculty Member</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setProfileActiveTab('settings')}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary/90 transition-colors shadow-sm"
-              >
-                <Edit2 className="w-3.5 h-3.5" />
-                <span>{t('teacher.edit_profile', 'Edit Profile & Settings')}</span>
-              </button>
+            {/* Column 2: Teacher Bio & Official Details */}
+            <div className="md:col-span-4 space-y-3.5 text-xs">
+              <div>
+                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">STAFF ID NUMBER</span>
+                <span className="inline-block mt-0.5 px-2.5 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-700 font-mono font-bold text-xs border border-emerald-500/20">
+                  {profileForm.staffId || 'TMS/TCH/0054'}
+                </span>
+              </div>
+              <div>
+                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">FULL NAME & TITLE</span>
+                <strong className="text-foreground font-bold text-sm uppercase block mt-0.5">{profileForm.fullName || `${profileForm.firstName} ${profileForm.lastName}`}</strong>
+              </div>
+              <div>
+                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">STAFF ROLE / DUTY</span>
+                <strong className="text-emerald-700 font-bold block mt-0.5">{profileForm.roleTitle}</strong>
+              </div>
+              <div>
+                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">ACADEMIC SPECIALIZATION</span>
+                <strong className="text-foreground font-bold block mt-0.5">{profileForm.specialization || 'Not Specified'}</strong>
+              </div>
+              <div>
+                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">QUALIFICATIONS & DEGREES</span>
+                <strong className="text-foreground font-bold block mt-0.5">{profileForm.qualification || 'Not Specified'}</strong>
+              </div>
+              <div>
+                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">FORM TEACHER ASSIGNMENT</span>
+                <strong className="text-rose-600 font-bold block mt-0.5">{profileForm.formClass && profileForm.formClass !== 'None' ? profileForm.formClass : 'None'}</strong>
+              </div>
+              <div>
+                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">DATE JOINED FACULTY</span>
+                <strong className="text-foreground font-bold block mt-0.5">{profileForm.joiningDate || 'Not Specified'}</strong>
+              </div>
+              <div>
+                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">CONTACT PHONE</span>
+                <strong className="text-foreground font-bold block mt-0.5">{profileForm.phone || 'Not Specified'}</strong>
+              </div>
+              <div>
+                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">OFFICIAL EMAIL</span>
+                <strong className="text-foreground font-bold underline block mt-0.5">{profileForm.email}</strong>
+              </div>
             </div>
-          </div>
 
-          {/* Profile Tab Selector */}
-          <div className="flex items-center gap-1 p-2 bg-muted/20 border-b border-border overflow-x-auto">
-            <button
-              onClick={() => setProfileActiveTab('details')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                profileActiveTab === 'details'
-                  ? 'bg-card text-primary shadow-xs border border-border'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {t('teacher.personal_info', 'Personal Info')}
-            </button>
-            <button
-              onClick={() => setProfileActiveTab('teaching')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                profileActiveTab === 'teaching'
-                  ? 'bg-card text-primary shadow-xs border border-border'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {t('teacher.teaching_assignments', 'Teaching Assignments')}
-            </button>
-            <button
-              onClick={() => setProfileActiveTab('qualifications')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                profileActiveTab === 'qualifications'
-                  ? 'bg-card text-primary shadow-xs border border-border'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {t('teacher.qualifications', 'Qualifications & Bio')}
-            </button>
-            <button
-              onClick={() => setProfileActiveTab('settings')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                profileActiveTab === 'settings'
-                  ? 'bg-card text-primary shadow-xs border border-border'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {t('teacher.account_settings', 'Account Settings & Biometrics')}
-            </button>
-          </div>
+            {/* Column 3: Teaching Workload, Assigned Subjects & CBT Metrics */}
+            <div className="md:col-span-5 space-y-4 text-xs border-t md:border-t-0 md:border-l border-border pt-4 md:pt-0 md:pl-6">
+              <div>
+                <h4 className="font-serif font-bold text-sm text-foreground flex items-center gap-2 mb-2.5">
+                  <BookOpen className="w-4 h-4 text-emerald-600" />
+                  Assigned Subjects & Classes ({profileForm.subjectsAssigned?.length || 0})
+                </h4>
+                <div className="space-y-2">
+                  {profileForm.subjectsAssigned && profileForm.subjectsAssigned.length > 0 ? (
+                    profileForm.subjectsAssigned.map((sub: any, idx: number) => {
+                      const subName = typeof sub === 'string' ? sub : sub.name;
+                      const subGrade = typeof sub === 'string' ? (profileForm.formClass || 'JSS 3') : (sub.grade || profileForm.formClass || 'JSS 3');
+                      const subCode = typeof sub === 'object' && sub.code ? sub.code : `SUB-${idx + 1}`;
+                      return (
+                        <div key={idx} className="p-3 rounded-xl border border-border bg-muted/20 flex items-center justify-between shadow-xs">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded font-mono">
+                              {subCode}
+                            </span>
+                            <span className="font-bold text-foreground">{subName}</span>
+                          </div>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 font-serif">
+                            {subGrade}
+                          </span>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <p className="text-muted-foreground italic text-xs">No subjects currently assigned by Admin.</p>
+                  )}
+                </div>
+              </div>
 
-          {/* Clean Stats Bar (Only Real Authentic Data) */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border bg-card">
-            <div className="p-4 text-center">
-              <p className="text-[10px] uppercase font-bold text-muted-foreground">{t('teacher.form_class', 'Assigned Duty')}</p>
-              <p className="text-base font-serif font-bold text-foreground mt-0.5">{profileForm.formClass ? `Form Teacher: ${profileForm.formClass}` : 'Subject Teacher'}</p>
-            </div>
-            <div className="p-4 text-center">
-              <p className="text-[10px] uppercase font-bold text-muted-foreground">{t('teacher.assigned_subjects', 'Department / Subject')}</p>
-              <p className="text-base font-serif font-bold text-foreground mt-0.5">{profileForm.department || profileForm.specialization || 'Academic Staff'}</p>
-            </div>
-            <div className="p-4 text-center">
-              <p className="text-[10px] uppercase font-bold text-muted-foreground">{t('teacher.status', 'Account Status')}</p>
-              <p className="text-base font-serif font-bold text-emerald-600 mt-0.5">{t('teacher.active_verified', 'Active / Verified')}</p>
+              {/* Teaching Stats & CBT Metrics */}
+              <div className="space-y-2 pt-3 border-t border-border/60">
+                <h4 className="font-serif font-bold text-sm text-foreground flex items-center gap-2">
+                  <BarChart2 className="w-4 h-4 text-emerald-600" /> Teaching Stats & CBT Metrics
+                </h4>
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <div className="p-3 rounded-xl bg-card border border-border">
+                    <p className="text-[10px] text-muted-foreground uppercase font-bold">TOTAL STUDENTS TAUGHT</p>
+                    <p className="text-xl font-serif font-bold text-foreground mt-0.5">{profileForm.studentsCount ?? 0}</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-card border border-border">
+                    <p className="text-[10px] text-muted-foreground uppercase font-bold">CBT ASSESSMENTS</p>
+                    <p className="text-xl font-serif font-bold text-emerald-600 mt-0.5">{profileForm.cbtExamsCount ?? 0} Created</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-card border border-border">
+                    <p className="text-[10px] text-muted-foreground uppercase font-bold">CLASS ATTENDANCE RATE</p>
+                    <p className="text-xl font-serif font-bold text-emerald-600 mt-0.5">{profileForm.attendanceRate || '0%'}</p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-card border border-border">
+                    <p className="text-[10px] text-muted-foreground uppercase font-bold">RESIDENTIAL ADDRESS</p>
+                    <p className="text-xs font-semibold text-foreground truncate mt-1">{profileForm.address || 'Not Provided'}</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Tab Content */}
-        {profileActiveTab === 'details' && (
-          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-              {/* Column 1: Avatar Badge */}
-              <div className="md:col-span-3 flex flex-col items-center justify-start text-center space-y-3 border-b md:border-b-0 md:border-r border-border pb-6 md:pb-0 md:pr-6">
-                <div className="w-28 h-28 rounded-2xl bg-emerald-500/10 border-2 border-emerald-500/20 flex items-center justify-center font-serif font-bold text-4xl text-emerald-600 shadow-sm overflow-hidden">
-                  {profileForm.profileImage ? (
-                    <img src={profileForm.profileImage} alt="Teacher Avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    profileForm.firstName?.[0] || 'A'
-                  )}
-                </div>
-                <div className="space-y-1">
-                  <span className="px-3 py-1 rounded-full text-[10px] font-extrabold bg-emerald-500/15 text-emerald-700 border border-emerald-500/30 uppercase tracking-wider block">
-                    ACTIVE
-                  </span>
-                  <p className="text-xs font-bold text-muted-foreground">Faculty Member</p>
-                </div>
-              </div>
-
-              {/* Column 2: Teacher Bio & Official Details */}
-              <div className="md:col-span-4 space-y-3.5 text-xs">
-                <div>
-                  <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">STAFF ID NUMBER</span>
-                  <span className="inline-block mt-0.5 px-2.5 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-700 font-mono font-bold text-xs border border-emerald-500/20">
-                    {profileForm.staffId || 'TMS/TCH/0054'}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">FULL NAME & TITLE</span>
-                  <strong className="text-foreground font-bold text-sm uppercase block mt-0.5">{profileForm.fullName || `${profileForm.firstName} ${profileForm.lastName}`}</strong>
-                </div>
-                <div>
-                  <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">STAFF ROLE / DUTY</span>
-                  <strong className="text-emerald-700 font-bold block mt-0.5">{profileForm.roleTitle}</strong>
-                </div>
-                <div>
-                  <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">ACADEMIC SPECIALIZATION</span>
-                  <strong className="text-foreground font-bold block mt-0.5">{profileForm.specialization || 'Not Specified'}</strong>
-                </div>
-                <div>
-                  <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">QUALIFICATIONS & DEGREES</span>
-                  <strong className="text-foreground font-bold block mt-0.5">{profileForm.qualification || 'Not Specified'}</strong>
-                </div>
-                <div>
-                  <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">FORM TEACHER ASSIGNMENT</span>
-                  <strong className="text-rose-600 font-bold block mt-0.5">{profileForm.formClass || 'None'}</strong>
-                </div>
-                <div>
-                  <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">DATE JOINED FACULTY</span>
-                  <strong className="text-foreground font-bold block mt-0.5">{profileForm.joiningDate || 'Not Specified'}</strong>
-                </div>
-                <div>
-                  <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">CONTACT PHONE</span>
-                  <strong className="text-foreground font-bold block mt-0.5">{profileForm.phone || 'Not Specified'}</strong>
-                </div>
-                <div>
-                  <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">OFFICIAL EMAIL</span>
-                  <strong className="text-foreground font-bold underline block mt-0.5">{profileForm.email}</strong>
-                </div>
-              </div>
-
-              {/* Column 3: Teaching Workload, Assigned Subjects & CBT Metrics */}
-              <div className="md:col-span-5 space-y-4 text-xs border-t md:border-t-0 md:border-l border-border pt-4 md:pt-0 md:pl-6">
-                <div>
-                  <h4 className="font-serif font-bold text-sm text-foreground flex items-center gap-2 mb-2.5">
-                    <BookOpen className="w-4 h-4 text-emerald-600" />
-                    Assigned Subjects & Classes ({profileForm.subjectsAssigned?.length || 0})
-                  </h4>
-                  <div className="space-y-2">
-                    {profileForm.subjectsAssigned && profileForm.subjectsAssigned.length > 0 ? (
-                      profileForm.subjectsAssigned.map((sub: any, idx: number) => {
-                        const subName = typeof sub === 'string' ? sub : sub.name;
-                        const subGrade = typeof sub === 'string' ? (profileForm.formClass || 'JSS 3') : (sub.grade || profileForm.formClass || 'JSS 3');
-                        const subCode = typeof sub === 'object' && sub.code ? sub.code : `SUB-${idx + 1}`;
-                        return (
-                          <div key={idx} className="p-3 rounded-xl border border-border bg-muted/20 flex items-center justify-between shadow-xs">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded font-mono">
-                                {subCode}
-                              </span>
-                              <span className="font-bold text-foreground">{subName}</span>
-                            </div>
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 font-serif">
-                              {subGrade}
-                            </span>
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <p className="text-muted-foreground italic text-xs">No subjects currently assigned by Admin.</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Teaching Stats & CBT Metrics */}
-                <div className="space-y-2 pt-3 border-t border-border/60">
-                  <h4 className="font-serif font-bold text-sm text-foreground flex items-center gap-2">
-                    <BarChart2 className="w-4 h-4 text-emerald-600" /> Teaching Stats & CBT Metrics
-                  </h4>
-                  <div className="grid grid-cols-2 gap-3 pt-1">
-                    <div className="p-3 rounded-xl bg-card border border-border">
-                      <p className="text-[10px] text-muted-foreground uppercase font-bold">TOTAL STUDENTS TAUGHT</p>
-                      <p className="text-xl font-serif font-bold text-foreground mt-0.5">{profileForm.studentsCount ?? 0}</p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-card border border-border">
-                      <p className="text-[10px] text-muted-foreground uppercase font-bold">CBT ASSESSMENTS</p>
-                      <p className="text-xl font-serif font-bold text-emerald-600 mt-0.5">{profileForm.cbtExamsCount ?? 0} Created</p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-card border border-border">
-                      <p className="text-[10px] text-muted-foreground uppercase font-bold">CLASS ATTENDANCE RATE</p>
-                      <p className="text-xl font-serif font-bold text-emerald-600 mt-0.5">{profileForm.attendanceRate || '0%'}</p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-card border border-border">
-                      <p className="text-[10px] text-muted-foreground uppercase font-bold">RESIDENTIAL ADDRESS</p>
-                      <p className="text-xs font-semibold text-foreground truncate mt-1">{profileForm.address || 'Not Provided'}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {profileActiveTab === 'teaching' && (
-          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
-            <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-primary" /> {t('teacher.teaching_assignments', 'Teaching Assignments & Schedule')}
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-              <div className="p-4 rounded-xl bg-primary/5 border border-primary/15 space-y-1">
-                <span className="text-[10px] uppercase font-bold text-primary block">{t('teacher.form_teacher_class', 'Assigned Form Class')}</span>
-                <p className="font-serif font-bold text-foreground text-base">{profileForm.formClass || 'Subject Teacher Only'}</p>
-                <p className="text-[11px] text-muted-foreground">Main pastoral & gradebook oversight</p>
-              </div>
-              <div className="p-4 rounded-xl bg-muted/20 border border-border space-y-1">
-                <span className="text-[10px] uppercase font-bold text-muted-foreground block">{t('teacher.assigned_subjects', 'Subject Specialization')}</span>
-                <p className="font-semibold text-foreground text-sm">{profileForm.specialization || 'Not specified'}</p>
-                <p className="text-[11px] text-muted-foreground">Class Curriculum & CBT Exam Creator</p>
-              </div>
-              <div className="p-4 rounded-xl bg-muted/20 border border-border space-y-1">
-                <span className="text-[10px] uppercase font-bold text-muted-foreground block">{t('teacher.consultation_hours', 'Department')}</span>
-                <p className="font-semibold text-foreground text-sm">{profileForm.department || 'Academic Department'}</p>
-                <p className="text-[11px] text-muted-foreground">Faculty division assignment</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {profileActiveTab === 'qualifications' && (
-          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
-            <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
-              <Award className="w-4 h-4 text-primary" /> {t('teacher.qualifications', 'Certifications & Qualifications')}
-            </h3>
-            <div className="space-y-3 text-xs">
-              <div className="flex items-start gap-3 p-4 rounded-xl border border-border/60 bg-muted/10">
-                <BookOpen className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-bold text-foreground text-sm">{profileForm.qualification || 'Academic Qualification'}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">{profileForm.specialization ? `Specialization: ${profileForm.specialization}` : 'Specialization not specified'}</p>
-                </div>
-              </div>
-              {profileForm.bio && (
-                <div className="p-4 rounded-xl border border-border/60 bg-muted/10 space-y-1">
-                  <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.philosophy_statement', 'Educational Philosophy')}</span>
-                  <p className="text-foreground leading-relaxed italic text-sm">"{profileForm.bio}"</p>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {profileActiveTab === 'settings' && (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const fullName = `${profileForm.firstName} ${profileForm.lastName}`.trim();
-              saveTeacher({
-                staffId: profileForm.staffId,
-                name: fullName,
-                email: profileForm.email,
-                phone: profileForm.phone,
-                department: profileForm.department,
-                specialization: profileForm.specialization,
-                qualification: profileForm.qualification,
-                gender: profileForm.gender,
-                dob: profileForm.dob,
-                address: profileForm.address,
-                bio: profileForm.bio,
-                formTeacherOf: profileForm.formClass || formClass,
-                profileImage: profileForm.profileImage,
-              });
-
-              // Sync auth session in localStorage
-              try {
-                const currentAuth = JSON.parse(localStorage.getItem('tarepet_auth_user') || '{}');
-                if (currentAuth && currentAuth.email) {
-                  currentAuth.first_name = profileForm.firstName;
-                  currentAuth.last_name = profileForm.lastName;
-                  currentAuth.phone = profileForm.phone;
-                  if (!currentAuth.profile) currentAuth.profile = {};
-                  currentAuth.profile.gender = profileForm.gender;
-                  currentAuth.profile.dob = profileForm.dob;
-                  currentAuth.profile.address = profileForm.address;
-                  currentAuth.profile.qualifications = profileForm.qualification;
-                  currentAuth.profile.specialization = profileForm.specialization;
-                  currentAuth.profile.bio = profileForm.bio;
-                  currentAuth.profile.profileImage = profileForm.profileImage;
-                  localStorage.setItem('tarepet_auth_user', JSON.stringify(currentAuth));
-                }
-              } catch (err) {}
-
-              // Send to backend DB for persistence
-              authClient.patch('/auth/me/', {
-                first_name: profileForm.firstName,
-                last_name: profileForm.lastName,
-                phone: profileForm.phone,
-                profile: {
-                  gender: profileForm.gender,
-                  dob: profileForm.dob,
-                  address: profileForm.address,
-                  qualifications: profileForm.qualification,
-                  specialization: profileForm.specialization,
-                  bio: profileForm.bio,
-                }
-              }).catch(() => {});
-
-              window.dispatchEvent(new Event('cbt_store_updated'));
-              window.dispatchEvent(new Event('storage'));
-              showToast(t('teacher.profile_saved_success', 'Profile updated & synced to Admin Portal in real time!'));
-            }}
-            className="space-y-6"
-          >
-            {/* Personal Details Edit Card */}
-            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
-              <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
-                <User className="w-4 h-4 text-primary" /> Edit Personal Information
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.first_name', 'First Name')}</label>
-                  <input
-                    type="text"
-                    value={profileForm.firstName}
-                    onChange={e => setProfileForm({ ...profileForm, firstName: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.last_name', 'Last Name')}</label>
-                  <input
-                    type="text"
-                    value={profileForm.lastName}
-                    onChange={e => setProfileForm({ ...profileForm, lastName: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.email_address', 'Email Address')}</label>
-                  <input
-                    type="email"
-                    value={profileForm.email}
-                    disabled
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/40 text-xs text-muted-foreground outline-none cursor-not-allowed"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.phone_number', 'Phone Number')}</label>
-                  <input
-                    type="text"
-                    value={profileForm.phone}
-                    onChange={e => setProfileForm({ ...profileForm, phone: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Gender</label>
-                  <select
-                    value={profileForm.gender}
-                    onChange={e => setProfileForm({ ...profileForm, gender: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
-                  >
-                    <option value="">Not Specified</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Date of Birth</label>
-                  <input
-                    type="date"
-                    value={profileForm.dob}
-                    onChange={e => setProfileForm({ ...profileForm, dob: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.subject_specialization', 'Subject Specialization')}</label>
-                  <input
-                    type="text"
-                    value={profileForm.specialization}
-                    onChange={e => setProfileForm({ ...profileForm, specialization: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.residential_address', 'Residential Address')}</label>
-                  <input
-                    type="text"
-                    value={profileForm.address}
-                    onChange={e => setProfileForm({ ...profileForm, address: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.philosophy_statement', 'Professional Philosophy / Bio')}</label>
-                  <textarea
-                    rows={3}
-                    value={profileForm.bio}
-                    onChange={e => setProfileForm({ ...profileForm, bio: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Biometric Authentication Activation Card */}
-            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
-              <div className="flex items-center justify-between border-b border-border pb-3">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                    <Fingerprint className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-serif font-bold text-foreground text-base">
-                      Biometric Authentication (Fingerprint & Face ID)
-                    </h3>
-                    <p className="text-[11px] text-muted-foreground">
-                      Enable hardware-level biometric login on Android (Fingerprint), iPhone/Mac (Touch ID / Face ID), or Windows Hello.
-                    </p>
-                  </div>
-                </div>
-                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border uppercase ${
-                  biometricsEnabled
-                    ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
-                    : 'bg-muted/40 text-muted-foreground border-border'
-                }`}>
-                  {biometricsEnabled ? 'Activated' : 'Inactive'}
-                </span>
-              </div>
-
-              <div className="p-4 rounded-xl border border-border bg-muted/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <p className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                    <Smartphone className="w-4 h-4 text-primary" />
-                    <span>{biometricsEnabled ? 'Device Biometrics Registered' : 'One-Touch Fast Portal Access'}</span>
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {biometricsEnabled 
-                      ? 'You can now sign into your Teacher Portal using your fingerprint scanner or Face ID.'
-                      : 'Register your device platform authenticator for seamless one-touch sign in.'}
-                  </p>
+        {/* Clean Edit Profile & Biometrics Modal */}
+        {showEditModal && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-card border border-border rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 my-8">
+              <div className="flex items-center justify-between pb-3 border-b border-border">
+                <div className="flex items-center gap-2">
+                  <Edit2 className="w-5 h-5 text-emerald-600" />
+                  <h3 className="font-serif font-bold text-foreground text-lg">Edit Profile & Account Settings</h3>
                 </div>
                 <button
-                  type="button"
-                  disabled={biometricLoading}
-                  onClick={async () => {
-                    setBiometricLoading(true);
-                    const emailVal = profileForm.email || (user?.email) || profileForm.staffId;
-                    if (biometricsEnabled) {
-                      unenrollBiometrics(emailVal);
-                      setBiometricsEnabled(false);
-                      showToast('Biometric authentication deactivated for this device.');
-                    } else {
-                      const res = await enrollBiometrics({
-                        email: emailVal,
-                        name: `${profileForm.firstName} ${profileForm.lastName}`,
-                        role: 'TEACHER',
-                        staffId: profileForm.staffId,
-                      });
-                      if (res.success) {
-                        setBiometricsEnabled(true);
-                        showToast(`Biometric login (${res.biometricType === 'FACE_ID' ? 'Face ID' : 'Fingerprint'}) activated successfully!`);
-                      } else {
-                        showToast(res.error || 'Failed to activate biometric login.');
-                      }
-                    }
-                    setBiometricLoading(false);
-                  }}
-                  className={`px-5 py-2.5 rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-2 whitespace-nowrap ${
-                    biometricsEnabled 
-                      ? 'border border-destructive/30 text-destructive hover:bg-destructive/10' 
-                      : 'bg-primary text-white hover:bg-primary/90'
-                  }`}
+                  onClick={() => setShowEditModal(false)}
+                  className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  <Fingerprint className="w-4 h-4" />
-                  <span>{biometricLoading ? 'Processing...' : biometricsEnabled ? 'Deactivate Biometrics' : 'Activate Fingerprint / Face ID'}</span>
+                  <X className="w-5 h-5" />
                 </button>
               </div>
-            </div>
 
-            {/* Notification Preferences */}
-            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
-              <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
-                <Bell className="w-4 h-4 text-primary" /> {t('teacher.notification_alerts_title', 'Notification Alerts')}
-              </h3>
-              <div className="space-y-3">
-                <label className="flex items-center justify-between p-3 rounded-xl border border-border bg-muted/10 cursor-pointer">
-                  <div>
-                    <p className="font-bold text-xs text-foreground">{t('teacher.cbt_alerts_title', 'CBT Exam Submission Alerts')}</p>
-                    <p className="text-[10px] text-muted-foreground">{t('teacher.cbt_alerts_desc', 'Receive notifications when students submit CBT exams.')}</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={profileForm.cbtAlerts}
-                    onChange={e => setProfileForm({ ...profileForm, cbtAlerts: e.target.checked })}
-                    className="w-4 h-4 text-primary rounded"
-                  />
-                </label>
-                <label className="flex items-center justify-between p-3 rounded-xl border border-border bg-muted/10 cursor-pointer">
-                  <div>
-                    <p className="font-bold text-xs text-foreground">{t('teacher.approval_notif_title', 'Admin Approval Notifications')}</p>
-                    <p className="text-[10px] text-muted-foreground">{t('teacher.approval_notif_desc', 'Get notified when exams are approved by principal/admin.')}</p>
-                  </div>
-                  <input
-                    type="checkbox"
-                    checked={profileForm.emailAlerts}
-                    onChange={e => setProfileForm({ ...profileForm, emailAlerts: e.target.checked })}
-                    className="w-4 h-4 text-primary rounded"
-                  />
-                </label>
-              </div>
-            </div>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const fullName = `${profileForm.firstName} ${profileForm.lastName}`.trim();
+                  saveTeacher({
+                    staffId: profileForm.staffId,
+                    name: fullName,
+                    email: profileForm.email,
+                    phone: profileForm.phone,
+                    department: profileForm.department,
+                    specialization: profileForm.specialization,
+                    qualification: profileForm.qualification,
+                    gender: profileForm.gender,
+                    dob: profileForm.dob,
+                    address: profileForm.address,
+                    bio: profileForm.bio,
+                    formTeacherOf: profileForm.formClass || formClass,
+                    profileImage: profileForm.profileImage,
+                  });
 
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                className="bg-primary text-white px-8 py-3 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors shadow-sm flex items-center gap-2"
+                  // Sync auth session in localStorage
+                  try {
+                    const currentAuth = JSON.parse(localStorage.getItem('tarepet_auth_user') || '{}');
+                    if (currentAuth && currentAuth.email) {
+                      currentAuth.first_name = profileForm.firstName;
+                      currentAuth.last_name = profileForm.lastName;
+                      currentAuth.phone = profileForm.phone;
+                      if (!currentAuth.profile) currentAuth.profile = {};
+                      currentAuth.profile.gender = profileForm.gender;
+                      currentAuth.profile.dob = profileForm.dob;
+                      currentAuth.profile.address = profileForm.address;
+                      currentAuth.profile.qualifications = profileForm.qualification;
+                      currentAuth.profile.specialization = profileForm.specialization;
+                      currentAuth.profile.bio = profileForm.bio;
+                      currentAuth.profile.profileImage = profileForm.profileImage;
+                      localStorage.setItem('tarepet_auth_user', JSON.stringify(currentAuth));
+                    }
+                  } catch (err) {}
+
+                  // Send to backend DB for persistence
+                  authClient.patch('/auth/me/', {
+                    first_name: profileForm.firstName,
+                    last_name: profileForm.lastName,
+                    phone: profileForm.phone,
+                    profile: {
+                      gender: profileForm.gender,
+                      dob: profileForm.dob,
+                      address: profileForm.address,
+                      qualifications: profileForm.qualification,
+                      specialization: profileForm.specialization,
+                      bio: profileForm.bio,
+                    }
+                  }).catch(() => {});
+
+                  window.dispatchEvent(new Event('cbt_store_updated'));
+                  window.dispatchEvent(new Event('storage'));
+                  showToast('Profile updated & synced to Admin Portal in real time!');
+                  setShowEditModal(false);
+                }}
+                className="space-y-4 text-xs"
               >
-                <Save className="w-4 h-4" />
-                <span>{t('teacher.save_profile_btn', 'Save Profile & Preferences')}</span>
-              </button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">First Name</label>
+                    <input
+                      type="text"
+                      value={profileForm.firstName}
+                      onChange={e => setProfileForm({ ...profileForm, firstName: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Last Name</label>
+                    <input
+                      type="text"
+                      value={profileForm.lastName}
+                      onChange={e => setProfileForm({ ...profileForm, lastName: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Phone Number</label>
+                    <input
+                      type="text"
+                      value={profileForm.phone}
+                      onChange={e => setProfileForm({ ...profileForm, phone: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Residential Address</label>
+                    <input
+                      type="text"
+                      value={profileForm.address}
+                      onChange={e => setProfileForm({ ...profileForm, address: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Biometrics activation section inside modal */}
+                <div className="p-4 rounded-xl border border-border bg-muted/10 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Fingerprint className="w-5 h-5 text-emerald-600" />
+                      <div>
+                        <p className="font-bold text-foreground text-xs">Biometric Authentication</p>
+                        <p className="text-[10px] text-muted-foreground">Enable Fingerprint / Face ID for fast login</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={biometricLoading}
+                      onClick={async () => {
+                        setBiometricLoading(true);
+                        const emailVal = profileForm.email || (user?.email) || profileForm.staffId;
+                        if (biometricsEnabled) {
+                          unenrollBiometrics(emailVal);
+                          setBiometricsEnabled(false);
+                          showToast('Biometric authentication deactivated for this device.');
+                        } else {
+                          const res = await enrollBiometrics({
+                            email: emailVal,
+                            name: `${profileForm.firstName} ${profileForm.lastName}`,
+                            role: 'TEACHER',
+                            staffId: profileForm.staffId,
+                          });
+                          if (res.success) {
+                            setBiometricsEnabled(true);
+                            showToast(`Biometric login (${res.biometricType === 'FACE_ID' ? 'Face ID' : 'Fingerprint'}) activated successfully!`);
+                          } else {
+                            showToast(res.error || 'Failed to activate biometric login.');
+                          }
+                        }
+                        setBiometricLoading(false);
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-xs flex items-center gap-1.5 ${
+                        biometricsEnabled
+                          ? 'border border-rose-500/30 text-rose-600 hover:bg-rose-500/10'
+                          : 'bg-emerald-700 text-white hover:bg-emerald-800'
+                      }`}
+                    >
+                      <span>{biometricLoading ? 'Processing...' : biometricsEnabled ? 'Deactivate Biometrics' : 'Activate Fingerprint / Face ID'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
+                    className="px-4 py-2 rounded-xl border border-border text-foreground hover:bg-muted text-xs font-semibold"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    <span>Save Changes</span>
+                  </button>
+                </div>
+              </form>
             </div>
-          </form>
+          </div>
         )}
       </div>
     );
