@@ -235,7 +235,7 @@ export default function TeacherDashboard() {
     
     let totalMarks = 0;
     const subjectsList: SubjectScore[] = courses.map(c => {
-      const sc = getSafeProperty(broadsheet, c.code) || { ca1: isSS ? 8 : 16, ca2: isSS ? 8 : 16, cbtScore: isSS ? 24 : 0, paperExam: isSS ? 32 : 52, exam: isSS ? 32 : 52 };
+      const sc = getSafeProperty(broadsheet, c.code) || { ca1: 0, ca2: 0, cbtScore: 0, paperExam: 0, exam: 0 };
       const ca = (sc.ca1 || 0) + (sc.ca2 || 0);
       const exam = isSS ? ((sc.cbtScore || 0) + (sc.paperExam || sc.exam || 0)) : (sc.exam !== undefined ? sc.exam : (sc.paperExam || 0));
       const tot = sc.total || (ca + (isSS ? (sc.cbtScore || 0) + (sc.paperExam || sc.exam || 0) : exam));
@@ -248,26 +248,26 @@ export default function TeacherDashboard() {
         cbt_exam_score: isSS ? (sc.cbtScore || 0) : 0,
         total_score: tot,
         grade_letter: g.grade,
-        teacher_remark: sc.remark || sc.remarks || 'Commendable performance and active classroom participation.'
+        teacher_remark: sc.remark || sc.remarks || ''
       };
     });
 
-    const avg = courses.length > 0 ? Math.round((totalMarks / courses.length) * 10) / 10 : 75;
+    const avg = courses.length > 0 ? Math.round((totalMarks / courses.length) * 10) / 10 : 0;
     const overallG = isSS ? calculateWAECGrade(avg) : calculateBECEGrade(avg);
 
     return {
       student_info: {
-        id: student?.id || 'STD-001',
-        student_id_code: student?.code || student?.admission_number || `TP/${student?.id || '001'}`,
-        name: student?.name || 'Student Record',
-        grade_level: student?.grade || 'JSS 3 Faith',
-        house: 'Blue House (Aquila)',
-        admission_date: 'September 2024'
+        id: student?.id || '',
+        student_id_code: student?.code || student?.admission_number || student?.admissionNo || `TMS/${student?.id || ''}`,
+        name: student?.name || '',
+        grade_level: student?.grade || '',
+        house: student?.house || 'School House',
+        admission_date: student?.admission_date || ''
       },
       academic_term: {
         term: '3rd Term Final Session',
         year: '2025/2026',
-        ref_code: `TMS-REP-${student?.id || '001'}`,
+        ref_code: `TMS-REP-${student?.id || ''}`,
         report_date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
       },
       overall_performance: {
@@ -278,10 +278,10 @@ export default function TeacherDashboard() {
       subjects: subjectsList,
       attendance: {
         total_days: 120,
-        present: 116,
-        absent: 4,
-        late: 1,
-        percentage: 96.7
+        present: 120,
+        absent: 0,
+        late: 0,
+        percentage: 100
       },
       montessori_conduct: [
         { trait: 'Punctuality & Diligence', rating: 'Excellent' },
@@ -289,10 +289,10 @@ export default function TeacherDashboard() {
         { trait: 'Politeness & Respect', rating: 'Excellent' },
         { trait: 'Academic Inquisitiveness', rating: 'Distinction' }
       ],
-      house_points: 145,
+      house_points: 0,
       remarks: {
-        teacher_remark: avg >= 75 ? 'An exceptionally brilliant and disciplined student with remarkable potential.' : 'Very good academic progress with consistent determination throughout the session.',
-        headmistress_remark: 'Approved for session promotion with congratulations on outstanding character and diligence.'
+        teacher_remark: avg >= 50 ? 'Satisfactory academic performance and steady progress.' : 'Needs closer guidance and academic support.',
+        headmistress_remark: avg >= 50 ? 'Approved for promotion.' : 'Requires consolidation.'
       }
     };
   };
@@ -309,13 +309,13 @@ export default function TeacherDashboard() {
       const cbtAuto = isSS ? getAutomaticCBTScore(student.code || student.email || student.name, c.code) : 0;
       const existing = getSafeProperty(saved, c.code);
       Reflect.set(initialScores, c.code, {
-        ca1: existing?.ca1 ?? (isSS ? 8 : 16),
-        ca2: existing?.ca2 ?? (isSS ? 8 : 16),
+        ca1: existing?.ca1 ?? 0,
+        ca2: existing?.ca2 ?? 0,
         assignment: existing?.assignment ?? 0,
         cbtScore: isSS ? (existing?.cbtScore !== undefined ? existing.cbtScore : cbtAuto) : 0,
-        paperExam: existing?.paperExam ?? (existing?.exam ?? (isSS ? 32 : 52)),
-        exam: existing?.exam ?? (existing?.paperExam ?? (isSS ? 32 : 52)),
-        remark: existing?.remark || 'Good academic effort & steady progress'
+        paperExam: existing?.paperExam ?? (existing?.exam ?? 0),
+        exam: existing?.exam ?? (existing?.paperExam ?? 0),
+        remark: existing?.remark || ''
       });
     });
 
@@ -361,13 +361,13 @@ export default function TeacherDashboard() {
     const isSS = isSeniorSecondaryClass(student.grade);
     const saved = getStudentBroadsheet(student.id);
     const current = getSafeProperty(saved, courseCode) || {
-      ca1: isSS ? 8 : 16,
-      ca2: isSS ? 8 : 16,
+      ca1: 0,
+      ca2: 0,
       assignment: 0,
       cbtScore: isSS ? getAutomaticCBTScore(student.code || student.email, courseCode) : 0,
-      paperExam: isSS ? 32 : 52,
-      exam: isSS ? 32 : 52,
-      remark: 'Good academic effort & steady progress'
+      paperExam: 0,
+      exam: 0,
+      remark: ''
     };
 
     let numVal = typeof val === 'number' ? val : parseFloat(val);
@@ -412,7 +412,7 @@ export default function TeacherDashboard() {
         const sum = scores.reduce((acc, curr) => acc + (curr.total || ((curr.ca1 || 0) + (curr.ca2 || 0) + (curr.exam || curr.paperExam || 0) + (curr.cbtScore || 0))), 0);
         avg = Math.round((sum / scores.length) * 10) / 10;
       } else {
-        avg = 72.5; // Demo baseline if uncalculated
+        avg = 0;
       }
 
       const nextClass = getNextProgressiveClass(currentClass, student.stream);
@@ -2705,9 +2705,7 @@ export default function TeacherDashboard() {
       const allHistory = getArchivedCohortsForTeacher(teacherProfile.staffId, formClass);
 
       // Extract unique academic sessions for filtering
-      const availableSessions = Array.from(new Set(allHistory.map(h => h.academicSession)));
-      if (!availableSessions.includes('2025/2026')) availableSessions.push('2025/2026');
-      if (!availableSessions.includes('2024/2025')) availableSessions.push('2024/2025');
+      const availableSessions = Array.from(new Set(allHistory.map(h => h.academicSession))).filter(Boolean);
 
       // Filter historical records
       const filteredHistory = allHistory.filter(rec => {

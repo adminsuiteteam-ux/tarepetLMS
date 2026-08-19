@@ -1284,17 +1284,23 @@ function persistAttendance(att: Record<string, CBTAttendanceRecord[]>) {
 export function getStudentsForClass(className: string = 'SS1', stream: string = 'Science'): CBTStudentInfo[] {
   const c = className || 'SS1';
   const s = stream || 'Science';
+  const cClean = c.toLowerCase().trim();
 
-  return [
-    { studentId: 'TMS/SS1/SCI/4821', studentName: 'Emeka Amadi', class: c, stream: s, regNo: '2025/4821', avatar: '👨‍🎓' },
-    { studentId: 'TMS/SS1/SCI/4822', studentName: 'Chisom Okeke', class: c, stream: s, regNo: '2025/4822', avatar: '👩‍🎓' },
-    { studentId: 'TMS/SS1/SCI/4823', studentName: 'Fatimah Bello', class: c, stream: s, regNo: '2025/4823', avatar: '👩‍🎓' },
-    { studentId: 'TMS/SS1/SCI/4824', studentName: 'Chidi Eze', class: c, stream: s, regNo: '2025/4824', avatar: '👨‍🎓' },
-    { studentId: 'TMS/SS1/SCI/4825', studentName: 'Grace Adebayo', class: c, stream: s, regNo: '2025/4825', avatar: '👩‍🎓' },
-    { studentId: 'TMS/SS1/SCI/4826', studentName: 'Tunde Bakare', class: c, stream: s, regNo: '2025/4826', avatar: '👨‍🎓' },
-    { studentId: 'TMS/SS1/SCI/4827', studentName: 'Nneka Nwosu', class: c, stream: s, regNo: '2025/4827', avatar: '👩‍🎓' },
-    { studentId: 'TMS/SS1/SCI/4828', studentName: 'Kofi Mensah', class: c, stream: s, regNo: '2025/4828', avatar: '👨‍🎓' },
-  ];
+  const stored = getStoredStudents();
+  const matched = stored.filter(st => {
+    const sGrade = (st.grade || '').toLowerCase().trim();
+    if (!cClean) return true;
+    return sGrade.includes(cClean) || cClean.includes(sGrade);
+  });
+
+  return matched.map(st => ({
+    studentId: st.code || st.admissionNo || `TMS/${st.id}`,
+    studentName: st.name,
+    class: st.grade || c,
+    stream: st.stream || s,
+    regNo: st.admissionNo || st.code || `REG/${st.id}`,
+    avatar: '👨‍🎓'
+  }));
 }
 
 export function getExamAttendance(examId: number, className: string = 'SS1', stream: string = 'Science'): CBTAttendanceRecord[] {
@@ -1302,15 +1308,15 @@ export function getExamAttendance(examId: number, className: string = 'SS1', str
   const list = _examAttendance[String(examId)];
   if (list && list.length > 0) return list;
 
-  // If no attendance saved yet for this exam, seed default attendance list
-  const defaultStudents = getStudentsForClass(className, stream);
-  const seeded: CBTAttendanceRecord[] = defaultStudents.map((s, idx) => ({
+  // Initialize from actual class roster
+  const classStudents = getStudentsForClass(className, stream);
+  const seeded: CBTAttendanceRecord[] = classStudents.map(s => ({
     examId,
     studentId: s.studentId,
     studentName: s.studentName,
     class: s.class,
     stream: s.stream,
-    markedPresent: idx === 0, // Emeka Amadi marked present by default for demo
+    markedPresent: false,
     markedAt: new Date().toISOString(),
     markedBy: 'Teacher Invigilator'
   }));
@@ -1530,7 +1536,9 @@ export function saveStudentBroadsheet(studentIdOrCode: string | number, courseSc
 
 export function getAutomaticCBTScore(studentCodeOrEmail: string, courseCode: string): number {
   const subs = getStoredSubmissions();
-  const lower = (studentCodeOrEmail || '').toLowerCase();
+  const lower = (studentCodeOrEmail || '').toLowerCase().trim();
+  if (!lower) return 0;
+
   const match = subs.find(s => 
     (s.student_id?.toLowerCase() === lower || s.student_email?.toLowerCase() === lower || s.student_name?.toLowerCase().includes(lower)) &&
     (s.course_code === courseCode || s.exam_title?.toLowerCase().includes(courseCode.toLowerCase()))
@@ -1540,15 +1548,7 @@ export function getAutomaticCBTScore(studentCodeOrEmail: string, courseCode: str
     return Math.round((match.percentage / 100) * 30);
   }
 
-  // Default CBT test scores for demo students SS1 to SS3
-  if (courseCode === 'MTH-101') return 24;
-  if (courseCode === 'PHY-101') return 22;
-  if (courseCode === 'CHM-101') return 25;
-  if (courseCode === 'ENG-101') return 26;
-  if (courseCode === 'BIO-101') return 23;
-  if (courseCode === 'CIV-101') return 25;
-  if (courseCode.startsWith('PRI') || courseCode.startsWith('NUR')) return 22;
-  return 20;
+  return 0;
 }
 
 // ── Promotion & Academic History Store ────────────────────────────────────
@@ -1611,97 +1611,24 @@ export function getNextProgressiveClass(currentClass: string, stream?: string): 
   return 'SS 1 Science';
 }
 
-const INITIAL_PROMOTION_HISTORY: PromotionRecord[] = [
-  {
-    id: 'PROM-2025-001',
-    studentId: 'std-2025-01',
-    studentName: 'Emmanuel Chukwuemeka',
-    studentCode: 'TP/2025/JSS3/014',
-    fromClass: 'JSS 3 Faith',
-    toClass: 'SS 1 Science',
-    academicSession: '2025/2026',
-    term: '3rd Term',
-    cumulativeAverage: 84.5,
-    status: 'promoted',
-    promotedAt: '2026-07-20T14:30:00Z',
-    promotedByTeacherId: 'tch-001',
-    promotedByTeacherName: 'Mrs. Victoria Adeyemi',
-    broadsheetSnapshot: {
-      'MTH-001': { ca1: 18, ca2: 17, exam: 52, total: 87, grade: 'A', remarks: 'Excellent' },
-      'ENG-001': { ca1: 16, ca2: 18, exam: 48, total: 82, grade: 'A', remarks: 'Distinction' },
-      'BSC-001': { ca1: 19, ca2: 18, exam: 51, total: 88, grade: 'A', remarks: 'Outstanding' },
-    }
-  },
-  {
-    id: 'PROM-2025-002',
-    studentId: 'std-2025-02',
-    studentName: 'Fatima Abubakar',
-    studentCode: 'TP/2025/JSS3/015',
-    fromClass: 'JSS 3 Faith',
-    toClass: 'SS 1 Art',
-    academicSession: '2025/2026',
-    term: '3rd Term',
-    cumulativeAverage: 79.2,
-    status: 'promoted',
-    promotedAt: '2026-07-20T14:30:00Z',
-    promotedByTeacherId: 'tch-001',
-    promotedByTeacherName: 'Mrs. Victoria Adeyemi',
-    broadsheetSnapshot: {
-      'MTH-001': { ca1: 14, ca2: 15, exam: 44, total: 73, grade: 'B', remarks: 'Very Good' },
-      'ENG-001': { ca1: 18, ca2: 19, exam: 53, total: 90, grade: 'A', remarks: 'Exceptional' },
-      'SOC-001': { ca1: 17, ca2: 16, exam: 49, total: 82, grade: 'A', remarks: 'Distinction' },
-    }
-  },
-  {
-    id: 'PROM-2025-003',
-    studentId: 'std-2025-03',
-    studentName: 'Blessing Okafor',
-    studentCode: 'TP/2025/JSS3/016',
-    fromClass: 'JSS 3 Faith',
-    toClass: 'SS 1 Science',
-    academicSession: '2025/2026',
-    term: '3rd Term',
-    cumulativeAverage: 81.0,
-    status: 'promoted',
-    promotedAt: '2026-07-20T14:30:00Z',
-    promotedByTeacherId: 'tch-001',
-    promotedByTeacherName: 'Mrs. Victoria Adeyemi',
-    broadsheetSnapshot: {
-      'MTH-001': { ca1: 17, ca2: 16, exam: 50, total: 83, grade: 'A', remarks: 'Distinction' },
-      'ENG-001': { ca1: 15, ca2: 17, exam: 47, total: 79, grade: 'B', remarks: 'Very Good' },
-    }
-  },
-  {
-    id: 'PROM-2025-004',
-    studentId: 'std-2025-04',
-    studentName: 'Tunde Bakare',
-    studentCode: 'TP/2025/SS1/008',
-    fromClass: 'SS 1 Science',
-    toClass: 'SS 2 Science',
-    academicSession: '2025/2026',
-    term: '3rd Term',
-    cumulativeAverage: 88.0,
-    status: 'promoted',
-    promotedAt: '2026-07-21T10:15:00Z',
-    promotedByTeacherId: 'tch-002',
-    promotedByTeacherName: 'Mr. David Adeleke',
-    broadsheetSnapshot: {
-      'MTH-101': { ca1: 10, ca2: 10, cbtExam: 28, theoryExam: 40, total: 88, grade: 'A1', remarks: 'Distinction' },
-      'PHY-101': { ca1: 9, ca2: 9, cbtExam: 27, theoryExam: 38, total: 83, grade: 'B2', remarks: 'Very Good' },
-    }
-  }
-];
+const INITIAL_PROMOTION_HISTORY: PromotionRecord[] = [];
 
 export function getPromotionHistory(): PromotionRecord[] {
-  if (typeof window === 'undefined') return INITIAL_PROMOTION_HISTORY;
+  if (typeof window === 'undefined') return [];
   try {
     const saved = localStorage.getItem('tarepet_promotion_history');
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed)) {
+        // Filter out any legacy dummy/mock seeds
+        const realRecords = parsed.filter((r: any) => 
+          r && r.id && !String(r.id).startsWith('PROM-2025-') && !String(r.studentId).startsWith('std-2025-')
+        );
+        return realRecords;
+      }
     }
   } catch (e) {}
-  return INITIAL_PROMOTION_HISTORY;
+  return [];
 }
 
 export function savePromotionHistory(records: PromotionRecord[]) {
