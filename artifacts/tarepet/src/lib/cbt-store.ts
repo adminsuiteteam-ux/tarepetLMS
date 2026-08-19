@@ -1440,9 +1440,14 @@ export interface CourseBroadsheetScore {
   ca2: number;
   assignment?: number;
   cbtScore?: number;
+  cbtExam?: number;
   paperExam?: number;
+  theoryExam?: number;
   exam?: number;
+  total?: number;
+  grade?: string;
   remark?: string;
+  remarks?: string;
 }
 
 export function calculateWAECGrade(total: number): { grade: string; color: string; label: string } {
@@ -1545,6 +1550,259 @@ export function getAutomaticCBTScore(studentCodeOrEmail: string, courseCode: str
   if (courseCode.startsWith('PRI') || courseCode.startsWith('NUR')) return 22;
   return 20;
 }
+
+// ── Promotion & Academic History Store ────────────────────────────────────
+export interface PromotionRecord {
+  id: string;
+  studentId: string;
+  studentName: string;
+  studentCode: string;
+  fromClass: string;
+  toClass: string;
+  academicSession: string;
+  term: string;
+  cumulativeAverage: number;
+  status: 'promoted' | 'repeated' | 'graduated' | 'transferred';
+  promotedAt: string;
+  promotedByTeacherId: string;
+  promotedByTeacherName: string;
+  broadsheetSnapshot: Record<string, CourseBroadsheetScore>;
+}
+
+export function getNextProgressiveClass(currentClass: string, stream?: string): string {
+  if (!currentClass) return 'JSS 1 Faith';
+  const cUpper = currentClass.toUpperCase().trim();
+
+  if (cUpper.includes('CRECHE')) return 'Nursery 1 Faith';
+  if (cUpper.includes('NURSERY 1') || cUpper.includes('NUR 1')) return 'Nursery 2 Faith';
+  if (cUpper.includes('NURSERY 2') || cUpper.includes('NUR 2')) return 'Nursery 3 Faith';
+  if (cUpper.includes('NURSERY 3') || cUpper.includes('NUR 3')) return 'Primary 1 Faith';
+
+  if (cUpper.includes('PRIMARY 1') || cUpper.includes('BASIC 1')) return 'Primary 2 Faith';
+  if (cUpper.includes('PRIMARY 2') || cUpper.includes('BASIC 2')) return 'Primary 3 Faith';
+  if (cUpper.includes('PRIMARY 3') || cUpper.includes('BASIC 3')) return 'Primary 4 Faith';
+  if (cUpper.includes('PRIMARY 4') || cUpper.includes('BASIC 4')) return 'Primary 5 Faith';
+  if (cUpper.includes('PRIMARY 5') || cUpper.includes('BASIC 5')) return 'Primary 6 Faith';
+  if (cUpper.includes('PRIMARY 6') || cUpper.includes('BASIC 6')) return 'JSS 1 Faith';
+
+  if (cUpper.includes('JSS 1') || cUpper.includes('JS 1')) return 'JSS 2 Faith';
+  if (cUpper.includes('JSS 2') || cUpper.includes('JS 2')) return 'JSS 3 Faith';
+  if (cUpper.includes('JSS 3') || cUpper.includes('JS 3')) {
+    const s = (stream || '').toLowerCase();
+    if (s.includes('art')) return 'SS 1 Art';
+    if (s.includes('comm')) return 'SS 1 Commercial';
+    return 'SS 1 Science';
+  }
+
+  if (cUpper.includes('SS 1') || cUpper.includes('SS1')) {
+    if (cUpper.includes('ART')) return 'SS 2 Art';
+    if (cUpper.includes('COMM')) return 'SS 2 Commercial';
+    return 'SS 2 Science';
+  }
+  if (cUpper.includes('SS 2') || cUpper.includes('SS2')) {
+    if (cUpper.includes('ART')) return 'SS 3 Art';
+    if (cUpper.includes('COMM')) return 'SS 3 Commercial';
+    return 'SS 3 Science';
+  }
+  if (cUpper.includes('SS 3') || cUpper.includes('SS3')) {
+    return 'Graduated (Alumni)';
+  }
+
+  return 'SS 1 Science';
+}
+
+const INITIAL_PROMOTION_HISTORY: PromotionRecord[] = [
+  {
+    id: 'PROM-2025-001',
+    studentId: 'std-2025-01',
+    studentName: 'Emmanuel Chukwuemeka',
+    studentCode: 'TP/2025/JSS3/014',
+    fromClass: 'JSS 3 Faith',
+    toClass: 'SS 1 Science',
+    academicSession: '2025/2026',
+    term: '3rd Term',
+    cumulativeAverage: 84.5,
+    status: 'promoted',
+    promotedAt: '2026-07-20T14:30:00Z',
+    promotedByTeacherId: 'tch-001',
+    promotedByTeacherName: 'Mrs. Victoria Adeyemi',
+    broadsheetSnapshot: {
+      'MTH-001': { ca1: 18, ca2: 17, exam: 52, total: 87, grade: 'A', remarks: 'Excellent' },
+      'ENG-001': { ca1: 16, ca2: 18, exam: 48, total: 82, grade: 'A', remarks: 'Distinction' },
+      'BSC-001': { ca1: 19, ca2: 18, exam: 51, total: 88, grade: 'A', remarks: 'Outstanding' },
+    }
+  },
+  {
+    id: 'PROM-2025-002',
+    studentId: 'std-2025-02',
+    studentName: 'Fatima Abubakar',
+    studentCode: 'TP/2025/JSS3/015',
+    fromClass: 'JSS 3 Faith',
+    toClass: 'SS 1 Art',
+    academicSession: '2025/2026',
+    term: '3rd Term',
+    cumulativeAverage: 79.2,
+    status: 'promoted',
+    promotedAt: '2026-07-20T14:30:00Z',
+    promotedByTeacherId: 'tch-001',
+    promotedByTeacherName: 'Mrs. Victoria Adeyemi',
+    broadsheetSnapshot: {
+      'MTH-001': { ca1: 14, ca2: 15, exam: 44, total: 73, grade: 'B', remarks: 'Very Good' },
+      'ENG-001': { ca1: 18, ca2: 19, exam: 53, total: 90, grade: 'A', remarks: 'Exceptional' },
+      'SOC-001': { ca1: 17, ca2: 16, exam: 49, total: 82, grade: 'A', remarks: 'Distinction' },
+    }
+  },
+  {
+    id: 'PROM-2025-003',
+    studentId: 'std-2025-03',
+    studentName: 'Blessing Okafor',
+    studentCode: 'TP/2025/JSS3/016',
+    fromClass: 'JSS 3 Faith',
+    toClass: 'SS 1 Science',
+    academicSession: '2025/2026',
+    term: '3rd Term',
+    cumulativeAverage: 81.0,
+    status: 'promoted',
+    promotedAt: '2026-07-20T14:30:00Z',
+    promotedByTeacherId: 'tch-001',
+    promotedByTeacherName: 'Mrs. Victoria Adeyemi',
+    broadsheetSnapshot: {
+      'MTH-001': { ca1: 17, ca2: 16, exam: 50, total: 83, grade: 'A', remarks: 'Distinction' },
+      'ENG-001': { ca1: 15, ca2: 17, exam: 47, total: 79, grade: 'B', remarks: 'Very Good' },
+    }
+  },
+  {
+    id: 'PROM-2025-004',
+    studentId: 'std-2025-04',
+    studentName: 'Tunde Bakare',
+    studentCode: 'TP/2025/SS1/008',
+    fromClass: 'SS 1 Science',
+    toClass: 'SS 2 Science',
+    academicSession: '2025/2026',
+    term: '3rd Term',
+    cumulativeAverage: 88.0,
+    status: 'promoted',
+    promotedAt: '2026-07-21T10:15:00Z',
+    promotedByTeacherId: 'tch-002',
+    promotedByTeacherName: 'Mr. David Adeleke',
+    broadsheetSnapshot: {
+      'MTH-101': { ca1: 10, ca2: 10, cbtExam: 28, theoryExam: 40, total: 88, grade: 'A1', remarks: 'Distinction' },
+      'PHY-101': { ca1: 9, ca2: 9, cbtExam: 27, theoryExam: 38, total: 83, grade: 'B2', remarks: 'Very Good' },
+    }
+  }
+];
+
+export function getPromotionHistory(): PromotionRecord[] {
+  if (typeof window === 'undefined') return INITIAL_PROMOTION_HISTORY;
+  try {
+    const saved = localStorage.getItem('tarepet_promotion_history');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {}
+  return INITIAL_PROMOTION_HISTORY;
+}
+
+export function savePromotionHistory(records: PromotionRecord[]) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem('tarepet_promotion_history', JSON.stringify(records));
+  } catch (e) {}
+  broadcastRealtimeEvent();
+}
+
+export interface ExecutePromotionsPayload {
+  teacherId: string;
+  teacherName: string;
+  fromClass: string;
+  academicSession: string;
+  term: string;
+  studentPromotions: Array<{
+    studentId: string;
+    studentName: string;
+    studentCode: string;
+    toClass: string;
+    status: 'promoted' | 'repeated' | 'graduated' | 'transferred';
+    cumulativeAverage: number;
+    broadsheetSnapshot: Record<string, CourseBroadsheetScore>;
+  }>;
+}
+
+export function executeStudentPromotions(payload: ExecutePromotionsPayload): { success: boolean; count: number } {
+  const currentHistory = getPromotionHistory();
+  const students = getStoredStudents();
+  const timestamp = new Date().toISOString();
+  const newRecords: PromotionRecord[] = [];
+
+  payload.studentPromotions.forEach((sp, idx) => {
+    // 1. Create Promotion Record
+    const recordId = `PROM-${payload.academicSession.replace('/', '-')}-${Date.now().toString(36)}-${idx + 1}`;
+    newRecords.push({
+      id: recordId,
+      studentId: sp.studentId,
+      studentName: sp.studentName,
+      studentCode: sp.studentCode,
+      fromClass: payload.fromClass,
+      toClass: sp.status === 'promoted' ? sp.toClass : sp.status === 'repeated' ? payload.fromClass : sp.toClass,
+      academicSession: payload.academicSession,
+      term: payload.term,
+      cumulativeAverage: sp.cumulativeAverage,
+      status: sp.status,
+      promotedAt: timestamp,
+      promotedByTeacherId: payload.teacherId,
+      promotedByTeacherName: payload.teacherName,
+      broadsheetSnapshot: sp.broadsheetSnapshot || getStudentBroadsheet(sp.studentId)
+    });
+
+    // 2. Update Student Active Grade/Class in Student Directory
+    const studentIdx = students.findIndex(s => String(s.id) === String(sp.studentId) || s.code === sp.studentCode);
+    if (studentIdx !== -1) {
+      if (sp.status === 'promoted') {
+        students[studentIdx].grade = sp.toClass;
+        // Infer stream if SS class
+        if (sp.toClass.includes('Art')) students[studentIdx].stream = 'Art';
+        else if (sp.toClass.includes('Commercial')) students[studentIdx].stream = 'Commercial';
+        else if (sp.toClass.includes('Science')) students[studentIdx].stream = 'Science';
+      } else if (sp.status === 'graduated') {
+        students[studentIdx].grade = 'Alumni / Graduated';
+        students[studentIdx].status = 'Alumni';
+      }
+      saveStudent(students[studentIdx]);
+
+      // 3. Clear/Reset active broadsheet for the student for the upcoming new session
+      // (The historical completed scores are now permanently saved in promotion history!)
+      if (sp.status === 'promoted') {
+        saveStudentBroadsheet(sp.studentId, {});
+      }
+    }
+  });
+
+  // Save all history
+  savePromotionHistory([...newRecords, ...currentHistory]);
+  broadcastRealtimeEvent();
+  return { success: true, count: newRecords.length };
+}
+
+export function getArchivedCohortsForTeacher(teacherIdOrName?: string, formClass?: string): PromotionRecord[] {
+  const history = getPromotionHistory();
+  if (!teacherIdOrName && !formClass) return history;
+
+  const tClean = (teacherIdOrName || '').toLowerCase();
+  const fClean = (formClass || '').toLowerCase().replace(/\s+/g, '');
+
+  return history.filter(rec => {
+    const matchTeacher = !teacherIdOrName || 
+      rec.promotedByTeacherId.toLowerCase() === tClean || 
+      rec.promotedByTeacherName.toLowerCase().includes(tClean);
+
+    const fromClean = (rec.fromClass || '').toLowerCase().replace(/\s+/g, '');
+    const matchClass = !formClass || fromClean.includes(fClean) || fClean.includes(fromClean);
+
+    return matchTeacher || matchClass;
+  });
+}
+
 
 // ── Persistent Login Activity & Security Audit Store ─────────────────────
 export interface LoginActivityRecord {

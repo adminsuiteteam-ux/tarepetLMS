@@ -51,6 +51,7 @@ const ROLE_NAV: Record<string, NavSection[]> = {
     { id: 'students',  label: 'Manage Students',    icon: Users },
     { id: 'exams',     label: 'Manage Exams',       icon: ClipboardList },
     { id: 'results',   label: 'Manage Results',     icon: FileText },
+    { id: 'history',   label: 'Academic History',   icon: GraduationCap },
     { id: 'profile',   label: 'My Profile',         icon: UserCheck },
     { id: 'settings',  label: 'Settings',           icon: Settings },
   ],

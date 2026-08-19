@@ -11,13 +11,13 @@ import {
   TrendingUp, Play, Lock, MessageSquare, ChevronDown, ChevronRight, ChevronLeft,
   CheckSquare, XCircle, RefreshCw, PenLine, Globe, Layers, ArrowUpRight,
   ClipboardList, Settings, ShieldCheck, User, Bell, Printer, CreditCard, GraduationCap, Zap, School,
-  Fingerprint, Smartphone, Save
+  Fingerprint, Smartphone, Save, History, Sparkles, RotateCcw, FileSpreadsheet, Check
 } from 'lucide-react';
 
 import { authClient } from '@/lib/api-auth';
-import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, getStoredTeachers, saveTeacher, saveStudent, deleteStudent, subscribeToCBTStore, syncStudentsWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, calculateBECEGrade, isSeniorSecondaryClass, CourseBroadsheetScore } from '@/lib/cbt-store';
+import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, getStoredTeachers, saveTeacher, saveStudent, deleteStudent, subscribeToCBTStore, syncStudentsWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, calculateBECEGrade, isSeniorSecondaryClass, CourseBroadsheetScore, PromotionRecord, getPromotionHistory, executeStudentPromotions, getNextProgressiveClass, getArchivedCohortsForTeacher } from '@/lib/cbt-store';
 import { useTranslation } from '@/lib/i18n';
-import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
+import { TerminalReportCard, ReportCardData, SubjectScore } from '@/components/reports/TerminalReportCard';
 import { getTimeGreeting } from '@/lib/utils';
 import { isBiometricsEnabled, enrollBiometrics, unenrollBiometrics } from '@/lib/biometrics';
 
@@ -210,6 +210,94 @@ export default function TeacherDashboard() {
   const [broadsheetSubject, setBroadsheetSubject] = useState<string>('MTH-101');
   const [broadsheetClassFilter, setBroadsheetClassFilter] = useState<string>('');
 
+  // 🎓 Student Promotion & Session Rollover State
+  const [showPromotionModal, setShowPromotionModal] = useState(false);
+  const [promotionSession, setPromotionSession] = useState('2026/2027');
+  const [promotionTerm, setPromotionTerm] = useState('3rd Term');
+  const [promotionSelections, setPromotionSelections] = useState<Record<string, {
+    status: 'promoted' | 'repeated' | 'graduated' | 'transferred';
+    toClass: string;
+    cumulativeAverage: number;
+  }>>({});
+
+  // 📜 Academic History & Past Cohorts State
+  const [historySessionFilter, setHistorySessionFilter] = useState<string>('ALL');
+  const [historyClassFilter, setHistoryClassFilter] = useState<string>('ALL');
+  const [historySearch, setHistorySearch] = useState<string>('');
+  const [selectedHistoryRecord, setSelectedHistoryRecord] = useState<PromotionRecord | null>(null);
+  const [showHistoryBroadsheetModal, setShowHistoryBroadsheetModal] = useState<PromotionRecord | null>(null);
+  const [selectedReportCardStudent, setSelectedReportCardStudent] = useState<any | null>(null);
+
+  const buildReportCardData = (student: any): ReportCardData => {
+    const isSS = student ? isSeniorSecondaryClass(student.grade) : false;
+    const broadsheet = student ? getStudentBroadsheet(student.id) : {};
+    const courses = getCoursesForClass(student?.grade || 'SS1', student?.stream || 'Science');
+    
+    let totalMarks = 0;
+    const subjectsList: SubjectScore[] = courses.map(c => {
+      const sc = getSafeProperty(broadsheet, c.code) || { ca1: isSS ? 8 : 16, ca2: isSS ? 8 : 16, cbtScore: isSS ? 24 : 0, paperExam: isSS ? 32 : 52, exam: isSS ? 32 : 52 };
+      const ca = (sc.ca1 || 0) + (sc.ca2 || 0);
+      const exam = isSS ? ((sc.cbtScore || 0) + (sc.paperExam || sc.exam || 0)) : (sc.exam !== undefined ? sc.exam : (sc.paperExam || 0));
+      const tot = sc.total || (ca + (isSS ? (sc.cbtScore || 0) + (sc.paperExam || sc.exam || 0) : exam));
+      totalMarks += tot;
+      const g = isSS ? calculateWAECGrade(tot) : calculateBECEGrade(tot);
+      return {
+        code: c.code,
+        title: c.name,
+        ca_score: ca,
+        cbt_exam_score: isSS ? (sc.cbtScore || 0) : 0,
+        total_score: tot,
+        grade_letter: g.grade,
+        teacher_remark: sc.remark || sc.remarks || 'Commendable performance and active classroom participation.'
+      };
+    });
+
+    const avg = courses.length > 0 ? Math.round((totalMarks / courses.length) * 10) / 10 : 75;
+    const overallG = isSS ? calculateWAECGrade(avg) : calculateBECEGrade(avg);
+
+    return {
+      student_info: {
+        id: student?.id || 'STD-001',
+        student_id_code: student?.code || student?.admission_number || `TP/${student?.id || '001'}`,
+        name: student?.name || 'Student Record',
+        grade_level: student?.grade || 'JSS 3 Faith',
+        house: 'Blue House (Aquila)',
+        admission_date: 'September 2024'
+      },
+      academic_term: {
+        term: '3rd Term Final Session',
+        year: '2025/2026',
+        ref_code: `TMS-REP-${student?.id || '001'}`,
+        report_date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+      },
+      overall_performance: {
+        average_percentage: avg,
+        grade_letter: overallG.grade,
+        total_subjects: courses.length
+      },
+      subjects: subjectsList,
+      attendance: {
+        total_days: 120,
+        present: 116,
+        absent: 4,
+        late: 1,
+        percentage: 96.7
+      },
+      montessori_conduct: [
+        { trait: 'Punctuality & Diligence', rating: 'Excellent' },
+        { trait: 'Leadership & Team Spirit', rating: 'Very Good' },
+        { trait: 'Politeness & Respect', rating: 'Excellent' },
+        { trait: 'Academic Inquisitiveness', rating: 'Distinction' }
+      ],
+      house_points: 145,
+      remarks: {
+        teacher_remark: avg >= 75 ? 'An exceptionally brilliant and disciplined student with remarkable potential.' : 'Very good academic progress with consistent determination throughout the session.',
+        headmistress_remark: 'Approved for session promotion with congratulations on outstanding character and diligence.'
+      }
+    };
+  };
+
+
   const handleOpenStudentBroadsheet = (student: any) => {
     setSelectedBroadsheetStudent(student);
     const courses = getCoursesForClass(student.grade || 'SS1', student.stream || 'Science');
@@ -309,6 +397,72 @@ export default function TeacherDashboard() {
   };
 
   // Helper to extract real teacher data filled by Admin (100% matched to Admin Portal)
+  const handleOpenPromotionModal = (targetRoster: any[], currentClass: string) => {
+    const initialMap: Record<string, {
+      status: 'promoted' | 'repeated' | 'graduated' | 'transferred';
+      toClass: string;
+      cumulativeAverage: number;
+    }> = {};
+
+    targetRoster.forEach(student => {
+      const saved = getStudentBroadsheet(student.id);
+      const scores = Object.values(saved);
+      let avg = 0;
+      if (scores.length > 0) {
+        const sum = scores.reduce((acc, curr) => acc + (curr.total || ((curr.ca1 || 0) + (curr.ca2 || 0) + (curr.exam || curr.paperExam || 0) + (curr.cbtScore || 0))), 0);
+        avg = Math.round((sum / scores.length) * 10) / 10;
+      } else {
+        avg = 72.5; // Demo baseline if uncalculated
+      }
+
+      const nextClass = getNextProgressiveClass(currentClass, student.stream);
+      const isPass = avg >= 50;
+
+      initialMap[student.id] = {
+        status: isPass ? (nextClass === 'Graduated (Alumni)' ? 'graduated' : 'promoted') : 'repeated',
+        toClass: nextClass,
+        cumulativeAverage: avg
+      };
+    });
+
+    setPromotionSelections(initialMap);
+    setShowPromotionModal(true);
+  };
+
+  const handleExecutePromotionSubmit = (currentClass: string, targetRoster: any[]) => {
+    const teacherProfile = getTeacherProfileData();
+    const promotionsPayload = targetRoster.map(s => {
+      const sel = promotionSelections[s.id] || {
+        status: 'promoted' as const,
+        toClass: getNextProgressiveClass(currentClass, s.stream),
+        cumulativeAverage: 75
+      };
+      return {
+        studentId: s.id,
+        studentName: s.name,
+        studentCode: s.code || s.admission_number || `TP/${s.id}`,
+        toClass: sel.toClass,
+        status: sel.status,
+        cumulativeAverage: sel.cumulativeAverage,
+        broadsheetSnapshot: getStudentBroadsheet(s.id)
+      };
+    });
+
+    const result = executeStudentPromotions({
+      teacherId: teacherProfile.staffId,
+      teacherName: teacherProfile.fullName,
+      fromClass: currentClass,
+      academicSession: promotionSession,
+      term: promotionTerm,
+      studentPromotions: promotionsPayload
+    });
+
+    if (result.success) {
+      setShowPromotionModal(false);
+      showToast(`🎉 Successfully promoted ${result.count} students! Historical cohort archived to Academic History.`);
+    }
+  };
+
   const getTeacherProfileData = () => {
     const t = matchedStoredTeacher;
     const prof = (user?.profile as any) || {};
@@ -1903,6 +2057,12 @@ export default function TeacherDashboard() {
               >
                 <ShieldCheck className="w-4 h-4" /> {t('teacher.sync_report_cards', 'Sync All Scores to Report Cards')}
               </button>
+              <button
+                onClick={() => handleOpenPromotionModal(classRoster, activeClass)}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer"
+              >
+                <GraduationCap className="w-4 h-4" /> {t('teacher.promote_class_btn', 'Promote Students / Session Rollover')}
+              </button>
             </div>
           </div>
 
@@ -2538,7 +2698,287 @@ export default function TeacherDashboard() {
     }
 
     // =========================================================
-    // 5. TEACHER PROFILE
+    // 5. ACADEMIC HISTORY & PAST COHORTS
+    // =========================================================
+    if (activeSection === 'history') {
+      const teacherProfile = getTeacherProfileData();
+      const allHistory = getArchivedCohortsForTeacher(teacherProfile.staffId, formClass);
+
+      // Extract unique academic sessions for filtering
+      const availableSessions = Array.from(new Set(allHistory.map(h => h.academicSession)));
+      if (!availableSessions.includes('2025/2026')) availableSessions.push('2025/2026');
+      if (!availableSessions.includes('2024/2025')) availableSessions.push('2024/2025');
+
+      // Filter historical records
+      const filteredHistory = allHistory.filter(rec => {
+        const matchSession = historySessionFilter === 'ALL' || rec.academicSession === historySessionFilter;
+        const matchClass = historyClassFilter === 'ALL' || rec.fromClass.toLowerCase().includes(historyClassFilter.toLowerCase());
+        const q = historySearch.toLowerCase();
+        const matchSearch = !q || rec.studentName.toLowerCase().includes(q) || rec.studentCode.toLowerCase().includes(q) || rec.toClass.toLowerCase().includes(q);
+        return matchSession && matchClass && matchSearch;
+      });
+
+      const totalArchived = filteredHistory.length;
+      const totalPromoted = filteredHistory.filter(h => h.status === 'promoted' || h.status === 'graduated').length;
+      const totalRepeated = filteredHistory.filter(h => h.status === 'repeated').length;
+      const promotionRate = totalArchived > 0 ? Math.round((totalPromoted / totalArchived) * 100) : 100;
+      const avgGPA = totalArchived > 0 
+        ? (filteredHistory.reduce((acc, h) => acc + (h.cumulativeAverage || 0), 0) / totalArchived).toFixed(1)
+        : '0.0';
+
+      return (
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-border">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600">
+                  <History className="w-5 h-5" />
+                </span>
+                <h2 className="text-2xl font-serif font-bold text-foreground">{t('teacher.history_title', 'Academic History & Past Cohorts')}</h2>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {t('teacher.history_desc', 'Permanent archive of past student cohorts, promotion logs, historical broadsheets, and past terminal report cards.')}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  const defaultClass = formClass || 'JSS 3 Faith';
+                  const activeRoster = roster.filter(s => (s.grade || '').toLowerCase().includes(defaultClass.toLowerCase()));
+                  handleOpenPromotionModal(activeRoster.length > 0 ? activeRoster : roster.slice(0, 10), defaultClass);
+                }}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer"
+              >
+                <GraduationCap className="w-4 h-4" /> {t('teacher.new_promotion_btn', 'Promote Current Class')}
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Metrics */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <div className="bg-card border border-border p-4 rounded-2xl shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] uppercase font-bold text-muted-foreground">{t('teacher.total_archived', 'Archived Students')}</span>
+                <Users className="w-4 h-4 text-indigo-600" />
+              </div>
+              <p className="text-2xl font-bold text-foreground mt-1">{totalArchived}</p>
+              <span className="text-[10px] text-muted-foreground">{t('teacher.across_sessions', 'Across recorded cohorts')}</span>
+            </div>
+            <div className="bg-card border border-border p-4 rounded-2xl shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] uppercase font-bold text-muted-foreground">{t('teacher.promoted_count', 'Promoted Students')}</span>
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              </div>
+              <p className="text-2xl font-bold text-emerald-600 mt-1">{totalPromoted}</p>
+              <span className="text-[10px] text-emerald-600/80 font-semibold">{promotionRate}% Promotion Success</span>
+            </div>
+            <div className="bg-card border border-border p-4 rounded-2xl shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] uppercase font-bold text-muted-foreground">{t('teacher.repeated_count', 'Retained / Repeating')}</span>
+                <RotateCcw className="w-4 h-4 text-amber-600" />
+              </div>
+              <p className="text-2xl font-bold text-amber-600 mt-1">{totalRepeated}</p>
+              <span className="text-[10px] text-amber-600/80 font-semibold">{totalArchived > 0 ? (100 - promotionRate) : 0}% Retention</span>
+            </div>
+            <div className="bg-card border border-border p-4 rounded-2xl shadow-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] uppercase font-bold text-muted-foreground">{t('teacher.cohort_avg_gpa', 'Cohort Avg Score')}</span>
+                <Star className="w-4 h-4 text-primary" />
+              </div>
+              <p className="text-2xl font-bold text-primary mt-1">{avgGPA}%</p>
+              <span className="text-[10px] text-muted-foreground">{t('teacher.cumulative_term_score', 'Cumulative Scale')}</span>
+            </div>
+          </div>
+
+          {/* Filters Bar */}
+          <div className="bg-card rounded-2xl border border-border p-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+              {/* Session Selector */}
+              <div>
+                <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">{t('teacher.academic_session', 'Academic Session')}</label>
+                <select
+                  value={historySessionFilter}
+                  onChange={e => setHistorySessionFilter(e.target.value)}
+                  className="px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs font-bold text-foreground focus:ring-2 focus:ring-indigo-500 outline-none"
+                >
+                  <option value="ALL">{t('teacher.all_sessions', 'All Academic Sessions')}</option>
+                  {availableSessions.map(s => (
+                    <option key={s} value={s}>{s} Session</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Class Filter */}
+              <div>
+                <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">{t('teacher.origin_class', 'Origin Class')}</label>
+                <select
+                  value={historyClassFilter}
+                  onChange={e => setHistoryClassFilter(e.target.value)}
+                  className="px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs font-bold text-foreground focus:ring-2 focus:ring-indigo-500 outline-none"
+                >
+                  <option value="ALL">{t('teacher.all_classes', 'All Classes')}</option>
+                  <option value="JSS 1">JSS 1</option>
+                  <option value="JSS 2">JSS 2</option>
+                  <option value="JSS 3">JSS 3</option>
+                  <option value="SS 1">SS 1</option>
+                  <option value="SS 2">SS 2</option>
+                  <option value="SS 3">SS 3</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Search Box */}
+            <div className="relative w-full md:w-72">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder={t('teacher.search_history_placeholder', 'Search student name, ID or class...')}
+                value={historySearch}
+                onChange={e => setHistorySearch(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 rounded-xl border border-border bg-muted/20 text-xs text-foreground focus:ring-2 focus:ring-indigo-500 outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Archived Records Table */}
+          <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
+            <div className="p-4 border-b border-border flex items-center justify-between bg-muted/10">
+              <div className="flex items-center gap-2">
+                <FileSpreadsheet className="w-4 h-4 text-indigo-600" />
+                <h3 className="text-sm font-bold text-foreground font-serif">
+                  {t('teacher.past_cohort_roster', 'Past Cohort Promotion Log & Score Snapshots')}
+                </h3>
+              </div>
+              <span className="text-xs font-semibold text-muted-foreground">
+                {filteredHistory.length} {t('teacher.records_found', 'records archived')}
+              </span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                    <th className="py-3 px-4">{t('teacher.student', 'Student Name')}</th>
+                    <th className="py-3 px-3">{t('teacher.admission_id', 'Student ID')}</th>
+                    <th className="py-3 px-3">{t('teacher.session_term', 'Session / Term')}</th>
+                    <th className="py-3 px-3">{t('teacher.class_transition', 'Class Transition')}</th>
+                    <th className="py-3 px-3 text-center">{t('teacher.cum_average', 'Final Average')}</th>
+                    <th className="py-3 px-3 text-center">{t('teacher.promotion_status', 'Status')}</th>
+                    <th className="py-3 px-4 text-right">{t('teacher.actions', 'Historical Actions')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/60">
+                  {filteredHistory.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="py-12 text-center text-muted-foreground">
+                        <div className="max-w-xs mx-auto space-y-2">
+                          <History className="w-8 h-8 text-muted-foreground/40 mx-auto" />
+                          <p className="font-bold text-foreground">{t('teacher.no_history_records', 'No historical promotion records found')}</p>
+                          <p className="text-xs">{t('teacher.no_history_desc', 'When students are promoted at the end of the academic year, their broadsheet and transition records will be permanently archived here.')}</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredHistory.map((rec, idx) => (
+                      <tr key={rec.id || idx} className="hover:bg-muted/30 transition-colors">
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center shrink-0 border border-indigo-200">
+                              {rec.studentName?.charAt(0) || 'S'}
+                            </div>
+                            <div>
+                              <p className="font-bold text-foreground">{rec.studentName}</p>
+                              <p className="text-[10px] text-muted-foreground">Promoted by {rec.promotedByTeacherName || 'Form Teacher'}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded-md bg-muted text-foreground border border-border">
+                            {rec.studentCode}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="text-xs">
+                            <span className="font-bold text-foreground block">{rec.academicSession}</span>
+                            <span className="text-[10px] text-muted-foreground">{rec.term || '3rd Term'}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-3">
+                          <div className="flex items-center gap-1.5 text-xs font-semibold">
+                            <span className="text-muted-foreground">{rec.fromClass}</span>
+                            <ChevronRight className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                            <span className="text-indigo-600 font-bold">{rec.toClass}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-bold ${
+                            rec.cumulativeAverage >= 75 ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' :
+                            rec.cumulativeAverage >= 60 ? 'bg-teal-100 text-teal-800 border border-teal-300' :
+                            rec.cumulativeAverage >= 50 ? 'bg-blue-100 text-blue-800 border border-blue-300' :
+                            'bg-amber-100 text-amber-800 border border-amber-300'
+                          }`}>
+                            {rec.cumulativeAverage}%
+                          </span>
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          {rec.status === 'promoted' && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              <Check className="w-3 h-3" /> Promoted
+                            </span>
+                          )}
+                          {rec.status === 'repeated' && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                              <RotateCcw className="w-3 h-3" /> Repeating
+                            </span>
+                          )}
+                          {rec.status === 'graduated' && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                              <GraduationCap className="w-3 h-3" /> Graduated
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => setShowHistoryBroadsheetModal(rec)}
+                              className="px-2.5 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-[11px] font-bold text-foreground flex items-center gap-1 transition-colors cursor-pointer"
+                              title="View Archived Broadsheet Scores"
+                            >
+                              <Eye className="w-3.5 h-3.5 text-indigo-600" /> Scores
+                            </button>
+                            <button
+                              onClick={() => {
+                                // Open report card modal with historical scores
+                                setSelectedReportCardStudent({
+                                  id: rec.studentId,
+                                  name: rec.studentName,
+                                  code: rec.studentCode,
+                                  grade: rec.fromClass,
+                                  attendance: 96,
+                                  stream: rec.toClass.includes('Art') ? 'Art' : rec.toClass.includes('Commercial') ? 'Commercial' : 'Science'
+                                });
+                              }}
+                              className="px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-[11px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                              title="Print Historical Terminal Report Card"
+                            >
+                              <Printer className="w-3.5 h-3.5" /> Report Card
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // =========================================================
+    // 6. TEACHER PROFILE
     if (activeSection === 'profile') return (
       <div className="space-y-6 max-w-5xl">
         {/* Clean Page Title & Single Action Button */}
@@ -4071,6 +4511,383 @@ export default function TeacherDashboard() {
               </form>
             </div>
           </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* 🎓 STUDENT PROMOTION & SESSION ROLLOVER MODAL */}
+        {/* ========================================================= */}
+        {showPromotionModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+            <div className="bg-card rounded-2xl border border-border shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+              {/* Modal Header */}
+              <div className="p-5 border-b border-border flex items-center justify-between bg-indigo-950/20">
+                <div className="flex items-center gap-3">
+                  <span className="p-2.5 rounded-xl bg-indigo-600 text-white shadow-sm">
+                    <GraduationCap className="w-5 h-5" />
+                  </span>
+                  <div>
+                    <h3 className="font-serif font-bold text-lg text-foreground">
+                      {t('teacher.promotion_modal_title', 'End-of-Session Student Promotion & Rollover')}
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      {t('teacher.promotion_modal_subtitle', 'Review passing thresholds, adjust destinations, and transition the current cohort to the new academic session.')}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowPromotionModal(false)}
+                  className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Modal Configuration Strip */}
+              <div className="p-4 bg-muted/20 border-b border-border grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">
+                    {t('teacher.new_target_session', 'Target Academic Session')}
+                  </label>
+                  <input
+                    type="text"
+                    value={promotionSession}
+                    onChange={e => setPromotionSession(e.target.value)}
+                    className="w-full px-3 py-1.5 rounded-lg border border-border bg-card text-xs font-bold text-foreground"
+                    placeholder="e.g. 2026/2027"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">
+                    {t('teacher.promotion_term_label', 'Current Promotion Term')}
+                  </label>
+                  <select
+                    value={promotionTerm}
+                    onChange={e => setPromotionTerm(e.target.value)}
+                    className="w-full px-3 py-1.5 rounded-lg border border-border bg-card text-xs font-bold text-foreground"
+                  >
+                    <option value="3rd Term">3rd Term (Annual Final Promotion)</option>
+                    <option value="2nd Term">2nd Term Mid-Year Transition</option>
+                    <option value="1st Term">1st Term Exception Transition</option>
+                  </select>
+                </div>
+                <div className="flex items-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPromotionSelections(prev => {
+                        const next = { ...prev };
+                        Object.keys(next).forEach(id => {
+                          const avg = next[id].cumulativeAverage;
+                          const currentClass = broadsheetClassFilter || formClass || 'JSS 3 Faith';
+                          const s = roster.find(r => r.id === id);
+                          const dest = getNextProgressiveClass(currentClass, s?.stream);
+                          next[id] = {
+                            ...next[id],
+                            status: avg >= 50 ? (dest === 'Graduated (Alumni)' ? 'graduated' : 'promoted') : 'repeated',
+                            toClass: avg >= 50 ? dest : currentClass
+                          };
+                        });
+                        return next;
+                      });
+                      showToast('Auto-selected: ≥ 50% Promoted, < 50% Repeating.');
+                    }}
+                    className="w-full px-3 py-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    ⚡ Auto-select (≥ 50% Pass)
+                  </button>
+                </div>
+              </div>
+
+              {/* Students Promotion Table */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                <div className="text-xs text-muted-foreground bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200 rounded-xl p-3 flex items-start gap-2">
+                  <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold">Permanent Archival Notice:</span> When you finalize promotions, each student's current grades and broadsheet will be permanently archived under <strong>Academic History</strong>. Their broadsheet for the new session will start fresh for their incoming Form Teacher.
+                  </div>
+                </div>
+
+                <div className="border border-border rounded-xl overflow-hidden bg-card">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="bg-muted/40 text-[11px] font-bold text-muted-foreground border-b border-border uppercase">
+                        <th className="py-2.5 px-3">Student</th>
+                        <th className="py-2.5 px-2 text-center">Cum. Average</th>
+                        <th className="py-2.5 px-3">Promotion Decision</th>
+                        <th className="py-2.5 px-3">Destination Class</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/60">
+                      {roster
+                        .filter(s => (s.grade || '').toLowerCase().includes((broadsheetClassFilter || formClass || 'JSS 3').toLowerCase()))
+                        .map(student => {
+                          const sel = promotionSelections[student.id] || {
+                            status: 'promoted',
+                            toClass: getNextProgressiveClass(broadsheetClassFilter || formClass || 'JSS 3 Faith', student.stream),
+                            cumulativeAverage: 75
+                          };
+
+                          return (
+                            <tr key={student.id} className="hover:bg-muted/20">
+                              <td className="py-2.5 px-3">
+                                <p className="font-bold text-foreground">{student.name}</p>
+                                <span className="font-mono text-[10px] text-muted-foreground">{student.code || student.admission_number || student.email}</span>
+                              </td>
+                              <td className="py-2.5 px-2 text-center">
+                                <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${
+                                  sel.cumulativeAverage >= 50 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                                }`}>
+                                  {sel.cumulativeAverage}%
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-3">
+                                <select
+                                  value={sel.status}
+                                  onChange={e => {
+                                    const val = e.target.value as any;
+                                    setPromotionSelections(prev => ({
+                                      ...prev,
+                                      [student.id]: {
+                                        ...sel,
+                                        status: val,
+                                        toClass: val === 'repeated' 
+                                          ? (broadsheetClassFilter || formClass || 'JSS 3 Faith') 
+                                          : getNextProgressiveClass(broadsheetClassFilter || formClass || 'JSS 3 Faith', student.stream)
+                                      }
+                                    }));
+                                  }}
+                                  className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold ${
+                                    sel.status === 'promoted' ? 'border-emerald-300 bg-emerald-50 text-emerald-800' :
+                                    sel.status === 'repeated' ? 'border-amber-300 bg-amber-50 text-amber-800' :
+                                    sel.status === 'graduated' ? 'border-purple-300 bg-purple-50 text-purple-800' :
+                                    'border-border bg-muted/20 text-foreground'
+                                  }`}
+                                >
+                                  <option value="promoted">✅ Promote to Next Class</option>
+                                  <option value="repeated">🔄 Repeat Current Class</option>
+                                  <option value="graduated">🎓 Graduated (Alumni)</option>
+                                  <option value="transferred">📤 Transferred / Withdrawn</option>
+                                </select>
+                              </td>
+                              <td className="py-2.5 px-3">
+                                <select
+                                  value={sel.toClass}
+                                  onChange={e => {
+                                    setPromotionSelections(prev => ({
+                                      ...prev,
+                                      [student.id]: {
+                                        ...sel,
+                                        toClass: e.target.value
+                                      }
+                                    }));
+                                  }}
+                                  className="px-2.5 py-1.5 rounded-lg border border-border bg-muted/20 text-xs font-semibold text-foreground w-full max-w-[200px]"
+                                >
+                                  <option value="Graduated (Alumni)">🎓 Graduated (Alumni)</option>
+                                  <optgroup label="Junior Secondary">
+                                    <option value="JSS 1 Faith">JSS 1 Faith</option>
+                                    <option value="JSS 1 Grace">JSS 1 Grace</option>
+                                    <option value="JSS 2 Faith">JSS 2 Faith</option>
+                                    <option value="JSS 2 Grace">JSS 2 Grace</option>
+                                    <option value="JSS 3 Faith">JSS 3 Faith</option>
+                                    <option value="JSS 3 Grace">JSS 3 Grace</option>
+                                  </optgroup>
+                                  <optgroup label="Senior Secondary">
+                                    <option value="SS 1 Science">SS 1 Science</option>
+                                    <option value="SS 1 Art">SS 1 Art</option>
+                                    <option value="SS 1 Commercial">SS 1 Commercial</option>
+                                    <option value="SS 2 Science">SS 2 Science</option>
+                                    <option value="SS 2 Art">SS 2 Art</option>
+                                    <option value="SS 2 Commercial">SS 2 Commercial</option>
+                                    <option value="SS 3 Science">SS 3 Science</option>
+                                    <option value="SS 3 Art">SS 3 Art</option>
+                                    <option value="SS 3 Commercial">SS 3 Commercial</option>
+                                  </optgroup>
+                                </select>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-4 border-t border-border bg-muted/10 flex items-center justify-between gap-3">
+                <div className="text-xs text-muted-foreground">
+                  Session: <span className="font-bold text-foreground">{promotionSession}</span> ({promotionTerm})
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowPromotionModal(false)}
+                    className="px-4 py-2.5 rounded-xl border border-border text-xs font-bold text-foreground hover:bg-muted transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const activeClass = broadsheetClassFilter || formClass || 'JSS 3 Faith';
+                      const activeRoster = roster.filter(s => (s.grade || '').toLowerCase().includes(activeClass.toLowerCase()));
+                      handleExecutePromotionSubmit(activeClass, activeRoster.length > 0 ? activeRoster : roster.slice(0, 10));
+                    }}
+                    className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md transition-all flex items-center gap-2 cursor-pointer"
+                  >
+                    <GraduationCap className="w-4 h-4" /> Finalize & Execute Promotion
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* 📜 HISTORICAL BROADSHEET MODAL */}
+        {/* ========================================================= */}
+        {showHistoryBroadsheetModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+            <div className="bg-card rounded-2xl border border-border shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+              {/* Header */}
+              <div className="p-5 border-b border-border flex items-center justify-between bg-indigo-950/20">
+                <div className="flex items-center gap-3">
+                  <span className="p-2.5 rounded-xl bg-indigo-600 text-white shadow-sm">
+                    <FileSpreadsheet className="w-5 h-5" />
+                  </span>
+                  <div>
+                    <h3 className="font-serif font-bold text-lg text-foreground">
+                      {showHistoryBroadsheetModal.studentName} — Archived Broadsheet
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      Session: <span className="font-semibold text-foreground">{showHistoryBroadsheetModal.academicSession}</span> ({showHistoryBroadsheetModal.term || '3rd Term'}) · Class: <span className="font-semibold text-foreground">{showHistoryBroadsheetModal.fromClass}</span> → <span className="font-semibold text-indigo-600">{showHistoryBroadsheetModal.toClass}</span>
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowHistoryBroadsheetModal(null)}
+                  className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Broadsheet Content Table */}
+              <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-muted/20 p-4 rounded-xl border border-border">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">Student ID</span>
+                    <span className="font-mono text-xs font-bold text-foreground">{showHistoryBroadsheetModal.studentCode}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">Final Cumulative Avg</span>
+                    <span className="text-sm font-bold text-emerald-600">{showHistoryBroadsheetModal.cumulativeAverage}%</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">Promotion Outcome</span>
+                    <span className="text-xs font-bold text-indigo-600 uppercase">{showHistoryBroadsheetModal.status}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">Archived On</span>
+                    <span className="text-xs font-semibold text-foreground">{new Date(showHistoryBroadsheetModal.promotedAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
+
+                <div className="border border-border rounded-xl overflow-hidden">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-muted/40 border-b border-border text-[11px] font-bold text-muted-foreground uppercase">
+                        <th className="py-2.5 px-3">Subject / Course</th>
+                        <th className="py-2.5 px-2 text-center">1st CA</th>
+                        <th className="py-2.5 px-2 text-center">2nd CA</th>
+                        <th className="py-2.5 px-2 text-center">CBT Obj</th>
+                        <th className="py-2.5 px-2 text-center">Theory / Exam</th>
+                        <th className="py-2.5 px-2 text-center font-bold text-foreground">Total Score</th>
+                        <th className="py-2.5 px-2 text-center">Grade</th>
+                        <th className="py-2.5 px-3">Remark</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/60">
+                      {Object.keys(showHistoryBroadsheetModal.broadsheetSnapshot || {}).length === 0 ? (
+                        <tr>
+                          <td colSpan={8} className="py-8 text-center text-muted-foreground">
+                            No subject score records recorded for this historical snapshot.
+                          </td>
+                        </tr>
+                      ) : (
+                        Object.entries(showHistoryBroadsheetModal.broadsheetSnapshot).map(([cCode, score]: [string, any]) => {
+                          const total = score.total || ((score.ca1 || 0) + (score.ca2 || 0) + (score.cbtScore || 0) + (score.paperExam || score.exam || 0));
+                          const isSS = isSeniorSecondaryClass(showHistoryBroadsheetModal.fromClass);
+                          const grade = isSS ? calculateWAECGrade(total) : calculateBECEGrade(total);
+
+                          return (
+                            <tr key={cCode} className="hover:bg-muted/20">
+                              <td className="py-2.5 px-3">
+                                <span className="font-bold text-foreground">{cCode}</span>
+                              </td>
+                              <td className="py-2.5 px-2 text-center font-semibold">{score.ca1 ?? '-'}</td>
+                              <td className="py-2.5 px-2 text-center font-semibold">{score.ca2 ?? '-'}</td>
+                              <td className="py-2.5 px-2 text-center font-semibold">{isSS ? (score.cbtScore ?? '-') : 'N/A'}</td>
+                              <td className="py-2.5 px-2 text-center font-semibold">{score.paperExam ?? score.exam ?? '-'}</td>
+                              <td className="py-2.5 px-2 text-center font-bold text-foreground">{total}</td>
+                              <td className="py-2.5 px-2 text-center">
+                                <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold border ${grade.color}`}>
+                                  {grade.grade}
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-3 text-muted-foreground italic text-[11px]">
+                                {score.remark || score.remarks || 'Good academic effort & steady progress'}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="p-4 border-t border-border bg-muted/10 flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  Signed: <strong>{showHistoryBroadsheetModal.promotedByTeacherName || 'Form Teacher'}</strong>
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowHistoryBroadsheetModal(null)}
+                    className="px-4 py-2 rounded-xl border border-border text-xs font-bold text-foreground hover:bg-muted transition-colors cursor-pointer"
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={() => {
+                      const rec = showHistoryBroadsheetModal;
+                      setShowHistoryBroadsheetModal(null);
+                      setSelectedReportCardStudent({
+                        id: rec.studentId,
+                        name: rec.studentName,
+                        code: rec.studentCode,
+                        grade: rec.fromClass,
+                        attendance: 96,
+                        stream: rec.toClass.includes('Art') ? 'Art' : rec.toClass.includes('Commercial') ? 'Commercial' : 'Science'
+                      });
+                    }}
+                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Printer className="w-3.5 h-3.5" /> Print Terminal Report Card
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 🖨️ Terminal Report Card Modal */}
+        {selectedReportCardStudent && (
+          <TerminalReportCard
+            data={buildReportCardData(selectedReportCardStudent)}
+            onClose={() => setSelectedReportCardStudent(null)}
+          />
         )}
 
         {renderSection()}
