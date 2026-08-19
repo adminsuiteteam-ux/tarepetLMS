@@ -626,41 +626,24 @@ export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [
 ];
 
 function loadSavedTeachers(): TeacherRecord[] {
-  let savedTeachers: TeacherRecord[] = [];
   if (typeof window !== 'undefined') {
     try {
       const saved = localStorage.getItem('tarepet_teachers_list');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          savedTeachers = parsed;
+          // Live backend data exists — use it directly as the single source of truth.
+          // Filter out any deleted accounts but accept ALL teachers regardless of ID.
+          return parsed.filter((t: TeacherRecord) =>
+            t && t.name && !isAccountDeleted(t.email) && !isAccountDeleted(t.staffId)
+          );
         }
       }
     } catch (e) {}
   }
 
-  // Merge DEFAULT_FORM_TEACHERS with saved edits, preserving exact official roster (19)
-  const defaultKeys = new Set(DEFAULT_FORM_TEACHERS.map(t => (t.email || t.staffId || '').toLowerCase()));
-  const mergedMap = new Map<string, TeacherRecord>();
-  
-  DEFAULT_FORM_TEACHERS.forEach(t => {
-    mergedMap.set((t.email || t.staffId || '').toLowerCase(), t);
-  });
-
-  savedTeachers.forEach(t => {
-    const key = (t.email || t.staffId || String(t.id)).toLowerCase();
-    if (defaultKeys.has(key)) {
-      const existing = mergedMap.get(key);
-      if (existing) {
-        mergedMap.set(key, { ...existing, ...t });
-      }
-    } else if (typeof t.id === 'number' && t.id >= 1000) {
-      // Allow newly created custom teachers (ID >= 1000)
-      mergedMap.set(key, t);
-    }
-  });
-
-  return Array.from(mergedMap.values());
+  // No live data synced yet — fall back to hardcoded defaults as initial seed
+  return DEFAULT_FORM_TEACHERS;
 }
 
 let _teachers: TeacherRecord[] = loadSavedTeachers();
@@ -689,19 +672,19 @@ export function saveTeacher(teacherData: Partial<TeacherRecord> & { name: string
     staffId: staffId,
     name: teacherData.name.trim(),
     email: email,
-    phone: teacherData.phone || (existing?.phone) || '+234 800 000 0000',
-    gender: teacherData.gender || (existing?.gender) || 'Male',
-    department: teacherData.department || (existing?.department) || 'Academic Department',
-    specialization: teacherData.specialization || (existing?.specialization) || 'General Education',
-    qualification: teacherData.qualification || (existing?.qualification) || 'B.Sc. Education',
+    phone: teacherData.phone || (existing?.phone) || '',
+    gender: teacherData.gender || (existing?.gender) || '',
+    department: teacherData.department || (existing?.department) || '',
+    specialization: teacherData.specialization || (existing?.specialization) || '',
+    qualification: teacherData.qualification || (existing?.qualification) || '',
     status: teacherData.status || (existing?.status) || 'Active',
     joined: teacherData.joined || (existing?.joined) || new Date().toISOString().split('T')[0],
     formTeacherOf: teacherData.formTeacherOf || (existing?.formTeacherOf) || 'None',
     subjectsAssigned: teacherData.subjectsAssigned || (existing?.subjectsAssigned) || [],
     classesCount: teacherData.classesCount || (existing?.classesCount) || 0,
     studentsCount: teacherData.studentsCount || (existing?.studentsCount) || 0,
-    address: teacherData.address || (existing?.address) || 'Tarepet School Campus',
-    dob: teacherData.dob || (existing?.dob) || '1990-01-01',
+    address: teacherData.address || (existing?.address) || '',
+    dob: teacherData.dob || (existing?.dob) || '',
     cbtExamsCount: teacherData.cbtExamsCount || (existing?.cbtExamsCount) || 0,
     attendanceRate: teacherData.attendanceRate || (existing?.attendanceRate) || '0%',
     profileImage: teacherData.profileImage || (existing?.profileImage) || '',
@@ -869,19 +852,19 @@ export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
           admissionNo: u.student_id || u.profile?.student_id || `TMS/SS1/SCI/${u.id}`,
           name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
           email: u.email,
-          gender: u.profile?.gender || 'Male',
+          gender: u.profile?.gender || '',
           maritalStatus: 'Single',
-          dob: u.profile?.dob || 'Not Available',
-          phone: u.phone || 'Not Available',
+          dob: u.profile?.dob || '',
+          phone: u.phone || u.profile?.phone || '',
           country: 'Nigeria',
-          stateOfOrigin: u.profile?.stateOfOrigin || 'Bayelsa',
-          lga: u.profile?.lga || 'Yenagoa',
-          address: u.profile?.address || 'Not Available',
+          stateOfOrigin: u.profile?.stateOfOrigin || '',
+          lga: u.profile?.lga || '',
+          address: u.profile?.address || '',
           grade: u.profile?.grade || u.profile?.formTeacherOf || 'SS1',
           stream: u.profile?.stream || 'Science',
           programme: 'Senior Secondary Certificate (SSCE)',
-          parentName: u.profile?.parentName || 'Not Available',
-          parentPhone: u.profile?.parentPhone || 'Not Available',
+          parentName: u.profile?.parentName || '',
+          parentPhone: u.profile?.parentPhone || '',
           status: 'ACTIVE',
           studyMode: 'Full Time',
           attendance: '100%',
@@ -894,6 +877,64 @@ export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
     // Graceful fallback to in-memory records if backend API is not serving /users/
   }
   return _students;
+}
+
+export async function syncTeachersWithBackend(): Promise<TeacherRecord[]> {
+  try {
+    const res = await authClient.get('/auth/users/?role=TEACHER');
+    if (res.data) {
+      const dataArr = Array.isArray(res.data?.results) ? res.data.results : Array.isArray(res.data) ? res.data : [];
+      const fetched: TeacherRecord[] = dataArr
+        .filter((u: any) => {
+          const uCode = u.profile?.teacher_id || u.teacher_id || '';
+          const uName = `${u.first_name || ''} ${u.last_name || ''}`.trim();
+          return !isAccountDeleted(u.email) && !isAccountDeleted(u.id) && !isAccountDeleted(uCode) && !isAccountDeleted(uName);
+        })
+        .map((u: any) => {
+          const prof = u.profile || {};
+          const subs = Array.isArray(prof.subjects_taught) ? prof.subjects_taught : [];
+          const spec = typeof prof.specialization === 'string' && prof.specialization
+            ? prof.specialization
+            : (subs.length > 0 ? (typeof subs[0] === 'string' ? subs[0] : subs[0].name) : '');
+
+          return {
+            id: u.id,
+            staffId: prof.teacher_id || u.teacher_id || `TMS/TCH/${String(u.id).padStart(4, '0')}`,
+            name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
+            email: u.email,
+            phone: u.phone || prof.phone || '',
+            gender: prof.gender || '',
+            department: prof.department || '',
+            specialization: spec,
+            qualification: prof.qualifications || '',
+            status: u.is_active !== false ? 'Active' : 'Inactive',
+            joined: prof.hire_date || (u.date_joined ? u.date_joined.split('T')[0] : ''),
+            formTeacherOf: prof.form_teacher_of || 'None',
+            subjectsAssigned: subs,
+            classesCount: subs.length || 0,
+            studentsCount: prof.students_count ?? (prof.studentsCount ?? 0),
+            address: prof.address || '',
+            dob: prof.dob || '',
+            salary: prof.salary || '',
+            bankName: prof.bank_name || '',
+            accountNumber: prof.account_number || '',
+            cbtExamsCount: 0,
+            attendanceRate: prof.attendance_rate || prof.attendanceRate || '0%',
+            profileImage: prof.profile_image || '',
+            password: prof.teacher_id || u.teacher_id || `TMS/TCH/${String(u.id).padStart(4, '0')}`,
+          };
+        });
+
+      if (fetched.length > 0) {
+        saveStoredTeachers(fetched);
+        _teachers = fetched;
+        broadcastRealtimeEvent();
+      }
+    }
+  } catch (err) {
+    // Graceful fallback
+  }
+  return _teachers;
 }
 
 export function saveStudent(studentData: Partial<StudentRecord> & { name: string }): StudentRecord {

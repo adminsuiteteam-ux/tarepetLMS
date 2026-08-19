@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 import { authClient } from '@/lib/api-auth';
-import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, getStoredTeachers, saveTeacher, saveStudent, deleteStudent, subscribeToCBTStore, syncStudentsWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, calculateBECEGrade, isSeniorSecondaryClass, CourseBroadsheetScore, PromotionRecord, getPromotionHistory, executeStudentPromotions, getNextProgressiveClass, getArchivedCohortsForTeacher } from '@/lib/cbt-store';
+import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, getStoredTeachers, saveTeacher, saveStudent, deleteStudent, subscribeToCBTStore, syncStudentsWithBackend, syncTeachersWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, calculateBECEGrade, isSeniorSecondaryClass, CourseBroadsheetScore, PromotionRecord, getPromotionHistory, executeStudentPromotions, getNextProgressiveClass, getArchivedCohortsForTeacher } from '@/lib/cbt-store';
 import { useTranslation } from '@/lib/i18n';
 import { TerminalReportCard, ReportCardData, SubjectScore } from '@/components/reports/TerminalReportCard';
 import { getTimeGreeting } from '@/lib/utils';
@@ -86,7 +86,7 @@ export default function TeacherDashboard() {
     const cleanUEmail = uEmail.replace(/[^a-z0-9]/g, '');
 
     const allTeachers = getStoredTeachers();
-    return allTeachers.find((t: any) => {
+    const found = allTeachers.find((t: any) => {
       const tEmail = (t.email || '').toLowerCase();
       const tStaffId = (t.staffId || '').toLowerCase();
       const tName = (t.name || '').toLowerCase();
@@ -100,7 +100,38 @@ export default function TeacherDashboard() {
         (cleanUEmail.length >= 4 && (cleanUEmail.includes(cleanTEmail) || cleanTEmail.includes(cleanUEmail))) ||
         (uName.length >= 3 && tName === uName)
       );
-    }) || allTeachers[0];
+    });
+
+    if (found) return found;
+
+    // Direct construction from authenticated user profile — never fall back to another teacher
+    const prof = (user.profile as any) || {};
+    return {
+      id: user.id || Date.now(),
+      staffId: prof.teacher_id || (user as any).staffId || `TMS/TCH/${String(user.id || '0001').padStart(4, '0')}`,
+      name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email || '',
+      email: user.email || '',
+      phone: user.phone || prof.phone || '',
+      gender: prof.gender || '',
+      department: prof.department || '',
+      specialization: prof.specialization || '',
+      qualification: prof.qualifications || '',
+      status: (user as any).is_active !== false ? 'Active' : 'Inactive',
+      joined: prof.hire_date || '',
+      formTeacherOf: prof.form_teacher_of || prof.formTeacherOf || 'None',
+      subjectsAssigned: Array.isArray(prof.subjects_taught) ? prof.subjects_taught : [],
+      classesCount: Array.isArray(prof.subjects_taught) ? prof.subjects_taught.length : 0,
+      studentsCount: prof.students_count ?? (prof.studentsCount ?? 0),
+      address: prof.address || '',
+      bio: prof.bio || '',
+      dob: prof.dob || '',
+      salary: prof.salary || '',
+      bankName: prof.bank_name || '',
+      accountNumber: prof.account_number || '',
+      cbtExamsCount: 0,
+      attendanceRate: '0%',
+      profileImage: prof.profile_image || '',
+    };
   }, [user]);
 
   const rawFormClass = (user?.profile as any)?.formTeacherOf || (user?.profile as any)?.form_teacher_of || matchedStoredTeacher?.formTeacherOf;
@@ -130,6 +161,7 @@ export default function TeacherDashboard() {
   React.useEffect(() => {
     setRoster(getStoredStudents());
     syncStudentsWithBackend().then(res => setRoster(res));
+    syncTeachersWithBackend();
     const unsub = subscribeToCBTStore(() => {
       setRoster(getStoredStudents());
     });
@@ -466,7 +498,7 @@ export default function TeacherDashboard() {
   const getTeacherProfileData = () => {
     const t = matchedStoredTeacher;
     const prof = (user?.profile as any) || {};
-    const tName = t?.name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Teacher Staff';
+    const tName = t?.name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || '';
     const nameParts = tName.split(' ');
     const fName = user?.first_name || nameParts[0] || '';
     const lName = user?.last_name || nameParts.slice(1).join(' ') || '';
@@ -484,9 +516,9 @@ export default function TeacherDashboard() {
       fullName: tName,
       email: t?.email || user?.email || '',
       phone: t?.phone || user?.phone || prof.phone || '',
-      staffId: t?.staffId || prof.teacher_id || (user as any)?.staffId || 'TMS/TCH/0054',
-      roleTitle: formCls ? 'Form Teacher' : (t?.department || prof.department || 'Subject Educator'),
-      department: t?.department || prof.department || 'Academic Department',
+      staffId: t?.staffId || prof.teacher_id || (user as any)?.staffId || '',
+      roleTitle: formCls ? 'Form Teacher' : (t?.department || prof.department || ''),
+      department: t?.department || prof.department || '',
       qualification: t?.qualification || prof.qualifications || '',
       joiningDate: t?.joined || prof.hire_date || '',
       gender: t?.gender || prof.gender || '',

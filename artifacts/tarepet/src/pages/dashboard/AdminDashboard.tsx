@@ -5,7 +5,7 @@ import { authClient, sanitizeMailto } from '@/lib/api-auth';
 import { PortalLayout } from '@/components/layout/PortalLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
-import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, clearAllStoredStudents, deleteStudent, syncStudentsWithBackend, getStoredTeachers, saveTeacher, saveStoredTeachers, clearAllStoredTeachers, deleteTeacher, listenToRealtimeEvents, clearCBTStoreCache, clearAllSiteDefaultData, isAccountDeleted, getAdminPassword, setAdminPassword } from '@/lib/cbt-store';
+import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, clearAllStoredStudents, deleteStudent, syncStudentsWithBackend, getStoredTeachers, saveTeacher, saveStoredTeachers, clearAllStoredTeachers, deleteTeacher, syncTeachersWithBackend, listenToRealtimeEvents, clearCBTStoreCache, clearAllSiteDefaultData, isAccountDeleted, getAdminPassword, setAdminPassword } from '@/lib/cbt-store';
 import { AdminManagementPanel } from '@/components/dashboard/AdminManagementPanel';
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
 import {
@@ -306,8 +306,8 @@ const EMPTY_TEACHER_FORM = {
   // Step 3 — Teaching Load
   isFormTeacher: 'No', // 'Yes' | 'No'
   formTeacherClass: 'SS 1 Science',
-  teachingDivision: 'Junior Secondary (JSS 1 - JSS 3)', // 'Junior Secondary (JSS 1 - JSS 3)' | 'Senior Secondary (SS 1 - SS 3)'
-  subjectsAssigned: [{ name: 'Mathematics', grade: 'JSS 1' }],
+  teachingDivision: 'Junior Secondary (JSS 1 - JSS 3)',
+  subjectsAssigned: [] as { name: string; grade: string }[],
   // Step 4 — Employment
   staffId: '', joined: '', status: 'Active', salary: '', bankName: '', accountNumber: '',
 };
@@ -334,10 +334,10 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
   const handleSave = () => {
     const serial = String(Math.floor(1 + Math.random() * 9999)).padStart(4, '0');
     const staffId = form.staffId || `TMS/TCH/${serial}`;
-    const nameParts = (form.name || 'Teacher Staff').trim().split(' ');
-    const firstName = nameParts[0] || 'Teacher';
-    const lastName = nameParts.slice(1).join(' ') || 'Staff';
-    const email = form.email || `${firstName.toLowerCase()}.${lastName.toLowerCase()}@tarepet.com`;
+    const nameParts = (form.name || '').trim().split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+    const email = form.email || (firstName ? `${firstName.toLowerCase()}.${lastName ? lastName.toLowerCase() : 'staff'}@tarepet.com` : '');
 
     const formTeacherDisplay = form.isFormTeacher === 'Yes'
       ? form.formTeacherClass
@@ -346,14 +346,14 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
     const created = {
       id: Date.now(),
       staffId: staffId,
-      name: form.name || `${firstName} ${lastName}`,
+      name: form.name || `${firstName} ${lastName}`.trim(),
       email: email,
       phone: form.phone,
       gender: form.gender,
       department: form.isFormTeacher === 'Yes' ? 'Form Teacher' : 'Subject Teacher',
       specialization: form.specialization,
       qualification: form.qualification,
-      status: form.status,
+      status: form.status || 'Active',
       joined: form.joined || new Date().toISOString().split('T')[0],
       formTeacherOf: formTeacherDisplay,
       subjectsAssigned: form.subjectsAssigned.filter((s: any) => s.name),
@@ -391,6 +391,11 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
       bank_name: form.bankName,
       account_number: form.accountNumber,
       form_teacher_of: formTeacherDisplay,
+    }).then((res) => {
+      if (res.data?.id) {
+        saveTeacher({ ...created, id: res.data.id });
+      }
+      syncTeachersWithBackend();
     }).catch(() => {});
 
     saveTeacher(created);
@@ -1961,32 +1966,32 @@ export default function AdminDashboard() {
               const subs = Array.isArray(prof.subjects_taught) ? prof.subjects_taught : [];
               const spec = typeof prof.specialization === 'string' && prof.specialization
                 ? prof.specialization
-                : (subs.length > 0 ? (typeof subs[0] === 'string' ? subs[0] : subs[0].name) : 'General Education');
+                : (subs.length > 0 ? (typeof subs[0] === 'string' ? subs[0] : subs[0].name) : '');
 
               return {
                 id: u.id,
                 staffId: prof.teacher_id || u.teacher_id || `TMS/TCH/${String(u.id).padStart(4, '0')}`,
                 name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
                 email: u.email,
-                phone: u.phone || prof.phone || '+234 800 000 0000',
-                gender: prof.gender || 'Male',
-                department: prof.department || 'Academic Department',
+                phone: u.phone || prof.phone || '',
+                gender: prof.gender || '',
+                department: prof.department || '',
                 specialization: spec,
-                qualification: prof.qualifications || 'B.Sc. Education',
+                qualification: prof.qualifications || '',
                 status: u.is_active ? 'Active' : 'Inactive',
-                joined: prof.hire_date || (u.date_joined ? u.date_joined.split('T')[0] : '2026-01-01'),
+                joined: prof.hire_date || (u.date_joined ? u.date_joined.split('T')[0] : ''),
                 formTeacherOf: prof.form_teacher_of || 'None',
                 subjectsAssigned: subs,
                 classesCount: subs.length || 0,
                 studentsCount: prof.students_count ?? (prof.studentsCount ?? 0),
-                address: prof.address || 'Tarepet School Campus',
-                dob: prof.dob || '1990-01-01',
+                address: prof.address || '',
+                dob: prof.dob || '',
                 salary: prof.salary || '',
                 bankName: prof.bank_name || '',
                 accountNumber: prof.account_number || '',
                 cbtExamsCount: 0,
                 attendanceRate: prof.attendance_rate || prof.attendanceRate || '0%',
-                profileImage: '',
+                profileImage: prof.profile_image || '',
               };
             });
 
@@ -1997,12 +2002,12 @@ export default function AdminDashboard() {
               studentId: u.profile?.student_id || u.student_id || `TP-STU-${String(u.id).padStart(3, '0')}`,
               name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
               email: u.email,
-              phone: u.phone || '+234 800 000 0000',
-              gender: 'Male',
-              grade: u.profile?.grade_level || 'JSS1',
-              stream: 'General',
+              phone: u.phone || u.profile?.phone || '',
+              gender: u.profile?.gender || '',
+              grade: u.profile?.grade_level || u.profile?.grade || '',
+              stream: u.profile?.stream || '',
               status: u.is_active ? 'Active' : 'Inactive',
-              joined: u.date_joined ? u.date_joined.split('T')[0] : '2026-01-01',
+              joined: u.profile?.hire_date || (u.date_joined ? u.date_joined.split('T')[0] : ''),
             }));
 
           // Sync local storage & state directly with live backend database results

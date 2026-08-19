@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 
 import { authClient } from '@/lib/api-auth';
-import { getStoredTeachers, saveTeacher, broadcastRealtimeEvent, addRealtimeActivity } from '@/lib/cbt-store';
+import { getStoredTeachers, saveTeacher, broadcastRealtimeEvent, addRealtimeActivity, syncTeachersWithBackend } from '@/lib/cbt-store';
 import { addRealtimeNotification } from '@/lib/notifications-store';
 import { isBiometricsSupported, isBiometricsEnabled, enrollBiometrics, unenrollBiometrics } from '@/lib/biometrics';
 
@@ -61,9 +61,9 @@ export default function TeacherProfile() {
         (cleanUEmail.length >= 4 && (cleanUEmail.includes(cleanTEmail) || cleanTEmail.includes(cleanUEmail))) ||
         (uName.length >= 3 && tName === uName)
       );
-    }) || allTeachers[0];
+    });
 
-    const tName = stored?.name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Teacher Staff';
+    const tName = stored?.name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.email || '';
     const nameParts = tName.split(' ');
     const fName = user?.first_name || nameParts[0] || '';
     const lName = user?.last_name || nameParts.slice(1).join(' ') || '';
@@ -81,9 +81,9 @@ export default function TeacherProfile() {
       fullName: tName,
       email: stored?.email || user?.email || '',
       phone: stored?.phone || user?.phone || prof.phone || '',
-      staffId: stored?.staffId || prof.teacher_id || (user as any)?.staffId || 'TMS/TCH/0054',
-      roleTitle: formCls ? 'Form Teacher' : (stored?.department || prof.department || 'Subject Educator'),
-      department: stored?.department || prof.department || 'Academic Department',
+      staffId: stored?.staffId || prof.teacher_id || (user as any)?.staffId || '',
+      roleTitle: formCls ? `Form Teacher (${formCls})` : (stored?.department || prof.department || ''),
+      department: stored?.department || prof.department || '',
       qualification: stored?.qualification || prof.qualifications || '',
       joiningDate: stored?.joined || prof.hire_date || '',
       gender: stored?.gender || prof.gender || '',
@@ -93,9 +93,9 @@ export default function TeacherProfile() {
       bio: stored?.bio || prof.bio || '',
       formClass: formCls,
       subjectsAssigned: subs,
-      studentsCount: stored?.studentsCount ?? 0,
+      studentsCount: stored?.studentsCount ?? (prof.students_count ?? 0),
       cbtExamsCount: stored?.cbtExamsCount ?? 0,
-      attendanceRate: stored?.attendanceRate || '0%',
+      attendanceRate: stored?.attendanceRate || prof.attendance_rate || '0%',
       emergencyContactName: '',
       emergencyContactPhone: '',
       officeHours: (stored as any)?.officeHours || '',
@@ -105,7 +105,7 @@ export default function TeacherProfile() {
       emailAlerts: true,
       cbtAlerts: true,
       smsAlerts: false,
-      profileImage: stored?.profileImage || prof.profileImage || '',
+      profileImage: stored?.profileImage || prof.profile_image || prof.profileImage || '',
     };
   };
 
@@ -116,6 +116,9 @@ export default function TeacherProfile() {
     // 1. Sync from local auth & stored teacher records
     const updated = getInitialProfile();
     setProfileForm(updated);
+    syncTeachersWithBackend().then(() => {
+      setProfileForm(getInitialProfile());
+    });
 
     // 2. Fetch live user profile from Django REST API backend (/auth/me/)
     authClient.get('/auth/me/').then(res => {
