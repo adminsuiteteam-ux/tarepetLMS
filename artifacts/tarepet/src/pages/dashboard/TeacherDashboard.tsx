@@ -1922,36 +1922,49 @@ export default function TeacherDashboard() {
                   className="px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs font-bold text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
                 >
                   {formClass && (
-                    <option value={formClass}>{formClass} ({t('teacher.assigned_form_class', 'Assigned Class')})</option>
+                    <option value={formClass}>⭐ {formClass} ({t('teacher.assigned_form_class', 'Your Assigned Class')})</option>
                   )}
-                  <optgroup label="Junior Secondary (100% Handwritten No CBT)">
-                    <option value="JSS 3 Faith">JSS 3 Faith</option>
-                    <option value="JSS 3 Love">JSS 3 Love</option>
-                    <option value="JSS 2 Faith">JSS 2 Faith</option>
-                    <option value="JSS 2 Love">JSS 2 Love</option>
+                  <optgroup label="🧸 Nursery & Early Years">
+                    <option value="Creche">Creche</option>
+                    <option value="Nursery 1 Faith">Nursery 1 Faith</option>
+                    <option value="Nursery 1 Love">Nursery 1 Love</option>
+                    <option value="Nursery 2 Faith">Nursery 2 Faith</option>
+                    <option value="Nursery 2 Love">Nursery 2 Love</option>
+                    <option value="Nursery 3 Faith">Nursery 3 Faith</option>
+                    <option value="Nursery 3 Love">Nursery 3 Love</option>
+                  </optgroup>
+                  <optgroup label="🎒 Primary Education (Basic 1–6)">
+                    <option value="Primary 1 Faith">Primary 1 Faith</option>
+                    <option value="Primary 1 Love">Primary 1 Love</option>
+                    <option value="Primary 2 Faith">Primary 2 Faith</option>
+                    <option value="Primary 2 Love">Primary 2 Love</option>
+                    <option value="Primary 3 Faith">Primary 3 Faith</option>
+                    <option value="Primary 3 Love">Primary 3 Love</option>
+                    <option value="Primary 4 Faith">Primary 4 Faith</option>
+                    <option value="Primary 4 Love">Primary 4 Love</option>
+                    <option value="Primary 5 Faith">Primary 5 Faith</option>
+                    <option value="Primary 5 Love">Primary 5 Love</option>
+                    <option value="Primary 6 Faith">Primary 6 Faith</option>
+                    <option value="Primary 6 Love">Primary 6 Love</option>
+                  </optgroup>
+                  <optgroup label="📚 Junior Secondary (JSS 1–3 · Handwritten)">
                     <option value="JSS 1 Faith">JSS 1 Faith</option>
                     <option value="JSS 1 Love">JSS 1 Love</option>
+                    <option value="JSS 2 Faith">JSS 2 Faith</option>
+                    <option value="JSS 2 Love">JSS 2 Love</option>
+                    <option value="JSS 3 Faith">JSS 3 Faith</option>
+                    <option value="JSS 3 Love">JSS 3 Love</option>
                   </optgroup>
-                  <optgroup label="Senior Secondary (CBT OBJ + Theory)">
+                  <optgroup label="🎓 Senior Secondary (SS 1–3 · CBT + Theory)">
                     <option value="SS 1 Science">SS 1 Science</option>
                     <option value="SS 1 Art">SS 1 Art</option>
+                    <option value="SS 1 Commercial">SS 1 Commercial</option>
                     <option value="SS 2 Science">SS 2 Science</option>
                     <option value="SS 2 Art">SS 2 Art</option>
+                    <option value="SS 2 Commercial">SS 2 Commercial</option>
                     <option value="SS 3 Science">SS 3 Science</option>
                     <option value="SS 3 Art">SS 3 Art</option>
-                  </optgroup>
-                  <optgroup label="Primary (100% Handwritten)">
-                    <option value="Primary 1 Faith">Primary 1 Faith</option>
-                    <option value="Primary 2 Faith">Primary 2 Faith</option>
-                    <option value="Primary 3 Faith">Primary 3 Faith</option>
-                    <option value="Primary 4 Faith">Primary 4 Faith</option>
-                    <option value="Primary 5 Faith">Primary 5 Faith</option>
-                    <option value="Primary 6 Faith">Primary 6 Faith</option>
-                  </optgroup>
-                  <optgroup label="Nursery / Early Years">
-                    <option value="Nursery 1 Faith">Nursery 1 Faith</option>
-                    <option value="Nursery 2 Faith">Nursery 2 Faith</option>
-                    <option value="Nursery 3 Faith">Nursery 3 Faith</option>
+                    <option value="SS 3 Commercial">SS 3 Commercial</option>
                   </optgroup>
                 </select>
               </div>
@@ -3430,10 +3443,10 @@ export default function TeacherDashboard() {
                         className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-card text-xs font-semibold text-foreground focus:ring-2 focus:ring-primary outline-none"
                       >
                         <optgroup label="🧸 Nursery & Early Years">
+                          <option value="Creche / Toddler">👶 Creche / Toddler</option>
                           <option value="Nursery 1">🧸 Nursery 1</option>
                           <option value="Nursery 2">🧸 Nursery 2</option>
                           <option value="Nursery 3">🧸 Nursery 3</option>
-                          <option value="Creche / Toddler">👶 Creche / Toddler</option>
                         </optgroup>
                         <optgroup label="🎒 Primary Education">
                           <option value="Primary 1">🎒 Primary 1</option>
@@ -3441,6 +3454,7 @@ export default function TeacherDashboard() {
                           <option value="Primary 3">🎒 Primary 3</option>
                           <option value="Primary 4">🎒 Primary 4</option>
                           <option value="Primary 5">🎒 Primary 5</option>
+                          <option value="Primary 6">🎒 Primary 6</option>
                         </optgroup>
                         <optgroup label="📚 Junior Secondary">
                           <option value="JSS 1">📚 JSS 1</option>
