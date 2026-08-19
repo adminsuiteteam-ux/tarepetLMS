@@ -2128,8 +2128,8 @@ export default function TeacherDashboard() {
                       </h4>
                       <p className="text-xs text-muted-foreground">
                         {isSeniorSecondaryClass(selectedBroadsheetStudent.grade)
-                          ? t('teacher.ss_scheme_hint', 'Scheme: 1st CA (10), 2nd CA (10), CBT Exam (30), and Theory Exam (40). Total = 100%.')
-                          : t('teacher.jss_scheme_hint', 'Scheme: 1st CA (20), 2nd CA (20), and Terminal Examination (60). Total = 100%.')
+                          ? t('teacher.ss_scheme_hint', 'Scheme: 1st CA, 2nd CA, CBT Exam, and Theory Exam.')
+                          : t('teacher.jss_scheme_hint', 'Scheme: 1st CA, 2nd CA, and Terminal Examination.')
                         }
                       </p>
                     </div>
@@ -2139,28 +2139,28 @@ export default function TeacherDashboard() {
                     <table className="w-full text-xs text-left border-collapse">
                       <thead className="bg-muted/40 uppercase text-[10px] text-muted-foreground tracking-wider border-b border-border">
                         {isSeniorSecondaryClass(selectedBroadsheetStudent.grade) ? (
-                          /* SS 1 - SS 3 Headers (No WAEC Grade) */
+                          /* SS 1 - SS 3 Headers: Student Name, Student ID, 1st CA, 2nd CA, CBT Exam, Theory Exam, Total, Teacher Remarks */
                           <tr>
                             <th className="p-3 min-w-[200px]">{t('teacher.course_subject', 'Course / Subject')}</th>
-                            <th className="p-3 text-center min-w-[90px]">{t('teacher.th_1st_ca_ss', '1st CA (10)')}</th>
-                            <th className="p-3 text-center min-w-[90px]">{t('teacher.th_2nd_ca_ss', '2nd CA (10)')}</th>
+                            <th className="p-3 text-center min-w-[90px]">{t('teacher.th_1st_ca', '1st CA')}</th>
+                            <th className="p-3 text-center min-w-[90px]">{t('teacher.th_2nd_ca', '2nd CA')}</th>
                             <th className="p-3 text-center min-w-[120px] bg-blue-500/10 text-blue-700">
                               <span className="flex items-center justify-center gap-1">
-                                {t('teacher.th_cbt_exam_ss', 'CBT Exam (30)')} <Zap className="w-3 h-3 text-blue-600 shrink-0" />
+                                {t('teacher.th_cbt_exam', 'CBT Exam')} <Zap className="w-3 h-3 text-blue-600 shrink-0" />
                               </span>
                             </th>
-                            <th className="p-3 text-center min-w-[110px]">{t('teacher.th_theory_exam_ss', 'Theory Exam (40)')}</th>
-                            <th className="p-3 text-center min-w-[90px]">{t('teacher.total_100_percent', 'Total (100)')}</th>
+                            <th className="p-3 text-center min-w-[110px]">{t('teacher.th_theory_exam', 'Theory Exam')}</th>
+                            <th className="p-3 text-center min-w-[90px]">{t('teacher.total_col', 'Total')}</th>
                             <th className="p-3 min-w-[200px]">{t('teacher.teacher_remarks_col', 'Teacher Remarks')}</th>
                           </tr>
                         ) : (
-                          /* JSS 1 - JSS 3 / Basic Education Headers */
+                          /* JSS 1 - JSS 3 / Basic Education Headers: 1st CA, 2nd CA, Exam, Total, Teacher Remarks */
                           <tr>
                             <th className="p-3 min-w-[200px]">{t('teacher.course_subject', 'Course / Subject')}</th>
-                            <th className="p-3 text-center min-w-[100px]">{t('teacher.th_1st_ca_jss', '1st CA (20)')}</th>
-                            <th className="p-3 text-center min-w-[100px]">{t('teacher.th_2nd_ca_jss', '2nd CA (20)')}</th>
-                            <th className="p-3 text-center min-w-[120px]">{t('teacher.th_exam_jss', 'Exam (60)')}</th>
-                            <th className="p-3 text-center min-w-[90px]">{t('teacher.total_100_percent', 'Total (100)')}</th>
+                            <th className="p-3 text-center min-w-[100px]">{t('teacher.th_1st_ca', '1st CA')}</th>
+                            <th className="p-3 text-center min-w-[100px]">{t('teacher.th_2nd_ca', '2nd CA')}</th>
+                            <th className="p-3 text-center min-w-[120px]">{t('teacher.th_exam', 'Exam')}</th>
+                            <th className="p-3 text-center min-w-[90px]">{t('teacher.total_col', 'Total')}</th>
                             <th className="p-3 min-w-[200px]">{t('teacher.teacher_remarks_col', 'Teacher Remarks')}</th>
                           </tr>
                         )}
@@ -2169,17 +2169,17 @@ export default function TeacherDashboard() {
                         {getCoursesForClass(selectedBroadsheetStudent.grade || 'SS1', selectedBroadsheetStudent.stream || 'Science').map(course => {
                           const isStudentSS = isSeniorSecondaryClass(selectedBroadsheetStudent.grade);
                           const sc = getSafeProperty(broadsheetScores, course.code) || {
-                            ca1: isStudentSS ? 8 : 16,
-                            ca2: isStudentSS ? 8 : 16,
+                            ca1: 0,
+                            ca2: 0,
                             cbtScore: isStudentSS ? getAutomaticCBTScore(selectedBroadsheetStudent.code || selectedBroadsheetStudent.email, course.code) : 0,
-                            paperExam: isStudentSS ? 32 : 52,
-                            exam: isStudentSS ? 32 : 52,
+                            paperExam: 0,
+                            exam: 0,
                             remark: ''
                           };
                           
                           const total = isStudentSS
-                            ? (sc.ca1 || 0) + (sc.ca2 || 0) + (sc.cbtScore || 0) + (sc.paperExam || 0)
-                            : (sc.ca1 || 0) + (sc.ca2 || 0) + (sc.exam !== undefined ? sc.exam : (sc.paperExam || 0));
+                            ? (Number(sc.ca1) || 0) + (Number(sc.ca2) || 0) + (Number(sc.cbtScore) || 0) + (Number(sc.paperExam) || 0)
+                            : (Number(sc.ca1) || 0) + (Number(sc.ca2) || 0) + (sc.exam !== undefined ? (Number(sc.exam) || 0) : (Number(sc.paperExam) || 0));
 
                           return (
                             <tr key={course.code} className="hover:bg-muted/20 transition-colors">
@@ -2195,8 +2195,8 @@ export default function TeacherDashboard() {
                                 <input
                                   type="number"
                                   min={0}
-                                  max={isStudentSS ? 10 : 20}
-                                  value={sc.ca1}
+                                  max={100}
+                                  value={sc.ca1 ?? 0}
                                   onChange={e => handleUpdateScoreInput(course.code, 'ca1', e.target.value)}
                                   className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-emerald-500 outline-none"
                                 />
@@ -2207,8 +2207,8 @@ export default function TeacherDashboard() {
                                 <input
                                   type="number"
                                   min={0}
-                                  max={isStudentSS ? 10 : 20}
-                                  value={sc.ca2}
+                                  max={100}
+                                  value={sc.ca2 ?? 0}
                                   onChange={e => handleUpdateScoreInput(course.code, 'ca2', e.target.value)}
                                   className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-emerald-500 outline-none"
                                 />
@@ -2221,8 +2221,8 @@ export default function TeacherDashboard() {
                                     <input
                                       type="number"
                                       min={0}
-                                      max={30}
-                                      value={sc.cbtScore}
+                                      max={100}
+                                      value={sc.cbtScore ?? 0}
                                       onChange={e => handleUpdateScoreInput(course.code, 'cbtScore', e.target.value)}
                                       className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-blue-300 bg-blue-50/50 text-blue-800 focus:ring-2 focus:ring-blue-500 outline-none"
                                     />
@@ -2231,8 +2231,8 @@ export default function TeacherDashboard() {
                                     <input
                                       type="number"
                                       min={0}
-                                      max={40}
-                                      value={sc.paperExam}
+                                      max={100}
+                                      value={sc.paperExam ?? 0}
                                       onChange={e => handleUpdateScoreInput(course.code, 'paperExam', e.target.value)}
                                       className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-emerald-500 outline-none"
                                     />
@@ -2240,14 +2240,14 @@ export default function TeacherDashboard() {
                                 </>
                               )}
 
-                              {/* For JSS / Basic: Handwritten Exam Input (60 max) */}
+                              {/* For JSS / Basic: Handwritten Exam Input */}
                               {!isStudentSS && (
                                 <td className="p-3 text-center">
                                   <input
                                     type="number"
                                     min={0}
-                                    max={60}
-                                    value={sc.exam !== undefined ? sc.exam : sc.paperExam}
+                                    max={100}
+                                    value={sc.exam !== undefined ? sc.exam : (sc.paperExam ?? 0)}
                                     onChange={e => handleUpdateScoreInput(course.code, 'exam', e.target.value)}
                                     className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-emerald-500 outline-none"
                                   />
@@ -2305,8 +2305,8 @@ export default function TeacherDashboard() {
                     </h3>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {isSS
-                        ? t('teacher.ss_table_guide', 'Senior Secondary (SS 1–3): Record 1st CA (10), 2nd CA (10), CBT Exam OBJ (30), and Theory Exam (40) for ')
-                        : t('teacher.jss_table_guide', 'Junior Secondary (JSS 1–3) & Basic: Record handwritten 1st CA (20), 2nd CA (20), and Terminal Exam (60) for ')
+                        ? t('teacher.ss_table_guide', 'Senior Secondary (SS 1–3): Record 1st CA, 2nd CA, CBT Exam, and Theory Exam for ')
+                        : t('teacher.jss_table_guide', 'Junior Secondary (JSS 1–3) & Basic: Record 1st CA, 2nd CA, and Exam for ')
                       }
                       <strong className="text-emerald-700">{activeCourse.name} ({activeCourse.code})</strong>.
                     </p>
@@ -2327,7 +2327,7 @@ export default function TeacherDashboard() {
                   <div>
                     <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.assessment_scheme', 'Assessment Scheme')}</span>
                     <strong className="text-xs font-bold text-emerald-700">
-                      {isSS ? '1st CA(10) + 2nd CA(10) + CBT(30) + Theory(40)' : '1st CA(20) + 2nd CA(20) + Exam(60)'}
+                      {isSS ? '1st CA + 2nd CA + CBT Exam + Theory Exam' : '1st CA + 2nd CA + Exam'}
                     </strong>
                   </div>
                   <div>
@@ -2359,15 +2359,15 @@ export default function TeacherDashboard() {
                         <tr>
                           <th className="p-3 min-w-[180px]">{t('teacher.student_name_col', 'Student Name')}</th>
                           <th className="p-3 min-w-[120px]">{t('teacher.student_id_col', 'Student ID')}</th>
-                          <th className="p-3 text-center min-w-[90px]">{t('teacher.th_1st_ca_ss', '1st CA (10)')}</th>
-                          <th className="p-3 text-center min-w-[90px]">{t('teacher.th_2nd_ca_ss', '2nd CA (10)')}</th>
+                          <th className="p-3 text-center min-w-[90px]">{t('teacher.th_1st_ca', '1st CA')}</th>
+                          <th className="p-3 text-center min-w-[90px]">{t('teacher.th_2nd_ca', '2nd CA')}</th>
                           <th className="p-3 text-center min-w-[120px] bg-blue-500/10 text-blue-700">
                             <span className="flex items-center justify-center gap-1">
-                              {t('teacher.th_cbt_exam_ss', 'CBT Exam (30)')} <Zap className="w-3 h-3 text-blue-600 shrink-0" />
+                              {t('teacher.th_cbt_exam', 'CBT Exam')} <Zap className="w-3 h-3 text-blue-600 shrink-0" />
                             </span>
                           </th>
-                          <th className="p-3 text-center min-w-[110px]">{t('teacher.th_theory_exam_ss', 'Theory Exam (40)')}</th>
-                          <th className="p-3 text-center min-w-[90px]">{t('teacher.total_100_percent', 'Total (100)')}</th>
+                          <th className="p-3 text-center min-w-[110px]">{t('teacher.th_theory_exam', 'Theory Exam')}</th>
+                          <th className="p-3 text-center min-w-[90px]">{t('teacher.total_col', 'Total')}</th>
                           <th className="p-3 text-right min-w-[120px]">{t('teacher.action_col', 'Action')}</th>
                         </tr>
                       ) : (
@@ -2375,10 +2375,10 @@ export default function TeacherDashboard() {
                         <tr>
                           <th className="p-3 min-w-[180px]">{t('teacher.student_name_col', 'Student Name')}</th>
                           <th className="p-3 min-w-[120px]">{t('teacher.student_id_col', 'Student ID')}</th>
-                          <th className="p-3 text-center min-w-[100px]">{t('teacher.th_1st_ca_jss', '1st CA (20)')}</th>
-                          <th className="p-3 text-center min-w-[100px]">{t('teacher.th_2nd_ca_jss', '2nd CA (20)')}</th>
-                          <th className="p-3 text-center min-w-[110px]">{t('teacher.th_exam_jss', 'Exam (60)')}</th>
-                          <th className="p-3 text-center min-w-[90px]">{t('teacher.total_100_percent', 'Total (100)')}</th>
+                          <th className="p-3 text-center min-w-[100px]">{t('teacher.th_1st_ca', '1st CA')}</th>
+                          <th className="p-3 text-center min-w-[100px]">{t('teacher.th_2nd_ca', '2nd CA')}</th>
+                          <th className="p-3 text-center min-w-[110px]">{t('teacher.th_exam', 'Exam')}</th>
+                          <th className="p-3 text-center min-w-[90px]">{t('teacher.total_col', 'Total')}</th>
                           <th className="p-3 text-right min-w-[120px]">{t('teacher.action_col', 'Action')}</th>
                         </tr>
                       )}
@@ -2387,18 +2387,18 @@ export default function TeacherDashboard() {
                       {classRoster.map(s => {
                         const saved = getStudentBroadsheet(s.id);
                         const sc = getSafeProperty(saved, activeCourse.code) || {
-                          ca1: isSS ? 8 : 16,
-                          ca2: isSS ? 8 : 16,
+                          ca1: 0,
+                          ca2: 0,
                           assignment: 0,
                           cbtScore: isSS ? getAutomaticCBTScore(s.code || s.email, activeCourse.code) : 0,
-                          paperExam: isSS ? 32 : 52,
-                          exam: isSS ? 32 : 52,
-                          remark: 'Good academic effort'
+                          paperExam: 0,
+                          exam: 0,
+                          remark: ''
                         };
 
                         const rowTotal = isSS
-                          ? ((sc.ca1 || 0) + (sc.ca2 || 0) + (sc.cbtScore || 0) + (sc.paperExam || 0))
-                          : ((sc.ca1 || 0) + (sc.ca2 || 0) + (sc.exam !== undefined ? sc.exam : (sc.paperExam || 0)));
+                          ? ((Number(sc.ca1) || 0) + (Number(sc.ca2) || 0) + (Number(sc.cbtScore) || 0) + (Number(sc.paperExam) || 0))
+                          : ((Number(sc.ca1) || 0) + (Number(sc.ca2) || 0) + (sc.exam !== undefined ? (Number(sc.exam) || 0) : (Number(sc.paperExam) || 0)));
 
                         return (
                           <tr
@@ -2428,8 +2428,8 @@ export default function TeacherDashboard() {
                               <input
                                 type="number"
                                 min={0}
-                                max={isSS ? 10 : 20}
-                                value={sc.ca1}
+                                max={100}
+                                value={sc.ca1 ?? 0}
                                 onChange={e => handleInlineStudentScoreUpdate(s, activeCourse.code, 'ca1', e.target.value)}
                                 className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-emerald-500 outline-none"
                               />
@@ -2440,8 +2440,8 @@ export default function TeacherDashboard() {
                               <input
                                 type="number"
                                 min={0}
-                                max={isSS ? 10 : 20}
-                                value={sc.ca2}
+                                max={100}
+                                value={sc.ca2 ?? 0}
                                 onChange={e => handleInlineStudentScoreUpdate(s, activeCourse.code, 'ca2', e.target.value)}
                                 className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-emerald-500 outline-none"
                               />
@@ -2454,8 +2454,8 @@ export default function TeacherDashboard() {
                                   <input
                                     type="number"
                                     min={0}
-                                    max={30}
-                                    value={sc.cbtScore}
+                                    max={100}
+                                    value={sc.cbtScore ?? 0}
                                     onChange={e => handleInlineStudentScoreUpdate(s, activeCourse.code, 'cbtScore', e.target.value)}
                                     className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-blue-300 bg-blue-50/60 text-blue-800 focus:ring-2 focus:ring-blue-500 outline-none"
                                   />
@@ -2464,8 +2464,8 @@ export default function TeacherDashboard() {
                                   <input
                                     type="number"
                                     min={0}
-                                    max={40}
-                                    value={sc.paperExam}
+                                    max={100}
+                                    value={sc.paperExam ?? 0}
                                     onChange={e => handleInlineStudentScoreUpdate(s, activeCourse.code, 'paperExam', e.target.value)}
                                     className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-emerald-500 outline-none"
                                   />
@@ -2479,8 +2479,8 @@ export default function TeacherDashboard() {
                                 <input
                                   type="number"
                                   min={0}
-                                  max={60}
-                                  value={sc.exam !== undefined ? sc.exam : sc.paperExam}
+                                  max={100}
+                                  value={sc.exam !== undefined ? sc.exam : (sc.paperExam ?? 0)}
                                   onChange={e => handleInlineStudentScoreUpdate(s, activeCourse.code, 'exam', e.target.value)}
                                   className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-emerald-500 outline-none"
                                 />

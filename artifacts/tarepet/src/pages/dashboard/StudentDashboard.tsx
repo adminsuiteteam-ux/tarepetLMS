@@ -506,22 +506,22 @@ export default function StudentDashboard() {
                   {isSS ? (
                     <tr>
                       <th className="p-3 min-w-[180px]">Subject Name</th>
-                      <th className="p-3 text-center min-w-[80px]">1st CA (10%)</th>
-                      <th className="p-3 text-center min-w-[80px]">2nd CA (10%)</th>
+                      <th className="p-3 text-center min-w-[80px]">1st CA</th>
+                      <th className="p-3 text-center min-w-[80px]">2nd CA</th>
                       <th className="p-3 text-center min-w-[120px] bg-blue-500/10 text-blue-700">
-                        <span className="flex items-center justify-center gap-1">CBT Exam (30%) <Zap className="w-3.5 h-3.5 text-blue-600 shrink-0" /></span>
+                        <span className="flex items-center justify-center gap-1">CBT Exam <Zap className="w-3.5 h-3.5 text-blue-600 shrink-0" /></span>
                       </th>
-                      <th className="p-3 text-center min-w-[90px]">Theory Exam (40%)</th>
-                      <th className="p-3 text-center min-w-[90px]">Total (100%)</th>
+                      <th className="p-3 text-center min-w-[90px]">Theory Exam</th>
+                      <th className="p-3 text-center min-w-[90px]">Total</th>
                       <th className="p-3 min-w-[180px]">Teacher Remarks</th>
                     </tr>
                   ) : (
                     <tr>
                       <th className="p-3 min-w-[180px]">Subject Name</th>
-                      <th className="p-3 text-center min-w-[90px]">1st CA (20%)</th>
-                      <th className="p-3 text-center min-w-[90px]">2nd CA (20%)</th>
-                      <th className="p-3 text-center min-w-[100px]">Exam (60%)</th>
-                      <th className="p-3 text-center min-w-[90px]">Total (100%)</th>
+                      <th className="p-3 text-center min-w-[90px]">1st CA</th>
+                      <th className="p-3 text-center min-w-[90px]">2nd CA</th>
+                      <th className="p-3 text-center min-w-[100px]">Exam</th>
+                      <th className="p-3 text-center min-w-[90px]">Total</th>
                       <th className="p-3 min-w-[180px]">Teacher Remarks</th>
                     </tr>
                   )}
@@ -542,7 +542,7 @@ export default function StudentDashboard() {
                           <td className="p-3 text-center bg-blue-500/5 border-x border-blue-200/50">
                             <div className="flex flex-col items-center justify-center">
                               <span className="font-mono font-bold text-xs text-blue-700 bg-blue-100/80 px-2 py-0.5 rounded border border-blue-200">
-                                {g.cbtScore} / 30
+                                {g.cbtScore}
                               </span>
                               <span className="text-[8px] font-bold text-blue-600 uppercase tracking-wider mt-0.5 flex items-center gap-0.5">
                                 <Zap className="w-2.5 h-2.5 text-blue-600 shrink-0" /> CBT Synced
