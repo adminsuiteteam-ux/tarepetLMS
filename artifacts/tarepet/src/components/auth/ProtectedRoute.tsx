@@ -1,5 +1,5 @@
 import React from 'react';
-import { useLocation } from 'wouter';
+import { useLocation, Redirect } from 'wouter';
 import { useAuth, UserRole } from '@/context/AuthContext';
 
 interface ProtectedRouteProps {
@@ -38,8 +38,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   if (!isAuthenticated) {
-    setLocation('/sign-in');
-    return null;
+    return <Redirect to="/sign-in" replace />;
   }
 
   const userRoleUpper = (user?.role || '').toUpperCase();

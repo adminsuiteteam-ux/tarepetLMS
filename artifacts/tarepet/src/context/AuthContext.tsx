@@ -115,14 +115,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       localStorage.removeItem('tarepet_auth_user');
       sessionStorage.removeItem('tarepet_auth_user');
+      localStorage.removeItem('tarepet_user');
     } catch (err) {
       console.warn('Could not clear auth storage', err);
     }
-    // safeRedirect ensures we only ever navigate within the same origin.
-    const baseUrl = import.meta.env.BASE_URL || '/';
-    const cleanBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
-    const target = `${cleanBase}sign-in`;
-    safeRedirect(target);
+    // Update browser history cleanly without hard reload
+    if (typeof window !== 'undefined' && window.location.pathname !== '/sign-in') {
+      window.history.pushState(null, '', '/sign-in');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    }
   };
 
   const roleUpper = (user?.role || '').toUpperCase();
