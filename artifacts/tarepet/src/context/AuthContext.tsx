@@ -37,6 +37,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (parsed && parsed.role) {
           parsed.role = parsed.role.toUpperCase() as UserRole;
         }
+        // Ensure tokens are synced on cold reload
+        const storedAccess = localStorage.getItem('tarepet_access_token') || sessionStorage.getItem('tarepet_access_token') || '';
+        const storedRefresh = localStorage.getItem('tarepet_refresh_token') || sessionStorage.getItem('tarepet_refresh_token') || '';
+        if (storedAccess || storedRefresh) {
+          setTokens(storedAccess, storedRefresh);
+        }
         return parsed;
       }
       return null;
@@ -56,6 +62,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       sessionStorage.removeItem('tarepet_auth_user');
     }
   }, [user]);
+
+  // Real-time multi-tab session synchronization
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'tarepet_auth_user') {
+        if (e.newValue) {
+          try {
+            const parsed = JSON.parse(e.newValue);
+            if (parsed && parsed.role) {
+              parsed.role = parsed.role.toUpperCase() as UserRole;
+            }
+            setUser(parsed);
+          } catch {}
+        } else {
+          setUser(null);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const login = (accessToken: string, refreshToken: string, userData: User) => {
     // 1. Forcefully purge any previous session state to ensure strict isolation

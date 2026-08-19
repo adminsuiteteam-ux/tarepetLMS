@@ -24,7 +24,15 @@ export default function SignIn() {
   const [mfaToken, setMfaToken] = useState("");
   const [mfaCode, setMfaCode] = useState("");
   const [, setLocation] = useLocation();
-  const { login } = useAuth();
+  const { user, isAuthenticated, login } = useAuth();
+
+  // If already authenticated and cached, redirect immediately to dashboard
+  useEffect(() => {
+    if (isAuthenticated && user?.role) {
+      const rolePath = user.role.toLowerCase();
+      setLocation(`/dashboard/${rolePath}`);
+    }
+  }, [isAuthenticated, user, setLocation]);
 
   const handleBiometricLogin = async () => {
     setError(null);

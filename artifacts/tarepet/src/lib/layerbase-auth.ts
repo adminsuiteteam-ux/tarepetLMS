@@ -87,29 +87,55 @@ export class LayerbaseAuthClient {
 
   constructor(baseURL: string = LAYERBASE_API_URL) {
     this.baseURL = baseURL;
+    if (typeof window !== 'undefined') {
+      this.accessToken = localStorage.getItem('tarepet_access_token') || sessionStorage.getItem('tarepet_access_token');
+      this.refreshToken = localStorage.getItem('tarepet_refresh_token') || sessionStorage.getItem('tarepet_refresh_token');
+    }
   }
 
   /**
-   * Set active tokens in memory
+   * Set active tokens in memory & persistent cache
    */
   public setSessionTokens(access: string, refresh: string): void {
     this.accessToken = access;
     this.refreshToken = refresh;
+    if (typeof window !== 'undefined') {
+      if (access) {
+        localStorage.setItem('tarepet_access_token', access);
+        sessionStorage.setItem('tarepet_access_token', access);
+      }
+      if (refresh) {
+        localStorage.setItem('tarepet_refresh_token', refresh);
+        sessionStorage.setItem('tarepet_refresh_token', refresh);
+      }
+    }
   }
 
   /**
-   * Clear active session tokens from memory
+   * Clear active session tokens
    */
   public clearSessionTokens(): void {
     this.accessToken = null;
     this.refreshToken = null;
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('tarepet_access_token');
+      sessionStorage.removeItem('tarepet_access_token');
+      localStorage.removeItem('tarepet_refresh_token');
+      sessionStorage.removeItem('tarepet_refresh_token');
+    }
   }
 
   public getAccessToken(): string | null {
+    if (!this.accessToken && typeof window !== 'undefined') {
+      this.accessToken = localStorage.getItem('tarepet_access_token') || sessionStorage.getItem('tarepet_access_token');
+    }
     return this.accessToken;
   }
 
   public getRefreshToken(): string | null {
+    if (!this.refreshToken && typeof window !== 'undefined') {
+      this.refreshToken = localStorage.getItem('tarepet_refresh_token') || sessionStorage.getItem('tarepet_refresh_token');
+    }
     return this.refreshToken;
   }
 

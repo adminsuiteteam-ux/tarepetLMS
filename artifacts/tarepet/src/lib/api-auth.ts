@@ -4,29 +4,56 @@ import { layerbaseAuth } from './layerbase-auth';
 // Enterprise API Client for Django / Layerbase JWT Authentication
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://tarepet-backend-4iw6.onrender.com/api/v1';
 
-// ── In-memory token store ─────────────────────────────────────────────────────
-// Tokens are NEVER written to localStorage or any browser storage.
-// They live only in these module-level variables for the lifetime of the browser session.
-let _accessToken: string | null = null;
-let _refreshToken: string | null = null;
+// ── Persistent & Cached Token Store ──────────────────────────────────────────
+// Tokens are cached in localStorage + sessionStorage so users remain securely logged in across page reloads.
+let _accessToken: string | null = typeof window !== 'undefined' 
+  ? (localStorage.getItem('tarepet_access_token') || sessionStorage.getItem('tarepet_access_token')) 
+  : null;
+let _refreshToken: string | null = typeof window !== 'undefined' 
+  ? (localStorage.getItem('tarepet_refresh_token') || sessionStorage.getItem('tarepet_refresh_token')) 
+  : null;
 
-export function setTokens(access: string, refresh: string): void {
+export function setTokens(access: string, refresh?: string): void {
   _accessToken = access;
-  _refreshToken = refresh;
-  layerbaseAuth.setSessionTokens(access, refresh);
+  if (refresh !== undefined && refresh !== null) {
+    _refreshToken = refresh;
+  }
+  if (typeof window !== 'undefined') {
+    if (access) {
+      localStorage.setItem('tarepet_access_token', access);
+      sessionStorage.setItem('tarepet_access_token', access);
+    }
+    if (refresh) {
+      localStorage.setItem('tarepet_refresh_token', refresh);
+      sessionStorage.setItem('tarepet_refresh_token', refresh);
+    }
+  }
+  layerbaseAuth.setSessionTokens(access, _refreshToken || '');
 }
 
 export function clearTokens(): void {
   _accessToken = null;
   _refreshToken = null;
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('tarepet_access_token');
+    sessionStorage.removeItem('tarepet_access_token');
+    localStorage.removeItem('tarepet_refresh_token');
+    sessionStorage.removeItem('tarepet_refresh_token');
+  }
   layerbaseAuth.clearSessionTokens();
 }
 
 export function getAccessToken(): string | null {
+  if (!_accessToken && typeof window !== 'undefined') {
+    _accessToken = localStorage.getItem('tarepet_access_token') || sessionStorage.getItem('tarepet_access_token');
+  }
   return _accessToken;
 }
 
 export function getRefreshToken(): string | null {
+  if (!_refreshToken && typeof window !== 'undefined') {
+    _refreshToken = localStorage.getItem('tarepet_refresh_token') || sessionStorage.getItem('tarepet_refresh_token');
+  }
   return _refreshToken;
 }
 
@@ -90,10 +117,7 @@ authClient.interceptors.response.use(
             refresh: _refreshToken,
           });
           const { access, refresh } = res.data;
-          _accessToken = access;
-          if (refresh) {
-            _refreshToken = refresh;
-          }
+          setTokens(access, refresh || _refreshToken || undefined);
           originalRequest.headers.Authorization = `Bearer ${access}`;
           return authClient(originalRequest);
         } catch (refreshError) {
