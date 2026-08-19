@@ -439,8 +439,8 @@ export default function StudentDashboard() {
               <h2 className="text-2xl font-serif font-bold text-foreground">{t('student.check_results_title', 'Check Academic Results')}</h2>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {isSS
-                  ? t('student.results_desc_ss', 'Senior Secondary Track: Official continuous assessments (1st & 2nd CA), CBT objective exams, theory exams, and WAEC grades.')
-                  : t('student.results_desc_jss', 'Basic / Junior Secondary Track: Official continuous assessments (1st & 2nd CA), terminal handwritten examinations, and BECE grades.')
+                  ? t('student.results_desc_ss', 'Senior Secondary Track: Official continuous assessments (1st & 2nd CA), CBT objective exams, and theory exams.')
+                  : t('student.results_desc_jss', 'Basic / Junior Secondary Track: Official continuous assessments (1st & 2nd CA) and terminal handwritten examinations.')
                 }
               </p>
             </div>
@@ -479,9 +479,9 @@ export default function StudentDashboard() {
               <p className="text-2xl font-serif font-bold text-blue-600 mt-1.5 uppercase tracking-wider">{overallAvg >= 40 ? 'PASSED & PROMOTED' : 'AWAITING'}</p>
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase text-muted-foreground">{isSS ? 'Overall WAEC Grade' : 'Overall BECE Grade'}</p>
-              <span className={`text-sm font-extrabold px-3 py-1 rounded-full inline-block mt-2 ${overallGrade.color}`}>
-                {overallGrade.grade} ({overallGrade.label})
+              <p className="text-[10px] font-bold uppercase text-muted-foreground">{t('student.academic_standing_label', 'Academic Standing')}</p>
+              <span className={`text-sm font-extrabold px-3 py-1 rounded-full inline-block mt-2 ${overallAvg >= 50 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}`}>
+                {overallAvg >= 75 ? 'Distinction' : overallAvg >= 60 ? 'Credit' : overallAvg >= 50 ? 'Pass' : 'Needs Support'}
               </span>
             </div>
           </div>
@@ -513,7 +513,6 @@ export default function StudentDashboard() {
                       </th>
                       <th className="p-3 text-center min-w-[90px]">Theory Exam (40%)</th>
                       <th className="p-3 text-center min-w-[90px]">Total (100%)</th>
-                      <th className="p-3 text-center min-w-[80px]">WAEC Grade</th>
                       <th className="p-3 min-w-[180px]">Teacher Remarks</th>
                     </tr>
                   ) : (
@@ -523,7 +522,6 @@ export default function StudentDashboard() {
                       <th className="p-3 text-center min-w-[90px]">2nd CA (20%)</th>
                       <th className="p-3 text-center min-w-[100px]">Exam (60%)</th>
                       <th className="p-3 text-center min-w-[90px]">Total (100%)</th>
-                      <th className="p-3 text-center min-w-[80px]">BECE Grade</th>
                       <th className="p-3 min-w-[180px]">Teacher Remarks</th>
                     </tr>
                   )}
@@ -558,11 +556,6 @@ export default function StudentDashboard() {
                         <td className="p-3 text-center font-mono font-bold text-muted-foreground">{g.exam !== undefined ? g.exam : g.paperExam}</td>
                       )}
                       <td className="p-3 text-center font-bold text-sm text-foreground font-serif">{g.total}%</td>
-                      <td className="p-3 text-center">
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${g.gradeInfo.color}`}>
-                          {g.gradeInfo.grade}
-                        </span>
-                      </td>
                       <td className="p-3 text-muted-foreground italic text-xs">
                         {g.remark || 'Good overall performance.'}
                       </td>

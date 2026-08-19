@@ -2108,10 +2108,10 @@ export default function TeacherDashboard() {
                         </div>
                         <div className="text-center px-3 py-1 bg-muted/20 rounded-xl border border-border">
                           <span className="text-[10px] uppercase font-bold text-muted-foreground block">
-                            {isStudentSS ? t('teacher.overall_waec_grade', 'WAEC Grade') : t('teacher.overall_bece_grade', 'BECE Grade')}
+                            {t('teacher.academic_status_label', 'Academic Standing')}
                           </span>
-                          <span className={`text-sm font-extrabold px-2.5 py-0.5 rounded-full inline-block mt-0.5 ${overallGrade.color}`}>
-                            {overallGrade.grade} ({overallGrade.label})
+                          <span className={`text-sm font-extrabold px-2.5 py-0.5 rounded-full inline-block mt-0.5 ${avgScore >= 50 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}`}>
+                            {avgScore >= 75 ? 'Distinction' : avgScore >= 60 ? 'Credit' : avgScore >= 50 ? 'Pass' : 'Needs Support'}
                           </span>
                         </div>
                       </div>
@@ -2139,7 +2139,7 @@ export default function TeacherDashboard() {
                     <table className="w-full text-xs text-left border-collapse">
                       <thead className="bg-muted/40 uppercase text-[10px] text-muted-foreground tracking-wider border-b border-border">
                         {isSeniorSecondaryClass(selectedBroadsheetStudent.grade) ? (
-                          /* SS 1 - SS 3 Headers */
+                          /* SS 1 - SS 3 Headers (No WAEC Grade) */
                           <tr>
                             <th className="p-3 min-w-[200px]">{t('teacher.course_subject', 'Course / Subject')}</th>
                             <th className="p-3 text-center min-w-[90px]">{t('teacher.th_1st_ca_ss', '1st CA (10)')}</th>
@@ -2151,7 +2151,6 @@ export default function TeacherDashboard() {
                             </th>
                             <th className="p-3 text-center min-w-[110px]">{t('teacher.th_theory_exam_ss', 'Theory Exam (40)')}</th>
                             <th className="p-3 text-center min-w-[90px]">{t('teacher.total_100_percent', 'Total (100)')}</th>
-                            <th className="p-3 text-center min-w-[90px]">{t('teacher.waec_grade_col', 'WAEC Grade')}</th>
                             <th className="p-3 min-w-[200px]">{t('teacher.teacher_remarks_col', 'Teacher Remarks')}</th>
                           </tr>
                         ) : (
@@ -2162,7 +2161,6 @@ export default function TeacherDashboard() {
                             <th className="p-3 text-center min-w-[100px]">{t('teacher.th_2nd_ca_jss', '2nd CA (20)')}</th>
                             <th className="p-3 text-center min-w-[120px]">{t('teacher.th_exam_jss', 'Exam (60)')}</th>
                             <th className="p-3 text-center min-w-[90px]">{t('teacher.total_100_percent', 'Total (100)')}</th>
-                            <th className="p-3 text-center min-w-[90px]">{t('teacher.bece_grade_col', 'BECE Grade')}</th>
                             <th className="p-3 min-w-[200px]">{t('teacher.teacher_remarks_col', 'Teacher Remarks')}</th>
                           </tr>
                         )}
@@ -2182,8 +2180,6 @@ export default function TeacherDashboard() {
                           const total = isStudentSS
                             ? (sc.ca1 || 0) + (sc.ca2 || 0) + (sc.cbtScore || 0) + (sc.paperExam || 0)
                             : (sc.ca1 || 0) + (sc.ca2 || 0) + (sc.exam !== undefined ? sc.exam : (sc.paperExam || 0));
-
-                          const gradeBadge = isStudentSS ? calculateWAECGrade(total) : calculateBECEGrade(total);
 
                           return (
                             <tr key={course.code} className="hover:bg-muted/20 transition-colors">
@@ -2261,13 +2257,6 @@ export default function TeacherDashboard() {
                               {/* Total Score */}
                               <td className="p-3 text-center font-bold text-sm text-foreground font-serif">
                                 {total}%
-                              </td>
-
-                              {/* Grade Badge */}
-                              <td className="p-3 text-center">
-                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${gradeBadge.color}`}>
-                                  {gradeBadge.grade}
-                                </span>
                               </td>
 
                               {/* Teacher Remark */}
@@ -2354,9 +2343,9 @@ export default function TeacherDashboard() {
                     )}
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.grading_standard', 'Grading Standard')}</span>
+                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.term_status_scale', 'Terminal Score Basis')}</span>
                     <strong className="text-xs font-bold text-foreground">
-                      {isSS ? 'WAEC Standard (A1–F9)' : 'BECE Standard (A–F)'}
+                      100% Cumulative Scale
                     </strong>
                   </div>
                 </div>
@@ -2366,7 +2355,7 @@ export default function TeacherDashboard() {
                   <table className="w-full text-xs text-left border-collapse">
                     <thead className="bg-muted/40 uppercase text-[10px] text-muted-foreground tracking-wider border-b border-border">
                       {isSS ? (
-                        /* SS 1 - SS 3 Column Layout (As Defined by School Requirements) */
+                        /* SS 1 - SS 3 Column Layout: Student Name, Student ID, 1st CA, 2nd CA, CBT Exam, Theory Exam, Total, Action */
                         <tr>
                           <th className="p-3 min-w-[180px]">{t('teacher.student_name_col', 'Student Name')}</th>
                           <th className="p-3 min-w-[120px]">{t('teacher.student_id_col', 'Student ID')}</th>
@@ -2379,11 +2368,10 @@ export default function TeacherDashboard() {
                           </th>
                           <th className="p-3 text-center min-w-[110px]">{t('teacher.th_theory_exam_ss', 'Theory Exam (40)')}</th>
                           <th className="p-3 text-center min-w-[90px]">{t('teacher.total_100_percent', 'Total (100)')}</th>
-                          <th className="p-3 text-center min-w-[90px]">{t('teacher.waec_grade_col', 'WAEC Grade')}</th>
                           <th className="p-3 text-right min-w-[120px]">{t('teacher.action_col', 'Action')}</th>
                         </tr>
                       ) : (
-                        /* JSS 1 - JSS 3 Column Layout (As Defined by School Requirements) */
+                        /* JSS 1 - JSS 3 Column Layout: Student Name, Student ID, 1st CA, 2nd CA, Exam, Total, Action */
                         <tr>
                           <th className="p-3 min-w-[180px]">{t('teacher.student_name_col', 'Student Name')}</th>
                           <th className="p-3 min-w-[120px]">{t('teacher.student_id_col', 'Student ID')}</th>
@@ -2391,7 +2379,6 @@ export default function TeacherDashboard() {
                           <th className="p-3 text-center min-w-[100px]">{t('teacher.th_2nd_ca_jss', '2nd CA (20)')}</th>
                           <th className="p-3 text-center min-w-[110px]">{t('teacher.th_exam_jss', 'Exam (60)')}</th>
                           <th className="p-3 text-center min-w-[90px]">{t('teacher.total_100_percent', 'Total (100)')}</th>
-                          <th className="p-3 text-center min-w-[90px]">{t('teacher.bece_grade_col', 'BECE Grade')}</th>
                           <th className="p-3 text-right min-w-[120px]">{t('teacher.action_col', 'Action')}</th>
                         </tr>
                       )}
@@ -2412,8 +2399,6 @@ export default function TeacherDashboard() {
                         const rowTotal = isSS
                           ? ((sc.ca1 || 0) + (sc.ca2 || 0) + (sc.cbtScore || 0) + (sc.paperExam || 0))
                           : ((sc.ca1 || 0) + (sc.ca2 || 0) + (sc.exam !== undefined ? sc.exam : (sc.paperExam || 0)));
-
-                        const rowGrade = isSS ? calculateWAECGrade(rowTotal) : calculateBECEGrade(rowTotal);
 
                         return (
                           <tr
@@ -2505,13 +2490,6 @@ export default function TeacherDashboard() {
                             {/* Total Score */}
                             <td className="p-3 text-center font-bold text-sm text-foreground font-serif">
                               {rowTotal}%
-                            </td>
-
-                            {/* Grade Badge */}
-                            <td className="p-3 text-center">
-                              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${rowGrade.color}`}>
-                                {rowGrade.grade}
-                              </span>
                             </td>
 
                             {/* Action Button */}
