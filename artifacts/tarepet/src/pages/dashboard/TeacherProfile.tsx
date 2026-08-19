@@ -270,12 +270,11 @@ export default function TeacherProfile() {
   };
 
   return (
-    <ProtectedRoute allowedRoles={['TEACHER', 'ADMIN']}>
-      <PortalLayout
-        title="Teacher Profile"
-        activeSection="profile"
-        onNavigate={handleNavigate}
-      >
+    <PortalLayout
+      title="Teacher Profile"
+      activeSection="profile"
+      onNavigate={handleNavigate}
+    >
         {/* Toast Notification */}
         {toastMsg && (
           <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 text-xs font-semibold animate-in fade-in slide-in-from-bottom duration-200">
@@ -884,6 +883,5 @@ export default function TeacherProfile() {
           </div>
         )}
       </PortalLayout>
-    </ProtectedRoute>
   );
 }
