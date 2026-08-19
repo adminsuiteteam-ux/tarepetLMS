@@ -622,6 +622,23 @@ export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [
     password: 'TMS/TCH/0022',
     address: 'Tarepet School Campus',
     qualification: 'B.Sc. Biology'
+  },
+  {
+    id: 120,
+    staffId: 'TMS/TCH/4864',
+    name: 'john paul',
+    email: 'johnpaul@tarepet.com',
+    gender: 'Male',
+    phone: '',
+    formTeacherOf: 'None',
+    department: 'Secondary Section',
+    specialization: 'General Education',
+    subjectsAssigned: [],
+    status: 'Active',
+    joined: '2023-09-01',
+    password: 'TMS/TCH/4864',
+    address: 'Tarepet School Campus',
+    qualification: 'B.Sc. Education'
   }
 ];
 
@@ -837,7 +854,7 @@ export function getStoredStudents(): StudentRecord[] {
 
 export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
   try {
-    const res = await authClient.get('/auth/users/?role=STUDENT');
+    const res = await authClient.get('/auth/users/?role=STUDENT&page_size=500');
     if (res.data) {
       const dataArr = Array.isArray(res.data?.results) ? res.data.results : Array.isArray(res.data) ? res.data : [];
       const fetched: StudentRecord[] = dataArr
@@ -881,7 +898,7 @@ export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
 
 export async function syncTeachersWithBackend(): Promise<TeacherRecord[]> {
   try {
-    const res = await authClient.get('/auth/users/?role=TEACHER');
+    const res = await authClient.get('/auth/users/?role=TEACHER&page_size=200');
     if (res.data) {
       const dataArr = Array.isArray(res.data?.results) ? res.data.results : Array.isArray(res.data) ? res.data : [];
       const fetched: TeacherRecord[] = dataArr

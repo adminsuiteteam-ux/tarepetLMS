@@ -1956,11 +1956,16 @@ export default function AdminDashboard() {
     // 3. Periodic backend polling
     const fetchBackendUsers = async () => {
       try {
-        const res = await authClient.get('/auth/users/');
-        if (res.status === 200) {
+        const [teacherRes, studentRes] = await Promise.allSettled([
+          authClient.get('/auth/users/?role=TEACHER&page_size=200'),
+          authClient.get('/auth/users/?role=STUDENT&page_size=500')
+        ]);
+
+        if (teacherRes.status === 'fulfilled' && teacherRes.value.data) {
+          const res = teacherRes.value;
           const users = Array.isArray(res.data?.results) ? res.data.results : Array.isArray(res.data) ? res.data : [];
           const liveTeachers = users
-            .filter((u: any) => u.role === 'TEACHER' && !isAccountDeleted(u.email) && !isAccountDeleted(u.id) && !isAccountDeleted(u.profile?.teacher_id))
+            .filter((u: any) => !isAccountDeleted(u.email) && !isAccountDeleted(u.id) && !isAccountDeleted(u.profile?.teacher_id))
             .map((u: any) => {
               const prof = u.profile || {};
               const subs = Array.isArray(prof.subjects_taught) ? prof.subjects_taught : [];
@@ -1995,8 +2000,17 @@ export default function AdminDashboard() {
               };
             });
 
+          if (liveTeachers.length > 0) {
+            saveStoredTeachers(liveTeachers);
+            setTeachersList(liveTeachers);
+          }
+        }
+
+        if (studentRes.status === 'fulfilled' && studentRes.value.data) {
+          const res = studentRes.value;
+          const users = Array.isArray(res.data?.results) ? res.data.results : Array.isArray(res.data) ? res.data : [];
           const liveStudents = users
-            .filter((u: any) => u.role === 'STUDENT' && !isAccountDeleted(u.email) && !isAccountDeleted(u.id) && !isAccountDeleted(u.profile?.student_id))
+            .filter((u: any) => !isAccountDeleted(u.email) && !isAccountDeleted(u.id) && !isAccountDeleted(u.profile?.student_id))
             .map((u: any) => ({
               id: u.id,
               studentId: u.profile?.student_id || u.student_id || `TP-STU-${String(u.id).padStart(3, '0')}`,
@@ -2010,12 +2024,10 @@ export default function AdminDashboard() {
               joined: u.profile?.hire_date || (u.date_joined ? u.date_joined.split('T')[0] : ''),
             }));
 
-          // Sync local storage & state directly with live backend database results
-          saveStoredTeachers(liveTeachers);
-          setTeachersList(liveTeachers);
-
-          saveStoredStudents(liveStudents);
-          setStudentsList(liveStudents);
+          if (liveStudents.length > 0) {
+            saveStoredStudents(liveStudents);
+            setStudentsList(liveStudents);
+          }
         }
       } catch (e) {
         // Backend offline or user not admin — fallback to local storage

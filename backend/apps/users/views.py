@@ -129,9 +129,19 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
         return self.request.user
 
 
+from rest_framework.pagination import PageNumberPagination
+
+
+class UserPagination(PageNumberPagination):
+    page_size = 200
+    page_size_query_param = 'page_size'
+    max_page_size = 1000
+
+
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all().order_by('-date_joined')
     serializer_class = UserSerializer
+    pagination_class = UserPagination
     permission_classes = [IsAdmin]
     filterset_fields = ['role', 'is_active']
     search_fields = ['email', 'first_name', 'last_name', 'phone']
