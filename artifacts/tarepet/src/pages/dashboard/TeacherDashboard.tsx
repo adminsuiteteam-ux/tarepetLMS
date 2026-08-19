@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 import { authClient } from '@/lib/api-auth';
-import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, getStoredTeachers, saveTeacher, saveStudent, deleteStudent, subscribeToCBTStore, syncStudentsWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, calculateBECEGrade, CourseBroadsheetScore } from '@/lib/cbt-store';
+import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, getStoredTeachers, saveTeacher, saveStudent, deleteStudent, subscribeToCBTStore, syncStudentsWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, calculateBECEGrade, isSeniorSecondaryClass, CourseBroadsheetScore } from '@/lib/cbt-store';
 import { useTranslation } from '@/lib/i18n';
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
 import { getTimeGreeting } from '@/lib/utils';
@@ -209,11 +209,6 @@ export default function TeacherDashboard() {
   const [broadsheetScores, setBroadsheetScores] = useState<Record<string, CourseBroadsheetScore>>({});
   const [broadsheetSubject, setBroadsheetSubject] = useState<string>('MTH-101');
   const [broadsheetClassFilter, setBroadsheetClassFilter] = useState<string>('');
-
-  const isSeniorSecondaryClass = (grade?: string) => {
-    const g = (grade || '').toUpperCase().replace(/\s+/g, '');
-    return g.startsWith('SS') || g.includes('SENIOR') || g.includes('SS1') || g.includes('SS2') || g.includes('SS3');
-  };
 
   const handleOpenStudentBroadsheet = (student: any) => {
     setSelectedBroadsheetStudent(student);
@@ -1860,10 +1855,10 @@ export default function TeacherDashboard() {
     // 4. MANAGE RESULTS
     // =========================================================
     if (activeSection === 'results') {
-      const activeClass = broadsheetClassFilter || formClass || 'SS 1 Science';
+      const activeClass = broadsheetClassFilter || formClass || 'JSS 3 Faith';
       const isSS = isSeniorSecondaryClass(activeClass);
       const classCourseList = getCoursesForClass(activeClass);
-      const activeCourse = classCourseList.find(c => c.code === broadsheetSubject) || classCourseList[0] || { code: 'MTH-101', name: 'General Mathematics' };
+      const activeCourse = classCourseList.find(c => c.code === broadsheetSubject) || classCourseList[0] || { code: 'MTH-001', name: 'Junior Mathematics' };
 
       // Filter roster for the selected class or search query
       const classRoster = roster.filter(s => {
@@ -1918,7 +1913,7 @@ export default function TeacherDashboard() {
               <div>
                 <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">{t('teacher.class_grade_label', 'Class & Arm')}</label>
                 <select
-                  value={broadsheetClassFilter || formClass || 'SS 1 Science'}
+                  value={broadsheetClassFilter || formClass || 'JSS 3 Faith'}
                   onChange={e => {
                     setBroadsheetClassFilter(e.target.value);
                     const newCourses = getCoursesForClass(e.target.value);
@@ -1926,23 +1921,38 @@ export default function TeacherDashboard() {
                   }}
                   className="px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs font-bold text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
                 >
-                  <option value="SS 1 Science">SS 1 Science</option>
-                  <option value="SS 1 Art">SS 1 Art</option>
-                  <option value="SS 2 Science">SS 2 Science</option>
-                  <option value="SS 2 Art">SS 2 Art</option>
-                  <option value="SS 3 Science">SS 3 Science</option>
-                  <option value="SS 3 Art">SS 3 Art</option>
-                  <option value="JSS 1">JSS 1</option>
-                  <option value="JSS 2">JSS 2</option>
-                  <option value="JSS 3">JSS 3</option>
-                  <option value="Primary 1">Primary 1</option>
-                  <option value="Primary 2">Primary 2</option>
-                  <option value="Primary 3">Primary 3</option>
-                  <option value="Primary 4">Primary 4</option>
-                  <option value="Primary 5">Primary 5</option>
-                  <option value="Nursery 1">Nursery 1</option>
-                  <option value="Nursery 2">Nursery 2</option>
-                  <option value="Nursery 3">Nursery 3</option>
+                  {formClass && (
+                    <option value={formClass}>{formClass} ({t('teacher.assigned_form_class', 'Assigned Class')})</option>
+                  )}
+                  <optgroup label="Junior Secondary (100% Handwritten No CBT)">
+                    <option value="JSS 3 Faith">JSS 3 Faith</option>
+                    <option value="JSS 3 Love">JSS 3 Love</option>
+                    <option value="JSS 2 Faith">JSS 2 Faith</option>
+                    <option value="JSS 2 Love">JSS 2 Love</option>
+                    <option value="JSS 1 Faith">JSS 1 Faith</option>
+                    <option value="JSS 1 Love">JSS 1 Love</option>
+                  </optgroup>
+                  <optgroup label="Senior Secondary (CBT OBJ + Theory)">
+                    <option value="SS 1 Science">SS 1 Science</option>
+                    <option value="SS 1 Art">SS 1 Art</option>
+                    <option value="SS 2 Science">SS 2 Science</option>
+                    <option value="SS 2 Art">SS 2 Art</option>
+                    <option value="SS 3 Science">SS 3 Science</option>
+                    <option value="SS 3 Art">SS 3 Art</option>
+                  </optgroup>
+                  <optgroup label="Primary (100% Handwritten)">
+                    <option value="Primary 1 Faith">Primary 1 Faith</option>
+                    <option value="Primary 2 Faith">Primary 2 Faith</option>
+                    <option value="Primary 3 Faith">Primary 3 Faith</option>
+                    <option value="Primary 4 Faith">Primary 4 Faith</option>
+                    <option value="Primary 5 Faith">Primary 5 Faith</option>
+                    <option value="Primary 6 Faith">Primary 6 Faith</option>
+                  </optgroup>
+                  <optgroup label="Nursery / Early Years">
+                    <option value="Nursery 1 Faith">Nursery 1 Faith</option>
+                    <option value="Nursery 2 Faith">Nursery 2 Faith</option>
+                    <option value="Nursery 3 Faith">Nursery 3 Faith</option>
+                  </optgroup>
                 </select>
               </div>
 

@@ -1465,6 +1465,30 @@ export function calculateBECEGrade(total: number): { grade: string; color: strin
   return { grade: 'F', color: 'bg-red-100 text-red-800 border border-red-300', label: 'Fail' };
 }
 
+export function isSeniorSecondaryClass(gradeOrClass?: string): boolean {
+  if (!gradeOrClass) return false;
+  const clean = gradeOrClass.toUpperCase().trim();
+  // Any Junior secondary, Primary, or Nursery class is NEVER senior secondary (NO CBT)
+  if (
+    clean.includes('JSS') ||
+    clean.includes('JS ') ||
+    clean.startsWith('JS') ||
+    clean.includes('JUNIOR') ||
+    clean.includes('PRIMARY') ||
+    clean.includes('PRI') ||
+    clean.includes('BASIC') ||
+    clean.includes('NURSERY') ||
+    clean.includes('NUR') ||
+    clean.includes('CRECHE')
+  ) {
+    return false;
+  }
+  const stripped = clean.replace(/\s+/g, '');
+  return stripped.startsWith('SS') || clean.includes('SENIOR');
+}
+
+
+
 const DEFAULT_BROADSHEET_SCORES: Record<string, Record<string, CourseBroadsheetScore>> = {};
 
 function loadSavedBroadsheet(): Record<string, Record<string, CourseBroadsheetScore>> {
