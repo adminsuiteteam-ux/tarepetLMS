@@ -1438,9 +1438,10 @@ export const listenToRealtimeEvents = subscribeToCBTStore;
 export interface CourseBroadsheetScore {
   ca1: number;
   ca2: number;
-  assignment: number;
-  cbtScore: number;
-  paperExam: number;
+  assignment?: number;
+  cbtScore?: number;
+  paperExam?: number;
+  exam?: number;
   remark?: string;
 }
 
@@ -1454,6 +1455,14 @@ export function calculateWAECGrade(total: number): { grade: string; color: strin
   if (total >= 45) return { grade: 'D7', color: 'bg-orange-50 text-orange-700 border border-orange-200', label: 'Pass' };
   if (total >= 40) return { grade: 'E8', color: 'bg-rose-50 text-rose-700 border border-rose-200', label: 'Pass' };
   return { grade: 'F9', color: 'bg-red-100 text-red-800 border border-red-300', label: 'Fail' };
+}
+
+export function calculateBECEGrade(total: number): { grade: string; color: string; label: string } {
+  if (total >= 75) return { grade: 'A', color: 'bg-emerald-100 text-emerald-800 border border-emerald-300', label: 'Distinction' };
+  if (total >= 65) return { grade: 'B', color: 'bg-teal-50 text-teal-700 border border-teal-200', label: 'Upper Credit' };
+  if (total >= 50) return { grade: 'C', color: 'bg-blue-50 text-blue-700 border border-blue-200', label: 'Lower Credit' };
+  if (total >= 40) return { grade: 'P', color: 'bg-amber-50 text-amber-700 border border-amber-200', label: 'Pass' };
+  return { grade: 'F', color: 'bg-red-100 text-red-800 border border-red-300', label: 'Fail' };
 }
 
 const DEFAULT_BROADSHEET_SCORES: Record<string, Record<string, CourseBroadsheetScore>> = {};

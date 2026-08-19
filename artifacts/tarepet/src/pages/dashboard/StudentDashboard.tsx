@@ -13,7 +13,7 @@ import {
   Fingerprint, Smartphone
 } from 'lucide-react';
 
-import { getStoredExams, getStoredSubmissions, subscribeToCBTStore, getCoursesForClass, getStudentBroadsheet, calculateWAECGrade, getStoredStudents, saveStudent, broadcastRealtimeEvent } from '@/lib/cbt-store';
+import { getStoredExams, getStoredSubmissions, subscribeToCBTStore, getCoursesForClass, getStudentBroadsheet, calculateWAECGrade, calculateBECEGrade, getStoredStudents, saveStudent, broadcastRealtimeEvent } from '@/lib/cbt-store';
 import { authClient } from '@/lib/api-auth';
 import { StudentPaymentPanel } from '@/components/dashboard/StudentPaymentPanel';
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
@@ -406,6 +406,7 @@ export default function StudentDashboard() {
       const studentGrade = (user?.profile as any)?.grade || 'SS1';
       const studentStream = (user?.profile as any)?.stream || 'Science';
       const studentCode = (user?.profile as any)?.code || (user?.email || '1');
+      const isSS = studentGrade.toUpperCase().includes('SS') || studentGrade.toUpperCase().includes('SENIOR');
 
       // Fetch published broadsheet for this student
       const broadsheet = getStudentBroadsheet(user?.id || '1') || getStudentBroadsheet(studentCode) || getStudentBroadsheet('1');
@@ -415,25 +416,33 @@ export default function StudentDashboard() {
       let coursesWithScoresCount = 0;
 
       const scoredCourses = courses.map(c => {
-        const sc = broadsheet[c.code] || { ca1: 0, ca2: 0, assignment: 0, cbtScore: 0, paperExam: 0, remark: '' };
-        const total = (sc.ca1 || 0) + (sc.ca2 || 0) + (sc.assignment || 0) + (sc.cbtScore || 0) + (sc.paperExam || 0);
+        const sc = broadsheet[c.code] || { ca1: 0, ca2: 0, assignment: 0, cbtScore: 0, paperExam: 0, exam: 0, remark: '' };
+        const total = isSS
+          ? (sc.ca1 || 0) + (sc.ca2 || 0) + (sc.cbtScore || 0) + (sc.paperExam || 0)
+          : (sc.ca1 || 0) + (sc.ca2 || 0) + (sc.exam !== undefined ? sc.exam : (sc.paperExam || 0));
+
         if (total > 0) {
           totalScoreSum += total;
           coursesWithScoresCount++;
         }
-        const waec = calculateWAECGrade(total);
-        return { ...c, ...sc, total, waec };
+        const gradeInfo = isSS ? calculateWAECGrade(total) : calculateBECEGrade(total);
+        return { ...c, ...sc, total, gradeInfo };
       });
 
       const overallAvg = coursesWithScoresCount > 0 ? Math.round(totalScoreSum / coursesWithScoresCount) : 0;
-      const overallGrade = calculateWAECGrade(overallAvg);
+      const overallGrade = isSS ? calculateWAECGrade(overallAvg) : calculateBECEGrade(overallAvg);
 
       return (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h2 className="text-2xl font-serif font-bold text-foreground">{t('student.check_results_title', 'Check Academic Results')}</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">{t('student.check_results_desc', 'Official terminal report card, continuous assessments, CBT exam scores, and teacher remarks.')}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {isSS
+                  ? t('student.results_desc_ss', 'Senior Secondary Track: Official continuous assessments (1st & 2nd CA), CBT objective exams, theory exams, and WAEC grades.')
+                  : t('student.results_desc_jss', 'Basic / Junior Secondary Track: Official continuous assessments (1st & 2nd CA), terminal handwritten examinations, and BECE grades.')
+                }
+              </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border">
@@ -455,7 +464,7 @@ export default function StudentDashboard() {
             </div>
           </div>
 
-          {/* Student Terminal Summary Banner */}
+          {/* Quick Summary Strip */}
           <div className="bg-card rounded-2xl border border-border p-6 shadow-sm grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
             <div className="border-r border-border/50 pr-2">
               <p className="text-[10px] font-bold uppercase text-muted-foreground">{t('student.overall_avg', 'Term Average')}</p>
@@ -470,7 +479,7 @@ export default function StudentDashboard() {
               <p className="text-2xl font-serif font-bold text-blue-600 mt-1.5 uppercase tracking-wider">{overallAvg >= 40 ? 'PASSED & PROMOTED' : 'AWAITING'}</p>
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase text-muted-foreground">Overall WAEC Grade</p>
+              <p className="text-[10px] font-bold uppercase text-muted-foreground">{isSS ? 'Overall WAEC Grade' : 'Overall BECE Grade'}</p>
               <span className={`text-sm font-extrabold px-3 py-1 rounded-full inline-block mt-2 ${overallGrade.color}`}>
                 {overallGrade.grade} ({overallGrade.label})
               </span>
@@ -494,19 +503,30 @@ export default function StudentDashboard() {
             <div className="overflow-x-auto">
               <table className="w-full text-xs text-left border-collapse">
                 <thead className="bg-muted/40 uppercase text-[10px] text-muted-foreground tracking-wider border-b border-border">
-                  <tr>
-                    <th className="p-3 min-w-[180px]">Subject Name</th>
-                    <th className="p-3 text-center min-w-[80px]">1st CA (10%)</th>
-                    <th className="p-3 text-center min-w-[80px]">2nd CA (10%)</th>
-                    <th className="p-3 text-center min-w-[80px]">Assign. (10%)</th>
-                    <th className="p-3 text-center min-w-[120px] bg-blue-500/10 text-blue-700">
-                      <span className="flex items-center justify-center gap-1">CBT Exam (30%) <Zap className="w-3.5 h-3.5 text-blue-600 shrink-0" /></span>
-                    </th>
-                    <th className="p-3 text-center min-w-[90px]">Paper Exam (40%)</th>
-                    <th className="p-3 text-center min-w-[90px]">Total (100%)</th>
-                    <th className="p-3 text-center min-w-[80px]">Grade</th>
-                    <th className="p-3 min-w-[180px]">Teacher Remarks</th>
-                  </tr>
+                  {isSS ? (
+                    <tr>
+                      <th className="p-3 min-w-[180px]">Subject Name</th>
+                      <th className="p-3 text-center min-w-[80px]">1st CA (10%)</th>
+                      <th className="p-3 text-center min-w-[80px]">2nd CA (10%)</th>
+                      <th className="p-3 text-center min-w-[120px] bg-blue-500/10 text-blue-700">
+                        <span className="flex items-center justify-center gap-1">CBT Exam (30%) <Zap className="w-3.5 h-3.5 text-blue-600 shrink-0" /></span>
+                      </th>
+                      <th className="p-3 text-center min-w-[90px]">Theory Exam (40%)</th>
+                      <th className="p-3 text-center min-w-[90px]">Total (100%)</th>
+                      <th className="p-3 text-center min-w-[80px]">WAEC Grade</th>
+                      <th className="p-3 min-w-[180px]">Teacher Remarks</th>
+                    </tr>
+                  ) : (
+                    <tr>
+                      <th className="p-3 min-w-[180px]">Subject Name</th>
+                      <th className="p-3 text-center min-w-[90px]">1st CA (20%)</th>
+                      <th className="p-3 text-center min-w-[90px]">2nd CA (20%)</th>
+                      <th className="p-3 text-center min-w-[100px]">Exam (60%)</th>
+                      <th className="p-3 text-center min-w-[90px]">Total (100%)</th>
+                      <th className="p-3 text-center min-w-[80px]">BECE Grade</th>
+                      <th className="p-3 min-w-[180px]">Teacher Remarks</th>
+                    </tr>
+                  )}
                 </thead>
                 <tbody className="divide-y divide-border">
                   {scoredCourses.map(g => (
@@ -519,22 +539,28 @@ export default function StudentDashboard() {
                       </td>
                       <td className="p-3 text-center font-mono font-bold text-muted-foreground">{g.ca1}</td>
                       <td className="p-3 text-center font-mono font-bold text-muted-foreground">{g.ca2}</td>
-                      <td className="p-3 text-center font-mono font-bold text-muted-foreground">{g.assignment}</td>
-                      <td className="p-3 text-center bg-blue-500/5 border-x border-blue-200/50">
-                        <div className="flex flex-col items-center justify-center">
-                          <span className="font-mono font-bold text-xs text-blue-700 bg-blue-100/80 px-2 py-0.5 rounded border border-blue-200">
-                            {g.cbtScore} / 30
-                          </span>
-                          <span className="text-[8px] font-bold text-blue-600 uppercase tracking-wider mt-0.5 flex items-center gap-0.5">
-                            <Zap className="w-2.5 h-2.5 text-blue-600 shrink-0" /> CBT Synced
-                          </span>
-                        </div>
-                      </td>
-                      <td className="p-3 text-center font-mono font-bold text-muted-foreground">{g.paperExam}</td>
+                      {isSS && (
+                        <>
+                          <td className="p-3 text-center bg-blue-500/5 border-x border-blue-200/50">
+                            <div className="flex flex-col items-center justify-center">
+                              <span className="font-mono font-bold text-xs text-blue-700 bg-blue-100/80 px-2 py-0.5 rounded border border-blue-200">
+                                {g.cbtScore} / 30
+                              </span>
+                              <span className="text-[8px] font-bold text-blue-600 uppercase tracking-wider mt-0.5 flex items-center gap-0.5">
+                                <Zap className="w-2.5 h-2.5 text-blue-600 shrink-0" /> CBT Synced
+                              </span>
+                            </div>
+                          </td>
+                          <td className="p-3 text-center font-mono font-bold text-muted-foreground">{g.paperExam}</td>
+                        </>
+                      )}
+                      {!isSS && (
+                        <td className="p-3 text-center font-mono font-bold text-muted-foreground">{g.exam !== undefined ? g.exam : g.paperExam}</td>
+                      )}
                       <td className="p-3 text-center font-bold text-sm text-foreground font-serif">{g.total}%</td>
                       <td className="p-3 text-center">
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${g.waec.color}`}>
-                          {g.waec.grade}
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${g.gradeInfo.color}`}>
+                          {g.gradeInfo.grade}
                         </span>
                       </td>
                       <td className="p-3 text-muted-foreground italic text-xs">

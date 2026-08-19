@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 import { authClient } from '@/lib/api-auth';
-import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, getStoredTeachers, saveTeacher, saveStudent, deleteStudent, subscribeToCBTStore, syncStudentsWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, CourseBroadsheetScore } from '@/lib/cbt-store';
+import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, getStoredTeachers, saveTeacher, saveStudent, deleteStudent, subscribeToCBTStore, syncStudentsWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, calculateBECEGrade, CourseBroadsheetScore } from '@/lib/cbt-store';
 import { useTranslation } from '@/lib/i18n';
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
 import { getTimeGreeting } from '@/lib/utils';
@@ -207,23 +207,32 @@ export default function TeacherDashboard() {
   // Broadsheet & Detailed Student Score Table State
   const [selectedBroadsheetStudent, setSelectedBroadsheetStudent] = useState<any | null>(null);
   const [broadsheetScores, setBroadsheetScores] = useState<Record<string, CourseBroadsheetScore>>({});
+  const [broadsheetSubject, setBroadsheetSubject] = useState<string>('MTH-101');
+  const [broadsheetClassFilter, setBroadsheetClassFilter] = useState<string>('');
+
+  const isSeniorSecondaryClass = (grade?: string) => {
+    const g = (grade || '').toUpperCase().replace(/\s+/g, '');
+    return g.startsWith('SS') || g.includes('SENIOR') || g.includes('SS1') || g.includes('SS2') || g.includes('SS3');
+  };
 
   const handleOpenStudentBroadsheet = (student: any) => {
     setSelectedBroadsheetStudent(student);
     const courses = getCoursesForClass(student.grade || 'SS1', student.stream || 'Science');
     const saved = getStudentBroadsheet(student.id);
+    const isSS = isSeniorSecondaryClass(student.grade);
 
     const initialScores: Record<string, CourseBroadsheetScore> = {};
     courses.forEach(c => {
-      const cbtAuto = getAutomaticCBTScore(student.code || student.email || student.name, c.code);
+      const cbtAuto = isSS ? getAutomaticCBTScore(student.code || student.email || student.name, c.code) : 0;
       const existing = getSafeProperty(saved, c.code);
       Reflect.set(initialScores, c.code, {
-        ca1: existing?.ca1 ?? 8,
-        ca2: existing?.ca2 ?? 8,
-        assignment: existing?.assignment ?? 9,
-        cbtScore: existing?.cbtScore !== undefined ? existing.cbtScore : cbtAuto,
-        paperExam: existing?.paperExam ?? 32,
-        remark: existing?.remark || 'Good progress & steady academic effort'
+        ca1: existing?.ca1 ?? (isSS ? 8 : 16),
+        ca2: existing?.ca2 ?? (isSS ? 8 : 16),
+        assignment: existing?.assignment ?? 0,
+        cbtScore: isSS ? (existing?.cbtScore !== undefined ? existing.cbtScore : cbtAuto) : 0,
+        paperExam: existing?.paperExam ?? (existing?.exam ?? (isSS ? 32 : 52)),
+        exam: existing?.exam ?? (existing?.paperExam ?? (isSS ? 32 : 52)),
+        remark: existing?.remark || 'Good academic effort & steady progress'
       });
     });
 
@@ -231,21 +240,29 @@ export default function TeacherDashboard() {
   };
 
   const handleUpdateScoreInput = (courseCode: string, field: keyof CourseBroadsheetScore, val: any) => {
+    const isSS = selectedBroadsheetStudent ? isSeniorSecondaryClass(selectedBroadsheetStudent.grade) : true;
     setBroadsheetScores(prev => {
-      const current = getSafeProperty(prev, courseCode) || { ca1: 0, ca2: 0, assignment: 0, cbtScore: 0, paperExam: 0, remark: '' };
+      const current = getSafeProperty(prev, courseCode) || { ca1: 0, ca2: 0, assignment: 0, cbtScore: 0, paperExam: 0, exam: 0, remark: '' };
       let numVal = typeof val === 'number' ? val : parseFloat(val);
       if (isNaN(numVal)) numVal = 0;
 
-      if (field === 'ca1' || field === 'ca2' || field === 'assignment') numVal = Math.min(10, Math.max(0, numVal));
-      if (field === 'paperExam') numVal = Math.min(40, Math.max(0, numVal));
-      if (field === 'cbtScore') numVal = Math.min(30, Math.max(0, numVal));
+      if (isSS) {
+        if (field === 'ca1' || field === 'ca2') numVal = Math.min(10, Math.max(0, numVal));
+        if (field === 'cbtScore') numVal = Math.min(30, Math.max(0, numVal));
+        if (field === 'paperExam') numVal = Math.min(40, Math.max(0, numVal));
+      } else {
+        if (field === 'ca1' || field === 'ca2') numVal = Math.min(20, Math.max(0, numVal));
+        if (field === 'paperExam' || field === 'exam') numVal = Math.min(60, Math.max(0, numVal));
+      }
 
       const updated: CourseBroadsheetScore = {
+        ...current,
         ca1: field === 'ca1' ? numVal : current.ca1,
         ca2: field === 'ca2' ? numVal : current.ca2,
         assignment: field === 'assignment' ? numVal : current.assignment,
-        cbtScore: field === 'cbtScore' ? numVal : current.cbtScore,
-        paperExam: field === 'paperExam' ? numVal : current.paperExam,
+        cbtScore: isSS ? (field === 'cbtScore' ? numVal : (current.cbtScore ?? 0)) : 0,
+        paperExam: (field === 'paperExam' || field === 'exam') ? numVal : (current.paperExam ?? current.exam ?? 0),
+        exam: (field === 'paperExam' || field === 'exam') ? numVal : (current.exam ?? current.paperExam ?? 0),
         remark: field === 'remark' ? String(val || '') : (current.remark || '')
       };
       const nextState = { ...prev, [courseCode]: updated };
@@ -255,6 +272,45 @@ export default function TeacherDashboard() {
       }
       return nextState;
     });
+  };
+
+  const handleInlineStudentScoreUpdate = (student: any, courseCode: string, field: 'ca1' | 'ca2' | 'cbtScore' | 'paperExam' | 'exam', val: any) => {
+    const isSS = isSeniorSecondaryClass(student.grade);
+    const saved = getStudentBroadsheet(student.id);
+    const current = getSafeProperty(saved, courseCode) || {
+      ca1: isSS ? 8 : 16,
+      ca2: isSS ? 8 : 16,
+      assignment: 0,
+      cbtScore: isSS ? getAutomaticCBTScore(student.code || student.email, courseCode) : 0,
+      paperExam: isSS ? 32 : 52,
+      exam: isSS ? 32 : 52,
+      remark: 'Good academic effort & steady progress'
+    };
+
+    let numVal = typeof val === 'number' ? val : parseFloat(val);
+    if (isNaN(numVal)) numVal = 0;
+
+    if (isSS) {
+      if (field === 'ca1' || field === 'ca2') numVal = Math.min(10, Math.max(0, numVal));
+      if (field === 'cbtScore') numVal = Math.min(30, Math.max(0, numVal));
+      if (field === 'paperExam') numVal = Math.min(40, Math.max(0, numVal));
+    } else {
+      if (field === 'ca1' || field === 'ca2') numVal = Math.min(20, Math.max(0, numVal));
+      if (field === 'paperExam' || field === 'exam') numVal = Math.min(60, Math.max(0, numVal));
+    }
+
+    const updated: CourseBroadsheetScore = {
+      ...current,
+      ca1: field === 'ca1' ? numVal : current.ca1,
+      ca2: field === 'ca2' ? numVal : current.ca2,
+      cbtScore: isSS ? (field === 'cbtScore' ? numVal : (current.cbtScore ?? 0)) : 0,
+      paperExam: (field === 'paperExam' || field === 'exam') ? numVal : (current.paperExam ?? current.exam ?? 0),
+      exam: (field === 'paperExam' || field === 'exam') ? numVal : (current.exam ?? current.paperExam ?? 0),
+    };
+
+    const nextScores = { ...saved, [courseCode]: updated };
+    saveStudentBroadsheet(student.id, nextScores);
+    setRoster([...getStoredStudents()]);
   };
 
   // Helper to extract real teacher data filled by Admin (100% matched to Admin Portal)
@@ -1803,18 +1859,158 @@ export default function TeacherDashboard() {
     // =========================================================
     // 4. MANAGE RESULTS
     // =========================================================
-    if (activeSection === 'results') return (
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h2 className="text-2xl font-serif font-bold text-foreground">{t('teacher.manage_results', 'Manage Results & Broadsheet')}</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">{t('teacher.manage_results_desc', 'Grade student submissions and record term CA & exam scores to the class broadsheet.')}</p>
-          </div>
-        </div>
+    if (activeSection === 'results') {
+      const activeClass = broadsheetClassFilter || formClass || 'SS 1 Science';
+      const isSS = isSeniorSecondaryClass(activeClass);
+      const classCourseList = getCoursesForClass(activeClass);
+      const activeCourse = classCourseList.find(c => c.code === broadsheetSubject) || classCourseList[0] || { code: 'MTH-101', name: 'General Mathematics' };
 
-        {/* Interactive Class Broadsheet & Scores */}
-        <div>
-          {selectedBroadsheetStudent ? (
+      // Filter roster for the selected class or search query
+      const classRoster = roster.filter(s => {
+        const q = studentSearch.toLowerCase();
+        const matchSearch = !q || s.name.toLowerCase().includes(q) || s.code.toLowerCase().includes(q);
+        
+        if (broadsheetClassFilter) {
+          const bcClean = broadsheetClassFilter.toLowerCase().replace(/\s+/g, '');
+          const sGradeClean = (s.grade || '').toLowerCase().replace(/\s+/g, '');
+          return matchSearch && (sGradeClean.includes(bcClean) || bcClean.includes(sGradeClean));
+        }
+        if (formClass) {
+          const fcClean = formClass.toLowerCase().replace(/\s+/g, '');
+          const sGradeClean = (s.grade || '').toLowerCase().replace(/\s+/g, '');
+          return matchSearch && (sGradeClean.includes(fcClean) || fcClean.includes(sGradeClean));
+        }
+        return matchSearch;
+      });
+
+      return (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 className="text-2xl font-serif font-bold text-foreground">{t('teacher.manage_results', 'Manage Results & Broadsheet')}</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {isSS 
+                  ? t('teacher.results_desc_ss', 'Senior Secondary (SS 1–3): Record 1st CA, 2nd CA, CBT Objective exam (Auto/Manual), and Handwritten Theory exam scores.')
+                  : t('teacher.results_desc_jss', 'Junior Secondary (JSS 1–3) & Basic Education: Record handwritten 1st CA, 2nd CA, and Terminal Examination marks.')
+                }
+              </p>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => {
+                  classRoster.forEach(student => {
+                    const saved = getStudentBroadsheet(student.id);
+                    saveStudentBroadsheet(student.id, saved);
+                  });
+                  showToast(t('teacher.sync_all_success', 'All student marks synced and published to official terminal report cards!'));
+                }}
+                className="bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer"
+              >
+                <ShieldCheck className="w-4 h-4" /> {t('teacher.sync_report_cards', 'Sync All Scores to Report Cards')}
+              </button>
+            </div>
+          </div>
+
+          {/* Controls Bar: Class Selector, Subject Picker, Search */}
+          <div className="bg-card rounded-2xl border border-border p-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+              {/* Class Filter */}
+              <div>
+                <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">{t('teacher.class_grade_label', 'Class & Arm')}</label>
+                <select
+                  value={broadsheetClassFilter || formClass || 'SS 1 Science'}
+                  onChange={e => {
+                    setBroadsheetClassFilter(e.target.value);
+                    const newCourses = getCoursesForClass(e.target.value);
+                    if (newCourses.length > 0) setBroadsheetSubject(newCourses[0].code);
+                  }}
+                  className="px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs font-bold text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
+                >
+                  <option value="SS 1 Science">SS 1 Science</option>
+                  <option value="SS 1 Art">SS 1 Art</option>
+                  <option value="SS 2 Science">SS 2 Science</option>
+                  <option value="SS 2 Art">SS 2 Art</option>
+                  <option value="SS 3 Science">SS 3 Science</option>
+                  <option value="SS 3 Art">SS 3 Art</option>
+                  <option value="JSS 1">JSS 1</option>
+                  <option value="JSS 2">JSS 2</option>
+                  <option value="JSS 3">JSS 3</option>
+                  <option value="Primary 1">Primary 1</option>
+                  <option value="Primary 2">Primary 2</option>
+                  <option value="Primary 3">Primary 3</option>
+                  <option value="Primary 4">Primary 4</option>
+                  <option value="Primary 5">Primary 5</option>
+                  <option value="Nursery 1">Nursery 1</option>
+                  <option value="Nursery 2">Nursery 2</option>
+                  <option value="Nursery 3">Nursery 3</option>
+                </select>
+              </div>
+
+              {/* Subject Selector */}
+              <div>
+                <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">{t('teacher.active_subject_label', 'Active Subject / Course')}</label>
+                <select
+                  value={activeCourse.code}
+                  onChange={e => setBroadsheetSubject(e.target.value)}
+                  className="px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs font-bold text-emerald-700 focus:ring-2 focus:ring-emerald-500 outline-none min-w-[200px]"
+                >
+                  {classCourseList.map(c => (
+                    <option key={c.code} value={c.code}>
+                      {c.name} ({c.code})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Academic Term */}
+              <div>
+                <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">{t('teacher.academic_term', 'Academic Term')}</label>
+                <span className="inline-block px-3 py-2 rounded-xl bg-muted/30 border border-border text-xs font-semibold text-foreground">
+                  1st Term 2026/2027
+                </span>
+              </div>
+            </div>
+
+            {/* Student Search & Quick Sample Populate */}
+            <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+              <div className="relative flex-1 md:w-56">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder={t('teacher.search_student_ph', 'Search pupil name or ID...')}
+                  value={studentSearch}
+                  onChange={e => setStudentSearch(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 rounded-xl border border-border bg-muted/20 text-xs outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  classRoster.forEach(student => {
+                    const isStudentSS = isSeniorSecondaryClass(student.grade);
+                    const cbtAuto = isStudentSS ? getAutomaticCBTScore(student.code || student.email, activeCourse.code) : 0;
+                    handleInlineStudentScoreUpdate(student, activeCourse.code, 'ca1', isStudentSS ? 8 : 16);
+                    handleInlineStudentScoreUpdate(student, activeCourse.code, 'ca2', isStudentSS ? 8 : 16);
+                    if (isStudentSS) {
+                      handleInlineStudentScoreUpdate(student, activeCourse.code, 'cbtScore', cbtAuto);
+                      handleInlineStudentScoreUpdate(student, activeCourse.code, 'paperExam', 32);
+                    } else {
+                      handleInlineStudentScoreUpdate(student, activeCourse.code, 'exam', 52);
+                    }
+                  });
+                  showToast(t('teacher.populated_sample_toast', 'Auto-populated standard assessment marks for this subject!'));
+                }}
+                className="px-3 py-2 rounded-xl border border-emerald-500/30 text-emerald-700 hover:bg-emerald-500/10 text-xs font-bold flex items-center gap-1.5 transition-colors shrink-0 cursor-pointer"
+                title={t('teacher.quick_populate_tooltip', 'Quick populate benchmark scores')}
+              >
+                <Zap className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="hidden sm:inline">{t('teacher.btn_auto_fill', 'Auto-Fill Benchmarks')}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Interactive Class Broadsheet & Scores */}
+          <div>
+            {selectedBroadsheetStudent ? (
               /* =========================================================
                  INDIVIDUAL STUDENT DETAILED BROADSHEET VIEW
                  ========================================================= */
@@ -1826,14 +2022,17 @@ export default function TeacherDashboard() {
                       onClick={() => setSelectedBroadsheetStudent(null)}
                       className="p-2 rounded-xl bg-card border border-border hover:bg-accent text-foreground transition-all flex items-center gap-1.5 text-xs font-bold shadow-xs cursor-pointer"
                     >
-                      <ChevronLeft className="w-4 h-4" /> Back to Full Class Broadsheet
+                      <ChevronLeft className="w-4 h-4" /> {t('teacher.back_to_class_register', 'Back to Class Broadsheet Table')}
                     </button>
                     <div>
                       <h3 className="font-serif font-bold text-lg text-foreground flex items-center gap-2">
-                        {t('teacher.official_student_broadsheet', 'Official Student Broadsheet — ')}<span className="text-primary">{selectedBroadsheetStudent.name}</span>
+                        {t('teacher.official_student_broadsheet', 'Official Student Broadsheet — ')}<span className="text-emerald-700">{selectedBroadsheetStudent.name}</span>
                       </h3>
                       <p className="text-xs text-muted-foreground">
-                        {t('teacher.fill_ca_marks_desc', 'Fill 1st CA, 2nd CA, Assignment & Paper exam marks below. CBT test scores are automatically filled.')}
+                        {isSeniorSecondaryClass(selectedBroadsheetStudent.grade)
+                          ? t('teacher.fill_ss_marks_desc', 'Senior Secondary Track: 1st CA (10), 2nd CA (10), CBT OBJ Exam (30 Auto/Manual), and Theory Exam (40).')
+                          : t('teacher.fill_jss_marks_desc', 'Junior Secondary / Basic Track: 1st CA (20), 2nd CA (20), and Terminal Examination (60).')
+                        }
                       </p>
                     </div>
                   </div>
@@ -1843,15 +2042,15 @@ export default function TeacherDashboard() {
                         saveStudentBroadsheet(selectedBroadsheetStudent.id, broadsheetScores);
                         showToast(`Saved and synced terminal scores for ${selectedBroadsheetStudent.name}!`);
                       }}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+                      className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
                     >
-                      <ShieldCheck className="w-4 h-4" /> Save & Sync to Report Card
+                      <ShieldCheck className="w-4 h-4" /> {t('teacher.btn_save_sync_report', 'Save & Sync to Report Card')}
                     </button>
                     <button
                       onClick={() => window.print()}
                       className="bg-muted hover:bg-accent text-foreground font-bold text-xs px-3 py-2 rounded-xl border border-border transition-all flex items-center gap-1.5 cursor-pointer"
                     >
-                      <Printer className="w-3.5 h-3.5" /> Print Broadsheet
+                      <Printer className="w-3.5 h-3.5" /> {t('teacher.btn_print_broadsheet', 'Print Broadsheet')}
                     </button>
                   </div>
                 </div>
@@ -1859,7 +2058,7 @@ export default function TeacherDashboard() {
                 {/* Student Profile Card */}
                 <div className="bg-card rounded-2xl border border-border p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center font-serif font-bold text-2xl text-primary border-2 border-primary/20 shrink-0">
+                    <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-700 flex items-center justify-center font-serif font-bold text-2xl border-2 border-emerald-500/20 shrink-0">
                       {selectedBroadsheetStudent.name?.[0] || 'S'}
                     </div>
                     <div>
@@ -1867,12 +2066,18 @@ export default function TeacherDashboard() {
                         <span className="text-[10px] font-bold uppercase tracking-wider bg-rose-500/10 text-rose-600 border border-rose-200 px-2.5 py-0.5 rounded-md font-mono">
                           {selectedBroadsheetStudent.code}
                         </span>
-                        <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-md">
+                        <span className="text-xs font-bold text-emerald-700 bg-emerald-500/10 px-2.5 py-0.5 rounded-md">
                           {selectedBroadsheetStudent.grade} ({selectedBroadsheetStudent.stream || 'Science'})
                         </span>
-                        <span className="text-[10px] font-extrabold uppercase bg-blue-500/10 text-blue-600 border border-blue-200 px-2 py-0.5 rounded-md flex items-center gap-1">
-                          <Zap className="w-3 h-3 text-blue-600 shrink-0" /> CBT Results Auto-Filled
-                        </span>
+                        {isSeniorSecondaryClass(selectedBroadsheetStudent.grade) ? (
+                          <span className="text-[10px] font-extrabold uppercase bg-blue-500/10 text-blue-600 border border-blue-200 px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <Zap className="w-3 h-3 text-blue-600 shrink-0" /> {t('teacher.cbt_auto_filled_tag', 'CBT OBJ Integrated')}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-extrabold uppercase bg-amber-500/10 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-md">
+                            {t('teacher.handwritten_exam_tag', 'Handwritten Examination')}
+                          </span>
+                        )}
                       </div>
                       <h4 className="font-serif font-bold text-lg text-foreground">{selectedBroadsheetStudent.name}</h4>
                       <p className="text-xs text-muted-foreground">{t('teacher.parent_guardian_prefix', 'Parent / Guardian: ')}<strong>{selectedBroadsheetStudent.parentName || 'Chief Nwosu'}</strong> ({selectedBroadsheetStudent.parentPhone || '08031112233'})</p>
@@ -1881,14 +2086,19 @@ export default function TeacherDashboard() {
 
                   {/* Summary Score Pills */}
                   {(() => {
+                    const isStudentSS = isSeniorSecondaryClass(selectedBroadsheetStudent.grade);
                     const courses = getCoursesForClass(selectedBroadsheetStudent.grade || 'SS1', selectedBroadsheetStudent.stream || 'Science');
                     let grandTotal = 0;
                     courses.forEach(c => {
-                      const sc = getSafeProperty(broadsheetScores, c.code) || { ca1: 0, ca2: 0, assignment: 0, cbtScore: 0, paperExam: 0 };
-                      grandTotal += (sc.ca1 + sc.ca2 + sc.assignment + sc.cbtScore + sc.paperExam);
+                      const sc = getSafeProperty(broadsheetScores, c.code) || { ca1: 0, ca2: 0, cbtScore: 0, paperExam: 0, exam: 0 };
+                      if (isStudentSS) {
+                        grandTotal += ((sc.ca1 || 0) + (sc.ca2 || 0) + (sc.cbtScore || 0) + (sc.paperExam || 0));
+                      } else {
+                        grandTotal += ((sc.ca1 || 0) + (sc.ca2 || 0) + (sc.exam !== undefined ? sc.exam : (sc.paperExam || 0)));
+                      }
                     });
                     const avgScore = courses.length > 0 ? Math.round(grandTotal / courses.length) : 0;
-                    const overallGrade = calculateWAECGrade(avgScore);
+                    const overallGrade = isStudentSS ? calculateWAECGrade(avgScore) : calculateBECEGrade(avgScore);
 
                     return (
                       <div className="flex items-center gap-3 border-t md:border-t-0 md:border-l border-border pt-3 md:pt-0 md:pl-5">
@@ -1897,7 +2107,9 @@ export default function TeacherDashboard() {
                           <span className="text-xl font-serif font-bold text-foreground">{avgScore}%</span>
                         </div>
                         <div className="text-center px-3 py-1 bg-muted/20 rounded-xl border border-border">
-                          <span className="text-[10px] uppercase font-bold text-muted-foreground block">{t('teacher.overall_grade', 'Overall Grade')}</span>
+                          <span className="text-[10px] uppercase font-bold text-muted-foreground block">
+                            {isStudentSS ? t('teacher.overall_waec_grade', 'WAEC Grade') : t('teacher.overall_bece_grade', 'BECE Grade')}
+                          </span>
                           <span className={`text-sm font-extrabold px-2.5 py-0.5 rounded-full inline-block mt-0.5 ${overallGrade.color}`}>
                             {overallGrade.grade} ({overallGrade.label})
                           </span>
@@ -1912,55 +2124,66 @@ export default function TeacherDashboard() {
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div>
                       <h4 className="font-bold text-foreground text-sm flex items-center gap-2">
-                        <BarChart2 className="w-4 h-4 text-primary" /> Subject Assessment Breakdown
+                        <BarChart2 className="w-4 h-4 text-emerald-700" /> {t('teacher.subject_assessment_breakdown', 'Subject Assessment Breakdown')}
                       </h4>
-                      <p className="text-xs text-muted-foreground">{t('teacher.fill_marks_breakdown_desc', 'Fill 1st CA (10), 2nd CA (10), Assignment (10), and Paper Exam (40). CBT Exam (30) is auto-populated from CBT results.')}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {isSeniorSecondaryClass(selectedBroadsheetStudent.grade)
+                          ? t('teacher.ss_scheme_hint', 'Scheme: 1st CA (10), 2nd CA (10), CBT Exam (30), and Theory Exam (40). Total = 100%.')
+                          : t('teacher.jss_scheme_hint', 'Scheme: 1st CA (20), 2nd CA (20), and Terminal Examination (60). Total = 100%.')
+                        }
+                      </p>
                     </div>
-                    <button
-                      onClick={() => {
-                        const courses = getCoursesForClass(selectedBroadsheetStudent.grade || 'SS1', selectedBroadsheetStudent.stream || 'Science');
-                        courses.forEach(c => {
-                          const cbtAuto = getAutomaticCBTScore(selectedBroadsheetStudent.code || selectedBroadsheetStudent.email, c.code);
-                          handleUpdateScoreInput(c.code, 'ca1', 8);
-                          handleUpdateScoreInput(c.code, 'ca2', 9);
-                          handleUpdateScoreInput(c.code, 'assignment', 8);
-                          handleUpdateScoreInput(c.code, 'cbtScore', cbtAuto);
-                          handleUpdateScoreInput(c.code, 'paperExam', 32);
-                        });
-                        showToast('Populated sample marks for all subjects!');
-                      }}
-                      className="text-xs font-bold text-primary hover:underline bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20 transition-colors cursor-pointer flex items-center gap-1.5"
-                    >
-                      <Zap className="w-3.5 h-3.5 text-primary shrink-0" /> Auto-Fill Sample Marks
-                    </button>
                   </div>
 
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs text-left border-collapse">
                       <thead className="bg-muted/40 uppercase text-[10px] text-muted-foreground tracking-wider border-b border-border">
-                        <tr>
-                          <th className="p-3 min-w-[200px]">{t('teacher.course_subject', 'Course / Subject')}</th>
-                          <th className="p-3 text-center min-w-[90px]">1st CA (10%)</th>
-                          <th className="p-3 text-center min-w-[90px]">2nd CA (10%)</th>
-                          <th className="p-3 text-center min-w-[90px]">{t('teacher.assignment_10_percent', 'Assignment (10%)')}</th>
-                          <th className="p-3 text-center min-w-[120px] bg-blue-500/10 text-blue-700">
-                            <span className="flex items-center justify-center gap-1">{t('teacher.cbt_exam_30_percent', 'CBT Exam (30%) ')}<Zap className="w-3.5 h-3.5 text-blue-600 shrink-0" /></span>
-                          </th>
-                          <th className="p-3 text-center min-w-[100px]">{t('teacher.paper_exam_40_percent', 'Paper Exam (40%)')}</th>
-                          <th className="p-3 text-center min-w-[90px]">{t('teacher.total_100_percent', 'Total (100%)')}</th>
-                          <th className="p-3 text-center min-w-[80px]">{t('teacher.grade_col', 'Grade')}</th>
-                          <th className="p-3 min-w-[200px]">{t('teacher.teacher_remarks_col', 'Teacher Remarks')}</th>
-                        </tr>
+                        {isSeniorSecondaryClass(selectedBroadsheetStudent.grade) ? (
+                          /* SS 1 - SS 3 Headers */
+                          <tr>
+                            <th className="p-3 min-w-[200px]">{t('teacher.course_subject', 'Course / Subject')}</th>
+                            <th className="p-3 text-center min-w-[90px]">{t('teacher.th_1st_ca_ss', '1st CA (10)')}</th>
+                            <th className="p-3 text-center min-w-[90px]">{t('teacher.th_2nd_ca_ss', '2nd CA (10)')}</th>
+                            <th className="p-3 text-center min-w-[120px] bg-blue-500/10 text-blue-700">
+                              <span className="flex items-center justify-center gap-1">
+                                {t('teacher.th_cbt_exam_ss', 'CBT Exam (30)')} <Zap className="w-3 h-3 text-blue-600 shrink-0" />
+                              </span>
+                            </th>
+                            <th className="p-3 text-center min-w-[110px]">{t('teacher.th_theory_exam_ss', 'Theory Exam (40)')}</th>
+                            <th className="p-3 text-center min-w-[90px]">{t('teacher.total_100_percent', 'Total (100)')}</th>
+                            <th className="p-3 text-center min-w-[90px]">{t('teacher.waec_grade_col', 'WAEC Grade')}</th>
+                            <th className="p-3 min-w-[200px]">{t('teacher.teacher_remarks_col', 'Teacher Remarks')}</th>
+                          </tr>
+                        ) : (
+                          /* JSS 1 - JSS 3 / Basic Education Headers */
+                          <tr>
+                            <th className="p-3 min-w-[200px]">{t('teacher.course_subject', 'Course / Subject')}</th>
+                            <th className="p-3 text-center min-w-[100px]">{t('teacher.th_1st_ca_jss', '1st CA (20)')}</th>
+                            <th className="p-3 text-center min-w-[100px]">{t('teacher.th_2nd_ca_jss', '2nd CA (20)')}</th>
+                            <th className="p-3 text-center min-w-[120px]">{t('teacher.th_exam_jss', 'Exam (60)')}</th>
+                            <th className="p-3 text-center min-w-[90px]">{t('teacher.total_100_percent', 'Total (100)')}</th>
+                            <th className="p-3 text-center min-w-[90px]">{t('teacher.bece_grade_col', 'BECE Grade')}</th>
+                            <th className="p-3 min-w-[200px]">{t('teacher.teacher_remarks_col', 'Teacher Remarks')}</th>
+                          </tr>
+                        )}
                       </thead>
                       <tbody className="divide-y divide-border">
                         {getCoursesForClass(selectedBroadsheetStudent.grade || 'SS1', selectedBroadsheetStudent.stream || 'Science').map(course => {
+                          const isStudentSS = isSeniorSecondaryClass(selectedBroadsheetStudent.grade);
                           const sc = getSafeProperty(broadsheetScores, course.code) || {
-                            ca1: 0, ca2: 0, assignment: 0,
-                            cbtScore: getAutomaticCBTScore(selectedBroadsheetStudent.code || selectedBroadsheetStudent.email, course.code),
-                            paperExam: 0, remark: ''
+                            ca1: isStudentSS ? 8 : 16,
+                            ca2: isStudentSS ? 8 : 16,
+                            cbtScore: isStudentSS ? getAutomaticCBTScore(selectedBroadsheetStudent.code || selectedBroadsheetStudent.email, course.code) : 0,
+                            paperExam: isStudentSS ? 32 : 52,
+                            exam: isStudentSS ? 32 : 52,
+                            remark: ''
                           };
-                          const total = sc.ca1 + sc.ca2 + sc.assignment + sc.cbtScore + sc.paperExam;
-                          const waec = calculateWAECGrade(total);
+                          
+                          const total = isStudentSS
+                            ? (sc.ca1 || 0) + (sc.ca2 || 0) + (sc.cbtScore || 0) + (sc.paperExam || 0)
+                            : (sc.ca1 || 0) + (sc.ca2 || 0) + (sc.exam !== undefined ? sc.exam : (sc.paperExam || 0));
+
+                          const gradeBadge = isStudentSS ? calculateWAECGrade(total) : calculateBECEGrade(total);
 
                           return (
                             <tr key={course.code} className="hover:bg-muted/20 transition-colors">
@@ -1976,10 +2199,10 @@ export default function TeacherDashboard() {
                                 <input
                                   type="number"
                                   min={0}
-                                  max={10}
+                                  max={isStudentSS ? 10 : 20}
                                   value={sc.ca1}
                                   onChange={e => handleUpdateScoreInput(course.code, 'ca1', e.target.value)}
-                                  className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-primary outline-none"
+                                  className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-emerald-500 outline-none"
                                 />
                               </td>
 
@@ -1988,48 +2211,52 @@ export default function TeacherDashboard() {
                                 <input
                                   type="number"
                                   min={0}
-                                  max={10}
+                                  max={isStudentSS ? 10 : 20}
                                   value={sc.ca2}
                                   onChange={e => handleUpdateScoreInput(course.code, 'ca2', e.target.value)}
-                                  className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-primary outline-none"
+                                  className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-emerald-500 outline-none"
                                 />
                               </td>
 
-                              {/* Assignment Input */}
-                              <td className="p-3 text-center">
-                                <input
-                                  type="number"
-                                  min={0}
-                                  max={10}
-                                  value={sc.assignment}
-                                  onChange={e => handleUpdateScoreInput(course.code, 'assignment', e.target.value)}
-                                  className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-primary outline-none"
-                                />
-                              </td>
+                              {/* For SS: CBT Exam & Theory Exam */}
+                              {isStudentSS && (
+                                <>
+                                  <td className="p-3 text-center bg-blue-500/5 border-x border-blue-200/50">
+                                    <input
+                                      type="number"
+                                      min={0}
+                                      max={30}
+                                      value={sc.cbtScore}
+                                      onChange={e => handleUpdateScoreInput(course.code, 'cbtScore', e.target.value)}
+                                      className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-blue-300 bg-blue-50/50 text-blue-800 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    />
+                                  </td>
+                                  <td className="p-3 text-center">
+                                    <input
+                                      type="number"
+                                      min={0}
+                                      max={40}
+                                      value={sc.paperExam}
+                                      onChange={e => handleUpdateScoreInput(course.code, 'paperExam', e.target.value)}
+                                      className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-emerald-500 outline-none"
+                                    />
+                                  </td>
+                                </>
+                              )}
 
-                              {/* CBT Exam (AUTOMATICALLY POPULATED & HIGHLIGHTED) */}
-                              <td className="p-3 text-center bg-blue-500/5 border-x border-blue-200/50">
-                                <div className="flex flex-col items-center justify-center">
-                                  <span className="font-mono font-bold text-xs text-blue-700 bg-blue-100/80 px-2.5 py-1 rounded-md border border-blue-200">
-                                    {sc.cbtScore} / 30
-                                  </span>
-                                  <span className="text-[9px] font-bold text-blue-600 uppercase tracking-wider mt-1 flex items-center gap-0.5">
-                                    <Zap className="w-2.5 h-2.5 text-blue-600 shrink-0" /> CBT Auto-Synced
-                                  </span>
-                                </div>
-                              </td>
-
-                              {/* Paper Exam Input */}
-                              <td className="p-3 text-center">
-                                <input
-                                  type="number"
-                                  min={0}
-                                  max={40}
-                                  value={sc.paperExam}
-                                  onChange={e => handleUpdateScoreInput(course.code, 'paperExam', e.target.value)}
-                                  className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-primary outline-none"
-                                />
-                              </td>
+                              {/* For JSS / Basic: Handwritten Exam Input (60 max) */}
+                              {!isStudentSS && (
+                                <td className="p-3 text-center">
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    max={60}
+                                    value={sc.exam !== undefined ? sc.exam : sc.paperExam}
+                                    onChange={e => handleUpdateScoreInput(course.code, 'exam', e.target.value)}
+                                    className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-emerald-500 outline-none"
+                                  />
+                                </td>
+                              )}
 
                               {/* Total Score */}
                               <td className="p-3 text-center font-bold text-sm text-foreground font-serif">
@@ -2038,8 +2265,8 @@ export default function TeacherDashboard() {
 
                               {/* Grade Badge */}
                               <td className="p-3 text-center">
-                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${waec.color}`}>
-                                  {waec.grade}
+                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${gradeBadge.color}`}>
+                                  {gradeBadge.grade}
                                 </span>
                               </td>
 
@@ -2049,8 +2276,8 @@ export default function TeacherDashboard() {
                                   type="text"
                                   value={sc.remark || ''}
                                   onChange={e => handleUpdateScoreInput(course.code, 'remark', e.target.value)}
-                                  placeholder="Enter subject remark..."
-                                  className="w-full text-xs py-1.5 px-2.5 rounded-lg border border-border bg-card focus:ring-2 focus:ring-primary outline-none"
+                                  placeholder={t('teacher.remark_ph', 'Enter subject remark...')}
+                                  className="w-full text-xs py-1.5 px-2.5 rounded-lg border border-border bg-card focus:ring-2 focus:ring-emerald-500 outline-none"
                                 />
                               </td>
                             </tr>
@@ -2070,9 +2297,9 @@ export default function TeacherDashboard() {
                         saveStudentBroadsheet(selectedBroadsheetStudent.id, broadsheetScores);
                         showToast(`Successfully saved and published report card for ${selectedBroadsheetStudent.name}!`);
                       }}
-                      className="bg-primary hover:bg-primary/90 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
+                      className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
                     >
-                      <ShieldCheck className="w-4 h-4" /> Publish Broadsheet to Report Cards
+                      <ShieldCheck className="w-4 h-4" /> {t('teacher.btn_publish_broadsheet', 'Publish Broadsheet to Report Cards')}
                     </button>
                   </div>
                 </div>
@@ -2085,113 +2312,215 @@ export default function TeacherDashboard() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <h3 className="font-serif font-bold text-foreground text-lg flex items-center gap-2">
-                      <BarChart2 className="w-5 h-5 text-primary" /> Class Broadsheet & Terminal Master Register
+                      <BarChart2 className="w-5 h-5 text-emerald-700" /> {t('teacher.broadsheet_table_title', 'Class Broadsheet & Terminal Master Register')}
                     </h3>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {t('teacher.broadsheet_click_row_desc', 'Click any student row below to open their individual fillable broadsheet (1st CA, 2nd CA, Assignment, CBT Exam & Paper Exam).')}
+                      {isSS
+                        ? t('teacher.ss_table_guide', 'Senior Secondary (SS 1–3): Record 1st CA (10), 2nd CA (10), CBT Exam OBJ (30), and Theory Exam (40) for ')
+                        : t('teacher.jss_table_guide', 'Junior Secondary (JSS 1–3) & Basic: Record handwritten 1st CA (20), 2nd CA (20), and Terminal Exam (60) for ')
+                      }
+                      <strong className="text-emerald-700">{activeCourse.name} ({activeCourse.code})</strong>.
                     </p>
                   </div>
-                  <button
-                    onClick={() => showToast(t('teacher.sync_success', 'All class broadsheet scores synced to student report cards!'))}
-                    className="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-emerald-700 transition-colors shadow-sm cursor-pointer"
-                  >
-                    {t('teacher.sync_report_cards', 'Sync All Scores to Report Cards')}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-muted-foreground bg-muted/40 px-3 py-1.5 rounded-xl border border-border">
+                      {classRoster.length} {t('teacher.enrolled_pupils_count', 'Pupils Enrolled')}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Class Overview Banner */}
                 <div className="bg-muted/20 border border-border rounded-xl p-4 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
                   <div>
-                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.enrolled_students', 'Enrolled Students')}</span>
-                    <strong className="text-lg font-bold text-foreground font-serif">{filteredRoster.length} Pupils</strong>
+                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.selected_class_header', 'Active Class')}</span>
+                    <strong className="text-base font-bold text-foreground font-serif">{activeClass}</strong>
                   </div>
                   <div>
                     <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.assessment_scheme', 'Assessment Scheme')}</span>
-                    <strong className="text-xs font-bold text-primary">CA1(10) + CA2(10) + Assign(10) + CBT(30) + Paper(40)</strong>
+                    <strong className="text-xs font-bold text-emerald-700">
+                      {isSS ? '1st CA(10) + 2nd CA(10) + CBT(30) + Theory(40)' : '1st CA(20) + 2nd CA(20) + Exam(60)'}
+                    </strong>
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.cbt_integration', 'CBT Integration')}</span>
-                    <strong className="text-xs font-bold text-emerald-600 flex items-center justify-center gap-1"><Zap className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> {t('teacher.auto_synced', 'Auto-Synced')}</strong>
+                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.cbt_integration', 'Examination Mode')}</span>
+                    {isSS ? (
+                      <strong className="text-xs font-bold text-blue-600 flex items-center justify-center gap-1">
+                        <Zap className="w-3.5 h-3.5 text-blue-600 shrink-0" /> {t('teacher.cbt_plus_theory', 'CBT (OBJ) + Theory')}
+                      </strong>
+                    ) : (
+                      <strong className="text-xs font-bold text-amber-700">
+                        {t('teacher.handwritten_exam_mode', '100% Handwritten Exam')}
+                      </strong>
+                    )}
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.academic_term', 'Academic Term')}</span>
-                    <strong className="text-xs font-bold text-foreground">1st Term 2026/2027</strong>
+                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.grading_standard', 'Grading Standard')}</span>
+                    <strong className="text-xs font-bold text-foreground">
+                      {isSS ? 'WAEC Standard (A1–F9)' : 'BECE Standard (A–F)'}
+                    </strong>
                   </div>
                 </div>
 
-                {/* All Students Broadsheet Table */}
+                {/* All Students Broadsheet Table with Direct Score Entry */}
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs text-left border-collapse">
                     <thead className="bg-muted/40 uppercase text-[10px] text-muted-foreground tracking-wider border-b border-border">
-                      <tr>
-                        <th className="p-3">{t('teacher.student_name_col', 'Student Name')}</th>
-                        <th className="p-3">{t('teacher.admission_id_col', 'Admission ID')}</th>
-                        <th className="p-3">{t('teacher.class_arm_col', 'Class & Arm')}</th>
-                        <th className="p-3 text-center">{t('teacher.cbt_sync_status', 'CBT Sync Status')}</th>
-                        <th className="p-3 text-center">{t('teacher.cumulative_average', 'Cumulative Average')}</th>
-                        <th className="p-3 text-center">{t('teacher.waec_grade_col', 'WAEC Grade')}</th>
-                        <th className="p-3 text-right">{t('teacher.action_col', 'Action')}</th>
-                      </tr>
+                      {isSS ? (
+                        /* SS 1 - SS 3 Column Layout (As Defined by School Requirements) */
+                        <tr>
+                          <th className="p-3 min-w-[180px]">{t('teacher.student_name_col', 'Student Name')}</th>
+                          <th className="p-3 min-w-[120px]">{t('teacher.student_id_col', 'Student ID')}</th>
+                          <th className="p-3 text-center min-w-[90px]">{t('teacher.th_1st_ca_ss', '1st CA (10)')}</th>
+                          <th className="p-3 text-center min-w-[90px]">{t('teacher.th_2nd_ca_ss', '2nd CA (10)')}</th>
+                          <th className="p-3 text-center min-w-[120px] bg-blue-500/10 text-blue-700">
+                            <span className="flex items-center justify-center gap-1">
+                              {t('teacher.th_cbt_exam_ss', 'CBT Exam (30)')} <Zap className="w-3 h-3 text-blue-600 shrink-0" />
+                            </span>
+                          </th>
+                          <th className="p-3 text-center min-w-[110px]">{t('teacher.th_theory_exam_ss', 'Theory Exam (40)')}</th>
+                          <th className="p-3 text-center min-w-[90px]">{t('teacher.total_100_percent', 'Total (100)')}</th>
+                          <th className="p-3 text-center min-w-[90px]">{t('teacher.waec_grade_col', 'WAEC Grade')}</th>
+                          <th className="p-3 text-right min-w-[120px]">{t('teacher.action_col', 'Action')}</th>
+                        </tr>
+                      ) : (
+                        /* JSS 1 - JSS 3 Column Layout (As Defined by School Requirements) */
+                        <tr>
+                          <th className="p-3 min-w-[180px]">{t('teacher.student_name_col', 'Student Name')}</th>
+                          <th className="p-3 min-w-[120px]">{t('teacher.student_id_col', 'Student ID')}</th>
+                          <th className="p-3 text-center min-w-[100px]">{t('teacher.th_1st_ca_jss', '1st CA (20)')}</th>
+                          <th className="p-3 text-center min-w-[100px]">{t('teacher.th_2nd_ca_jss', '2nd CA (20)')}</th>
+                          <th className="p-3 text-center min-w-[110px]">{t('teacher.th_exam_jss', 'Exam (60)')}</th>
+                          <th className="p-3 text-center min-w-[90px]">{t('teacher.total_100_percent', 'Total (100)')}</th>
+                          <th className="p-3 text-center min-w-[90px]">{t('teacher.bece_grade_col', 'BECE Grade')}</th>
+                          <th className="p-3 text-right min-w-[120px]">{t('teacher.action_col', 'Action')}</th>
+                        </tr>
+                      )}
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {filteredRoster.map(s => {
-                        const courses = getCoursesForClass(s.grade || 'SS1', s.stream || 'Science');
+                      {classRoster.map(s => {
                         const saved = getStudentBroadsheet(s.id);
-                        let sumTotal = 0;
+                        const sc = getSafeProperty(saved, activeCourse.code) || {
+                          ca1: isSS ? 8 : 16,
+                          ca2: isSS ? 8 : 16,
+                          assignment: 0,
+                          cbtScore: isSS ? getAutomaticCBTScore(s.code || s.email, activeCourse.code) : 0,
+                          paperExam: isSS ? 32 : 52,
+                          exam: isSS ? 32 : 52,
+                          remark: 'Good academic effort'
+                        };
 
-                        courses.forEach(c => {
-                          const sc = getSafeProperty(saved, c.code) || {
-                            ca1: 8, ca2: 8, assignment: 9,
-                            cbtScore: getAutomaticCBTScore(s.code || s.email, c.code),
-                            paperExam: 32
-                          };
-                          sumTotal += (sc.ca1 + sc.ca2 + sc.assignment + sc.cbtScore + sc.paperExam);
-                        });
+                        const rowTotal = isSS
+                          ? ((sc.ca1 || 0) + (sc.ca2 || 0) + (sc.cbtScore || 0) + (sc.paperExam || 0))
+                          : ((sc.ca1 || 0) + (sc.ca2 || 0) + (sc.exam !== undefined ? sc.exam : (sc.paperExam || 0)));
 
-                        const avg = courses.length > 0 ? Math.round(sumTotal / courses.length) : 0;
-                        const waec = calculateWAECGrade(avg);
+                        const rowGrade = isSS ? calculateWAECGrade(rowTotal) : calculateBECEGrade(rowTotal);
 
                         return (
                           <tr
                             key={s.id}
-                            onClick={() => handleOpenStudentBroadsheet(s)}
-                            className="hover:bg-primary/5 cursor-pointer transition-colors group"
-                            title={t('teacher.click_row_tooltip', 'Click row to open individual student broadsheet')}
+                            className="hover:bg-muted/20 transition-colors"
                           >
+                            {/* Student Name */}
                             <td className="p-3">
                               <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-xs flex items-center justify-center font-serif">
+                                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-700 font-bold text-xs flex items-center justify-center font-serif shrink-0">
                                   {s.name?.[0] || 'S'}
                                 </div>
-                                <span className="font-bold text-foreground group-hover:text-primary transition-colors text-xs">{s.name}</span>
+                                <div>
+                                  <span className="font-bold text-foreground block text-xs">{s.name}</span>
+                                  <span className="text-[10px] text-muted-foreground">{s.grade} ({s.stream || 'General'})</span>
+                                </div>
                               </div>
                             </td>
-                            <td className="p-3 text-muted-foreground font-mono font-bold text-xs">{s.code}</td>
-                            <td className="p-3">
-                              <span className="font-bold text-primary text-xs">{s.grade} ({s.stream || 'Science'})</span>
+
+                            {/* Student ID */}
+                            <td className="p-3 text-muted-foreground font-mono font-bold text-xs">
+                              {s.code || `TMS/${s.id}`}
                             </td>
+
+                            {/* 1st CA Input */}
                             <td className="p-3 text-center">
-                              <span className="text-[10px] font-extrabold uppercase bg-blue-500/10 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
-                                <Zap className="w-3 h-3 text-blue-600 shrink-0" /> {t('teacher.auto_synced', 'Auto-Synced')}
+                              <input
+                                type="number"
+                                min={0}
+                                max={isSS ? 10 : 20}
+                                value={sc.ca1}
+                                onChange={e => handleInlineStudentScoreUpdate(s, activeCourse.code, 'ca1', e.target.value)}
+                                className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-emerald-500 outline-none"
+                              />
+                            </td>
+
+                            {/* 2nd CA Input */}
+                            <td className="p-3 text-center">
+                              <input
+                                type="number"
+                                min={0}
+                                max={isSS ? 10 : 20}
+                                value={sc.ca2}
+                                onChange={e => handleInlineStudentScoreUpdate(s, activeCourse.code, 'ca2', e.target.value)}
+                                className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-emerald-500 outline-none"
+                              />
+                            </td>
+
+                            {/* SS 1-3: CBT Exam & Theory Exam */}
+                            {isSS && (
+                              <>
+                                <td className="p-3 text-center bg-blue-500/5 border-x border-blue-200/40">
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    max={30}
+                                    value={sc.cbtScore}
+                                    onChange={e => handleInlineStudentScoreUpdate(s, activeCourse.code, 'cbtScore', e.target.value)}
+                                    className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-blue-300 bg-blue-50/60 text-blue-800 focus:ring-2 focus:ring-blue-500 outline-none"
+                                  />
+                                </td>
+                                <td className="p-3 text-center">
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    max={40}
+                                    value={sc.paperExam}
+                                    onChange={e => handleInlineStudentScoreUpdate(s, activeCourse.code, 'paperExam', e.target.value)}
+                                    className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-emerald-500 outline-none"
+                                  />
+                                </td>
+                              </>
+                            )}
+
+                            {/* JSS 1-3: Handwritten Exam */}
+                            {!isSS && (
+                              <td className="p-3 text-center">
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={60}
+                                  value={sc.exam !== undefined ? sc.exam : sc.paperExam}
+                                  onChange={e => handleInlineStudentScoreUpdate(s, activeCourse.code, 'exam', e.target.value)}
+                                  className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-emerald-500 outline-none"
+                                />
+                              </td>
+                            )}
+
+                            {/* Total Score */}
+                            <td className="p-3 text-center font-bold text-sm text-foreground font-serif">
+                              {rowTotal}%
+                            </td>
+
+                            {/* Grade Badge */}
+                            <td className="p-3 text-center">
+                              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${rowGrade.color}`}>
+                                {rowGrade.grade}
                               </span>
                             </td>
-                            <td className="p-3 text-center font-bold text-foreground font-serif text-sm">
-                              {avg}%
-                            </td>
-                            <td className="p-3 text-center">
-                              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${waec.color}`}>
-                                {waec.grade}
-                              </span>
-                            </td>
+
+                            {/* Action Button */}
                             <td className="p-3 text-right">
                               <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleOpenStudentBroadsheet(s);
-                                }}
-                                className="bg-primary/10 group-hover:bg-primary text-primary group-hover:text-white px-3 py-1.5 rounded-xl font-bold text-xs transition-colors inline-flex items-center gap-1 cursor-pointer"
+                                onClick={() => handleOpenStudentBroadsheet(s)}
+                                className="bg-emerald-500/10 hover:bg-emerald-700 text-emerald-700 hover:text-white px-3 py-1.5 rounded-xl font-bold text-xs transition-colors inline-flex items-center gap-1 cursor-pointer"
                               >
-                                {t('teacher.fill_broadsheet_btn', 'Fill Broadsheet')} <ArrowUpRight className="w-3.5 h-3.5" />
+                                {t('teacher.fill_broadsheet_btn', 'All Subjects')} <ArrowUpRight className="w-3.5 h-3.5" />
                               </button>
                             </td>
                           </tr>
@@ -2203,8 +2532,9 @@ export default function TeacherDashboard() {
               </div>
             )}
           </div>
-      </div>
-    );
+        </div>
+      );
+    }
 
     // =========================================================
     // 5. TEACHER PROFILE
