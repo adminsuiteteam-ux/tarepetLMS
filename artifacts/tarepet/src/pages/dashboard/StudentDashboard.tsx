@@ -140,6 +140,9 @@ export default function StudentDashboard() {
       studentId: prof.student_id || s?.admissionNo || (user as any)?.admissionNo || (user as any)?.admissionNumber || '',
       grade: prof.grade_level || s?.grade || '',
       house: prof.house || s?.house || '',
+      gender: prof.gender || s?.gender || 'Male',
+      dob: prof.dob || prof.date_of_birth || s?.dob || '2010-05-15',
+      address: prof.address || s?.address || 'Tarepet School Campus, Yenagoa',
       profileImage: prof.profileImage || s?.profileImage || '',
       emailNotifications: true,
     };
@@ -790,6 +793,24 @@ export default function StudentDashboard() {
               <input type="text" value={profileForm.phone} onChange={e => setProfileForm({...profileForm, phone: e.target.value})} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Gender</label>
+              <select value={profileForm.gender || 'Male'} onChange={e => setProfileForm({...profileForm, gender: e.target.value})} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none">
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Date of Birth</label>
+              <input type="date" value={profileForm.dob || '2010-05-15'} onChange={e => setProfileForm({...profileForm, dob: e.target.value})} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Residential Address</label>
+            <input type="text" value={profileForm.address || ''} onChange={e => setProfileForm({...profileForm, address: e.target.value})} placeholder="e.g. Tarepet School Campus, Yenagoa" className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
+          </div>
         </div>
 
         {/* Biometric Security Settings */}
@@ -877,6 +898,9 @@ export default function StudentDashboard() {
                 name: fullName,
                 email: profileForm.email,
                 phone: profileForm.phone,
+                gender: profileForm.gender,
+                dob: profileForm.dob,
+                address: profileForm.address,
                 profileImage: profileForm.profileImage,
               });
 
@@ -888,8 +912,12 @@ export default function StudentDashboard() {
                   currentAuth.last_name = profileForm.lastName;
                   currentAuth.phone = profileForm.phone;
                   if (!currentAuth.profile) currentAuth.profile = {};
+                  currentAuth.profile.gender = profileForm.gender;
+                  currentAuth.profile.date_of_birth = profileForm.dob;
+                  currentAuth.profile.address = profileForm.address;
                   currentAuth.profile.profileImage = profileForm.profileImage;
                   localStorage.setItem('tarepet_auth_user', JSON.stringify(currentAuth));
+                  localStorage.setItem('tarepet_user', JSON.stringify(currentAuth));
                 }
               } catch (err) {}
 
@@ -898,6 +926,13 @@ export default function StudentDashboard() {
                 first_name: profileForm.firstName,
                 last_name: profileForm.lastName,
                 phone: profileForm.phone,
+                profile: {
+                  student_id: profileForm.studentId,
+                  gender: profileForm.gender,
+                  date_of_birth: profileForm.dob,
+                  address: profileForm.address,
+                  profileImage: profileForm.profileImage,
+                }
               }).catch(() => {});
 
               broadcastRealtimeEvent();

@@ -838,25 +838,75 @@ const EditTeacherModal = ({ teacher, onClose, onSave }: { teacher: any; onClose:
           </button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+          {/* Avatar Photo Preview and Upload */}
+          <div className="p-3.5 rounded-2xl bg-muted/20 border border-border flex items-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center font-serif font-bold text-lg text-primary overflow-hidden shrink-0">
+              {form.profileImage ? (
+                <img src={form.profileImage} alt="Teacher" className="w-full h-full object-cover" />
+              ) : (
+                `${form.name?.[0] || 'T'}`
+              )}
+            </div>
+            <div className="flex-1 space-y-1.5">
+              <input
+                type="file"
+                accept="image/*"
+                id="adminTeacherEditPhotoInput"
+                className="hidden"
+                onChange={e => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      setForm((prev: any) => ({ ...prev, profileImage: reader.result as string }));
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }}
+              />
+              <div className="flex items-center gap-2">
+                <label
+                  htmlFor="adminTeacherEditPhotoInput"
+                  className="px-3 py-1.5 bg-primary text-white rounded-xl text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 hover:bg-primary/90 transition-all shadow-xs"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>{form.profileImage ? 'Change Photo' : 'Upload Photo'}</span>
+                </label>
+                {form.profileImage && (
+                  <button
+                    type="button"
+                    onClick={() => setForm((prev: any) => ({ ...prev, profileImage: '' }))}
+                    className="px-2.5 py-1.5 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold hover:bg-rose-50 flex items-center gap-1"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Remove</span>
+                  </button>
+                )}
+              </div>
+              <p className="text-[10px] text-muted-foreground">JPG, PNG, or WEBP. Syncs to Teacher portal real-time.</p>
+            </div>
+          </div>
+
           <div>
             <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Full Name & Title</label>
             <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required
               className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
-          <div>
-            <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Staff ID</label>
-            <input type="text" value={form.staffId} onChange={e => setForm({ ...form, staffId: e.target.value })} required
-              className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-mono" />
-          </div>
-          <div>
-            <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Specialization</label>
-            <input type="text" value={form.specialization} onChange={e => setForm({ ...form, specialization: e.target.value })}
-              className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
-          </div>
-          <div>
-            <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Qualifications</label>
-            <input type="text" value={form.qualification} onChange={e => setForm({ ...form, qualification: e.target.value })}
-              className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Staff ID</label>
+              <input type="text" value={form.staffId} onChange={e => setForm({ ...form, staffId: e.target.value })} required
+                className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-mono" />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Status</label>
+              <select value={form.status || 'Active'} onChange={e => setForm({ ...form, status: e.target.value })}
+                className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
+                <option value="Active">Active</option>
+                <option value="On Leave">On Leave</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -872,22 +922,85 @@ const EditTeacherModal = ({ teacher, onClose, onSave }: { teacher: any; onClose:
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Form Teacher Duty</label>
-              <input type="text" value={form.formTeacherOf || ''} onChange={e => setForm({ ...form, formTeacherOf: e.target.value })} placeholder="e.g. SS1 Science"
-                className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Gender</label>
+              <select value={form.gender || 'Male'} onChange={e => setForm({ ...form, gender: e.target.value })}
+                className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
             </div>
             <div>
-              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Status</label>
-              <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}
+              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Date of Birth</label>
+              <input type="date" value={form.dob || '1990-01-01'} onChange={e => setForm({ ...form, dob: e.target.value })}
+                className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+            </div>
+          </div>
+          <div>
+            <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Residential Address</label>
+            <input type="text" value={form.address || ''} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="e.g. Tarepet School Campus, Yenagoa, Bayelsa State"
+              className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+          </div>
+          <div>
+            <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Specialization</label>
+            <input type="text" value={form.specialization} onChange={e => setForm({ ...form, specialization: e.target.value })}
+              className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+          </div>
+          <div>
+            <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Qualifications</label>
+            <input type="text" value={form.qualification} onChange={e => setForm({ ...form, qualification: e.target.value })}
+              className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Teaching Division</label>
+              <select value={form.department || 'Senior Secondary (SS 1 - SS 3)'} onChange={e => setForm({ ...form, department: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                <option value="Active">Active</option>
-                <option value="On Leave">On Leave</option>
-                <option value="Inactive">Inactive</option>
+                <option value="Senior Secondary (SS 1 - SS 3)">Senior Secondary (SS 1 - SS 3)</option>
+                <option value="Junior Secondary (JSS 1 - JSS 3)">Junior Secondary (JSS 1 - JSS 3)</option>
+                <option value="Primary Department (Primary 1 - 5)">Primary Department (Primary 1 - 5)</option>
+                <option value="Nursery Department (Nursery 1 - 3)">Nursery Department (Nursery 1 - 3)</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Form Teacher Duty</label>
+              <select value={form.formTeacherOf || 'None'} onChange={e => setForm({ ...form, formTeacherOf: e.target.value })}
+                className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
+                <option value="None">None (Subject Specialist Only)</option>
+                <option value="Nursery 1">Nursery 1</option>
+                <option value="Nursery 2">Nursery 2</option>
+                <option value="Nursery 3">Nursery 3</option>
+                <option value="Primary 1">Primary 1</option>
+                <option value="Primary 2">Primary 2</option>
+                <option value="Primary 3">Primary 3</option>
+                <option value="Primary 4">Primary 4</option>
+                <option value="Primary 5">Primary 5</option>
+                <option value="JSS 1">JSS 1</option>
+                <option value="JSS 2">JSS 2</option>
+                <option value="JSS 3">JSS 3</option>
+                <option value="SS 1 Science">SS 1 Science</option>
+                <option value="SS 1 Art">SS 1 Art</option>
+                <option value="SS 2 Science">SS 2 Science</option>
+                <option value="SS 2 Art">SS 2 Art</option>
+                <option value="SS 3 Science">SS 3 Science</option>
+                <option value="SS 3 Art">SS 3 Art</option>
               </select>
             </div>
           </div>
-          <div className="flex gap-3 pt-3">
-            <button type="submit" className="flex-1 bg-primary text-white py-2.5 rounded-xl font-bold hover:bg-primary/90 transition-colors">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Bank Name</label>
+              <input type="text" value={form.bankName || ''} onChange={e => setForm({ ...form, bankName: e.target.value })} placeholder="e.g. First Bank"
+                className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Account Number</label>
+              <input type="text" value={form.accountNumber || ''} onChange={e => setForm({ ...form, accountNumber: e.target.value })} placeholder="e.g. 0123456789"
+                className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-mono" />
+            </div>
+          </div>
+          <div className="flex gap-3 pt-3 border-t border-border">
+            <button type="submit" className="flex-1 bg-primary text-white py-2.5 rounded-xl font-bold hover:bg-primary/90 transition-colors shadow-sm">
               Save Changes
             </button>
             <button type="button" onClick={onClose} className="border border-border px-5 py-2.5 rounded-xl hover:bg-accent transition-colors">

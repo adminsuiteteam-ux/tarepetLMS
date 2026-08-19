@@ -296,6 +296,9 @@ export default function TeacherDashboard() {
       attendanceRate: t?.attendanceRate || '0%',
       officeHours: (t as any)?.officeHours || '',
       profileImage: t?.profileImage || prof.profileImage || '',
+      salary: t?.salary || prof.salary || '',
+      bankName: t?.bankName || prof.bank_name || '',
+      accountNumber: t?.accountNumber || prof.account_number || '',
       emailAlerts: true,
       cbtAlerts: true,
     };
@@ -2420,18 +2423,23 @@ export default function TeacherDashboard() {
           </div>
         </div>
 
-        {/* Clean Edit Profile & Biometrics Modal */}
+        {/* Full Comprehensive Edit Profile & Biometrics Modal */}
         {showEditModal && (
           <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-card border border-border rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 my-8">
-              <div className="flex items-center justify-between pb-3 border-b border-border">
-                <div className="flex items-center gap-2">
-                  <Edit2 className="w-5 h-5 text-emerald-600" />
-                  <h3 className="font-serif font-bold text-foreground text-lg">Edit Profile & Account Settings</h3>
+            <div className="bg-card border border-border rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl space-y-6 my-8 max-h-[92vh] overflow-y-auto">
+              <div className="flex items-center justify-between pb-4 border-b border-border">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold">
+                    <Edit2 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-serif font-bold text-foreground text-lg sm:text-xl">Edit Complete Profile & Faculty Records</h3>
+                    <p className="text-xs text-muted-foreground">All edits persist to your official records, Django backend, and Admin Portal in real time.</p>
+                  </div>
                 </div>
                 <button
                   onClick={() => setShowEditModal(false)}
-                  className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                  className="p-2 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -2455,6 +2463,10 @@ export default function TeacherDashboard() {
                     bio: profileForm.bio,
                     formTeacherOf: profileForm.formClass || formClass,
                     profileImage: profileForm.profileImage,
+                    salary: profileForm.salary,
+                    bankName: profileForm.bankName,
+                    accountNumber: profileForm.accountNumber,
+                    joined: profileForm.joiningDate,
                   });
 
                   // Sync auth session in localStorage
@@ -2464,15 +2476,24 @@ export default function TeacherDashboard() {
                       currentAuth.first_name = profileForm.firstName;
                       currentAuth.last_name = profileForm.lastName;
                       currentAuth.phone = profileForm.phone;
+                      currentAuth.email = profileForm.email;
                       if (!currentAuth.profile) currentAuth.profile = {};
+                      currentAuth.profile.teacher_id = profileForm.staffId;
                       currentAuth.profile.gender = profileForm.gender;
                       currentAuth.profile.dob = profileForm.dob;
                       currentAuth.profile.address = profileForm.address;
                       currentAuth.profile.qualifications = profileForm.qualification;
                       currentAuth.profile.specialization = profileForm.specialization;
+                      currentAuth.profile.department = profileForm.department;
+                      currentAuth.profile.form_teacher_of = profileForm.formClass || formClass;
+                      currentAuth.profile.hire_date = profileForm.joiningDate;
+                      currentAuth.profile.salary = profileForm.salary;
+                      currentAuth.profile.bank_name = profileForm.bankName;
+                      currentAuth.profile.account_number = profileForm.accountNumber;
                       currentAuth.profile.bio = profileForm.bio;
                       currentAuth.profile.profileImage = profileForm.profileImage;
                       localStorage.setItem('tarepet_auth_user', JSON.stringify(currentAuth));
+                      localStorage.setItem('tarepet_user', JSON.stringify(currentAuth));
                     }
                   } catch (err) {}
 
@@ -2481,70 +2502,301 @@ export default function TeacherDashboard() {
                     first_name: profileForm.firstName,
                     last_name: profileForm.lastName,
                     phone: profileForm.phone,
+                    email: profileForm.email,
                     profile: {
+                      teacher_id: profileForm.staffId,
                       gender: profileForm.gender,
                       dob: profileForm.dob,
                       address: profileForm.address,
+                      department: profileForm.department,
                       qualifications: profileForm.qualification,
                       specialization: profileForm.specialization,
+                      form_teacher_of: profileForm.formClass || formClass,
+                      hire_date: profileForm.joiningDate,
+                      salary: profileForm.salary,
+                      bank_name: profileForm.bankName,
+                      account_number: profileForm.accountNumber,
                       bio: profileForm.bio,
+                      profileImage: profileForm.profileImage,
                     }
                   }).catch(() => {});
 
                   window.dispatchEvent(new Event('cbt_store_updated'));
                   window.dispatchEvent(new Event('storage'));
-                  showToast('Profile updated & synced to Admin Portal in real time!');
+                  showToast('Profile & image updated and synced to Admin Portal in real time!');
                   setShowEditModal(false);
                 }}
-                className="space-y-4 text-xs"
+                className="space-y-6 text-xs"
               >
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">First Name</label>
-                    <input
-                      type="text"
-                      value={profileForm.firstName}
-                      onChange={e => setProfileForm({ ...profileForm, firstName: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
-                    />
+                {/* 1. Profile Photo / Avatar Live Uploader */}
+                <div className="p-4 rounded-2xl bg-muted/20 border border-border flex flex-col sm:flex-row items-center gap-5">
+                  <div className="w-20 h-20 rounded-2xl bg-emerald-500/10 border-2 border-emerald-500/20 flex items-center justify-center font-serif font-bold text-2xl text-emerald-700 shadow-sm overflow-hidden shrink-0">
+                    {profileForm.profileImage ? (
+                      <img src={profileForm.profileImage} alt="Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      `${profileForm.firstName?.[0] || 'T'}${profileForm.lastName?.[0] || 'M'}`
+                    )}
                   </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Last Name</label>
+                  <div className="space-y-2 flex-1 text-center sm:text-left">
                     <input
-                      type="text"
-                      value={profileForm.lastName}
-                      onChange={e => setProfileForm({ ...profileForm, lastName: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
+                      type="file"
+                      accept="image/*"
+                      id="teacherEditPhotoModalInput"
+                      className="hidden"
+                      onChange={e => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            const updatedImg = reader.result as string;
+                            setProfileForm(prev => ({ ...prev, profileImage: updatedImg }));
+                            showToast('Photo uploaded! Click "Save Changes" to apply.');
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
                     />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Phone Number</label>
-                    <input
-                      type="text"
-                      value={profileForm.phone}
-                      onChange={e => setProfileForm({ ...profileForm, phone: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Residential Address</label>
-                    <input
-                      type="text"
-                      value={profileForm.address}
-                      onChange={e => setProfileForm({ ...profileForm, address: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
-                    />
+                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                      <label
+                        htmlFor="teacherEditPhotoModalInput"
+                        className="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-sm transition-all"
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>Upload New Photo</span>
+                      </label>
+                      {profileForm.profileImage && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setProfileForm(prev => ({ ...prev, profileImage: '' }));
+                            showToast('Photo removed.');
+                          }}
+                          className="px-3 py-1.5 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold hover:bg-rose-50 flex items-center gap-1"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Remove</span>
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">JPG, PNG, or WEBP. Image updates real-time across Teacher & Admin views.</p>
                   </div>
                 </div>
 
-                {/* Biometrics activation section inside modal */}
-                <div className="p-4 rounded-xl border border-border bg-muted/10 space-y-3">
+                {/* 2. Personal & Contact Information */}
+                <div className="space-y-3">
+                  <h4 className="font-serif font-bold text-xs uppercase tracking-wider text-primary border-b border-border pb-1.5 flex items-center gap-2">
+                    <User className="w-3.5 h-3.5" /> Personal & Contact Details
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">First Name</label>
+                      <input
+                        type="text"
+                        value={profileForm.firstName}
+                        onChange={e => setProfileForm({ ...profileForm, firstName: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Last Name</label>
+                      <input
+                        type="text"
+                        value={profileForm.lastName}
+                        onChange={e => setProfileForm({ ...profileForm, lastName: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Official Email Address</label>
+                      <input
+                        type="email"
+                        value={profileForm.email}
+                        onChange={e => setProfileForm({ ...profileForm, email: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Contact Phone Number</label>
+                      <input
+                        type="text"
+                        value={profileForm.phone}
+                        onChange={e => setProfileForm({ ...profileForm, phone: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Gender</label>
+                      <select
+                        value={profileForm.gender || 'Male'}
+                        onChange={e => setProfileForm({ ...profileForm, gender: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
+                      >
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Date of Birth</label>
+                      <input
+                        type="date"
+                        value={profileForm.dob || '1990-01-01'}
+                        onChange={e => setProfileForm({ ...profileForm, dob: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Residential Address</label>
+                      <input
+                        type="text"
+                        value={profileForm.address}
+                        onChange={e => setProfileForm({ ...profileForm, address: e.target.value })}
+                        placeholder="e.g. Tarepet School Campus, Yenagoa, Bayelsa State"
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Academic & Faculty Credentials */}
+                <div className="space-y-3">
+                  <h4 className="font-serif font-bold text-xs uppercase tracking-wider text-primary border-b border-border pb-1.5 flex items-center gap-2">
+                    <GraduationCap className="w-3.5 h-3.5" /> Academic & Faculty Credentials
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Staff Role / Duty / Title</label>
+                      <input
+                        type="text"
+                        value={profileForm.roleTitle}
+                        onChange={e => setProfileForm({ ...profileForm, roleTitle: e.target.value })}
+                        placeholder="e.g. Senior Subject Teacher & Head of Sciences"
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Teaching Division / Department</label>
+                      <select
+                        value={profileForm.department || 'Senior Secondary (SS 1 - SS 3)'}
+                        onChange={e => setProfileForm({ ...profileForm, department: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
+                      >
+                        <option value="Senior Secondary (SS 1 - SS 3)">Senior Secondary (SS 1 - SS 3)</option>
+                        <option value="Junior Secondary (JSS 1 - JSS 3)">Junior Secondary (JSS 1 - JSS 3)</option>
+                        <option value="Primary Department (Primary 1 - 5)">Primary Department (Primary 1 - 5)</option>
+                        <option value="Nursery Department (Nursery 1 - 3)">Nursery Department (Nursery 1 - 3)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Form Teacher Assignment</label>
+                      <select
+                        value={profileForm.formClass || 'None'}
+                        onChange={e => setProfileForm({ ...profileForm, formClass: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
+                      >
+                        <option value="None">None (Subject Specialist Only)</option>
+                        <option value="Nursery 1">Nursery 1</option>
+                        <option value="Nursery 2">Nursery 2</option>
+                        <option value="Nursery 3">Nursery 3</option>
+                        <option value="Primary 1">Primary 1</option>
+                        <option value="Primary 2">Primary 2</option>
+                        <option value="Primary 3">Primary 3</option>
+                        <option value="Primary 4">Primary 4</option>
+                        <option value="Primary 5">Primary 5</option>
+                        <option value="JSS 1">JSS 1</option>
+                        <option value="JSS 2">JSS 2</option>
+                        <option value="JSS 3">JSS 3</option>
+                        <option value="SS 1 Science">SS 1 Science</option>
+                        <option value="SS 1 Art">SS 1 Art</option>
+                        <option value="SS 2 Science">SS 2 Science</option>
+                        <option value="SS 2 Art">SS 2 Art</option>
+                        <option value="SS 3 Science">SS 3 Science</option>
+                        <option value="SS 3 Art">SS 3 Art</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Date Joined Faculty</label>
+                      <input
+                        type="text"
+                        value={profileForm.joiningDate || 'September 2021'}
+                        onChange={e => setProfileForm({ ...profileForm, joiningDate: e.target.value })}
+                        placeholder="e.g. September 2021"
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Academic Specialization</label>
+                      <input
+                        type="text"
+                        value={profileForm.specialization}
+                        onChange={e => setProfileForm({ ...profileForm, specialization: e.target.value })}
+                        placeholder="e.g. Pure & Applied Mathematics, Physics & STEM"
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
+                      />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Qualifications & TRCN Degrees</label>
+                      <input
+                        type="text"
+                        value={profileForm.qualification}
+                        onChange={e => setProfileForm({ ...profileForm, qualification: e.target.value })}
+                        placeholder="e.g. B.Sc. Ed (Mathematics), M.Sc. Statistics, TRCN Certified"
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Staff ID & Employment / Banking */}
+                <div className="space-y-3">
+                  <h4 className="font-serif font-bold text-xs uppercase tracking-wider text-primary border-b border-border pb-1.5 flex items-center gap-2">
+                    <CreditCard className="w-3.5 h-3.5" /> Staff ID & Banking Information
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Staff ID Number</label>
+                      <input
+                        type="text"
+                        value={profileForm.staffId}
+                        onChange={e => setProfileForm({ ...profileForm, staffId: e.target.value })}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground font-mono font-bold focus:ring-2 focus:ring-emerald-500 outline-none"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Bank Name</label>
+                      <input
+                        type="text"
+                        value={profileForm.bankName || ''}
+                        onChange={e => setProfileForm({ ...profileForm, bankName: e.target.value })}
+                        placeholder="e.g. First Bank of Nigeria"
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Account Number</label>
+                      <input
+                        type="text"
+                        value={profileForm.accountNumber || ''}
+                        onChange={e => setProfileForm({ ...profileForm, accountNumber: e.target.value })}
+                        placeholder="e.g. 0123456789"
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground font-mono focus:ring-2 focus:ring-emerald-500 outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 5. Biometrics Activation */}
+                <div className="p-4 rounded-2xl border border-border bg-muted/10 space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Fingerprint className="w-5 h-5 text-emerald-600" />
+                    <div className="flex items-center gap-2.5">
+                      <Fingerprint className="w-5 h-5 text-emerald-600 shrink-0" />
                       <div>
                         <p className="font-bold text-foreground text-xs">Biometric Authentication</p>
-                        <p className="text-[10px] text-muted-foreground">Enable Fingerprint / Face ID for fast login</p>
+                        <p className="text-[10px] text-muted-foreground">Android Fingerprint, Apple Face ID / Touch ID, Windows Hello</p>
                       </div>
                     </div>
                     <button
@@ -2573,10 +2825,10 @@ export default function TeacherDashboard() {
                         }
                         setBiometricLoading(false);
                       }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-xs flex items-center gap-1.5 ${
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 ${
                         biometricsEnabled
                           ? 'border border-rose-500/30 text-rose-600 hover:bg-rose-500/10'
-                          : 'bg-emerald-700 text-white hover:bg-emerald-800'
+                          : 'bg-emerald-700 text-white hover:bg-emerald-800 shadow-emerald-700/20'
                       }`}
                     >
                       <span>{biometricLoading ? 'Processing...' : biometricsEnabled ? 'Deactivate Biometrics' : 'Activate Fingerprint / Face ID'}</span>
@@ -2584,19 +2836,20 @@ export default function TeacherDashboard() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+                {/* Footer Buttons */}
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
                   <button
                     type="button"
                     onClick={() => setShowEditModal(false)}
-                    className="px-4 py-2 rounded-xl border border-border text-foreground hover:bg-muted text-xs font-semibold"
+                    className="px-5 py-2.5 rounded-xl border border-border text-foreground hover:bg-muted text-xs font-semibold transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm"
+                    className="px-6 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all"
                   >
-                    <Save className="w-3.5 h-3.5" />
+                    <Save className="w-4 h-4" />
                     <span>Save Changes</span>
                   </button>
                 </div>
