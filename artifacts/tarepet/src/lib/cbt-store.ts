@@ -1939,12 +1939,12 @@ export function clearAllSiteDefaultData(): void {
  * Admin Password Storage & Management
  */
 export function getAdminPassword(): string {
-  if (typeof window === 'undefined') return 'AdminPassword123!';
+  if (typeof window === 'undefined') return 'Admin@12345';
   try {
     const saved = localStorage.getItem('tarepet_admin_password');
     if (saved && saved.trim()) return saved.trim();
   } catch {}
-  return 'AdminPassword123!';
+  return 'Admin@12345';
 }
 
 export function setAdminPassword(newPassword: string): void {
