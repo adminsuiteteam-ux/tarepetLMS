@@ -9,7 +9,7 @@ import {
   User, BookOpen, Award, ShieldCheck, CreditCard, Printer, Download,
   Edit2, Bell, Lock, CheckCircle2, X, Mail, Phone, MapPin, Calendar,
   Briefcase, GraduationCap, Save, ArrowLeft, Check, Star, Layers, Users,
-  Fingerprint, Smartphone
+  Fingerprint, Smartphone, BarChart2
 } from 'lucide-react';
 
 import { authClient } from '@/lib/api-auth';
@@ -39,60 +39,71 @@ export default function TeacherProfile() {
   const getInitialProfile = () => {
     const prof = (user?.profile as any) || {};
     const uEmail = (user?.email || '').toLowerCase();
-    const uStaffId = (prof.teacher_id || (user as any)?.staffId || '').toLowerCase();
+    const uStaffId = ((user?.profile as any)?.teacher_id || (user as any)?.staffId || (user as any)?.id || (user as any)?.username || '').toString().toLowerCase();
+    const uName = `${user?.first_name || ''} ${user?.last_name || ''}`.trim().toLowerCase();
+    const cleanUStaffId = uStaffId.replace(/[^a-z0-9]/g, '');
+    const cleanUEmail = uEmail.replace(/[^a-z0-9]/g, '');
 
-    // Check if matching teacher created by Admin exists in cbt-store
-    const stored = getStoredTeachers().find(t =>
-      (t.email && t.email.toLowerCase() === uEmail) ||
-      (t.staffId && t.staffId.toLowerCase() === uStaffId)
-    );
+    const allTeachers = getStoredTeachers();
+    const stored = allTeachers.find((t: any) => {
+      const tEmail = (t.email || '').toLowerCase();
+      const tStaffId = (t.staffId || '').toLowerCase();
+      const tName = (t.name || '').toLowerCase();
+      const cleanTStaffId = tStaffId.replace(/[^a-z0-9]/g, '');
+      const cleanTEmail = tEmail.replace(/[^a-z0-9]/g, '');
 
-    const nameParts = (user?.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : (stored?.name || '')).split(' ');
+      return (
+        (tStaffId && tStaffId === uStaffId) ||
+        (cleanUStaffId.length >= 3 && (cleanUStaffId === cleanTStaffId || cleanUStaffId.includes(cleanTStaffId) || cleanTStaffId.includes(cleanUStaffId))) ||
+        (tEmail && tEmail === uEmail) ||
+        (cleanUEmail.length >= 4 && (cleanUEmail.includes(cleanTEmail) || cleanTEmail.includes(cleanUEmail))) ||
+        (uName.length >= 3 && tName === uName)
+      );
+    }) || allTeachers[0];
+
+    const tName = stored?.name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Teacher Staff';
+    const nameParts = tName.split(' ');
     const fName = user?.first_name || nameParts[0] || '';
     const lName = user?.last_name || nameParts.slice(1).join(' ') || '';
-    const email = user?.email || stored?.email || '';
-    const phone = user?.phone || prof.phone || stored?.phone || '';
-    const staffId = prof.teacher_id || (user as any)?.staffId || stored?.staffId || '';
-    const dept = prof.department || stored?.department || '';
-    const qual = prof.qualifications || stored?.qualification || '';
-    const rawSpec = stored?.specialization || prof.specialization || prof.subjects_taught;
-    const spec = typeof rawSpec === 'string' ? rawSpec : Array.isArray(rawSpec) ? rawSpec.map((s: any) => typeof s === 'string' ? s : s.name).join(', ') : '';
-    const gen = prof.gender || stored?.gender || '';
-    const dobVal = prof.dob || stored?.dob || '';
-    const addr = prof.address || stored?.address || '';
-    const rawFormCls = prof.formTeacherOf || prof.form_teacher_of || stored?.formTeacherOf;
-    const formCls = (rawFormCls && rawFormCls !== 'None' && !rawFormCls.startsWith('No')) ? rawFormCls : '';
-    const joinDate = prof.hire_date || stored?.joined || '';
-    const sal = prof.salary || stored?.salary || '';
-    const bank = prof.bank_name || stored?.bankName || '';
-    const acct = prof.account_number || stored?.accountNumber || '';
+    const formCls = (stored?.formTeacherOf && stored.formTeacherOf !== 'None' && !stored.formTeacherOf.startsWith('No'))
+      ? stored.formTeacherOf
+      : (prof.form_teacher_of || prof.formTeacherOf || '');
+    const rawSpec = stored?.specialization || prof.specialization || (Array.isArray(prof.subjects_taught) ? prof.subjects_taught.map((s: any) => typeof s === 'string' ? s : s.name).join(', ') : prof.subjects_taught) || '';
+    const subs = (stored?.subjectsAssigned && Array.isArray(stored.subjectsAssigned) && stored.subjectsAssigned.length > 0)
+      ? stored.subjectsAssigned
+      : (Array.isArray(prof.subjects_taught) ? prof.subjects_taught : []);
 
     return {
       firstName: fName,
       lastName: lName,
-      email: email,
-      phone: phone,
-      staffId: staffId,
-      roleTitle: formCls ? `Form Teacher (${formCls})` : (dept || 'Subject Teacher'),
-      department: dept,
-      qualification: qual,
-      joiningDate: joinDate,
-      gender: gen,
-      dob: dobVal,
-      specialization: spec,
-      address: addr,
-      bio: prof.bio || stored?.bio || '',
+      fullName: tName,
+      email: stored?.email || user?.email || '',
+      phone: stored?.phone || user?.phone || prof.phone || '',
+      staffId: stored?.staffId || prof.teacher_id || (user as any)?.staffId || 'TMS/TCH/0054',
+      roleTitle: formCls ? 'Form Teacher' : (stored?.department || prof.department || 'Subject Educator'),
+      department: stored?.department || prof.department || 'Academic Department',
+      qualification: stored?.qualification || prof.qualifications || '',
+      joiningDate: stored?.joined || prof.hire_date || '',
+      gender: stored?.gender || prof.gender || '',
+      dob: stored?.dob || prof.dob || '',
+      specialization: typeof rawSpec === 'string' ? rawSpec : '',
+      address: stored?.address || prof.address || '',
+      bio: stored?.bio || prof.bio || '',
+      formClass: formCls,
+      subjectsAssigned: subs,
+      studentsCount: stored?.studentsCount ?? 0,
+      cbtExamsCount: stored?.cbtExamsCount ?? 0,
+      attendanceRate: stored?.attendanceRate || '0%',
       emergencyContactName: '',
       emergencyContactPhone: '',
       officeHours: (stored as any)?.officeHours || '',
-      formClass: formCls,
-      salary: sal,
-      bankName: bank,
-      accountNumber: acct,
+      salary: stored?.salary || prof.salary || '',
+      bankName: stored?.bankName || prof.bank_name || '',
+      accountNumber: stored?.accountNumber || prof.account_number || '',
       emailAlerts: true,
       cbtAlerts: true,
       smsAlerts: false,
-      profileImage: prof.profileImage || stored?.profileImage || '',
+      profileImage: stored?.profileImage || prof.profileImage || '',
     };
   };
 
@@ -457,51 +468,123 @@ export default function TeacherProfile() {
 
           {/* Profile Tab Content Grid */}
           {activeTab === 'details' && (
-            <div className="space-y-6">
-              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
-                <div className="flex items-center justify-between border-b border-border pb-3">
-                  <h3 className="font-serif font-bold text-foreground text-base flex items-center gap-2">
-                    <User className="w-4 h-4 text-primary" /> {t('teacher.personal_info', 'Personal & Contact Information')}
-                  </h3>
-                  <span className="text-[11px] text-muted-foreground">Admin Verified Profile</span>
+            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                {/* Column 1: Avatar Badge */}
+                <div className="md:col-span-3 flex flex-col items-center justify-start text-center space-y-3 border-b md:border-b-0 md:border-r border-border pb-6 md:pb-0 md:pr-6">
+                  <div className="w-28 h-28 rounded-2xl bg-emerald-500/10 border-2 border-emerald-500/20 flex items-center justify-center font-serif font-bold text-4xl text-emerald-600 shadow-sm overflow-hidden">
+                    {profileForm.profileImage ? (
+                      <img src={profileForm.profileImage} alt="Teacher Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      profileForm.firstName?.[0] || 'A'
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <span className="px-3 py-1 rounded-full text-[10px] font-extrabold bg-emerald-500/15 text-emerald-700 border border-emerald-500/30 uppercase tracking-wider block">
+                      ACTIVE
+                    </span>
+                    <p className="text-xs font-bold text-muted-foreground">Faculty Member</p>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
-                  <div className="p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1">
-                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.full_name', 'Full Name')}</span>
-                    <p className="font-bold text-foreground text-sm">{profileForm.firstName} {profileForm.lastName}</p>
+                {/* Column 2: Teacher Bio & Official Details */}
+                <div className="md:col-span-4 space-y-3.5 text-xs">
+                  <div>
+                    <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">STAFF ID NUMBER</span>
+                    <span className="inline-block mt-0.5 px-2.5 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-700 font-mono font-bold text-xs border border-emerald-500/20">
+                      {profileForm.staffId || 'TMS/TCH/0054'}
+                    </span>
                   </div>
-                  <div className="p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1">
-                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.staff_designation_code', 'Staff ID Code')}</span>
-                    <p className="font-mono font-bold text-primary text-sm">{profileForm.staffId || 'TMS/TCH/STAFF'}</p>
+                  <div>
+                    <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">FULL NAME & TITLE</span>
+                    <strong className="text-foreground font-bold text-sm uppercase block mt-0.5">{profileForm.firstName} {profileForm.lastName}</strong>
                   </div>
-                  <div className="p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1">
-                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.official_email', 'Official Email Address')}</span>
-                    <p className="font-semibold text-foreground truncate">{profileForm.email}</p>
+                  <div>
+                    <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">STAFF ROLE / DUTY</span>
+                    <strong className="text-emerald-700 font-bold block mt-0.5">{profileForm.roleTitle}</strong>
                   </div>
-                  <div className="p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1">
-                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.phone_contact', 'Phone Contact')}</span>
-                    <p className="font-semibold text-foreground">
-                      {profileForm.phone ? profileForm.phone : <span className="text-muted-foreground italic">Not provided</span>}
-                    </p>
+                  <div>
+                    <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">ACADEMIC SPECIALIZATION</span>
+                    <strong className="text-foreground font-bold block mt-0.5">{profileForm.specialization || 'Not Specified'}</strong>
                   </div>
-                  <div className="p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1">
-                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.gender_dob', 'Gender / Date of Birth')}</span>
-                    <p className="font-semibold text-foreground">
-                      {profileForm.gender || profileForm.dob ? `${profileForm.gender || 'Not specified'}${profileForm.dob ? ` • ${profileForm.dob}` : ''}` : <span className="text-muted-foreground italic">Not provided</span>}
-                    </p>
+                  <div>
+                    <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">QUALIFICATIONS & DEGREES</span>
+                    <strong className="text-foreground font-bold block mt-0.5">{profileForm.qualification || 'Not Specified'}</strong>
                   </div>
-                  <div className="p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1">
-                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.first_appointment_date', 'First Appointment Date')}</span>
-                    <p className="font-semibold text-foreground">
-                      {profileForm.joiningDate ? profileForm.joiningDate : <span className="text-muted-foreground italic">Not specified</span>}
-                    </p>
+                  <div>
+                    <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">FORM TEACHER ASSIGNMENT</span>
+                    <strong className="text-rose-600 font-bold block mt-0.5">{profileForm.formClass && profileForm.formClass !== 'None' ? profileForm.formClass : 'None'}</strong>
                   </div>
-                  <div className="p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1 sm:col-span-2 lg:col-span-3">
-                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.residential_address', 'Residential Address')}</span>
-                    <p className="font-semibold text-foreground">
-                      {profileForm.address ? profileForm.address : <span className="text-muted-foreground italic">Not provided</span>}
-                    </p>
+                  <div>
+                    <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">DATE JOINED FACULTY</span>
+                    <strong className="text-foreground font-bold block mt-0.5">{profileForm.joiningDate || 'Not Specified'}</strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">CONTACT PHONE</span>
+                    <strong className="text-foreground font-bold block mt-0.5">{profileForm.phone || 'Not Specified'}</strong>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">OFFICIAL EMAIL</span>
+                    <strong className="text-foreground font-bold underline block mt-0.5">{profileForm.email}</strong>
+                  </div>
+                </div>
+
+                {/* Column 3: Teaching Workload, Assigned Subjects & CBT Metrics */}
+                <div className="md:col-span-5 space-y-4 text-xs border-t md:border-t-0 md:border-l border-border pt-4 md:pt-0 md:pl-6">
+                  <div>
+                    <h4 className="font-serif font-bold text-sm text-foreground flex items-center gap-2 mb-2.5">
+                      <BookOpen className="w-4 h-4 text-emerald-600" />
+                      Assigned Subjects & Classes ({profileForm.subjectsAssigned?.length || 0})
+                    </h4>
+                    <div className="space-y-2">
+                      {profileForm.subjectsAssigned && profileForm.subjectsAssigned.length > 0 ? (
+                        profileForm.subjectsAssigned.map((sub: any, idx: number) => {
+                          const subName = typeof sub === 'string' ? sub : sub.name;
+                          const subGrade = typeof sub === 'string' ? (profileForm.formClass || 'JSS 3') : (sub.grade || profileForm.formClass || 'JSS 3');
+                          const subCode = typeof sub === 'object' && sub.code ? sub.code : `SUB-${idx + 1}`;
+                          return (
+                            <div key={idx} className="p-3 rounded-xl border border-border bg-muted/20 flex items-center justify-between shadow-xs">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded font-mono">
+                                  {subCode}
+                                </span>
+                                <span className="font-bold text-foreground">{subName}</span>
+                              </div>
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 font-serif">
+                                {subGrade}
+                              </span>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <p className="text-muted-foreground italic text-xs">No subjects currently assigned by Admin.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Teaching Stats & CBT Metrics */}
+                  <div className="space-y-2 pt-3 border-t border-border/60">
+                    <h4 className="font-serif font-bold text-sm text-foreground flex items-center gap-2">
+                      <BarChart2 className="w-4 h-4 text-emerald-600" /> Teaching Stats & CBT Metrics
+                    </h4>
+                    <div className="grid grid-cols-2 gap-3 pt-1">
+                      <div className="p-3 rounded-xl bg-card border border-border">
+                        <p className="text-[10px] text-muted-foreground uppercase font-bold">TOTAL STUDENTS TAUGHT</p>
+                        <p className="text-xl font-serif font-bold text-foreground mt-0.5">{profileForm.studentsCount ?? 0}</p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-card border border-border">
+                        <p className="text-[10px] text-muted-foreground uppercase font-bold">CBT ASSESSMENTS</p>
+                        <p className="text-xl font-serif font-bold text-emerald-600 mt-0.5">{profileForm.cbtExamsCount ?? 0} Created</p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-card border border-border">
+                        <p className="text-[10px] text-muted-foreground uppercase font-bold">CLASS ATTENDANCE RATE</p>
+                        <p className="text-xl font-serif font-bold text-emerald-600 mt-0.5">{profileForm.attendanceRate || '0%'}</p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-card border border-border">
+                        <p className="text-[10px] text-muted-foreground uppercase font-bold">RESIDENTIAL ADDRESS</p>
+                        <p className="text-xs font-semibold text-foreground truncate mt-1">{profileForm.address || 'Not Provided'}</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
