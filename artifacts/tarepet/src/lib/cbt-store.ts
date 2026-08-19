@@ -642,25 +642,53 @@ export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [
   }
 ];
 
+function deduplicateTeachers(list: TeacherRecord[]): TeacherRecord[] {
+  const seenStaffIds = new Set<string>();
+  const seenEmails = new Set<string>();
+  const seenNames = new Set<string>();
+  const deduped: TeacherRecord[] = [];
+
+  for (const t of list) {
+    if (!t || !t.name) continue;
+    if (isAccountDeleted(t.email) || isAccountDeleted(t.staffId) || isAccountDeleted(t.id)) continue;
+
+    const staffIdClean = (t.staffId || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const emailClean = (t.email || '').toLowerCase().trim();
+    const nameClean = (t.name || '').toLowerCase().trim();
+
+    if (staffIdClean && seenStaffIds.has(staffIdClean)) continue;
+    if (emailClean && seenEmails.has(emailClean)) continue;
+    if (nameClean && seenNames.has(nameClean)) continue;
+
+    if (staffIdClean) seenStaffIds.add(staffIdClean);
+    if (emailClean) seenEmails.add(emailClean);
+    if (nameClean) seenNames.add(nameClean);
+
+    deduped.push(t);
+  }
+
+  return deduped;
+}
+
 function loadSavedTeachers(): TeacherRecord[] {
+  let list: TeacherRecord[] = [];
   if (typeof window !== 'undefined') {
     try {
       const saved = localStorage.getItem('tarepet_teachers_list');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Live backend data exists — use it directly as the single source of truth.
-          // Filter out any deleted accounts but accept ALL teachers regardless of ID.
-          return parsed.filter((t: TeacherRecord) =>
-            t && t.name && !isAccountDeleted(t.email) && !isAccountDeleted(t.staffId)
-          );
+          list = parsed;
         }
       }
     } catch (e) {}
   }
 
-  // No live data synced yet — fall back to hardcoded defaults as initial seed
-  return DEFAULT_FORM_TEACHERS;
+  if (list.length === 0) {
+    list = DEFAULT_FORM_TEACHERS;
+  }
+
+  return deduplicateTeachers(list);
 }
 
 let _teachers: TeacherRecord[] = loadSavedTeachers();
@@ -675,11 +703,15 @@ export function saveTeacher(teacherData: Partial<TeacherRecord> & { name: string
   const serial = String(Math.floor(1 + Math.random() * 9999)).padStart(4, '0');
   const staffId = teacherData.staffId || `TMS/TCH/${serial}`;
   const email = teacherData.email || formatStudentEmail(teacherData.name);
+  const nameClean = (teacherData.name || '').trim().toLowerCase();
+  const staffIdClean = staffId.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const emailClean = email.toLowerCase().trim();
 
   const existingIdx = _teachers.findIndex(t => 
     (teacherData.id && t.id === teacherData.id) ||
-    (teacherData.email && t.email && t.email.toLowerCase() === teacherData.email.toLowerCase()) ||
-    (staffId && t.staffId && t.staffId.toLowerCase() === staffId.toLowerCase())
+    (emailClean && (t.email || '').toLowerCase().trim() === emailClean) ||
+    (staffIdClean && (t.staffId || '').toLowerCase().replace(/[^a-z0-9]/g, '') === staffIdClean) ||
+    (nameClean && (t.name || '').trim().toLowerCase() === nameClean)
   );
 
   const existing = existingIdx >= 0 ? _teachers[existingIdx] : null;
@@ -717,6 +749,8 @@ export function saveTeacher(teacherData: Partial<TeacherRecord> & { name: string
     _teachers = [newTeacher, ..._teachers];
   }
 
+  _teachers = deduplicateTeachers(_teachers);
+
   if (typeof window !== 'undefined') {
     try {
       localStorage.setItem('tarepet_teachers_list', JSON.stringify(_teachers));
@@ -727,7 +761,7 @@ export function saveTeacher(teacherData: Partial<TeacherRecord> & { name: string
 }
 
 export function saveStoredTeachers(teachers: TeacherRecord[]) {
-  _teachers = teachers;
+  _teachers = deduplicateTeachers(teachers);
   if (typeof window !== 'undefined') {
     try {
       localStorage.setItem('tarepet_teachers_list', JSON.stringify(_teachers));
