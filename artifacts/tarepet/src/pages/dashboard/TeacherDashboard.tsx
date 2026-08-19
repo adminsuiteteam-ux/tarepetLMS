@@ -2214,14 +2214,14 @@ export default function TeacherDashboard() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border">
           <div className="flex items-center gap-2.5">
             <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block shadow-xs ring-4 ring-emerald-500/20" />
-            <h2 className="text-lg sm:text-xl font-bold font-serif text-foreground">Teacher Profile & Academic Records</h2>
+            <h2 className="text-lg sm:text-xl font-bold font-serif text-foreground">{t('teacher.profile_title', 'Teacher Profile & Academic Records')}</h2>
           </div>
           <div className="relative">
             <button
               onClick={() => setShowActionsDropdown(prev => !prev)}
               className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-sm"
             >
-              <span>Actions</span>
+              <span>{t('teacher.actions', 'Actions')}</span>
               <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showActionsDropdown ? 'rotate-180' : ''}`} />
             </button>
             {showActionsDropdown && (
@@ -2307,57 +2307,57 @@ export default function TeacherDashboard() {
                 <label
                   htmlFor="teacherAvatarPickerClean"
                   className="absolute -bottom-1 -right-1 p-1.5 bg-emerald-700 text-white rounded-lg shadow cursor-pointer hover:scale-105 transition-all border border-card"
-                  title="Upload Photo"
+                  title={t('teacher.upload_photo', 'Upload Photo')}
                 >
                   <Edit2 className="w-3 h-3" />
                 </label>
               </div>
               <div className="space-y-1">
                 <span className="px-3 py-1 rounded-full text-[10px] font-extrabold bg-emerald-500/15 text-emerald-700 border border-emerald-500/30 uppercase tracking-wider block">
-                  ACTIVE
+                  {t('teacher.status_active', 'ACTIVE')}
                 </span>
-                <p className="text-xs font-bold text-muted-foreground">Faculty Member</p>
+                <p className="text-xs font-bold text-muted-foreground">{t('teacher.faculty_member', 'Faculty Member')}</p>
               </div>
             </div>
 
             {/* Column 2: Teacher Bio & Official Details */}
             <div className="md:col-span-4 space-y-3.5 text-xs">
               <div>
-                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">STAFF ID NUMBER</span>
+                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">{t('teacher.label_staff_id', 'STAFF ID NUMBER')}</span>
                 <span className="inline-block mt-0.5 px-2.5 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-700 font-mono font-bold text-xs border border-emerald-500/20">
                   {profileForm.staffId || 'TMS/TCH/0054'}
                 </span>
               </div>
               <div>
-                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">FULL NAME & TITLE</span>
+                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">{t('teacher.label_full_name', 'FULL NAME & TITLE')}</span>
                 <strong className="text-foreground font-bold text-sm uppercase block mt-0.5">{profileForm.fullName || `${profileForm.firstName} ${profileForm.lastName}`}</strong>
               </div>
               <div>
-                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">STAFF ROLE / DUTY</span>
+                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">{t('teacher.label_staff_role', 'STAFF ROLE / DUTY')}</span>
                 <strong className="text-emerald-700 font-bold block mt-0.5">{profileForm.roleTitle}</strong>
               </div>
               <div>
-                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">ACADEMIC SPECIALIZATION</span>
+                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">{t('teacher.label_academic_spec', 'ACADEMIC SPECIALIZATION')}</span>
                 <strong className="text-foreground font-bold block mt-0.5">{profileForm.specialization || 'Not Specified'}</strong>
               </div>
               <div>
-                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">QUALIFICATIONS & DEGREES</span>
+                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">{t('teacher.label_qualifications', 'QUALIFICATIONS & DEGREES')}</span>
                 <strong className="text-foreground font-bold block mt-0.5">{profileForm.qualification || 'Not Specified'}</strong>
               </div>
               <div>
-                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">FORM TEACHER ASSIGNMENT</span>
+                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">{t('teacher.label_form_teacher', 'FORM TEACHER ASSIGNMENT')}</span>
                 <strong className="text-rose-600 font-bold block mt-0.5">{profileForm.formClass && profileForm.formClass !== 'None' ? profileForm.formClass : 'None'}</strong>
               </div>
               <div>
-                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">DATE JOINED FACULTY</span>
+                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">{t('teacher.label_date_joined', 'DATE JOINED FACULTY')}</span>
                 <strong className="text-foreground font-bold block mt-0.5">{profileForm.joiningDate || 'Not Specified'}</strong>
               </div>
               <div>
-                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">CONTACT PHONE</span>
+                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">{t('teacher.label_phone', 'CONTACT PHONE')}</span>
                 <strong className="text-foreground font-bold block mt-0.5">{profileForm.phone || 'Not Specified'}</strong>
               </div>
               <div>
-                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">OFFICIAL EMAIL</span>
+                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">{t('teacher.label_email', 'OFFICIAL EMAIL')}</span>
                 <strong className="text-foreground font-bold underline block mt-0.5">{profileForm.email}</strong>
               </div>
             </div>
@@ -2367,7 +2367,7 @@ export default function TeacherDashboard() {
               <div>
                 <h4 className="font-serif font-bold text-sm text-foreground flex items-center gap-2 mb-2.5">
                   <BookOpen className="w-4 h-4 text-emerald-600" />
-                  Assigned Subjects & Classes ({profileForm.subjectsAssigned?.length || 0})
+                  {t('teacher.assigned_subjects_title', 'Assigned Subjects & Classes')} ({profileForm.subjectsAssigned?.length || 0})
                 </h4>
                 <div className="space-y-2">
                   {profileForm.subjectsAssigned && profileForm.subjectsAssigned.length > 0 ? (
@@ -2390,7 +2390,7 @@ export default function TeacherDashboard() {
                       );
                     })
                   ) : (
-                    <p className="text-muted-foreground italic text-xs">No subjects currently assigned by Admin.</p>
+                    <p className="text-muted-foreground italic text-xs">{t('teacher.no_subjects_assigned', 'No subjects currently assigned by Admin.')}</p>
                   )}
                 </div>
               </div>
@@ -2398,23 +2398,23 @@ export default function TeacherDashboard() {
               {/* Teaching Stats & CBT Metrics */}
               <div className="space-y-2 pt-3 border-t border-border/60">
                 <h4 className="font-serif font-bold text-sm text-foreground flex items-center gap-2">
-                  <BarChart2 className="w-4 h-4 text-emerald-600" /> Teaching Stats & CBT Metrics
+                  <BarChart2 className="w-4 h-4 text-emerald-600" /> {t('teacher.stats_header', 'Teaching Stats & CBT Metrics')}
                 </h4>
                 <div className="grid grid-cols-2 gap-3 pt-1">
                   <div className="p-3 rounded-xl bg-card border border-border">
-                    <p className="text-[10px] text-muted-foreground uppercase font-bold">TOTAL STUDENTS TAUGHT</p>
+                    <p className="text-[10px] text-muted-foreground uppercase font-bold">{t('teacher.total_students', 'TOTAL STUDENTS TAUGHT')}</p>
                     <p className="text-xl font-serif font-bold text-foreground mt-0.5">{profileForm.studentsCount ?? 0}</p>
                   </div>
                   <div className="p-3 rounded-xl bg-card border border-border">
-                    <p className="text-[10px] text-muted-foreground uppercase font-bold">CBT ASSESSMENTS</p>
+                    <p className="text-[10px] text-muted-foreground uppercase font-bold">{t('teacher.cbt_assessments', 'CBT ASSESSMENTS')}</p>
                     <p className="text-xl font-serif font-bold text-emerald-600 mt-0.5">{profileForm.cbtExamsCount ?? 0} Created</p>
                   </div>
                   <div className="p-3 rounded-xl bg-card border border-border">
-                    <p className="text-[10px] text-muted-foreground uppercase font-bold">CLASS ATTENDANCE RATE</p>
+                    <p className="text-[10px] text-muted-foreground uppercase font-bold">{t('teacher.attendance_rate', 'CLASS ATTENDANCE RATE')}</p>
                     <p className="text-xl font-serif font-bold text-emerald-600 mt-0.5">{profileForm.attendanceRate || '0%'}</p>
                   </div>
                   <div className="p-3 rounded-xl bg-card border border-border">
-                    <p className="text-[10px] text-muted-foreground uppercase font-bold">RESIDENTIAL ADDRESS</p>
+                    <p className="text-[10px] text-muted-foreground uppercase font-bold">{t('teacher.residential_address', 'RESIDENTIAL ADDRESS')}</p>
                     <p className="text-xs font-semibold text-foreground truncate mt-1">{profileForm.address || 'Not Provided'}</p>
                   </div>
                 </div>
@@ -2433,8 +2433,8 @@ export default function TeacherDashboard() {
                     <Edit2 className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-serif font-bold text-foreground text-lg sm:text-xl">Edit Complete Profile & Faculty Records</h3>
-                    <p className="text-xs text-muted-foreground">All edits persist to your official records, Django backend, and Admin Portal in real time.</p>
+                    <h3 className="font-serif font-bold text-foreground text-lg sm:text-xl">{t('teacher.edit_modal_title', 'Edit Complete Profile & Faculty Records')}</h3>
+                    <p className="text-xs text-muted-foreground">{t('teacher.edit_modal_desc', 'All edits persist to your official records, Django backend, and Admin Portal in real time.')}</p>
                   </div>
                 </div>
                 <button
@@ -2523,7 +2523,7 @@ export default function TeacherDashboard() {
 
                   window.dispatchEvent(new Event('cbt_store_updated'));
                   window.dispatchEvent(new Event('storage'));
-                  showToast('Profile & image updated and synced to Admin Portal in real time!');
+                  showToast(t('teacher.profile_sync_success', 'Profile & image updated and synced to Admin Portal in real time!'));
                   setShowEditModal(false);
                 }}
                 className="space-y-6 text-xs"
@@ -2562,7 +2562,7 @@ export default function TeacherDashboard() {
                         className="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-sm transition-all"
                       >
                         <Upload className="w-3.5 h-3.5" />
-                        <span>Upload New Photo</span>
+                        <span>{t('teacher.upload_new_photo', 'Upload New Photo')}</span>
                       </label>
                       {profileForm.profileImage && (
                         <button
@@ -2574,22 +2574,22 @@ export default function TeacherDashboard() {
                           className="px-3 py-1.5 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold hover:bg-rose-50 flex items-center gap-1"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
-                          <span>Remove</span>
+                          <span>{t('teacher.remove_photo_btn', 'Remove')}</span>
                         </button>
                       )}
                     </div>
-                    <p className="text-[10px] text-muted-foreground">JPG, PNG, or WEBP. Image updates real-time across Teacher & Admin views.</p>
+                    <p className="text-[10px] text-muted-foreground">{t('teacher.photo_format_hint', 'JPG, PNG, or WEBP. Image updates real-time across Teacher & Admin views.')}</p>
                   </div>
                 </div>
 
                 {/* 2. Personal & Contact Information */}
                 <div className="space-y-3">
                   <h4 className="font-serif font-bold text-xs uppercase tracking-wider text-primary border-b border-border pb-1.5 flex items-center gap-2">
-                    <User className="w-3.5 h-3.5" /> Personal & Contact Details
+                    <User className="w-3.5 h-3.5" /> {t('teacher.personal_contact_details', 'Personal & Contact Details')}
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">First Name</label>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">{t('teacher.first_name', 'First Name')}</label>
                       <input
                         type="text"
                         value={profileForm.firstName}
@@ -2599,7 +2599,7 @@ export default function TeacherDashboard() {
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Last Name</label>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">{t('teacher.last_name', 'Last Name')}</label>
                       <input
                         type="text"
                         value={profileForm.lastName}
@@ -2609,7 +2609,7 @@ export default function TeacherDashboard() {
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Official Email Address</label>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">{t('teacher.official_email_label', 'Official Email Address')}</label>
                       <input
                         type="email"
                         value={profileForm.email}
@@ -2619,7 +2619,7 @@ export default function TeacherDashboard() {
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Contact Phone Number</label>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">{t('teacher.contact_phone_label', 'Contact Phone Number')}</label>
                       <input
                         type="text"
                         value={profileForm.phone}
@@ -2628,19 +2628,19 @@ export default function TeacherDashboard() {
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Gender</label>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">{t('teacher.gender_label', 'Gender')}</label>
                       <select
                         value={profileForm.gender || 'Male'}
                         onChange={e => setProfileForm({ ...profileForm, gender: e.target.value })}
                         className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
                       >
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                        <option value="Other">Other</option>
+                        <option value="Male">{t('teacher.gender_male', 'Male')}</option>
+                        <option value="Female">{t('teacher.gender_female', 'Female')}</option>
+                        <option value="Other">{t('teacher.gender_other', 'Other')}</option>
                       </select>
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Date of Birth</label>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">{t('teacher.dob_label', 'Date of Birth')}</label>
                       <input
                         type="date"
                         value={profileForm.dob || '1990-01-01'}
@@ -2649,7 +2649,7 @@ export default function TeacherDashboard() {
                       />
                     </div>
                     <div className="sm:col-span-2">
-                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Residential Address</label>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">{t('teacher.residential_address_label', 'Residential Address')}</label>
                       <input
                         type="text"
                         value={profileForm.address}
@@ -2664,11 +2664,11 @@ export default function TeacherDashboard() {
                 {/* 3. Academic & Faculty Credentials */}
                 <div className="space-y-3">
                   <h4 className="font-serif font-bold text-xs uppercase tracking-wider text-primary border-b border-border pb-1.5 flex items-center gap-2">
-                    <GraduationCap className="w-3.5 h-3.5" /> Academic & Faculty Credentials
+                    <GraduationCap className="w-3.5 h-3.5" /> {t('teacher.academic_credentials_header', 'Academic & Faculty Credentials')}
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Staff Role / Duty / Title</label>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">{t('teacher.staff_role_label', 'Staff Role / Duty / Title')}</label>
                       <input
                         type="text"
                         value={profileForm.roleTitle}
@@ -2678,47 +2678,47 @@ export default function TeacherDashboard() {
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Teaching Division / Department</label>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">{t('teacher.teaching_division_label', 'Teaching Division / Department')}</label>
                       <select
                         value={profileForm.department || 'Senior Secondary (SS 1 - SS 3)'}
                         onChange={e => setProfileForm({ ...profileForm, department: e.target.value })}
                         className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
                       >
-                        <option value="Senior Secondary (SS 1 - SS 3)">Senior Secondary (SS 1 - SS 3)</option>
-                        <option value="Junior Secondary (JSS 1 - JSS 3)">Junior Secondary (JSS 1 - JSS 3)</option>
-                        <option value="Primary Department (Primary 1 - 5)">Primary Department (Primary 1 - 5)</option>
-                        <option value="Nursery Department (Nursery 1 - 3)">Nursery Department (Nursery 1 - 3)</option>
+                        <option value="Senior Secondary (SS 1 - SS 3)">{t('teacher.div_ss', 'Senior Secondary (SS 1 - SS 3)')}</option>
+                        <option value="Junior Secondary (JSS 1 - JSS 3)">{t('teacher.div_jss', 'Junior Secondary (JSS 1 - JSS 3)')}</option>
+                        <option value="Primary Department (Primary 1 - 5)">{t('teacher.div_pri', 'Primary Department (Primary 1 - 5)')}</option>
+                        <option value="Nursery Department (Nursery 1 - 3)">{t('teacher.div_nur', 'Nursery Department (Nursery 1 - 3)')}</option>
                       </select>
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Form Teacher Assignment</label>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">{t('teacher.form_teacher_assignment_label', 'Form Teacher Assignment')}</label>
                       <select
                         value={profileForm.formClass || 'None'}
                         onChange={e => setProfileForm({ ...profileForm, formClass: e.target.value })}
                         className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
                       >
-                        <option value="None">None (Subject Specialist Only)</option>
-                        <option value="Nursery 1">Nursery 1</option>
-                        <option value="Nursery 2">Nursery 2</option>
-                        <option value="Nursery 3">Nursery 3</option>
-                        <option value="Primary 1">Primary 1</option>
-                        <option value="Primary 2">Primary 2</option>
-                        <option value="Primary 3">Primary 3</option>
-                        <option value="Primary 4">Primary 4</option>
-                        <option value="Primary 5">Primary 5</option>
-                        <option value="JSS 1">JSS 1</option>
-                        <option value="JSS 2">JSS 2</option>
-                        <option value="JSS 3">JSS 3</option>
-                        <option value="SS 1 Science">SS 1 Science</option>
-                        <option value="SS 1 Art">SS 1 Art</option>
-                        <option value="SS 2 Science">SS 2 Science</option>
-                        <option value="SS 2 Art">SS 2 Art</option>
-                        <option value="SS 3 Science">SS 3 Science</option>
-                        <option value="SS 3 Art">SS 3 Art</option>
+                        <option value="None">{t('teacher.form_none', 'None (Subject Specialist Only)')}</option>
+                        <option value="Nursery 1">{t('teacher.form_n1', 'Nursery 1')}</option>
+                        <option value="Nursery 2">{t('teacher.form_n2', 'Nursery 2')}</option>
+                        <option value="Nursery 3">{t('teacher.form_n3', 'Nursery 3')}</option>
+                        <option value="Primary 1">{t('teacher.form_p1', 'Primary 1')}</option>
+                        <option value="Primary 2">{t('teacher.form_p2', 'Primary 2')}</option>
+                        <option value="Primary 3">{t('teacher.form_p3', 'Primary 3')}</option>
+                        <option value="Primary 4">{t('teacher.form_p4', 'Primary 4')}</option>
+                        <option value="Primary 5">{t('teacher.form_p5', 'Primary 5')}</option>
+                        <option value="JSS 1">{t('teacher.form_j1', 'JSS 1')}</option>
+                        <option value="JSS 2">{t('teacher.form_j2', 'JSS 2')}</option>
+                        <option value="JSS 3">{t('teacher.form_j3', 'JSS 3')}</option>
+                        <option value="SS 1 Science">{t('teacher.form_ss1_sci', 'SS 1 Science')}</option>
+                        <option value="SS 1 Art">{t('teacher.form_ss1_art', 'SS 1 Art')}</option>
+                        <option value="SS 2 Science">{t('teacher.form_ss2_sci', 'SS 2 Science')}</option>
+                        <option value="SS 2 Art">{t('teacher.form_ss2_art', 'SS 2 Art')}</option>
+                        <option value="SS 3 Science">{t('teacher.form_ss3_sci', 'SS 3 Science')}</option>
+                        <option value="SS 3 Art">{t('teacher.form_ss3_art', 'SS 3 Art')}</option>
                       </select>
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Date Joined Faculty</label>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">{t('teacher.date_joined_label', 'Date Joined Faculty')}</label>
                       <input
                         type="text"
                         value={profileForm.joiningDate || 'September 2021'}
@@ -2728,7 +2728,7 @@ export default function TeacherDashboard() {
                       />
                     </div>
                     <div className="sm:col-span-2">
-                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Academic Specialization</label>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">{t('teacher.academic_specialization_label', 'Academic Specialization')}</label>
                       <input
                         type="text"
                         value={profileForm.specialization}
@@ -2738,7 +2738,7 @@ export default function TeacherDashboard() {
                       />
                     </div>
                     <div className="sm:col-span-2">
-                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Qualifications & TRCN Degrees</label>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">{t('teacher.qualifications_degrees_label', 'Qualifications & TRCN Degrees')}</label>
                       <input
                         type="text"
                         value={profileForm.qualification}
@@ -2753,11 +2753,11 @@ export default function TeacherDashboard() {
                 {/* 4. Staff ID & Employment / Banking */}
                 <div className="space-y-3">
                   <h4 className="font-serif font-bold text-xs uppercase tracking-wider text-primary border-b border-border pb-1.5 flex items-center gap-2">
-                    <CreditCard className="w-3.5 h-3.5" /> Staff ID & Banking Information
+                    <CreditCard className="w-3.5 h-3.5" /> {t('teacher.staff_id_banking_header', 'Staff ID & Banking Information')}
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
-                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Staff ID Number</label>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">{t('teacher.staff_id_num_label', 'Staff ID Number')}</label>
                       <input
                         type="text"
                         value={profileForm.staffId}
@@ -2767,7 +2767,7 @@ export default function TeacherDashboard() {
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Bank Name</label>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">{t('teacher.bank_name_label', 'Bank Name')}</label>
                       <input
                         type="text"
                         value={profileForm.bankName || ''}
@@ -2777,7 +2777,7 @@ export default function TeacherDashboard() {
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Account Number</label>
+                      <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">{t('teacher.account_num_label', 'Account Number')}</label>
                       <input
                         type="text"
                         value={profileForm.accountNumber || ''}
@@ -2795,8 +2795,8 @@ export default function TeacherDashboard() {
                     <div className="flex items-center gap-2.5">
                       <Fingerprint className="w-5 h-5 text-emerald-600 shrink-0" />
                       <div>
-                        <p className="font-bold text-foreground text-xs">Biometric Authentication</p>
-                        <p className="text-[10px] text-muted-foreground">Android Fingerprint, Apple Face ID / Touch ID, Windows Hello</p>
+                        <p className="font-bold text-foreground text-xs">{t('teacher.biometrics_modal_header', 'Biometric Authentication')}</p>
+                        <p className="text-[10px] text-muted-foreground">{t('teacher.biometrics_modal_desc', 'Android Fingerprint, Apple Face ID / Touch ID, Windows Hello')}</p>
                       </div>
                     </div>
                     <button
@@ -2843,14 +2843,14 @@ export default function TeacherDashboard() {
                     onClick={() => setShowEditModal(false)}
                     className="px-5 py-2.5 rounded-xl border border-border text-foreground hover:bg-muted text-xs font-semibold transition-colors"
                   >
-                    Cancel
+                    {t('teacher.btn_cancel', 'Cancel')}
                   </button>
                   <button
                     type="submit"
                     className="px-6 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all"
                   >
                     <Save className="w-4 h-4" />
-                    <span>Save Changes</span>
+                    <span>{t('teacher.btn_save_changes', 'Save Changes')}</span>
                   </button>
                 </div>
               </form>
@@ -2917,10 +2917,10 @@ export default function TeacherDashboard() {
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <Smartphone className="w-4 h-4 text-emerald-600" />
-                <p className="font-bold text-xs text-foreground">Android Fingerprint & Apple Face ID / Touch ID</p>
+                <p className="font-bold text-xs text-foreground">{t('teacher.biometrics_device_title', 'Android Fingerprint & Apple Face ID / Touch ID')}</p>
               </div>
               <p className="text-[11px] text-muted-foreground max-w-md">
-                Fast, 1-touch passwordless biometric sign-in directly on this device using Android fingerprint sensors, Apple Face ID / Touch ID, or Windows Hello.
+                {t('teacher.biometrics_device_desc', 'Fast, 1-touch passwordless biometric sign-in directly on this device using Android fingerprint sensors, Apple Face ID / Touch ID, or Windows Hello.')}
               </p>
             </div>
 
