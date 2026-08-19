@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'wouter';
 import { useAuth } from '@/context/AuthContext';
 import { useTranslation } from '@/lib/i18n';
 import tarepetLogo from '@assets/tarepet__1784835204178.png';
 import { NotificationPanel } from '@/components/ui/NotificationPanel';
+import { getStoredStudents, getStoredTeachers, getStoredExams } from '@/lib/cbt-store';
 import {
   LayoutDashboard, BookOpen, GraduationCap, Users, Award,
   Calendar, LogOut, Menu, X, UserCheck, ShieldAlert,
@@ -11,6 +12,7 @@ import {
   Briefcase, PenLine, Star, Library, ClipboardList, Trophy,
   CreditCard, HeartHandshake, School, Shield, Search,
   Megaphone, CalendarCheck, ChevronRight, Sun, Moon, DollarSign,
+  ArrowRight
 } from 'lucide-react';
 
 export interface NavSection {
@@ -101,6 +103,7 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
   const { user, logout } = useAuth();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
+  const [searchFocused, setSearchFocused] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       return document.documentElement.classList.contains('dark') ||
@@ -131,6 +134,96 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
 
   const roleColor = getRoleColor(user?.role);
   const navItems = getRoleNav(user?.role);
+
+  const searchResults = useMemo(() => {
+    const q = searchValue.trim().toLowerCase();
+    if (!q) return [];
+
+    const results: Array<{
+      id: string;
+      title: string;
+      subtitle: string;
+      category: 'Page' | 'Student' | 'Teacher' | 'Exam';
+      sectionId: string;
+      icon: React.ElementType;
+    }> = [];
+
+    // 1. Navigation items
+    navItems.forEach(item => {
+      if (item.label.toLowerCase().includes(q) || item.id.toLowerCase().includes(q)) {
+        results.push({
+          id: `nav-${item.id}`,
+          title: item.label,
+          subtitle: 'Navigation Section',
+          category: 'Page',
+          sectionId: item.id,
+          icon: item.icon,
+        });
+      }
+    });
+
+    // 2. Students
+    try {
+      const students = getStoredStudents();
+      students.forEach(s => {
+        const name = (s.name || '').toLowerCase();
+        const adm = (s.admissionNo || s.code || '').toLowerCase();
+        const cls = (s.grade || s.stream || '').toLowerCase();
+        if (name.includes(q) || adm.includes(q) || cls.includes(q)) {
+          results.push({
+            id: `student-${s.id || s.admissionNo || s.code}`,
+            title: s.name,
+            subtitle: `${s.admissionNo || s.code} • ${s.grade || 'Student'}`,
+            category: 'Student',
+            sectionId: user?.role === 'ADMIN' ? 'users' : 'students',
+            icon: Users,
+          });
+        }
+      });
+    } catch {}
+
+    // 3. Teachers
+    try {
+      const teachers = getStoredTeachers();
+      teachers.forEach(t => {
+        const name = (t.name || '').toLowerCase();
+        const staffId = (t.staffId || '').toLowerCase();
+        const dept = (t.department || t.specialization || '').toLowerCase();
+        if (name.includes(q) || staffId.includes(q) || dept.includes(q)) {
+          results.push({
+            id: `teacher-${t.id || t.staffId}`,
+            title: t.name,
+            subtitle: `${t.staffId} • ${t.department || t.specialization || 'Teacher'}`,
+            category: 'Teacher',
+            sectionId: user?.role === 'ADMIN' ? 'teachers' : 'overview',
+            icon: GraduationCap,
+          });
+        }
+      });
+    } catch {}
+
+    // 4. Exams
+    try {
+      const exams = getStoredExams();
+      exams.forEach(ex => {
+        const title = (ex.title || '').toLowerCase();
+        const sub = (ex.course_name || ex.course_code || '').toLowerCase();
+        const gr = (ex.class || ex.stream || '').toLowerCase();
+        if (title.includes(q) || sub.includes(q) || gr.includes(q)) {
+          results.push({
+            id: `exam-${ex.id}`,
+            title: ex.title,
+            subtitle: `${ex.course_name || ex.course_code || 'Assessment'} (${ex.class || 'All Levels'})`,
+            category: 'Exam',
+            sectionId: 'exams',
+            icon: ClipboardList,
+          });
+        }
+      });
+    } catch {}
+
+    return results.slice(0, 8);
+  }, [searchValue, navItems, user?.role]);
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full" style={{ fontFamily: 'var(--font-poppins)' }}>
@@ -253,18 +346,80 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
               </p>
             </div>
 
-            {/* Search Bar */}
-            <div className="flex-1 max-w-xs ml-2">
+            {/* Interactive Live Search Bar */}
+            <div className="flex-1 max-w-sm ml-2 relative">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
                 <input
                   type="text"
-                  placeholder="Search students, teachers..."
+                  placeholder="Search students, teachers, exams, pages..."
                   value={searchValue}
                   onChange={e => setSearchValue(e.target.value)}
-                  className="w-full pl-8 pr-3 py-2 text-xs bg-muted/50 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 text-foreground placeholder:text-muted-foreground"
+                  onFocus={() => setSearchFocused(true)}
+                  className="w-full pl-8 pr-8 py-2 text-xs bg-muted/50 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 text-foreground placeholder:text-muted-foreground transition-all"
                 />
+                {searchValue && (
+                  <button
+                    onClick={() => setSearchValue('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-muted-foreground hover:text-foreground rounded"
+                    title="Clear search"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
+
+              {/* Search Live Results Dropdown */}
+              {searchFocused && searchValue.trim() && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setSearchFocused(false)} />
+                  <div className="absolute left-0 right-0 mt-2 bg-card border border-border rounded-xl shadow-2xl z-50 py-2 max-h-80 overflow-y-auto animate-in fade-in zoom-in-95 duration-100">
+                    <div className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/50 flex justify-between items-center">
+                      <span>Search Results ({searchResults.length})</span>
+                      <span className="text-[9px] font-normal lowercase">click to open</span>
+                    </div>
+
+                    {searchResults.length > 0 ? (
+                      <div className="py-1">
+                        {searchResults.map((res) => {
+                          const IconComp = res.icon;
+                          return (
+                            <button
+                              key={res.id}
+                              onClick={() => {
+                                onNavigate(res.sectionId);
+                                setSearchFocused(false);
+                                setSearchValue('');
+                              }}
+                              className="w-full px-3 py-2 text-left hover:bg-muted/70 flex items-center justify-between gap-2.5 transition-colors group"
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
+                                  <IconComp className="w-3.5 h-3.5" />
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors">{res.title}</p>
+                                  <p className="text-[10px] text-muted-foreground truncate">{res.subtitle}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-muted text-muted-foreground uppercase border border-border">
+                                  {res.category}
+                                </span>
+                                <ArrowRight className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="p-4 text-center text-xs text-muted-foreground">
+                        No matches found for "{searchValue}"
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </div>
 

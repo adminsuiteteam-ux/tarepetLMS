@@ -11,11 +11,13 @@ import {
   Plus, Search, Filter, CheckSquare, XCircle, RefreshCw,
   Video, Phone, User, Users, ChevronRight, Lock, Bell,
   DollarSign, Check, ChevronDown, Zap, ShieldCheck,
+  Fingerprint, Smartphone
 } from 'lucide-react';
 import { getStoredExams, getStoredSubmissions, subscribeToCBTStore, getCoursesForClass, getStudentBroadsheet, calculateWAECGrade } from '@/lib/cbt-store';
 import { RealTimeSyncStatus } from '@/components/cbt/RealTimeSyncStatus';
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
 import { getTimeGreeting } from '@/lib/utils';
+import { isBiometricsEnabled, enrollBiometrics, unenrollBiometrics } from '@/lib/biometrics';
 
 // ── Data Definitions ────────────────────────────
 const CHILDREN: any[] = [];
@@ -90,6 +92,16 @@ export default function ParentDashboard() {
     name: user?.first_name ? `${user.first_name} ${user.last_name}` : 'Parent Member',
     profileImage: '',
   }));
+  const [biometricsEnabled, setBiometricsEnabled] = useState<boolean>(() => {
+    return isBiometricsEnabled(user?.email || 'parent@tarepet.com');
+  });
+  const [biometricLoading, setBiometricLoading] = useState(false);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 3500);
+  };
 
   const activeChild = CHILDREN.find(c => c.id === selectedChildId) ?? CHILDREN[0];
 
@@ -512,6 +524,71 @@ export default function ParentDashboard() {
               </div>
               <p className="text-[10px] text-muted-foreground">Select an image file to update your parent profile avatar in real time.</p>
             </div>
+          </div>
+        </div>
+
+        {/* Biometric Security Settings */}
+        <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-border pb-3">
+            <h3 className="font-serif font-bold text-foreground text-base flex items-center gap-2">
+              <Fingerprint className="w-5 h-5 text-amber-600" /> Biometric Authentication (Fingerprint & Face ID)
+            </h3>
+            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase border ${
+              biometricsEnabled ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-muted text-muted-foreground border-border'
+            }`}>
+              {biometricsEnabled ? 'Active / Enabled' : 'Not Activated'}
+            </span>
+          </div>
+
+          <div className="p-4 rounded-xl bg-muted/20 border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Smartphone className="w-4 h-4 text-amber-600" />
+                <p className="font-bold text-xs text-foreground">Android Fingerprint & Apple Face ID / Touch ID</p>
+              </div>
+              <p className="text-[11px] text-muted-foreground max-w-md">
+                Fast, 1-touch passwordless biometric sign-in directly on this device using Android fingerprint sensors, Apple Face ID / Touch ID, or Windows Hello.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              disabled={biometricLoading}
+              onClick={async () => {
+                const email = user?.email || 'parent@tarepet.com';
+                const name = parentProfile.name || 'Parent Member';
+                setBiometricLoading(true);
+                try {
+                  if (biometricsEnabled) {
+                    unenrollBiometrics(email);
+                    setBiometricsEnabled(false);
+                    showToast('Biometric authentication removed successfully.');
+                  } else {
+                    const res = await enrollBiometrics({
+                      email,
+                      name,
+                      role: 'PARENT',
+                    });
+                    if (res.success) {
+                      setBiometricsEnabled(true);
+                      showToast('Biometric authentication activated for this device!');
+                    } else {
+                      showToast(res.error || 'Biometric registration failed. Ensure your device sensor is enabled.');
+                    }
+                  }
+                } finally {
+                  setBiometricLoading(false);
+                }
+              }}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-2 shrink-0 ${
+                biometricsEnabled
+                  ? 'bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 border border-rose-200'
+                  : 'bg-amber-600 hover:bg-amber-700 text-white shadow-amber-600/20'
+              }`}
+            >
+              <Fingerprint className="w-4 h-4" />
+              <span>{biometricLoading ? 'Processing...' : (biometricsEnabled ? 'Deactivate Biometrics' : 'Activate Fingerprint / Face ID')}</span>
+            </button>
           </div>
         </div>
 
