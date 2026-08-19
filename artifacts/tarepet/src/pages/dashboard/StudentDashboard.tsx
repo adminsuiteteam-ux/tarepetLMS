@@ -12,7 +12,8 @@ import {
   CheckSquare, Filter, Search, Sparkles, Zap, Printer, ShieldCheck
 } from 'lucide-react';
 
-import { getStoredExams, getStoredSubmissions, subscribeToCBTStore, getCoursesForClass, getStudentBroadsheet, calculateWAECGrade } from '@/lib/cbt-store';
+import { getStoredExams, getStoredSubmissions, subscribeToCBTStore, getCoursesForClass, getStudentBroadsheet, calculateWAECGrade, getStoredStudents, saveStudent, broadcastRealtimeEvent } from '@/lib/cbt-store';
+import { authClient } from '@/lib/api-auth';
 import { StudentPaymentPanel } from '@/components/dashboard/StudentPaymentPanel';
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
 import { getTimeGreeting } from '@/lib/utils';
@@ -21,8 +22,6 @@ import { getTimeGreeting } from '@/lib/utils';
 const MY_COURSES: any[] = [];
 
 const GRADE_REPORT: any[] = [];
-
-
 
 const TERM_ACADEMIC_CALENDAR: any[] = [];
 
@@ -35,7 +34,6 @@ const WEEKLY_TIMETABLE: Record<DayKey, Array<{ time: string; subject: string; te
   Thursday: [],
   Friday: [],
 };
-
 
 const CATEGORY_COLORS: Record<string, string> = {
   Academic: 'bg-blue-100 text-blue-700',
@@ -59,8 +57,8 @@ function getTimetableForDay(day: DayKey) {
 }
 
 export default function StudentDashboard() {
-  const { user, isStudent, isAdmin } = useAuth();
   const { t } = useTranslation();
+  const { user, isStudent, isAdmin } = useAuth();
 
   if (!user || (!isStudent && !isAdmin) || (user.role !== 'STUDENT' && user.role !== 'ADMIN')) {
     return (
@@ -114,17 +112,43 @@ export default function StudentDashboard() {
     return () => unsub();
   }, []);
 
-  // Settings form state (in-memory only)
-  const [profileForm, setProfileForm] = useState(() => ({
-    firstName: user?.first_name || 'Kelechi',
-    lastName: user?.last_name || 'Amadi',
-    email: user?.email || 'kelechi.amadi@tarepet.com',
-    phone: '+234 812 345 6789',
-    studentId: (user?.profile as any)?.student_id || 'TMS/SS1/SCI/4821',
-    house: 'Blue House (Eagle)',
-    profileImage: '',
-    emailNotifications: true,
-  }));
+  const matchedStoredStudent = React.useMemo(() => {
+    if (!user) return null;
+    const uEmail = (user.email || '').toLowerCase();
+    const uAdm = ((user.profile as any)?.student_id || (user as any).admissionNumber || (user as any).id || '').toString().toLowerCase();
+    return getStoredStudents().find((s: any) => {
+      const sEmail = (s.email || '').toLowerCase();
+      const sAdm = (s.admissionNumber || '').toLowerCase();
+      return (sEmail && sEmail === uEmail) || (sAdm && sAdm === uAdm);
+    });
+  }, [user]);
+
+  const getStudentProfileData = () => {
+    const s = matchedStoredStudent;
+    const prof = (user?.profile as any) || {};
+    const nameParts = (user?.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : (s?.name || '')).split(' ');
+    const fName = user?.first_name || nameParts[0] || '';
+    const lName = user?.last_name || nameParts.slice(1).join(' ') || '';
+
+    return {
+      firstName: fName,
+      lastName: lName,
+      email: user?.email || s?.email || '',
+      phone: user?.phone || prof.phone || s?.phone || '',
+      studentId: prof.student_id || s?.admissionNo || (user as any)?.admissionNo || (user as any)?.admissionNumber || '',
+      grade: prof.grade_level || s?.grade || '',
+      house: prof.house || s?.house || '',
+      profileImage: prof.profileImage || s?.profileImage || '',
+      emailNotifications: true,
+    };
+  };
+
+  // Settings form state (synced with actual admin data)
+  const [profileForm, setProfileForm] = useState(getStudentProfileData);
+
+  React.useEffect(() => {
+    setProfileForm(getStudentProfileData());
+  }, [user, matchedStoredStudent]);
 
   const [selectedTerm, setSelectedTerm] = useState<'1st Term' | '2nd Term' | '3rd Term'>('1st Term');
   const [showReportCardModal, setShowReportCardModal] = useState(false);
@@ -772,9 +796,47 @@ export default function StudentDashboard() {
             </div>
             <input type="checkbox" checked={profileForm.emailNotifications} onChange={e => setProfileForm({...profileForm, emailNotifications: e.target.checked})} className="w-4 h-4 text-primary rounded" />
           </label>
-          <button onClick={() => {
-            showToast('Student profile & photo settings saved!');
-          }} className="bg-primary text-white px-6 py-2.5 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors">
+          <button
+            onClick={() => {
+              const fullName = `${profileForm.firstName} ${profileForm.lastName}`.trim();
+              saveStudent({
+                admissionNo: profileForm.studentId,
+                name: fullName,
+                email: profileForm.email,
+                phone: profileForm.phone,
+                profileImage: profileForm.profileImage,
+              });
+
+              // Sync auth session in localStorage
+              try {
+                const currentAuth = JSON.parse(localStorage.getItem('tarepet_auth_user') || '{}');
+                if (currentAuth && currentAuth.email) {
+                  currentAuth.first_name = profileForm.firstName;
+                  currentAuth.last_name = profileForm.lastName;
+                  currentAuth.phone = profileForm.phone;
+                  if (!currentAuth.profile) currentAuth.profile = {};
+                  currentAuth.profile.profileImage = profileForm.profileImage;
+                  localStorage.setItem('tarepet_auth_user', JSON.stringify(currentAuth));
+                }
+              } catch (err) {}
+
+              // Send to backend DB
+              authClient.patch('/auth/me/', {
+                first_name: profileForm.firstName,
+                last_name: profileForm.lastName,
+                phone: profileForm.phone,
+              }).catch(() => {});
+
+              broadcastRealtimeEvent();
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new Event('cbt_store_updated'));
+                window.dispatchEvent(new Event('storage'));
+              }
+
+              showToast('Student profile & photo updated in real time!');
+            }}
+            className="bg-primary text-white px-6 py-2.5 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors shadow-sm"
+          >
             {t('student.save_settings', 'Save Profile Settings')}
           </button>
         </div>

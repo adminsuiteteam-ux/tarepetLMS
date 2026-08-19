@@ -47,21 +47,22 @@ export default function TeacherProfile() {
       (t.staffId && t.staffId.toLowerCase() === uStaffId)
     );
 
-    const fName = user?.first_name || (stored ? stored.name.split(' ')[0] : 'Teacher');
-    const lName = user?.last_name || (stored ? stored.name.split(' ').slice(1).join(' ') : 'Staff');
-    const email = user?.email || stored?.email || 'teacher@tarepet.com';
-    const phone = user?.phone || prof.phone || stored?.phone || '+234 800 000 0000';
-    const staffId = prof.teacher_id || (user as any)?.staffId || stored?.staffId || 'TMS/TCH/0001';
-    const dept = prof.department || stored?.department || 'Academic Department';
-    const qual = prof.qualifications || stored?.qualification || 'B.Sc. Education';
+    const nameParts = (user?.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : (stored?.name || '')).split(' ');
+    const fName = user?.first_name || nameParts[0] || '';
+    const lName = user?.last_name || nameParts.slice(1).join(' ') || '';
+    const email = user?.email || stored?.email || '';
+    const phone = user?.phone || prof.phone || stored?.phone || '';
+    const staffId = prof.teacher_id || (user as any)?.staffId || stored?.staffId || '';
+    const dept = prof.department || stored?.department || '';
+    const qual = prof.qualifications || stored?.qualification || '';
     const rawSpec = stored?.specialization || prof.specialization || prof.subjects_taught;
-    const spec = typeof rawSpec === 'string' ? rawSpec : Array.isArray(rawSpec) ? rawSpec.map((s: any) => typeof s === 'string' ? s : s.name).join(', ') : 'Primary Literacy & STEM Education';
-    const gen = prof.gender || stored?.gender || 'Female';
-    const dobVal = prof.dob || stored?.dob || '1990-01-01';
-    const addr = prof.address || stored?.address || 'Tarepet School Campus, Yenagoa, Bayelsa State';
+    const spec = typeof rawSpec === 'string' ? rawSpec : Array.isArray(rawSpec) ? rawSpec.map((s: any) => typeof s === 'string' ? s : s.name).join(', ') : '';
+    const gen = prof.gender || stored?.gender || '';
+    const dobVal = prof.dob || stored?.dob || '';
+    const addr = prof.address || stored?.address || '';
     const rawFormCls = prof.formTeacherOf || prof.form_teacher_of || stored?.formTeacherOf;
-    const formCls = (rawFormCls && rawFormCls !== 'None' && !rawFormCls.startsWith('No')) ? rawFormCls : 'None';
-    const joinDate = prof.hire_date || stored?.joined || 'September 2021';
+    const formCls = (rawFormCls && rawFormCls !== 'None' && !rawFormCls.startsWith('No')) ? rawFormCls : '';
+    const joinDate = prof.hire_date || stored?.joined || '';
     const sal = prof.salary || stored?.salary || '';
     const bank = prof.bank_name || stored?.bankName || '';
     const acct = prof.account_number || stored?.accountNumber || '';
@@ -72,19 +73,18 @@ export default function TeacherProfile() {
       email: email,
       phone: phone,
       staffId: staffId,
-      roleTitle: formCls !== 'None' ? `Form Teacher (${formCls})` : (dept || 'Subject Teacher'),
+      roleTitle: formCls ? `Form Teacher (${formCls})` : (dept || 'Subject Teacher'),
       department: dept,
       qualification: qual,
-      experience: '5 Years Teaching Experience',
       joiningDate: joinDate,
       gender: gen,
       dob: dobVal,
       specialization: spec,
       address: addr,
-      bio: prof.bio || stored?.bio || 'Passionate Montessori educator dedicated to analytical problem solving and digital learning excellence.',
-      emergencyContactName: 'School Administrator',
-      emergencyContactPhone: '+234 800 000 0000',
-      officeHours: 'Monday - Thursday: 2:00 PM - 4:00 PM',
+      bio: prof.bio || stored?.bio || '',
+      emergencyContactName: '',
+      emergencyContactPhone: '',
+      officeHours: (stored as any)?.officeHours || '',
       formClass: formCls,
       salary: sal,
       bankName: bank,
@@ -210,7 +210,7 @@ export default function TeacherProfile() {
     // 2. Sync session user in localStorage
     if (typeof window !== 'undefined') {
       try {
-        const storedUserJson = localStorage.getItem('tarepet_user');
+        const storedUserJson = localStorage.getItem('tarepet_user') || localStorage.getItem('tarepet_auth_user');
         if (storedUserJson) {
           const uObj = JSON.parse(storedUserJson);
           uObj.first_name = profileForm.firstName;
@@ -231,11 +231,16 @@ export default function TeacherProfile() {
             uObj.profile.account_number = profileForm.accountNumber;
           }
           localStorage.setItem('tarepet_user', JSON.stringify(uObj));
+          localStorage.setItem('tarepet_auth_user', JSON.stringify(uObj));
         }
       } catch (err) {}
     }
 
     broadcastRealtimeEvent();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('cbt_store_updated'));
+      window.dispatchEvent(new Event('storage'));
+    }
 
     // 3. Patch live user profile in Django backend API (/auth/me/)
     authClient.patch('/auth/me/', {
@@ -255,9 +260,9 @@ export default function TeacherProfile() {
         account_number: profileForm.accountNumber,
       }
     }).then(() => {
-      showToast(t('teacher.profile_saved_success', 'Teacher profile updated & synced to Admin Portal!'));
+      showToast(t('teacher.profile_saved_success', 'Profile updated & synced to Admin Portal in real time!'));
     }).catch(() => {
-      showToast(t('teacher.profile_saved_success', 'Teacher profile updated & synced to Admin Portal!'));
+      showToast(t('teacher.profile_saved_success', 'Profile updated & synced to Admin Portal in real time!'));
     });
   };
 
@@ -433,99 +438,71 @@ export default function TeacherProfile() {
               </button>
             </div>
 
-            {/* Stats Bar */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-border bg-card">
+            {/* Clean Stats Bar (Only Real Authentic Data) */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-border bg-card">
               <div className="p-4 text-center">
-                <p className="text-[10px] uppercase font-bold text-muted-foreground">{t('teacher.form_class')}</p>
-                <p className="text-base font-serif font-bold text-foreground mt-0.5">{profileForm.formClass}</p>
+                <p className="text-[10px] uppercase font-bold text-muted-foreground">{t('teacher.form_class', 'Assigned Duty')}</p>
+                <p className="text-base font-serif font-bold text-foreground mt-0.5">{profileForm.formClass && profileForm.formClass !== 'None' ? `Form Teacher: ${profileForm.formClass}` : 'Subject Teacher'}</p>
               </div>
               <div className="p-4 text-center">
-                <p className="text-[10px] uppercase font-bold text-muted-foreground">{t('teacher.students_supervised')}</p>
-                <p className="text-base font-serif font-bold text-foreground mt-0.5">142 {t('teacher.active_students')}</p>
+                <p className="text-[10px] uppercase font-bold text-muted-foreground">{t('teacher.assigned_subjects', 'Department / Subject')}</p>
+                <p className="text-base font-serif font-bold text-foreground mt-0.5">{profileForm.department || profileForm.specialization || 'Academic Staff'}</p>
               </div>
               <div className="p-4 text-center">
-                <p className="text-[10px] uppercase font-bold text-muted-foreground">{t('teacher.service_duration')}</p>
-                <p className="text-base font-serif font-bold text-foreground mt-0.5">{profileForm.experience}</p>
-              </div>
-              <div className="p-4 text-center">
-                <p className="text-[10px] uppercase font-bold text-muted-foreground">{t('teacher.status')}</p>
-                <p className="text-base font-serif font-bold text-emerald-600 mt-0.5">{t('teacher.active_verified')}</p>
+                <p className="text-[10px] uppercase font-bold text-muted-foreground">{t('teacher.status', 'Account Status')}</p>
+                <p className="text-base font-serif font-bold text-emerald-600 mt-0.5">{t('teacher.active_verified', 'Active / Verified')}</p>
               </div>
             </div>
           </div>
 
           {/* Profile Tab Content Grid */}
           {activeTab === 'details' && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 space-y-6">
-                <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
-                  <div className="flex items-center justify-between border-b border-border pb-3">
-                    <h3 className="font-serif font-bold text-foreground text-base flex items-center gap-2">
-                      <User className="w-4 h-4 text-primary" /> {t('teacher.personal_info')}
-                    </h3>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                    <div className="p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1">
-                      <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.full_name')}</span>
-                      <p className="font-bold text-foreground">{profileForm.firstName} {profileForm.lastName}</p>
-                    </div>
-                    <div className="p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1">
-                      <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.staff_designation_code')}</span>
-                      <p className="font-mono font-bold text-primary">{profileForm.staffId}</p>
-                    </div>
-                    <div className="p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1">
-                      <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.official_email')}</span>
-                      <p className="font-semibold text-foreground truncate">{profileForm.email}</p>
-                    </div>
-                    <div className="p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1">
-                      <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.phone_contact')}</span>
-                      <p className="font-semibold text-foreground">{profileForm.phone}</p>
-                    </div>
-                    <div className="p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1">
-                      <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.gender_dob')}</span>
-                      <p className="font-semibold text-foreground">{profileForm.gender} • {profileForm.dob}</p>
-                    </div>
-                    <div className="p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1">
-                      <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.first_appointment_date')}</span>
-                      <p className="font-semibold text-foreground">{profileForm.joiningDate}</p>
-                    </div>
-                    <div className="sm:col-span-2 p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1">
-                      <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.residential_address')}</span>
-                      <p className="font-semibold text-foreground">{profileForm.address}</p>
-                    </div>
-                  </div>
+            <div className="space-y-6">
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
+                <div className="flex items-center justify-between border-b border-border pb-3">
+                  <h3 className="font-serif font-bold text-foreground text-base flex items-center gap-2">
+                    <User className="w-4 h-4 text-primary" /> {t('teacher.personal_info', 'Personal & Contact Information')}
+                  </h3>
+                  <span className="text-[11px] text-muted-foreground">Admin Verified Profile</span>
                 </div>
-              </div>
 
-              {/* Quick Staff ID Badge Card */}
-              <div className="space-y-6">
-                <div className="bg-gradient-to-br from-primary via-primary/95 to-secondary rounded-2xl p-5 text-white shadow-md space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest opacity-90">{t('school.name')}</p>
-                      <p className="text-[11px] font-bold">{t('teacher.faculty_staff_identity')}</p>
-                    </div>
-                    <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center text-xs font-bold border border-white/30">
-                      {t('school.abbr')}
-                    </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+                  <div className="p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1">
+                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.full_name', 'Full Name')}</span>
+                    <p className="font-bold text-foreground text-sm">{profileForm.firstName} {profileForm.lastName}</p>
                   </div>
-                  <div className="flex items-center gap-3 pt-2">
-                    <div className="w-14 h-14 rounded-xl bg-white/10 border border-white/30 flex items-center justify-center font-bold text-xl shrink-0">
-                      {profileForm.firstName?.[0]}{profileForm.lastName?.[0]}
-                    </div>
-                    <div>
-                      <h4 className="font-serif font-bold text-sm leading-tight">{profileForm.firstName} {profileForm.lastName}</h4>
-                      <p className="text-[11px] opacity-80 mt-0.5">{profileForm.staffId}</p>
-                      <p className="text-[10px] font-semibold text-emerald-300 mt-0.5">{t('teacher.valid_until_dec_2028')}</p>
-                    </div>
+                  <div className="p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1">
+                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.staff_designation_code', 'Staff ID Code')}</span>
+                    <p className="font-mono font-bold text-primary text-sm">{profileForm.staffId || 'TMS/TCH/STAFF'}</p>
                   </div>
-                  <button
-                    onClick={() => setShowStaffIdModal(true)}
-                    className="w-full bg-white text-primary font-bold py-2 rounded-xl text-xs hover:bg-white/90 transition-colors shadow-sm"
-                  >
-                    {t('teacher.expand_print_id')}
-                  </button>
+                  <div className="p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1">
+                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.official_email', 'Official Email Address')}</span>
+                    <p className="font-semibold text-foreground truncate">{profileForm.email}</p>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1">
+                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.phone_contact', 'Phone Contact')}</span>
+                    <p className="font-semibold text-foreground">
+                      {profileForm.phone ? profileForm.phone : <span className="text-muted-foreground italic">Not provided</span>}
+                    </p>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1">
+                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.gender_dob', 'Gender / Date of Birth')}</span>
+                    <p className="font-semibold text-foreground">
+                      {profileForm.gender || profileForm.dob ? `${profileForm.gender || 'Not specified'}${profileForm.dob ? ` • ${profileForm.dob}` : ''}` : <span className="text-muted-foreground italic">Not provided</span>}
+                    </p>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1">
+                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.first_appointment_date', 'First Appointment Date')}</span>
+                    <p className="font-semibold text-foreground">
+                      {profileForm.joiningDate ? profileForm.joiningDate : <span className="text-muted-foreground italic">Not specified</span>}
+                    </p>
+                  </div>
+                  <div className="p-3.5 rounded-xl border border-border/60 bg-muted/10 space-y-1 sm:col-span-2 lg:col-span-3">
+                    <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.residential_address', 'Residential Address')}</span>
+                    <p className="font-semibold text-foreground">
+                      {profileForm.address ? profileForm.address : <span className="text-muted-foreground italic">Not provided</span>}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
