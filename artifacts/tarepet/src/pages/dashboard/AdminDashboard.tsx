@@ -5818,151 +5818,194 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
             </div>
           </div>
 
-          {/* LEVEL 1: Department Category Cards */}
-          {!selectedTeacherDivision ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-              {TEACHER_DIVISIONS.map(div => {
-                const Icon = div.icon;
-                const count = teachersList.filter(div.filterFn).length;
-                return (
-                  <div
-                    key={div.key}
-                    onClick={() => setSelectedTeacherDivision(div.key)}
-                    className="group bg-card border-2 border-primary/20 hover:border-primary/50 bg-primary/5 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer space-y-4 flex flex-col justify-between"
-                  >
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
-                          <Icon className="w-6 h-6" />
-                        </div>
-                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
-                          {count} Teachers
-                        </span>
+          {/* Interactive Department Filter Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            {TEACHER_DIVISIONS.map(div => {
+              const Icon = div.icon;
+              const count = teachersList.filter(div.filterFn).length;
+              const isSelected = selectedTeacherDivision === div.key;
+              return (
+                <div
+                  key={div.key}
+                  onClick={() => {
+                    setSelectedTeacherDivision(isSelected ? null : div.key);
+                  }}
+                  className={`group border-2 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer space-y-3 flex flex-col justify-between ${
+                    isSelected
+                      ? 'border-primary bg-primary/10 ring-2 ring-primary/20'
+                      : 'border-primary/20 hover:border-primary/50 bg-primary/5'
+                  }`}
+                >
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                        isSelected ? 'bg-primary text-white' : 'bg-primary/10 text-primary'
+                      }`}>
+                        <Icon className="w-5 h-5" />
                       </div>
-                      <div>
-                        <h3 className="font-serif font-bold text-lg text-foreground group-hover:text-primary transition-colors">
-                          {div.title}
-                        </h3>
-                        <p className="text-[11px] font-semibold text-primary/80 mt-0.5">{div.subtitle}</p>
-                        <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{div.description}</p>
-                      </div>
+                      <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
+                        isSelected ? 'bg-primary text-white border-primary' : 'bg-primary/10 text-primary border-primary/20'
+                      }`}>
+                        {count} Teachers
+                      </span>
                     </div>
-                    <div className="pt-3 border-t border-primary/15 flex items-center justify-between text-xs font-bold text-primary">
-                      <span>Browse {count} Staff Member{count !== 1 ? 's' : ''}</span>
-                      <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    <div>
+                      <h3 className="font-serif font-bold text-base text-foreground group-hover:text-primary transition-colors">
+                        {div.title}
+                      </h3>
+                      <p className="text-[11px] font-semibold text-primary/80 mt-0.5">{div.subtitle}</p>
+                      <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed line-clamp-2">{div.description}</p>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          ) : (
-            /* LEVEL 2: Filtered Teacher Table */
-            <div className="space-y-4">
-              {/* Search bar */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                  <div className="pt-2.5 border-t border-primary/15 flex items-center justify-between text-xs font-bold text-primary">
+                    <span>{isSelected ? '✓ Filter Active' : `Filter by ${div.title}`}</span>
+                    <ChevronRight className={`w-4 h-4 transition-transform ${isSelected ? 'rotate-90' : 'group-hover:translate-x-1'}`} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Live Teachers Data Table (Always Visible) */}
+          <div className="space-y-4 pt-2">
+            {/* Filter Pill & Search Bar */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <input
                   type="text"
                   value={teacherSearch}
                   onChange={e => setTeacherSearch(e.target.value)}
-                  placeholder={`Search ${activeDivision?.title} by name, staff ID, subject, email...`}
+                  placeholder={`Search ${activeDivision ? activeDivision.title : 'all 25 faculty members'} by name, staff ID, subject, email...`}
                   className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-muted/20 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
 
-              {/* Teacher table */}
-              <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
-                <table className="w-full text-xs text-left">
-                  <thead className="bg-muted/30 text-muted-foreground uppercase text-[10px] tracking-wider">
-                    <tr>
-                      <th className="py-3.5 px-4">Teacher / Staff ID</th>
-                      <th className="py-3.5 px-4">Specialization & Qualification</th>
-                      <th className="py-3.5 px-4">Form Teacher Of</th>
-                      <th className="py-3.5 px-4">Email / Phone</th>
-                      <th className="py-3.5 px-4">Workload</th>
-                      <th className="py-3.5 px-4">Status</th>
-                      <th className="py-3.5 px-4 text-right text-[10px]">Click to View Profile</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {filteredTeachers.length > 0 ? (
-                      filteredTeachers.map(tchr => (
-                        <tr
-                          key={tchr.id}
-                          onClick={() => setSelectedTeacher(tchr)}
-                          className="hover:bg-primary/5 cursor-pointer transition-colors group"
-                        >
-                          <td className="py-4 px-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-xl font-bold text-sm bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20">
-                                {tchr.profileImage ? (
-                                  <img src={tchr.profileImage} alt={tchr.name} className="w-full h-full object-cover rounded-xl" />
-                                ) : (
-                                  tchr.name[0]
-                                )}
-                              </div>
-                              <div>
-                                <p className="font-bold text-foreground group-hover:text-primary transition-colors text-sm">{tchr.name}</p>
-                                <p className="text-[10px] font-mono text-muted-foreground">{tchr.staffId}</p>
-                              </div>
+              {selectedTeacherDivision && (
+                <div className="flex items-center gap-2 bg-primary/10 text-primary px-3 py-2 rounded-xl border border-primary/20 text-xs font-bold shrink-0">
+                  <span>Filtered: {activeDivision?.title} ({filteredTeachers.length})</span>
+                  <button
+                    onClick={() => { setSelectedTeacherDivision(null); setTeacherSearch(''); }}
+                    className="hover:bg-primary/20 p-1 rounded-md transition-colors"
+                    title="Show all faculty members"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Teacher Table */}
+            <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-muted/30 text-muted-foreground uppercase text-[10px] tracking-wider">
+                  <tr>
+                    <th className="py-3.5 px-4">Teacher / Staff ID</th>
+                    <th className="py-3.5 px-4">Specialization & Qualification</th>
+                    <th className="py-3.5 px-4">Form Teacher Of</th>
+                    <th className="py-3.5 px-4">Email / Phone</th>
+                    <th className="py-3.5 px-4">Workload</th>
+                    <th className="py-3.5 px-4">Status</th>
+                    <th className="py-3.5 px-4 text-right text-[10px]">Click to View Profile</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filteredTeachers.length > 0 ? (
+                    filteredTeachers.map(tchr => (
+                      <tr
+                        key={tchr.id}
+                        onClick={() => setSelectedTeacher(tchr)}
+                        className="hover:bg-primary/5 cursor-pointer transition-colors group"
+                      >
+                        <td className="py-4 px-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl font-bold text-sm bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20 overflow-hidden">
+                              {tchr.profileImage ? (
+                                <img src={tchr.profileImage} alt={tchr.name} className="w-full h-full object-cover rounded-xl" />
+                              ) : (
+                                tchr.name[0]
+                              )}
                             </div>
-                          </td>
-                          <td className="py-4 px-4">
-                            <p className="font-bold text-foreground">{tchr.specialization || 'Subject Educator'}</p>
-                            <p className="text-[10px] text-muted-foreground truncate max-w-[180px]">{tchr.qualification || 'B.Sc. Education'}</p>
-                          </td>
-                          <td className="py-4 px-4 font-semibold text-primary">
-                            {tchr.formTeacherOf || 'None'}
-                          </td>
-                          <td className="py-4 px-4 text-muted-foreground">
-                            <p className="text-foreground font-medium">{tchr.email}</p>
-                            <p className="text-[10px]">{tchr.phone}</p>
-                          </td>
-                          <td className="py-4 px-4 text-muted-foreground">
-                            <p className="font-bold text-foreground">{tchr.subjectsAssigned?.length || 0} Subjects</p>
-                            <p className="text-[10px]">{tchr.studentsCount || 0} Students</p>
-                          </td>
-                          <td className="py-4 px-4">
-                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
-                              tchr.status === 'Active' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-amber-500/10 text-amber-600 border-amber-200'
-                            }`}>
-                              {tchr.status}
-                            </span>
-                          </td>
-                          <td className="py-4 px-4 text-right">
-                            <span className="text-[10px] text-primary font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-end gap-1">
-                              View Profile <ArrowUpRight className="w-3.5 h-3.5" />
-                            </span>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={7} className="py-12 text-center text-muted-foreground">
-                          <GraduationCap className="w-10 h-10 mx-auto mb-2 opacity-30 text-primary" />
-                          <p className="text-sm font-semibold">No teachers found in this department.</p>
-                          <p className="text-xs mt-1">Try adding teachers or adjusting the search.</p>
+                            <div>
+                              <p className="font-bold text-foreground group-hover:text-primary transition-colors text-sm">{tchr.name}</p>
+                              <p className="text-[10px] font-mono text-muted-foreground">{tchr.staffId}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-4">
+                          <p className="font-bold text-foreground">{tchr.specialization || 'Subject Educator'}</p>
+                          <p className="text-[10px] text-muted-foreground truncate max-w-[180px]">{tchr.qualification || 'B.Sc. Education'}</p>
+                        </td>
+                        <td className="py-4 px-4 font-semibold text-primary">
+                          {tchr.formTeacherOf || 'None'}
+                        </td>
+                        <td className="py-4 px-4 text-muted-foreground">
+                          <p className="text-foreground font-medium">{tchr.email}</p>
+                          <p className="text-[10px]">{tchr.phone}</p>
+                        </td>
+                        <td className="py-4 px-4 text-muted-foreground">
+                          <p className="font-bold text-foreground">{tchr.subjectsAssigned?.length || 0} Subjects</p>
+                          <p className="text-[10px]">{tchr.studentsCount || 0} Students</p>
+                        </td>
+                        <td className="py-4 px-4">
+                          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
+                            tchr.status === 'Active' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-amber-500/10 text-amber-600 border-amber-200'
+                          }`}>
+                            {tchr.status}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 text-right">
+                          <span className="text-[10px] text-primary font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-end gap-1">
+                            View Profile <ArrowUpRight className="w-3.5 h-3.5" />
+                          </span>
                         </td>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={7} className="py-12 text-center text-muted-foreground">
+                        <GraduationCap className="w-10 h-10 mx-auto mb-2 opacity-30 text-primary" />
+                        <p className="text-sm font-semibold">No teachers found matching criteria.</p>
+                        <p className="text-xs mt-1">Try clearing filters or adjusting your search query.</p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
-          )}
+          </div>
 
           {showAddTeacherModal && (
             <AddTeacherWizardModal
               onClose={() => setShowAddTeacherModal(false)}
-              onSave={(created) => {
+              onSave={async (created) => {
+                try {
+                  const nameParts = (created.name || '').trim().split(' ');
+                  const fn = nameParts[0] || 'Teacher';
+                  const ln = nameParts.slice(1).join(' ') || 'Staff';
+                  await authClient.post('/auth/users/', {
+                    email: created.email,
+                    password: created.staffId || 'TMS/TCH/0001',
+                    first_name: fn,
+                    last_name: ln,
+                    role: 'TEACHER',
+                    phone: created.phone,
+                    teacher_id: created.staffId,
+                    department: created.department,
+                    specialization: created.specialization,
+                    form_teacher_of: created.formTeacherOf,
+                  });
+                } catch (e) {
+                  console.warn('API teacher creation fallback local save');
+                }
                 saveTeacher(created);
-                setTeachersList(getStoredTeachers());
                 setShowAddTeacherModal(false);
               }}
             />
           )}
         </div>
       );
+
     }
     if (activeSection === 'classes') {
       const fallbackClass = {

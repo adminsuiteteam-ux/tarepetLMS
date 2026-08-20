@@ -154,3 +154,34 @@ class LoginActivityLog(models.Model):
     def __str__(self):
         return f"{self.email} ({self.role}) - {self.status} at {self.timestamp}"
 
+
+# ── Signals: Auto-Create Profile for Users ───────────────────────────────────
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+@receiver(post_save, sender=CustomUser)
+def create_or_ensure_user_profile(sender, instance, created, **kwargs):
+    if instance.role == CustomUser.Role.TEACHER:
+        if not hasattr(instance, 'teacher_profile'):
+            TeacherProfile.objects.create(
+                user=instance,
+                teacher_id=f"TMS/TCH/{instance.id:04d}",
+                department="Montessori Primary",
+                specialization="Education Specialist",
+            )
+    elif instance.role == CustomUser.Role.STUDENT:
+        if not hasattr(instance, 'student_profile'):
+            StudentProfile.objects.create(
+                user=instance,
+                student_id=f"TP-STU-{instance.id:04d}",
+                grade_level="Primary 1",
+            )
+    elif instance.role == CustomUser.Role.PARENT:
+        if not hasattr(instance, 'parent_profile'):
+            ParentProfile.objects.create(user=instance)
+    elif instance.role == CustomUser.Role.ADMIN:
+        if not hasattr(instance, 'admin_profile'):
+            AdminProfile.objects.create(user=instance)
+
+
+
