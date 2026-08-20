@@ -5677,12 +5677,16 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
           filterFn: (t: any) => {
             const div = (t.teachingDivision || t.department || '').toLowerCase();
             const formOf = (t.formTeacherOf || t.formTeacherClass || '').toLowerCase();
+            const spec = (t.specialization || '').toLowerCase();
             const hasSub = t.subjectsAssigned?.some((s: any) => {
               const g = (s.grade || '').toUpperCase();
               const n = (s.name || '').toLowerCase();
-              return g.startsWith('NUR') || g.startsWith('PRI') || n.includes('nursery') || n.includes('primary');
+              return g.startsWith('NUR') || g.startsWith('PRI') || g.startsWith('BASIC') || n.includes('nursery') || n.includes('primary') || n.includes('basic');
             });
-            return div.includes('nursery') || div.includes('primary') || formOf.includes('nur') || formOf.includes('pri') || hasSub || div.includes('entire');
+            if (formOf.includes('ss 1') || formOf.includes('ss 2') || formOf.includes('ss 3') || formOf.includes('jss 1') || formOf.includes('jss 2') || formOf.includes('jss 3')) {
+              return false;
+            }
+            return formOf.includes('nur') || formOf.includes('pri') || formOf.includes('basic') || spec.includes('nursery') || spec.includes('primary') || spec.includes('basic') || hasSub || div.includes('nursery') || div.includes('primary');
           },
           icon: School,
           filterKey: 'NURSERY_PRIMARY',
@@ -5695,11 +5699,15 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
           filterFn: (t: any) => {
             const div = (t.teachingDivision || t.department || '').toLowerCase();
             const formOf = (t.formTeacherOf || t.formTeacherClass || '').toLowerCase();
+            const spec = (t.specialization || '').toLowerCase();
             const hasSub = t.subjectsAssigned?.some((s: any) => {
               const g = (s.grade || '').toUpperCase();
               return g.startsWith('JSS');
             });
-            return div.includes('junior') || div.includes('jss') || formOf.includes('jss') || hasSub || div.includes('entire') || div.includes('all primary');
+            if (formOf.includes('ss 1') || formOf.includes('ss 2') || formOf.includes('ss 3') || formOf.includes('nur') || formOf.includes('pri') || formOf.includes('basic')) {
+              return false;
+            }
+            return formOf.includes('jss') || spec.includes('jss') || hasSub || div.includes('junior') || (div.includes('jss') && !div.includes('ss'));
           },
           icon: BookOpen,
           filterKey: 'JUNIOR',
@@ -5712,11 +5720,15 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
           filterFn: (t: any) => {
             const div = (t.teachingDivision || t.department || '').toLowerCase();
             const formOf = (t.formTeacherOf || t.formTeacherClass || '').toLowerCase();
+            const spec = (t.specialization || '').toLowerCase();
             const hasSub = t.subjectsAssigned?.some((s: any) => {
               const g = (s.grade || '').toUpperCase();
               return g.startsWith('SS');
             });
-            return div.includes('senior') || div.includes('ss') || formOf.includes('ss') || hasSub || div.includes('entire') || div.includes('all primary');
+            if (formOf.includes('jss') || formOf.includes('primary') || formOf.includes('basic') || formOf.includes('nursery') || formOf.includes('pri') || formOf.includes('nur')) {
+              return false;
+            }
+            return formOf.includes('ss') || spec.includes('ss') || hasSub || div.includes('senior') || (div.includes('ss') && !div.includes('jss'));
           },
           icon: GraduationCap,
           filterKey: 'SENIOR',
