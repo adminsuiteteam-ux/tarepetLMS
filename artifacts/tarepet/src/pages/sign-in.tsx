@@ -9,7 +9,7 @@ import { authClient } from "@/lib/api-auth";
 import { layerbaseAuth } from "@/lib/layerbase-auth";
 import { useTranslation } from "@/lib/i18n";
 
-import { getStoredStudents, getStoredTeachers, isAccountDeleted, recordLoginActivity, getAdminPassword } from "@/lib/cbt-store";
+import { getStoredStudents, getStoredTeachers, isAccountDeleted, recordLoginActivity, getAdminPassword, syncTeachersWithBackend, syncStudentsWithBackend } from "@/lib/cbt-store";
 import { isBiometricsSupported, getEnrolledBiometricUsers, verifyBiometricsPrompt } from "@/lib/biometrics";
 
 export default function SignIn() {
@@ -25,6 +25,11 @@ export default function SignIn() {
   const [mfaCode, setMfaCode] = useState("");
   const [, setLocation] = useLocation();
   const { user, isAuthenticated, login } = useAuth();
+
+  useEffect(() => {
+    syncTeachersWithBackend();
+    syncStudentsWithBackend();
+  }, []);
 
   // If already authenticated and cached, redirect immediately to dashboard
   useEffect(() => {
@@ -148,8 +153,8 @@ export default function SignIn() {
       setIsLoading(false);
       return;
     }
-    const storedTeachers = getStoredTeachers();
-    const matchedTeacher = storedTeachers.find(t => {
+    let storedTeachers = getStoredTeachers();
+    let matchedTeacher = storedTeachers.find(t => {
       const tEmail = (t.email || '').toLowerCase();
       const tStaffId = (t.staffId || '').toLowerCase();
       const cleanStaffId = tStaffId.replace(/[^a-z0-9]/g, '');
@@ -161,6 +166,22 @@ export default function SignIn() {
         String(t.id).toLowerCase() === lowerInput
       );
     });
+
+    if (!matchedTeacher) {
+      const syncedTeachers = await syncTeachersWithBackend();
+      matchedTeacher = syncedTeachers.find(t => {
+        const tEmail = (t.email || '').toLowerCase();
+        const tStaffId = (t.staffId || '').toLowerCase();
+        const cleanStaffId = tStaffId.replace(/[^a-z0-9]/g, '');
+        const cleanTEmail = tEmail.replace(/[^a-z0-9]/g, '');
+        return (
+          (tEmail && tEmail === lowerInput) ||
+          (tStaffId && tStaffId === lowerInput) ||
+          (cleanInput.length > 2 && (cleanInput === cleanStaffId || cleanInput === cleanTEmail)) ||
+          String(t.id).toLowerCase() === lowerInput
+        );
+      });
+    }
 
     if (matchedTeacher) {
       const expectedPassword = matchedTeacher.password || matchedTeacher.staffId;

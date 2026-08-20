@@ -12,7 +12,7 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
     For students: email is firstname.surname@tarepet.com and password is their Student ID.
     For teachers: email is firstname.surname@tarepet.com and password is their Teacher ID.
     """
-    email = serializers.EmailField(required=False, allow_blank=True)
+    email = serializers.CharField(required=False, allow_blank=True)
     username = serializers.CharField(required=False, allow_blank=True)
     password = serializers.CharField(write_only=True, trim_whitespace=False)
 
@@ -31,12 +31,39 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
             raise serializers.ValidationError({'password': 'Password is required.'})
 
         identifier = str(identifier).strip()
+        password = str(password).strip()
 
         from django.contrib.auth import authenticate
+        from django.db.models import Q
         from rest_framework_simplejwt.exceptions import AuthenticationFailed
         from rest_framework_simplejwt.tokens import RefreshToken
 
-        user = authenticate(self.context.get('request'), username=identifier, password=password)
+        # Find user by email, username, teacher_id, or student_id
+        target_user = User.objects.filter(
+            Q(email__iexact=identifier) |
+            Q(username__iexact=identifier) |
+            Q(teacher_profile__teacher_id__iexact=identifier) |
+            Q(student_profile__student_id__iexact=identifier)
+        ).first()
+
+        user = None
+        if target_user:
+            teacher_id = getattr(getattr(target_user, 'teacher_profile', None), 'teacher_id', None)
+            student_id = getattr(getattr(target_user, 'student_profile', None), 'student_id', None)
+
+            # Auto-repair default password hash if matching Staff ID or Student ID
+            if (teacher_id and (password.upper() == teacher_id.upper())) or \
+               (student_id and (password.upper() == student_id.upper())):
+                target_user.set_password(password)
+                target_user.save()
+
+            user = authenticate(self.context.get('request'), username=target_user.email, password=password)
+            if not user and target_user.check_password(password) and target_user.is_active:
+                user = target_user
+
+        if not user:
+            user = authenticate(self.context.get('request'), username=identifier, password=password)
+
         if not user or not user.is_active:
             raise AuthenticationFailed('Invalid email/ID or password credentials.')
 
