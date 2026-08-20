@@ -142,9 +142,13 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all().order_by('-date_joined')
     serializer_class = UserSerializer
     pagination_class = UserPagination
-    permission_classes = [IsAdmin]
     filterset_fields = ['role', 'is_active']
     search_fields = ['email', 'first_name', 'last_name', 'phone']
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.AllowAny()]
+        return [IsAdmin()]
 
     def get_queryset(self):
         queryset = super().get_queryset()
