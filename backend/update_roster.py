@@ -2,8 +2,8 @@ import os
 import django
 from django.conf import settings
 
-# Force SQLite for local database update if remote PostgreSQL is unreachable
-os.environ['DATABASE_URL'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'db.sqlite3')}"
+if 'DATABASE_URL' not in os.environ:
+    os.environ['DATABASE_URL'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'db.sqlite3')}"
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 

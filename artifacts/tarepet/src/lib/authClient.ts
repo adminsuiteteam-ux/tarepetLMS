@@ -1,25 +1,10 @@
-import { createAuthClient } from 'better-auth/react';
+import { authClient } from './api-auth';
 
 /**
- * Tarepet Better Auth Client
+ * Tarepet Django REST API Auth Client
  *
- * All auth requests are sent to the Better Auth microservice.
- * - Development:  http://localhost:3001
- * - Production:   Set VITE_AUTH_URL in your deployment environment
+ * All authentication requests are routed to the Django REST Framework backend.
+ * Endpoints: /api/v1/auth/login/, /api/v1/auth/refresh/, /api/v1/auth/me/
  */
-export const authClient = createAuthClient({
-  baseURL: import.meta.env.VITE_AUTH_URL || 'http://localhost:3001',
-});
+export { authClient };
 
-// Named convenience exports used throughout the app
-export const {
-  signIn,
-  signUp,
-  signOut,
-  useSession,
-  getSession,
-} = authClient;
-
-// ── Type helpers ────────────────────────────────────────────────────────────
-export type Session = typeof authClient.$Infer.Session;
-export type User = typeof authClient.$Infer.Session.user;

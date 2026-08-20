@@ -55,3 +55,51 @@ export function useEnrollCourseMutation() {
     },
   });
 }
+
+export function useCreateCourseMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (courseData: Partial<Course>) => {
+      const res = await authClient.post('/lms/courses/', courseData);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+    },
+  });
+}
+
+export function useCreateModuleMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (moduleData: { course: number; title: string; description?: string; order?: number }) => {
+      const res = await authClient.post('/lms/modules/', moduleData);
+      return res.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['courseDetail', variables.course] });
+    },
+  });
+}
+
+export function useCreateLessonMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (lessonData: {
+      module: number;
+      title: string;
+      content_type: string;
+      content_url?: string;
+      text_content?: string;
+      estimated_time?: number;
+      order?: number;
+    }) => {
+      const res = await authClient.post('/lms/lessons/', lessonData);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+    },
+  });
+}
+
