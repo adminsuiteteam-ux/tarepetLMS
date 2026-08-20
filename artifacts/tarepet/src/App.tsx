@@ -28,6 +28,8 @@ import ParentDashboard from '@/pages/dashboard/ParentDashboard';
 import CBTExam from '@/pages/dashboard/CBTExam';
 import CBTBuilder from '@/pages/dashboard/CBTBuilder';
 import CBTApproval from '@/pages/dashboard/CBTApproval';
+import SearchPage from '@/pages/search-page';
+import NotificationsPage from '@/pages/notifications-page';
 
 const queryClient = new QueryClient();
 
@@ -45,6 +47,10 @@ function Router() {
       {/* Standalone Pages (No public Header/Footer layout) */}
       <Route path="/sign-in" component={SignIn} />
       <Route path="/dashboard" component={DashboardRedirect} />
+      <Route path="/search" component={SearchPage} />
+      <Route path="/dashboard/search" component={SearchPage} />
+      <Route path="/notifications" component={NotificationsPage} />
+      <Route path="/dashboard/notifications" component={NotificationsPage} />
 
       {/* Protected Dashboard Routes — role-gated */}
       <Route path="/dashboard/admin">

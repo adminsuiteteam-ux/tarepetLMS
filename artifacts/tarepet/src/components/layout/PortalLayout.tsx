@@ -349,15 +349,28 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
 
             {/* Interactive Live Search Bar */}
             <div className="flex-1 max-w-sm ml-2 relative">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+              <div className="relative flex items-center">
+                <button
+                  onClick={() => {
+                    if (typeof window !== 'undefined') window.location.href = '/search';
+                  }}
+                  className="absolute left-2.5 p-1 text-muted-foreground hover:text-emerald-600 transition-colors z-10 cursor-pointer"
+                  title="Open Search Page"
+                >
+                  <Search className="w-3.5 h-3.5" />
+                </button>
                 <input
                   type="text"
                   placeholder="Search students, teachers, exams, pages..."
                   value={searchValue}
                   onChange={e => setSearchValue(e.target.value)}
                   onFocus={() => setSearchFocused(true)}
-                  className="w-full pl-8 pr-8 py-2 text-xs bg-muted/50 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 text-foreground placeholder:text-muted-foreground transition-all"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && typeof window !== 'undefined') {
+                      window.location.href = '/search';
+                    }
+                  }}
+                  className="w-full pl-8 pr-8 py-2 text-xs bg-muted/50 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/30 text-foreground placeholder:text-muted-foreground transition-all cursor-pointer"
                 />
                 {searchValue && (
                   <button

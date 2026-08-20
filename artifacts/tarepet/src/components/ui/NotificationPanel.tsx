@@ -231,6 +231,19 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ role }) =>
               </ul>
             )}
           </div>
+
+          {/* Footer link to full Notifications Page */}
+          <div className="p-2 border-t border-border bg-card text-center shrink-0">
+            <button
+              onClick={() => {
+                setOpen(false);
+                if (typeof window !== 'undefined') window.location.href = '/notifications';
+              }}
+              className="w-full py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <span>View Full Notification Center Page</span>
+            </button>
+          </div>
         </div>
       )}
     </div>
