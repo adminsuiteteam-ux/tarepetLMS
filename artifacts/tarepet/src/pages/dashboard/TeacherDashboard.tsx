@@ -3136,19 +3136,30 @@ export default function TeacherDashboard() {
               </div>
               <div>
                 <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">{t('teacher.label_staff_role', 'STAFF ROLE / DUTY')}</span>
-                <strong className="text-emerald-700 font-bold block mt-0.5">{profileForm.roleTitle}</strong>
+                <strong className="text-emerald-700 font-bold flex items-center gap-1.5 mt-0.5">
+                  <School className="w-3.5 h-3.5 text-emerald-600" />
+                  {profileForm.formClass && profileForm.formClass !== 'None' ? `Form Teacher (${profileForm.formClass})` : (profileForm.roleTitle || 'Form Teacher & Class Educator')}
+                </strong>
               </div>
               <div>
                 <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">{t('teacher.label_academic_spec', 'ACADEMIC SPECIALIZATION')}</span>
-                <strong className="text-foreground font-bold block mt-0.5">{profileForm.specialization || 'Not Specified'}</strong>
+                <strong className="text-foreground font-bold block mt-0.5">{profileForm.specialization || 'Education Specialist'}</strong>
               </div>
               <div>
                 <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">{t('teacher.label_qualifications', 'QUALIFICATIONS & DEGREES')}</span>
-                <strong className="text-foreground font-bold block mt-0.5">{profileForm.qualification || 'Not Specified'}</strong>
+                <strong className="text-foreground font-bold block mt-0.5">{profileForm.qualification || 'B.Sc. Ed, TRCN Certified'}</strong>
               </div>
               <div>
                 <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">{t('teacher.label_form_teacher', 'FORM TEACHER ASSIGNMENT')}</span>
-                <strong className="text-rose-600 font-bold block mt-0.5">{profileForm.formClass && profileForm.formClass !== 'None' ? profileForm.formClass : 'None'}</strong>
+                <span className="inline-block mt-0.5 px-2.5 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-700 font-bold text-xs border border-emerald-500/20">
+                  {profileForm.formClass && profileForm.formClass !== 'None' ? profileForm.formClass : (formClass || 'Form Teacher Assigned')}
+                </span>
+              </div>
+              <div className="p-3 rounded-xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 space-y-1">
+                <span className="text-[10px] font-bold text-emerald-800 uppercase block">Form Class Pastoral Responsibility</span>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Administrative oversight, attendance tracking, broadsheet compilation, student promotion rollover, and parent communications.
+                </p>
               </div>
               <div>
                 <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">{t('teacher.label_date_joined', 'DATE JOINED FACULTY')}</span>

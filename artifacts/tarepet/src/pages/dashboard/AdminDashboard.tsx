@@ -5570,19 +5570,30 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                   </div>
                   <div>
                     <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider">Staff Role / Duty</span>
-                    <strong className="text-foreground font-bold text-emerald-700">{tchr.formTeacherOf && tchr.formTeacherOf !== 'None' ? 'Form Teacher' : 'Subject Educator'}</strong>
+                    <strong className="text-emerald-700 font-bold flex items-center gap-1.5 mt-0.5">
+                      <School className="w-3.5 h-3.5 text-emerald-600" />
+                      {tchr.formTeacherOf && tchr.formTeacherOf !== 'None' ? `Form Teacher (${tchr.formTeacherOf})` : 'Form Teacher & Subject Specialist'}
+                    </strong>
                   </div>
                   <div>
                     <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider">Academic Specialization</span>
-                    <strong className="text-foreground font-bold">{tchr.specialization || 'Pure Mathematics'}</strong>
+                    <strong className="text-foreground font-bold">{tchr.specialization || 'Education Specialist'}</strong>
                   </div>
                   <div>
                     <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider">Qualifications & Degrees</span>
-                    <strong className="text-foreground font-bold">{tchr.qualification || 'B.Sc. Ed, M.Sc'}</strong>
+                    <strong className="text-foreground font-bold">{tchr.qualification || 'B.Sc. Ed, TRCN Certified'}</strong>
                   </div>
                   <div>
-                    <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider">Form Teacher Assignment</span>
-                    <strong className="text-primary font-bold">{tchr.formTeacherOf || 'None'}</strong>
+                    <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider">Form Teacher Class Assignment</span>
+                    <span className="inline-block mt-0.5 px-2.5 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-700 font-bold text-xs border border-emerald-500/20">
+                      {tchr.formTeacherOf && tchr.formTeacherOf !== 'None' ? tchr.formTeacherOf : (tchr.subjectsAssigned?.[0]?.grade || 'Form Teacher Assigned')}
+                    </span>
+                  </div>
+                  <div className="p-3 rounded-xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 space-y-1">
+                    <span className="text-[10px] font-bold text-emerald-800 uppercase block">Form Class Pastoral Responsibility</span>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      Administrative oversight, attendance tracking, broadsheet compilation, student promotion rollover, and parent communications.
+                    </p>
                   </div>
                   <div>
                     <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider">Date Joined Faculty</span>
