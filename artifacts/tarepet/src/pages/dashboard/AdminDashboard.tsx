@@ -5577,11 +5577,11 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                   </div>
                   <div>
                     <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider">Academic Specialization</span>
-                    <strong className="text-foreground font-bold">{tchr.specialization || 'Education Specialist'}</strong>
+                    <strong className="text-foreground font-bold">{tchr.specialization || 'Not Specified'}</strong>
                   </div>
                   <div>
                     <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider">Qualifications & Degrees</span>
-                    <strong className="text-foreground font-bold">{tchr.qualification || 'B.Sc. Ed, TRCN Certified'}</strong>
+                    <strong className="text-foreground font-bold">{tchr.qualification || 'Not Specified'}</strong>
                   </div>
                   <div>
                     <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider">Form Teacher Class Assignment</span>
@@ -5956,8 +5956,8 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                           </div>
                         </td>
                         <td className="py-4 px-4">
-                          <p className="font-bold text-foreground">{tchr.specialization || 'Subject Educator'}</p>
-                          <p className="text-[10px] text-muted-foreground truncate max-w-[180px]">{tchr.qualification || 'B.Sc. Education'}</p>
+                          <p className="font-bold text-foreground">{tchr.specialization || 'Not Specified'}</p>
+                          <p className="text-[10px] text-muted-foreground truncate max-w-[180px]">{tchr.qualification || 'Not Specified'}</p>
                         </td>
                         <td className="py-4 px-4 font-semibold text-primary">
                           {tchr.formTeacherOf || 'None'}

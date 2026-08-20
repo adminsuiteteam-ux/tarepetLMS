@@ -3143,11 +3143,11 @@ export default function TeacherDashboard() {
               </div>
               <div>
                 <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">{t('teacher.label_academic_spec', 'ACADEMIC SPECIALIZATION')}</span>
-                <strong className="text-foreground font-bold block mt-0.5">{profileForm.specialization || 'Education Specialist'}</strong>
+                <strong className="text-foreground font-bold block mt-0.5">{profileForm.specialization || 'Not Specified'}</strong>
               </div>
               <div>
                 <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">{t('teacher.label_qualifications', 'QUALIFICATIONS & DEGREES')}</span>
-                <strong className="text-foreground font-bold block mt-0.5">{profileForm.qualification || 'B.Sc. Ed, TRCN Certified'}</strong>
+                <strong className="text-foreground font-bold block mt-0.5">{profileForm.qualification || 'Not Specified'}</strong>
               </div>
               <div>
                 <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">{t('teacher.label_form_teacher', 'FORM TEACHER ASSIGNMENT')}</span>
