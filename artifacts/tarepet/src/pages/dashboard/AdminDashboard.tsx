@@ -305,8 +305,8 @@ const EMPTY_TEACHER_FORM = {
   specialization: '', qualification: '',
   // Step 3 — Teaching Load
   isFormTeacher: 'No', // 'Yes' | 'No'
-  formTeacherClass: 'SS 1 Science',
-  teachingDivision: 'Junior Secondary (JSS 1 - JSS 3)',
+  formTeacherClass: '',
+  teachingDivision: '',
   subjectsAssigned: [] as { name: string; grade: string }[],
   // Step 4 — Employment
   staffId: '', joined: '', status: 'Active', salary: '', bankName: '', accountNumber: '',
@@ -339,8 +339,34 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
     const lastName = nameParts.slice(1).join(' ') || '';
     const email = form.email || (firstName ? `${firstName.toLowerCase()}.${lastName ? lastName.toLowerCase() : 'staff'}@tarepet.com` : '');
 
+    const formCls = form.isFormTeacher === 'Yes' ? (form.formTeacherClass || '') : '';
+    let targetDivision = '';
+
+    if (form.isFormTeacher === 'Yes' && formCls) {
+      const formUpper = formCls.toUpperCase();
+      if (formUpper.startsWith('SS')) targetDivision = 'Senior Secondary';
+      else if (formUpper.startsWith('JSS')) targetDivision = 'Junior Secondary';
+      else if (formUpper.startsWith('NUR') || formUpper.startsWith('PRI') || formUpper.startsWith('BASIC')) targetDivision = 'Nursery & Primary';
+    } else if (form.teachingDivision) {
+      const divUpper = form.teachingDivision.toUpperCase();
+      if (divUpper.includes('SENIOR') || divUpper.includes('SS')) targetDivision = 'Senior Secondary';
+      else if (divUpper.includes('JUNIOR') || divUpper.includes('JSS')) targetDivision = 'Junior Secondary';
+      else if (divUpper.includes('NURSERY') || divUpper.includes('PRIMARY') || divUpper.includes('EARLY')) targetDivision = 'Nursery & Primary';
+    }
+
+    if (!targetDivision && form.subjectsAssigned.length > 0) {
+      const subGrades = form.subjectsAssigned.map((s: any) => (s.grade || '').toUpperCase());
+      if (subGrades.some((g: any) => g.startsWith('SS'))) targetDivision = 'Senior Secondary';
+      else if (subGrades.some((g: any) => g.startsWith('JSS'))) targetDivision = 'Junior Secondary';
+      else if (subGrades.some((g: any) => g.startsWith('NUR') || g.startsWith('PRI') || g.startsWith('BASIC'))) targetDivision = 'Nursery & Primary';
+    }
+
+    if (!targetDivision) {
+      targetDivision = form.isFormTeacher === 'Yes' ? 'Form Class' : 'General Faculty';
+    }
+
     const formTeacherDisplay = form.isFormTeacher === 'Yes'
-      ? form.formTeacherClass
+      ? (form.formTeacherClass || 'Unassigned Form Class')
       : 'None';
 
     const created = {
@@ -348,26 +374,27 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
       staffId: staffId,
       name: form.name || `${firstName} ${lastName}`.trim(),
       email: email,
-      phone: form.phone,
-      gender: form.gender,
-      department: form.isFormTeacher === 'Yes' ? 'Form Teacher' : 'Subject Teacher',
-      specialization: form.specialization,
-      qualification: form.qualification,
+      phone: form.phone || '',
+      gender: form.gender || '',
+      department: targetDivision,
+      teachingDivision: targetDivision,
+      specialization: form.specialization || '',
+      qualification: form.qualification || '',
       status: form.status || 'Active',
       joined: form.joined || new Date().toISOString().split('T')[0],
       formTeacherOf: formTeacherDisplay,
       subjectsAssigned: form.subjectsAssigned.filter((s: any) => s.name),
       classesCount: form.subjectsAssigned.filter((s: any) => s.name).length,
       studentsCount: 0,
-      address: form.address,
-      dob: form.dob,
+      address: form.address || '',
+      dob: form.dob || '',
       cbtExamsCount: 0,
       attendanceRate: '0%',
       profileImage: form.profileImage || '',
-      salary: form.salary,
+      salary: form.salary || '',
       salaryGrade: 'Standard',
-      bankName: form.bankName,
-      accountNumber: form.accountNumber,
+      bankName: form.bankName || '',
+      accountNumber: form.accountNumber || '',
     };
 
     // 1. Post to backend Django REST API
@@ -664,19 +691,18 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                     <div className="pt-2 animate-in fade-in">
                       <label className={labelCls}>Select Specific Form Class</label>
                       <select className={inputCls} value={form.formTeacherClass} onChange={e => setF('formTeacherClass', e.target.value)}>
-                        {GRADE_OPTIONS.map(c => <option key={c}>{c}</option>)}
+                        <option value="">-- Select Form Class --</option>
+                        {GRADE_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
                       </select>
                     </div>
                   ) : (
                     <div className="pt-2 animate-in fade-in">
                       <label className={labelCls}>Teaching Division Level</label>
                       <select className={inputCls} value={form.teachingDivision} onChange={e => setF('teachingDivision', e.target.value)}>
-                        <option>Nursery & Early Years (Nursery 1 - Nursery 3)</option>
-                        <option>Primary Education (Primary 1 - Primary 5)</option>
-                        <option>Junior Secondary (JSS 1 - JSS 3)</option>
-                        <option>Senior Secondary (SS 1 - SS 3)</option>
-                        <option>All Primary & Secondary Levels</option>
-                        <option>Entire School (Nursery, Primary & Secondary)</option>
+                        <option value="">-- Select Teaching Division Level --</option>
+                        <option value="Nursery & Primary">Nursery & Primary (Nursery 1 - Primary 5)</option>
+                        <option value="Junior Secondary">Junior Secondary (JSS 1 - JSS 3)</option>
+                        <option value="Senior Secondary">Senior Secondary (SS 1 - SS 3)</option>
                       </select>
                     </div>
                   )}
