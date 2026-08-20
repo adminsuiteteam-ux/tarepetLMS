@@ -434,6 +434,7 @@ export function clearAllStoredTeachers() {
   if (typeof window !== 'undefined') {
     try {
       localStorage.removeItem('tarepet_teachers_list');
+      localStorage.removeItem('tarepet_deleted_accounts');
     } catch (e) {}
   }
   broadcastRealtimeEvent();

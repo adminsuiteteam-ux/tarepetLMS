@@ -1946,41 +1946,39 @@ export default function AdminDashboard() {
       if (teacherRes.status === 'fulfilled' && teacherRes.value.data) {
         const res = teacherRes.value;
         const users = Array.isArray(res.data?.results) ? res.data.results : Array.isArray(res.data) ? res.data : [];
-        const liveTeachers = users
-          .filter((u: any) => !isAccountDeleted(u.email) && !isAccountDeleted(u.id) && !isAccountDeleted(u.profile?.teacher_id))
-          .map((u: any) => {
-            const prof = u.profile || {};
-            const subs = Array.isArray(prof.subjects_taught) ? prof.subjects_taught : [];
-            const spec = typeof prof.specialization === 'string' && prof.specialization
-              ? prof.specialization
-              : (subs.length > 0 ? (typeof subs[0] === 'string' ? subs[0] : subs[0].name) : '');
+        const liveTeachers = users.map((u: any) => {
+          const prof = u.profile || {};
+          const subs = Array.isArray(prof.subjects_taught) ? prof.subjects_taught : [];
+          const spec = typeof prof.specialization === 'string' && prof.specialization
+            ? prof.specialization
+            : (subs.length > 0 ? (typeof subs[0] === 'string' ? subs[0] : subs[0].name) : '');
 
-            return {
-              id: u.id,
-              staffId: prof.teacher_id || u.teacher_id || `TMS/TCH/${String(u.id).padStart(4, '0')}`,
-              name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
-              email: u.email,
-              phone: u.phone || prof.phone || '',
-              gender: prof.gender || '',
-              department: prof.department || '',
-              specialization: spec,
-              qualification: prof.qualifications || '',
-              status: u.is_active ? 'Active' : 'Inactive',
-              joined: prof.hire_date || (u.date_joined ? u.date_joined.split('T')[0] : ''),
-              formTeacherOf: prof.form_teacher_of || 'None',
-              subjectsAssigned: subs,
-              classesCount: subs.length || 0,
-              studentsCount: prof.students_count ?? (prof.studentsCount ?? 0),
-              address: prof.address || '',
-              dob: prof.dob || '',
-              salary: prof.salary || '',
-              bankName: prof.bank_name || '',
-              accountNumber: prof.account_number || '',
-              cbtExamsCount: 0,
-              attendanceRate: prof.attendance_rate || prof.attendanceRate || '0%',
-              profileImage: prof.profile_image || '',
-            };
-          });
+          return {
+            id: u.id,
+            staffId: prof.teacher_id || u.teacher_id || `TMS/TCH/${String(u.id).padStart(4, '0')}`,
+            name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
+            email: u.email,
+            phone: u.phone || prof.phone || '',
+            gender: prof.gender || '',
+            department: prof.department || '',
+            specialization: spec,
+            qualification: prof.qualifications || '',
+            status: u.is_active ? 'Active' : 'Inactive',
+            joined: prof.hire_date || (u.date_joined ? u.date_joined.split('T')[0] : ''),
+            formTeacherOf: prof.form_teacher_of || 'None',
+            subjectsAssigned: subs,
+            classesCount: subs.length || 0,
+            studentsCount: prof.students_count ?? (prof.studentsCount ?? 0),
+            address: prof.address || '',
+            dob: prof.dob || '',
+            salary: prof.salary || '',
+            bankName: prof.bank_name || '',
+            accountNumber: prof.account_number || '',
+            cbtExamsCount: 0,
+            attendanceRate: prof.attendance_rate || prof.attendanceRate || '0%',
+            profileImage: prof.profile_image || '',
+          };
+        });
 
         if (liveTeachers.length > 0) {
           saveStoredTeachers(liveTeachers);
@@ -1991,20 +1989,18 @@ export default function AdminDashboard() {
       if (studentRes.status === 'fulfilled' && studentRes.value.data) {
         const res = studentRes.value;
         const users = Array.isArray(res.data?.results) ? res.data.results : Array.isArray(res.data) ? res.data : [];
-        const liveStudents = users
-          .filter((u: any) => !isAccountDeleted(u.email) && !isAccountDeleted(u.id) && !isAccountDeleted(u.profile?.student_id))
-          .map((u: any) => ({
-            id: u.id,
-            studentId: u.profile?.student_id || u.student_id || `TP-STU-${String(u.id).padStart(3, '0')}`,
-            name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
-            email: u.email,
-            phone: u.phone || u.profile?.phone || '',
-            gender: u.profile?.gender || '',
-            grade: u.profile?.grade_level || u.profile?.grade || '',
-            stream: u.profile?.stream || '',
-            status: u.is_active ? 'Active' : 'Inactive',
-            joined: u.profile?.hire_date || (u.date_joined ? u.date_joined.split('T')[0] : ''),
-          }));
+        const liveStudents = users.map((u: any) => ({
+          id: u.id,
+          studentId: u.profile?.student_id || u.student_id || `TP-STU-${String(u.id).padStart(3, '0')}`,
+          name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
+          email: u.email,
+          phone: u.phone || u.profile?.phone || '',
+          gender: u.profile?.gender || '',
+          grade: u.profile?.grade_level || u.profile?.grade || '',
+          stream: u.profile?.stream || '',
+          status: u.is_active ? 'Active' : 'Inactive',
+          joined: u.profile?.hire_date || (u.date_joined ? u.date_joined.split('T')[0] : ''),
+        }));
 
         if (liveStudents.length > 0) {
           saveStoredStudents(liveStudents);
