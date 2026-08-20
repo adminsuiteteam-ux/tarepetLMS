@@ -1934,6 +1934,87 @@ export default function AdminDashboard() {
 
   // Teacher management state — loaded from persistent teacher store and live backend
   const [teachersList, setTeachersList] = useState<any[]>(() => getStoredTeachers());
+  const [isResetting, setIsResetting] = useState(false);
+
+  const fetchBackendUsers = React.useCallback(async () => {
+    try {
+      const [teacherRes, studentRes] = await Promise.allSettled([
+        authClient.get('/auth/users/?role=TEACHER&page_size=200'),
+        authClient.get('/auth/users/?role=STUDENT&page_size=500')
+      ]);
+
+      if (teacherRes.status === 'fulfilled' && teacherRes.value.data) {
+        const res = teacherRes.value;
+        const users = Array.isArray(res.data?.results) ? res.data.results : Array.isArray(res.data) ? res.data : [];
+        const liveTeachers = users
+          .filter((u: any) => !isAccountDeleted(u.email) && !isAccountDeleted(u.id) && !isAccountDeleted(u.profile?.teacher_id))
+          .map((u: any) => {
+            const prof = u.profile || {};
+            const subs = Array.isArray(prof.subjects_taught) ? prof.subjects_taught : [];
+            const spec = typeof prof.specialization === 'string' && prof.specialization
+              ? prof.specialization
+              : (subs.length > 0 ? (typeof subs[0] === 'string' ? subs[0] : subs[0].name) : '');
+
+            return {
+              id: u.id,
+              staffId: prof.teacher_id || u.teacher_id || `TMS/TCH/${String(u.id).padStart(4, '0')}`,
+              name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
+              email: u.email,
+              phone: u.phone || prof.phone || '',
+              gender: prof.gender || '',
+              department: prof.department || '',
+              specialization: spec,
+              qualification: prof.qualifications || '',
+              status: u.is_active ? 'Active' : 'Inactive',
+              joined: prof.hire_date || (u.date_joined ? u.date_joined.split('T')[0] : ''),
+              formTeacherOf: prof.form_teacher_of || 'None',
+              subjectsAssigned: subs,
+              classesCount: subs.length || 0,
+              studentsCount: prof.students_count ?? (prof.studentsCount ?? 0),
+              address: prof.address || '',
+              dob: prof.dob || '',
+              salary: prof.salary || '',
+              bankName: prof.bank_name || '',
+              accountNumber: prof.account_number || '',
+              cbtExamsCount: 0,
+              attendanceRate: prof.attendance_rate || prof.attendanceRate || '0%',
+              profileImage: prof.profile_image || '',
+            };
+          });
+
+        if (liveTeachers.length > 0) {
+          saveStoredTeachers(liveTeachers);
+          setTeachersList(liveTeachers);
+        }
+      }
+
+      if (studentRes.status === 'fulfilled' && studentRes.value.data) {
+        const res = studentRes.value;
+        const users = Array.isArray(res.data?.results) ? res.data.results : Array.isArray(res.data) ? res.data : [];
+        const liveStudents = users
+          .filter((u: any) => !isAccountDeleted(u.email) && !isAccountDeleted(u.id) && !isAccountDeleted(u.profile?.student_id))
+          .map((u: any) => ({
+            id: u.id,
+            studentId: u.profile?.student_id || u.student_id || `TP-STU-${String(u.id).padStart(3, '0')}`,
+            name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
+            email: u.email,
+            phone: u.phone || u.profile?.phone || '',
+            gender: u.profile?.gender || '',
+            grade: u.profile?.grade_level || u.profile?.grade || '',
+            stream: u.profile?.stream || '',
+            status: u.is_active ? 'Active' : 'Inactive',
+            joined: u.profile?.hire_date || (u.date_joined ? u.date_joined.split('T')[0] : ''),
+          }));
+
+        if (liveStudents.length > 0) {
+          saveStoredStudents(liveStudents);
+          setStudentsList(liveStudents);
+        }
+      }
+    } catch (e) {
+      // Backend offline or user not admin — fallback to local storage
+    }
+  }, []);
 
   // Sync teachers & users from live Django REST API backend & real-time store
   React.useEffect(() => {
@@ -1954,86 +2035,6 @@ export default function AdminDashboard() {
     window.addEventListener('cbt_store_updated', handleSyncFromStore);
 
     // 3. Periodic backend polling
-    const fetchBackendUsers = async () => {
-      try {
-        const [teacherRes, studentRes] = await Promise.allSettled([
-          authClient.get('/auth/users/?role=TEACHER&page_size=200'),
-          authClient.get('/auth/users/?role=STUDENT&page_size=500')
-        ]);
-
-        if (teacherRes.status === 'fulfilled' && teacherRes.value.data) {
-          const res = teacherRes.value;
-          const users = Array.isArray(res.data?.results) ? res.data.results : Array.isArray(res.data) ? res.data : [];
-          const liveTeachers = users
-            .filter((u: any) => !isAccountDeleted(u.email) && !isAccountDeleted(u.id) && !isAccountDeleted(u.profile?.teacher_id))
-            .map((u: any) => {
-              const prof = u.profile || {};
-              const subs = Array.isArray(prof.subjects_taught) ? prof.subjects_taught : [];
-              const spec = typeof prof.specialization === 'string' && prof.specialization
-                ? prof.specialization
-                : (subs.length > 0 ? (typeof subs[0] === 'string' ? subs[0] : subs[0].name) : '');
-
-              return {
-                id: u.id,
-                staffId: prof.teacher_id || u.teacher_id || `TMS/TCH/${String(u.id).padStart(4, '0')}`,
-                name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
-                email: u.email,
-                phone: u.phone || prof.phone || '',
-                gender: prof.gender || '',
-                department: prof.department || '',
-                specialization: spec,
-                qualification: prof.qualifications || '',
-                status: u.is_active ? 'Active' : 'Inactive',
-                joined: prof.hire_date || (u.date_joined ? u.date_joined.split('T')[0] : ''),
-                formTeacherOf: prof.form_teacher_of || 'None',
-                subjectsAssigned: subs,
-                classesCount: subs.length || 0,
-                studentsCount: prof.students_count ?? (prof.studentsCount ?? 0),
-                address: prof.address || '',
-                dob: prof.dob || '',
-                salary: prof.salary || '',
-                bankName: prof.bank_name || '',
-                accountNumber: prof.account_number || '',
-                cbtExamsCount: 0,
-                attendanceRate: prof.attendance_rate || prof.attendanceRate || '0%',
-                profileImage: prof.profile_image || '',
-              };
-            });
-
-          if (liveTeachers.length > 0) {
-            saveStoredTeachers(liveTeachers);
-            setTeachersList(liveTeachers);
-          }
-        }
-
-        if (studentRes.status === 'fulfilled' && studentRes.value.data) {
-          const res = studentRes.value;
-          const users = Array.isArray(res.data?.results) ? res.data.results : Array.isArray(res.data) ? res.data : [];
-          const liveStudents = users
-            .filter((u: any) => !isAccountDeleted(u.email) && !isAccountDeleted(u.id) && !isAccountDeleted(u.profile?.student_id))
-            .map((u: any) => ({
-              id: u.id,
-              studentId: u.profile?.student_id || u.student_id || `TP-STU-${String(u.id).padStart(3, '0')}`,
-              name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
-              email: u.email,
-              phone: u.phone || u.profile?.phone || '',
-              gender: u.profile?.gender || '',
-              grade: u.profile?.grade_level || u.profile?.grade || '',
-              stream: u.profile?.stream || '',
-              status: u.is_active ? 'Active' : 'Inactive',
-              joined: u.profile?.hire_date || (u.date_joined ? u.date_joined.split('T')[0] : ''),
-            }));
-
-          if (liveStudents.length > 0) {
-            saveStoredStudents(liveStudents);
-            setStudentsList(liveStudents);
-          }
-        }
-      } catch (e) {
-        // Backend offline or user not admin — fallback to local storage
-      }
-    };
-
     fetchBackendUsers();
     const intervalId = setInterval(fetchBackendUsers, 8000);
 
@@ -5760,18 +5761,20 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                 </button>
               )}
               <button
-                onClick={() => {
+                onClick={async () => {
+                  setIsResetting(true);
                   clearAllStoredTeachers();
                   clearAllStoredStudents();
                   clearCBTStoreCache();
-                  setTeachersList([]);
-                  setStudentsList([]);
-                  setExamsList([]);
+                  await fetchBackendUsers();
+                  setIsResetting(false);
                 }}
-                className="px-3 py-2.5 border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 shrink-0"
-                title="Purge cached teachers, students, and exams data to sync with backend"
+                disabled={isResetting}
+                className="px-3 py-2.5 border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 shrink-0 disabled:opacity-50 cursor-pointer"
+                title="Purge cached data and immediately re-sync live 25 teachers with backend"
               >
-                <Trash2 className="w-4 h-4" /> Reset / Clear Local Cache
+                <RefreshCw className={`w-4 h-4 ${isResetting ? 'animate-spin' : ''}`} />
+                {isResetting ? 'Syncing Backend...' : 'Reset / Sync Live Data'}
               </button>
               <button
                 onClick={() => setShowAddTeacherModal(true)}
