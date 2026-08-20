@@ -141,13 +141,36 @@ class UserSerializer(serializers.ModelSerializer):
         instance.first_name = validated_data.get('first_name', instance.first_name)
         instance.last_name = validated_data.get('last_name', instance.last_name)
         instance.phone = validated_data.get('phone', instance.phone)
+        if 'email' in validated_data and validated_data['email']:
+            instance.email = validated_data['email']
         instance.save()
 
         if instance.role == User.Role.TEACHER and hasattr(instance, 'teacher_profile'):
             t_prof = instance.teacher_profile
-            for attr in ['department', 'specialization', 'qualifications', 'gender', 'dob', 'address', 'salary', 'bank_name', 'account_number', 'form_teacher_of', 'bio']:
-                if attr in profile_data:
-                    setattr(t_prof, attr, profile_data[attr])
+            field_map = {
+                'department': 'department',
+                'specialization': 'specialization',
+                'qualifications': 'qualifications',
+                'qualification': 'qualifications',
+                'gender': 'gender',
+                'dob': 'dob',
+                'address': 'address',
+                'salary': 'salary',
+                'bank_name': 'bank_name',
+                'bankName': 'bank_name',
+                'account_number': 'account_number',
+                'accountNumber': 'account_number',
+                'form_teacher_of': 'form_teacher_of',
+                'formTeacherOf': 'form_teacher_of',
+                'bio': 'bio',
+                'profile_image': 'profile_image',
+                'profileImage': 'profile_image',
+            }
+            for key, attr in field_map.items():
+                if key in profile_data:
+                    val = profile_data[key]
+                    if val is not None:
+                        setattr(t_prof, attr, val)
             t_prof.save()
 
         return instance

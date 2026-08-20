@@ -637,9 +637,45 @@ export async function syncTeachersWithBackend(): Promise<TeacherRecord[]> {
         });
 
       if (fetched.length > 0) {
-        saveStoredTeachers(fetched);
-        _teachers = fetched;
-        broadcastRealtimeEvent();
+        const mergedTeachers = fetched.map(backendT => {
+          const localMatch = _teachers.find(lt =>
+            lt.id === backendT.id ||
+            (lt.email && lt.email.toLowerCase() === backendT.email.toLowerCase()) ||
+            (lt.staffId && lt.staffId.toLowerCase() === backendT.staffId.toLowerCase())
+          );
+
+          if (localMatch) {
+            return {
+              ...backendT,
+              ...localMatch,
+              name: localMatch.name || backendT.name,
+              email: localMatch.email || backendT.email,
+              phone: localMatch.phone || backendT.phone,
+              qualification: localMatch.qualification || backendT.qualification,
+              specialization: localMatch.specialization || backendT.specialization,
+              gender: localMatch.gender || backendT.gender,
+              dob: localMatch.dob || backendT.dob,
+              address: localMatch.address || backendT.address,
+              bio: localMatch.bio || backendT.bio,
+              formTeacherOf: localMatch.formTeacherOf && localMatch.formTeacherOf !== 'None' ? localMatch.formTeacherOf : backendT.formTeacherOf,
+              department: localMatch.department || backendT.department,
+              profileImage: localMatch.profileImage || backendT.profileImage,
+              bankName: localMatch.bankName || backendT.bankName,
+              accountNumber: localMatch.accountNumber || backendT.accountNumber,
+            };
+          }
+          return backendT;
+        });
+
+        const unbackedLocal = _teachers.filter(lt => !fetched.some(bt =>
+          bt.id === lt.id ||
+          (bt.email && bt.email.toLowerCase() === lt.email.toLowerCase()) ||
+          (bt.staffId && bt.staffId.toLowerCase() === lt.staffId.toLowerCase())
+        ));
+
+        const combined = deduplicateTeachers([...mergedTeachers, ...unbackedLocal]);
+        _teachers = combined;
+        saveStoredTeachers(combined);
       }
     }
   } catch (err) {

@@ -188,8 +188,16 @@ export default function TeacherProfile() {
   const handleSaveProfile = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
+    const allTeachers = getStoredTeachers();
+    const stored = allTeachers.find((t: any) =>
+      (t.staffId && t.staffId === profileForm.staffId) ||
+      (t.email && t.email === profileForm.email) ||
+      (t.name && t.name.toLowerCase() === profileForm.fullName.toLowerCase())
+    );
+
     // 1. Update cbt-store for local persistence
     saveTeacher({
+      id: stored?.id,
       staffId: profileForm.staffId,
       name: `${profileForm.firstName} ${profileForm.lastName}`.trim(),
       email: profileForm.email,

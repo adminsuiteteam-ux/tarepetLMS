@@ -3262,7 +3262,10 @@ export default function TeacherDashboard() {
                 onSubmit={(e) => {
                   e.preventDefault();
                   const fullName = `${profileForm.firstName} ${profileForm.lastName}`.trim();
+                  const tId = typeof matchedStoredTeacher?.id === 'number' ? matchedStoredTeacher.id : undefined;
+
                   saveTeacher({
+                    id: tId,
                     staffId: profileForm.staffId,
                     name: fullName,
                     email: profileForm.email,
@@ -3282,10 +3285,30 @@ export default function TeacherDashboard() {
                     joined: profileForm.joiningDate,
                   });
 
+                  // Update profileForm state immediately so UI reflects saved changes
+                  setProfileForm(prev => ({
+                    ...prev,
+                    fullName: fullName,
+                    email: profileForm.email,
+                    phone: profileForm.phone,
+                    specialization: profileForm.specialization,
+                    qualification: profileForm.qualification,
+                    department: profileForm.department,
+                    formClass: profileForm.formClass || formClass,
+                    gender: profileForm.gender,
+                    dob: profileForm.dob,
+                    address: profileForm.address,
+                    bio: profileForm.bio,
+                    profileImage: profileForm.profileImage,
+                    salary: profileForm.salary,
+                    bankName: profileForm.bankName,
+                    accountNumber: profileForm.accountNumber,
+                  }));
+
                   // Sync auth session in localStorage
                   try {
-                    const currentAuth = JSON.parse(localStorage.getItem('tarepet_auth_user') || '{}');
-                    if (currentAuth && currentAuth.email) {
+                    const currentAuth = JSON.parse(localStorage.getItem('tarepet_auth_user') || localStorage.getItem('tarepet_user') || '{}');
+                    if (currentAuth) {
                       currentAuth.first_name = profileForm.firstName;
                       currentAuth.last_name = profileForm.lastName;
                       currentAuth.phone = profileForm.phone;
@@ -3330,8 +3353,10 @@ export default function TeacherDashboard() {
                       bank_name: profileForm.bankName,
                       account_number: profileForm.accountNumber,
                       bio: profileForm.bio,
-                      profileImage: profileForm.profileImage,
+                      profile_image: profileForm.profileImage,
                     }
+                  }).then(() => {
+                    syncTeachersWithBackend();
                   }).catch(() => {});
 
                   // Send real-time notification to Admin Portal
