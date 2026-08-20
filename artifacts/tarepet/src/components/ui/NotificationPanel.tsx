@@ -128,13 +128,16 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ role }) =>
 
       {/* Dropdown Panel */}
       {open && (
-        <div
-          ref={panelRef}
-          role="dialog"
-          aria-label="Notifications"
-          className="absolute right-0 top-[calc(100%+10px)] w-[360px] max-w-[95vw] bg-card border border-border rounded-2xl shadow-2xl z-50 overflow-hidden"
-          style={{ maxHeight: '480px', display: 'flex', flexDirection: 'column' }}
-        >
+        <>
+          {/* Mobile backdrop */}
+          <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-xs sm:hidden" onClick={() => setOpen(false)} />
+          <div
+            ref={panelRef}
+            role="dialog"
+            aria-label="Notifications"
+            className="fixed sm:absolute left-3 right-3 sm:left-auto sm:right-0 top-16 sm:top-[calc(100%+10px)] w-auto sm:w-[360px] bg-card border border-border rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+            style={{ maxHeight: 'calc(100vh - 90px)', display: 'flex', flexDirection: 'column' }}
+          >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card shrink-0">
             <div className="flex items-center gap-2">
@@ -232,7 +235,6 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ role }) =>
             )}
           </div>
 
-          {/* Footer link to full Notifications Page */}
           <div className="p-2 border-t border-border bg-card text-center shrink-0">
             <button
               onClick={() => {
@@ -245,8 +247,9 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ role }) =>
             </button>
           </div>
         </div>
-      )}
-    </div>
+      </>
+    )}
+  </div>
   );
 };
 
