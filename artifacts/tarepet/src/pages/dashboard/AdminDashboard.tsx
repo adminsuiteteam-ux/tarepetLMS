@@ -5710,7 +5710,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
 
       const activeDivision = TEACHER_DIVISIONS.find(d => d.key === selectedTeacherDivision);
 
-      // Apply filters based on selected division
+      // Apply filters based on selected division and sort alphabetically A-Z by teacher name
       const filteredTeachers = teachersList.filter(t => {
         const q = teacherSearch.toLowerCase();
         const matchSearch = !q || t.name.toLowerCase().includes(q) || t.email.toLowerCase().includes(q) || t.staffId.toLowerCase().includes(q) || (t.specialization && t.specialization.toLowerCase().includes(q)) || (t.formTeacherOf && t.formTeacherOf.toLowerCase().includes(q));
@@ -5719,7 +5719,7 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
           matchFilter = activeDivision.filterFn(t);
         }
         return matchSearch && matchFilter;
-      });
+      }).sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }));
 
       return (
         <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>

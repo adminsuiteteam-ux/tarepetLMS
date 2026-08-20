@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 
 import { authClient } from '@/lib/api-auth';
+import { addRealtimeNotification } from '@/lib/notifications-store';
 import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, getStoredTeachers, saveTeacher, saveStudent, deleteStudent, subscribeToCBTStore, syncStudentsWithBackend, syncTeachersWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, calculateBECEGrade, isSeniorSecondaryClass, CourseBroadsheetScore, PromotionRecord, getPromotionHistory, executeStudentPromotions, getNextProgressiveClass, getArchivedCohortsForTeacher } from '@/lib/cbt-store';
 import { useTranslation } from '@/lib/i18n';
 import { TerminalReportCard, ReportCardData, SubjectScore } from '@/components/reports/TerminalReportCard';
@@ -3322,6 +3323,14 @@ export default function TeacherDashboard() {
                     }
                   }).catch(() => {});
 
+                  // Send real-time notification to Admin Portal
+                  addRealtimeNotification({
+                    title: 'Teacher Profile Updated',
+                    message: `${profileForm.firstName} ${profileForm.lastName} (${profileForm.staffId || 'TMS/TCH/0001'}) updated their profile details.`,
+                    type: 'info',
+                    recipientRole: 'ADMIN',
+                  });
+
                   window.dispatchEvent(new Event('cbt_store_updated'));
                   window.dispatchEvent(new Event('storage'));
                   showToast(t('teacher.profile_sync_success', 'Profile & image updated and synced to Admin Portal in real time!'));
@@ -3787,8 +3796,36 @@ export default function TeacherDashboard() {
               <input type="checkbox" checked={profileForm.emailAlerts} onChange={e => setProfileForm({...profileForm, emailAlerts: e.target.checked})} className="w-4 h-4 text-primary rounded" />
             </label>
           </div>
-          <button onClick={() => {
-            showToast('Teacher profile & preferences saved successfully!');
+          <button onClick={async () => {
+            saveTeacher({
+              staffId: profileForm.staffId,
+              name: `${profileForm.firstName} ${profileForm.lastName}`.trim(),
+              email: profileForm.email,
+              phone: profileForm.phone,
+              specialization: profileForm.specialization,
+            });
+            try {
+              await authClient.patch('/auth/me/', {
+                first_name: profileForm.firstName,
+                last_name: profileForm.lastName,
+                phone: profileForm.phone,
+                email: profileForm.email,
+                profile: {
+                  specialization: profileForm.specialization
+                }
+              });
+            } catch (e) {}
+
+            addRealtimeNotification({
+              title: 'Teacher Settings Updated',
+              message: `${profileForm.firstName} ${profileForm.lastName} (${profileForm.staffId || 'TMS/TCH/0001'}) updated their profile settings.`,
+              type: 'info',
+              recipientRole: 'ADMIN',
+            });
+
+            window.dispatchEvent(new Event('cbt_store_updated'));
+            window.dispatchEvent(new Event('storage'));
+            showToast('Teacher profile & preferences saved and synced to Admin in real time!');
           }} className="bg-primary text-white px-6 py-2.5 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors">
             {t('teacher.save_settings', 'Save Settings')}
           </button>
