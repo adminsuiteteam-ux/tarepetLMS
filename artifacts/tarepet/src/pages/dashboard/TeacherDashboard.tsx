@@ -140,19 +140,19 @@ export default function TeacherDashboard() {
 
   const isSeniorSecondaryTeacher = React.useMemo(() => {
     if (!user) return false;
-    if (user.role === 'ADMIN' || isAdmin) return true;
+    if (user.role === 'ADMIN') return true;
     
     if (formClass && isSeniorSecondaryClass(formClass)) return true;
 
-    const subs = matchedStoredTeacher?.subjectsAssigned || (user?.profile as any)?.subjects_taught || [];
-    if (Array.isArray(subs)) {
+    const subs = matchedStoredTeacher?.subjectsAssigned || (user?.profile as any)?.subjects_taught || (user?.profile as any)?.subjectsAssigned || [];
+    if (Array.isArray(subs) && subs.length > 0) {
       for (const item of subs) {
-        const classStr = typeof item === 'string' ? item : (item?.class || item?.grade || item?.name || '');
+        const classStr = typeof item === 'string' ? item : (item?.class || item?.grade || item?.name || item?.code || '');
         if (isSeniorSecondaryClass(classStr)) return true;
       }
     }
     return false;
-  }, [formClass, matchedStoredTeacher, user, isAdmin]);
+  }, [formClass, matchedStoredTeacher, user]);
 
   // Sub-tab states
   const [studentSubTab, setStudentSubTabState] = useState<'roster' | 'attendance'>('roster');
@@ -1846,7 +1846,7 @@ export default function TeacherDashboard() {
           <div className="bg-card rounded-2xl border border-border p-4 shadow-sm space-y-3">
             <div className="flex flex-col sm:flex-row gap-3 pt-1">
               <div className="flex gap-1.5 bg-muted/40 p-1 rounded-xl border border-border">
-                {['ALL', 'JSS1', 'JSS2', 'JSS3', 'SS1', 'SS2', 'SS3'].map(cls => (
+                {['ALL', 'SS1', 'SS2', 'SS3'].map(cls => (
                   <button
                     key={cls}
                     onClick={() => setSelectedExamClass(cls)}

@@ -127,7 +127,7 @@ export default function CBTBuilder() {
 
   const isAuthorizedToUseCBT = useMemo(() => {
     if (!user) return false;
-    if (user.role === 'ADMIN' || (user as any).isAdmin) return true;
+    if (user.role === 'ADMIN') return true;
 
     const prof = (user.profile as any) || {};
     const formCls = prof.form_teacher_of || prof.formTeacherOf || '';
