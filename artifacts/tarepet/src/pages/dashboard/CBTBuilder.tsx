@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { authClient } from '@/lib/api-auth';
 import { motion } from 'framer-motion';
@@ -88,37 +88,10 @@ const getStatusBadgeStyle = (status: string) => {
   }
 };
 
-import { getStoredExams, saveCBTExam, updateExamStatus, getStoredSubmissions, subscribeToCBTStore, SENIOR_COURSES, JUNIOR_COURSES, getCoursesForClass, setExamResultsReleased, SCHOOL_CLASSES } from '@/lib/cbt-store';
+import { getStoredExams, saveCBTExam, updateExamStatus, getStoredSubmissions, subscribeToCBTStore, SENIOR_COURSES, JUNIOR_COURSES, getCoursesForClass, setExamResultsReleased, SCHOOL_CLASSES, isSeniorSecondaryClass, getStoredTeachers } from '@/lib/cbt-store';
 import { addRealtimeNotification } from '@/lib/notifications-store';
 
 const ALL_CLASS_CARDS = [
-  {
-    key: 'Nursery 1',
-    label: 'Nursery Section',
-    subtext: 'Creche, Nursery 1 & 2 (Faith, Love & Grace Arms)',
-    hasStreams: false,
-    color: 'bg-pink-50/50 border-pink-200 hover:border-pink-400',
-    iconBg: 'bg-pink-100 text-pink-700',
-    accent: 'text-pink-700',
-  },
-  {
-    key: 'Primary 1',
-    label: 'Primary Section',
-    subtext: 'Primary 1 to 6 (Faith & Love Arms)',
-    hasStreams: false,
-    color: 'bg-amber-50/50 border-amber-200 hover:border-amber-400',
-    iconBg: 'bg-amber-100 text-amber-700',
-    accent: 'text-amber-700',
-  },
-  {
-    key: 'JSS1',
-    label: 'Junior Secondary (JSS 1-3)',
-    subtext: 'BECE / Basic Education',
-    hasStreams: false,
-    color: 'bg-teal-50/50 border-teal-200 hover:border-teal-400',
-    iconBg: 'bg-teal-100 text-teal-700',
-    accent: 'text-teal-700',
-  },
   {
     key: 'SS1',
     label: 'SS1 (Senior Secondary 1)',
@@ -140,7 +113,7 @@ const ALL_CLASS_CARDS = [
   {
     key: 'SS3',
     label: 'SS3 (Senior Secondary 3)',
-    subtext: 'SSCE / WAEC Prep',
+    subtext: 'SSCE / WAEC & NECO Prep (Science & Art)',
     hasStreams: true,
     color: 'bg-emerald-50/50 border-emerald-200 hover:border-emerald-400',
     iconBg: 'bg-emerald-100 text-emerald-700',
@@ -151,6 +124,57 @@ const ALL_CLASS_CARDS = [
 export default function CBTBuilder() {
   const { t } = useTranslation();
   const { user } = useAuth();
+
+  const isAuthorizedToUseCBT = useMemo(() => {
+    if (!user) return false;
+    if (user.role === 'ADMIN' || (user as any).isAdmin) return true;
+
+    const prof = (user.profile as any) || {};
+    const formCls = prof.form_teacher_of || prof.formTeacherOf || '';
+    if (formCls && isSeniorSecondaryClass(formCls)) return true;
+
+    const subs = Array.isArray(prof.subjects_taught) ? prof.subjects_taught : [];
+    for (const item of subs) {
+      const classStr = typeof item === 'string' ? item : (item?.class || item?.grade || item?.name || '');
+      if (isSeniorSecondaryClass(classStr)) return true;
+    }
+
+    const allTeachers = getStoredTeachers();
+    const match = allTeachers.find((t: any) => t.email === user.email || t.staffId === prof.teacher_id);
+    if (match) {
+      if (match.formTeacherOf && isSeniorSecondaryClass(match.formTeacherOf)) return true;
+      if (Array.isArray(match.subjectsAssigned)) {
+        for (const item of match.subjectsAssigned) {
+          const classStr = typeof item === 'string' ? item : (item?.class || item?.grade || item?.name || '');
+          if (isSeniorSecondaryClass(classStr)) return true;
+        }
+      }
+    }
+    return false;
+  }, [user]);
+
+  if (!isAuthorizedToUseCBT) {
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
+        <div className="bg-card border border-border rounded-2xl p-8 max-w-lg text-center shadow-xl">
+          <div className="w-16 h-16 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center mx-auto mb-4 border border-amber-200">
+            <Lock className="w-8 h-8" />
+          </div>
+          <h2 className="text-2xl font-serif font-bold text-foreground mb-2">CBT Builder Restricted</h2>
+          <p className="text-muted-foreground text-sm leading-relaxed mb-6">
+            The Computer-Based Testing (CBT) Examination System is strictly enabled for <strong>Senior Secondary Classes (SS1 Art & Sci to SS3 Art & Sci)</strong>.
+            <br /><br />
+            Creche, Nursery, Primary, and Junior Secondary (JSS 1-3) assessments are conducted via paper-based continuous evaluations.
+          </p>
+          <Link href="/teacher-dashboard">
+            <button className="px-6 py-3 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary/90 transition shadow-md">
+              Return to Teacher Dashboard
+            </button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
   const [view, setView] = useState<View>('list');
   const [openClassDropdown, setOpenClassDropdown] = useState<string | null>(null);
   const [exams, setExams] = useState<any[]>([]);
@@ -687,18 +711,15 @@ export default function CBTBuilder() {
                   value={form.class}
                   onChange={e => {
                     const newClass = e.target.value;
-                    const isSenior = newClass.startsWith('SS');
-                    const newStream = isSenior ? 'Science' : 'General';
-                    const courses = getCoursesForClass(newClass, newStream);
+                    const courses = getCoursesForClass(newClass, form.stream || 'Science');
                     setForm({
                       ...form,
                       class: newClass,
-                      stream: newStream,
                       course: courses[0]?.code || '',
                     });
                   }}
                 >
-                  {SCHOOL_CLASSES.map(cls => (
+                  {SCHOOL_CLASSES.filter(cls => isSeniorSecondaryClass(cls.id) || isSeniorSecondaryClass(cls.label)).map(cls => (
                     <option key={cls.id} value={cls.id}>
                       {cls.label}
                     </option>
@@ -711,17 +732,11 @@ export default function CBTBuilder() {
                 <select
                   className={inputClass}
                   value={form.stream}
-                  disabled={form.class.startsWith('JSS')}
                   onChange={e => handleStreamChange(e.target.value)}
                 >
-                  {form.class.startsWith('JSS') ? (
-                    <option value="General">{t("General Curriculum (No Stream)")}</option>
-                  ) : (
-                    <>
-                      <option value="Science">{t("Science Department")}</option>
-                      <option value="Arts">{t("Art Department")}</option>
-                    </>
-                  )}
+                  <option value="Science">{t("Science Department")}</option>
+                  <option value="Arts">{t("Art Department")}</option>
+                  <option value="Commercial">{t("Commercial Department")}</option>
                 </select>
               </div>
             </div>

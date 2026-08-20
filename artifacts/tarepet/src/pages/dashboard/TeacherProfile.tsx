@@ -262,6 +262,30 @@ export default function TeacherProfile() {
       } catch (err) {}
     }
 
+    // 3. Sync to Django Backend Database via API
+    authClient.put('/auth/me/', {
+      first_name: profileForm.firstName,
+      last_name: profileForm.lastName,
+      phone: profileForm.phone,
+      email: profileForm.email,
+      profile: {
+        department: profileForm.department,
+        specialization: profileForm.specialization,
+        qualifications: profileForm.qualification,
+        gender: profileForm.gender,
+        dob: profileForm.dob || null,
+        address: profileForm.address,
+        bio: profileForm.bio,
+        form_teacher_of: profileForm.formClass,
+        salary: profileForm.salary,
+        bank_name: profileForm.bankName,
+        account_number: profileForm.accountNumber,
+        profile_image: profileForm.profileImage,
+      }
+    }).catch(err => {
+      console.warn('[TeacherProfile] Backend sync warning:', err);
+    });
+
     broadcastRealtimeEvent();
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('cbt_store_updated'));

@@ -2,6 +2,25 @@
 // All data lives in module-level memory and localStorage sync. Syncs with backend API.
 import { addRealtimeNotification } from './notifications-store';
 
+function safeGetProp<T>(obj: Record<string | number, T> | null | undefined, key: string | number): T | undefined {
+  if (!obj) return undefined;
+  const strKey = String(key);
+  if (strKey === '__proto__' || strKey === 'constructor' || strKey === 'prototype') return undefined;
+  if (Object.prototype.hasOwnProperty.call(obj, strKey)) {
+    return Reflect.get(obj, strKey);
+  }
+  if (Object.prototype.hasOwnProperty.call(obj, key)) {
+    return Reflect.get(obj, key);
+  }
+  return undefined;
+}
+
+function safeSetProp<T>(obj: Record<string, T>, key: string | number, value: T): void {
+  const strKey = String(key);
+  if (strKey === '__proto__' || strKey === 'constructor' || strKey === 'prototype') return;
+  Reflect.set(obj, strKey, value);
+}
+
 export interface CBTQuestion {
   id: number;
   question_text: string;
@@ -415,8 +434,38 @@ export function saveTeacher(teacherData: Partial<TeacherRecord> & { name: string
       localStorage.setItem('tarepet_teachers_list', JSON.stringify(_teachers));
     } catch (e) {}
   }
+
+  // Real-time async sync to Django backend database
+  const tNames = (newTeacher.name || '').trim().split(' ');
+  const tPayload = {
+    email: newTeacher.email,
+    first_name: tNames[0] || newTeacher.name,
+    last_name: tNames.slice(1).join(' ') || 'Teacher',
+    phone: newTeacher.phone,
+    role: 'TEACHER',
+    teacher_id: newTeacher.staffId,
+    department: newTeacher.department,
+    specialization: newTeacher.specialization,
+    qualifications: newTeacher.qualification,
+    gender: newTeacher.gender,
+    dob: newTeacher.dob || null,
+    address: newTeacher.address,
+    salary: newTeacher.salary,
+    bank_name: newTeacher.bankName,
+    account_number: newTeacher.accountNumber,
+    form_teacher_of: newTeacher.formTeacherOf,
+    bio: newTeacher.bio || '',
+  };
+
+  if (typeof newTeacher.id === 'number' && newTeacher.id < 1000000000) {
+    authClient.patch(`/auth/users/${newTeacher.id}/`, tPayload).catch(() => {});
+  } else {
+    authClient.post('/auth/register/', tPayload).catch(() => {});
+  }
+
   broadcastRealtimeEvent();
-  return _teachers[existingIdx >= 0 ? existingIdx : 0];
+  const targetIdx = Math.max(0, existingIdx);
+  return _teachers[targetIdx] || _teachers[0];
 }
 
 export function saveStoredTeachers(teachers: TeacherRecord[]) {
@@ -725,8 +774,37 @@ export function saveStudent(studentData: Partial<StudentRecord> & { name: string
     _students = [newStudent, ..._students];
   }
 
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('tarepet_students_list', JSON.stringify(_students));
+    } catch (e) {}
+  }
+
+  // Real-time async sync to Django backend database
+  const sNames = (newStudent.name || '').trim().split(' ');
+  const sPayload = {
+    email: newStudent.email,
+    first_name: sNames[0] || newStudent.name,
+    last_name: sNames.slice(1).join(' ') || 'Student',
+    phone: newStudent.phone !== 'Not Available' ? newStudent.phone : '',
+    role: 'STUDENT',
+    student_id: newStudent.code,
+    grade: newStudent.grade,
+    house: newStudent.house,
+    dob: newStudent.dob !== 'Not Available' ? newStudent.dob : null,
+    address: newStudent.address !== 'Not Available' ? newStudent.address : '',
+    emergency_contact: newStudent.parentPhone !== 'Not Available' ? newStudent.parentPhone : '',
+  };
+
+  if (typeof newStudent.id === 'number' && newStudent.id < 1000000000) {
+    authClient.patch(`/auth/users/${newStudent.id}/`, sPayload).catch(() => {});
+  } else {
+    authClient.post('/auth/register/', sPayload).catch(() => {});
+  }
+
   broadcastRealtimeEvent();
-  return _students[existingIdx >= 0 ? existingIdx : 0];
+  const targetIdx = Math.max(0, existingIdx);
+  return _students[targetIdx] || _students[0];
 }
 
 export function saveStoredStudents(students: StudentRecord[]) {
@@ -871,6 +949,19 @@ export function saveCBTExam(examData: Partial<CBTExam> & { title: string; course
     recipientRole: 'ADMIN'
   });
 
+  // Real-time backend API dispatch
+  authClient.post('/assessments/cbt-exams/', {
+    title: newExam.title,
+    description: newExam.description,
+    instructions: newExam.instructions,
+    assessment_type: newExam.assessment_type,
+    term: newExam.term,
+    duration_minutes: newExam.duration_minutes,
+    questions_per_page: newExam.questions_per_page,
+    status: newExam.status,
+    questions: newExam.questions
+  }).catch(() => {});
+
   return newExam;
 }
 
@@ -880,6 +971,12 @@ export function updateExamStatus(examId: number, status: CBTExam['status'], reas
   if (!exam) return null;
 
   exam.status = status;
+
+  // Real-time backend API update
+  authClient.patch(`/assessments/cbt-exams/${examId}/`, {
+    status: status,
+    rejection_reason: reason
+  }).catch(() => {});
   if (status === 'ACTIVE') {
     exam.activated_at = new Date().toISOString();
     addRealtimeActivity('EXAM_ACTIVATED', `Exam Activated for Students: ${exam.title}`, `Now live for ${exam.class} ${exam.stream} students.`, exam.teacher_name);
@@ -962,7 +1059,7 @@ export function submitStudentCBTAttempt(
 
   exam.questions.forEach(q => {
     total_possible += q.points || 5;
-    if (answers[q.id] === q.correct_option) {
+    if (safeGetProp(answers, q.id) === q.correct_option) {
       score += q.points || 5;
     }
   });
@@ -1093,7 +1190,7 @@ export function getStudentsForClass(className: string = 'SS1', stream: string = 
 
 export function getExamAttendance(examId: number, className: string = 'SS1', stream: string = 'Science'): CBTAttendanceRecord[] {
   _examAttendance = loadSavedAttendance();
-  const list = _examAttendance[String(examId)];
+  const list = safeGetProp(_examAttendance, examId);
   if (list && list.length > 0) return list;
 
   // Initialize from actual class roster
@@ -1109,7 +1206,7 @@ export function getExamAttendance(examId: number, className: string = 'SS1', str
     markedBy: 'Teacher Invigilator'
   }));
 
-  _examAttendance[String(examId)] = seeded;
+  safeSetProp(_examAttendance, examId, seeded);
   persistAttendance(_examAttendance);
   return seeded;
 }
@@ -1145,8 +1242,16 @@ export function setStudentExamAttendance(
     list.push(rec);
   }
 
-  _examAttendance[key] = list;
+  safeSetProp(_examAttendance, key, list);
   persistAttendance(_examAttendance);
+
+  // Real-time backend API dispatch
+  authClient.post('/assessments/attendance/', {
+    date: new Date().toISOString().split('T')[0],
+    status: markedPresent ? 'present' : 'absent',
+    notes: `Exam Attendance for ${examId} - ${className} ${stream} (${studentName})`
+  }).catch(() => {});
+
   broadcastRealtimeEvent();
 }
 
@@ -1169,14 +1274,14 @@ export function markAllStudentsAttendance(
     markedBy
   }));
 
-  _examAttendance[key] = list;
+  safeSetProp(_examAttendance, key, list);
   persistAttendance(_examAttendance);
   broadcastRealtimeEvent();
 }
 
 export function isStudentMarkedPresent(examId: number, studentIdentifier: string): boolean {
   _examAttendance = loadSavedAttendance();
-  const list = _examAttendance[String(examId)];
+  const list = safeGetProp(_examAttendance, examId);
   if (!list || list.length === 0) {
     const seeded = getExamAttendance(examId);
     const lower = studentIdentifier.trim().toLowerCase();
@@ -1265,9 +1370,11 @@ export function calculateBECEGrade(total: number): { grade: string; color: strin
 }
 
 export function isSeniorSecondaryClass(gradeOrClass?: string): boolean {
-  if (!gradeOrClass) return false;
+  if (!gradeOrClass || typeof gradeOrClass !== 'string') return false;
   const clean = gradeOrClass.toUpperCase().trim();
-  // Any Junior secondary, Primary, or Nursery class is NEVER senior secondary (NO CBT)
+  if (!clean || clean === 'NONE' || clean === 'UNASSIGNED' || clean.startsWith('NO')) return false;
+
+  // Reject lower classes immediately
   if (
     clean.includes('JSS') ||
     clean.includes('JS ') ||
@@ -1282,8 +1389,9 @@ export function isSeniorSecondaryClass(gradeOrClass?: string): boolean {
   ) {
     return false;
   }
-  const stripped = clean.replace(/\s+/g, '');
-  return stripped.startsWith('SS') || clean.includes('SENIOR');
+
+  // Explicit match for SS1, SS2, SS3 (Science, Art, Commercial)
+  return /\b(SS\s*[123]|SENIOR\s*SECONDARY\s*[123]|SS\s*ONE|SS\s*TWO|SS\s*THREE)\b/.test(clean);
 }
 
 
@@ -1319,6 +1427,13 @@ export function saveStudentBroadsheet(studentIdOrCode: string | number, courseSc
       localStorage.setItem('tarepet_broadsheet_scores', JSON.stringify(_broadsheetScores));
     } catch (e) {}
   }
+
+  // Real-time async sync to Django backend gradebook
+  authClient.post('/assessments/gradebook/', {
+    student_id: key,
+    scores: courseScores
+  }).catch(() => {});
+
   broadcastRealtimeEvent();
 }
 

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 from .models import StudentProfile, TeacherProfile, ParentProfile, AdminProfile
 
 User = get_user_model()
@@ -34,17 +35,16 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
         password = str(password).strip()
 
         from django.contrib.auth import authenticate
-        from django.db.models import Q
         from rest_framework_simplejwt.exceptions import AuthenticationFailed
         from rest_framework_simplejwt.tokens import RefreshToken
 
         # Find user by email, username, teacher_id, or student_id
-        target_user = User.objects.filter(
-            Q(email__iexact=identifier) |
-            Q(username__iexact=identifier) |
-            Q(teacher_profile__teacher_id__iexact=identifier) |
-            Q(student_profile__student_id__iexact=identifier)
-        ).first()
+        q_filter = Q(email__iexact=identifier)
+        q_filter.add(Q(username__iexact=identifier), Q.OR)
+        q_filter.add(Q(teacher_profile__teacher_id__iexact=identifier), Q.OR)
+        q_filter.add(Q(student_profile__student_id__iexact=identifier), Q.OR)
+
+        target_user = User.objects.filter(q_filter).first()
 
         user = None
         if target_user:
@@ -137,16 +137,25 @@ class UserSerializer(serializers.ModelSerializer):
         return None
 
     def update(self, instance, validated_data):
-        profile_data = self.initial_data.get('profile', {})
-        instance.first_name = validated_data.get('first_name', instance.first_name)
-        instance.last_name = validated_data.get('last_name', instance.last_name)
-        instance.phone = validated_data.get('phone', instance.phone)
+        raw_input = getattr(self, 'initial_data', {})
+        raw_data = raw_input if isinstance(raw_input, dict) else {}
+        prof_input = raw_data.get('profile', {})
+        profile_data = prof_input if isinstance(prof_input, dict) else {}
+        
+        # Merge top-level raw fields into profile_data if provided at root level
+        merged_profile = {**raw_data, **profile_data}
+
+        instance.first_name = validated_data.get('first_name', raw_data.get('first_name', instance.first_name))
+        instance.last_name = validated_data.get('last_name', raw_data.get('last_name', instance.last_name))
+        instance.phone = validated_data.get('phone', raw_data.get('phone', instance.phone))
         if 'email' in validated_data and validated_data['email']:
             instance.email = validated_data['email']
+        elif 'email' in raw_data and raw_data.get('email'):
+            instance.email = raw_data['email']
         instance.save()
 
-        if instance.role == User.Role.TEACHER and hasattr(instance, 'teacher_profile'):
-            t_prof = instance.teacher_profile
+        if instance.role == User.Role.TEACHER:
+            t_prof, _ = TeacherProfile.objects.get_or_create(user=instance)
             field_map = {
                 'department': 'department',
                 'specialization': 'specialization',
@@ -167,11 +176,41 @@ class UserSerializer(serializers.ModelSerializer):
                 'profileImage': 'profile_image',
             }
             for key, attr in field_map.items():
-                if key in profile_data:
-                    val = profile_data[key]
+                if key in merged_profile:
+                    val = merged_profile[key]
                     if val is not None:
                         setattr(t_prof, attr, val)
             t_prof.save()
+
+        elif instance.role == User.Role.STUDENT:
+            s_prof, _ = StudentProfile.objects.get_or_create(user=instance)
+            student_field_map = {
+                'grade': 'grade_level',
+                'grade_level': 'grade_level',
+                'house': 'house',
+                'student_id': 'student_id',
+                'code': 'student_id',
+                'admissionNo': 'student_id',
+                'date_of_birth': 'date_of_birth',
+                'dob': 'date_of_birth',
+                'medical_conditions': 'medical_conditions',
+                'allergies': 'allergies',
+                'emergency_contact': 'emergency_contact',
+            }
+            for key, attr in student_field_map.items():
+                if key in merged_profile:
+                    val = merged_profile[key]
+                    if val is not None and val != '':
+                        setattr(s_prof, attr, val)
+            s_prof.save()
+
+        elif instance.role == User.Role.ADMIN:
+            a_prof, _ = AdminProfile.objects.get_or_create(user=instance)
+            if 'role_type' in merged_profile:
+                a_prof.role_type = merged_profile['role_type']
+            if 'permissions' in merged_profile:
+                a_prof.permissions = merged_profile['permissions']
+            a_prof.save()
 
         return instance
 

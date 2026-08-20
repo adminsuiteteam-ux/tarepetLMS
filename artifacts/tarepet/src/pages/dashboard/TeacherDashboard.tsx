@@ -138,6 +138,22 @@ export default function TeacherDashboard() {
   const rawFormClass = (user?.profile as any)?.formTeacherOf || (user?.profile as any)?.form_teacher_of || matchedStoredTeacher?.formTeacherOf;
   const formClass = (rawFormClass && rawFormClass !== 'None' && !rawFormClass.startsWith('No')) ? rawFormClass : '';
 
+  const isSeniorSecondaryTeacher = React.useMemo(() => {
+    if (!user) return false;
+    if (user.role === 'ADMIN' || isAdmin) return true;
+    
+    if (formClass && isSeniorSecondaryClass(formClass)) return true;
+
+    const subs = matchedStoredTeacher?.subjectsAssigned || (user?.profile as any)?.subjects_taught || [];
+    if (Array.isArray(subs)) {
+      for (const item of subs) {
+        const classStr = typeof item === 'string' ? item : (item?.class || item?.grade || item?.name || '');
+        if (isSeniorSecondaryClass(classStr)) return true;
+      }
+    }
+    return false;
+  }, [formClass, matchedStoredTeacher, user, isAdmin]);
+
   // Sub-tab states
   const [studentSubTab, setStudentSubTabState] = useState<'roster' | 'attendance'>('roster');
   const setStudentSubTab = (tab: 'roster' | 'attendance') => {
@@ -663,19 +679,21 @@ export default function TeacherDashboard() {
           <p className="text-emerald-100 text-sm">{t('teacher.manage_subtitle', 'Manage classes, CBT assessments, and student progress.')}</p>
         </div>
 
-        {/* CBT Exam Engine Card */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-2xl p-5 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <span className="bg-white/20 text-white text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full mb-1.5 inline-block">{t('teacher.cbt_assessment_system', 'CBT Assessment System')}</span>
-            <h3 className="text-xl font-bold">{t('teacher.cbt_exam_builder_title', 'CBT Exam Builder & Management')}</h3>
-            <p className="text-blue-100 text-xs mt-1">{t('teacher.cbt_exam_builder_desc', 'Create CBT tests/exams, submit for admin approval, upload to students & sync scores to report cards.')}</p>
+        {/* CBT Exam Engine Card (Senior Secondary SS1-SS3 Teachers & Admins Only) */}
+        {isSeniorSecondaryTeacher && (
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-2xl p-5 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <span className="bg-white/20 text-white text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full mb-1.5 inline-block">{t('teacher.cbt_assessment_system', 'CBT Assessment System')}</span>
+              <h3 className="text-xl font-bold">{t('teacher.cbt_exam_builder_title', 'CBT Exam Builder & Management')}</h3>
+              <p className="text-blue-100 text-xs mt-1">{t('teacher.cbt_exam_builder_desc', 'Create CBT tests/exams, submit for admin approval, upload to students & sync scores to report cards.')}</p>
+            </div>
+            <Link href="/dashboard/cbt-builder">
+              <button className="px-5 py-2.5 rounded-xl bg-white text-blue-700 font-bold text-sm hover:bg-blue-50 transition shadow-md whitespace-nowrap">
+                {t('teacher.open_cbt_builder', 'Open CBT Builder →')}
+              </button>
+            </Link>
           </div>
-          <Link href="/dashboard/cbt-builder">
-            <button className="px-5 py-2.5 rounded-xl bg-white text-blue-700 font-bold text-sm hover:bg-blue-50 transition shadow-md whitespace-nowrap">
-              {t('teacher.open_cbt_builder', 'Open CBT Builder →')}
-            </button>
-          </Link>
-        </div>
+        )}
 
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -702,7 +720,7 @@ export default function TeacherDashboard() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
               { label: 'Manage Students', section: 'students', icon: Users },
-              { label: 'CBT Exam Builder', href: '/dashboard/cbt-builder', icon: ClipboardList },
+              ...(isSeniorSecondaryTeacher ? [{ label: 'CBT Exam Builder', href: '/dashboard/cbt-builder', icon: ClipboardList }] : []),
               { label: 'Manage Results', section: 'results', icon: FileText },
               { label: 'Portal Settings', section: 'settings', icon: Settings },
             ].map((a: any, i: number) => (
@@ -1792,11 +1810,17 @@ export default function TeacherDashboard() {
               </h2>
               <p className="text-blue-100 text-xs mt-1 max-w-xl">{t('teacher.cbt_workflow_desc', 'Subject Teacher creates questions → Form Teacher reviews → Admin approves → Form Teacher uploads to Student Portal.')}</p>
             </div>
-            <Link href="/dashboard/cbt-builder">
-              <button className="bg-white text-blue-700 hover:bg-blue-50 font-bold px-6 py-3 rounded-xl text-sm transition-all shadow-lg whitespace-nowrap">
-                {t('teacher.launch_cbt_builder', 'Launch CBT Exam Builder →')}
-              </button>
-            </Link>
+            {isSeniorSecondaryTeacher ? (
+              <Link href="/dashboard/cbt-builder">
+                <button className="bg-white text-blue-700 hover:bg-blue-50 font-bold px-6 py-3 rounded-xl text-sm transition-all shadow-lg whitespace-nowrap">
+                  {t('teacher.launch_cbt_builder', 'Launch CBT Exam Builder →')}
+                </button>
+              </Link>
+            ) : (
+              <div className="bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2.5 rounded-xl text-xs text-blue-100 font-medium">
+                🔒 CBT Builder is restricted to Senior Secondary (SS1 - SS3)
+              </div>
+            )}
           </div>
 
           {/* Workflow Status Info Banner */}
