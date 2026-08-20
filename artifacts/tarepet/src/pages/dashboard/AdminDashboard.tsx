@@ -682,24 +682,37 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                   )}
                 </div>
 
-                {/* Subjects List (No Code Field!) */}
+                {/* Add Subject to Assign Classes */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className={labelCls + ' mb-0'}>Subjects Assigned</label>
-                    <button type="button" onClick={addSubject} className="text-xs font-bold text-teal-700 flex items-center gap-1 hover:underline cursor-pointer">
-                      <Plus className="w-3.5 h-3.5" /> Add Subject
+                    <label className={labelCls + ' mb-0'}>Classes & Subjects Assigned</label>
+                    <button type="button" onClick={addSubject} className="text-xs font-bold text-teal-700 flex items-center gap-1.5 hover:bg-teal-100 cursor-pointer bg-teal-50 px-3 py-1.5 rounded-lg border border-teal-200/80 transition-colors">
+                      <Plus className="w-3.5 h-3.5" /> Add Subject to Assign Classes
                     </button>
                   </div>
                   <div className="space-y-2.5">
-                    {form.subjectsAssigned.map((sub: any, i: number) => (
-                      <div key={i} className="flex items-center gap-3">
-                        <input className={inputCls + ' flex-1'} value={sub.name} onChange={e => updateSubject(i, 'name', e.target.value)} placeholder="Subject Name (e.g. Mathematics)" />
-                        <input className={inputCls + ' w-48'} value={sub.grade} onChange={e => updateSubject(i, 'grade', e.target.value)} placeholder="Class / Level (e.g. JSS 1)" />
-                        <button type="button" onClick={() => removeSubject(i)} className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center hover:bg-rose-100 transition shrink-0 cursor-pointer">
-                          <X className="w-3.5 h-3.5" />
+                    {form.subjectsAssigned.length > 0 ? (
+                      form.subjectsAssigned.map((sub: any, i: number) => (
+                        <div key={i} className="flex items-center gap-3">
+                          <input className={inputCls + ' flex-1'} value={sub.name} onChange={e => updateSubject(i, 'name', e.target.value)} placeholder="Subject Name (e.g. Mathematics, English, Physics)" />
+                          <select className={inputCls + ' w-48'} value={sub.grade} onChange={e => updateSubject(i, 'grade', e.target.value)}>
+                            {GRADE_OPTIONS.map(g => (
+                              <option key={g} value={g}>{g}</option>
+                            ))}
+                          </select>
+                          <button type="button" onClick={() => removeSubject(i)} className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center hover:bg-rose-100 transition shrink-0 cursor-pointer" title="Remove Subject">
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-4 border border-dashed border-teal-200/80 rounded-xl text-center bg-teal-50/30">
+                        <p className="text-xs text-slate-600 mb-2 font-medium">No subjects or classes assigned to this teacher profile yet.</p>
+                        <button type="button" onClick={addSubject} className="text-xs font-bold text-teal-700 inline-flex items-center gap-1.5 hover:underline cursor-pointer bg-white px-3 py-1.5 rounded-lg border border-teal-200 shadow-2xs">
+                          <Plus className="w-3.5 h-3.5 text-teal-600" /> Add Subject to Assign Classes
                         </button>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
               </div>
