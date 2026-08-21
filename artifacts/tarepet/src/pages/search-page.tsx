@@ -4,48 +4,35 @@ import {
   Search,
   Users,
   GraduationCap,
-  BookOpen,
   FileText,
-  CreditCard,
-  ArrowUpRight,
-  Filter,
   X,
-  Sparkles,
-  School,
-  Building2,
-  CheckCircle2,
   ChevronRight
 } from 'lucide-react';
 import { getStoredTeachers, getStoredStudents, getStoredExams } from '@/lib/cbt-store';
 
-const DEFAULT_SUBJECTS = [
-  { id: 1, name: 'Mathematics', code: 'MTH-101', department: 'Science & Logic', classesCount: 6 },
-  { id: 2, name: 'English Language', code: 'ENG-101', department: 'Humanities & Languages', classesCount: 6 },
-  { id: 3, name: 'Basic Science', code: 'BSC-102', department: 'Sciences', classesCount: 3 },
-  { id: 4, name: 'Physics', code: 'PHY-301', department: 'Senior Science', classesCount: 3 },
-  { id: 5, name: 'Chemistry', code: 'CHM-301', department: 'Senior Science', classesCount: 3 },
-  { id: 6, name: 'Biology', code: 'BIO-301', department: 'Senior Science', classesCount: 3 },
-  { id: 7, name: 'Government', code: 'GOV-301', department: 'Senior Arts', classesCount: 3 },
-  { id: 8, name: 'Literature in English', code: 'LIT-301', department: 'Senior Arts', classesCount: 3 },
-  { id: 9, name: 'Civic Education', code: 'CVE-101', department: 'General Academics', classesCount: 6 },
-];
-
 export default function SearchPage() {
   const [, setLocation] = useLocation();
   const [query, setQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'all' | 'students' | 'teachers' | 'subjects' | 'exams'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'students' | 'teachers' | 'exams'>('all');
 
   // Load datasets
   const teachers = useMemo(() => getStoredTeachers(), []);
   const students = useMemo(() => getStoredStudents(), []);
 
-  // Filtered search results
+  // Filtered search results (Only show results when user types a query)
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
+    if (!q) {
+      return {
+        all: [],
+        students: [],
+        teachers: [],
+        exams: [],
+      };
+    }
 
     const matchedStudents = students
       .filter((s: any) => {
-        if (!q) return true;
         const name = (s.name || '').toLowerCase();
         const id = (s.studentId || s.admissionNo || '').toLowerCase();
         const grade = (s.grade || '').toLowerCase();
@@ -66,7 +53,6 @@ export default function SearchPage() {
 
     const matchedTeachers = teachers
       .filter((t: any) => {
-        if (!q) return true;
         const name = (t.name || '').toLowerCase();
         const staffId = (t.staffId || '').toLowerCase();
         const dept = (t.department || '').toLowerCase();
@@ -86,30 +72,9 @@ export default function SearchPage() {
         targetUrl: `/dashboard/admin?section=teachers&id=${t.id}`,
       }));
 
-    const matchedSubjects = DEFAULT_SUBJECTS
-      .filter((s: any) => {
-        if (!q) return true;
-        const name = (s.name || '').toLowerCase();
-        const code = (s.code || '').toLowerCase();
-        const dept = (s.department || '').toLowerCase();
-        return name.includes(q) || code.includes(q) || dept.includes(q);
-      })
-      .map((s: any) => ({
-        id: `sub-${s.id}`,
-        type: 'subjects',
-        title: s.name,
-        subtitle: `${s.code} · Department: ${s.department}`,
-        badge: `${s.classesCount || 3} Classes`,
-        category: 'Curriculum Subject',
-        icon: BookOpen,
-        badgeColor: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
-        targetUrl: `/dashboard/admin?section=courses`,
-      }));
-
     const storedExams = getStoredExams();
     const matchedExams = storedExams
       .filter((e: any) => {
-        if (!q) return true;
         const title = (e.title || e.course_name || '').toLowerCase();
         const subject = (e.course_name || e.subject || '').toLowerCase();
         const code = (e.course_code || e.code || '').toLowerCase();
@@ -128,15 +93,15 @@ export default function SearchPage() {
       }));
 
     return {
-      all: [...matchedStudents, ...matchedTeachers, ...matchedSubjects, ...matchedExams],
+      all: [...matchedStudents, ...matchedTeachers, ...matchedExams],
       students: matchedStudents,
       teachers: matchedTeachers,
-      subjects: matchedSubjects,
       exams: matchedExams,
     };
   }, [query, teachers, students]);
 
   const activeResults = results[activeTab] || [];
+  const hasQuery = query.trim().length > 0;
 
   return (
     <div className="min-h-screen bg-background text-foreground p-4 sm:p-8 max-w-6xl mx-auto space-y-6">
@@ -148,7 +113,7 @@ export default function SearchPage() {
           </div>
           <div>
             <h1 className="font-serif font-bold text-xl sm:text-2xl text-foreground">Global Portal Search & Directory</h1>
-            <p className="text-xs text-muted-foreground">Search across students, faculty teachers, curriculum subjects, and CBT exams.</p>
+            <p className="text-xs text-muted-foreground">Search across students, faculty teachers, and CBT exams in real time.</p>
           </div>
         </div>
 
@@ -168,7 +133,7 @@ export default function SearchPage() {
           autoFocus
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by student name, admission no, teacher staff ID, subject code, or CBT exam..."
+          placeholder="Search by student name, admission no, teacher staff ID, or CBT exam..."
           className="w-full pl-12 pr-12 py-3.5 text-sm sm:text-base bg-card border-2 border-emerald-500/30 rounded-2xl focus:outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-500/10 text-foreground placeholder:text-muted-foreground shadow-sm transition-all"
         />
         {query && (
@@ -181,50 +146,45 @@ export default function SearchPage() {
         )}
       </div>
 
-      {/* Popular Search Suggestions / Tags */}
-      <div className="flex items-center gap-2 flex-wrap text-xs">
-        <span className="text-muted-foreground font-semibold flex items-center gap-1">
-          <Sparkles className="w-3.5 h-3.5 text-amber-500" /> Popular Tags:
-        </span>
-        {['Evelyn Alaere', 'JSS 1', 'Mathematics', 'Form Teacher', 'TMS/TCH/0119', 'BECE Exam'].map((tag) => (
-          <button
-            key={tag}
-            onClick={() => setQuery(tag)}
-            className="px-3 py-1 rounded-full bg-muted/60 hover:bg-emerald-500/10 hover:text-emerald-700 border border-border text-muted-foreground transition-all cursor-pointer font-medium"
-          >
-            {tag}
-          </button>
-        ))}
-      </div>
+      {/* Category Tabs (Only when searching) */}
+      {hasQuery && (
+        <div className="flex items-center gap-2 border-b border-border overflow-x-auto pb-1">
+          {[
+            { key: 'all', label: 'All Results', count: results.all.length },
+            { key: 'students', label: 'Students Roster', count: results.students.length },
+            { key: 'teachers', label: 'Faculty Directory', count: results.teachers.length },
+            { key: 'exams', label: 'CBT Assessments', count: results.exams.length },
+          ].map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key as any)}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer ${
+                activeTab === tab.key
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+              }`}
+            >
+              <span>{tab.label}</span>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] ${activeTab === tab.key ? 'bg-white/20 text-white' : 'bg-muted text-muted-foreground'}`}>
+                {tab.count}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
 
-      {/* Category Tabs */}
-      <div className="flex items-center gap-2 border-b border-border overflow-x-auto pb-1">
-        {[
-          { key: 'all', label: 'All Results', count: results.all.length },
-          { key: 'students', label: 'Students Roster', count: results.students.length },
-          { key: 'teachers', label: 'Faculty Directory', count: results.teachers.length },
-          { key: 'subjects', label: 'Subjects & Courses', count: results.subjects.length },
-          { key: 'exams', label: 'CBT Assessments', count: results.exams.length },
-        ].map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key as any)}
-            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer ${
-              activeTab === tab.key
-                ? 'bg-emerald-600 text-white shadow-sm'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-            }`}
-          >
-            <span>{tab.label}</span>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] ${activeTab === tab.key ? 'bg-white/20 text-white' : 'bg-muted text-muted-foreground'}`}>
-              {tab.count}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {/* Search Results Grid */}
-      {activeResults.length > 0 ? (
+      {/* Search Results Grid / Initial Clean State */}
+      {!hasQuery ? (
+        <div className="py-20 text-center space-y-3 bg-card border border-border rounded-3xl p-8">
+          <div className="w-14 h-14 rounded-full bg-emerald-500/10 text-emerald-600 mx-auto flex items-center justify-center">
+            <Search className="w-7 h-7" />
+          </div>
+          <h3 className="font-serif font-bold text-lg text-foreground">Type to Search Portal Directory</h3>
+          <p className="text-xs text-muted-foreground max-w-md mx-auto">
+            Search for enrolled students by name or admission number, faculty teachers by name or staff ID, and active CBT assessments.
+          </p>
+        </div>
+      ) : activeResults.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {activeResults.map((item: any) => {
             const IconComp = item.icon;
@@ -261,12 +221,12 @@ export default function SearchPage() {
         </div>
       ) : (
         <div className="py-16 text-center space-y-3 bg-card border border-border rounded-3xl p-8">
-          <div className="w-14 h-14 rounded-full bg-emerald-500/10 text-emerald-600 mx-auto flex items-center justify-center">
+          <div className="w-14 h-14 rounded-full bg-rose-500/10 text-rose-600 mx-auto flex items-center justify-center">
             <Search className="w-7 h-7" />
           </div>
           <h3 className="font-serif font-bold text-lg text-foreground">No records matched "{query}"</h3>
           <p className="text-xs text-muted-foreground max-w-md mx-auto">
-            Try adjusting your search keywords, clearing search filters, or checking spelling for teacher staff IDs and student numbers.
+            Check spelling for student admission numbers, teacher names, staff IDs, or assessment titles.
           </p>
           <button
             onClick={() => setQuery('')}
