@@ -3177,16 +3177,6 @@ export default function TeacherDashboard() {
                   {profileForm.formClass && profileForm.formClass !== 'None' ? profileForm.formClass : (formClass || 'Form Teacher Assigned')}
                 </span>
               </div>
-              <div className="p-3 rounded-xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 space-y-1">
-                <span className="text-[10px] font-bold text-emerald-800 uppercase block">Form Class Pastoral Responsibility</span>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Administrative oversight, attendance tracking, broadsheet compilation, student promotion rollover, and parent communications.
-                </p>
-              </div>
-              <div>
-                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">{t('teacher.label_date_joined', 'DATE JOINED FACULTY')}</span>
-                <strong className="text-foreground font-bold block mt-0.5">{profileForm.joiningDate || 'Not Specified'}</strong>
-              </div>
               <div>
                 <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">{t('teacher.label_phone', 'CONTACT PHONE')}</span>
                 <strong className="text-foreground font-bold block mt-0.5">{profileForm.phone || 'Not Specified'}</strong>
@@ -3195,9 +3185,13 @@ export default function TeacherDashboard() {
                 <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">{t('teacher.label_email', 'OFFICIAL EMAIL')}</span>
                 <strong className="text-foreground font-bold underline block mt-0.5">{profileForm.email}</strong>
               </div>
+              <div>
+                <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">{t('teacher.residential_address', 'RESIDENTIAL ADDRESS')}</span>
+                <strong className="text-foreground font-bold block mt-0.5">{profileForm.address || 'Not Provided'}</strong>
+              </div>
             </div>
 
-            {/* Column 3: Teaching Workload, Assigned Subjects & CBT Metrics */}
+            {/* Column 3: Teaching Workload & Assigned Subjects */}
             <div className="md:col-span-5 space-y-4 text-xs border-t md:border-t-0 md:border-l border-border pt-4 md:pt-0 md:pl-6">
               <div>
                 <h4 className="font-serif font-bold text-sm text-foreground flex items-center gap-2 mb-2.5">
@@ -3227,31 +3221,6 @@ export default function TeacherDashboard() {
                   ) : (
                     <p className="text-muted-foreground italic text-xs">{t('teacher.no_subjects_assigned', 'No subjects currently assigned by Admin.')}</p>
                   )}
-                </div>
-              </div>
-
-              {/* Teaching Stats & CBT Metrics */}
-              <div className="space-y-2 pt-3 border-t border-border/60">
-                <h4 className="font-serif font-bold text-sm text-foreground flex items-center gap-2">
-                  <BarChart2 className="w-4 h-4 text-emerald-600" /> {t('teacher.stats_header', 'Teaching Stats & CBT Metrics')}
-                </h4>
-                <div className="grid grid-cols-2 gap-3 pt-1">
-                  <div className="p-3 rounded-xl bg-card border border-border">
-                    <p className="text-[10px] text-muted-foreground uppercase font-bold">{t('teacher.total_students', 'TOTAL STUDENTS TAUGHT')}</p>
-                    <p className="text-xl font-serif font-bold text-foreground mt-0.5">{profileForm.studentsCount ?? 0}</p>
-                  </div>
-                  <div className="p-3 rounded-xl bg-card border border-border">
-                    <p className="text-[10px] text-muted-foreground uppercase font-bold">{t('teacher.cbt_assessments', 'CBT ASSESSMENTS')}</p>
-                    <p className="text-xl font-serif font-bold text-emerald-600 mt-0.5">{profileForm.cbtExamsCount ?? 0} Created</p>
-                  </div>
-                  <div className="p-3 rounded-xl bg-card border border-border">
-                    <p className="text-[10px] text-muted-foreground uppercase font-bold">{t('teacher.attendance_rate', 'CLASS ATTENDANCE RATE')}</p>
-                    <p className="text-xl font-serif font-bold text-emerald-600 mt-0.5">{profileForm.attendanceRate || '0%'}</p>
-                  </div>
-                  <div className="p-3 rounded-xl bg-card border border-border">
-                    <p className="text-[10px] text-muted-foreground uppercase font-bold">{t('teacher.residential_address', 'RESIDENTIAL ADDRESS')}</p>
-                    <p className="text-xs font-semibold text-foreground truncate mt-1">{profileForm.address || 'Not Provided'}</p>
-                  </div>
                 </div>
               </div>
             </div>

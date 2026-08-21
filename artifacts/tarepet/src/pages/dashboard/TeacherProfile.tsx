@@ -487,10 +487,6 @@ export default function TeacherProfile() {
                   <strong className="text-rose-600 font-bold block mt-0.5">{profileForm.formClass && profileForm.formClass !== 'None' ? profileForm.formClass : 'None'}</strong>
                 </div>
                 <div>
-                  <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">DATE JOINED FACULTY</span>
-                  <strong className="text-foreground font-bold block mt-0.5">{profileForm.joiningDate || 'Not Specified'}</strong>
-                </div>
-                <div>
                   <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">CONTACT PHONE</span>
                   <strong className="text-foreground font-bold block mt-0.5">{profileForm.phone || 'Not Specified'}</strong>
                 </div>
@@ -498,9 +494,13 @@ export default function TeacherProfile() {
                   <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">OFFICIAL EMAIL</span>
                   <strong className="text-foreground font-bold underline block mt-0.5">{profileForm.email}</strong>
                 </div>
+                <div>
+                  <span className="text-muted-foreground font-semibold block text-[10px] uppercase tracking-wider">RESIDENTIAL ADDRESS</span>
+                  <strong className="text-foreground font-bold block mt-0.5">{profileForm.address || 'Not Provided'}</strong>
+                </div>
               </div>
 
-              {/* Column 3: Teaching Workload, Assigned Subjects & CBT Metrics */}
+              {/* Column 3: Teaching Workload & Assigned Subjects */}
               <div className="md:col-span-5 space-y-4 text-xs border-t md:border-t-0 md:border-l border-border pt-4 md:pt-0 md:pl-6">
                 <div>
                   <h4 className="font-serif font-bold text-sm text-foreground flex items-center gap-2 mb-2.5">
@@ -530,31 +530,6 @@ export default function TeacherProfile() {
                     ) : (
                       <p className="text-muted-foreground italic text-xs">No subjects currently assigned by Admin.</p>
                     )}
-                  </div>
-                </div>
-
-                {/* Teaching Stats & CBT Metrics */}
-                <div className="space-y-2 pt-3 border-t border-border/60">
-                  <h4 className="font-serif font-bold text-sm text-foreground flex items-center gap-2">
-                    <BarChart2 className="w-4 h-4 text-emerald-600" /> Teaching Stats & CBT Metrics
-                  </h4>
-                  <div className="grid grid-cols-2 gap-3 pt-1">
-                    <div className="p-3 rounded-xl bg-card border border-border">
-                      <p className="text-[10px] text-muted-foreground uppercase font-bold">TOTAL STUDENTS TAUGHT</p>
-                      <p className="text-xl font-serif font-bold text-foreground mt-0.5">{profileForm.studentsCount ?? 0}</p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-card border border-border">
-                      <p className="text-[10px] text-muted-foreground uppercase font-bold">CBT ASSESSMENTS</p>
-                      <p className="text-xl font-serif font-bold text-emerald-600 mt-0.5">{profileForm.cbtExamsCount ?? 0} Created</p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-card border border-border">
-                      <p className="text-[10px] text-muted-foreground uppercase font-bold">CLASS ATTENDANCE RATE</p>
-                      <p className="text-xl font-serif font-bold text-emerald-600 mt-0.5">{profileForm.attendanceRate || '0%'}</p>
-                    </div>
-                    <div className="p-3 rounded-xl bg-card border border-border">
-                      <p className="text-[10px] text-muted-foreground uppercase font-bold">RESIDENTIAL ADDRESS</p>
-                      <p className="text-xs font-semibold text-foreground truncate mt-1">{profileForm.address || 'Not Provided'}</p>
-                    </div>
                   </div>
                 </div>
               </div>

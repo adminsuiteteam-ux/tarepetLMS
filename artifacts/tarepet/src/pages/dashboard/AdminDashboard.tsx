@@ -5653,16 +5653,6 @@ export default function AdminDashboard() {
                       {tchr.formTeacherOf && tchr.formTeacherOf !== 'None' ? tchr.formTeacherOf : (tchr.subjectsAssigned?.[0]?.grade || 'Form Teacher Assigned')}
                     </span>
                   </div>
-                  <div className="p-3 rounded-xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 space-y-1">
-                    <span className="text-[10px] font-bold text-emerald-800 uppercase block">Form Class Pastoral Responsibility</span>
-                    <p className="text-[11px] text-muted-foreground leading-relaxed">
-                      Administrative oversight, attendance tracking, broadsheet compilation, student promotion rollover, and parent communications.
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider">Date Joined Faculty</span>
-                    <strong className="text-foreground font-bold">{tchr.joined || '2021-09-10'}</strong>
-                  </div>
                   <div>
                     <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider">Contact Phone</span>
                     <strong className="text-foreground font-bold">{tchr.phone || '+234 800 000 0000'}</strong>
@@ -5697,31 +5687,6 @@ export default function AdminDashboard() {
                       ) : (
                         <p className="text-muted-foreground italic text-xs">No subjects currently assigned.</p>
                       )}
-                    </div>
-                  </div>
-
-                  {/* Performance & Portal Activity */}
-                  <div className="space-y-2 pt-2 border-t border-border/60">
-                    <h4 className="font-serif font-bold text-sm text-foreground flex items-center gap-2">
-                      <BarChart2 className="w-4 h-4 text-emerald-600" /> Teaching Stats & CBT Metrics
-                    </h4>
-                    <div className="grid grid-cols-2 gap-3 pt-1">
-                      <div className="p-3 rounded-xl bg-card border border-border">
-                        <p className="text-[10px] text-muted-foreground uppercase font-bold">Total Students Taught</p>
-                        <p className="text-xl font-serif font-bold text-foreground mt-0.5">{tchr.studentsCount ?? 0}</p>
-                      </div>
-                      <div className="p-3 rounded-xl bg-card border border-border">
-                        <p className="text-[10px] text-muted-foreground uppercase font-bold">CBT Assessments</p>
-                        <p className="text-xl font-serif font-bold text-emerald-600 mt-0.5">{tchr.cbtExamsCount ?? 0} Created</p>
-                      </div>
-                      <div className="p-3 rounded-xl bg-card border border-border">
-                        <p className="text-[10px] text-muted-foreground uppercase font-bold">Class Attendance Rate</p>
-                        <p className="text-xl font-serif font-bold text-emerald-600 mt-0.5">{tchr.attendanceRate || '0%'}</p>
-                      </div>
-                      <div className="p-3 rounded-xl bg-card border border-border">
-                        <p className="text-[10px] text-muted-foreground uppercase font-bold">Residential Address</p>
-                        <p className="text-xs font-semibold text-foreground truncate mt-1">{tchr.address || 'Not Provided'}</p>
-                      </div>
                     </div>
                   </div>
                 </div>
