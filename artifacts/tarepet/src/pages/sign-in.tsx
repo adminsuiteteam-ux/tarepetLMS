@@ -244,46 +244,222 @@ export default function SignIn() {
   };
 
   return (
-    <div className="min-h-[100dvh] flex bg-background">
-      {/* Left Panel - Brand Identity */}
-      <div className="hidden lg:flex lg:w-1/2 bg-secondary text-white p-16 flex-col justify-between relative overflow-hidden">
+    <div className="min-h-[100dvh] flex flex-col lg:flex-row bg-[#EBF0F7] dark:bg-zinc-950 font-sans">
+      {/* LEFT PANEL (Desktop & Mobile Main) - The Card Mockup Design from Reference */}
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-12 order-1">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.96, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+          className="w-full max-w-[420px] bg-white dark:bg-zinc-900 rounded-[38px] shadow-2xl border border-black/5 dark:border-white/10 overflow-hidden relative"
+        >
+          {/* Top Artistic Curved Header (Tarepet Crimson, Gold & Emerald Organic Blobs) */}
+          <div className="relative h-44 bg-[#E4583E] dark:bg-primary overflow-hidden flex flex-col items-center justify-center text-center px-6 pt-2 pb-6">
+            {/* Left Gold Organic Curved Blob */}
+            <div className="absolute -left-10 -bottom-6 w-36 h-36 rounded-full bg-[#D4AF37] opacity-90 blur-xs pointer-events-none" />
+            {/* Right Emerald Organic Curved Blob */}
+            <div className="absolute -right-8 -top-4 w-36 h-36 rounded-full bg-[#10B981] opacity-85 blur-xs pointer-events-none" />
+            {/* Ambient overlay texture */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/20 pointer-events-none" />
+
+            {/* School Crest / Small Badge */}
+            <div className="relative z-10 flex items-center justify-center mb-1.5">
+              <div className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md p-1 shadow-xs border border-white/30 flex items-center justify-center">
+                <img src={tarepetLogo} alt="Tarepet Logo" className="w-7 h-7 object-contain rounded-full" />
+              </div>
+            </div>
+
+            {/* Title & Tagline matching reference mockup */}
+            <div className="relative z-10">
+              <h1 className="text-2xl font-bold font-serif text-white tracking-tight leading-snug drop-shadow-xs">
+                Tarepet Portal
+              </h1>
+              <p className="text-[11px] text-white/90 font-medium tracking-wide uppercase mt-0.5">
+                Sign in to your account
+              </p>
+            </div>
+          </div>
+
+          {/* Overlapping White Form Sheet with Completely Rounded Top Corners */}
+          <div className="bg-white dark:bg-zinc-900 rounded-t-[32px] -mt-5 relative z-10 px-6 sm:px-8 pt-6 pb-8 space-y-4 shadow-sm">
+            {/* Quick Role Helper Tabs */}
+            <div className="flex items-center justify-between p-1 bg-zinc-100 dark:bg-zinc-800 rounded-full text-[11px] font-semibold text-muted-foreground mb-1">
+              {[
+                { id: 'student', label: 'Student', hint: 'TMS/2026/042' },
+                { id: 'teacher', label: 'Teacher', hint: 'TMS/TCH/0054' },
+                { id: 'admin', label: 'Admin', hint: 'admin@tarepet.com' },
+              ].map(role => (
+                <button
+                  key={role.id}
+                  type="button"
+                  onClick={() => {
+                    if (role.id === 'admin') {
+                      setEmail('admin@tarepet.com');
+                      setPassword('Admin@12345');
+                    } else if (role.id === 'teacher') {
+                      const t = getStoredTeachers()[0];
+                      setEmail(t?.staffId || t?.email || 'TMS/TCH/0054');
+                      setPassword(t?.password || t?.staffId || 'TMS/TCH/0054');
+                    } else {
+                      const s = getStoredStudents()[0];
+                      setEmail(s?.code || s?.email || 'TMS/2026/042');
+                      setPassword(s?.code || 'TMS/2026/042');
+                    }
+                  }}
+                  className="flex-1 py-1.5 rounded-full hover:text-foreground text-center transition-all hover:bg-white dark:hover:bg-zinc-700 hover:shadow-xs"
+                >
+                  {role.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-2.5 p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-medium"
+              >
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{error}</span>
+              </motion.div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-3.5">
+              {/* Email / ID Input Pill */}
+              <div className="space-y-1">
+                <label htmlFor="email" className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-1">
+                  Email / Staff ID / Student Code
+                </label>
+                <div className="relative">
+                  <input
+                    id="email"
+                    type="text"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter email or registration code"
+                    className="w-full px-5 py-3.5 bg-zinc-100 dark:bg-zinc-800/90 border border-transparent rounded-2xl text-xs font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:bg-white dark:focus:bg-zinc-800 transition-all shadow-inner"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+
+              {/* Password Input Pill */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between px-1">
+                  <label htmlFor="password" className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                    Password / Access Passcode
+                  </label>
+                </div>
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••••••"
+                    className="w-full pl-5 pr-11 py-3.5 bg-zinc-100 dark:bg-zinc-800/90 border border-transparent rounded-2xl text-xs font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:bg-white dark:focus:bg-zinc-800 transition-all shadow-inner font-mono"
+                    required
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Forgot Password Link */}
+              <div className="flex items-center justify-end px-1 pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => alert("Please contact Tarepet School Administrator or ICT department to reset your portal passcode.")}
+                  className="text-[11px] text-primary hover:underline font-semibold"
+                >
+                  Forgot password?
+                </button>
+              </div>
+
+              {/* Main Pill Submit Button matching the dark rounded pill in mockup */}
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-zinc-950 hover:bg-black text-white dark:bg-primary dark:hover:bg-primary/90 transition-all rounded-full py-4 text-xs font-bold uppercase tracking-wider shadow-xl active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  {isLoading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Verifying Credentials...</span>
+                    </>
+                  ) : (
+                    <span>Sign in to Portal</span>
+                  )}
+                </button>
+              </div>
+            </form>
+
+            {/* Terms of Service & Privacy Notice matching mockup style */}
+            <div className="pt-3 text-center space-y-3">
+              <p className="text-[10px] text-muted-foreground leading-relaxed px-2">
+                Signing into Tarepet Portal means you agree to the{" "}
+                <Link href="/terms" className="text-foreground font-semibold hover:underline">
+                  Privacy Policy
+                </Link>{" "}
+                and{" "}
+                <Link href="/terms" className="text-foreground font-semibold hover:underline">
+                  Terms of Service
+                </Link>.
+              </p>
+
+              <div className="border-t border-border/60 pt-3">
+                <p className="text-xs text-muted-foreground">
+                  Need admissions help?{" "}
+                  <Link href="/admissions" className="text-primary font-bold hover:underline">
+                    Admissions Desk
+                  </Link>
+                </p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* RIGHT PANEL (Desktop Mode) - School Portal Showcase & Brand Experience */}
+      <div className="hidden lg:flex lg:w-[48%] bg-zinc-950 text-white p-14 flex-col justify-between relative overflow-hidden order-2 border-l border-white/10">
         {/* Background Image Layer */}
         <div className="absolute inset-0 z-0">
           <img
             src={heroImg}
             alt="Tare Pet Montessori School"
-            className="w-full h-full object-cover opacity-80 scale-105 brightness-[0.9]"
+            className="w-full h-full object-cover opacity-35 scale-105 brightness-90"
           />
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-950/85 via-slate-950/65 to-slate-950/85" />
+          <div className="absolute inset-0 bg-gradient-to-br from-zinc-950/90 via-zinc-950/75 to-zinc-950/95" />
         </div>
 
-        {/* Decorative Pattern */}
-        <div className="absolute inset-0 opacity-5 z-0">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-primary rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
-          <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="0.5" opacity="0.3"/>
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#grid)" />
-          </svg>
-        </div>
+        {/* Ambient brand glow */}
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-emerald-600/20 rounded-full blur-3xl pointer-events-none" />
 
+        {/* Top Branding */}
         <div className="relative z-10">
           <div className="flex items-center gap-3.5 mb-8">
             <img 
               src={tarepetLogo} 
               alt="Tarepet Montessori School Logo" 
-              className="w-10 h-10 object-contain"
+              className="w-12 h-12 object-contain rounded-full bg-white/10 p-1 backdrop-blur-md"
             />
             <div className="flex flex-col">
-              <span className="font-serif font-bold text-3xl text-white leading-none tracking-tight">
-                {t('school.name')}
+              <span className="font-serif font-bold text-2xl text-white leading-none tracking-tight">
+                {t('school.name', 'Tarepet Montessori')}
               </span>
-              <span className="font-sans text-xs uppercase tracking-[0.2em] text-white/80 font-semibold mt-1">
-                {t('school.abbr')}
+              <span className="font-sans text-[11px] uppercase tracking-[0.2em] text-emerald-400 font-semibold mt-1">
+                {t('school.abbr', 'Excellence & Character')}
               </span>
             </div>
           </div>
@@ -292,155 +468,45 @@ export default function SignIn() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
+            className="space-y-4 max-w-md"
           >
-            <h1 className="text-4xl md:text-5xl font-serif font-bold mb-6 leading-tight drop-shadow-sm">
-              {t('signin.welcome_portal')}<span className="text-primary italic font-light">{t('signin.school_portal')}</span>
-            </h1>
-            <p className="text-lg text-white/90 leading-relaxed max-w-md font-sans mb-8">
-              {t('signin.portal_desc')}
+            <h2 className="text-3xl xl:text-4xl font-serif font-bold leading-tight text-white">
+              Integrated School Management &amp; CBT Portal
+            </h2>
+            <p className="text-sm text-zinc-300 leading-relaxed font-sans">
+              Secure, real-time academic records, automated grading, CBT examinations, and faculty administrative controls for the Tarepet Montessori community.
             </p>
           </motion.div>
         </div>
 
+        {/* Features highlights */}
+        <div className="relative z-10 space-y-3 py-6 max-w-md">
+          <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xs">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0" />
+            <span className="text-xs font-semibold text-zinc-200">Instant Real-Time Profile &amp; Data Sync</span>
+          </div>
+          <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xs">
+            <span className="w-2.5 h-2.5 rounded-full bg-primary shrink-0" />
+            <span className="text-xs font-semibold text-zinc-200">Verified CBT Examination Engine</span>
+          </div>
+          <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xs">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0" />
+            <span className="text-xs font-semibold text-zinc-200">Comprehensive Terminal Report Cards &amp; ID Badges</span>
+          </div>
+        </div>
+
+        {/* Guiding Principle */}
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="relative z-10"
+          className="relative z-10 pt-4 border-t border-white/10"
         >
-          <p className="text-white/60 text-sm italic font-serif">
+          <p className="text-zinc-400 text-xs italic font-serif">
             &ldquo;Nurturing Minds, Shaping Character, Empowering Excellence.&rdquo;
           </p>
-          <p className="text-white/80 text-xs mt-2 uppercase tracking-wider">
-            {t('signin.guiding_principle')}
-          </p>
-        </motion.div>
-      </div>
-
-      {/* Right Panel - Form */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="w-full max-w-md"
-        >
-          {/* Mobile Logo */}
-          <div className="lg:hidden flex items-center gap-3 mb-12 justify-center">
-            <img 
-              src={tarepetLogo} 
-              alt="Tarepet Montessori School Logo" 
-              className="w-9 h-9 object-contain"
-            />
-            <div className="flex flex-col">
-              <span className="font-serif font-bold text-2xl text-primary leading-none tracking-tight">
-                {t('school.name')}
-              </span>
-              <span className="font-sans text-xs uppercase tracking-[0.15em] text-secondary font-medium mt-1">
-                {t('school.abbr')}
-              </span>
-            </div>
-          </div>
-
-          <div className="mb-10">
-            <h2 className="text-3xl font-serif font-bold text-foreground mb-2">{t('signin.title')}</h2>
-            <p className="text-muted-foreground">{t('signin.subtitle')}</p>
-          </div>
-
-          {/* Error Message */}
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-2 p-3 mb-6 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm"
-            >
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{error}</span>
-            </motion.div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email / Staff ID Field */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
-                {t('signin.email_label', 'Email Address or Staff ID')}
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
-                <input
-                  id="email"
-                  type="text"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="firstname.surname@tarepet.com or TMS/TCH/0001"
-                  className="w-full pl-12 pr-4 py-3 border border-border rounded-lg bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-            </div>
-
-            {/* Password Field */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
-                {t('signin.password_label', 'Password')}
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="TMS/CLASS/FOUR DIGIT"
-                  className="w-full pl-12 pr-12 py-3 border border-border rounded-lg bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-                  required
-                  disabled={isLoading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
-
-            {/* Forgot Password */}
-            <div className="flex items-center justify-end">
-              <button
-                type="button"
-                className="text-sm text-primary hover:underline font-medium"
-              >
-                {t('signin.forgot_password')}
-              </button>
-            </div>
-
-            {/* Sign In Button */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-primary text-white hover:bg-primary/90 transition-colors rounded-lg py-3 text-base font-medium shadow-sm disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {isLoading ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Signing in...
-                </>
-              ) : (
-                t('signin.title')
-              )}
-            </button>
-          </form>
-
-          {/* Footer Note */}
-          <p className="text-xs text-muted-foreground text-center mt-8 border-t border-border pt-8">
-            {t('signin.footer_note')}
-            <Link href="/admissions" className="text-primary hover:underline">
-              {t('signin.admissions_page')}
-            </Link>.
+          <p className="text-zinc-500 text-[10px] mt-1 uppercase tracking-wider">
+            Tarepet Montessori Guiding Principle
           </p>
         </motion.div>
       </div>
@@ -451,7 +517,7 @@ export default function SignIn() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="w-full max-w-sm rounded-2xl bg-card p-6 shadow-2xl border border-border"
+            className="w-full max-w-sm rounded-3xl bg-card p-6 shadow-2xl border border-border"
           >
             <div className="flex items-center gap-3 mb-4 text-primary">
               <Lock className="w-6 h-6 shrink-0" />
@@ -489,14 +555,14 @@ export default function SignIn() {
                   value={mfaCode}
                   onChange={(e) => setMfaCode(e.target.value.replace(/[^0-9]/g, ''))}
                   placeholder="123456"
-                  className="w-full text-center text-2xl tracking-[0.4em] font-mono py-3 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full text-center text-2xl tracking-[0.4em] font-mono py-3 border border-border rounded-2xl bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   required
                   autoFocus
                 />
               </div>
 
               {error && (
-                <div className="flex items-center gap-2 p-2 rounded bg-destructive/10 text-destructive text-xs">
+                <div className="flex items-center gap-2 p-2 rounded-xl bg-destructive/10 text-destructive text-xs">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{error}</span>
                 </div>
@@ -506,14 +572,14 @@ export default function SignIn() {
                 <button
                   type="button"
                   onClick={() => { setMfaRequired(false); setMfaCode(''); setError(null); }}
-                  className="flex-1 px-4 py-2.5 rounded-lg border border-border text-sm font-medium hover:bg-accent text-foreground transition-colors"
+                  className="flex-1 px-4 py-2.5 rounded-full border border-border text-sm font-medium hover:bg-accent text-foreground transition-colors"
                 >
                   {t('mfa.cancel', 'Cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={isLoading || mfaCode.length < 6}
-                  className="flex-1 px-4 py-2.5 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                  className="flex-1 px-4 py-2.5 rounded-full bg-primary text-white text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
                 >
                   {isLoading ? t('mfa.verifying', 'Verifying...') : t('mfa.verify_code', 'Verify Code')}
                 </button>
