@@ -983,35 +983,39 @@ export default function StudentDashboard() {
                 profileImage: profileForm.profileImage,
               });
 
-              // Sync auth session in localStorage
-              try {
-                const currentAuth = JSON.parse(localStorage.getItem('tarepet_auth_user') || '{}');
-                if (currentAuth && currentAuth.email) {
-                  currentAuth.first_name = profileForm.firstName;
-                  currentAuth.last_name = profileForm.lastName;
-                  currentAuth.phone = profileForm.phone;
-                  if (!currentAuth.profile) currentAuth.profile = {};
-                  currentAuth.profile.gender = profileForm.gender;
-                  currentAuth.profile.date_of_birth = profileForm.dob;
-                  currentAuth.profile.address = profileForm.address;
-                  currentAuth.profile.profileImage = profileForm.profileImage;
-                  localStorage.setItem('tarepet_auth_user', JSON.stringify(currentAuth));
-                  localStorage.setItem('tarepet_user', JSON.stringify(currentAuth));
+              // Sync auth session in context and localStorage immediately
+              updateUser({
+                first_name: profileForm.firstName,
+                last_name: profileForm.lastName,
+                phone: profileForm.phone,
+                profile_image: profileForm.profileImage,
+                profile: {
+                  ...(user?.profile || {}),
+                  student_id: profileForm.studentId,
+                  gender: profileForm.gender,
+                  date_of_birth: profileForm.dob,
+                  address: profileForm.address,
+                  profile_image: profileForm.profileImage,
+                  profileImage: profileForm.profileImage,
                 }
-              } catch (err) {}
+              });
 
-              // Send to backend DB
+              // Send to backend DB and re-fetch authoritative profile
               authClient.patch('/auth/me/', {
                 first_name: profileForm.firstName,
                 last_name: profileForm.lastName,
                 phone: profileForm.phone,
+                profile_image: profileForm.profileImage,
                 profile: {
                   student_id: profileForm.studentId,
                   gender: profileForm.gender,
                   date_of_birth: profileForm.dob,
                   address: profileForm.address,
+                  profile_image: profileForm.profileImage,
                   profileImage: profileForm.profileImage,
                 }
+              }).then(() => {
+                refreshUserProfile().catch(() => {});
               }).catch(() => {});
 
               broadcastRealtimeEvent();

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authClient, setTokens, clearTokens, getRefreshToken, safeRedirect } from '@/lib/api-auth';
+import { sendWebSocketEvent, subscribeToWebSocketEvents } from '@/lib/websocket-client';
 
 export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT' | 'PARENT';
 
@@ -11,6 +12,7 @@ export interface User {
   phone?: string;
   role: UserRole;
   profile?: any;
+  profile_image?: string;
 }
 
 interface AuthContextType {
@@ -76,6 +78,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Fetch live database user profile on app startup
   useEffect(() => {
     refreshUserProfile().catch(() => {});
+  }, [refreshUserProfile]);
+
+  // Listen to WebSocket events for real-time profile updates across devices
+  useEffect(() => {
+    const unsubWs = subscribeToWebSocketEvents((evt) => {
+      if (evt.type === 'PROFILE_UPDATED' || evt.type === 'AVATAR_UPDATED' || evt.type === 'ROSTER_UPDATED') {
+        refreshUserProfile().catch(() => {});
+      }
+    });
+    return () => unsubWs();
   }, [refreshUserProfile]);
 
   useEffect(() => {
@@ -145,6 +157,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem('tarepet_auth_user', JSON.stringify(merged));
         sessionStorage.setItem('tarepet_auth_user', JSON.stringify(merged));
       } catch (err) {}
+      
+      // Dispatch real-time events locally and across WebSockets
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('tarepet_user_updated', { detail: merged }));
+        window.dispatchEvent(new Event('storage'));
+        sendWebSocketEvent('PROFILE_UPDATED', merged);
+      }
       return merged;
     });
   };
