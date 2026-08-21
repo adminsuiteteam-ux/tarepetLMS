@@ -1,1 +1,1 @@
-web: python manage.py migrate --no-input || true; gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --log-level info
+web: python manage.py migrate --no-input || true; daphne -b 0.0.0.0 -p $PORT config.asgi:application || gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120

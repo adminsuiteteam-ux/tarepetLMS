@@ -16,3 +16,6 @@ django-redis>=5.4.0
 cloudinary>=1.40.0
 django-cloudinary-storage>=0.3.0
 sentry-sdk>=2.0.0
+channels>=4.0.0
+daphne>=4.0.0
+channels-redis>=4.0.0
