@@ -17,7 +17,7 @@ import {
 import { authClient } from '@/lib/api-auth';
 import { addRealtimeNotification } from '@/lib/notifications-store';
 import { ImageCropModal } from '@/components/ui/ImageCropModal';
-import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, getStoredTeachers, saveTeacher, saveStudent, deleteStudent, subscribeToCBTStore, syncStudentsWithBackend, syncTeachersWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, calculateBECEGrade, isSeniorSecondaryClass, CourseBroadsheetScore, PromotionRecord, getPromotionHistory, executeStudentPromotions, getNextProgressiveClass, getArchivedCohortsForTeacher, matchStudentClass } from '@/lib/cbt-store';
+import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, getStoredTeachers, saveTeacher, saveStudent, deleteStudent, subscribeToCBTStore, broadcastRealtimeEvent, syncStudentsWithBackend, syncTeachersWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, calculateBECEGrade, isSeniorSecondaryClass, CourseBroadsheetScore, PromotionRecord, getPromotionHistory, executeStudentPromotions, getNextProgressiveClass, getArchivedCohortsForTeacher, matchStudentClass } from '@/lib/cbt-store';
 import { useTranslation } from '@/lib/i18n';
 import { TerminalReportCard, ReportCardData, SubjectScore } from '@/components/reports/TerminalReportCard';
 import { getTimeGreeting } from '@/lib/utils';
@@ -3446,6 +3446,7 @@ export default function TeacherDashboard() {
                     recipientRole: 'ADMIN',
                   });
 
+                  broadcastRealtimeEvent();
                   window.dispatchEvent(new Event('cbt_store_updated'));
                   window.dispatchEvent(new Event('storage'));
                   showToast(t('teacher.profile_sync_success', 'Profile & image updated and synced to Admin Portal in real time!'));
@@ -3840,6 +3841,7 @@ export default function TeacherDashboard() {
               recipientRole: 'ADMIN',
             });
 
+            broadcastRealtimeEvent();
             window.dispatchEvent(new Event('cbt_store_updated'));
             window.dispatchEvent(new Event('storage'));
             showToast('Teacher profile & preferences saved and synced to Admin in real time!');

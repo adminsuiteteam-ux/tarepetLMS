@@ -2323,8 +2323,18 @@ export default function AdminDashboard() {
   // Sync teachers & users from live Django REST API backend & real-time store
   React.useEffect(() => {
     const handleSyncFromStore = () => {
-      setTeachersList(getStoredTeachers());
-      setStudentsList(getStoredStudents());
+      const latestTeachers = getStoredTeachers();
+      const latestStudents = getStoredStudents();
+      setTeachersList(latestTeachers);
+      setStudentsList(latestStudents);
+      setSelectedTeacher((prev: any) => {
+        if (!prev) return null;
+        return latestTeachers.find((t: any) => (prev.id && t.id === prev.id) || (prev.staffId && t.staffId === prev.staffId) || (prev.email && t.email === prev.email)) || prev;
+      });
+      setSelectedUser((prev: any) => {
+        if (!prev) return null;
+        return latestStudents.find((s: any) => (prev.id && s.id === prev.id) || (prev.admissionNo && s.admissionNo === prev.admissionNo) || (prev.studentId && s.studentId === prev.studentId) || (prev.email && s.email === prev.email)) || prev;
+      });
     };
 
     // 1. Initial sync
@@ -3142,7 +3152,8 @@ export default function AdminDashboard() {
     if (activeSection === 'users') {
       // ── LEVEL 3: Individual Student Profile Page ──────────────────────
       if (selectedUser) {
-        const u = selectedUser;
+        const liveStudent = studentsList.find((s: any) => (selectedUser.id && s.id === selectedUser.id) || (selectedUser.admissionNo && s.admissionNo === selectedUser.admissionNo) || (selectedUser.studentId && s.studentId === selectedUser.studentId) || (selectedUser.email && s.email === selectedUser.email));
+        const u = liveStudent || selectedUser;
 
         return (
           <div className="space-y-6">
@@ -5852,7 +5863,8 @@ export default function AdminDashboard() {
 
     if (activeSection === 'teachers') {
       if (selectedTeacher) {
-        const tchr = selectedTeacher;
+        const liveTeacher = teachersList.find((t: any) => (selectedTeacher.id && t.id === selectedTeacher.id) || (selectedTeacher.staffId && t.staffId === selectedTeacher.staffId) || (selectedTeacher.email && t.email === selectedTeacher.email));
+        const tchr = liveTeacher || selectedTeacher;
         return (
           <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
             {/* Breadcrumb Navigation */}

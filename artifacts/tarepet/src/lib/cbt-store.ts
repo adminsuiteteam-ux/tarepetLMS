@@ -646,27 +646,31 @@ function loadSavedTeachers(): TeacherRecord[] {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Strictly prune any non-official/legacy teachers from localStorage
-          list = parsed.filter((t: any) => {
-            if (!t || !t.email) return false;
-            const em = (t.email || '').toLowerCase().trim();
-            const nm = (t.name || '').toLowerCase().trim();
-            return OFFICIAL_TEACHER_EMAILS.has(em) || OFFICIAL_TEACHER_NAMES.has(nm) || (typeof t.id === 'number' && t.id > 1700000000000);
-          });
+          list = parsed.filter((t: any) => t && t.name && !isAccountDeleted(t.email) && !isAccountDeleted(t.staffId) && !isAccountDeleted(t.id));
         }
       }
     } catch (e) {}
   }
 
-  // Ensure all 19 official teachers are present, with saved overrides merged
-  const merged = DEFAULT_FORM_TEACHERS.map(def => {
-    const found = list.find(l => (l.email && l.email.toLowerCase() === def.email.toLowerCase()) || (l.staffId && l.staffId.toLowerCase() === def.staffId.toLowerCase()));
-    return found ? { ...def, ...found } : def;
-  });
+  if (list.length === 0) {
+    list = [...DEFAULT_FORM_TEACHERS];
+  } else {
+    // Append any missing official default teachers if not yet in the list
+    for (const def of DEFAULT_FORM_TEACHERS) {
+      const defStaffId = (def.staffId || '').toLowerCase();
+      const defEmail = (def.email || '').toLowerCase();
+      const hasMatch = list.some(l => 
+        (l.id && l.id === def.id) || 
+        (l.staffId && l.staffId.toLowerCase() === defStaffId) || 
+        (l.email && l.email.toLowerCase() === defEmail)
+      );
+      if (!hasMatch) {
+        list.push(def);
+      }
+    }
+  }
 
-  // Include any newly added custom staff
-  const custom = list.filter(l => !DEFAULT_FORM_TEACHERS.some(d => d.email.toLowerCase() === (l.email || '').toLowerCase()));
-  const deduped = deduplicateTeachers([...merged, ...custom]);
+  const deduped = deduplicateTeachers(list);
 
   if (typeof window !== 'undefined') {
     try {
@@ -687,52 +691,54 @@ export function getStoredTeachers(): TeacherRecord[] {
 export function saveTeacher(teacherData: Partial<TeacherRecord> & { name: string }): TeacherRecord {
   _teachers = loadSavedTeachers();
   const serial = String(Math.floor(1 + Math.random() * 9999)).padStart(4, '0');
-  const staffId = teacherData.staffId || `TMS/TCH/${serial}`;
-  const email = teacherData.email || formatStudentEmail(teacherData.name);
-  const nameClean = (teacherData.name || '').trim().toLowerCase();
-  const staffIdClean = staffId.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const emailClean = email.toLowerCase().trim();
-
-  const existingIdx = _teachers.findIndex(t => 
+  const existing = _teachers.find(t => 
     (teacherData.id && t.id === teacherData.id) ||
-    (emailClean && (t.email || '').toLowerCase().trim() === emailClean) ||
-    (staffIdClean && (t.staffId || '').toLowerCase().replace(/[^a-z0-9]/g, '') === staffIdClean) ||
-    (nameClean && (t.name || '').trim().toLowerCase() === nameClean)
+    (teacherData.staffId && (t.staffId || '').toLowerCase().replace(/[^a-z0-9]/g, '') === (teacherData.staffId || '').toLowerCase().replace(/[^a-z0-9]/g, '')) ||
+    (teacherData.email && (t.email || '').toLowerCase().trim() === (teacherData.email || '').toLowerCase().trim()) ||
+    (teacherData.name && (t.name || '').trim().toLowerCase() === (teacherData.name || '').trim().toLowerCase())
   );
 
-  const existing = existingIdx >= 0 ? _teachers[existingIdx] : null;
+  const staffId = teacherData.staffId || existing?.staffId || `TMS/TCH/${serial}`;
+  const email = teacherData.email || existing?.email || formatStudentEmail(teacherData.name);
 
-  const newTeacher: TeacherRecord = {
-    id: teacherData.id || (existing ? existing.id : Date.now()),
+  const updatedTeacher: TeacherRecord = {
+    id: teacherData.id || existing?.id || Date.now(),
     staffId: staffId,
     name: teacherData.name.trim(),
     email: email,
-    phone: teacherData.phone || (existing?.phone) || '',
-    gender: teacherData.gender || (existing?.gender) || '',
-    department: teacherData.department || (existing?.department) || '',
-    specialization: teacherData.specialization || (existing?.specialization) || '',
-    qualification: teacherData.qualification || (existing?.qualification) || '',
-    status: teacherData.status || (existing?.status) || 'Active',
-    joined: teacherData.joined || (existing?.joined) || new Date().toISOString().split('T')[0],
-    formTeacherOf: teacherData.formTeacherOf || (existing?.formTeacherOf) || 'None',
-    subjectsAssigned: teacherData.subjectsAssigned || (existing?.subjectsAssigned) || [],
-    classesCount: teacherData.classesCount || (existing?.classesCount) || 0,
-    studentsCount: teacherData.studentsCount || (existing?.studentsCount) || 0,
-    address: teacherData.address || (existing?.address) || '',
-    dob: teacherData.dob || (existing?.dob) || '',
-    cbtExamsCount: teacherData.cbtExamsCount || (existing?.cbtExamsCount) || 0,
-    attendanceRate: teacherData.attendanceRate || (existing?.attendanceRate) || '0%',
-    profileImage: teacherData.profileImage || (existing?.profileImage) || '',
-    salary: teacherData.salary || (existing?.salary) || '',
-    bankName: teacherData.bankName || (existing?.bankName) || '',
-    accountNumber: teacherData.accountNumber || (existing?.accountNumber) || '',
-    password: teacherData.password || (existing?.password) || staffId,
+    phone: teacherData.phone !== undefined ? teacherData.phone : (existing?.phone || ''),
+    gender: teacherData.gender !== undefined ? teacherData.gender : (existing?.gender || ''),
+    department: teacherData.department !== undefined ? teacherData.department : (existing?.department || ''),
+    specialization: teacherData.specialization !== undefined ? teacherData.specialization : (existing?.specialization || ''),
+    qualification: teacherData.qualification !== undefined ? teacherData.qualification : (existing?.qualification || ''),
+    status: teacherData.status !== undefined ? teacherData.status : (existing?.status || 'Active'),
+    joined: teacherData.joined !== undefined ? teacherData.joined : (existing?.joined || new Date().toISOString().split('T')[0]),
+    formTeacherOf: teacherData.formTeacherOf !== undefined ? teacherData.formTeacherOf : (existing?.formTeacherOf || 'None'),
+    subjectsAssigned: teacherData.subjectsAssigned !== undefined ? teacherData.subjectsAssigned : (existing?.subjectsAssigned || []),
+    classesCount: teacherData.classesCount !== undefined ? teacherData.classesCount : (existing?.classesCount || 0),
+    studentsCount: teacherData.studentsCount !== undefined ? teacherData.studentsCount : (existing?.studentsCount || 0),
+    address: teacherData.address !== undefined ? teacherData.address : (existing?.address || ''),
+    dob: teacherData.dob !== undefined ? teacherData.dob : (existing?.dob || ''),
+    bio: teacherData.bio !== undefined ? teacherData.bio : (existing?.bio || ''),
+    cbtExamsCount: teacherData.cbtExamsCount !== undefined ? teacherData.cbtExamsCount : (existing?.cbtExamsCount || 0),
+    attendanceRate: teacherData.attendanceRate !== undefined ? teacherData.attendanceRate : (existing?.attendanceRate || '0%'),
+    profileImage: teacherData.profileImage !== undefined ? teacherData.profileImage : (existing?.profileImage || ''),
+    salary: teacherData.salary !== undefined ? teacherData.salary : (existing?.salary || ''),
+    bankName: teacherData.bankName !== undefined ? teacherData.bankName : (existing?.bankName || ''),
+    accountNumber: teacherData.accountNumber !== undefined ? teacherData.accountNumber : (existing?.accountNumber || ''),
+    password: teacherData.password !== undefined ? teacherData.password : (existing?.password || staffId),
   };
 
+  const existingIdx = _teachers.findIndex(t => 
+    (updatedTeacher.id && t.id === updatedTeacher.id) ||
+    (t.staffId && t.staffId.toLowerCase() === updatedTeacher.staffId.toLowerCase()) ||
+    (t.email && t.email.toLowerCase() === updatedTeacher.email.toLowerCase())
+  );
+
   if (existingIdx >= 0) {
-    _teachers[existingIdx] = { ..._teachers[existingIdx], ...newTeacher };
+    _teachers[existingIdx] = updatedTeacher;
   } else {
-    _teachers = [newTeacher, ..._teachers];
+    _teachers.unshift(updatedTeacher);
   }
 
   _teachers = deduplicateTeachers(_teachers);
@@ -1205,7 +1211,11 @@ if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
 
 export function broadcastRealtimeEvent() {
   if (typeof window === 'undefined') return;
+  _teachers = loadSavedTeachers();
+  _students = loadSavedStudents();
+  _exams = loadSavedExams();
   window.dispatchEvent(new Event('cbt_store_updated'));
+  window.dispatchEvent(new Event('storage'));
   if (broadcastChannel) {
     try {
       broadcastChannel.postMessage({ type: 'CBT_STORE_MUTATED', timestamp: Date.now() });
@@ -1696,6 +1706,8 @@ export function subscribeToCBTStore(callback: () => void) {
   if (typeof window === 'undefined') return () => {};
 
   const handleUpdate = () => {
+    _teachers = loadSavedTeachers();
+    _students = loadSavedStudents();
     _exams = loadSavedExams();
     callback();
   };
