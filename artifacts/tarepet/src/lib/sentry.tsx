@@ -21,9 +21,10 @@ export function initSentry() {
   const env = (import.meta as any).env?.MODE || 'production';
 
   try {
+    const pkg = '@sentry/react';
     // Dynamically import Sentry if available in bundle
     // @ts-ignore
-    import('@sentry/react')
+    import(/* @vite-ignore */ pkg)
       .then((Sentry) => {
         Sentry.init({
           dsn,
@@ -51,8 +52,9 @@ export function initSentry() {
 export function captureException(error: any, context?: Record<string, any>) {
   if (typeof window === 'undefined') return;
   try {
+    const pkg = '@sentry/react';
     // @ts-ignore
-    import('@sentry/react').then((Sentry) => {
+    import(/* @vite-ignore */ pkg).then((Sentry) => {
       Sentry.captureException(error, { extra: context });
     }).catch(() => {
       console.error('[Error Logger]', error, context);
