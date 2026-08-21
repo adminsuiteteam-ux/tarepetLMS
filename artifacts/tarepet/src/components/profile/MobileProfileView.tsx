@@ -154,7 +154,7 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
       onLogout();
     } else {
       logout();
-      window.location.href = '/login';
+      window.location.href = '/sign-in';
     }
   };
 

@@ -44,8 +44,11 @@ function PublicRoute({ component: Component }: { component: React.ComponentType 
 function Router() {
   return (
     <Switch>
-      {/* Standalone Pages (No public Header/Footer layout) */}
+      {/* Standalone Authentication Pages */}
       <Route path="/sign-in" component={SignIn} />
+      <Route path="/signin" component={SignIn} />
+      <Route path="/login" component={SignIn} />
+      <Route path="/portal" component={SignIn} />
       <Route path="/dashboard" component={DashboardRedirect} />
       <Route path="/search" component={SearchPage} />
       <Route path="/dashboard/search" component={SearchPage} />

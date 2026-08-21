@@ -636,9 +636,9 @@ export default function TeacherProfile() {
           {/* Clean Edit Profile & Biometrics Modal */}
           {/* Full Comprehensive Edit Profile & Biometrics Modal */}
           {showEditModal && (
-            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-              <div className="bg-card border border-border rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl space-y-6 my-8 max-h-[92vh] overflow-y-auto">
-                <div className="flex items-center justify-between pb-4 border-b border-border">
+            <div className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-hidden">
+              <div className="bg-card border border-border rounded-3xl max-w-3xl w-full shadow-2xl flex flex-col max-h-[90vh] overflow-hidden relative">
+                <div className="flex items-center justify-between p-4 sm:p-6 border-b border-border shrink-0">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold">
                       <Edit2 className="w-5 h-5" />
@@ -650,7 +650,7 @@ export default function TeacherProfile() {
                   </div>
                   <button
                     onClick={() => setShowEditModal(false)}
-                    className="p-2 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                    className="p-2 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -661,8 +661,9 @@ export default function TeacherProfile() {
                     handleSaveProfile(e);
                     setShowEditModal(false);
                   }}
-                  className="space-y-6 text-xs"
+                  className="flex flex-col flex-1 overflow-hidden"
                 >
+                  <div className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1 text-xs pb-10">
                   {/* 1. Profile Photo / Avatar Live Uploader */}
                   <div className="p-4 rounded-2xl bg-muted/20 border border-border flex flex-col sm:flex-row items-center gap-5">
                     <div className="w-20 h-20 rounded-2xl bg-emerald-500/10 border-2 border-emerald-500/20 flex items-center justify-center font-serif font-bold text-2xl text-emerald-700 shadow-sm overflow-hidden shrink-0">
@@ -938,41 +939,42 @@ export default function TeacherProfile() {
                       </div>
                     </div>
                   </div>
+                </div>
 
-                  {/* Footer Buttons */}
-                  <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
-                    <button
-                      type="button"
-                      onClick={() => setShowEditModal(false)}
-                      className="px-5 py-2.5 rounded-xl border border-border text-foreground hover:bg-muted text-xs font-semibold transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-6 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all"
-                    >
-                      <Save className="w-4 h-4" />
-                      <span>Save Changes</span>
-                    </button>
-                  </div>
-                </form>
-              </div>
+                {/* Sticky Footer Buttons (Permanently Visible above Bottom Navbar) */}
+                <div className="p-4 sm:p-5 border-t border-border bg-card/95 backdrop-blur-sm flex items-center justify-end gap-3 shrink-0 rounded-b-3xl shadow-lg z-20">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
+                    className="px-5 py-2.5 rounded-full border border-border text-foreground hover:bg-muted text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-7 py-2.5 rounded-full bg-primary hover:bg-primary/90 text-white text-xs font-bold flex items-center gap-2 shadow-md shadow-primary/20 transition-all cursor-pointer"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>Save Changes</span>
+                  </button>
+                </div>
+              </form>
             </div>
-          )}
-        </div>
+          </div>
+        )}
+      </div>
 
-        {/* Official Teacher Staff ID Card Modal */}
-        {showStaffIdModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in zoom-in duration-150" onClick={() => setShowStaffIdModal(false)}>
-            <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
-              <div className="p-6 border-b border-border flex items-center justify-between">
-                <h3 className="font-serif font-bold text-xl text-foreground flex items-center gap-2">
-                  <CreditCard className="w-5 h-5 text-primary" /> {t('teacher.staff_id_title')}
-                </h3>
-                <button onClick={() => setShowStaffIdModal(false)} className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-accent">
-                  <X className="w-5 h-5" />
-                </button>
+      {/* Official Teacher Staff ID Card Modal */}
+      {showStaffIdModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 backdrop-blur-xs p-4 animate-in fade-in zoom-in duration-150" onClick={() => setShowStaffIdModal(false)}>
+          <div className="bg-card rounded-3xl border border-border shadow-2xl w-full max-w-lg overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="p-6 border-b border-border flex items-center justify-between">
+              <h3 className="font-serif font-bold text-xl text-foreground flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-primary" /> {t('teacher.staff_id_title')}
+              </h3>
+              <button onClick={() => setShowStaffIdModal(false)} className="text-muted-foreground hover:text-foreground p-1.5 rounded-xl hover:bg-accent cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
               </div>
               <div className="p-6 space-y-4">
                 <div className="border-4 border-primary rounded-2xl overflow-hidden shadow-lg bg-gradient-to-br from-primary/5 to-secondary/5">
