@@ -48,28 +48,30 @@ function parseDate(iso: any): Date {
   return new Date();
 }
 
-function timeAgo(iso: string): string {
+function formatNotificationTime(iso: any): string {
   try {
-    const date = parseDate(iso);
-    const now = Date.now();
-    const diff = now - date.getTime();
+    const d = parseDate(iso);
+    const now = new Date();
+    const diffMs = Math.abs(now.getTime() - d.getTime());
 
-    // If in the future (due to slight server drift) or within last 60 seconds
-    if (diff <= 60000) return 'just now';
+    const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
 
-    const mins = Math.floor(diff / 60000);
-    if (mins < 60) return `${mins}m ago`;
-
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24) return `${hrs}h ago`;
-
-    const days = Math.floor(hrs / 24);
-    if (days === 1) return 'Yesterday';
-    if (days < 7) return `${days}d ago`;
-
-    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+    if (diffMs < 60000) {
+      return 'Just now';
+    }
+    if (diffMs < 3600000) {
+      const mins = Math.floor(diffMs / 60000);
+      return `${mins}m ago`;
+    }
+    if (diffMs < 86400000 && d.getDate() === now.getDate()) {
+      return `Today, ${timeStr}`;
+    }
+    if (diffMs < 172800000) {
+      return `Yesterday, ${timeStr}`;
+    }
+    return `${d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}, ${timeStr}`;
   } catch (e) {
-    return 'just now';
+    return 'Just now';
   }
 }
 
@@ -264,7 +266,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ role }) =>
                             {n.title}
                           </p>
                           <span className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0" title={formatExactTime(n.time)}>
-                            {timeAgo(n.time)}
+                            {formatNotificationTime(n.time)}
                           </span>
                         </div>
                         <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{n.message}</p>
