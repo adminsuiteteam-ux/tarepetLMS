@@ -36,9 +36,8 @@ import {
   Briefcase, UserCog, BookMarked, MessageSquare, KeyRound,
   BadgeCheck, Ban, RotateCcw, FileDown, Send, FlaskConical, Palette,
   School, CalendarCheck, Megaphone, UserPlus, FileSpreadsheet, TrendingUp, Sparkles, ChevronRight, Eye, Layers, ShieldCheck, Bell, AlertTriangle, Key, Trophy, BarChart3, TrendingDown, XCircle, UploadCloud, Camera,
-  Fingerprint, Smartphone, Scissors
+  Scissors
 } from 'lucide-react';
-import { isBiometricsEnabled, enrollBiometrics, unenrollBiometrics } from '@/lib/biometrics';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, LineChart, Line, CartesianGrid,
 } from 'recharts';
@@ -2129,11 +2128,6 @@ export default function AdminDashboard() {
   const [profileUpdateSuccess, setProfileUpdateSuccess] = useState(false);
   const [adminPasswordForm, setAdminPasswordForm] = useState({ current: '', newPass: '', confirm: '' });
   const [adminPasswordStatus, setAdminPasswordStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-  const [biometricsEnabled, setBiometricsEnabled] = useState<boolean>(() => {
-    return isBiometricsEnabled('admin@tarepet.com');
-  });
-  const [biometricLoading, setBiometricLoading] = useState(false);
-  const [biometricToast, setBiometricToast] = useState<string | null>(null);
 
   // Class Marksheet / Score Entry State
   const [resultsViewTab, setResultsViewTab] = useState<'roster' | 'marksheet' | 'fees'>('roster');
@@ -2849,84 +2843,6 @@ export default function AdminDashboard() {
             </form>
           </div>
 
-          {/* Biometric Security Settings Card */}
-          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-border pb-3">
-              <div>
-                <h3 className="font-serif font-bold text-foreground text-base flex items-center gap-2">
-                  <Fingerprint className="w-5 h-5 text-rose-600" /> Admin Biometric Authentication (Fingerprint & Face ID)
-                </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Secure your Chief Administrator account with hardware-level biometric enrollment.
-                </p>
-              </div>
-              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase border ${
-                biometricsEnabled ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-muted text-muted-foreground border-border'
-              }`}>
-                {biometricsEnabled ? 'Active / Enabled' : 'Not Activated'}
-              </span>
-            </div>
-
-            {biometricToast && (
-              <div className="p-3 bg-slate-900 text-white rounded-xl text-xs flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>{biometricToast}</span>
-              </div>
-            )}
-
-            <div className="p-4 rounded-xl bg-muted/20 border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <Smartphone className="w-4 h-4 text-rose-600" />
-                  <p className="font-bold text-xs text-foreground">Android Fingerprint, iPhone/Mac Touch ID & Face ID, Windows Hello</p>
-                </div>
-                <p className="text-[11px] text-muted-foreground max-w-md">
-                  Enable fast 1-touch biometric access for <strong className="text-foreground">admin@tarepet.com</strong> on this device without repeatedly typing passwords.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                disabled={biometricLoading}
-                onClick={async () => {
-                  setBiometricLoading(true);
-                  try {
-                    if (biometricsEnabled) {
-                      unenrollBiometrics('admin@tarepet.com');
-                      setBiometricsEnabled(false);
-                      setBiometricToast('Admin biometric authentication removed successfully.');
-                      setTimeout(() => setBiometricToast(null), 3500);
-                    } else {
-                      const res = await enrollBiometrics({
-                        email: 'admin@tarepet.com',
-                        name: 'Chief Administrator',
-                        role: 'ADMIN',
-                        staffId: 'TMS/ADM/001',
-                      });
-                      if (res.success) {
-                        setBiometricsEnabled(true);
-                        setBiometricToast('Admin biometric authentication activated for this device!');
-                        setTimeout(() => setBiometricToast(null), 3500);
-                      } else {
-                        setBiometricToast(res.error || 'Biometric enrollment failed. Ensure sensor is enabled.');
-                        setTimeout(() => setBiometricToast(null), 4000);
-                      }
-                    }
-                  } finally {
-                    setBiometricLoading(false);
-                  }
-                }}
-                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-2 shrink-0 ${
-                  biometricsEnabled
-                    ? 'bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 border border-rose-200'
-                    : 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-600/20'
-                }`}
-              >
-                <Fingerprint className="w-4 h-4" />
-                <span>{biometricLoading ? 'Processing...' : (biometricsEnabled ? 'Deactivate Admin Biometrics' : 'Activate Fingerprint / Face ID')}</span>
-              </button>
-            </div>
-          </div>
         </div>
       );
     }

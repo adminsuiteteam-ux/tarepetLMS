@@ -11,7 +11,7 @@ import {
   TrendingUp, Play, Lock, MessageSquare, ChevronDown, ChevronRight, ChevronLeft,
   CheckSquare, XCircle, RefreshCw, PenLine, Globe, Layers, ArrowUpRight,
   ClipboardList, Settings, ShieldCheck, User, Bell, Printer, CreditCard, GraduationCap, Zap, School,
-  Fingerprint, Smartphone, Save, History, Sparkles, RotateCcw, FileSpreadsheet, Check, Scissors
+  Save, History, Sparkles, RotateCcw, FileSpreadsheet, Check, Scissors
 } from 'lucide-react';
 
 import { authClient } from '@/lib/api-auth';
@@ -21,7 +21,6 @@ import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEm
 import { useTranslation } from '@/lib/i18n';
 import { TerminalReportCard, ReportCardData, SubjectScore } from '@/components/reports/TerminalReportCard';
 import { getTimeGreeting } from '@/lib/utils';
-import { isBiometricsEnabled, enrollBiometrics, unenrollBiometrics } from '@/lib/biometrics';
 
 function getSafeProperty<T>(obj: Record<string | number, T> | null | undefined, key: string | number): T | undefined {
   if (obj && typeof obj === 'object' && Object.prototype.hasOwnProperty.call(obj, key)) {
@@ -625,12 +624,6 @@ export default function TeacherDashboard() {
     broadcastRealtimeEvent();
     showToast('Profile photo deleted successfully.');
   };
-
-  const [biometricsEnabled, setBiometricsEnabled] = useState<boolean>(() => {
-    const email = user?.email || (user?.profile as any)?.teacher_id || '';
-    return isBiometricsEnabled(email);
-  });
-  const [biometricLoading, setBiometricLoading] = useState(false);
 
   React.useEffect(() => {
     setProfileForm(getTeacherProfileData());
@@ -3736,53 +3729,6 @@ export default function TeacherDashboard() {
                   </div>
                 </div>
 
-                {/* 5. Biometrics Activation */}
-                <div className="p-4 rounded-2xl border border-border bg-muted/10 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <Fingerprint className="w-5 h-5 text-emerald-600 shrink-0" />
-                      <div>
-                        <p className="font-bold text-foreground text-xs">{t('teacher.biometrics_modal_header', 'Biometric Authentication')}</p>
-                        <p className="text-[10px] text-muted-foreground">{t('teacher.biometrics_modal_desc', 'Android Fingerprint, Apple Face ID / Touch ID, Windows Hello')}</p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      disabled={biometricLoading}
-                      onClick={async () => {
-                        setBiometricLoading(true);
-                        const emailVal = profileForm.email || (user?.email) || profileForm.staffId;
-                        if (biometricsEnabled) {
-                          unenrollBiometrics(emailVal);
-                          setBiometricsEnabled(false);
-                          showToast('Biometric authentication deactivated for this device.');
-                        } else {
-                          const res = await enrollBiometrics({
-                            email: emailVal,
-                            name: `${profileForm.firstName} ${profileForm.lastName}`,
-                            role: 'TEACHER',
-                            staffId: profileForm.staffId,
-                          });
-                          if (res.success) {
-                            setBiometricsEnabled(true);
-                            showToast(`Biometric login (${res.biometricType === 'FACE_ID' ? 'Face ID' : 'Fingerprint'}) activated successfully!`);
-                          } else {
-                            showToast(res.error || 'Failed to activate biometric login.');
-                          }
-                        }
-                        setBiometricLoading(false);
-                      }}
-                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 ${
-                        biometricsEnabled
-                          ? 'border border-rose-500/30 text-rose-600 hover:bg-rose-500/10'
-                          : 'bg-emerald-700 text-white hover:bg-emerald-800 shadow-emerald-700/20'
-                      }`}
-                    >
-                      <span>{biometricLoading ? 'Processing...' : biometricsEnabled ? 'Deactivate Biometrics' : 'Activate Fingerprint / Face ID'}</span>
-                    </button>
-                  </div>
-                </div>
-
                 {/* Footer Buttons */}
                 <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
                   <button
@@ -3844,72 +3790,6 @@ export default function TeacherDashboard() {
           <div>
             <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.subject_specialization', 'Subject Specialization')}</label>
             <input type="text" value={profileForm.specialization} onChange={e => setProfileForm({...profileForm, specialization: e.target.value})} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
-          </div>
-        </div>
-
-        {/* Biometric Security Settings */}
-        <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
-          <div className="flex items-center justify-between border-b border-border pb-3">
-            <h3 className="font-serif font-bold text-foreground text-base flex items-center gap-2">
-              <Fingerprint className="w-5 h-5 text-emerald-600" /> Biometric Authentication (Fingerprint & Face ID)
-            </h3>
-            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase border ${
-              biometricsEnabled ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-muted text-muted-foreground border-border'
-            }`}>
-              {biometricsEnabled ? 'Active / Enabled' : 'Not Activated'}
-            </span>
-          </div>
-
-          <div className="p-4 rounded-xl bg-muted/20 border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <Smartphone className="w-4 h-4 text-emerald-600" />
-                <p className="font-bold text-xs text-foreground">{t('teacher.biometrics_device_title', 'Android Fingerprint & Apple Face ID / Touch ID')}</p>
-              </div>
-              <p className="text-[11px] text-muted-foreground max-w-md">
-                {t('teacher.biometrics_device_desc', 'Fast, 1-touch passwordless biometric sign-in directly on this device using Android fingerprint sensors, Apple Face ID / Touch ID, or Windows Hello.')}
-              </p>
-            </div>
-
-            <button
-              type="button"
-              disabled={biometricLoading}
-              onClick={async () => {
-                const email = user?.email || (user?.profile as any)?.teacher_id || profileForm.email;
-                const name = `${profileForm.firstName} ${profileForm.lastName}`.trim();
-                setBiometricLoading(true);
-                try {
-                  if (biometricsEnabled) {
-                    unenrollBiometrics(email);
-                    setBiometricsEnabled(false);
-                    showToast('Biometric authentication removed successfully.');
-                  } else {
-                    const res = await enrollBiometrics({
-                      email,
-                      name,
-                      role: 'TEACHER',
-                      staffId: profileForm.staffId,
-                    });
-                    if (res.success) {
-                      setBiometricsEnabled(true);
-                      showToast(`Biometric authentication activated for this device!`);
-                    } else {
-                      showToast(res.error || 'Biometric registration failed. Ensure your device sensor is enabled.');
-                    }
-                  }
-                } finally {
-                  setBiometricLoading(false);
-                }
-              }}
-              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-2 shrink-0 ${
-                biometricsEnabled
-                  ? 'bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 border border-rose-200'
-                  : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
-              }`}
-            >
-              <Fingerprint className="w-4 h-4" />
-              <span>{biometricLoading ? 'Processing...' : (biometricsEnabled ? 'Deactivate Biometrics' : 'Activate Fingerprint / Face ID')}</span>
-            </button>
           </div>
         </div>
 
