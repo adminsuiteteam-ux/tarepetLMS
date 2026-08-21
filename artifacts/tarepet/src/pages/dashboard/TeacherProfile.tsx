@@ -383,12 +383,12 @@ export default function TeacherProfile() {
         {/* Mobile View Profile (matching modern design reference) */}
         <div className="md:hidden">
           <MobileProfileView
-            name={profileForm.fullName || `${profileForm.firstName} ${profileForm.lastName}`}
-            email={profileForm.email || user?.email || ''}
-            subtitle={profileForm.roleTitle || profileForm.department || 'Form Teacher'}
-            avatarUrl={profileForm.profileImage}
-            roleBadge={user?.role || 'TEACHER'}
-            location="Yenagoa Campus, Nigeria"
+            name={profileForm.fullName || `${profileForm.firstName || ''} ${profileForm.lastName || ''}`.trim() || (user?.first_name ? `${user.first_name} ${user.last_name || ''}` : 'Faculty Teacher')}
+            email={profileForm.email || user?.email || 'teacher@tarepet.com'}
+            subtitle={profileForm.formClass && profileForm.formClass !== 'None' ? `Form Teacher (${profileForm.formClass})` : (profileForm.roleTitle || profileForm.specialization || 'Form Teacher & Educator')}
+            avatarUrl={profileForm.profileImage || (user as any)?.profile_image}
+            roleBadge={profileForm.staffId ? `Staff ID: ${profileForm.staffId}` : (user?.role || 'TEACHER')}
+            location="Tarepet Montessori Academy, Yenagoa"
             onBack={() => setLocation('/dashboard/teacher')}
             onEditProfile={() => setShowEditModal(true)}
             onViewIdCard={() => setShowStaffIdModal(true)}
@@ -399,14 +399,14 @@ export default function TeacherProfile() {
                 label: 'Class Assignment',
                 value: profileForm.formClass && profileForm.formClass !== 'None' ? profileForm.formClass : 'General Faculty',
                 onClick: () => setShowEditModal(true),
-                color: 'bg-emerald-500/10 text-emerald-600',
+                color: 'bg-primary/10 text-primary',
               },
               {
                 icon: BookOpen,
                 label: 'Assigned Subjects',
                 value: `${profileForm.subjectsAssigned?.length || 0} Courses`,
                 onClick: () => setShowEditModal(true),
-                color: 'bg-blue-500/10 text-blue-600',
+                color: 'bg-secondary/10 text-secondary',
               }
             ]}
           />

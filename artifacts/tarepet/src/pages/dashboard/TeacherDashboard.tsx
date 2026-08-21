@@ -3095,12 +3095,12 @@ export default function TeacherDashboard() {
         {/* Mobile View Profile */}
         <div className="md:hidden">
           <MobileProfileView
-            name={profileForm.fullName || `${profileForm.firstName} ${profileForm.lastName}`}
-            email={profileForm.email || user?.email || ''}
-            subtitle={profileForm.roleTitle || profileForm.department || 'Form Teacher'}
-            avatarUrl={profileForm.profileImage}
-            roleBadge={user?.role || 'TEACHER'}
-            location="Yenagoa Campus, Nigeria"
+            name={profileForm.fullName || `${profileForm.firstName || ''} ${profileForm.lastName || ''}`.trim() || (user?.first_name ? `${user.first_name} ${user.last_name || ''}` : 'Faculty Teacher')}
+            email={profileForm.email || user?.email || 'teacher@tarepet.com'}
+            subtitle={profileForm.formClass && profileForm.formClass !== 'None' ? `Form Teacher (${profileForm.formClass})` : (profileForm.roleTitle || profileForm.specialization || 'Form Teacher & Educator')}
+            avatarUrl={profileForm.profileImage || (user as any)?.profile_image}
+            roleBadge={profileForm.staffId ? `Staff ID: ${profileForm.staffId}` : (user?.role || 'TEACHER')}
+            location="Tarepet Montessori Academy, Yenagoa"
             onBack={() => setActiveSection('overview')}
             onEditProfile={() => setShowEditModal(true)}
             onViewIdCard={() => setShowStaffIdModal(true)}
@@ -3111,14 +3111,14 @@ export default function TeacherDashboard() {
                 label: 'Class Assignment',
                 value: profileForm.formClass && profileForm.formClass !== 'None' ? profileForm.formClass : 'General Faculty',
                 onClick: () => setShowEditModal(true),
-                color: 'bg-emerald-500/10 text-emerald-600',
+                color: 'bg-primary/10 text-primary',
               },
               {
                 icon: BookOpen,
                 label: 'Assigned Subjects',
                 value: `${profileForm.subjectsAssigned?.length || 0} Courses`,
                 onClick: () => setShowEditModal(true),
-                color: 'bg-blue-500/10 text-blue-600',
+                color: 'bg-secondary/10 text-secondary',
               }
             ]}
           />
@@ -3349,8 +3349,9 @@ export default function TeacherDashboard() {
             </div>
           </div>
         </div>
+        </div>
 
-        {/* Full Comprehensive Edit Profile & Biometrics Modal */}
+        {/* Full Comprehensive Edit Profile & Biometrics Modal (Accessible on Mobile & Desktop) */}
         {showEditModal && (
           <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
             <div className="bg-card border border-border rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl space-y-6 my-8 max-h-[92vh] overflow-y-auto">
@@ -3786,7 +3787,6 @@ export default function TeacherDashboard() {
             </div>
           </div>
         )}
-        </div>
       </>
     );
 
