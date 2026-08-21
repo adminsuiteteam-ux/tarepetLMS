@@ -878,13 +878,16 @@ function loadSavedStudents(): StudentRecord[] {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed)) {
         const liveOnly = parsed.filter((s: any) => {
-          const sCode = String(s.code || s.admissionNo || s.studentId || '');
+          const sCode = String(s.code || s.admissionNo || s.studentId || '').toLowerCase();
           const sName = String(s.name || '').toLowerCase();
           const sEmail = String(s.email || '').toLowerCase();
-          const isMock = sCode.includes('9927') || sName.includes('civa media') || s.id === 1;
+          const isMock = sCode.includes('9927') || sCode.includes('tp-stu') || sName.includes('civa') || sName.includes('hacker') || sName.includes('wronguser') || sName.includes('david okon') || sEmail.includes('hacker@') || sEmail.includes('wronguser@') || sEmail.includes('civa.media') || sEmail.includes('student@tarepet.com') || sEmail.includes('emeka.amadi') || sEmail.includes('chidinma.okoro') || sEmail.includes('kelechi.eze') || sEmail.includes('somto.nnamdi') || sEmail.includes('tari.powei') || s.id === 1;
           const isDeleted = isAccountDeleted(sCode) || isAccountDeleted(sEmail) || isAccountDeleted(sName) || isAccountDeleted(s.id);
           return !isMock && !isDeleted;
         });
+        if (liveOnly.length !== parsed.length) {
+          localStorage.setItem('tarepet_students_list', JSON.stringify(liveOnly));
+        }
         return liveOnly;
       }
     }
@@ -966,25 +969,8 @@ export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
           };
         });
 
-      const localStudents = loadSavedStudents();
-      const mergedStudents = fetched.map(bs => {
-        const localMatch = localStudents.find(ls => 
-          ls.id === bs.id || 
-          (ls.email && bs.email && ls.email.toLowerCase() === bs.email.toLowerCase()) || 
-          (ls.code && bs.code && ls.code.toLowerCase() === bs.code.toLowerCase())
-        );
-        return localMatch ? { ...localMatch, ...bs, grade: bs.grade || localMatch.grade, profileImage: bs.profileImage || localMatch.profileImage } : bs;
-      });
-
-      const unbackedLocal = localStudents.filter(ls => !fetched.some(bs => 
-        bs.id === ls.id || 
-        (bs.email && ls.email && bs.email.toLowerCase() === ls.email.toLowerCase()) || 
-        (bs.code && ls.code && bs.code.toLowerCase() === ls.code.toLowerCase())
-      ));
-
-      const combined = [...mergedStudents, ...unbackedLocal];
-      _students = combined;
-      saveStoredStudents(combined);
+      _students = fetched;
+      saveStoredStudents(fetched);
       broadcastRealtimeEvent();
     }
   } catch (err) {
