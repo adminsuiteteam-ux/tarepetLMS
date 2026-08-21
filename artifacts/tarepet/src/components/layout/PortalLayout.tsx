@@ -380,34 +380,30 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
 
       {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Header */}
+        {/* Top Header: ONLY Logo, Search Navigation, and Settings Icon */}
         <header className="sticky top-0 z-30 bg-card border-b border-border px-3 sm:px-5 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4">
           <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
             <button
               onClick={() => setMobileSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-full text-muted-foreground hover:bg-accent transition-colors shrink-0"
+              className="lg:hidden p-2 rounded-full text-muted-foreground hover:bg-accent transition-colors shrink-0 cursor-pointer"
               title="Open Menu"
             >
               <Menu className="w-5 h-5" />
             </button>
 
-            {/* Mobile Logo & Portal Title */}
-            <div className="flex items-center gap-2 lg:hidden shrink-0">
-              <img src={tarepetLogo} alt="Logo" className="w-6 h-6 object-contain rounded-full" />
-              <span className="font-bold text-xs sm:text-sm text-foreground truncate max-w-[130px] sm:max-w-[200px]">
+            {/* Logo & Portal Title */}
+            <div
+              onClick={() => onNavigate('overview')}
+              className="flex items-center gap-2.5 cursor-pointer shrink-0"
+              title="Tarepet Portal Home"
+            >
+              <img src={tarepetLogo} alt="Logo" className="w-7 h-7 object-contain rounded-full border border-border/60 shadow-xs" />
+              <span className="font-bold font-serif text-xs sm:text-sm text-foreground truncate max-w-[140px] sm:max-w-[220px]">
                 {title || 'Tarepet LMS'}
               </span>
             </div>
 
-            {/* Desktop School Name / Breadcrumb */}
-            <div className="hidden lg:block shrink-0">
-              <h1 className="text-base font-bold text-foreground leading-tight">{title}</h1>
-              <p className="text-[11px] text-muted-foreground">
-                {navItems.find(n => n.id === activeSection)?.label ?? 'Dashboard'}
-              </p>
-            </div>
-
-            {/* Desktop Search Bar Link */}
+            {/* Desktop Search Bar */}
             <div
               onClick={() => {
                 if (typeof window !== 'undefined') window.location.href = '/search';
@@ -427,7 +423,7 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
             </div>
           </div>
 
-          {/* Right actions: Completely Rounded Action Buttons */}
+          {/* Right actions: Search icon (on mobile) and Settings Icon only */}
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             {/* Mobile Search Icon Button */}
             <button
@@ -435,41 +431,23 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
                 if (typeof window !== 'undefined') window.location.href = '/search';
               }}
               title="Search Portal"
-              className="md:hidden p-2 rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              className="md:hidden p-2 rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer"
             >
               <Search className="w-5 h-5" />
             </button>
 
-            {/* Notifications */}
-            <NotificationPanel role={(user?.role ?? 'STUDENT') as any} />
-
-            {/* Dark Mode Toggle */}
+            {/* Settings Icon Button */}
             <button
-              onClick={toggleDarkMode}
-              title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              className="p-2 rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              onClick={() => onNavigate(user?.role === 'TEACHER' ? 'settings' : (user?.role === 'ADMIN' ? 'settings' : 'settings'))}
+              title="Settings & Display Options"
+              className={`p-2 rounded-full transition-colors cursor-pointer ${
+                activeSection === 'settings'
+                  ? 'bg-primary text-white shadow-xs'
+                  : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+              }`}
             >
-              {isDarkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5" />}
+              <Settings className="w-5 h-5" />
             </button>
-
-            {/* Profile Header Trigger */}
-            <div
-              onClick={() => onNavigate('profile')}
-              className="flex items-center gap-2 pl-1.5 sm:pl-2 border-l border-border cursor-pointer group"
-              title="Click to view Profile"
-            >
-              <div className="w-8 h-8 rounded-full bg-primary text-white font-bold flex items-center justify-center text-sm group-hover:scale-105 transition-transform shadow-xs overflow-hidden border border-border">
-                {userAvatar ? (
-                  <img src={userAvatar} alt="Avatar" className="w-full h-full object-cover" />
-                ) : (
-                  user?.first_name?.[0] ?? 'A'
-                )}
-              </div>
-              <div className="hidden sm:block">
-                <p className="text-xs font-bold text-foreground leading-tight group-hover:text-primary transition-colors">{user?.first_name ?? 'User'} {user?.last_name ?? ''}</p>
-                <p className="text-[10px] text-muted-foreground">{user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase() : 'Member'}</p>
-              </div>
-            </div>
           </div>
         </header>
 

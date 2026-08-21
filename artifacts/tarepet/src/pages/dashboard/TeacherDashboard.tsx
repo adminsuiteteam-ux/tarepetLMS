@@ -559,6 +559,28 @@ export default function TeacherDashboard() {
 
   const [profileForm, setProfileForm] = useState(getTeacherProfileData);
 
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return document.documentElement.classList.contains('dark') ||
+        localStorage.getItem('theme') === 'dark';
+    }
+    return false;
+  });
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(prev => {
+      const next = !prev;
+      if (next) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      }
+      return next;
+    });
+  };
+
   const [profileActiveTab, setProfileActiveTab] = useState<'details' | 'teaching' | 'qualifications' | 'settings'>('details');
   const [showEditModal, setShowEditModal] = useState(false);
   const [cropModalOpen, setCropModalOpen] = useState(false);
@@ -3903,6 +3925,32 @@ export default function TeacherDashboard() {
           }} className="bg-primary text-white px-6 py-2.5 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors">
             {t('teacher.save_settings', 'Save Settings')}
           </button>
+        </div>
+
+        {/* 3. Display & Appearance */}
+        <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
+          <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
+            <Sun className="w-4 h-4 text-primary" /> Display & Appearance
+          </h3>
+          <div className="flex items-center justify-between p-3.5 rounded-xl border border-border bg-muted/10">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                {isDarkMode ? <Moon className="w-5 h-5 text-amber-400" /> : <Sun className="w-5 h-5 text-primary" />}
+              </div>
+              <div>
+                <p className="font-bold text-xs text-foreground">Theme Display Mode</p>
+                <p className="text-[10px] text-muted-foreground">{isDarkMode ? 'Dark interface mode active' : 'Light interface mode active'}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={toggleDarkMode}
+              className="px-4 py-2 rounded-full bg-primary hover:bg-primary/90 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              {isDarkMode ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+              <span>{isDarkMode ? 'Switch to Light' : 'Switch to Dark'}</span>
+            </button>
+          </div>
         </div>
       </div>
     );
