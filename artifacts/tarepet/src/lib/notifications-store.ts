@@ -16,8 +16,20 @@ export interface Notification {
   role: NotifRole;         // which role this belongs to (for filtering)
 }
 
-// ── In-memory state (no localStorage) ────────────────────────────────────────
-let _notifications: Notification[] = [];
+// ── Persistent state with LocalStorage + Real-time Sync ──────────────────────
+function loadSavedNotifications(): Notification[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const saved = localStorage.getItem('tarepet_notifications_list');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (e) {}
+  return [];
+}
+
+let _notifications: Notification[] = loadSavedNotifications();
 
 function getAll(): Notification[] {
   return _notifications;
@@ -25,6 +37,11 @@ function getAll(): Notification[] {
 
 function setAll(notifications: Notification[]) {
   _notifications = notifications;
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('tarepet_notifications_list', JSON.stringify(_notifications));
+    } catch (e) {}
+  }
 }
 
 // ── Subscriptions ─────────────────────────────────────────────────────────────

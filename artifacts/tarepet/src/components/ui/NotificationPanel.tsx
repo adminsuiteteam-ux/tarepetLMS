@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'wouter';
 import { Bell, X, CheckCheck, Trash2, BookOpen, CreditCard, UserCheck, AlertTriangle, Info, CheckCircle2 } from 'lucide-react';
 import {
   getNotificationsForRole,
@@ -94,6 +95,7 @@ interface NotificationPanelProps {
 }
 
 export const NotificationPanel: React.FC<NotificationPanelProps> = ({ role }) => {
+  const [, setLocation] = useLocation();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -291,7 +293,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ role }) =>
             <button
               onClick={() => {
                 setOpen(false);
-                if (typeof window !== 'undefined') window.location.href = '/notifications';
+                setLocation('/notifications');
               }}
               className="w-full py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
             >

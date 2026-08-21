@@ -23,6 +23,7 @@ import {
   clearNotification,
   clearAllNotifications,
   subscribeToNotifications,
+  syncNotificationsWithBackend,
   type NotifRole,
   type Notification,
 } from '@/lib/notifications-store';
@@ -111,6 +112,7 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     sync();
+    syncNotificationsWithBackend(selectedRole).catch(() => {});
     const unsub = subscribeToNotifications(sync);
     return unsub;
   }, [selectedRole]);
