@@ -5,9 +5,10 @@ import { authClient, sanitizeMailto } from '@/lib/api-auth';
 import { PortalLayout } from '@/components/layout/PortalLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
-import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, clearAllStoredStudents, deleteStudent, syncStudentsWithBackend, getStoredTeachers, saveTeacher, saveStoredTeachers, clearAllStoredTeachers, deleteTeacher, syncTeachersWithBackend, listenToRealtimeEvents, clearCBTStoreCache, clearAllSiteDefaultData, isAccountDeleted, getAdminPassword, setAdminPassword, matchStudentClass } from '@/lib/cbt-store';
+import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, clearAllStoredStudents, deleteStudent, syncStudentsWithBackend, getStoredTeachers, saveTeacher, saveStoredTeachers, clearAllStoredTeachers, deleteTeacher, syncTeachersWithBackend, listenToRealtimeEvents, clearCBTStoreCache, clearAllSiteDefaultData, isAccountDeleted, getAdminPassword, setAdminPassword, matchStudentClass, broadcastRealtimeEvent } from '@/lib/cbt-store';
 import { AdminManagementPanel } from '@/components/dashboard/AdminManagementPanel';
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
+import { ImageCropModal } from '@/components/ui/ImageCropModal';
 import {
   getPaymentItems,
   getPaymentTransactions,
@@ -35,7 +36,7 @@ import {
   Briefcase, UserCog, BookMarked, MessageSquare, KeyRound,
   BadgeCheck, Ban, RotateCcw, FileDown, Send, FlaskConical, Palette,
   School, CalendarCheck, Megaphone, UserPlus, FileSpreadsheet, TrendingUp, Sparkles, ChevronRight, Eye, Layers, ShieldCheck, Bell, AlertTriangle, Key, Trophy, BarChart3, TrendingDown, XCircle, UploadCloud, Camera,
-  Fingerprint, Smartphone
+  Fingerprint, Smartphone, Scissors
 } from 'lucide-react';
 import { isBiometricsEnabled, enrollBiometrics, unenrollBiometrics } from '@/lib/biometrics';
 import {
@@ -525,13 +526,24 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                       <p className="text-[11px] text-slate-500">Upload a high-resolution headshot or paste an image URL.</p>
                     </div>
                     {form.profileImage && (
-                      <button
-                        type="button"
-                        onClick={() => setF('profileImage', '')}
-                        className="px-3 py-1 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition border border-rose-200 cursor-pointer"
-                      >
-                        Remove Photo
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            triggerCropModal(form.profileImage, (cropped) => setF('profileImage', cropped));
+                          }}
+                          className="px-3 py-1 text-xs font-bold text-foreground hover:bg-slate-100 rounded-xl transition border border-slate-300 cursor-pointer inline-flex items-center gap-1"
+                        >
+                          <Scissors className="w-3 h-3 text-primary" /> Crop Photo
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setF('profileImage', '')}
+                          className="px-3 py-1 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition border border-rose-200 cursor-pointer"
+                        >
+                          Remove Photo
+                        </button>
+                      </div>
                     )}
                   </div>
 
@@ -570,7 +582,7 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                         <p className="text-xs font-bold text-slate-800">
                           Click to browse <span className="text-primary">or drag & drop photo here</span>
                         </p>
-                        <p className="text-[10px] text-slate-500 mt-0.5 font-medium">Supports PNG, JPG, WEBP or SVG (Max 5MB)</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5 font-medium">Supports PNG, JPG, WEBP or SVG (Max 10MB)</p>
                       </label>
                       <input
                         type="file"
@@ -580,10 +592,14 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                         onChange={e => {
                           const file = e.target.files?.[0];
                           if (file) {
-                            if (file.size > 5 * 1024 * 1024) { alert('Image size exceeds 5MB'); return; }
+                            if (file.size > 10 * 1024 * 1024) { alert('Image size exceeds 10MB limit.'); return; }
                             const reader = new FileReader();
-                            reader.onloadend = () => setF('profileImage', reader.result as string);
+                            reader.onloadend = () => {
+                              const base64 = reader.result as string;
+                              triggerCropModal(base64, (cropped) => setF('profileImage', cropped));
+                            };
                             reader.readAsDataURL(file);
+                            e.target.value = '';
                           }
                         }}
                       />
@@ -864,7 +880,17 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
   );
 };
 
-const EditTeacherModal = ({ teacher, onClose, onSave }: { teacher: any; onClose: () => void; onSave: (updated: any) => void }) => {
+const EditTeacherModal = ({
+  teacher,
+  onClose,
+  onSave,
+  onOpenCrop
+}: {
+  teacher: any;
+  onClose: () => void;
+  onSave: (updated: any) => void;
+  onOpenCrop?: (img: string, cb: (cropped: string) => void) => void;
+}) => {
   const [form, setForm] = useState({ ...teacher });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -900,15 +926,27 @@ const EditTeacherModal = ({ teacher, onClose, onSave }: { teacher: any; onClose:
                 onChange={e => {
                   const file = e.target.files?.[0];
                   if (file) {
+                    if (file.size > 10 * 1024 * 1024) {
+                      alert('Image size exceeds 10MB limit.');
+                      return;
+                    }
                     const reader = new FileReader();
                     reader.onloadend = () => {
-                      setForm((prev: any) => ({ ...prev, profileImage: reader.result as string }));
+                      const base64 = reader.result as string;
+                      if (onOpenCrop) {
+                        onOpenCrop(base64, (cropped) => {
+                          setForm((prev: any) => ({ ...prev, profileImage: cropped }));
+                        });
+                      } else {
+                        setForm((prev: any) => ({ ...prev, profileImage: base64 }));
+                      }
                     };
                     reader.readAsDataURL(file);
+                    e.target.value = '';
                   }
                 }}
               />
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <label
                   htmlFor="adminTeacherEditPhotoInput"
                   className="px-3 py-1.5 bg-primary text-white rounded-xl text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 hover:bg-primary/90 transition-all shadow-xs"
@@ -917,14 +955,30 @@ const EditTeacherModal = ({ teacher, onClose, onSave }: { teacher: any; onClose:
                   <span>{form.profileImage ? 'Change Photo' : 'Upload Photo'}</span>
                 </label>
                 {form.profileImage && (
-                  <button
-                    type="button"
-                    onClick={() => setForm((prev: any) => ({ ...prev, profileImage: '' }))}
-                    className="px-2.5 py-1.5 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold hover:bg-rose-50 flex items-center gap-1"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>Remove</span>
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onOpenCrop) {
+                          onOpenCrop(form.profileImage, (cropped) => {
+                            setForm((prev: any) => ({ ...prev, profileImage: cropped }));
+                          });
+                        }
+                      }}
+                      className="px-2.5 py-1.5 text-foreground border border-border rounded-xl text-xs font-bold hover:bg-muted inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <Scissors className="w-3.5 h-3.5 text-primary" />
+                      <span>Crop / Resize</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setForm((prev: any) => ({ ...prev, profileImage: '' }))}
+                      className="px-2.5 py-1.5 text-rose-600 border border-rose-200 dark:border-rose-800/40 rounded-xl text-xs font-bold hover:bg-rose-50 dark:hover:bg-rose-950/30 inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Remove</span>
+                    </button>
+                  </>
                 )}
               </div>
               <p className="text-[10px] text-muted-foreground">JPG, PNG, or WEBP. Syncs to Teacher portal real-time.</p>
@@ -1046,6 +1100,195 @@ const EditTeacherModal = ({ teacher, onClose, onSave }: { teacher: any; onClose:
           <div className="flex gap-3 pt-3 border-t border-border">
             <button type="submit" className="flex-1 bg-primary text-white py-2.5 rounded-xl font-bold hover:bg-primary/90 transition-colors shadow-sm">
               Save Changes
+            </button>
+            <button type="button" onClick={onClose} className="border border-border px-5 py-2.5 rounded-xl hover:bg-accent transition-colors">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+const EditStudentModal = ({
+  student,
+  onClose,
+  onSave,
+  onOpenCrop,
+}: {
+  student: any;
+  onClose: () => void;
+  onSave: (updated: any) => void;
+  onOpenCrop?: (img: string, cb: (cropped: string) => void) => void;
+}) => {
+  const [form, setForm] = useState({ ...student });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(form);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in zoom-in duration-150">
+      <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-serif font-bold text-xl text-foreground">Edit Student Profile</h3>
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+          {/* Avatar Photo Preview and Upload */}
+          <div className="p-3.5 rounded-2xl bg-muted/20 border border-border flex items-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center font-serif font-bold text-lg text-primary overflow-hidden shrink-0">
+              {form.profileImage ? (
+                <img src={form.profileImage} alt="Student" className="w-full h-full object-cover" />
+              ) : (
+                `${form.name?.[0] || 'S'}`
+              )}
+            </div>
+            <div className="flex-1 space-y-1.5">
+              <input
+                type="file"
+                accept="image/*"
+                id="adminStudentEditPhotoInput"
+                className="hidden"
+                onChange={e => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    if (file.size > 10 * 1024 * 1024) {
+                      alert('Image size exceeds 10MB limit.');
+                      return;
+                    }
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      const base64 = reader.result as string;
+                      if (onOpenCrop) {
+                        onOpenCrop(base64, (cropped) => {
+                          setForm((prev: any) => ({ ...prev, profileImage: cropped }));
+                        });
+                      } else {
+                        setForm((prev: any) => ({ ...prev, profileImage: base64 }));
+                      }
+                    };
+                    reader.readAsDataURL(file);
+                    e.target.value = '';
+                  }
+                }}
+              />
+              <div className="flex flex-wrap items-center gap-2">
+                <label
+                  htmlFor="adminStudentEditPhotoInput"
+                  className="px-3 py-1.5 bg-primary text-white rounded-xl text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 hover:bg-primary/90 transition-all shadow-xs"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>{form.profileImage ? 'Change Photo' : 'Upload Photo'}</span>
+                </label>
+                {form.profileImage && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onOpenCrop) {
+                          onOpenCrop(form.profileImage, (cropped) => {
+                            setForm((prev: any) => ({ ...prev, profileImage: cropped }));
+                          });
+                        }
+                      }}
+                      className="px-2.5 py-1.5 text-foreground border border-border rounded-xl text-xs font-bold hover:bg-muted inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <Scissors className="w-3.5 h-3.5 text-primary" />
+                      <span>Crop / Resize</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setForm((prev: any) => ({ ...prev, profileImage: '' }))}
+                      className="px-2.5 py-1.5 text-rose-600 border border-rose-200 dark:border-rose-800/40 rounded-xl text-xs font-bold hover:bg-rose-50 dark:hover:bg-rose-950/30 inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Remove</span>
+                    </button>
+                  </>
+                )}
+              </div>
+              <p className="text-[10px] text-muted-foreground">JPG, PNG, or WEBP. Syncs to Student portal in real time.</p>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Full Student Name</label>
+            <input type="text" value={form.name || ''} onChange={e => setForm({ ...form, name: e.target.value })} required
+              className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Admission Number</label>
+              <input type="text" value={form.admissionNo || form.studentId || form.code || ''} onChange={e => setForm({ ...form, admissionNo: e.target.value, studentId: e.target.value })} required
+                className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-mono" />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Status</label>
+              <select value={form.status || 'Active'} onChange={e => setForm({ ...form, status: e.target.value })}
+                className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+                <option value="Suspended">Suspended</option>
+                <option value="Graduated">Graduated</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Class Level</label>
+              <select value={form.grade || 'SS1'} onChange={e => setForm({ ...form, grade: e.target.value })}
+                className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
+                {['Creche', 'Reception', 'Nursery 1', 'Nursery 2', 'Primary 1', 'Primary 2', 'Primary 3', 'Primary 4', 'Primary 5', 'Primary 6', 'JSS1', 'JSS2', 'JSS3', 'SS1', 'SS2', 'SS3'].map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Stream / Arm</label>
+              <input type="text" value={form.stream || 'Science'} onChange={e => setForm({ ...form, stream: e.target.value })}
+                className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" placeholder="e.g. Science, Art, Gold" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">School House</label>
+              <input type="text" value={form.house || ''} onChange={e => setForm({ ...form, house: e.target.value })}
+                className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" placeholder="e.g. Sapphire House" />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Gender</label>
+              <select value={form.gender || 'Male'} onChange={e => setForm({ ...form, gender: e.target.value })}
+                className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Parent / Guardian Name</label>
+              <input type="text" value={form.parentName || ''} onChange={e => setForm({ ...form, parentName: e.target.value })}
+                className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Parent Contact Phone</label>
+              <input type="tel" value={form.parentPhone || form.phone || ''} onChange={e => setForm({ ...form, parentPhone: e.target.value, phone: e.target.value })}
+                className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-3 border-t border-border">
+            <button type="submit" className="flex-1 bg-primary text-white py-2.5 rounded-xl font-bold hover:bg-primary/90 transition-colors shadow-sm">
+              Save Student Changes
             </button>
             <button type="button" onClick={onClose} className="border border-border px-5 py-2.5 rounded-xl hover:bg-accent transition-colors">
               Cancel
@@ -2121,6 +2364,108 @@ export default function AdminDashboard() {
   const [showTeacherActionsDropdown, setShowTeacherActionsDropdown] = useState(false);
   const [showEditTeacherModal, setShowEditTeacherModal] = useState(false);
   const [editTeacherForm, setEditTeacherForm] = useState<any>(null);
+  const [showEditStudentModal, setShowEditStudentModal] = useState(false);
+  const [editStudentForm, setEditStudentForm] = useState<any>(null);
+
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [pendingCropImage, setPendingCropImage] = useState('');
+  const [onCropSaveCallback, setOnCropSaveCallback] = useState<((cropped: string) => void) | null>(null);
+
+  const [adminToastMsg, setAdminToastMsg] = useState<string | null>(null);
+  const showToast = (msg: string) => {
+    setAdminToastMsg(msg);
+    setTimeout(() => setAdminToastMsg(null), 3500);
+  };
+
+  const triggerCropModal = (imageSrc: string, onSave: (cropped: string) => void) => {
+    setPendingCropImage(imageSrc);
+    setOnCropSaveCallback(() => onSave);
+    setCropModalOpen(true);
+  };
+
+  const handleSaveTeacherRealtime = (updated: any) => {
+    saveTeacher(updated);
+    setTeachersList(getStoredTeachers());
+    if (selectedTeacher?.id === updated.id || (selectedTeacher?.staffId && selectedTeacher?.staffId === updated.staffId)) {
+      setSelectedTeacher(updated);
+    }
+    if (updated.email) {
+      authClient.put('/auth/users/update_profile/', {
+        email: updated.email,
+        staff_id: updated.staffId,
+        profile_image: updated.profileImage || '',
+        name: updated.name,
+      }).catch(() => {});
+    }
+    broadcastRealtimeEvent();
+    showToast(`Teacher profile for ${updated.name} updated in real time!`);
+  };
+
+  const handleSaveStudentRealtime = (updated: any) => {
+    saveStudent(updated);
+    setStudentsList(getStoredStudents());
+    if (selectedUser?.id === updated.id || (selectedUser?.admissionNo && selectedUser?.admissionNo === updated.admissionNo) || (selectedUser?.studentId && selectedUser?.studentId === updated.studentId)) {
+      setSelectedUser(updated);
+    }
+    if (updated.email) {
+      authClient.put('/auth/users/update_profile/', {
+        email: updated.email,
+        student_id: updated.admissionNo || updated.studentId,
+        profile_image: updated.profileImage || '',
+        name: updated.name,
+      }).catch(() => {});
+    }
+    broadcastRealtimeEvent();
+    showToast(`Student profile for ${updated.name} updated in real time!`);
+  };
+
+  const handleDeleteTeacherAvatarRealtime = (teacherIdOrObj: any) => {
+    const tchr = typeof teacherIdOrObj === 'object' ? teacherIdOrObj : teachersList.find(t => t.id === teacherIdOrObj || t.staffId === teacherIdOrObj);
+    if (!tchr) return;
+    const updated = { ...tchr, profileImage: '' };
+    saveTeacher(updated);
+    setTeachersList(getStoredTeachers());
+    if (selectedTeacher?.id === updated.id || selectedTeacher?.staffId === updated.staffId) {
+      setSelectedTeacher(updated);
+    }
+    if (editTeacherForm && (editTeacherForm.id === updated.id || editTeacherForm.staffId === updated.staffId)) {
+      setEditTeacherForm(updated);
+    }
+    if (updated.email) {
+      authClient.put('/auth/users/update_profile/', {
+        email: updated.email,
+        staff_id: updated.staffId,
+        profile_image: '',
+        name: updated.name,
+      }).catch(() => {});
+    }
+    broadcastRealtimeEvent();
+    showToast(`Photo for teacher ${updated.name} removed.`);
+  };
+
+  const handleDeleteStudentAvatarRealtime = (studentIdOrObj: any) => {
+    const std = typeof studentIdOrObj === 'object' ? studentIdOrObj : studentsList.find(s => s.id === studentIdOrObj || s.admissionNo === studentIdOrObj || s.studentId === studentIdOrObj);
+    if (!std) return;
+    const updated = { ...std, profileImage: '' };
+    saveStudent(updated);
+    setStudentsList(getStoredStudents());
+    if (selectedUser?.id === updated.id || selectedUser?.admissionNo === updated.admissionNo || selectedUser?.studentId === updated.studentId) {
+      setSelectedUser(updated);
+    }
+    if (editStudentForm && (editStudentForm.id === updated.id || editStudentForm.admissionNo === updated.admissionNo)) {
+      setEditStudentForm(updated);
+    }
+    if (updated.email) {
+      authClient.put('/auth/users/update_profile/', {
+        email: updated.email,
+        student_id: updated.admissionNo || updated.studentId,
+        profile_image: '',
+        name: updated.name,
+      }).catch(() => {});
+    }
+    broadcastRealtimeEvent();
+    showToast(`Photo for student ${updated.name} removed.`);
+  };
 
   // Classes management state
   const [classFilterTab, setClassFilterTab] = useState<'ALL' | 'JUNIOR' | 'SCIENCE' | 'ART'>('ALL');
@@ -2916,7 +3261,7 @@ export default function AdminDashboard() {
                       <div className="fixed inset-0 z-40" onClick={() => setShowActionsDropdown(false)} />
                       <div className="absolute right-0 top-full mt-2 z-50 w-52 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
                         <button
-                          onClick={() => { setShowIDCardModal(u); setShowActionsDropdown(false); }}
+                          onClick={() => { setIdCardUser(u); setShowActionsDropdown(false); }}
                           className="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold text-foreground hover:bg-muted/40 transition-colors text-left cursor-pointer"
                         >
                           <span className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
@@ -2925,16 +3270,25 @@ export default function AdminDashboard() {
                           Print Student ID Card
                         </button>
                         <button
-                          onClick={() => { setShowEditModal(u); setShowActionsDropdown(false); }}
+                          onClick={() => { setEditStudentForm({ ...u }); setShowEditStudentModal(true); setShowActionsDropdown(false); }}
                           className="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold text-foreground hover:bg-muted/40 transition-colors text-left cursor-pointer"
                         >
                           <span className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
-                            <Edit className="w-3.5 h-3.5 text-emerald-600" />
+                            <Pencil className="w-3.5 h-3.5 text-emerald-600" />
                           </span>
                           Edit Student Profile
                         </button>
                         <button
-                          onClick={() => { setShowDeleteModal(u); setShowActionsDropdown(false); }}
+                          onClick={() => {
+                            if (confirm(`Are you sure you want to delete student ${u.name}? This action cannot be undone.`)) {
+                              deleteStudent(u.id);
+                              setStudentsList(getStoredStudents());
+                              setSelectedUser(null);
+                              setShowActionsDropdown(false);
+                              broadcastRealtimeEvent();
+                              showToast(`Student ${u.name} deleted.`);
+                            }
+                          }}
                           className="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold text-rose-600 hover:bg-rose-500/10 transition-colors text-left border-t border-border cursor-pointer"
                         >
                           <span className="w-7 h-7 rounded-lg bg-rose-500/10 flex items-center justify-center shrink-0">
@@ -2960,6 +3314,73 @@ export default function AdminDashboard() {
                         u.name[0]
                       )}
                     </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      id="adminStudentDirectAvatarInput"
+                      className="hidden"
+                      onChange={e => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          if (file.size > 10 * 1024 * 1024) {
+                            alert('Image size exceeds 10MB limit.');
+                            return;
+                          }
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            const base64 = reader.result as string;
+                            triggerCropModal(base64, (cropped) => {
+                              handleSaveStudentRealtime({ ...u, profileImage: cropped });
+                            });
+                          };
+                          reader.readAsDataURL(file);
+                          e.target.value = '';
+                        }
+                      }}
+                    />
+                    <label
+                      htmlFor="adminStudentDirectAvatarInput"
+                      className="absolute -bottom-1 -right-1 p-2 bg-primary hover:bg-primary/90 text-white rounded-xl shadow cursor-pointer hover:scale-105 transition-all border border-card"
+                      title="Upload Student Photo"
+                    >
+                      <Camera className="w-4 h-4" />
+                    </label>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
+                    <label
+                      htmlFor="adminStudentDirectAvatarInput"
+                      className="px-2.5 py-1 rounded-lg bg-primary hover:bg-primary/90 text-white text-[11px] font-bold transition-all cursor-pointer inline-flex items-center gap-1 shadow-xs"
+                      title="Upload & Crop Photo"
+                    >
+                      <Upload className="w-3 h-3" /> Change
+                    </label>
+
+                    {u.profileImage && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            triggerCropModal(u.profileImage, (cropped) => {
+                              handleSaveStudentRealtime({ ...u, profileImage: cropped });
+                            });
+                          }}
+                          className="px-2 py-1 rounded-lg bg-muted hover:bg-accent text-foreground text-[11px] font-bold border border-border transition-all cursor-pointer inline-flex items-center gap-1"
+                          title="Crop / Resize current photo"
+                        >
+                          <Scissors className="w-3 h-3 text-primary" /> Crop
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteStudentAvatarRealtime(u)}
+                          className="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-900/40 text-rose-600 text-[11px] font-bold border border-rose-200 dark:border-rose-800/40 transition-all cursor-pointer inline-flex items-center gap-1"
+                          title="Delete student profile picture"
+                        >
+                          <Trash2 className="w-3 h-3" /> Remove
+                        </button>
+                      </>
+                    )}
                   </div>
 
                   <div className="space-y-1">
@@ -5287,26 +5708,47 @@ export default function AdminDashboard() {
                           onChange={e => {
                             const file = e.target.files?.[0];
                             if (file) {
+                              if (file.size > 10 * 1024 * 1024) {
+                                alert('Image size exceeds 10MB limit.');
+                                return;
+                              }
                               const reader = new FileReader();
                               reader.onloadend = () => {
-                                setEditProfileForm(prev => ({ ...prev, profileImage: reader.result as string }));
+                                const base64 = reader.result as string;
+                                triggerCropModal(base64, (cropped) => {
+                                  setEditProfileForm(prev => ({ ...prev, profileImage: cropped }));
+                                });
                               };
                               reader.readAsDataURL(file);
+                              e.target.value = '';
                             }
                           }}
                         />
-                        <div className="flex items-center gap-2">
-                          <label htmlFor="adminAvatarFilePicker" className="px-3.5 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 cursor-pointer inline-flex items-center gap-1.5 shadow-sm">
-                            <Upload className="w-3.5 h-3.5" /> Select Image File
+                        <div className="flex flex-wrap items-center gap-2">
+                          <label htmlFor="adminAvatarFilePicker" className="px-3.5 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 cursor-pointer inline-flex items-center gap-1.5 shadow-sm transition-all">
+                            <Upload className="w-3.5 h-3.5" /> {editProfileForm.profileImage ? 'Change Photo' : 'Select Image File'}
                           </label>
                           {editProfileForm.profileImage && (
-                            <button
-                              type="button"
-                              onClick={() => setEditProfileForm({ ...editProfileForm, profileImage: '' })}
-                              className="px-3 py-2 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold hover:bg-rose-50"
-                            >
-                              Clear Photo
-                            </button>
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  triggerCropModal(editProfileForm.profileImage, (cropped) => {
+                                    setEditProfileForm(prev => ({ ...prev, profileImage: cropped }));
+                                  });
+                                }}
+                                className="px-3 py-2 text-foreground border border-border rounded-xl text-xs font-bold hover:bg-muted inline-flex items-center gap-1 cursor-pointer"
+                              >
+                                <Scissors className="w-3.5 h-3.5 text-primary" /> Crop / Resize
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditProfileForm({ ...editProfileForm, profileImage: '' })}
+                                className="px-3 py-2 text-rose-600 border border-rose-200 dark:border-rose-800/40 rounded-xl text-xs font-bold hover:bg-rose-50 dark:hover:bg-rose-950/30 inline-flex items-center gap-1 cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" /> Clear Photo
+                              </button>
+                            </>
                           )}
                         </div>
                         <p className="text-[10px] text-muted-foreground">Supported formats: JPG, PNG, WEBP. Real-time preview applied.</p>
@@ -5604,7 +6046,7 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start pt-2">
                 {/* Column 1: Teacher Photo & Badge */}
                 <div className="md:col-span-3 flex flex-col items-center">
-                  <div className="w-44 h-52 rounded-2xl border-2 border-emerald-500/30 shadow-md overflow-hidden bg-muted/20 flex items-center justify-center">
+                  <div className="w-44 h-52 rounded-2xl border-2 border-emerald-500/30 shadow-md overflow-hidden bg-muted/20 flex items-center justify-center relative group">
                     {tchr.profileImage ? (
                       <img src={tchr.profileImage} alt={tchr.name} className="w-full h-full object-cover" />
                     ) : (
@@ -5612,7 +6054,75 @@ export default function AdminDashboard() {
                         {tchr.name[0]}
                       </div>
                     )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      id="adminTeacherDirectAvatarInput"
+                      className="hidden"
+                      onChange={e => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          if (file.size > 10 * 1024 * 1024) {
+                            alert('Image size exceeds 10MB limit.');
+                            return;
+                          }
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            const base64 = reader.result as string;
+                            triggerCropModal(base64, (cropped) => {
+                              handleSaveTeacherRealtime({ ...tchr, profileImage: cropped });
+                            });
+                          };
+                          reader.readAsDataURL(file);
+                          e.target.value = '';
+                        }
+                      }}
+                    />
+                    <label
+                      htmlFor="adminTeacherDirectAvatarInput"
+                      className="absolute -bottom-1 -right-1 p-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl shadow cursor-pointer hover:scale-105 transition-all border border-card"
+                      title="Upload Teacher Photo"
+                    >
+                      <Camera className="w-4 h-4" />
+                    </label>
                   </div>
+
+                  <div className="flex flex-wrap items-center justify-center gap-1.5 pt-2">
+                    <label
+                      htmlFor="adminTeacherDirectAvatarInput"
+                      className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition-all cursor-pointer inline-flex items-center gap-1 shadow-xs"
+                      title="Upload & Crop Photo"
+                    >
+                      <Upload className="w-3 h-3" /> Change
+                    </label>
+
+                    {tchr.profileImage && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            triggerCropModal(tchr.profileImage, (cropped) => {
+                              handleSaveTeacherRealtime({ ...tchr, profileImage: cropped });
+                            });
+                          }}
+                          className="px-2 py-1 rounded-lg bg-muted hover:bg-accent text-foreground text-[11px] font-bold border border-border transition-all cursor-pointer inline-flex items-center gap-1"
+                          title="Crop / Resize current photo"
+                        >
+                          <Scissors className="w-3 h-3 text-emerald-600" /> Crop
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteTeacherAvatarRealtime(tchr)}
+                          className="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-900/40 text-rose-600 text-[11px] font-bold border border-rose-200 dark:border-rose-800/40 transition-all cursor-pointer inline-flex items-center gap-1"
+                          title="Delete teacher profile picture"
+                        >
+                          <Trash2 className="w-3 h-3" /> Remove
+                        </button>
+                      </>
+                    )}
+                  </div>
+
                   <span className={`mt-3 px-3.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${
                     tchr.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
                   }`}>
@@ -8988,11 +9498,23 @@ export default function AdminDashboard() {
           <EditTeacherModal
             teacher={editTeacherForm}
             onClose={() => { setShowEditTeacherModal(false); setEditTeacherForm(null); }}
+            onOpenCrop={triggerCropModal}
             onSave={(updated) => {
-              setTeachersList(prev => prev.map(t => t.id === updated.id ? updated : t));
-              if (selectedTeacher?.id === updated.id) setSelectedTeacher(updated);
+              handleSaveTeacherRealtime(updated);
               setShowEditTeacherModal(false);
               setEditTeacherForm(null);
+            }}
+          />
+        )}
+        {showEditStudentModal && editStudentForm && (
+          <EditStudentModal
+            student={editStudentForm}
+            onClose={() => { setShowEditStudentModal(false); setEditStudentForm(null); }}
+            onOpenCrop={triggerCropModal}
+            onSave={(updated) => {
+              handleSaveStudentRealtime(updated);
+              setShowEditStudentModal(false);
+              setEditStudentForm(null);
             }}
           />
         )}
@@ -9187,22 +9709,54 @@ export default function AdminDashboard() {
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) {
+                            if (file.size > 10 * 1024 * 1024) {
+                              alert('Image size exceeds 10MB limit.');
+                              return;
+                            }
                             const reader = new FileReader();
                             reader.onloadend = () => {
-                              setNewStudentForm(prev => ({ ...prev, profileImage: reader.result as string }));
+                              const base64 = reader.result as string;
+                              triggerCropModal(base64, (cropped) => {
+                                setNewStudentForm(prev => ({ ...prev, profileImage: cropped }));
+                              });
                             };
                             reader.readAsDataURL(file);
+                            e.target.value = '';
                           }
                         }}
                       />
 
-                      <button
-                        type="button"
-                        onClick={() => document.getElementById('studentPhotoLocalInput')?.click()}
-                        className="px-4 py-2 bg-primary text-primary-foreground text-xs font-bold rounded-xl hover:opacity-90 transition-opacity flex items-center gap-2 shadow-sm"
-                      >
-                        <Upload className="w-4 h-4" /> Add Photo from File
-                      </button>
+                      <div className="flex flex-wrap items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => document.getElementById('studentPhotoLocalInput')?.click()}
+                          className="px-4 py-2 bg-primary text-primary-foreground text-xs font-bold rounded-xl hover:opacity-90 transition-opacity flex items-center gap-2 shadow-sm cursor-pointer"
+                        >
+                          <Upload className="w-4 h-4" /> {newStudentForm.profileImage ? 'Change Photo' : 'Add Photo from File'}
+                        </button>
+                        {newStudentForm.profileImage && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                triggerCropModal(newStudentForm.profileImage, (cropped) => {
+                                  setNewStudentForm(prev => ({ ...prev, profileImage: cropped }));
+                                });
+                              }}
+                              className="px-3 py-2 border border-border rounded-xl text-xs font-bold text-foreground hover:bg-muted transition-colors flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Scissors className="w-3.5 h-3.5 text-primary" /> Crop Photo
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setNewStudentForm(prev => ({ ...prev, profileImage: '' }))}
+                              className="px-3 py-2 text-rose-600 border border-rose-200 dark:border-rose-800/40 rounded-xl text-xs font-bold hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" /> Remove
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -9445,6 +9999,30 @@ export default function AdminDashboard() {
           </div>
         )}
         {renderSection()}
+
+        {/* Realtime Toast Banner */}
+        {adminToastMsg && (
+          <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 text-xs font-semibold animate-in fade-in slide-in-from-bottom duration-200 border border-slate-800">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>{adminToastMsg}</span>
+          </div>
+        )}
+
+        <ImageCropModal
+          isOpen={cropModalOpen}
+          imageSrc={pendingCropImage}
+          onClose={() => {
+            setCropModalOpen(false);
+            setOnCropSaveCallback(null);
+          }}
+          onSave={(cropped) => {
+            if (onCropSaveCallback) {
+              onCropSaveCallback(cropped);
+            }
+            setCropModalOpen(false);
+            setOnCropSaveCallback(null);
+          }}
+        />
       </PortalLayout>
     </ProtectedRoute>
   );
