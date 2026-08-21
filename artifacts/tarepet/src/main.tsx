@@ -2,8 +2,12 @@ import { createRoot } from 'react-dom/client';
 
 import './i18n';
 import App from './App';
+import { initSentry, SentryErrorBoundary } from './lib/sentry';
 
 import './index.css';
+
+// Initialize Sentry telemetry
+initSentry();
 
 // Unregister any old service workers & clear stale browser caches automatically
 if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
@@ -21,5 +25,9 @@ if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
   }
 }
 
-createRoot(document.getElementById('root')!).render(<App />);
+createRoot(document.getElementById('root')!).render(
+  <SentryErrorBoundary>
+    <App />
+  </SentryErrorBoundary>
+);
 
