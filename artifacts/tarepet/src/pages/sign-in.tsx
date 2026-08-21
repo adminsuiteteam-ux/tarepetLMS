@@ -282,37 +282,6 @@ export default function SignIn() {
 
           {/* Overlapping White Form Sheet with Completely Rounded Top Corners */}
           <div className="bg-white dark:bg-zinc-900 rounded-t-[32px] -mt-5 relative z-10 px-6 sm:px-8 pt-6 pb-8 space-y-4 shadow-sm">
-            {/* Quick Role Helper Tabs */}
-            <div className="flex items-center justify-between p-1 bg-zinc-100 dark:bg-zinc-800 rounded-full text-[11px] font-semibold text-muted-foreground mb-1">
-              {[
-                { id: 'student', label: 'Student', hint: 'TMS/2026/042' },
-                { id: 'teacher', label: 'Teacher', hint: 'TMS/TCH/0054' },
-                { id: 'admin', label: 'Admin', hint: 'admin@tarepet.com' },
-              ].map(role => (
-                <button
-                  key={role.id}
-                  type="button"
-                  onClick={() => {
-                    if (role.id === 'admin') {
-                      setEmail('admin@tarepet.com');
-                      setPassword('Admin@12345');
-                    } else if (role.id === 'teacher') {
-                      const t = getStoredTeachers()[0];
-                      setEmail(t?.staffId || t?.email || 'TMS/TCH/0054');
-                      setPassword(t?.password || t?.staffId || 'TMS/TCH/0054');
-                    } else {
-                      const s = getStoredStudents()[0];
-                      setEmail(s?.code || s?.email || 'TMS/2026/042');
-                      setPassword(s?.code || 'TMS/2026/042');
-                    }
-                  }}
-                  className="flex-1 py-1.5 rounded-full hover:text-foreground text-center transition-all hover:bg-white dark:hover:bg-zinc-700 hover:shadow-xs"
-                >
-                  {role.label}
-                </button>
-              ))}
-            </div>
-
             {/* Error Message */}
             {error && (
               <motion.div

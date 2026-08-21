@@ -40,7 +40,7 @@ const TIMETABLE: any[] = [];
 
 export default function TeacherDashboard() {
   const { t } = useTranslation();
-  const { user, isTeacher, isAdmin } = useAuth();
+  const { user, isTeacher, isAdmin, updateUser } = useAuth();
 
   if (!user || (!isTeacher && !isAdmin) || (user.role !== 'TEACHER' && user.role !== 'ADMIN')) {
     return (
@@ -3108,6 +3108,7 @@ export default function TeacherDashboard() {
             location="Tarepet Montessori Academy, Yenagoa"
             onBack={() => setActiveSection('overview')}
             onEditProfile={() => setShowEditModal(true)}
+            onNavigateSection={setActiveSection}
           />
         </div>
 
@@ -3390,12 +3391,16 @@ export default function TeacherDashboard() {
                   // Update profileForm state immediately so UI reflects saved changes
                   setProfileForm(prev => ({
                     ...prev,
+                    firstName: profileForm.firstName,
+                    lastName: profileForm.lastName,
                     fullName: fullName,
                     email: profileForm.email,
                     phone: profileForm.phone,
+                    staffId: profileForm.staffId,
                     specialization: profileForm.specialization,
                     qualification: profileForm.qualification,
                     department: profileForm.department,
+                    roleTitle: profileForm.roleTitle || (profileForm.formClass ? `Form Teacher (${profileForm.formClass})` : prev.roleTitle),
                     formClass: profileForm.formClass || formClass,
                     gender: profileForm.gender,
                     dob: profileForm.dob,
@@ -3406,6 +3411,33 @@ export default function TeacherDashboard() {
                     bankName: profileForm.bankName,
                     accountNumber: profileForm.accountNumber,
                   }));
+
+                  // Update React AuthContext immediately
+                  updateUser({
+                    first_name: profileForm.firstName,
+                    last_name: profileForm.lastName,
+                    phone: profileForm.phone,
+                    email: profileForm.email,
+                    profile_image: profileForm.profileImage,
+                    profile: {
+                      ...(user?.profile || {}),
+                      teacher_id: profileForm.staffId,
+                      gender: profileForm.gender,
+                      dob: profileForm.dob,
+                      address: profileForm.address,
+                      qualifications: profileForm.qualification,
+                      specialization: profileForm.specialization,
+                      department: profileForm.department,
+                      form_teacher_of: profileForm.formClass || formClass,
+                      hire_date: profileForm.joiningDate,
+                      salary: profileForm.salary,
+                      bank_name: profileForm.bankName,
+                      account_number: profileForm.accountNumber,
+                      bio: profileForm.bio,
+                      profile_image: profileForm.profileImage,
+                      profileImage: profileForm.profileImage,
+                    } as any
+                  });
 
                   // Sync auth session in localStorage
                   try {

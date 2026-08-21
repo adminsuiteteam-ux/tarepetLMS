@@ -112,6 +112,8 @@ function getMobileNavItems(role?: string): NavSection[] {
         { id: 'overview', label: 'Home', icon: Home },
         { id: 'students', label: 'Students', icon: Users },
         { id: 'exams', label: 'Exams', icon: FileText },
+        { id: 'results', label: 'Results', icon: BarChart2 },
+        { id: 'history', label: 'History', icon: GraduationCap },
         { id: 'profile', label: 'Profile', icon: UserCheck },
       ];
     case 'STUDENT':

@@ -3,7 +3,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useTranslation } from '@/lib/i18n';
 import {
   Edit3, User, School, BookOpen, GraduationCap,
-  Award, Phone, Mail, LogOut, CheckCircle2, MapPin
+  Award, Phone, Mail, LogOut, CheckCircle2, MapPin,
+  FileBadge, CreditCard, BarChart2, ClipboardList, Users
 } from 'lucide-react';
 
 export interface ProfileCardItem {
@@ -32,6 +33,7 @@ export interface MobileProfileViewProps {
   onBack?: () => void;
   onEditProfile: () => void;
   onLogout?: () => void;
+  onNavigateSection?: (sectionId: string) => void;
   customCards?: ProfileCardItem[];
 }
 
@@ -48,8 +50,10 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
   avatarUrl,
   roleBadge,
   location = 'Tarepet Montessori Academy, Yenagoa',
+  onBack,
   onEditProfile,
   onLogout,
+  onNavigateSection,
   customCards
 }) => {
   const { user, logout } = useAuth();
@@ -69,6 +73,16 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
     : ['Physics'];
 
   const officialCards: ProfileCardItem[] = customCards || [
+    {
+      icon: FileBadge,
+      label: 'Staff ID Number',
+      value: (
+        <span className="inline-block px-3 py-1 rounded-lg bg-primary/10 text-primary font-mono font-bold text-xs border border-primary/20">
+          {effectiveStaffId}
+        </span>
+      ),
+      color: 'bg-primary/10 text-primary',
+    },
     {
       icon: User,
       label: 'Full Name & Title',
@@ -148,6 +162,7 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
     <div className="w-full pb-28 relative" style={{ fontFamily: 'var(--font-poppins)' }}>
       <div className="absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-primary/10 via-secondary/5 to-transparent pointer-events-none -z-10" />
 
+      {/* Main Profile Hero Card */}
       <div className="bg-card rounded-3xl border border-border/80 shadow-md p-6 text-center space-y-4 relative overflow-hidden mb-5">
         <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
 
@@ -175,15 +190,10 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
           <p className="text-xs text-muted-foreground font-normal break-all">{effectiveEmail}</p>
           <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground font-medium pt-1 flex-wrap">
             <span className="font-semibold text-primary">{effectiveRole}</span>
-            {location && (
-              <>
-                <span>•</span>
-                <span className="inline-flex items-center gap-1">
-                  <MapPin className="w-3 h-3 text-secondary shrink-0" />
-                  {location}
-                </span>
-              </>
-            )}
+            <span>•</span>
+            <span className="inline-block font-mono font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md text-[10px]">
+              ID: {effectiveStaffId}
+            </span>
           </div>
         </div>
 
@@ -199,6 +209,7 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
         </div>
       </div>
 
+      {/* Official Information Cards (Strictly holding the user details) */}
       <div className="space-y-2.5">
         {officialCards.map((card, index) => {
           const Icon = card.icon;
@@ -229,6 +240,62 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
           );
         })}
 
+        {/* Quick Academic Navigation Cards */}
+        {onNavigateSection && (
+          <div className="pt-4 pb-1 space-y-2.5">
+            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-1">
+              Academic Navigation & Records
+            </h3>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => onNavigateSection('results')}
+                className="p-3.5 rounded-2xl bg-card border border-border/80 shadow-xs flex flex-col items-start gap-1 hover:bg-muted/40 active:scale-[0.98] transition-all text-left cursor-pointer"
+              >
+                <div className="w-7 h-7 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                  <BarChart2 className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-bold text-foreground">Manage Results</span>
+                <span className="text-[10px] text-muted-foreground">Term grading & report cards</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigateSection('history')}
+                className="p-3.5 rounded-2xl bg-card border border-border/80 shadow-xs flex flex-col items-start gap-1 hover:bg-muted/40 active:scale-[0.98] transition-all text-left cursor-pointer"
+              >
+                <div className="w-7 h-7 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center">
+                  <GraduationCap className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-bold text-foreground">Academic History</span>
+                <span className="text-[10px] text-muted-foreground">Promotion cohorts & archives</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigateSection('exams')}
+                className="p-3.5 rounded-2xl bg-card border border-border/80 shadow-xs flex flex-col items-start gap-1 hover:bg-muted/40 active:scale-[0.98] transition-all text-left cursor-pointer"
+              >
+                <div className="w-7 h-7 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                  <ClipboardList className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-bold text-foreground">Manage Exams</span>
+                <span className="text-[10px] text-muted-foreground">CBT test question bank</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onNavigateSection('students')}
+                className="p-3.5 rounded-2xl bg-card border border-border/80 shadow-xs flex flex-col items-start gap-1 hover:bg-muted/40 active:scale-[0.98] transition-all text-left cursor-pointer"
+              >
+                <div className="w-7 h-7 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
+                  <Users className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-bold text-foreground">Manage Students</span>
+                <span className="text-[10px] text-muted-foreground">Student directory & roster</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Sign Out Card */}
         <div
           onClick={handleSignOut}
           className="bg-rose-500/5 dark:bg-rose-950/20 border border-rose-500/20 rounded-2xl p-4 shadow-xs flex items-center justify-between cursor-pointer hover:bg-rose-500/10 active:scale-[0.99] transition-all mt-4"
