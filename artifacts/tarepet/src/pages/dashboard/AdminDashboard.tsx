@@ -2046,6 +2046,32 @@ export default function AdminDashboard() {
           setStudentsList(liveStudents);
         }
       }
+
+      // Fetch live Finance Income & Expenses from Django Database
+      const [incomeRes, expenseRes] = await Promise.allSettled([
+        authClient.get('/finance/income/?page_size=300'),
+        authClient.get('/finance/expenses/?page_size=300')
+      ]);
+
+      if (incomeRes.status === 'fulfilled' && incomeRes.value.data) {
+        const incData = Array.isArray(incomeRes.value.data?.results) ? incomeRes.value.data.results : (Array.isArray(incomeRes.value.data) ? incomeRes.value.data : []);
+        if (incData.length > 0) {
+          setFinanceIncome(incData);
+          if (typeof window !== 'undefined') {
+            try { localStorage.setItem('tarepet_finance_income', JSON.stringify(incData)); } catch (e) {}
+          }
+        }
+      }
+
+      if (expenseRes.status === 'fulfilled' && expenseRes.value.data) {
+        const expData = Array.isArray(expenseRes.value.data?.results) ? expenseRes.value.data.results : (Array.isArray(expenseRes.value.data) ? expenseRes.value.data : []);
+        if (expData.length > 0) {
+          setFinanceExpenses(expData);
+          if (typeof window !== 'undefined') {
+            try { localStorage.setItem('tarepet_finance_expenses', JSON.stringify(expData)); } catch (e) {}
+          }
+        }
+      }
     } catch (e) {
       // Backend offline or user not admin — fallback to local storage
     }
@@ -8400,6 +8426,9 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                                   if (typeof window !== 'undefined') {
                                     localStorage.setItem('tarepet_finance_expenses', JSON.stringify(updated));
                                   }
+                                  if (row.id) {
+                                    authClient.patch(`/finance/expenses/${row.id}/`, { status: 'PAID' }).catch(() => {});
+                                  }
                                 }
                               }}
                               disabled={row.status === 'PAID'}
@@ -8613,22 +8642,26 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                   <button
                     disabled={!incomeForm.description || !incomeForm.amount}
                     onClick={() => {
+                      const refCode = `INC-${Date.now()}`;
                       const newRec = {
                         id: Date.now(),
+                        reference: refCode,
                         date: new Date().toISOString().split('T')[0],
                         description: incomeForm.description,
                         category: incomeForm.category,
                         amount: Number(incomeForm.amount),
                         status: 'RECEIVED',
-                        ref: `INC-${Date.now()}`,
+                        ref: refCode,
                       };
                       const updated = [newRec, ...financeIncome];
                       setFinanceIncome(updated);
                       if (typeof window !== 'undefined') {
                         try { localStorage.setItem('tarepet_finance_income', JSON.stringify(updated)); } catch (e) {}
                       }
+                      // Save to Django PostgreSQL/SQLite backend
+                      authClient.post('/finance/income/', newRec).catch(() => {});
                       setShowAddIncomeModal(false);
-                      setFinanceSaveAlert('Income record saved successfully!');
+                      setFinanceSaveAlert('Income record saved successfully to database!');
                       setTimeout(() => setFinanceSaveAlert(''), 4000);
                     }}
                     className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 disabled:opacity-50 shadow-sm transition-colors"
@@ -8693,22 +8726,26 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                   <button
                     disabled={!expenseForm.description || !expenseForm.amount}
                     onClick={() => {
+                      const refCode = `EXP-${Date.now()}`;
                       const newRec = {
                         id: Date.now(),
+                        reference: refCode,
                         date: new Date().toISOString().split('T')[0],
                         description: expenseForm.description,
                         category: expenseForm.category,
                         amount: Number(expenseForm.amount),
                         status: expenseForm.status,
-                        ref: `EXP-${Date.now()}`,
+                        ref: refCode,
                       };
                       const updated = [newRec, ...financeExpenses];
                       setFinanceExpenses(updated);
                       if (typeof window !== 'undefined') {
                         try { localStorage.setItem('tarepet_finance_expenses', JSON.stringify(updated)); } catch (e) {}
                       }
+                      // Save to Django PostgreSQL/SQLite backend
+                      authClient.post('/finance/expenses/', newRec).catch(() => {});
                       setShowAddExpenseModal(false);
-                      setFinanceSaveAlert('Expense record saved successfully!');
+                      setFinanceSaveAlert('Expense record saved successfully to database!');
                       setTimeout(() => setFinanceSaveAlert(''), 4000);
                     }}
                     className="flex items-center gap-2 px-5 py-2.5 bg-rose-600 text-white text-xs font-bold rounded-xl hover:bg-rose-700 disabled:opacity-50 shadow-sm transition-colors"

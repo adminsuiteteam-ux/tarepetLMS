@@ -19,6 +19,8 @@ interface AuthContextType {
   isLoading: boolean;
   login: (accessToken: string, refreshToken: string, userData: User) => void;
   logout: () => void;
+  updateUser: (updatedData: Partial<User>) => void;
+  refreshUserProfile: () => Promise<void>;
   isAdmin: boolean;
   isTeacher: boolean;
   isStudent: boolean;
@@ -51,6 +53,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   });
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const refreshUserProfile = React.useCallback(async () => {
+    const access = localStorage.getItem('tarepet_access_token') || sessionStorage.getItem('tarepet_access_token');
+    if (!access) return;
+    try {
+      const res = await authClient.get('/auth/me/');
+      if (res.data && res.data.email) {
+        const normalized = {
+          ...res.data,
+          role: (res.data.role || 'STUDENT').toUpperCase() as UserRole
+        };
+        setUser(normalized);
+        localStorage.setItem('tarepet_auth_user', JSON.stringify(normalized));
+        sessionStorage.setItem('tarepet_auth_user', JSON.stringify(normalized));
+      }
+    } catch (e) {
+      // Backend offline or invalid token — keep existing user in memory
+    }
+  }, []);
+
+  // Fetch live database user profile on app startup
+  useEffect(() => {
+    refreshUserProfile().catch(() => {});
+  }, [refreshUserProfile]);
 
   useEffect(() => {
     if (user) {
@@ -85,12 +111,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = (accessToken: string, refreshToken: string, userData: User) => {
-    // 1. Forcefully purge any previous session state to ensure strict isolation
-    try {
-      localStorage.removeItem('tarepet_auth_user');
-      sessionStorage.removeItem('tarepet_auth_user');
-    } catch {}
-
     const normalizedUser = {
       ...userData,
       role: (userData.role || 'STUDENT').toUpperCase() as UserRole,
@@ -103,6 +123,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err) {
       console.warn('Could not persist auth session', err);
     }
+    // Fetch latest authoritative profile from backend
+    setTimeout(() => {
+      refreshUserProfile().catch(() => {});
+    }, 100);
+  };
+
+  const updateUser = (updatedData: Partial<User>) => {
+    setUser(prev => {
+      if (!prev) return null;
+      const merged = {
+        ...prev,
+        ...updatedData,
+        profile: {
+          ...(prev.profile || {}),
+          ...(updatedData.profile || {})
+        },
+        role: (updatedData.role || prev.role).toUpperCase() as UserRole
+      };
+      try {
+        localStorage.setItem('tarepet_auth_user', JSON.stringify(merged));
+        sessionStorage.setItem('tarepet_auth_user', JSON.stringify(merged));
+      } catch (err) {}
+      return merged;
+    });
   };
 
   const logout = () => {
@@ -140,6 +184,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         login,
         logout,
+        updateUser,
+        refreshUserProfile,
         isAdmin,
         isTeacher,
         isStudent,

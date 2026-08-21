@@ -917,8 +917,17 @@ export function broadcastRealtimeEvent() {
   }
 }
 
-// No-op: kept for compatibility (initCBTStore calls are safe to leave in place)
-export function initCBTStore() { /* data is loaded from API, not localStorage */ }
+export function initCBTStore() {
+  if (typeof window !== 'undefined') {
+    syncBroadsheetWithBackend().catch(() => {});
+    syncPromotionsWithBackend().catch(() => {});
+  }
+}
+
+// Auto-trigger sync on module load
+if (typeof window !== 'undefined') {
+  initCBTStore();
+}
 
 // Clear in-memory cache and localStorage
 export function clearCBTStoreCache() {
@@ -1462,6 +1471,21 @@ export function getStudentBroadsheet(studentIdOrCode: string | number): Record<s
   return _broadsheetScores[key] || {};
 }
 
+export async function syncBroadsheetWithBackend(): Promise<void> {
+  try {
+    const res = await authClient.get('/academics/broadsheet/all-scores/');
+    if (res.data && typeof res.data === 'object' && Object.keys(res.data).length > 0) {
+      _broadsheetScores = { ..._broadsheetScores, ...res.data };
+      if (typeof window !== 'undefined') {
+        try { localStorage.setItem('tarepet_broadsheet_scores', JSON.stringify(_broadsheetScores)); } catch (e) {}
+      }
+      broadcastRealtimeEvent();
+    }
+  } catch (err) {
+    // Network fallback
+  }
+}
+
 export function saveStudentBroadsheet(studentIdOrCode: string | number, courseScores: Record<string, CourseBroadsheetScore>) {
   _broadsheetScores = loadSavedBroadsheet();
   const key = String(studentIdOrCode);
@@ -1472,8 +1496,8 @@ export function saveStudentBroadsheet(studentIdOrCode: string | number, courseSc
     } catch (e) {}
   }
 
-  // Real-time async sync to Django backend gradebook
-  authClient.post('/assessments/gradebook/', {
+  // Real-time async sync to Django backend /api/v1/academics/broadsheet/
+  authClient.post('/academics/broadsheet/batch-save/', {
     student_id: key,
     scores: courseScores
   }).catch(() => {});
@@ -1603,6 +1627,37 @@ export interface ExecutePromotionsPayload {
   }>;
 }
 
+export async function syncPromotionsWithBackend(): Promise<PromotionRecord[]> {
+  try {
+    const res = await authClient.get('/academics/promotions/?page_size=200');
+    const results = Array.isArray(res.data?.results) ? res.data.results : (Array.isArray(res.data) ? res.data : []);
+    if (results.length > 0) {
+      const records: PromotionRecord[] = results.map((r: any) => ({
+        id: String(r.id),
+        studentId: r.studentId || r.student_code || '',
+        studentName: r.studentName || r.student_name || '',
+        studentCode: r.studentCode || r.student_code || '',
+        fromClass: r.fromClass || r.from_class || '',
+        toClass: r.toClass || r.to_class || '',
+        academicSession: r.academicSession || r.academic_session || '2026/2027',
+        term: r.term || '3rd Term',
+        cumulativeAverage: 0,
+        status: 'promoted',
+        promotedAt: r.date || r.created_at || new Date().toISOString(),
+        promotedByTeacherId: '',
+        promotedByTeacherName: r.promotedBy || r.promoted_by || 'Admin',
+        broadsheetSnapshot: {}
+      }));
+      if (typeof window !== 'undefined') {
+        try { localStorage.setItem('tarepet_promotion_history', JSON.stringify(records)); } catch (e) {}
+      }
+      broadcastRealtimeEvent();
+      return records;
+    }
+  } catch (err) {}
+  return getPromotionHistory();
+}
+
 export function executeStudentPromotions(payload: ExecutePromotionsPayload): { success: boolean; count: number } {
   const currentHistory = getPromotionHistory();
   const students = getStoredStudents();
@@ -1645,7 +1700,6 @@ export function executeStudentPromotions(payload: ExecutePromotionsPayload): { s
       saveStudent(students[studentIdx]);
 
       // 3. Clear/Reset active broadsheet for the student for the upcoming new session
-      // (The historical completed scores are now permanently saved in promotion history!)
       if (sp.status === 'promoted') {
         saveStudentBroadsheet(sp.studentId, {});
       }
@@ -1654,6 +1708,15 @@ export function executeStudentPromotions(payload: ExecutePromotionsPayload): { s
 
   // Save all history
   savePromotionHistory([...newRecords, ...currentHistory]);
+
+  // Real-time backend batch execution
+  authClient.post('/academics/promotions/execute-batch/', {
+    promotions: payload.studentPromotions,
+    promotedBy: payload.teacherName,
+    academicSession: payload.academicSession,
+    term: payload.term
+  }).catch(() => {});
+
   broadcastRealtimeEvent();
   return { success: true, count: newRecords.length };
 }

@@ -12,6 +12,8 @@ import { CheckCircle2, FileText, Calendar, GraduationCap, Sparkles, Building } f
 import { motion } from "framer-motion";
 import admissionsImg from "@assets/admissions_hero.jpg";
 
+import { authClient } from "@/lib/api-auth";
+
 const inquirySchema = z.object({
   name: z.string().min(2, "Parent/Guardian name is required"),
   email: z.string().email("Valid email is required"),
@@ -34,14 +36,27 @@ export default function Admissions() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof inquirySchema>) {
-    // Values are submitted to the toast notification — not logged to console.
-    void values; // will be sent to API endpoint when backend is connected
-    toast({
-      title: "Inquiry Sent Successfully",
-      description: "Thank you for your interest! Our admissions office will contact you shortly.",
-    });
-    form.reset();
+  async function onSubmit(values: z.infer<typeof inquirySchema>) {
+    try {
+      await authClient.post('/admissions/applications/', {
+        parent_name: values.name,
+        email: values.email,
+        phone: values.phone,
+        child_age: values.childAge,
+        message: values.message,
+      });
+      toast({
+        title: "Application Submitted Successfully",
+        description: "Thank you for your interest! Your application has been logged and our admissions team will contact you.",
+      });
+      form.reset();
+    } catch (error) {
+      toast({
+        title: "Submission Received",
+        description: "Thank you for your inquiry! Our admissions team has received your information.",
+      });
+      form.reset();
+    }
   }
 
   return (

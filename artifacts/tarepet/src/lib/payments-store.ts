@@ -386,6 +386,80 @@ export function getStudentItemStatus(studentId: string | number, itemId: string,
   };
 }
 
+export async function syncPaymentsWithBackend(): Promise<void> {
+  try {
+    const [itemsRes, txRes] = await Promise.allSettled([
+      authClient.get('/finance/fee-items/?page_size=200'),
+      authClient.get('/finance/transactions/?page_size=500')
+    ]);
+
+    if (itemsRes.status === 'fulfilled' && itemsRes.value.data) {
+      const results = Array.isArray(itemsRes.value.data?.results) 
+        ? itemsRes.value.data.results 
+        : (Array.isArray(itemsRes.value.data) ? itemsRes.value.data : []);
+      
+      if (results.length > 0) {
+        _paymentItems = results.map((item: any) => ({
+          id: item.id || item.item_key,
+          name: item.name,
+          category: item.category,
+          parentId: item.parent_id || item.parentId,
+          amount: Number(item.amount) || 0,
+          gradeAmounts: item.grade_amounts || item.gradeAmounts || {},
+          currency: item.currency || 'NGN',
+          dueDate: item.due_date || item.dueDate || '2026-09-15',
+          description: item.description || '',
+          isRequired: item.is_required ?? item.isRequired ?? false,
+          term: item.term || '1ST_TERM',
+          session: item.session || '2026/2027'
+        }));
+        if (typeof window !== 'undefined') {
+          try { localStorage.setItem('tarepet_fee_items', JSON.stringify(_paymentItems)); } catch (e) {}
+        }
+      } else {
+        // If backend database is empty, seed it with DEFAULT_PAYMENT_ITEMS automatically
+        authClient.post('/finance/fee-items/bulk-save/', { items: DEFAULT_PAYMENT_ITEMS }).catch(() => {});
+      }
+    }
+
+    if (txRes.status === 'fulfilled' && txRes.value.data) {
+      const txResults = Array.isArray(txRes.value.data?.results)
+        ? txRes.value.data.results
+        : (Array.isArray(txRes.value.data) ? txRes.value.data : []);
+      if (txResults.length > 0) {
+        _transactions = txResults.map((t: any) => ({
+          id: String(t.id),
+          studentId: t.studentId || t.student_id || '',
+          studentName: t.studentName || t.student_name || '',
+          studentEmail: t.studentEmail || t.student_email || '',
+          itemId: t.itemId || t.item_key || '',
+          itemName: t.itemName || t.item_name || '',
+          amount: Number(t.amount) || 0,
+          currency: t.currency || 'NGN',
+          reference: t.reference || '',
+          channel: t.channel || 'paystack',
+          status: t.status || 'SUCCESS',
+          paidAt: t.paidAt || t.paid_at || new Date().toISOString(),
+          receiptUrl: t.receiptUrl || t.receipt_url,
+          term: t.term || '1ST_TERM',
+          session: t.session || '2026/2027'
+        }));
+        if (typeof window !== 'undefined') {
+          try { localStorage.setItem('tarepet_fee_transactions', JSON.stringify(_transactions)); } catch (e) {}
+        }
+      }
+    }
+    broadcastPaymentMutation();
+  } catch (err) {
+    // Network fallback — keep existing items in memory
+  }
+}
+
+// Auto-trigger sync on module load
+if (typeof window !== 'undefined') {
+  syncPaymentsWithBackend().catch(() => {});
+}
+
 // ── ADMIN CATEGORY / ITEM MANAGEMENT ─────────────────────────────────────────
 
 export function savePaymentItem(itemData: Partial<PaymentItem> & { name: string; amount: number }): PaymentItem {
@@ -418,8 +492,8 @@ export function savePaymentItem(itemData: Partial<PaymentItem> & { name: string;
 
   broadcastPaymentMutation();
 
-  // Async sync with Django API backend
-  authClient.post('/payments/categories/', newItem).catch(() => {});
+  // Save to Django PostgreSQL/SQLite backend in real-time
+  authClient.post('/finance/fee-items/bulk-save/', { items: [newItem] }).catch(() => {});
 
   return newItem;
 }
@@ -442,6 +516,10 @@ export function updateFeeItemAmount(id: string, amount: number, targetGrade: str
   }
 
   broadcastPaymentMutation();
+
+  // Save updated price to Django backend
+  authClient.post('/finance/fee-items/bulk-save/', { items: [item] }).catch(() => {});
+
   return true;
 }
 
@@ -452,8 +530,8 @@ export function deletePaymentItem(itemId: string): boolean {
   }
   broadcastPaymentMutation();
 
-  // Async sync with Django API backend
-  authClient.delete(`/payments/categories/${itemId}/`).catch(() => {});
+  // Async delete from Django API backend
+  authClient.delete(`/finance/fee-items/${itemId}/`).catch(() => {});
 
   return true;
 }
@@ -483,7 +561,7 @@ export function recordTransaction(txData: Omit<PaymentTransaction, 'id' | 'paidA
   });
 
   // Async sync with Django API backend
-  authClient.post('/payments/transactions/', newTx).catch(() => {});
+  authClient.post('/finance/transactions/', newTx).catch(() => {});
 
   return newTx;
 }

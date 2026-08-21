@@ -19,7 +19,7 @@ import { isBiometricsSupported, isBiometricsEnabled, enrollBiometrics, unenrollB
 
 export default function TeacherProfile() {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [, setLocation] = useLocation();
 
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -233,34 +233,31 @@ export default function TeacherProfile() {
       `${profileForm.firstName} ${profileForm.lastName}`
     );
 
-    // 2. Sync session user in localStorage
-    if (typeof window !== 'undefined') {
-      try {
-        const storedUserJson = localStorage.getItem('tarepet_user') || localStorage.getItem('tarepet_auth_user');
-        if (storedUserJson) {
-          const uObj = JSON.parse(storedUserJson);
-          uObj.first_name = profileForm.firstName;
-          uObj.last_name = profileForm.lastName;
-          uObj.phone = profileForm.phone;
-          uObj.email = profileForm.email;
-          if (!uObj.profile) uObj.profile = {};
-          uObj.profile.specialization = profileForm.specialization;
-          uObj.profile.qualifications = profileForm.qualification;
-          uObj.profile.gender = profileForm.gender;
-          uObj.profile.dob = profileForm.dob;
-          uObj.profile.address = profileForm.address;
-          uObj.profile.bio = profileForm.bio;
-          uObj.profile.formTeacherOf = profileForm.formClass;
-          uObj.profile.form_teacher_of = profileForm.formClass;
-          uObj.profile.salary = profileForm.salary;
-          uObj.profile.bank_name = profileForm.bankName;
-          uObj.profile.account_number = profileForm.accountNumber;
-          uObj.profile.profileImage = profileForm.profileImage;
-          localStorage.setItem('tarepet_user', JSON.stringify(uObj));
-          localStorage.setItem('tarepet_auth_user', JSON.stringify(uObj));
-        }
-      } catch (err) {}
-    }
+    // 2. Sync session user in AuthContext and localStorage
+    updateUser({
+      first_name: profileForm.firstName,
+      last_name: profileForm.lastName,
+      phone: profileForm.phone,
+      email: profileForm.email,
+      profile: {
+        ...(user?.profile || {}),
+        teacher_id: profileForm.staffId,
+        department: profileForm.department,
+        specialization: profileForm.specialization,
+        qualifications: profileForm.qualification,
+        gender: profileForm.gender,
+        dob: profileForm.dob,
+        address: profileForm.address,
+        bio: profileForm.bio,
+        formTeacherOf: profileForm.formClass,
+        form_teacher_of: profileForm.formClass,
+        salary: profileForm.salary,
+        bank_name: profileForm.bankName,
+        account_number: profileForm.accountNumber,
+        profileImage: profileForm.profileImage,
+        profile_image: profileForm.profileImage,
+      }
+    });
 
     // 3. Sync to Django Backend Database via API
     authClient.put('/auth/me/', {

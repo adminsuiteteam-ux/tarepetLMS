@@ -31,4 +31,9 @@ urlpatterns = [
     path('api/v1/auth/', include('apps.users.urls')),
     path('api/v1/lms/', include('apps.courses.urls')),
     path('api/v1/assessments/', include('apps.assessments.urls')),
+    path('api/v1/finance/', include('apps.finance.urls')),
+    path('api/v1/payments/', include('apps.finance.urls')),  # alias for payments
+    path('api/v1/academics/', include('apps.academics.urls')),
+    path('api/v1/admissions/', include('apps.admissions.urls')),
+    path('api/v1/communication/', include('apps.communication.urls')),
 ]

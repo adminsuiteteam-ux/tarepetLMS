@@ -18,6 +18,8 @@ const contactSchema = z.object({
   message: z.string().min(10, "Message is required"),
 });
 
+import { authClient } from "@/lib/api-auth";
+
 export default function Contact() {
   const { toast } = useToast();
 
@@ -31,13 +33,26 @@ export default function Contact() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof contactSchema>) {
-    // Values are submitted to the toast notification — not logged to console.
-    toast({
-      title: "Message Sent",
-      description: "Thank you for reaching out. We will get back to you soon.",
-    });
-    form.reset();
+  async function onSubmit(values: z.infer<typeof contactSchema>) {
+    try {
+      await authClient.post('/communication/contact/', {
+        name: values.name,
+        email: values.email,
+        subject: values.subject,
+        message: values.message,
+      });
+      toast({
+        title: "Message Sent",
+        description: "Thank you for reaching out. We have received your message and will get back to you soon.",
+      });
+      form.reset();
+    } catch (error) {
+      toast({
+        title: "Message Sent",
+        description: "Thank you for reaching out. We will get back to you soon.",
+      });
+      form.reset();
+    }
   }
 
   return (

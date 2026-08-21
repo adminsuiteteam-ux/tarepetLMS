@@ -105,6 +105,10 @@ INSTALLED_APPS = [
     'apps.users',
     'apps.courses',
     'apps.assessments',
+    'apps.finance',
+    'apps.academics',
+    'apps.admissions',
+    'apps.communication',
 ]
 
 MIDDLEWARE = [
