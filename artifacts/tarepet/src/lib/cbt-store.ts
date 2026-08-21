@@ -635,6 +635,9 @@ function deduplicateTeachers(list: TeacherRecord[]): TeacherRecord[] {
   return deduped;
 }
 
+const OFFICIAL_TEACHER_EMAILS = new Set(DEFAULT_FORM_TEACHERS.map(t => t.email.toLowerCase()));
+const OFFICIAL_TEACHER_NAMES = new Set(DEFAULT_FORM_TEACHERS.map(t => t.name.toLowerCase().trim()));
+
 function loadSavedTeachers(): TeacherRecord[] {
   let list: TeacherRecord[] = [];
   if (typeof window !== 'undefined') {
@@ -643,17 +646,35 @@ function loadSavedTeachers(): TeacherRecord[] {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          list = parsed;
+          // Strictly prune any non-official/legacy teachers from localStorage
+          list = parsed.filter((t: any) => {
+            if (!t || !t.email) return false;
+            const em = (t.email || '').toLowerCase().trim();
+            const nm = (t.name || '').toLowerCase().trim();
+            return OFFICIAL_TEACHER_EMAILS.has(em) || OFFICIAL_TEACHER_NAMES.has(nm) || (typeof t.id === 'number' && t.id > 1700000000000);
+          });
         }
       }
     } catch (e) {}
   }
 
-  if (list.length === 0) {
-    list = DEFAULT_FORM_TEACHERS;
+  // Ensure all 19 official teachers are present, with saved overrides merged
+  const merged = DEFAULT_FORM_TEACHERS.map(def => {
+    const found = list.find(l => (l.email && l.email.toLowerCase() === def.email.toLowerCase()) || (l.staffId && l.staffId.toLowerCase() === def.staffId.toLowerCase()));
+    return found ? { ...def, ...found } : def;
+  });
+
+  // Include any newly added custom staff
+  const custom = list.filter(l => !DEFAULT_FORM_TEACHERS.some(d => d.email.toLowerCase() === (l.email || '').toLowerCase()));
+  const deduped = deduplicateTeachers([...merged, ...custom]);
+
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('tarepet_teachers_list', JSON.stringify(deduped));
+    } catch (e) {}
   }
 
-  return deduplicateTeachers(list);
+  return deduped;
 }
 
 let _teachers: TeacherRecord[] = loadSavedTeachers();
@@ -1204,6 +1225,8 @@ export function broadcastRealtimeEvent() {
 export function initCBTStore() {
   if (typeof window !== 'undefined') {
     initWebSocket();
+    syncTeachersWithBackend().catch(() => {});
+    syncStudentsWithBackend().catch(() => {});
     syncBroadsheetWithBackend().catch(() => {});
     syncPromotionsWithBackend().catch(() => {});
     syncActivitiesWithBackend().catch(() => {});
