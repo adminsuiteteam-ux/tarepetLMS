@@ -340,32 +340,41 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
       {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Header */}
-        <header className="sticky top-0 z-30 bg-card border-b border-border px-5 py-3 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 flex-1 min-w-0">
+        <header className="sticky top-0 z-30 bg-card border-b border-border px-3 sm:px-5 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
             <button
               onClick={() => setMobileSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-lg text-muted-foreground hover:bg-accent transition-colors shrink-0"
+              className="lg:hidden p-2 rounded-xl text-muted-foreground hover:bg-accent transition-colors shrink-0"
+              title="Open Menu"
             >
               <Menu className="w-5 h-5" />
             </button>
 
-            {/* School Name / Breadcrumb */}
-            <div className="hidden sm:block shrink-0">
+            {/* Mobile Logo & Portal Title */}
+            <div className="flex items-center gap-2 lg:hidden shrink-0">
+              <img src={tarepetLogo} alt="Logo" className="w-6 h-6 object-contain rounded-md" />
+              <span className="font-bold text-xs sm:text-sm text-foreground truncate max-w-[130px] sm:max-w-[200px]">
+                {title || 'Tarepet LMS'}
+              </span>
+            </div>
+
+            {/* Desktop School Name / Breadcrumb */}
+            <div className="hidden lg:block shrink-0">
               <h1 className="text-base font-bold text-foreground leading-tight">{title}</h1>
               <p className="text-[11px] text-muted-foreground">
                 {navItems.find(n => n.id === activeSection)?.label ?? 'Dashboard'}
               </p>
             </div>
 
-            {/* Interactive Search Bar Link */}
+            {/* Desktop Search Bar Link */}
             <div
               onClick={() => {
                 if (typeof window !== 'undefined') window.location.href = '/search';
               }}
-              className="flex-1 max-w-sm ml-2 relative cursor-pointer group"
+              className="hidden md:flex flex-1 max-w-sm ml-2 relative cursor-pointer group"
               title="Click to open Search Page"
             >
-              <div className="relative flex items-center">
+              <div className="relative flex items-center w-full">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-hover:text-emerald-600 transition-colors" />
                 <input
                   type="text"
@@ -377,8 +386,18 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
             </div>
           </div>
 
-          {/* Right actions */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Right actions: Normal Navigation UI Icons */}
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+            {/* Mobile Search Icon Button */}
+            <button
+              onClick={() => {
+                if (typeof window !== 'undefined') window.location.href = '/search';
+              }}
+              title="Search Portal"
+              className="md:hidden p-2 rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            >
+              <Search className="w-5 h-5" />
+            </button>
 
             {/* Notifications */}
             <NotificationPanel role={(user?.role ?? 'STUDENT') as any} />
@@ -395,7 +414,7 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
             {/* Profile Header Trigger */}
             <div
               onClick={() => onNavigate('profile')}
-              className="flex items-center gap-2 pl-2 border-l border-border cursor-pointer group"
+              className="flex items-center gap-2 pl-1.5 sm:pl-2 border-l border-border cursor-pointer group"
               title="Click to view Profile"
             >
               <div className="w-8 h-8 rounded-full bg-primary text-white font-bold flex items-center justify-center text-sm group-hover:scale-105 transition-transform shadow-xs overflow-hidden border border-border">
@@ -414,9 +433,31 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
         </header>
 
         {/* Page body */}
-        <main className="flex-1 p-5 md:p-7 overflow-y-auto">
+        <main className="flex-1 p-4 sm:p-5 md:p-7 pb-20 lg:pb-7 overflow-y-auto">
           {children}
         </main>
+
+        {/* Mobile Sticky Bottom Navigation Bar with Normal UI Icons */}
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-md border-t border-border px-2 py-1.5 flex items-center justify-around shadow-lg">
+          {navItems.slice(0, 5).map((item) => {
+            const Icon = item.icon;
+            const isActive = activeSection === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => onNavigate(item.id)}
+                className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all ${
+                  isActive
+                    ? 'text-primary font-bold scale-105'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5]' : 'stroke-[1.75]'}`} />
+                <span className="text-[10px] mt-0.5 leading-tight truncate max-w-[54px]">{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
       </div>
     </div>
   );

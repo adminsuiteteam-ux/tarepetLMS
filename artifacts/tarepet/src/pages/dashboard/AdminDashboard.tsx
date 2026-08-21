@@ -9,6 +9,7 @@ import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, gen
 import { AdminManagementPanel } from '@/components/dashboard/AdminManagementPanel';
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
 import { ImageCropModal } from '@/components/ui/ImageCropModal';
+import { MobileProfileView } from '@/components/profile/MobileProfileView';
 import {
   getPaymentItems,
   getPaymentTransactions,
@@ -5275,10 +5276,48 @@ export default function AdminDashboard() {
     // 8. ADMIN PROFILE PAGE
     if (activeSection === 'profile') {
       return (
-        <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
+        <>
+          {/* Mobile View Profile */}
+          <div className="md:hidden">
+            <MobileProfileView
+              name={adminProfileData.name}
+              email={adminProfileData.email}
+              subtitle={`${adminProfileData.title} • ${adminProfileData.department}`}
+              avatarUrl={adminProfileData.profileImage}
+              roleBadge="ADMIN"
+              location="Yenagoa Campus, Nigeria"
+              onBack={() => setActiveSection('overview')}
+              onEditProfile={() => {
+                setEditProfileForm(adminProfileData);
+                setShowEditProfileModal(true);
+              }}
+              onChangePassword={() => {
+                setShowChangePasswordModal(true);
+              }}
+              onPrintProfile={() => window.print()}
+              extraMenuItems={[
+                {
+                  icon: ShieldCheck,
+                  label: 'Manage Sub-Admins & Permissions',
+                  value: 'Access Control',
+                  onClick: () => setActiveSection('manage_admins'),
+                  color: 'bg-rose-500/10 text-rose-600',
+                },
+                {
+                  icon: DollarSign,
+                  label: 'Financials & Fee Setup',
+                  value: 'School Bursary',
+                  onClick: () => setActiveSection('finance'),
+                  color: 'bg-emerald-500/10 text-emerald-600',
+                }
+              ]}
+            />
+          </div>
 
-          {/* Profile Header Banner */}
-          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
+          {/* Desktop View */}
+          <div className="hidden md:block space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
+            {/* Profile Header Banner */}
+            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 text-center sm:text-left">
               <div className="relative shrink-0">
                 <div className="w-20 h-20 rounded-2xl bg-primary text-white font-bold text-3xl flex items-center justify-center shadow-lg border-2 border-primary/20 overflow-hidden">
@@ -5816,7 +5855,8 @@ export default function AdminDashboard() {
             </div>
           )}
 
-        </div>
+          </div>
+        </>
       );
     }
 

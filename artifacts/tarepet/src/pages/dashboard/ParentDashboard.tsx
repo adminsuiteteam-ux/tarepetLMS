@@ -17,6 +17,7 @@ import { subscribeToPaymentStore, syncPaymentsWithBackend } from '@/lib/payments
 import { RealTimeSyncStatus } from '@/components/cbt/RealTimeSyncStatus';
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
 import { getTimeGreeting } from '@/lib/utils';
+import { MobileProfileView } from '@/components/profile/MobileProfileView';
 
 // ── Data Definitions ────────────────────────────
 const CHILDREN: any[] = [];
@@ -492,8 +493,50 @@ export default function ParentDashboard() {
 
     // 10. SETTINGS & PARENT TOOLS
     if (activeSection === 'settings' || activeSection === 'profile') return (
-      <div className="space-y-5">
-        <h2 className="text-xl font-serif font-bold text-foreground">{t('Parent Settings & Profile')}</h2>
+      <>
+        {/* Mobile View Profile */}
+        <div className="md:hidden">
+          <MobileProfileView
+            name={parentProfile.fullName || `${parentProfile.firstName} ${parentProfile.lastName}`}
+            email={parentProfile.email || user?.email || ''}
+            subtitle="Montessori Parent / Guardian"
+            avatarUrl={parentProfile.profileImage}
+            roleBadge="PARENT"
+            location="Yenagoa Campus, Nigeria"
+            onBack={() => setActiveSection('overview')}
+            onEditProfile={() => {
+              const fileInput = document.getElementById('parentAvatarPicker');
+              if (fileInput) fileInput.click();
+            }}
+            extraMenuItems={[
+              {
+                icon: GraduationCap,
+                label: 'Enrolled Children Records',
+                value: 'View Progress',
+                onClick: () => setActiveSection('academic'),
+                color: 'bg-emerald-500/10 text-emerald-600',
+              },
+              {
+                icon: CreditCard,
+                label: 'Tuition Fees & Invoices',
+                value: 'Fee Portal',
+                onClick: () => setActiveSection('fees'),
+                color: 'bg-amber-500/10 text-amber-600',
+              },
+              {
+                icon: School,
+                label: 'PTA & School Engagements',
+                value: 'Open Forum',
+                onClick: () => setActiveSection('engagement'),
+                color: 'bg-blue-500/10 text-blue-600',
+              }
+            ]}
+          />
+        </div>
+
+        {/* Desktop View */}
+        <div className="hidden md:block space-y-5">
+          <h2 className="text-xl font-serif font-bold text-foreground">{t('Parent Settings & Profile')}</h2>
         
         <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
           <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
@@ -605,6 +648,7 @@ export default function ParentDashboard() {
           </div>
         </div>
       </div>
+      </>
     );
 
     // Fallback if section is not matched

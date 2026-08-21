@@ -17,6 +17,7 @@ import {
 import { authClient } from '@/lib/api-auth';
 import { addRealtimeNotification } from '@/lib/notifications-store';
 import { ImageCropModal } from '@/components/ui/ImageCropModal';
+import { MobileProfileView } from '@/components/profile/MobileProfileView';
 import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, getStoredTeachers, saveTeacher, saveStudent, deleteStudent, subscribeToCBTStore, broadcastRealtimeEvent, syncStudentsWithBackend, syncTeachersWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, calculateBECEGrade, isSeniorSecondaryClass, CourseBroadsheetScore, PromotionRecord, getPromotionHistory, executeStudentPromotions, getNextProgressiveClass, getArchivedCohortsForTeacher, matchStudentClass } from '@/lib/cbt-store';
 import { useTranslation } from '@/lib/i18n';
 import { TerminalReportCard, ReportCardData, SubjectScore } from '@/components/reports/TerminalReportCard';
@@ -3090,7 +3091,41 @@ export default function TeacherDashboard() {
     // =========================================================
     // 6. TEACHER PROFILE
     if (activeSection === 'profile') return (
-      <div className="space-y-6 max-w-5xl">
+      <>
+        {/* Mobile View Profile */}
+        <div className="md:hidden">
+          <MobileProfileView
+            name={profileForm.fullName || `${profileForm.firstName} ${profileForm.lastName}`}
+            email={profileForm.email || user?.email || ''}
+            subtitle={profileForm.roleTitle || profileForm.department || 'Form Teacher'}
+            avatarUrl={profileForm.profileImage}
+            roleBadge={user?.role || 'TEACHER'}
+            location="Yenagoa Campus, Nigeria"
+            onBack={() => setActiveSection('overview')}
+            onEditProfile={() => setShowEditModal(true)}
+            onViewIdCard={() => setShowStaffIdModal(true)}
+            onPrintProfile={() => window.print()}
+            extraMenuItems={[
+              {
+                icon: GraduationCap,
+                label: 'Class Assignment',
+                value: profileForm.formClass && profileForm.formClass !== 'None' ? profileForm.formClass : 'General Faculty',
+                onClick: () => setShowEditModal(true),
+                color: 'bg-emerald-500/10 text-emerald-600',
+              },
+              {
+                icon: BookOpen,
+                label: 'Assigned Subjects',
+                value: `${profileForm.subjectsAssigned?.length || 0} Courses`,
+                onClick: () => setShowEditModal(true),
+                color: 'bg-blue-500/10 text-blue-600',
+              }
+            ]}
+          />
+        </div>
+
+        {/* Desktop View */}
+        <div className="hidden md:block space-y-6 max-w-5xl">
         {/* Clean Page Title & Single Action Button */}
         <div className="flex items-center justify-between gap-2 sm:gap-4 pb-3 border-b border-border w-full">
           <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
@@ -3850,6 +3885,7 @@ export default function TeacherDashboard() {
           </button>
         </div>
       </div>
+    </>
     );
 
     // Fallback for any unknown section

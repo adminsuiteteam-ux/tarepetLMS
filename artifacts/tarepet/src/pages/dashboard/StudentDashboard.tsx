@@ -19,6 +19,7 @@ import { StudentPaymentPanel } from '@/components/dashboard/StudentPaymentPanel'
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
 import { getTimeGreeting } from '@/lib/utils';
 import { ImageCropModal } from '@/components/ui/ImageCropModal';
+import { MobileProfileView } from '@/components/profile/MobileProfileView';
 
 // ─── Initial Seed Data (SS1 Science) ─────────────────────────
 const MY_COURSES: any[] = [];
@@ -830,13 +831,56 @@ export default function StudentDashboard() {
     // 7. SETTING / PROFILE
     // =========================================================
     if (activeSection === 'settings' || activeSection === 'profile') return (
-      <div className="space-y-6 max-w-3xl">
-        <div>
-          <h2 className="text-2xl font-serif font-bold text-foreground">{t('student.settings_title', 'Setting/profile')}</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">{t('student.settings_desc', 'Manage your student profile, account security, and notifications.')}</p>
+      <>
+        {/* Mobile View Profile */}
+        <div className="md:hidden">
+          <MobileProfileView
+            name={profileForm.fullName || `${profileForm.firstName} ${profileForm.lastName}`}
+            email={profileForm.email || user?.email || ''}
+            subtitle={`${profileForm.grade || 'Student'} • ${profileForm.stream || 'Senior Secondary'}`}
+            avatarUrl={profileForm.profileImage}
+            roleBadge="STUDENT"
+            location="Yenagoa Campus, Nigeria"
+            onBack={() => setActiveSection('overview')}
+            onEditProfile={() => {
+              const fileInput = document.getElementById('studentAvatarInputPicker');
+              if (fileInput) fileInput.click();
+            }}
+            onViewIdCard={() => setShowReportCardModal(true)}
+            extraMenuItems={[
+              {
+                icon: Award,
+                label: 'Official Terminal Report Card',
+                value: selectedTerm,
+                onClick: () => setShowReportCardModal(true),
+                color: 'bg-emerald-500/10 text-emerald-600',
+              },
+              {
+                icon: BookOpen,
+                label: 'Enrolled Academic Courses',
+                value: `${courses.length} Subjects`,
+                onClick: () => setActiveSection('courses'),
+                color: 'bg-blue-500/10 text-blue-600',
+              },
+              {
+                icon: CreditCard,
+                label: 'Tuition Fees & Payments',
+                value: 'View Balance',
+                onClick: () => setActiveSection('payments'),
+                color: 'bg-amber-500/10 text-amber-600',
+              }
+            ]}
+          />
         </div>
 
-        <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
+        {/* Desktop View */}
+        <div className="hidden md:block space-y-6 max-w-3xl">
+          <div>
+            <h2 className="text-2xl font-serif font-bold text-foreground">{t('student.settings_title', 'Setting/profile')}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">{t('student.settings_desc', 'Manage your student profile, account security, and notifications.')}</p>
+          </div>
+
+          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
           <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
             <User className="w-4 h-4 text-primary" /> {t('student.info_header', 'Student Information')}
           </h3>
@@ -1025,6 +1069,7 @@ export default function StudentDashboard() {
           </button>
         </div>
       </div>
+    </>
     );
 
     // Fallback if section is not matched

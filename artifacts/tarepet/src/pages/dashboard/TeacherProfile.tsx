@@ -16,6 +16,7 @@ import { authClient } from '@/lib/api-auth';
 import { getStoredTeachers, saveTeacher, broadcastRealtimeEvent, addRealtimeActivity, syncTeachersWithBackend } from '@/lib/cbt-store';
 import { addRealtimeNotification } from '@/lib/notifications-store';
 import { ImageCropModal } from '@/components/ui/ImageCropModal';
+import { MobileProfileView } from '@/components/profile/MobileProfileView';
 
 export default function TeacherProfile() {
   const { t } = useTranslation();
@@ -379,18 +380,52 @@ export default function TeacherProfile() {
           </div>
         )}
 
-        {/* Back Button to Dashboard */}
-        <div className="mb-4 flex items-center justify-between">
-          <button
-            onClick={() => setLocation('/dashboard/teacher')}
-            className="inline-flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-primary transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>{t('teacher.back_to_dashboard', 'Back to Teacher Dashboard')}</span>
-          </button>
+        {/* Mobile View Profile (matching modern design reference) */}
+        <div className="md:hidden">
+          <MobileProfileView
+            name={profileForm.fullName || `${profileForm.firstName} ${profileForm.lastName}`}
+            email={profileForm.email || user?.email || ''}
+            subtitle={profileForm.roleTitle || profileForm.department || 'Form Teacher'}
+            avatarUrl={profileForm.profileImage}
+            roleBadge={user?.role || 'TEACHER'}
+            location="Yenagoa Campus, Nigeria"
+            onBack={() => setLocation('/dashboard/teacher')}
+            onEditProfile={() => setShowEditModal(true)}
+            onViewIdCard={() => setShowStaffIdModal(true)}
+            onPrintProfile={() => window.print()}
+            extraMenuItems={[
+              {
+                icon: GraduationCap,
+                label: 'Class Assignment',
+                value: profileForm.formClass && profileForm.formClass !== 'None' ? profileForm.formClass : 'General Faculty',
+                onClick: () => setShowEditModal(true),
+                color: 'bg-emerald-500/10 text-emerald-600',
+              },
+              {
+                icon: BookOpen,
+                label: 'Assigned Subjects',
+                value: `${profileForm.subjectsAssigned?.length || 0} Courses`,
+                onClick: () => setShowEditModal(true),
+                color: 'bg-blue-500/10 text-blue-600',
+              }
+            ]}
+          />
         </div>
 
-        <div className="space-y-6 max-w-5xl">
+        {/* Desktop View */}
+        <div className="hidden md:block">
+          {/* Back Button to Dashboard */}
+          <div className="mb-4 flex items-center justify-between">
+            <button
+              onClick={() => setLocation('/dashboard/teacher')}
+              className="inline-flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-primary transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>{t('teacher.back_to_dashboard', 'Back to Teacher Dashboard')}</span>
+            </button>
+          </div>
+
+          <div className="space-y-6 max-w-5xl">
           {/* Clean Page Title & Single Action Button */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border">
             <div className="flex items-center gap-2.5">
@@ -609,6 +644,7 @@ export default function TeacherProfile() {
               </div>
             </div>
           </div>
+        </div>
 
           {/* Clean Edit Profile & Biometrics Modal */}
           {/* Full Comprehensive Edit Profile & Biometrics Modal */}
