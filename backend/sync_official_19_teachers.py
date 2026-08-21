@@ -241,12 +241,18 @@ OFFICIAL_19_TEACHERS = [
 
 allowed_emails = {t['email'].lower() for t in OFFICIAL_19_TEACHERS}
 
-# Step 1: Prune unlisted
-for t in CustomUser.objects.filter(role='TEACHER'):
+print("=== STEP 1: Deleting unlisted teachers from database ===")
+existing_teachers = CustomUser.objects.filter(role='TEACHER')
+deleted_count = 0
+for t in existing_teachers:
     if t.email.lower() not in allowed_emails:
+        print(f"DELETING UNLISTED TEACHER: {t.get_full_name()} ({t.email})")
         t.delete()
+        deleted_count += 1
 
-# Step 2: Create or update 19 teachers
+print(f"Deleted {deleted_count} unlisted teacher records.\n")
+
+print("=== STEP 2: Creating / Updating the Official 19 Teachers ===")
 for r in OFFICIAL_19_TEACHERS:
     u = CustomUser.objects.filter(email__iexact=r['email']).first()
     if not u:
@@ -275,5 +281,7 @@ for r in OFFICIAL_19_TEACHERS:
     p.gender = r['gender']
     p.form_teacher_of = r['form_class']
     p.save()
+    print(f"VERIFIED: {u.first_name} {u.last_name} | Staff ID: {p.teacher_id} | Phone: {u.phone} | Form Teacher: {p.form_teacher_of} | Spec: {p.specialization}")
 
-print(f"OK: Exactly {CustomUser.objects.filter(role='TEACHER').count()} official teachers synced.")
+total_now = CustomUser.objects.filter(role='TEACHER').count()
+print(f"\nSUCCESS: Exactly {total_now} official teachers exist in the database!")

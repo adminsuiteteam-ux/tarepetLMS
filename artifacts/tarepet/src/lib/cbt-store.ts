@@ -319,7 +319,293 @@ export interface TeacherRecord {
   bio?: string;
 }
 
-export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [];
+export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [
+  {
+    id: 1,
+    staffId: 'TMS/TCH/0001',
+    name: 'Ms. Allison Victoria',
+    email: 'allison.victoria@tarepet.com',
+    phone: '08062571566',
+    gender: 'Female',
+    formTeacherOf: 'SS 1',
+    department: 'Senior Secondary Section',
+    specialization: 'Senior Secondary Language Arts & English',
+    qualification: 'B.Ed. English & Literature',
+    status: 'Active',
+    joined: '2022-09-01',
+    bio: 'Form Teacher for SS 1 guiding students in English Language and Senior Secondary curriculum.'
+  },
+  {
+    id: 2,
+    staffId: 'TMS/TCH/0002',
+    name: 'Mrs. Timi Porbeni',
+    email: 'isaactimi16@gmail.com',
+    phone: '07068523730',
+    gender: 'Female',
+    formTeacherOf: 'SS 2',
+    department: 'Senior Secondary Humanities Department',
+    specialization: 'English Language & Literature in English (SS1, SS2, SS3)',
+    qualification: 'B.A. Literature in English, PGDE',
+    status: 'Active',
+    joined: '2021-09-01',
+    bio: 'Senior Instructor in English Language & Literature in English across SS 1, SS 2, and SS 3.'
+  },
+  {
+    id: 3,
+    staffId: 'TMS/TCH/0003',
+    name: 'Samuel Hannah',
+    email: 'hannah.samuel@tarepet.com',
+    phone: '08062429432',
+    gender: 'Female',
+    formTeacherOf: 'Creche',
+    department: 'Early Years & Vocational Studies',
+    specialization: 'Prevocational Studies (NUR - SS3) & Creche',
+    qualification: 'NCE Early Childhood Education',
+    status: 'Active',
+    joined: '2023-01-10',
+    bio: 'Form Educator for Creche and Prevocational Studies instructor from Nursery to SS 3.'
+  },
+  {
+    id: 4,
+    staffId: 'TMS/TCH/0004',
+    name: 'Nwachukwu (O) Edirin',
+    email: 'edirin.nwachukwu@tarepet.com',
+    phone: '07032356176',
+    gender: 'Female',
+    formTeacherOf: 'Primary 2',
+    department: 'Primary Section',
+    specialization: 'Primary 2 Curriculum & Basic Sciences',
+    qualification: 'B.Sc. Ed. Primary Science',
+    status: 'Active',
+    joined: '2022-09-01',
+    bio: 'Form Teacher for Primary 2 nurturing foundational literacy, numeracy, and science inquiry.'
+  },
+  {
+    id: 5,
+    staffId: 'TMS/TCH/0005',
+    name: 'Mrs. Ozichi Nwaudo Arinze',
+    email: 'ozichi.arinze@tarepet.com',
+    phone: '08067102216',
+    gender: 'Female',
+    formTeacherOf: 'JSS 1',
+    department: 'Junior Secondary Section',
+    specialization: 'Mathematics (JSS 1)',
+    qualification: 'B.Sc. Ed. Mathematics',
+    status: 'Active',
+    joined: '2020-09-01',
+    bio: 'Form Teacher for JSS 1 and Junior Secondary Mathematics educator.'
+  },
+  {
+    id: 6,
+    staffId: 'TMS/TCH/0006',
+    name: 'Ogbe Andrew',
+    email: 'ogbe.andrew@tarepet.com',
+    phone: '08020697680',
+    gender: 'Male',
+    formTeacherOf: 'Basic 4',
+    department: 'Mathematics & Sciences Department',
+    specialization: 'Mathematics (Basic 4, SS 2)',
+    qualification: 'B.Sc. Mathematics',
+    status: 'Active',
+    joined: '2021-09-01',
+    bio: 'Form Teacher and Mathematics instructor for Basic 4 and Senior Secondary 2.'
+  },
+  {
+    id: 7,
+    staffId: 'TMS/TCH/0007',
+    name: 'Abiola Adeniyi Adegemo',
+    email: 'adeniyiabiola2@gmail.com',
+    phone: '08131251726',
+    gender: 'Male',
+    formTeacherOf: 'Senior Science',
+    department: 'Physical & Commercial Sciences',
+    specialization: 'Physics (PRI - SS3) & Financial Accounting (JSS 1)',
+    qualification: 'B.Sc. Physics & Accounting',
+    status: 'Active',
+    joined: '2019-09-01',
+    bio: 'Senior Physics instructor for Primary to SS 3 and Financial Accounting instructor for JSS 1.'
+  },
+  {
+    id: 8,
+    staffId: 'TMS/TCH/0008',
+    name: 'Simeon Blessed Chigozie',
+    email: 'blessedsimeon6@gmail.com',
+    phone: '08146183309',
+    gender: 'Male',
+    formTeacherOf: 'JSS 1',
+    department: 'Creative Arts & Music Department',
+    specialization: 'Music (JSS 1) & Basic 4 Curriculum',
+    qualification: 'B.A. Music & Creative Arts',
+    status: 'Active',
+    joined: '2022-09-01',
+    bio: 'Form Teacher and instructor for Music (JSS 1) and Basic 4 creative arts.'
+  },
+  {
+    id: 9,
+    staffId: 'TMS/TCH/0009',
+    name: 'Egufe B. Austin',
+    email: 'austin.egufe@tarepet.com',
+    phone: '08066154094',
+    gender: 'Male',
+    formTeacherOf: 'JSS Vocational',
+    department: 'Vocational & Technical Studies',
+    specialization: 'Home Economics (JSS 1 - 3)',
+    qualification: 'B.Sc. Home Economics',
+    status: 'Active',
+    joined: '2023-09-01',
+    bio: 'Instructor for Home Economics across Junior Secondary classes (JSS 1 to JSS 3).'
+  },
+  {
+    id: 10,
+    staffId: 'TMS/TCH/0010',
+    name: 'Oyiniki Anita Ojinbrakemi',
+    email: 'oyinkianita6@gmail.com',
+    phone: '08146183309',
+    gender: 'Female',
+    formTeacherOf: 'JSS 3 Love',
+    department: 'Junior Secondary Section',
+    specialization: 'English Language & Verbal Reasoning (JSS 3)',
+    qualification: 'B.A. English & Literary Studies',
+    status: 'Active',
+    joined: '2021-09-01',
+    bio: 'Form Teacher for JSS 3 Love and instructor in English Language & Verbal Reasoning.'
+  },
+  {
+    id: 11,
+    staffId: 'TMS/TCH/0011',
+    name: 'Mrs. Eze Chidubem Janneth',
+    email: 'ukachukwuchidubem223@gmail.com',
+    phone: '08142417833',
+    gender: 'Female',
+    formTeacherOf: 'JSS 2 Faith',
+    department: 'Creative & Cultural Arts Department',
+    specialization: 'Fine Art & Creative Arts (JSS 1 - 3)',
+    qualification: 'B.A. Fine & Applied Arts, PGDE',
+    status: 'Active',
+    joined: '2020-09-01',
+    bio: 'Form Teacher for JSS 2 Faith and Fine Art instructor for JSS 1, JSS 2, and JSS 3.'
+  },
+  {
+    id: 12,
+    staffId: 'TMS/TCH/0012',
+    name: 'Agadaga Tari',
+    email: 'tari.agadaga@tarepet.com',
+    phone: '08065008494',
+    gender: 'Male',
+    formTeacherOf: 'None',
+    department: 'Social Sciences Department',
+    specialization: 'Social Studies (SOS) & Civic Education (JSS 1 - 3)',
+    qualification: 'B.Sc. Political Science & Social Studies',
+    status: 'Active',
+    joined: '2022-09-01',
+    bio: 'Instructor in Social Studies and Civic Education for Junior Secondary classes.'
+  },
+  {
+    id: 13,
+    staffId: 'TMS/TCH/0013',
+    name: 'Amos Godspower',
+    email: 'amosgodspower360@mail.com',
+    phone: '07035339196',
+    gender: 'Male',
+    formTeacherOf: 'JSS 3 Faith',
+    department: 'Business & Commercial Studies',
+    specialization: 'Business Studies (JSS 1 - 2) & Civic Education',
+    qualification: 'B.Sc. Business Education',
+    status: 'Active',
+    joined: '2021-09-01',
+    bio: 'Form Teacher for JSS 3 Faith and Business Studies educator.'
+  },
+  {
+    id: 14,
+    staffId: 'TMS/TCH/0014',
+    name: 'Iwu Adanma',
+    email: 'iwu.adanma@tarepet.com',
+    phone: '08039341848',
+    gender: 'Female',
+    formTeacherOf: 'JSS 1 Faith',
+    department: 'Senior Secondary Commercial Department',
+    specialization: 'Marketing & Commerce (SS 1 - 3)',
+    qualification: 'B.Sc. Marketing & Commercial Education',
+    status: 'Active',
+    joined: '2022-09-01',
+    bio: 'Form Teacher for JSS 1 Faith and Commerce & Marketing instructor for SS 1 to SS 3.'
+  },
+  {
+    id: 15,
+    staffId: 'TMS/TCH/0015',
+    name: 'Mr. Joseph Ekenebe',
+    email: 'joebleszekenebe@gmail.com',
+    phone: '08137183618',
+    gender: 'Male',
+    formTeacherOf: 'SS 2 Grace',
+    department: 'Senior Secondary Section',
+    specialization: 'Senior Secondary Studies (SS 1 - 3)',
+    qualification: 'B.Sc. Education',
+    status: 'Active',
+    joined: '2020-09-01',
+    bio: 'Form Teacher for SS 2 Grace and Senior Secondary educator.'
+  },
+  {
+    id: 16,
+    staffId: 'TMS/TCH/0016',
+    name: 'Goodluck Ufomba',
+    email: 'goodluckufomba2020@gmail.com',
+    phone: '08032288883',
+    gender: 'Male',
+    formTeacherOf: 'None',
+    department: 'Mathematics & Sciences Department',
+    specialization: 'Mathematics (JSS 2 & SS 2)',
+    qualification: 'B.Sc. Mathematics & Statistics',
+    status: 'Active',
+    joined: '2021-09-01',
+    bio: 'Mathematics instructor for Junior Secondary 2 and Senior Secondary 2.'
+  },
+  {
+    id: 17,
+    staffId: 'TMS/TCH/0017',
+    name: 'Eli Idua',
+    email: 'eliidua@gmail.com',
+    phone: '08068583070',
+    gender: 'Male',
+    formTeacherOf: 'SS 1 Art',
+    department: 'Mathematics & Quantitative Sciences',
+    specialization: 'Mathematics & Further Mathematics (JSS 3, SS 1, SS 2, SS 3)',
+    qualification: 'B.Sc. Mathematics, PGDE',
+    status: 'Active',
+    joined: '2019-09-01',
+    bio: 'Form Teacher for SS 1 Art and Mathematics & Further Mathematics specialist.'
+  },
+  {
+    id: 18,
+    staffId: 'TMS/TCH/0018',
+    name: 'Alex I. Akpokulokenei Maria',
+    email: 'alexakpobulokemi@gmail.com',
+    phone: '09066984417',
+    gender: 'Female',
+    formTeacherOf: 'None',
+    department: 'Earth & Environmental Sciences',
+    specialization: 'Geography (SS 1 - 3)',
+    qualification: 'B.Sc. Geography & Environmental Studies',
+    status: 'Active',
+    joined: '2022-09-01',
+    bio: 'Senior Geography educator across Senior Secondary classes (SS 1 to SS 3).'
+  },
+  {
+    id: 19,
+    staffId: 'TMS/TCH/0019',
+    name: 'Emmanuel U. Joseph',
+    email: 'joeugbede2024@gmail.com',
+    phone: '08021472342',
+    gender: 'Male',
+    formTeacherOf: 'None',
+    department: 'Biological & Life Sciences',
+    specialization: 'Biology (SS 1 - 3)',
+    qualification: 'B.Sc. Biology & Life Sciences',
+    status: 'Active',
+    joined: '2020-09-01',
+    bio: 'Senior Biology educator for Senior Secondary classes (SS 1 to SS 3).'
+  },
+];
 
 function deduplicateTeachers(list: TeacherRecord[]): TeacherRecord[] {
   const seenStaffIds = new Set<string>();
@@ -762,13 +1048,7 @@ export async function syncTeachersWithBackend(): Promise<TeacherRecord[]> {
           return backendT;
         });
 
-        const unbackedLocal = _teachers.filter(lt => !fetched.some(bt =>
-          bt.id === lt.id ||
-          (bt.email && bt.email.toLowerCase() === lt.email.toLowerCase()) ||
-          (bt.staffId && bt.staffId.toLowerCase() === lt.staffId.toLowerCase())
-        ));
-
-        const combined = deduplicateTeachers([...mergedTeachers, ...unbackedLocal]);
+        const combined = deduplicateTeachers(mergedTeachers);
         _teachers = combined;
         saveStoredTeachers(combined);
       }

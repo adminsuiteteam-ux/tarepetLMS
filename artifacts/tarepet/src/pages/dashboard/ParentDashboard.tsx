@@ -35,9 +35,10 @@ const MONTESSORI_SKILLS = [
 ];
 
 const TEACHERS = [
-  { name: 'Mrs. Okafor Chioma', subject: 'MTH-101 / CHM-101 / AGR-101', online: true, role: 'Senior Science Teacher' },
-  { name: 'Mr. Okonkwo Paul', subject: 'PHY-101 / BIO-101', online: true, role: 'Senior Physics & Biology Instructor' },
-  { name: 'Mrs. Dada Kemi', subject: 'ENG-101', online: true, role: 'Language Arts Instructor' },
+  { name: 'Ms. Allison Victoria', subject: 'English Language & Senior Secondary Studies', online: true, role: 'Form Teacher (SS 1)' },
+  { name: 'Mrs. Timi Porbeni', subject: 'English Language & Literature in English', online: true, role: 'Senior Instructor (SS1 - SS3)' },
+  { name: 'Abiola Adeniyi Adegemo', subject: 'Physics & Financial Accounting', online: true, role: 'Senior Science Instructor' },
+  { name: 'Eli Idua', subject: 'Mathematics & Further Mathematics', online: true, role: 'Form Teacher (SS 1 Art)' },
 ];
 
 const INVOICES = [
