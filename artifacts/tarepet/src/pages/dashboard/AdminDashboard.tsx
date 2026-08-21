@@ -2015,7 +2015,7 @@ export default function AdminDashboard() {
             accountNumber: prof.account_number || '',
             cbtExamsCount: 0,
             attendanceRate: prof.attendance_rate || prof.attendanceRate || '0%',
-            profileImage: prof.profile_image || '',
+            profileImage: prof.profile_image || u.profile_image || (u as any).profileImage || '',
           };
         });
 
@@ -2046,6 +2046,7 @@ export default function AdminDashboard() {
             stream: u.profile?.stream || '',
             status: u.is_active ? 'Active' : 'Inactive',
             joined: u.profile?.hire_date || (u.date_joined ? u.date_joined.split('T')[0] : ''),
+            profileImage: u.profile?.profile_image || u.profile_image || (u as any).profileImage || '',
           }));
 
         saveStoredStudents(liveStudents);
