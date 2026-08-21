@@ -3786,7 +3786,8 @@ export default function TeacherDashboard() {
             </div>
           </div>
         )}
-      </div>
+        </div>
+      </>
     );
 
     // =========================================================
@@ -3885,7 +3886,6 @@ export default function TeacherDashboard() {
           </button>
         </div>
       </div>
-    </>
     );
 
     // Fallback for any unknown section

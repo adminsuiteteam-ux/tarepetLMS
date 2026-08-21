@@ -76,8 +76,8 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
 
   return (
     <div className="w-full min-h-screen pb-16 relative overflow-hidden" style={{ fontFamily: 'var(--font-poppins)' }}>
-      {/* Soft warm ambient gradient background as in the design reference */}
-      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-orange-400/15 via-amber-300/10 to-transparent pointer-events-none -z-10" />
+      {/* Tarepet brand ambient gradient background */}
+      <div className="absolute top-0 left-0 right-0 h-96 bg-gradient-to-b from-primary/10 via-secondary/5 to-transparent pointer-events-none -z-10" />
 
       {/* Top Header with Back Button & Bold Title */}
       <div className="pt-2 pb-4 space-y-4">
@@ -97,12 +97,12 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
 
       {/* Main Profile Card (Rounded White Card matching the design image) */}
       <div className="bg-card rounded-3xl border border-border/70 shadow-lg p-6 text-center space-y-3.5 relative overflow-hidden mb-5">
-        {/* Subtle accent glow */}
-        <div className="absolute -top-12 -right-12 w-32 h-32 bg-orange-400/10 rounded-full blur-2xl pointer-events-none" />
+        {/* Subtle brand glow */}
+        <div className="absolute -top-12 -right-12 w-32 h-32 bg-primary/10 rounded-full blur-2xl pointer-events-none" />
 
         {/* Circular Avatar */}
         <div className="relative inline-block mx-auto">
-          <div className="w-24 h-24 rounded-full overflow-hidden border-3 border-orange-500/20 shadow-md bg-muted flex items-center justify-center mx-auto">
+          <div className="w-24 h-24 rounded-full overflow-hidden border-3 border-primary/20 shadow-md bg-muted flex items-center justify-center mx-auto">
             {avatarUrl ? (
               <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
             ) : (
@@ -127,7 +127,7 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
               <>
                 <span>•</span>
                 <span className="inline-flex items-center gap-0.5">
-                  <MapPin className="w-3 h-3 text-orange-500 shrink-0" />
+                  <MapPin className="w-3 h-3 text-primary shrink-0" />
                   {location}
                 </span>
               </>
@@ -135,11 +135,11 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
           </div>
         </div>
 
-        {/* Vibrant Orange Pill Button: "Edit Profile" */}
+        {/* Tarepet Brand Primary Pill Button: "Edit Profile" */}
         <div className="pt-2">
           <button
             onClick={onEditProfile}
-            className="px-7 py-2.5 rounded-full bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold text-xs shadow-md shadow-orange-500/25 active:scale-95 transition-all inline-flex items-center gap-2"
+            className="px-7 py-2.5 rounded-full bg-primary hover:bg-primary/90 text-white font-bold text-xs shadow-md shadow-primary/25 active:scale-95 transition-all inline-flex items-center gap-2"
           >
             <Edit3 className="w-3.5 h-3.5" />
             <span>{t('profile.edit_profile', 'Edit Profile')}</span>
@@ -155,7 +155,7 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
           className="bg-card rounded-2xl border border-border/70 p-4 shadow-xs flex items-center justify-between cursor-pointer hover:bg-muted/40 active:scale-[0.99] transition-all"
         >
           <div className="flex items-center gap-3.5">
-            <div className="w-8 h-8 rounded-xl bg-orange-500/10 text-orange-600 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <Globe className="w-4 h-4" />
             </div>
             <span className="text-xs font-semibold text-foreground">{t('profile.language', 'Language')}</span>
@@ -172,7 +172,7 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
           className="bg-card rounded-2xl border border-border/70 p-4 shadow-xs flex items-center justify-between cursor-pointer hover:bg-muted/40 active:scale-[0.99] transition-all"
         >
           <div className="flex items-center gap-3.5">
-            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center shrink-0">
               <Coins className="w-4 h-4" />
             </div>
             <span className="text-xs font-semibold text-foreground">{t('profile.currencies', 'Currencies & Billing')}</span>
@@ -189,8 +189,8 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
           className="bg-card rounded-2xl border border-border/70 p-4 shadow-xs flex items-center justify-between cursor-pointer hover:bg-muted/40 active:scale-[0.99] transition-all"
         >
           <div className="flex items-center gap-3.5">
-            <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center shrink-0">
-              {isDarkMode ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+            <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              {isDarkMode ? <Moon className="w-4 h-4 text-amber-400" /> : <Sun className="w-4 h-4 text-primary" />}
             </div>
             <span className="text-xs font-semibold text-foreground">{t('profile.appearance', 'Appearance')}</span>
           </div>
@@ -206,13 +206,13 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
           className="bg-card rounded-2xl border border-border/70 p-4 shadow-xs flex items-center justify-between cursor-pointer hover:bg-muted/40 active:scale-[0.99] transition-all"
         >
           <div className="flex items-center gap-3.5">
-            <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center shrink-0">
               <ShieldCheck className="w-4 h-4" />
             </div>
             <span className="text-xs font-semibold text-foreground">{t('profile.app_security', 'Application Security')}</span>
           </div>
           <div className="flex items-center gap-1.5 text-muted-foreground">
-            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">Secure</span>
+            <span className="text-[10px] font-bold text-secondary bg-secondary/10 px-2 py-0.5 rounded-full">Secure</span>
             <ChevronRight className="w-4 h-4" />
           </div>
         </div>
@@ -223,7 +223,7 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
           className="bg-card rounded-2xl border border-border/70 p-4 shadow-xs flex items-center justify-between cursor-pointer hover:bg-muted/40 active:scale-[0.99] transition-all"
         >
           <div className="flex items-center gap-3.5">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
               <Smartphone className="w-4 h-4" />
             </div>
             <span className="text-xs font-semibold text-foreground">{t('profile.manage_devices', 'Manage Devices')}</span>
@@ -241,7 +241,7 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
             className="bg-card rounded-2xl border border-border/70 p-4 shadow-xs flex items-center justify-between cursor-pointer hover:bg-muted/40 active:scale-[0.99] transition-all"
           >
             <div className="flex items-center gap-3.5">
-              <div className="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-600 flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
                 <KeyRound className="w-4 h-4" />
               </div>
               <span className="text-xs font-semibold text-foreground">{t('profile.change_password', 'Change Password')}</span>
@@ -326,7 +326,7 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
           <div className="bg-card border border-border rounded-3xl p-6 w-full max-w-sm shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
-                <Globe className="w-4 h-4 text-orange-500" /> Select Language
+                <Globe className="w-4 h-4 text-primary" /> Select Language
               </h3>
               <button onClick={() => setShowLanguageModal(false)} className="text-muted-foreground hover:text-foreground text-xs font-bold">
                 Done
@@ -349,7 +349,7 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
                   }}
                   className={`w-full flex items-center justify-between p-3 rounded-2xl text-xs font-semibold transition-all ${
                     currentLanguage === lang.code
-                      ? 'bg-orange-500 text-white shadow-sm'
+                      ? 'bg-primary text-white shadow-sm'
                       : 'bg-muted/30 text-foreground hover:bg-muted'
                   }`}
                 >
@@ -371,19 +371,19 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
           <div className="bg-card border border-border rounded-3xl p-6 w-full max-w-sm shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
-                <Coins className="w-4 h-4 text-emerald-500" /> Currency & Fees Schedule
+                <Coins className="w-4 h-4 text-secondary" /> Currency & Fees Schedule
               </h3>
               <button onClick={() => setShowCurrenciesModal(false)} className="text-muted-foreground hover:text-foreground text-xs font-bold">
                 Close
               </button>
             </div>
             <div className="space-y-2 text-xs">
-              <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between">
+              <div className="p-3.5 rounded-2xl bg-secondary/10 border border-secondary/20 flex items-center justify-between">
                 <div>
                   <p className="font-bold text-foreground">Nigerian Naira (NGN - ₦)</p>
                   <p className="text-[10px] text-muted-foreground">Primary School Tuition & CBT Billing</p>
                 </div>
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <CheckCircle2 className="w-4 h-4 text-secondary" />
               </div>
               <div className="p-3.5 rounded-2xl bg-muted/30 border border-border flex items-center justify-between">
                 <div>
@@ -402,15 +402,15 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
           <div className="bg-card border border-border rounded-3xl p-6 w-full max-w-sm shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-blue-500" /> Application Security
+                <ShieldCheck className="w-4 h-4 text-primary" /> Application Security
               </h3>
               <button onClick={() => setShowSecurityModal(false)} className="text-muted-foreground hover:text-foreground text-xs font-bold">
                 Close
               </button>
             </div>
             <div className="space-y-3 text-xs">
-              <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 space-y-1">
-                <div className="flex items-center gap-2 font-bold text-emerald-700 dark:text-emerald-400">
+              <div className="p-3.5 rounded-2xl bg-secondary/10 border border-secondary/20 space-y-1">
+                <div className="flex items-center gap-2 font-bold text-secondary">
                   <CheckCircle2 className="w-4 h-4" /> Account Protected
                 </div>
                 <p className="text-[11px] text-muted-foreground">
@@ -424,7 +424,7 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Session Status:</span>
-                  <span className="font-bold text-emerald-600">Active</span>
+                  <span className="font-bold text-secondary">Active</span>
                 </div>
               </div>
             </div>
@@ -438,7 +438,7 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
           <div className="bg-card border border-border rounded-3xl p-6 w-full max-w-sm shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
-                <Smartphone className="w-4 h-4 text-amber-500" /> Authorized Devices
+                <Smartphone className="w-4 h-4 text-primary" /> Authorized Devices
               </h3>
               <button onClick={() => setShowDevicesModal(false)} className="text-muted-foreground hover:text-foreground text-xs font-bold">
                 Close
@@ -447,13 +447,13 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
             <div className="space-y-2 text-xs">
               <div className="p-3.5 rounded-2xl bg-muted/20 border border-border flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Smartphone className="w-5 h-5 text-orange-500" />
+                  <Smartphone className="w-5 h-5 text-primary" />
                   <div>
                     <p className="font-bold text-foreground">Current Active Device</p>
                     <p className="text-[10px] text-muted-foreground">Web Session • Online now</p>
                   </div>
                 </div>
-                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">This device</span>
+                <span className="text-[10px] font-bold text-secondary bg-secondary/10 px-2 py-0.5 rounded-full">This device</span>
               </div>
             </div>
           </div>
