@@ -868,133 +868,28 @@ export function deleteTeacher(teacherIdOrStaffId: number | string): boolean {
   return true;
 }
 
-export const DEFAULT_STUDENTS: StudentRecord[] = [
-  {
-    id: 101,
-    code: 'TMS/SS1/SCI/4821',
-    admissionNo: 'TMS/SS1/SCI/4821',
-    studentId: 'TMS/SS1/SCI/4821',
-    name: 'Emeka Amadi',
-    email: 'emeka.amadi@tarepet.com',
-    gender: 'Male',
-    grade: 'SS1',
-    stream: 'Science',
-    status: 'Active',
-    parentName: 'Mr. Ebi Amadi',
-    parentPhone: '08031234567',
-    attendance: '98%',
-    atRisk: false,
-  },
-  {
-    id: 102,
-    code: 'TMS/JSS2/0042',
-    admissionNo: 'TMS/JSS2/0042',
-    studentId: 'TMS/JSS2/0042',
-    name: 'Chidinma Okoro',
-    email: 'chidinma.okoro@tarepet.com',
-    gender: 'Female',
-    grade: 'JSS2',
-    stream: 'General',
-    status: 'Active',
-    parentName: 'Mrs. Grace Okoro',
-    parentPhone: '08029876543',
-    attendance: '96%',
-    atRisk: false,
-  },
-  {
-    id: 103,
-    code: 'TMS/PRI4/0018',
-    admissionNo: 'TMS/PRI4/0018',
-    studentId: 'TMS/PRI4/0018',
-    name: 'Kelechi Eze',
-    email: 'kelechi.eze@tarepet.com',
-    gender: 'Male',
-    grade: 'Primary 4',
-    stream: 'General',
-    status: 'Active',
-    parentName: 'Chief David Eze',
-    parentPhone: '08134567890',
-    attendance: '100%',
-    atRisk: false,
-  },
-  {
-    id: 104,
-    code: 'TMS/SS2/ART/0031',
-    admissionNo: 'TMS/SS2/ART/0031',
-    studentId: 'TMS/SS2/ART/0031',
-    name: 'Somtochukwu Nnamdi',
-    email: 'somto.nnamdi@tarepet.com',
-    gender: 'Male',
-    grade: 'SS2',
-    stream: 'Art',
-    status: 'Active',
-    parentName: 'Dr. John Nnamdi',
-    parentPhone: '08061122334',
-    attendance: '95%',
-    atRisk: false,
-  },
-  {
-    id: 105,
-    code: 'TMS/PRI1/0009',
-    admissionNo: 'TMS/PRI1/0009',
-    studentId: 'TMS/PRI1/0009',
-    name: 'Tari Tari-Powei',
-    email: 'tari.powei@tarepet.com',
-    gender: 'Female',
-    grade: 'Primary 1',
-    stream: 'General',
-    status: 'Active',
-    parentName: 'Mr. Powei Tari',
-    parentPhone: '07038899001',
-    attendance: '99%',
-    atRisk: false,
-  },
-];
+export const DEFAULT_STUDENTS: StudentRecord[] = [];
 
 function loadSavedStudents(): StudentRecord[] {
-  let list: StudentRecord[] = [];
-  if (typeof window !== 'undefined') {
-    try {
-      const saved = localStorage.getItem('tarepet_students_list');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const liveOnly = parsed.filter((s: any) => {
-            const sCode = String(s.code || s.admissionNo || s.studentId || '');
-            const sName = String(s.name || '').toLowerCase();
-            const sEmail = String(s.email || '').toLowerCase();
-            const isMockSeed = sCode.includes('9927') || sName.includes('civa media') || s.id === 1;
-            const isDeleted = isAccountDeleted(sCode) || isAccountDeleted(sEmail) || isAccountDeleted(sName) || isAccountDeleted(s.id);
-            return !isMockSeed && !isDeleted;
-          });
-          if (liveOnly.length > 0) {
-            list = liveOnly;
-          }
-        }
+  if (typeof window === 'undefined') return [];
+  try {
+    const saved = localStorage.getItem('tarepet_students_list');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) {
+        const liveOnly = parsed.filter((s: any) => {
+          const sCode = String(s.code || s.admissionNo || s.studentId || '');
+          const sName = String(s.name || '').toLowerCase();
+          const sEmail = String(s.email || '').toLowerCase();
+          const isMock = sCode.includes('9927') || sName.includes('civa media') || s.id === 1;
+          const isDeleted = isAccountDeleted(sCode) || isAccountDeleted(sEmail) || isAccountDeleted(sName) || isAccountDeleted(s.id);
+          return !isMock && !isDeleted;
+        });
+        return liveOnly;
       }
-    } catch (e) {}
-  }
-
-  if (list.length === 0) {
-    list = DEFAULT_STUDENTS;
-  }
-
-  // Merge defaults to ensure core students are always present
-  const merged = DEFAULT_STUDENTS.map(def => {
-    const found = list.find(l => (l.email && l.email.toLowerCase() === def.email.toLowerCase()) || (l.code && l.code.toLowerCase() === def.code.toLowerCase()));
-    return found ? { ...def, ...found } : def;
-  });
-
-  const custom = list.filter(l => !DEFAULT_STUDENTS.some(d => d.email.toLowerCase() === (l.email || '').toLowerCase()));
-  const combined = [...merged, ...custom];
-
-  if (typeof window !== 'undefined') {
-    try {
-      localStorage.setItem('tarepet_students_list', JSON.stringify(combined));
-    } catch (e) {}
-  }
-
-  return combined;
+    }
+  } catch (e) {}
+  return [];
 }
 
 let _exams: CBTExam[] = loadSavedExams();
