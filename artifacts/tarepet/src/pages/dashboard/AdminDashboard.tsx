@@ -2042,8 +2042,17 @@ export default function AdminDashboard() {
         }));
 
         if (liveStudents.length > 0) {
-          saveStoredStudents(liveStudents);
-          setStudentsList(liveStudents);
+          const currentStored = getStoredStudents();
+          const merged = currentStored.map(s => {
+            const match = liveStudents.find(l => (l.email && s.email && l.email.toLowerCase() === s.email.toLowerCase()) || (l.studentId && s.studentId && l.studentId.toLowerCase() === s.studentId.toLowerCase()));
+            return match ? { ...s, ...match } : s;
+          });
+          const extra = liveStudents.filter(l => !merged.some(m => (m.email && l.email && m.email.toLowerCase() === l.email.toLowerCase())));
+          const finalStudents = [...merged, ...extra];
+          saveStoredStudents(finalStudents);
+          setStudentsList(finalStudents);
+        } else {
+          setStudentsList(getStoredStudents());
         }
       }
 
