@@ -3095,32 +3095,19 @@ export default function TeacherDashboard() {
         {/* Mobile View Profile */}
         <div className="md:hidden">
           <MobileProfileView
-            name={profileForm.fullName || `${profileForm.firstName || ''} ${profileForm.lastName || ''}`.trim() || (user?.first_name ? `${user.first_name} ${user.last_name || ''}` : 'Faculty Teacher')}
-            email={profileForm.email || user?.email || 'teacher@tarepet.com'}
-            subtitle={profileForm.formClass && profileForm.formClass !== 'None' ? `Form Teacher (${profileForm.formClass})` : (profileForm.roleTitle || profileForm.specialization || 'Form Teacher & Educator')}
+            staffId={profileForm.staffId || 'TMS/TCH/0007'}
+            name={profileForm.fullName || `${profileForm.firstName || ''} ${profileForm.lastName || ''}`.trim() || (user?.first_name ? `${user.first_name} ${user.last_name || ''}` : 'Abiola Adeniyi Adegemo')}
+            roleTitle={profileForm.formClass && profileForm.formClass !== 'None' ? `Form Teacher (${profileForm.formClass})` : (profileForm.roleTitle || 'Form Teacher (Senior Science)')}
+            specialization={profileForm.specialization || 'Physics (PRI - SS3) & Financial Accounting (JSS 1)'}
+            qualification={profileForm.qualification || 'Not Specified'}
+            formClass={profileForm.formClass || 'Senior Science'}
+            phone={profileForm.phone || '+234 800 000 0000'}
+            email={profileForm.email || user?.email || 'adeniyiabiola2@gmail.com'}
+            subjectsAssigned={profileForm.subjectsAssigned && profileForm.subjectsAssigned.length > 0 ? profileForm.subjectsAssigned : [{ name: 'Physics', grade: 'Senior Science' }]}
             avatarUrl={profileForm.profileImage || (user as any)?.profile_image}
-            roleBadge={profileForm.staffId ? `Staff ID: ${profileForm.staffId}` : (user?.role || 'TEACHER')}
             location="Tarepet Montessori Academy, Yenagoa"
             onBack={() => setActiveSection('overview')}
             onEditProfile={() => setShowEditModal(true)}
-            onViewIdCard={() => setShowStaffIdModal(true)}
-            onPrintProfile={() => window.print()}
-            extraMenuItems={[
-              {
-                icon: GraduationCap,
-                label: 'Class Assignment',
-                value: profileForm.formClass && profileForm.formClass !== 'None' ? profileForm.formClass : 'General Faculty',
-                onClick: () => setShowEditModal(true),
-                color: 'bg-primary/10 text-primary',
-              },
-              {
-                icon: BookOpen,
-                label: 'Assigned Subjects',
-                value: `${profileForm.subjectsAssigned?.length || 0} Courses`,
-                onClick: () => setShowEditModal(true),
-                color: 'bg-secondary/10 text-secondary',
-              }
-            ]}
           />
         </div>
 
