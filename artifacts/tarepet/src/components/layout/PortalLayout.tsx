@@ -140,7 +140,7 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
 
   const roleColor = getRoleColor(user?.role);
   const navItems = getRoleNav(user?.role);
-  const userAvatar = user?.profile?.profile_image || user?.profile?.profileImage || (user as any)?.profile_image || (user as any)?.profileImage;
+  const userAvatar = user?.profile_image || (user as any)?.profileImage || user?.profile?.profile_image || user?.profile?.profileImage;
 
   const searchResults = useMemo(() => {
     const q = searchValue.trim().toLowerCase();

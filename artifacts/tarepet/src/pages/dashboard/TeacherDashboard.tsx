@@ -3115,13 +3115,34 @@ export default function TeacherDashboard() {
                       }
                       const reader = new FileReader();
                       reader.onloadend = () => {
-                        const updated = { ...profileForm, profileImage: reader.result as string };
+                        const img = reader.result as string;
+                        const updated = { ...profileForm, profileImage: img };
                         setProfileForm(updated);
+                        updateUser({
+                          profile_image: img,
+                          profile: {
+                            ...(user?.profile || {}),
+                            profile_image: img,
+                            profileImage: img,
+                          }
+                        });
                         saveTeacher({
+                          id: user?.id,
+                          email: profileForm.email || user?.email,
                           staffId: profileForm.staffId,
                           name: profileForm.fullName || `${profileForm.firstName} ${profileForm.lastName}`,
-                          profileImage: reader.result as string,
+                          profileImage: img,
                         });
+                        authClient.put('/auth/me/', {
+                          profile_image: img,
+                          profile: {
+                            profile_image: img,
+                            profileImage: img,
+                          }
+                        }).then(() => {
+                          refreshUserProfile().catch(() => {});
+                        }).catch(() => {});
+                        broadcastRealtimeEvent();
                         showToast('Profile photo updated in real time!');
                       };
                       reader.readAsDataURL(file);
@@ -3387,7 +3408,32 @@ export default function TeacherDashboard() {
                           reader.onloadend = () => {
                             const updatedImg = reader.result as string;
                             setProfileForm(prev => ({ ...prev, profileImage: updatedImg }));
-                            showToast('Photo uploaded! Click "Save Changes" to apply.');
+                            updateUser({
+                              profile_image: updatedImg,
+                              profile: {
+                                ...(user?.profile || {}),
+                                profile_image: updatedImg,
+                                profileImage: updatedImg,
+                              }
+                            });
+                            saveTeacher({
+                              id: user?.id,
+                              email: profileForm.email || user?.email,
+                              staffId: profileForm.staffId,
+                              name: profileForm.fullName || `${profileForm.firstName} ${profileForm.lastName}`,
+                              profileImage: updatedImg,
+                            });
+                            authClient.put('/auth/me/', {
+                              profile_image: updatedImg,
+                              profile: {
+                                profile_image: updatedImg,
+                                profileImage: updatedImg,
+                              }
+                            }).then(() => {
+                              refreshUserProfile().catch(() => {});
+                            }).catch(() => {});
+                            broadcastRealtimeEvent();
+                            showToast('Photo uploaded and applied in real time!');
                           };
                           reader.readAsDataURL(file);
                         }

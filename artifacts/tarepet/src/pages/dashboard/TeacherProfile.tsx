@@ -416,6 +416,7 @@ export default function TeacherProfile() {
                           const updated = { ...profileForm, profileImage: imageBase64 };
                           setProfileForm(updated);
                           updateUser({
+                            profile_image: imageBase64,
                             profile: {
                               ...(user?.profile || {}),
                               profile_image: imageBase64,
@@ -423,11 +424,14 @@ export default function TeacherProfile() {
                             }
                           });
                           saveTeacher({
+                            id: user?.id,
+                            email: profileForm.email || user?.email,
                             staffId: profileForm.staffId,
                             name: profileForm.fullName || `${profileForm.firstName} ${profileForm.lastName}`,
                             profileImage: imageBase64,
                           });
                           authClient.put('/auth/me/', {
+                            profile_image: imageBase64,
                             profile: {
                               profile_image: imageBase64,
                               profileImage: imageBase64,
@@ -588,7 +592,32 @@ export default function TeacherProfile() {
                             reader.onloadend = () => {
                               const updatedImg = reader.result as string;
                               setProfileForm(prev => ({ ...prev, profileImage: updatedImg }));
-                              showToast('Photo uploaded! Click "Save Changes" to apply.');
+                              updateUser({
+                                profile_image: updatedImg,
+                                profile: {
+                                  ...(user?.profile || {}),
+                                  profile_image: updatedImg,
+                                  profileImage: updatedImg,
+                                }
+                              });
+                              saveTeacher({
+                                id: user?.id,
+                                email: profileForm.email || user?.email,
+                                staffId: profileForm.staffId,
+                                name: profileForm.fullName || `${profileForm.firstName} ${profileForm.lastName}`,
+                                profileImage: updatedImg,
+                              });
+                              authClient.put('/auth/me/', {
+                                profile_image: updatedImg,
+                                profile: {
+                                  profile_image: updatedImg,
+                                  profileImage: updatedImg,
+                                }
+                              }).then(() => {
+                                refreshUserProfile().catch(() => {});
+                              }).catch(() => {});
+                              broadcastRealtimeEvent();
+                              showToast('Photo uploaded and applied in real time!');
                             };
                             reader.readAsDataURL(file);
                           }
