@@ -32,6 +32,13 @@ export function initSentry() {
           sendDefaultPii: false,
         });
         isSentryInitialized = true;
+        // Expose test helper on browser console for instant verification
+        (window as any).__triggerSentryTest = () => {
+          Sentry.captureMessage('Tarepet LMS Frontend: Sentry Verification Ping', 'info');
+          Sentry.captureException(new Error('Tarepet LMS Frontend: Test Sentry Verification Error'));
+          console.log('%c[Sentry Verified]%c Test error dispatched to your Sentry dashboard!', 'color: #10b981; font-weight: bold;', 'color: inherit;');
+          return 'Dispatched test error to Sentry! Check your Sentry dashboard (Issues page).';
+        };
       })
       .catch(() => {
         // @sentry/react not installed; fallback gracefully

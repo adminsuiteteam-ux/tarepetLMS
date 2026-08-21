@@ -11,9 +11,15 @@ from django.http import JsonResponse
 def health_check(request):
     return JsonResponse({'status': 'healthy', 'service': 'tarepet-backend'})
 
+def trigger_sentry_test(request):
+    """Test view to intentionally trigger an exception and verify Sentry reporting."""
+    division_by_zero = 1 / 0
+    return JsonResponse({'status': 'never reached'})
+
 urlpatterns = [
     path('', health_check, name='root-health'),
     path('health/', health_check, name='health-check'),
+    path('api/sentry-debug/', trigger_sentry_test, name='sentry-debug'),
     path('admin/', admin.site.urls),
 
     # OpenAPI Schema & Docs
