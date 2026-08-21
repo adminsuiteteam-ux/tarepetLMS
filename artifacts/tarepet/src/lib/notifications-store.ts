@@ -43,14 +43,16 @@ export function subscribeToNotifications(fn: Listener): () => void {
 
 export async function syncNotificationsWithBackend(role: NotifRole): Promise<void> {
   try {
-    const response = await authClient.get(`/cbt-notifications/`).catch(() =>
-      authClient.get(`/notifications?role=${role}`)
+    const response = await authClient.get(`/communication/notifications/?role=${role}`).catch(() =>
+      authClient.get(`/notifications/?role=${role}`)
     );
 
     if (response && response.data) {
-      const serverNotifs: any[] = Array.isArray(response.data)
+      const serverNotifs: any[] = Array.isArray(response.data?.results)
+        ? response.data.results
+        : Array.isArray(response.data)
         ? response.data
-        : (response.data.notifications || response.data.results || []);
+        : (response.data.notifications || []);
 
       if (serverNotifs.length > 0) {
         const mappedServerNotifs: Notification[] = serverNotifs.map(sn => ({
@@ -60,7 +62,7 @@ export async function syncNotificationsWithBackend(role: NotifRole): Promise<voi
           time: sn.created_at || sn.time || new Date().toISOString(),
           read: Boolean(sn.is_read ?? sn.read),
           type: (sn.notification_type || sn.type || 'info').toLowerCase() as any,
-          role: role,
+          role: (sn.recipient_role || sn.role || role) as NotifRole,
         }));
 
         const existing = getAll();
@@ -78,7 +80,7 @@ export async function syncNotificationsWithBackend(role: NotifRole): Promise<voi
 
 export function getNotificationsForRole(role: NotifRole): Notification[] {
   return getAll()
-    .filter(n => n.role === role)
+    .filter(n => n.role === role || n.role === 'ALL')
     .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
 }
 
@@ -90,8 +92,8 @@ export function markAsRead(id: string) {
   const updated = getAll().map(n => n.id === id ? { ...n, read: true } : n);
   setAll(updated);
   notifyListeners();
-  authClient.post(`/cbt-notifications/${id}/mark_read/`).catch(() =>
-    authClient.post(`/notifications/${id}/read`).catch(() => {})
+  authClient.post(`/communication/notifications/${id}/mark_read/`).catch(() =>
+    authClient.post(`/notifications/${id}/mark_read/`).catch(() => {})
   );
 }
 
@@ -99,21 +101,25 @@ export function markAllAsRead(role: NotifRole) {
   const updated = getAll().map(n => n.role === role ? { ...n, read: true } : n);
   setAll(updated);
   notifyListeners();
-  authClient.post(`/cbt-notifications/mark_all_read/`).catch(() =>
-    authClient.post(`/notifications/read-all`, { role }).catch(() => {})
+  authClient.post(`/communication/notifications/mark_all_read/`, { role }).catch(() =>
+    authClient.post(`/notifications/mark_all_read/`, { role }).catch(() => {})
   );
 }
 
 export function clearNotification(id: string) {
   setAll(getAll().filter(n => n.id !== id));
   notifyListeners();
-  authClient.delete(`/notifications/${id}`).catch(() => {});
+  authClient.delete(`/communication/notifications/${id}/`).catch(() =>
+    authClient.delete(`/notifications/${id}/`).catch(() => {})
+  );
 }
 
 export function clearAllNotifications(role: NotifRole) {
   setAll(getAll().filter(n => n.role !== role));
   notifyListeners();
-  authClient.delete(`/notifications/clear-all`, { data: { role } }).catch(() => {});
+  authClient.post(`/communication/notifications/clear-all/`, { role }).catch(() =>
+    authClient.post(`/notifications/clear-all/`, { role }).catch(() => {})
+  );
 }
 
 export function addNotification(notif: Omit<Notification, 'id' | 'read' | 'time'>) {
@@ -125,7 +131,17 @@ export function addNotification(notif: Omit<Notification, 'id' | 'read' | 'time'
   };
   setAll([newNotif, ...getAll()]);
   notifyListeners();
-  authClient.post(`/notifications`, notif).catch(() => {});
+
+  // Async persist to Django backend database
+  authClient.post(`/communication/notifications/`, {
+    title: notif.title,
+    message: notif.message,
+    notification_type: notif.type,
+    type: notif.type,
+    recipient_role: notif.role,
+    role: notif.role,
+    is_read: false,
+  }).catch(() => {});
 }
 
 export function addRealtimeNotification(options: {

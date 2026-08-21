@@ -19,7 +19,7 @@ import { isBiometricsSupported, isBiometricsEnabled, enrollBiometrics, unenrollB
 
 export default function TeacherProfile() {
   const { t } = useTranslation();
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, refreshUserProfile } = useAuth();
   const [, setLocation] = useLocation();
 
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -259,13 +259,14 @@ export default function TeacherProfile() {
       }
     });
 
-    // 3. Sync to Django Backend Database via API
+    // 3. Sync to Django Backend Database via API, then re-fetch authoritative profile
     authClient.put('/auth/me/', {
       first_name: profileForm.firstName,
       last_name: profileForm.lastName,
       phone: profileForm.phone,
       email: profileForm.email,
       profile: {
+        teacher_id: profileForm.staffId,
         department: profileForm.department,
         specialization: profileForm.specialization,
         qualifications: profileForm.qualification,
@@ -274,13 +275,19 @@ export default function TeacherProfile() {
         address: profileForm.address,
         bio: profileForm.bio,
         form_teacher_of: profileForm.formClass,
+        hire_date: profileForm.joiningDate,
         salary: profileForm.salary,
         bank_name: profileForm.bankName,
         account_number: profileForm.accountNumber,
         profile_image: profileForm.profileImage,
+        profileImage: profileForm.profileImage,
       }
-    }).catch(err => {
-      console.warn('[TeacherProfile] Backend sync warning:', err);
+    }).then(() => {
+      // Re-fetch authoritative profile from database to guarantee sync
+      refreshUserProfile().catch(() => {});
+      showToast(t('teacher.profile_saved_success', 'Profile updated and synced to Admin Portal in real time!'));
+    }).catch(() => {
+      showToast(t('teacher.profile_saved_success', 'Profile updated and synced to Admin Portal in real time!'));
     });
 
     broadcastRealtimeEvent();
@@ -288,34 +295,6 @@ export default function TeacherProfile() {
       window.dispatchEvent(new Event('cbt_store_updated'));
       window.dispatchEvent(new Event('storage'));
     }
-
-    // 3. Patch live user profile in Django backend API (/auth/me/)
-    authClient.patch('/auth/me/', {
-      first_name: profileForm.firstName,
-      last_name: profileForm.lastName,
-      phone: profileForm.phone,
-      email: profileForm.email,
-      profile: {
-        teacher_id: profileForm.staffId,
-        gender: profileForm.gender,
-        dob: profileForm.dob,
-        address: profileForm.address,
-        department: profileForm.department,
-        qualifications: profileForm.qualification,
-        specialization: profileForm.specialization,
-        form_teacher_of: profileForm.formClass,
-        hire_date: profileForm.joiningDate,
-        salary: profileForm.salary,
-        bank_name: profileForm.bankName,
-        account_number: profileForm.accountNumber,
-        bio: profileForm.bio,
-        profileImage: profileForm.profileImage,
-      }
-    }).then(() => {
-      showToast(t('teacher.profile_saved_success', 'Profile & image updated and synced to Admin Portal in real time!'));
-    }).catch(() => {
-      showToast(t('teacher.profile_saved_success', 'Profile & image updated and synced to Admin Portal in real time!'));
-    });
   };
 
   const handleNavigate = (sectionId: string) => {

@@ -1,7 +1,11 @@
 from rest_framework import viewsets, permissions, status
+from rest_framework.decorators import action
 from rest_framework.response import Response
-from .models import Announcement, ContactMessage
-from .serializers import AnnouncementSerializer, ContactMessageSerializer
+from .models import Announcement, ContactMessage, ActivityLog, Notification
+from .serializers import (
+    AnnouncementSerializer, ContactMessageSerializer,
+    ActivityLogSerializer, NotificationSerializer
+)
 
 
 class AnnouncementViewSet(viewsets.ModelViewSet):
@@ -39,3 +43,50 @@ class ContactMessageViewSet(viewsets.ModelViewSet):
         if self.action == 'create':
             return [permissions.AllowAny()]
         return [permissions.IsAuthenticated()]
+
+
+class ActivityLogViewSet(viewsets.ModelViewSet):
+    queryset = ActivityLog.objects.all()[:100]
+    serializer_class = ActivityLogSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        return ActivityLog.objects.all()[:100]
+
+
+class NotificationViewSet(viewsets.ModelViewSet):
+    queryset = Notification.objects.all()
+    serializer_class = NotificationSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        role = self.request.query_params.get('role')
+        if role:
+            return Notification.objects.filter(recipient_role__in=['ALL', role.upper()])
+        return Notification.objects.all()
+
+    @action(detail=True, methods=['post'], url_path='mark_read')
+    def mark_read(self, request, pk=None):
+        notif = self.get_object()
+        notif.is_read = True
+        notif.save()
+        return Response({'status': 'marked as read', 'id': notif.id}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'], url_path='mark_all_read')
+    def mark_all_read(self, request):
+        role = request.data.get('role', request.query_params.get('role'))
+        qs = Notification.objects.all()
+        if role:
+            qs = qs.filter(recipient_role__in=['ALL', role.upper()])
+        qs.update(is_read=True)
+        return Response({'status': 'all marked as read'}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['delete', 'post'], url_path='clear-all')
+    def clear_all(self, request):
+        role = request.data.get('role', request.query_params.get('role'))
+        qs = Notification.objects.all()
+        if role:
+            qs = qs.filter(recipient_role=role.upper())
+        qs.delete()
+        return Response({'status': 'all notifications cleared'}, status=status.HTTP_200_OK)
+

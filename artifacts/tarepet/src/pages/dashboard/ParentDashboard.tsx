@@ -13,7 +13,8 @@ import {
   DollarSign, Check, ChevronDown, Zap, ShieldCheck,
   Fingerprint, Smartphone
 } from 'lucide-react';
-import { getStoredExams, getStoredSubmissions, subscribeToCBTStore, getCoursesForClass, getStudentBroadsheet, calculateWAECGrade } from '@/lib/cbt-store';
+import { getStoredExams, getStoredSubmissions, subscribeToCBTStore, getCoursesForClass, getStudentBroadsheet, calculateWAECGrade, syncStudentsWithBackend } from '@/lib/cbt-store';
+import { subscribeToPaymentStore, syncPaymentsWithBackend } from '@/lib/payments-store';
 import { RealTimeSyncStatus } from '@/components/cbt/RealTimeSyncStatus';
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
 import { getTimeGreeting } from '@/lib/utils';
@@ -55,7 +56,7 @@ const PTA_EVENTS = [
 ];
 
 export default function ParentDashboard() {
-  const { user } = useAuth();
+  const { user, refreshUserProfile } = useAuth();
   const { t } = useTranslation();
   const [activeSection, setActiveSectionState] = useState<string>(() => {
     if (typeof window !== 'undefined') {
@@ -102,6 +103,31 @@ export default function ParentDashboard() {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(null), 3500);
   };
+
+  // Real-time backend sync on mount & periodic polling
+  React.useEffect(() => {
+    const syncBackend = () => {
+      refreshUserProfile().catch(() => {});
+      syncStudentsWithBackend().catch(() => {});
+      syncPaymentsWithBackend().catch(() => {});
+    };
+    syncBackend();
+    const intervalId = setInterval(syncBackend, 15000);
+
+    const handleStoreUpdate = () => {
+      // Re-read student and exam data when store updates
+    };
+    const unsubCBT = subscribeToCBTStore(handleStoreUpdate);
+    const unsubPayments = subscribeToPaymentStore(handleStoreUpdate);
+    window.addEventListener('cbt_store_updated', handleStoreUpdate);
+
+    return () => {
+      unsubCBT();
+      unsubPayments();
+      window.removeEventListener('cbt_store_updated', handleStoreUpdate);
+      clearInterval(intervalId);
+    };
+  }, []);
 
   const activeChild = CHILDREN.find(c => c.id === selectedChildId) ?? CHILDREN[0];
 

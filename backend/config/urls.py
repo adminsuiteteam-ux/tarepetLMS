@@ -36,4 +36,7 @@ urlpatterns = [
     path('api/v1/academics/', include('apps.academics.urls')),
     path('api/v1/admissions/', include('apps.admissions.urls')),
     path('api/v1/communication/', include('apps.communication.urls')),
+    path('api/v1/notifications/', include('apps.communication.urls')),
+    path('api/v1/cbt-notifications/', include('apps.communication.urls')),
+    path('api/v1/activities/', include('apps.communication.urls')),
 ]

@@ -13,7 +13,7 @@ import {
   Fingerprint, Smartphone
 } from 'lucide-react';
 
-import { getStoredExams, getStoredSubmissions, subscribeToCBTStore, getCoursesForClass, getStudentBroadsheet, calculateWAECGrade, calculateBECEGrade, getStoredStudents, saveStudent, broadcastRealtimeEvent } from '@/lib/cbt-store';
+import { getStoredExams, getStoredSubmissions, subscribeToCBTStore, getCoursesForClass, getStudentBroadsheet, calculateWAECGrade, calculateBECEGrade, getStoredStudents, saveStudent, broadcastRealtimeEvent, syncStudentsWithBackend } from '@/lib/cbt-store';
 import { authClient } from '@/lib/api-auth';
 import { StudentPaymentPanel } from '@/components/dashboard/StudentPaymentPanel';
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
@@ -60,7 +60,7 @@ function getTimetableForDay(day: DayKey) {
 
 export default function StudentDashboard() {
   const { t } = useTranslation();
-  const { user, isStudent, isAdmin } = useAuth();
+  const { user, isStudent, isAdmin, refreshUserProfile } = useAuth();
 
   if (!user || (!isStudent && !isAdmin) || (user.role !== 'STUDENT' && user.role !== 'ADMIN')) {
     return (
@@ -109,9 +109,22 @@ export default function StudentDashboard() {
   };
 
   React.useEffect(() => {
+    // Sync CBT data from local store
     syncStudentCBTData();
     const unsub = subscribeToCBTStore(syncStudentCBTData);
-    return () => unsub();
+
+    // Fetch live student data and user profile from backend database
+    const syncBackend = () => {
+      refreshUserProfile().catch(() => {});
+      syncStudentsWithBackend().catch(() => {});
+    };
+    syncBackend();
+    const intervalId = setInterval(syncBackend, 15000);
+
+    return () => {
+      unsub();
+      clearInterval(intervalId);
+    };
   }, []);
 
   const matchedStoredStudent = React.useMemo(() => {

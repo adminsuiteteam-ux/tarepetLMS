@@ -921,6 +921,7 @@ export function initCBTStore() {
   if (typeof window !== 'undefined') {
     syncBroadsheetWithBackend().catch(() => {});
     syncPromotionsWithBackend().catch(() => {});
+    syncActivitiesWithBackend().catch(() => {});
   }
 }
 
@@ -1086,8 +1087,44 @@ export function addRealtimeActivity(type: LMSActivity['type'], title: string, de
     detail,
     user,
   };
-  _activities = [newAct, ..._activities].slice(0, 30);
+  _activities = [newAct, ..._activities].slice(0, 50);
   broadcastRealtimeEvent();
+
+  // Async persist to Django backend database
+  authClient.post('/communication/activities/', {
+    type,
+    activity_type: type,
+    title,
+    detail,
+    user,
+  }).catch(() => {});
+}
+
+export async function syncActivitiesWithBackend(): Promise<LMSActivity[]> {
+  try {
+    const res = await authClient.get('/communication/activities/');
+    if (res.data) {
+      const dataArr: any[] = Array.isArray(res.data?.results)
+        ? res.data.results
+        : Array.isArray(res.data)
+        ? res.data
+        : [];
+      if (dataArr.length > 0) {
+        _activities = dataArr.map((a: any) => ({
+          id: String(a.id),
+          timestamp: a.timestamp || new Date().toISOString(),
+          type: (a.type || a.activity_type || 'EXAM_CREATED') as LMSActivity['type'],
+          title: a.title || 'Activity',
+          detail: a.detail || '',
+          user: a.user || 'System',
+        }));
+        broadcastRealtimeEvent();
+      }
+    }
+  } catch (e) {
+    // Offline fallback to in-memory
+  }
+  return _activities;
 }
 
 export function getRealtimeActivities(): LMSActivity[] {
