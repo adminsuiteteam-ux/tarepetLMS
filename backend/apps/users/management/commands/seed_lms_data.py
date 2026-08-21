@@ -361,6 +361,21 @@ class Command(BaseCommand):
             defaults={'occupation': 'Civil Engineer', 'address': 'Yenagoa, Bayelsa State'}
         )
 
+        # 5. Clean up and purge any mock student accounts
+        StudentProfile.objects.all().delete()
+        User.objects.filter(role=User.Role.STUDENT).delete()
+        User.objects.filter(email__in=[
+            'civa.media@tarepet.com',
+            'student@tarepet.com',
+            'emeka.amadi@tarepet.com',
+            'hacker@evil.com',
+            'wronguser@fake.com',
+            'chidinma.okoro@tarepet.com',
+            'kelechi.eze@tarepet.com',
+            'somto.nnamdi@tarepet.com',
+            'tari.powei@tarepet.com',
+        ]).delete()
+
         primary_student_prof = None
 
         # 6. Create Course & Modules

@@ -932,18 +932,21 @@ export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
     const res = await authClient.get('/auth/users/?role=STUDENT&page_size=500');
     if (res.data) {
       const dataArr = Array.isArray(res.data?.results) ? res.data.results : Array.isArray(res.data) ? res.data : [];
+      const mockEmails = ['civa.media@tarepet.com', 'student@tarepet.com', 'emeka.amadi@tarepet.com', 'hacker@evil.com', 'wronguser@fake.com', 'chidinma.okoro@tarepet.com', 'kelechi.eze@tarepet.com', 'somto.nnamdi@tarepet.com', 'tari.powei@tarepet.com'];
       const fetched: StudentRecord[] = dataArr
         .filter((u: any) => {
-          const uCode = u.student_id || u.profile?.student_id || '';
-          const uName = `${u.first_name || ''} ${u.last_name || ''}`.trim();
-          return !isAccountDeleted(u.email) && !isAccountDeleted(u.id) && !isAccountDeleted(uCode) && !isAccountDeleted(uName);
+          const uCode = (u.student_id || u.profile?.student_id || '').toLowerCase();
+          const uEmail = (u.email || '').toLowerCase();
+          const uName = `${u.first_name || ''} ${u.last_name || ''}`.trim().toLowerCase();
+          const isMock = mockEmails.includes(uEmail) || uCode.includes('tp-stu-088') || uCode.includes('tp-stu-089') || uCode.includes('tp-stu-090') || uCode.includes('tp-stu-101') || uCode.includes('tp-stu-112') || uName.includes('civa') || uName.includes('hacker') || uName.includes('wronguser') || uName.includes('david okon');
+          return !isMock && !isAccountDeleted(u.email) && !isAccountDeleted(u.id) && !isAccountDeleted(uCode) && !isAccountDeleted(uName);
         })
         .map((u: any) => {
           const rawGrade = u.profile?.grade_level || u.profile?.grade || u.grade_level || u.grade || '';
           return {
             id: u.id,
-            code: u.student_id || u.profile?.student_id || `TMS/SS1/SCI/${u.id}`,
-            admissionNo: u.student_id || u.profile?.student_id || `TMS/SS1/SCI/${u.id}`,
+            code: u.student_id || u.profile?.student_id || `TMS/STU/${u.id}`,
+            admissionNo: u.student_id || u.profile?.student_id || `TMS/STU/${u.id}`,
             name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
             email: u.email,
             gender: u.profile?.gender || '',

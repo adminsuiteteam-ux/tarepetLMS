@@ -2028,18 +2028,25 @@ export default function AdminDashboard() {
       if (studentRes.status === 'fulfilled' && studentRes.value.data) {
         const res = studentRes.value;
         const users = Array.isArray(res.data?.results) ? res.data.results : Array.isArray(res.data) ? res.data : [];
-        const liveStudents = users.map((u: any) => ({
-          id: u.id,
-          studentId: u.profile?.student_id || u.student_id || `TP-STU-${String(u.id).padStart(3, '0')}`,
-          name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
-          email: u.email,
-          phone: u.phone || u.profile?.phone || '',
-          gender: u.profile?.gender || '',
-          grade: u.profile?.grade_level || u.profile?.grade || '',
-          stream: u.profile?.stream || '',
-          status: u.is_active ? 'Active' : 'Inactive',
-          joined: u.profile?.hire_date || (u.date_joined ? u.date_joined.split('T')[0] : ''),
-        }));
+        const mockEmails = ['civa.media@tarepet.com', 'student@tarepet.com', 'emeka.amadi@tarepet.com', 'hacker@evil.com', 'wronguser@fake.com', 'chidinma.okoro@tarepet.com', 'kelechi.eze@tarepet.com', 'somto.nnamdi@tarepet.com', 'tari.powei@tarepet.com'];
+        const liveStudents = users
+          .filter((u: any) => {
+            const email = (u.email || '').toLowerCase();
+            const sId = (u.student_id || u.profile?.student_id || '').toLowerCase();
+            return !mockEmails.includes(email) && !sId.includes('tp-stu-088') && !sId.includes('tp-stu-089') && !sId.includes('tp-stu-090') && !sId.includes('tp-stu-101') && !sId.includes('tp-stu-112');
+          })
+          .map((u: any) => ({
+            id: u.id,
+            studentId: u.profile?.student_id || u.student_id || `TMS/STU/${String(u.id).padStart(4, '0')}`,
+            name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
+            email: u.email,
+            phone: u.phone || u.profile?.phone || '',
+            gender: u.profile?.gender || '',
+            grade: u.profile?.grade_level || u.profile?.grade || '',
+            stream: u.profile?.stream || '',
+            status: u.is_active ? 'Active' : 'Inactive',
+            joined: u.profile?.hire_date || (u.date_joined ? u.date_joined.split('T')[0] : ''),
+          }));
 
         saveStoredStudents(liveStudents);
         setStudentsList(liveStudents);
