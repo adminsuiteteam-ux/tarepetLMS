@@ -2873,334 +2873,6 @@ export default function AdminDashboard() {
 
     // 2. USER MANAGEMENT — Overview → Type List → Profile
     if (activeSection === 'users') {
-
-
-      // ── LEVEL S1: Student class & division picker ─────────
-      if ((!userSubPage || userSubPage === 'STUDENT') && !selectedClass && !selectedUser) {
-        const SCHOOL_DIVISIONS = [
-          {
-            key: 'NURSERY',
-            title: 'Nursery Division',
-            subtitle: 'Nursery 1, Nursery 2, Nursery 3',
-            description: 'Early Childhood Montessori Education & Developmental Foundation',
-            levelsPrefix: 'NUR',
-            count: studentsList.filter(s => s.grade && (s.grade.toUpperCase().includes('NUR') || s.grade.toUpperCase().includes('NURSERY'))).length,
-            classes: STUDENT_CLASSES.filter(c => c.key.startsWith('NUR')),
-            icon: School
-          },
-          {
-            key: 'PRIMARY',
-            title: 'Primary Division',
-            subtitle: 'Primary 1 through Primary 5',
-            description: 'Foundational Elementary Curriculum & Basic Quantitative Skills',
-            levelsPrefix: 'PRI',
-            count: studentsList.filter(s => s.grade && (s.grade.toUpperCase().includes('PRI') || s.grade.toUpperCase().includes('PRIMARY') || s.grade.toUpperCase().includes('BASIC'))).length,
-            classes: STUDENT_CLASSES.filter(c => c.key.startsWith('PRI')),
-            icon: BookOpen
-          },
-          {
-            key: 'JSS',
-            title: 'Junior Secondary School',
-            subtitle: 'JSS 1, JSS 2, JSS 3',
-            description: 'Basic Education Curriculum & State BECE Examination Prep',
-            levelsPrefix: 'JSS',
-            count: studentsList.filter(s => s.grade && (s.grade.toUpperCase().includes('JSS') || s.grade.toUpperCase().includes('JUNIOR'))).length,
-            classes: STUDENT_CLASSES.filter(c => c.key.startsWith('JSS')),
-            icon: GraduationCap
-          },
-          {
-            key: 'SS',
-            title: 'Senior Secondary School',
-            subtitle: 'SS 1, SS 2, SS 3 (Science & Art)',
-            description: 'Senior Secondary Academic Programs, WAEC & NECO Streams',
-            levelsPrefix: 'SS',
-            count: studentsList.filter(s => s.grade && (s.grade.toUpperCase().includes('SS') || s.grade.toUpperCase().includes('SENIOR'))).length,
-            classes: STUDENT_CLASSES.filter(c => c.key.startsWith('SS')),
-            icon: Award
-          }
-        ];
-
-        const activeDivisionData = SCHOOL_DIVISIONS.find(d => d.key === selectedDivision);
-        const visibleClasses = selectedDivision ? activeDivisionData?.classes || [] : [];
-
-        return (
-          <div className="space-y-6">
-            {/* Header / Breadcrumb */}
-            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-              <div>
-                {selectedDivision ? (
-                  <div className="flex items-center gap-2 mb-2 text-xs">
-                    <button
-                      onClick={() => setSelectedDivision(null)}
-                      className="text-primary font-bold hover:underline flex items-center gap-1"
-                    >
-                      <ChevronLeft className="w-4 h-4" /> All School Divisions
-                    </button>
-                    <span className="text-muted-foreground">/</span>
-                    <span className="font-semibold text-foreground">{activeDivisionData?.title}</span>
-                  </div>
-                ) : null}
-
-                <h2 className="text-xl font-serif font-bold text-foreground">
-                  {selectedDivision ? activeDivisionData?.title : 'School Academic Divisions & Classes'}
-                </h2>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {selectedDivision
-                    ? `Showing active class levels under ${activeDivisionData?.title}`
-                    : 'Select a school division below to view its specific class rosters and student records.'}
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                {selectedDivision && (
-                  <button
-                    onClick={() => setSelectedDivision(null)}
-                    className="px-3.5 py-2.5 border border-border rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors flex items-center gap-1.5"
-                  >
-                    <ChevronLeft className="w-4 h-4" /> Back to Divisions
-                  </button>
-                )}
-                <button
-                  onClick={() => {
-                    setWizardStep(1);
-                    setNewStudentForm({
-                      name: '', dob: '', gender: 'Male', grade: 'JSS1', stream: 'General', country: 'Nigeria', stateOfOrigin: 'Bayelsa', lga: 'Yenagoa', address: '', phone: '', parentName: '', parentPhone: '', profileImage: ''
-                    });
-                    setShowAddStudentModal(true);
-                  }}
-                  className="px-4 py-2.5 bg-primary text-primary-foreground font-bold rounded-xl text-xs flex items-center gap-2 shadow-sm hover:opacity-90 transition-opacity"
-                >
-                  <UserPlus className="w-4 h-4" /> {t('students.addStudent')}
-                </button>
-              </div>
-            </div>
-
-            {/* LEVEL 1: TOP 4 DIVISION CARDS VIEW */}
-            {!selectedDivision ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-                {SCHOOL_DIVISIONS.map(div => {
-                  const Icon = div.icon;
-                  return (
-                    <div
-                      key={div.key}
-                      onClick={() => setSelectedDivision(div.key)}
-                      className="group bg-card border-2 border-primary/20 hover:border-primary/50 bg-primary/5 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer space-y-4 flex flex-col justify-between"
-                    >
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-bold">
-                            <Icon className="w-6 h-6" />
-                          </div>
-                          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
-                            {div.count} Students
-                          </span>
-                        </div>
-
-                        <div>
-                          <h3 className="font-serif font-bold text-lg text-foreground group-hover:text-primary transition-colors">
-                            {div.title}
-                          </h3>
-                          <p className="text-[11px] font-semibold text-primary/80 mt-0.5">{div.subtitle}</p>
-                          <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{div.description}</p>
-                        </div>
-                      </div>
-
-                      <div className="pt-3 border-t border-primary/15 flex items-center justify-between text-xs font-bold text-primary">
-                        <span>Explore {div.classes.length} Class Levels</span>
-                        <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              /* LEVEL 2: DETAILED CLASS CARDS FOR SELECTED DIVISION */
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                  {visibleClasses.map(cls => {
-                    const totalStudents = cls.hasStreams ? (cls.sciCount! + cls.artCount!) : cls.totalCount!;
-                    return (
-                      <div key={cls.key} className="relative">
-                        {/* Card */}
-                        <button
-                          onClick={() => {
-                            if (!cls.hasStreams) {
-                              setSelectedClass(cls.key);
-                              setSelectedStream(null);
-                              setOpenClassDropdown(null);
-                            } else {
-                              setOpenClassDropdown(prev => prev === cls.key ? null : cls.key);
-                            }
-                          }}
-                          className={`group w-full text-left rounded-2xl border-2 p-6 shadow-sm transition-all duration-200 hover:shadow-md hover:scale-[1.02] active:scale-100 ${cls.color} ${openClassDropdown === cls.key ? 'ring-2 ring-primary/40' : ''}`}
-                        >
-                          <div className="flex items-start justify-between mb-4">
-                            <div className={`p-3 rounded-2xl ${cls.iconBg}`}>
-                              <GraduationCap className="w-6 h-6" />
-                            </div>
-                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${cls.iconBg}`}>
-                              {totalStudents} {t('students.title')}
-                            </span>
-                          </div>
-                          <h3 className="font-serif font-bold text-xl text-foreground mb-1">{cls.label}</h3>
-                          {cls.hasStreams ? (
-                            <div className="flex gap-4 text-xs mt-2">
-                              <span className="text-muted-foreground">{t('students.scienceLabel')}<strong className={cls.accent}>{cls.sciCount}</strong></span>
-                              <span className="text-muted-foreground">{t('students.artLabel')}<strong className={cls.accent}>{cls.artCount}</strong></span>
-                            </div>
-                          ) : (
-                            <p className="text-xs text-muted-foreground mt-2 font-medium">{t('students.generalCurriculum')}</p>
-                          )}
-                          <div className={`flex items-center gap-1.5 text-xs font-bold mt-3 ${cls.accent}`}>
-                            <span>{cls.hasStreams ? t('students.chooseStream') : t('students.viewProfile')}</span>
-                            {cls.hasStreams ? (
-                              <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${openClassDropdown === cls.key ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                              </svg>
-                            ) : (
-                              <ChevronRight className="w-3.5 h-3.5" />
-                            )}
-                          </div>
-                        </button>
-
-                        {/* Stream Dropdown for SS classes */}
-                        {cls.hasStreams && openClassDropdown === cls.key && (
-                          <div className="absolute left-0 right-0 mt-2 bg-card border border-border rounded-2xl shadow-2xl z-40 py-2">
-                            <p className="px-4 pt-1 pb-2 text-[10px] uppercase font-bold text-muted-foreground tracking-wider">{t('students.chooseStream')}</p>
-                            <button
-                              onClick={() => { setSelectedClass(cls.key); setSelectedStream('Science'); setOpenClassDropdown(null); }}
-                              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-foreground hover:bg-primary/5 hover:text-primary transition-colors text-left"
-                            >
-                              <span className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                                <FlaskConical className="w-4 h-4" />
-                              </span>
-                              {t('addSubject.science')}
-                              <span className="ml-auto text-xs text-muted-foreground">{cls.sciCount} {t('students.title').toLowerCase()}</span>
-                            </button>
-                            <button
-                              onClick={() => { setSelectedClass(cls.key); setSelectedStream('Art'); setOpenClassDropdown(null); }}
-                              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-foreground hover:bg-secondary/5 hover:text-secondary transition-colors text-left"
-                            >
-                              <span className="w-8 h-8 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary">
-                                <Palette className="w-4 h-4" />
-                              </span>
-                              {t('addSubject.art')}
-                              <span className="ml-auto text-xs text-muted-foreground">{cls.artCount} {t('students.title').toLowerCase()}</span>
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-        );
-      }
-
-      // ── LEVEL S2: Class student roster view ─────────────────
-      if (userSubPage === 'STUDENT' && selectedClass && (!STUDENT_CLASSES.find(c => c.key === selectedClass)?.hasStreams || selectedStream) && !selectedUser) {
-        const cls = STUDENT_CLASSES.find(c => c.key === selectedClass)!;
-        return (
-          <div className="space-y-5">
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-2 text-sm flex-wrap">
-              <button onClick={() => { setSelectedClass(null); setSelectedStream(null); }}
-                className="text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
-                <ChevronLeft className="w-4 h-4" /> {t('students.selectClass')}
-              </button>
-              <span className="text-muted-foreground">/</span>
-              <span className="text-foreground font-semibold">{cls.label} {selectedStream ? `(${selectedStream})` : ''}</span>
-            </div>
-
-            {/* Header + toolbar */}
-            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-              <div>
-                <h2 className="text-xl font-serif font-bold text-foreground">{cls.label} {selectedStream ? `— ${selectedStream}` : 'Student Roster'}</h2>
-                <p className="text-xs text-muted-foreground mt-0.5">{filteredSSStudents.length} students found</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => {
-                    setWizardStep(1);
-                    setNewStudentForm({
-                      name: '', dob: '', gender: 'Male', grade: cls.key, stream: selectedStream || 'General', country: 'Nigeria', stateOfOrigin: 'Bayelsa', lga: 'Yenagoa', address: '', phone: '', parentName: '', parentPhone: '', profileImage: ''
-                    });
-                    setShowAddStudentModal(true);
-                  }}
-                  className="px-3.5 py-2 bg-primary text-primary-foreground font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-sm hover:opacity-90 transition-opacity shrink-0"
-                >
-                  <UserPlus className="w-4 h-4" /> {t('students.addStudent')}
-                </button>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                  <input type="text" value={userSearch} onChange={e => setUserSearch(e.target.value)}
-                    placeholder="Search students..."
-                    className="pl-10 pr-4 py-2.5 border border-border rounded-xl bg-muted/20 text-sm focus:outline-none focus:ring-2 focus:ring-primary w-64" />
-                </div>
-              </div>
-            </div>
-
-            {/* Student table */}
-            <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
-              <table className="w-full text-xs text-left">
-                <thead className="bg-muted/30 text-muted-foreground uppercase text-[10px] tracking-wider">
-                  <tr>
-                    <th className="py-3 px-4">{t('students.fullNameCol')}</th>
-                    <th className="py-3 px-4">{t('students.admissionNoCol')}</th>
-                    <th className="py-3 px-4">{t('students.classStreamCol')}</th>
-                    <th className="py-3 px-4">{t('students.houseCol')}</th>
-                    <th className="py-3 px-4">{t('students.statusCol')}</th>
-                    <th className="py-3 px-4 text-right">{t('students.actionCol')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {filteredSSStudents.length > 0 ? filteredSSStudents.map(s => (
-                    <tr key={s.id}
-                      onClick={() => setSelectedUser(s)}
-                      className="hover:bg-muted/20 cursor-pointer transition-colors group">
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-xl font-bold text-sm flex items-center justify-center shrink-0 ${cls.iconBg}`}>
-                            {s.profileImage ? (
-                              <img src={s.profileImage} alt={s.name} className="w-full h-full object-cover rounded-xl" />
-                            ) : s.name[0]}
-                          </div>
-                          <div>
-                            <p className="font-bold text-foreground group-hover:text-primary transition-colors">{s.name}</p>
-                            <p className="text-[10px] text-muted-foreground">{s.email}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4 text-muted-foreground font-mono">{s.studentId}</td>
-                      <td className="py-4 px-4 text-muted-foreground">{s.house}</td>
-                      <td className="py-4 px-4">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'
-                        }`}>{s.status}</span>
-                      </td>
-                      <td className="py-4 px-4 text-right">
-                        <span className="text-[10px] text-primary font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-end gap-1">
-                          {t('students.viewProfile')} <ArrowUpRight className="w-3 h-3" />
-                        </span>
-                      </td>
-                    </tr>
-                  )) : (
-                    <tr>
-                      <td colSpan={5} className="py-12 text-center text-muted-foreground">
-                        <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                        <p className="text-xs">{t('students.noStudents')}</p>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
-      }
-
       // ── LEVEL 3: Individual Student Profile Page ──────────────────────
       if (selectedUser) {
         const u = selectedUser;
@@ -3210,14 +2882,14 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
             {/* Breadcrumb back */}
             <div className="flex items-center gap-2 text-sm flex-wrap">
               <button onClick={() => setSelectedUser(null)}
-                className="text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors font-medium">
-                <ChevronLeft className="w-4 h-4" /> {t('students.backToClasses')}
+                className="text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors font-medium cursor-pointer">
+                <ChevronLeft className="w-4 h-4" /> Back to Students Directory
               </button>
               <span className="text-muted-foreground">/</span>
               <span className="text-foreground font-semibold">{t('studentProfile.breadcrumb')}{u.name}</span>
             </div>
 
-            {/* Profile Specification Card (Exact Match to User Reference Image) */}
+            {/* Profile Specification Card */}
             <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
               {/* Header Actions Bar */}
               <div className="flex items-center justify-between pb-4 border-b border-border flex-wrap gap-3">
@@ -3228,152 +2900,130 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                 <div className="relative">
                   <button
                     onClick={() => setShowActionsDropdown(prev => !prev)}
-                    className="px-4 py-2 bg-primary text-primary-foreground rounded-xl text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-2 shadow-sm"
+                    className="px-4 py-2 bg-primary text-primary-foreground rounded-xl text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-1.5 shadow-sm cursor-pointer"
                   >
-                    {t('studentProfile.actions')}
+                    Actions
                     <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showActionsDropdown ? 'rotate-180' : ''}`} />
                   </button>
                   {showActionsDropdown && (
-                    <div className="absolute right-0 mt-2 w-52 bg-card border border-border rounded-xl shadow-2xl z-50 py-1.5 text-xs divide-y divide-border">
-                      <div className="py-1">
-                        <button onClick={() => { setIdCardUser(u); setShowActionsDropdown(false); }} className="w-full text-left px-4 py-2 hover:bg-muted/50 flex items-center gap-2 font-medium">
-                          <FaIdCard className="w-3.5 h-3.5 text-primary" /> {t('studentProfile.generateIdCard')}
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowActionsDropdown(false)} />
+                      <div className="absolute right-0 top-full mt-2 z-50 w-52 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
+                        <button
+                          onClick={() => { setShowIDCardModal(u); setShowActionsDropdown(false); }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold text-foreground hover:bg-muted/40 transition-colors text-left cursor-pointer"
+                        >
+                          <span className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                            <FaIdCard className="w-3.5 h-3.5 text-primary" />
+                          </span>
+                          Print Student ID Card
                         </button>
-                        <button onClick={() => {
-                          setNewStudentForm({
-                            name: u.name || '',
-                            dob: u.dob || '',
-                            gender: u.gender || 'Male',
-                            grade: u.grade || 'JSS1',
-                            stream: u.stream || 'General',
-                            country: u.country || 'Nigeria',
-                            stateOfOrigin: u.stateOfOrigin || 'Bayelsa',
-                            lga: u.lga || 'Yenagoa',
-                            address: u.address || '',
-                            phone: u.phone || '',
-                            parentName: u.parentName || '',
-                            parentPhone: u.parentPhone || '',
-                            profileImage: u.profileImage || '',
-                          });
-                          setWizardStep(1);
-                          setShowAddStudentModal(true);
-                          setShowActionsDropdown(false);
-                        }} className="w-full text-left px-4 py-2 hover:bg-muted/50 flex items-center gap-2 font-medium">
-                          <FaPen className="w-3.5 h-3.5 text-muted-foreground" /> {t('studentProfile.editProfile')}
+                        <button
+                          onClick={() => { setShowEditModal(u); setShowActionsDropdown(false); }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold text-foreground hover:bg-muted/40 transition-colors text-left cursor-pointer"
+                        >
+                          <span className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
+                            <Edit className="w-3.5 h-3.5 text-emerald-600" />
+                          </span>
+                          Edit Student Profile
                         </button>
-                      </div>
-                      <div className="py-1">
-                        <button onClick={() => {
-                          if (confirm(`Are you sure you want to delete student "${u.name}"?`)) {
-                            deleteStudent(u.id);
-                            deleteStudent(u.email);
-                            deleteStudent(u.studentId);
-                            setStudentsList(prev => prev.filter(s => s.id !== u.id && s.email !== u.email && s.studentId !== u.studentId));
-                            setSelectedUser(null);
-                          }
-                          setShowActionsDropdown(false);
-                        }} className="w-full text-left px-4 py-2 hover:bg-rose-500/10 text-rose-600 flex items-center gap-2 font-medium">
-                          <FaTrash className="w-3.5 h-3.5 text-rose-500" /> {t('studentProfile.deleteStudent')}
+                        <button
+                          onClick={() => { setShowDeleteModal(u); setShowActionsDropdown(false); }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold text-rose-600 hover:bg-rose-500/10 transition-colors text-left border-t border-border cursor-pointer"
+                        >
+                          <span className="w-7 h-7 rounded-lg bg-rose-500/10 flex items-center justify-center shrink-0">
+                            <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                          </span>
+                          Delete Student
                         </button>
                       </div>
-                    </div>
+                    </>
                   )}
                 </div>
               </div>
 
-              {/* 3-Column Specification Layout */}
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start pt-2">
-                {/* Column 1: Student Photo */}
-                <div className="md:col-span-3 flex flex-col items-center">
-                  <div className="w-44 h-52 rounded-xl border-2 border-border shadow-md overflow-hidden bg-muted/20 flex items-center justify-center">
-                    {u.profileImage ? (
-                      <img src={u.profileImage} alt={u.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-primary/10 to-secondary/10 flex items-center justify-center text-4xl font-serif font-bold text-primary">
-                        {u.name[0]}
+              {/* Body Content */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                {/* Column 1: Passport Photo & Badges */}
+                <div className="lg:col-span-4 flex flex-col items-center space-y-4 text-center">
+                  <div className="w-40 h-40 rounded-2xl border-2 border-primary/20 p-1.5 shadow-md bg-muted/10 relative group">
+                    <div className="w-full h-full rounded-xl overflow-hidden bg-primary/10 flex items-center justify-center font-serif text-4xl font-bold text-primary">
+                      {u.profileImage ? (
+                        <img src={u.profileImage} alt={u.name} className="w-full h-full object-cover" />
+                      ) : (
+                        u.name[0]
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <h2 className="text-xl font-serif font-bold text-foreground">{u.name}</h2>
+                    <p className="text-xs font-mono font-bold text-primary bg-primary/10 px-3 py-1 rounded-full inline-block border border-primary/20">
+                      {u.studentId}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+                      {u.grade} {u.stream ? `— ${u.stream}` : ''}
+                    </span>
+                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-muted text-muted-foreground border border-border">
+                      {u.house || 'School House'}
+                    </span>
+                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
+                      u.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-600 border border-rose-500/20'
+                    }`}>
+                      {u.status}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Column 2: Detailed Attributes Grid */}
+                <div className="lg:col-span-8 space-y-6">
+                  {/* Basic Information */}
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-primary" /> Basic Academic Information
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-muted/20 p-4 rounded-xl border border-border text-xs">
+                      <div>
+                        <span className="text-muted-foreground block text-[10px] uppercase font-bold">Email Address</span>
+                        <span className="font-semibold text-foreground">{u.email || 'None'}</span>
                       </div>
-                    )}
+                      <div>
+                        <span className="text-muted-foreground block text-[10px] uppercase font-bold">Gender</span>
+                        <span className="font-semibold text-foreground">{u.gender || 'Not specified'}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block text-[10px] uppercase font-bold">Class Level & Arm</span>
+                        <span className="font-semibold text-foreground">{u.grade} ({u.stream || 'General'})</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block text-[10px] uppercase font-bold">Admission Date</span>
+                        <span className="font-semibold text-foreground">{u.joined || '2025/2026 Academic Year'}</span>
+                      </div>
+                    </div>
                   </div>
-                  <span className="mt-3 px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 uppercase tracking-wider">
-                    {t('common.status')} {u.status || 'Active'}
-                  </span>
-                </div>
 
-                {/* Column 2: Personal Identifiers */}
-                <div className="md:col-span-4 space-y-3.5 text-xs leading-relaxed">
+                  {/* Parent & Guardian Info */}
                   <div>
-                    <span className="text-muted-foreground font-medium">{t('studentProfile.studentIdLabel')}</span>
-                    <strong className="text-foreground font-mono font-bold text-sm bg-primary/10 text-primary px-2.5 py-0.5 rounded border border-primary/20">
-                      {u.admissionNo || generateAdmissionNumber(u.grade || 'JSS1', u.stream)}
-                    </strong>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground font-medium">{t('studentProfile.nameLabel')}</span>
-                    <strong className="text-foreground font-bold text-sm uppercase">{u.name}</strong>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground font-medium">{t('studentProfile.genderLabel')}</span>
-                    <strong className="text-foreground font-bold">{u.gender || 'Male'}</strong>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground font-medium">{t('studentProfile.maritalStatus')}</span>
-                    <strong className="text-foreground font-bold">{t('studentProfile.single')}</strong>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground font-medium">{t('studentProfile.dobLabel')}</span>
-                    <strong className="text-foreground font-bold">{u.dob || '2004-10-22'}</strong>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground font-medium">{t('studentProfile.phoneLabel')}</span>
-                    <strong className="text-foreground font-bold">{u.phone || 'Not Available'}</strong>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground font-medium">{t('studentProfile.countryLabel')}</span>
-                    <strong className="text-foreground font-bold">{u.country || 'Nigeria'}</strong>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground font-medium">{t('studentProfile.stateLabel')}</span>
-                    <strong className="text-foreground font-bold">{u.stateOfOrigin || 'Bayelsa'}</strong>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground font-medium">{t('studentProfile.lgaLabel')}</span>
-                    <strong className="text-foreground font-bold">{u.lga || 'Yenagoa'}</strong>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground font-medium">{t('studentProfile.emailLabel')}</span>
-                    <strong className="text-foreground font-bold underline">{u.email}</strong>
-                  </div>
-                </div>
-
-                {/* Column 3: Academic & Guardian Information */}
-                <div className="md:col-span-5 space-y-3.5 text-xs leading-relaxed border-t md:border-t-0 md:border-l border-border pt-4 md:pt-0 md:pl-6">
-                  <div>
-                    <span className="text-muted-foreground font-medium">{t('studentProfile.addressLabel')}</span>
-                    <strong className="text-foreground font-bold">{u.address || 'Azikoro village, Yenagoa, Bayelsa State'}</strong>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground font-medium">{t('studentProfile.classLabel')}</span>
-                    <strong className="text-foreground font-bold">
-                      {u.grade ? `${u.grade} ${u.stream ? `(${u.stream} Stream)` : ''}` : 'JSS 1'}
-                    </strong>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground font-medium">{t('studentProfile.programmeLabel')}</span>
-                    <strong className="text-foreground font-bold">
-                      {u.grade && u.grade.startsWith('SS') ? 'Senior Secondary Certificate (SSCE)' : 'Basic Education Certificate (BECE)'}
-                    </strong>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground font-medium">{t('studentProfile.parentNameLabel')}</span>
-                    <strong className="text-foreground font-bold">{u.parentName || 'Ayaebi Dimaro'}</strong>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground font-medium">{t('studentProfile.statusLabel')}</span>
-                    <strong className="text-emerald-600 font-bold">{t('studentProfile.active')}</strong>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground font-medium">{t('studentProfile.studyModeLabel')}</span>
-                    <strong className="text-foreground font-bold">{t('studentProfile.fullTime')}</strong>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
+                      <GraduationCap className="w-3.5 h-3.5 text-primary" /> Parent & Guardian Contact
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-muted/20 p-4 rounded-xl border border-border text-xs">
+                      <div>
+                        <span className="text-muted-foreground block text-[10px] uppercase font-bold">Parent / Guardian Name</span>
+                        <span className="font-semibold text-foreground">{u.parentName || 'Mr. & Mrs. Amadi'}</span>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground block text-[10px] uppercase font-bold">Emergency Phone</span>
+                        <span className="font-semibold text-primary">{u.parentPhone || u.phone || '08031234567'}</span>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <span className="text-muted-foreground block text-[10px] uppercase font-bold">Residential Address</span>
+                        <span className="font-semibold text-foreground">{u.address || 'Yenagoa, Bayelsa State, Nigeria'}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -3382,6 +3032,333 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
         );
       }
 
+      // ── LEVEL 1 & 2: Complete Student Directory View (Always Visible) ───
+      const SCHOOL_DIVISIONS = [
+        {
+          key: 'NURSERY',
+          title: 'Nursery Division',
+          subtitle: 'Nursery 1–3',
+          description: 'Early Childhood Montessori Education & Developmental Foundation',
+          filterFn: (s: any) => s.grade && (s.grade.toUpperCase().includes('NUR') || s.grade.toUpperCase().includes('CRECHE')),
+          icon: School
+        },
+        {
+          key: 'PRIMARY',
+          title: 'Primary Division',
+          subtitle: 'Primary 1–5',
+          description: 'Foundational Elementary Curriculum & Basic Quantitative Skills',
+          filterFn: (s: any) => s.grade && (s.grade.toUpperCase().includes('PRI') || s.grade.toUpperCase().includes('BASIC')),
+          icon: BookOpen
+        },
+        {
+          key: 'JSS',
+          title: 'Junior Secondary',
+          subtitle: 'JSS 1–3',
+          description: 'Basic Education Curriculum & State BECE Examination Prep',
+          filterFn: (s: any) => s.grade && (s.grade.toUpperCase().includes('JSS') || s.grade.toUpperCase().includes('JUNIOR')),
+          icon: GraduationCap
+        },
+        {
+          key: 'SS',
+          title: 'Senior Secondary',
+          subtitle: 'SS 1–3 (Science & Art)',
+          description: 'Senior Secondary Academic Programs, WAEC & NECO Streams',
+          filterFn: (s: any) => s.grade && (s.grade.toUpperCase().includes('SS') || s.grade.toUpperCase().includes('SENIOR')),
+          icon: Award
+        }
+      ];
+
+      const activeDivisionData = SCHOOL_DIVISIONS.find(d => d.key === selectedDivision);
+
+      const filteredStudentRecords = studentsList.filter(s => {
+        const q = userSearch.toLowerCase();
+        const matchSearch = !q || 
+          s.name.toLowerCase().includes(q) || 
+          (s.studentId && s.studentId.toLowerCase().includes(q)) || 
+          (s.code && s.code.toLowerCase().includes(q)) || 
+          (s.email && s.email.toLowerCase().includes(q)) || 
+          (s.grade && s.grade.toLowerCase().includes(q)) || 
+          (s.parentName && s.parentName.toLowerCase().includes(q)) || 
+          (s.parentPhone && s.parentPhone.includes(q));
+
+        let matchDivision = true;
+        if (selectedDivision && activeDivisionData) {
+          matchDivision = activeDivisionData.filterFn(s);
+        }
+
+        let matchClassPill = true;
+        if (selectedClass) {
+          matchClassPill = matchStudentClass(s.grade, selectedClass);
+        }
+
+        return matchSearch && matchDivision && matchClassPill;
+      }).sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }));
+
+      return (
+        <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
+          {/* Header Banner */}
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+            <div>
+              {selectedDivision && (
+                <div className="flex items-center gap-2 mb-2 text-xs">
+                  <button
+                    onClick={() => { setSelectedDivision(null); setSelectedClass(null); setUserSearch(''); }}
+                    className="text-primary font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <ChevronLeft className="w-4 h-4" /> All School Divisions
+                  </button>
+                  <span className="text-muted-foreground">/</span>
+                  <span className="font-semibold text-foreground">{activeDivisionData?.title}</span>
+                </div>
+              )}
+              <h2 className="font-bold text-xl text-foreground">
+                {selectedDivision ? activeDivisionData?.title : 'Students & Learner Directory'}
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                {selectedDivision
+                  ? activeDivisionData?.description
+                  : 'Manage active student enrollments, academic records, ID cards, and class distributions.'}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              {selectedDivision && (
+                <button
+                  onClick={() => { setSelectedDivision(null); setSelectedClass(null); setUserSearch(''); }}
+                  className="px-3.5 py-2.5 border border-border rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <ChevronLeft className="w-4 h-4" /> Back to Divisions
+                </button>
+              )}
+              <button
+                onClick={async () => {
+                  setIsResetting(true);
+                  clearAllStoredStudents();
+                  clearCBTStoreCache();
+                  await fetchBackendUsers();
+                  setIsResetting(false);
+                }}
+                disabled={isResetting}
+                className="px-3 py-2.5 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 shrink-0 disabled:opacity-50 cursor-pointer"
+                title="Re-sync student records with backend in real time"
+              >
+                <RefreshCw className={`w-4 h-4 ${isResetting ? 'animate-spin' : ''}`} />
+                {isResetting ? 'Syncing...' : 'Sync Live Students'}
+              </button>
+              <button
+                onClick={() => {
+                  setWizardStep(1);
+                  setNewStudentForm({
+                    name: '', dob: '', gender: 'Male', grade: 'SS1', stream: 'Science', country: 'Nigeria', stateOfOrigin: 'Bayelsa', lga: 'Yenagoa', address: '', phone: '', parentName: '', parentPhone: '', profileImage: ''
+                  });
+                  setShowAddStudentModal(true);
+                }}
+                className="bg-primary text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2 shadow-sm shrink-0 cursor-pointer"
+              >
+                <UserPlus className="w-4 h-4" /> {t('students.addStudent')}
+              </button>
+            </div>
+          </div>
+
+          {/* Summary Metrics */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total Enrolled</p>
+                <h3 className="text-2xl font-serif font-bold text-foreground mt-1">{studentsList.length}</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Active Learners</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><Users className="w-5 h-5" /></div>
+            </div>
+            <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Active Status</p>
+                <h3 className="text-2xl font-serif font-bold text-emerald-600 mt-1">{studentsList.filter(s => s.status === 'Active').length}</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">In good standing</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center"><CheckCircle2 className="w-5 h-5" /></div>
+            </div>
+            <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Male Learners</p>
+                <h3 className="text-2xl font-serif font-bold text-blue-600 mt-1">{studentsList.filter(s => s.gender === 'Male').length}</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Boys enrolled</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center"><GraduationCap className="w-5 h-5" /></div>
+            </div>
+            <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Female Learners</p>
+                <h3 className="text-2xl font-serif font-bold text-purple-600 mt-1">{studentsList.filter(s => s.gender === 'Female').length}</h3>
+                <p className="text-[11px] text-muted-foreground mt-0.5">Girls enrolled</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center"><GraduationCap className="w-5 h-5" /></div>
+            </div>
+          </div>
+
+          {/* Interactive Academic Stage Division Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            {SCHOOL_DIVISIONS.map(div => {
+              const Icon = div.icon;
+              const count = studentsList.filter(div.filterFn).length;
+              const isSelected = selectedDivision === div.key;
+              return (
+                <div
+                  key={div.key}
+                  onClick={() => {
+                    setSelectedDivision(isSelected ? null : div.key);
+                    setSelectedClass(null);
+                  }}
+                  className={`group border-2 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer space-y-3 flex flex-col justify-between ${
+                    isSelected ? 'border-primary bg-primary/10 ring-2 ring-primary/20' : 'border-border bg-card hover:border-primary/40'
+                  }`}
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+                        {count} Students
+                      </span>
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm text-foreground group-hover:text-primary transition-colors">{div.title}</h4>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">{div.subtitle}</p>
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-border flex items-center justify-between text-[11px] font-bold text-primary">
+                    <span>{isSelected ? 'Viewing Division' : 'Filter by Division'}</span>
+                    <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isSelected ? 'rotate-90' : 'group-hover:translate-x-1'}`} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Live Students Data Table (Always Visible) */}
+          <div className="space-y-4 pt-2">
+            {/* Filter Pills & Search Bar */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <input
+                  type="text"
+                  value={userSearch}
+                  onChange={e => setUserSearch(e.target.value)}
+                  placeholder={`Search ${selectedDivision ? activeDivisionData?.title : 'all students'} by name, admission no, class, parent phone...`}
+                  className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-muted/20 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              {/* Active Filter Indicators */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {selectedDivision && (
+                  <div className="flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-2 rounded-xl border border-primary/20 text-xs font-bold shrink-0">
+                    <span>Division: {activeDivisionData?.title}</span>
+                    <button
+                      onClick={() => { setSelectedDivision(null); setUserSearch(''); }}
+                      className="hover:bg-primary/20 p-1 rounded-md transition-colors cursor-pointer"
+                      title="Clear division filter"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+                {selectedClass && (
+                  <div className="flex items-center gap-1.5 bg-secondary/10 text-secondary px-3 py-2 rounded-xl border border-secondary/20 text-xs font-bold shrink-0">
+                    <span>Class: {selectedClass}</span>
+                    <button
+                      onClick={() => setSelectedClass(null)}
+                      className="hover:bg-secondary/20 p-1 rounded-md transition-colors cursor-pointer"
+                      title="Clear class filter"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Students Table */}
+            <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-muted/30 text-muted-foreground uppercase text-[10px] tracking-wider">
+                  <tr>
+                    <th className="py-3.5 px-4">Student / Admission No</th>
+                    <th className="py-3.5 px-4">Class Level & Arm</th>
+                    <th className="py-3.5 px-4">House / Group</th>
+                    <th className="py-3.5 px-4">Parent / Guardian</th>
+                    <th className="py-3.5 px-4">Emergency Phone</th>
+                    <th className="py-3.5 px-4">Status</th>
+                    <th className="py-3.5 px-4 text-right text-[10px]">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filteredStudentRecords.length > 0 ? (
+                    filteredStudentRecords.map(s => (
+                      <tr
+                        key={s.id}
+                        onClick={() => setSelectedUser(s)}
+                        className="hover:bg-primary/5 cursor-pointer transition-colors group"
+                      >
+                        <td className="py-4 px-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl font-bold text-sm bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20 overflow-hidden">
+                              {s.profileImage ? (
+                                <img src={s.profileImage} alt={s.name} className="w-full h-full object-cover rounded-xl" />
+                              ) : (
+                                s.name[0]
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-bold text-foreground group-hover:text-primary transition-colors text-sm">{s.name}</p>
+                              <p className="text-[10px] font-mono text-muted-foreground">{s.studentId || s.code || `TMS/STU/${s.id}`}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-4 px-4">
+                          <p className="font-bold text-foreground">{s.grade || 'SS1'}</p>
+                          <p className="text-[10px] text-muted-foreground">{s.stream ? `${s.stream} Stream` : 'General Curriculum'}</p>
+                        </td>
+                        <td className="py-4 px-4 font-semibold text-primary">
+                          {s.house || 'School House'}
+                        </td>
+                        <td className="py-4 px-4 text-muted-foreground">
+                          <p className="text-foreground font-medium">{s.parentName || 'Parent / Guardian'}</p>
+                          <p className="text-[10px]">{s.email}</p>
+                        </td>
+                        <td className="py-4 px-4 font-mono font-medium text-foreground">
+                          {s.parentPhone || s.phone || '08031234567'}
+                        </td>
+                        <td className="py-4 px-4">
+                          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
+                            s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-rose-500/10 text-rose-600 border-rose-500/20'
+                          }`}>
+                            {s.status}
+                          </span>
+                        </td>
+                        <td className="py-4 px-4 text-right">
+                          <span className="text-[10px] text-primary font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-end gap-1">
+                            View Profile <ArrowUpRight className="w-3.5 h-3.5" />
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={7} className="py-12 text-center text-muted-foreground">
+                        <Users className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                        <p className="font-bold text-sm text-foreground">No students found matching your criteria</p>
+                        <p className="text-xs text-muted-foreground mt-1">Try resetting the filter or adding a new student.</p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      );
       // ── LEVEL 2: User type list (clickable rows) ───────────────
       if (userSubPage && activeType) {
         const usersForType = filteredUsers(activeType.key === 'STAFF' ? 'PARENT' : activeType.key);
