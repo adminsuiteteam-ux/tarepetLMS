@@ -885,9 +885,7 @@ function loadSavedStudents(): StudentRecord[] {
           const isDeleted = isAccountDeleted(sCode) || isAccountDeleted(sEmail) || isAccountDeleted(sName) || isAccountDeleted(s.id);
           return !isMock && !isDeleted;
         });
-        if (liveOnly.length !== parsed.length) {
-          localStorage.setItem('tarepet_students_list', JSON.stringify(liveOnly));
-        }
+        localStorage.setItem('tarepet_students_list', JSON.stringify(liveOnly));
         return liveOnly;
       }
     }
