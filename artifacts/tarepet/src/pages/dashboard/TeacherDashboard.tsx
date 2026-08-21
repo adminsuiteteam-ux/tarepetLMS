@@ -16,7 +16,7 @@ import {
 
 import { authClient } from '@/lib/api-auth';
 import { addRealtimeNotification } from '@/lib/notifications-store';
-import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, getStoredTeachers, saveTeacher, saveStudent, deleteStudent, subscribeToCBTStore, syncStudentsWithBackend, syncTeachersWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, calculateBECEGrade, isSeniorSecondaryClass, CourseBroadsheetScore, PromotionRecord, getPromotionHistory, executeStudentPromotions, getNextProgressiveClass, getArchivedCohortsForTeacher } from '@/lib/cbt-store';
+import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, getStoredTeachers, saveTeacher, saveStudent, deleteStudent, subscribeToCBTStore, syncStudentsWithBackend, syncTeachersWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, calculateBECEGrade, isSeniorSecondaryClass, CourseBroadsheetScore, PromotionRecord, getPromotionHistory, executeStudentPromotions, getNextProgressiveClass, getArchivedCohortsForTeacher, matchStudentClass } from '@/lib/cbt-store';
 import { useTranslation } from '@/lib/i18n';
 import { TerminalReportCard, ReportCardData, SubjectScore } from '@/components/reports/TerminalReportCard';
 import { getTimeGreeting } from '@/lib/utils';
@@ -658,9 +658,7 @@ export default function TeacherDashboard() {
     
     // Form Teachers are strictly restricted to their assigned form class only
     if (formClass) {
-      const fcClean = formClass.toLowerCase().replace(/\s+/g, '');
-      const sGradeClean = (s.grade || '').toLowerCase().replace(/\s+/g, '');
-      const matchClass = sGradeClean.includes(fcClean) || fcClean.includes(sGradeClean);
+      const matchClass = matchStudentClass(s.grade, formClass);
       return matchSearch && matchClass;
     }
     return matchSearch;

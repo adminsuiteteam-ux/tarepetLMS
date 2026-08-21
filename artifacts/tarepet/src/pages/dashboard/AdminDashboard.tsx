@@ -5,7 +5,7 @@ import { authClient, sanitizeMailto } from '@/lib/api-auth';
 import { PortalLayout } from '@/components/layout/PortalLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
-import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, clearAllStoredStudents, deleteStudent, syncStudentsWithBackend, getStoredTeachers, saveTeacher, saveStoredTeachers, clearAllStoredTeachers, deleteTeacher, syncTeachersWithBackend, listenToRealtimeEvents, clearCBTStoreCache, clearAllSiteDefaultData, isAccountDeleted, getAdminPassword, setAdminPassword } from '@/lib/cbt-store';
+import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, clearAllStoredStudents, deleteStudent, syncStudentsWithBackend, getStoredTeachers, saveTeacher, saveStoredTeachers, clearAllStoredTeachers, deleteTeacher, syncTeachersWithBackend, listenToRealtimeEvents, clearCBTStoreCache, clearAllSiteDefaultData, isAccountDeleted, getAdminPassword, setAdminPassword, matchStudentClass } from '@/lib/cbt-store';
 import { AdminManagementPanel } from '@/components/dashboard/AdminManagementPanel';
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
 import {
@@ -2236,44 +2236,44 @@ export default function AdminDashboard() {
       return false;
     }
     const q = userSearch.toLowerCase();
-    const matchClass  = !selectedClass  || s.grade  === selectedClass;
-    const matchStream = !selectedStream || s.stream === selectedStream;
-    const matchSearch = !q || s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q) || (s.admissionNo && s.admissionNo.toLowerCase().includes(q));
+    const matchClass  = !selectedClass  || matchStudentClass(s.grade, selectedClass);
+    const matchStream = !selectedStream || s.stream === selectedStream || (!s.stream && selectedStream === 'Science');
+    const matchSearch = !q || s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q) || (s.admissionNo && s.admissionNo.toLowerCase().includes(q)) || (s.code && s.code.toLowerCase().includes(q));
     return matchClass && matchStream && matchSearch;
   });
 
   const STUDENT_CLASSES = [
     { label: 'Nursery 1', key: 'NUR1', hasStreams: false, color: 'border-primary/20 bg-primary/5 hover:border-primary/40', iconBg: 'bg-primary/10 text-primary', accent: 'text-primary',
-      totalCount: studentsList.filter(s => s.grade === 'NUR1').length },
+      totalCount: studentsList.filter(s => matchStudentClass(s.grade, 'NUR1')).length },
     { label: 'Nursery 2', key: 'NUR2', hasStreams: false, color: 'border-primary/20 bg-primary/5 hover:border-primary/40', iconBg: 'bg-primary/10 text-primary', accent: 'text-primary',
-      totalCount: studentsList.filter(s => s.grade === 'NUR2').length },
+      totalCount: studentsList.filter(s => matchStudentClass(s.grade, 'NUR2')).length },
     { label: 'Nursery 3', key: 'NUR3', hasStreams: false, color: 'border-primary/20 bg-primary/5 hover:border-primary/40', iconBg: 'bg-primary/10 text-primary', accent: 'text-primary',
-      totalCount: studentsList.filter(s => s.grade === 'NUR3').length },
+      totalCount: studentsList.filter(s => matchStudentClass(s.grade, 'NUR3')).length },
     { label: 'Primary 1', key: 'PRI1', hasStreams: false, color: 'border-primary/20 bg-primary/5 hover:border-primary/40', iconBg: 'bg-primary/10 text-primary', accent: 'text-primary',
-      totalCount: studentsList.filter(s => s.grade === 'PRI1').length },
+      totalCount: studentsList.filter(s => matchStudentClass(s.grade, 'PRI1')).length },
     { label: 'Primary 2', key: 'PRI2', hasStreams: false, color: 'border-primary/20 bg-primary/5 hover:border-primary/40', iconBg: 'bg-primary/10 text-primary', accent: 'text-primary',
-      totalCount: studentsList.filter(s => s.grade === 'PRI2').length },
+      totalCount: studentsList.filter(s => matchStudentClass(s.grade, 'PRI2')).length },
     { label: 'Primary 3', key: 'PRI3', hasStreams: false, color: 'border-primary/20 bg-primary/5 hover:border-primary/40', iconBg: 'bg-primary/10 text-primary', accent: 'text-primary',
-      totalCount: studentsList.filter(s => s.grade === 'PRI3').length },
+      totalCount: studentsList.filter(s => matchStudentClass(s.grade, 'PRI3')).length },
     { label: 'Primary 4', key: 'PRI4', hasStreams: false, color: 'border-primary/20 bg-primary/5 hover:border-primary/40', iconBg: 'bg-primary/10 text-primary', accent: 'text-primary',
-      totalCount: studentsList.filter(s => s.grade === 'PRI4').length },
+      totalCount: studentsList.filter(s => matchStudentClass(s.grade, 'PRI4')).length },
     { label: 'Primary 5', key: 'PRI5', hasStreams: false, color: 'border-primary/20 bg-primary/5 hover:border-primary/40', iconBg: 'bg-primary/10 text-primary', accent: 'text-primary',
-      totalCount: studentsList.filter(s => s.grade === 'PRI5').length },
+      totalCount: studentsList.filter(s => matchStudentClass(s.grade, 'PRI5')).length },
     { label: 'JSS 1', key: 'JSS1', hasStreams: false, color: 'border-primary/20 bg-primary/5 hover:border-primary/40', iconBg: 'bg-primary/10 text-primary', accent: 'text-primary',
-      totalCount: studentsList.filter(s => s.grade === 'JSS1').length },
+      totalCount: studentsList.filter(s => matchStudentClass(s.grade, 'JSS1')).length },
     { label: 'JSS 2', key: 'JSS2', hasStreams: false, color: 'border-primary/20 bg-primary/5 hover:border-primary/40', iconBg: 'bg-primary/10 text-primary', accent: 'text-primary',
-      totalCount: studentsList.filter(s => s.grade === 'JSS2').length },
+      totalCount: studentsList.filter(s => matchStudentClass(s.grade, 'JSS2')).length },
     { label: 'JSS 3', key: 'JSS3', hasStreams: false, color: 'border-primary/20 bg-primary/5 hover:border-primary/40', iconBg: 'bg-primary/10 text-primary', accent: 'text-primary',
-      totalCount: studentsList.filter(s => s.grade === 'JSS3').length },
+      totalCount: studentsList.filter(s => matchStudentClass(s.grade, 'JSS3')).length },
     { label: 'SS 1', key: 'SS1', hasStreams: true, color: 'border-primary/20 bg-primary/5 hover:border-primary/40', iconBg: 'bg-primary/10 text-primary', accent: 'text-primary',
-      sciCount: studentsList.filter(s => s.grade === 'SS1' && s.stream === 'Science').length,
-      artCount: studentsList.filter(s => s.grade === 'SS1' && s.stream === 'Art').length },
+      sciCount: studentsList.filter(s => matchStudentClass(s.grade, 'SS1') && (s.stream === 'Science' || !s.stream)).length,
+      artCount: studentsList.filter(s => matchStudentClass(s.grade, 'SS1') && s.stream === 'Art').length },
     { label: 'SS 2', key: 'SS2', hasStreams: true, color: 'border-primary/20 bg-primary/5 hover:border-primary/40', iconBg: 'bg-primary/10 text-primary', accent: 'text-primary',
-      sciCount: studentsList.filter(s => s.grade === 'SS2' && s.stream === 'Science').length,
-      artCount: studentsList.filter(s => s.grade === 'SS2' && s.stream === 'Art').length },
+      sciCount: studentsList.filter(s => matchStudentClass(s.grade, 'SS2') && (s.stream === 'Science' || !s.stream)).length,
+      artCount: studentsList.filter(s => matchStudentClass(s.grade, 'SS2') && s.stream === 'Art').length },
     { label: 'SS 3', key: 'SS3', hasStreams: true, color: 'border-primary/20 bg-primary/5 hover:border-primary/40', iconBg: 'bg-primary/10 text-primary', accent: 'text-primary',
-      sciCount: studentsList.filter(s => s.grade === 'SS3' && s.stream === 'Science').length,
-      artCount: studentsList.filter(s => s.grade === 'SS3' && s.stream === 'Art').length },
+      sciCount: studentsList.filter(s => matchStudentClass(s.grade, 'SS3') && (s.stream === 'Science' || !s.stream)).length,
+      artCount: studentsList.filter(s => matchStudentClass(s.grade, 'SS3') && s.stream === 'Art').length },
   ];
   const SS_CLASSES = STUDENT_CLASSES;
 
@@ -2858,7 +2858,7 @@ export default function AdminDashboard() {
             subtitle: 'Nursery 1, Nursery 2, Nursery 3',
             description: 'Early Childhood Montessori Education & Developmental Foundation',
             levelsPrefix: 'NUR',
-            count: studentsList.filter(s => s.grade?.startsWith('NUR')).length,
+            count: studentsList.filter(s => s.grade && (s.grade.toUpperCase().includes('NUR') || s.grade.toUpperCase().includes('NURSERY'))).length,
             classes: STUDENT_CLASSES.filter(c => c.key.startsWith('NUR')),
             icon: School
           },
@@ -2868,7 +2868,7 @@ export default function AdminDashboard() {
             subtitle: 'Primary 1 through Primary 5',
             description: 'Foundational Elementary Curriculum & Basic Quantitative Skills',
             levelsPrefix: 'PRI',
-            count: studentsList.filter(s => s.grade?.startsWith('PRI')).length,
+            count: studentsList.filter(s => s.grade && (s.grade.toUpperCase().includes('PRI') || s.grade.toUpperCase().includes('PRIMARY') || s.grade.toUpperCase().includes('BASIC'))).length,
             classes: STUDENT_CLASSES.filter(c => c.key.startsWith('PRI')),
             icon: BookOpen
           },
@@ -2878,7 +2878,7 @@ export default function AdminDashboard() {
             subtitle: 'JSS 1, JSS 2, JSS 3',
             description: 'Basic Education Curriculum & State BECE Examination Prep',
             levelsPrefix: 'JSS',
-            count: studentsList.filter(s => s.grade?.startsWith('JSS')).length,
+            count: studentsList.filter(s => s.grade && (s.grade.toUpperCase().includes('JSS') || s.grade.toUpperCase().includes('JUNIOR'))).length,
             classes: STUDENT_CLASSES.filter(c => c.key.startsWith('JSS')),
             icon: GraduationCap
           },
@@ -2888,7 +2888,7 @@ export default function AdminDashboard() {
             subtitle: 'SS 1, SS 2, SS 3 (Science & Art)',
             description: 'Senior Secondary Academic Programs, WAEC & NECO Streams',
             levelsPrefix: 'SS',
-            count: studentsList.filter(s => s.grade?.startsWith('SS')).length,
+            count: studentsList.filter(s => s.grade && (s.grade.toUpperCase().includes('SS') || s.grade.toUpperCase().includes('SENIOR'))).length,
             classes: STUDENT_CLASSES.filter(c => c.key.startsWith('SS')),
             icon: Award
           }

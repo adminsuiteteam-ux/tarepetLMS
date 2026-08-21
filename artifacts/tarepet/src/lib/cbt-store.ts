@@ -590,6 +590,28 @@ let _students: StudentRecord[] = loadSavedStudents();
 
 import { authClient } from './api-auth';
 
+export function matchStudentClass(studentGrade?: string, targetClass?: string): boolean {
+  if (!studentGrade || !targetClass) return false;
+  const cleanS = String(studentGrade).toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const cleanT = String(targetClass).toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+  if (cleanS === cleanT) return true;
+
+  const normalize = (val: string) => {
+    return val
+      .replace(/^NURSERY/i, 'NUR')
+      .replace(/^PRIMARY/i, 'PRI')
+      .replace(/^BASIC/i, 'PRI')
+      .replace(/^JUNIORSECONDARY/i, 'JSS')
+      .replace(/^SENIORSECONDARY/i, 'SS');
+  };
+
+  const normS = normalize(cleanS);
+  const normT = normalize(cleanT);
+
+  return normS === normT || normS.includes(normT) || normT.includes(normS);
+}
+
 export function getStoredStudents(): StudentRecord[] {
   _students = loadSavedStudents();
   return _students;
@@ -606,31 +628,53 @@ export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
           const uName = `${u.first_name || ''} ${u.last_name || ''}`.trim();
           return !isAccountDeleted(u.email) && !isAccountDeleted(u.id) && !isAccountDeleted(uCode) && !isAccountDeleted(uName);
         })
-        .map((u: any) => ({
-          id: u.id,
-          code: u.student_id || u.profile?.student_id || `TMS/SS1/SCI/${u.id}`,
-          admissionNo: u.student_id || u.profile?.student_id || `TMS/SS1/SCI/${u.id}`,
-          name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
-          email: u.email,
-          gender: u.profile?.gender || '',
-          maritalStatus: 'Single',
-          dob: u.profile?.dob || '',
-          phone: u.phone || u.profile?.phone || '',
-          country: 'Nigeria',
-          stateOfOrigin: u.profile?.stateOfOrigin || '',
-          lga: u.profile?.lga || '',
-          address: u.profile?.address || '',
-          grade: u.profile?.grade || u.profile?.formTeacherOf || 'SS1',
-          stream: u.profile?.stream || 'Science',
-          programme: 'Senior Secondary Certificate (SSCE)',
-          parentName: u.profile?.parentName || '',
-          parentPhone: u.profile?.parentPhone || '',
-          status: 'ACTIVE',
-          studyMode: 'Full Time',
-          attendance: '100%',
-          atRisk: false
-        }));
-      _students = fetched;
+        .map((u: any) => {
+          const rawGrade = u.profile?.grade_level || u.profile?.grade || u.grade_level || u.grade || '';
+          return {
+            id: u.id,
+            code: u.student_id || u.profile?.student_id || `TMS/SS1/SCI/${u.id}`,
+            admissionNo: u.student_id || u.profile?.student_id || `TMS/SS1/SCI/${u.id}`,
+            name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
+            email: u.email,
+            gender: u.profile?.gender || '',
+            maritalStatus: 'Single',
+            dob: u.profile?.date_of_birth || u.profile?.dob || '',
+            phone: u.phone || u.profile?.phone || '',
+            country: 'Nigeria',
+            stateOfOrigin: u.profile?.stateOfOrigin || '',
+            lga: u.profile?.lga || '',
+            address: u.profile?.address || '',
+            grade: rawGrade || 'SS1',
+            stream: u.profile?.stream || 'Science',
+            programme: 'Senior Secondary Certificate (SSCE)',
+            parentName: u.profile?.parentName || '',
+            parentPhone: u.profile?.parentPhone || u.profile?.emergency_contact || '',
+            status: 'ACTIVE',
+            studyMode: 'Full Time',
+            attendance: '100%',
+            atRisk: false
+          };
+        });
+
+      const localStudents = loadSavedStudents();
+      const mergedStudents = fetched.map(bs => {
+        const localMatch = localStudents.find(ls => 
+          ls.id === bs.id || 
+          (ls.email && bs.email && ls.email.toLowerCase() === bs.email.toLowerCase()) || 
+          (ls.code && bs.code && ls.code.toLowerCase() === bs.code.toLowerCase())
+        );
+        return localMatch ? { ...localMatch, ...bs, grade: bs.grade || localMatch.grade } : bs;
+      });
+
+      const unbackedLocal = localStudents.filter(ls => !fetched.some(bs => 
+        bs.id === ls.id || 
+        (bs.email && ls.email && bs.email.toLowerCase() === ls.email.toLowerCase()) || 
+        (bs.code && ls.code && bs.code.toLowerCase() === ls.code.toLowerCase())
+      ));
+
+      const combined = [...mergedStudents, ...unbackedLocal];
+      _students = combined;
+      saveStoredStudents(combined);
       broadcastRealtimeEvent();
     }
   } catch (err) {

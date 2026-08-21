@@ -219,6 +219,10 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False, allow_blank=True)
     role = serializers.ChoiceField(choices=User.Role.choices, default=User.Role.STUDENT)
     student_id = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    grade = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    grade_level = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    house = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    emergency_contact = serializers.CharField(write_only=True, required=False, allow_blank=True)
     teacher_id = serializers.CharField(write_only=True, required=False, allow_blank=True)
     department = serializers.CharField(write_only=True, required=False, allow_blank=True)
     specialization = serializers.CharField(write_only=True, required=False, allow_blank=True)
@@ -237,6 +241,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'email', 'password', 'first_name', 'last_name', 'phone', 'role', 'student_id', 'teacher_id',
+            'grade', 'grade_level', 'house', 'emergency_contact',
             'department', 'specialization', 'qualifications', 'subjects_taught', 'hire_date', 'gender',
             'dob', 'address', 'salary', 'bank_name', 'account_number', 'form_teacher_of'
         ]
@@ -246,6 +251,11 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         first_name = validated_data.get('first_name', '').strip()
         last_name = validated_data.get('last_name', '').strip()
         email = validated_data.get('email', '').strip().lower()
+
+        # Extract student profile extra fields
+        grade_val = validated_data.pop('grade_level', None) or validated_data.pop('grade', 'Primary 1')
+        house_val = validated_data.pop('house', 'Blue House')
+        emerg_val = validated_data.pop('emergency_contact', '')
 
         # Extract teacher profile extra fields
         dept = validated_data.pop('department', 'Academic Department')
@@ -305,7 +315,14 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
         # Create role profile with strictly assigned ID and individual fields
         if role == User.Role.STUDENT:
-            StudentProfile.objects.create(user=user, student_id=custom_stu_id)
+            StudentProfile.objects.create(
+                user=user,
+                student_id=custom_stu_id,
+                grade_level=grade_val,
+                house=house_val,
+                emergency_contact=emerg_val,
+                date_of_birth=dob_val,
+            )
         elif role == User.Role.TEACHER:
             TeacherProfile.objects.create(
                 user=user,
