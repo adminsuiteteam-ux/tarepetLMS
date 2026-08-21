@@ -10,7 +10,7 @@ import {
   Settings, User, Bell, Lock, AlertCircle,
   BarChart2, Shield, Play, ArrowUpRight, Trophy, ClipboardList,
   CheckSquare, Filter, Search, Sparkles, Zap, Printer, ShieldCheck,
-  Fingerprint, Smartphone
+  Fingerprint, Smartphone, Scissors, Trash2, Upload
 } from 'lucide-react';
 
 import { getStoredExams, getStoredSubmissions, subscribeToCBTStore, getCoursesForClass, getStudentBroadsheet, calculateWAECGrade, calculateBECEGrade, isSeniorSecondaryClass, getStoredStudents, saveStudent, broadcastRealtimeEvent, syncStudentsWithBackend } from '@/lib/cbt-store';
@@ -19,6 +19,7 @@ import { StudentPaymentPanel } from '@/components/dashboard/StudentPaymentPanel'
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
 import { getTimeGreeting } from '@/lib/utils';
 import { isBiometricsEnabled, enrollBiometrics, unenrollBiometrics } from '@/lib/biometrics';
+import { ImageCropModal } from '@/components/ui/ImageCropModal';
 
 // ─── Initial Seed Data (SS1 Science) ─────────────────────────
 const MY_COURSES: any[] = [];
@@ -163,6 +164,67 @@ export default function StudentDashboard() {
 
   // Settings form state (synced with actual admin data)
   const [profileForm, setProfileForm] = useState(getStudentProfileData);
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [pendingCropImage, setPendingCropImage] = useState('');
+
+  const handleSaveCroppedAvatar = (croppedBase64: string) => {
+    const updated = { ...profileForm, profileImage: croppedBase64 };
+    setProfileForm(updated);
+    updateUser({
+      profile_image: croppedBase64,
+      profile: {
+        ...(user?.profile || {}),
+        profile_image: croppedBase64,
+        profileImage: croppedBase64,
+      }
+    });
+    saveStudent({
+      admissionNo: profileForm.studentId,
+      name: `${profileForm.firstName} ${profileForm.lastName}`.trim(),
+      profileImage: croppedBase64,
+    });
+    authClient.patch('/auth/me/', {
+      profile_image: croppedBase64,
+      profile: {
+        profile_image: croppedBase64,
+        profileImage: croppedBase64,
+      }
+    }).then(() => {
+      refreshUserProfile().catch(() => {});
+    }).catch(() => {});
+    broadcastRealtimeEvent();
+    showToast('Profile photo cropped and updated in real time!');
+  };
+
+  const handleDeleteAvatar = () => {
+    const updated = { ...profileForm, profileImage: '' };
+    setProfileForm(updated);
+    updateUser({
+      profile_image: '',
+      profile: {
+        ...(user?.profile || {}),
+        profile_image: '',
+        profileImage: '',
+      }
+    });
+    saveStudent({
+      admissionNo: profileForm.studentId,
+      name: `${profileForm.firstName} ${profileForm.lastName}`.trim(),
+      profileImage: '',
+    });
+    authClient.patch('/auth/me/', {
+      profile_image: '',
+      profile: {
+        profile_image: '',
+        profileImage: '',
+      }
+    }).then(() => {
+      refreshUserProfile().catch(() => {});
+    }).catch(() => {});
+    broadcastRealtimeEvent();
+    showToast('Profile photo deleted successfully.');
+  };
+
   const [biometricsEnabled, setBiometricsEnabled] = useState<boolean>(() => {
     const identifier = user?.email || (user?.profile as any)?.student_id || '';
     return isBiometricsEnabled(identifier);
@@ -804,79 +866,48 @@ export default function StudentDashboard() {
                 onChange={e => {
                   const file = e.target.files?.[0];
                   if (file) {
-                    if (file.size > 5 * 1024 * 1024) {
-                      showToast('Image size exceeds 5MB limit.');
+                    if (file.size > 10 * 1024 * 1024) {
+                      showToast('Image size exceeds 10MB limit.');
                       return;
                     }
                     const reader = new FileReader();
                     reader.onloadend = () => {
                       const imageBase64 = reader.result as string;
-                      const updated = { ...profileForm, profileImage: imageBase64 };
-                      setProfileForm(updated);
-                      updateUser({
-                        profile: {
-                          ...(user?.profile || {}),
-                          profile_image: imageBase64,
-                          profileImage: imageBase64,
-                        }
-                      });
-                      saveStudent({
-                        admissionNo: profileForm.studentId,
-                        name: `${profileForm.firstName} ${profileForm.lastName}`.trim(),
-                        profileImage: imageBase64,
-                      });
-                      authClient.patch('/auth/me/', {
-                        profile: {
-                          profile_image: imageBase64,
-                          profileImage: imageBase64,
-                        }
-                      }).then(() => {
-                        refreshUserProfile().catch(() => {});
-                      }).catch(() => {});
-                      broadcastRealtimeEvent();
-                      showToast('Profile photo updated in real time!');
+                      setPendingCropImage(imageBase64);
+                      setCropModalOpen(true);
                     };
                     reader.readAsDataURL(file);
+                    e.target.value = '';
                   }
                 }}
               />
-              <div className="flex items-center gap-2">
-                <label htmlFor="studentAvatarInputPicker" className="px-3.5 py-1.5 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 cursor-pointer inline-flex items-center gap-1.5 shadow-sm">
-                  {t('student.upload_profile_picture', 'Upload Profile Picture')}
+              <div className="flex flex-wrap items-center gap-2">
+                <label htmlFor="studentAvatarInputPicker" className="px-3.5 py-1.5 bg-primary hover:bg-primary/90 text-white rounded-xl text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-sm transition-all">
+                  <Upload className="w-3.5 h-3.5" />
+                  {profileForm.profileImage ? t('student.change_photo', 'Change Photo') : t('student.upload_profile_picture', 'Upload Profile Picture')}
                 </label>
                 {profileForm.profileImage && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const updated = { ...profileForm, profileImage: '' };
-                      setProfileForm(updated);
-                      updateUser({
-                        profile: {
-                          ...(user?.profile || {}),
-                          profile_image: '',
-                          profileImage: '',
-                        }
-                      });
-                      saveStudent({
-                        admissionNo: profileForm.studentId,
-                        name: `${profileForm.firstName} ${profileForm.lastName}`.trim(),
-                        profileImage: '',
-                      });
-                      authClient.patch('/auth/me/', {
-                        profile: {
-                          profile_image: '',
-                          profileImage: '',
-                        }
-                      }).then(() => {
-                        refreshUserProfile().catch(() => {});
-                      }).catch(() => {});
-                      broadcastRealtimeEvent();
-                      showToast('Photo removed!');
-                    }}
-                    className="px-3 py-1.5 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold hover:bg-rose-50"
-                  >
-                    {t('student.remove_photo', 'Remove')}
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPendingCropImage(profileForm.profileImage);
+                        setCropModalOpen(true);
+                      }}
+                      className="px-3 py-1.5 text-foreground border border-border rounded-xl text-xs font-bold hover:bg-muted inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <Scissors className="w-3.5 h-3.5 text-primary" />
+                      <span>Crop / Resize</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDeleteAvatar}
+                      className="px-3 py-1.5 text-rose-600 border border-rose-200 dark:border-rose-800/40 rounded-xl text-xs font-bold hover:bg-rose-50 dark:hover:bg-rose-950/30 inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>{t('student.remove_photo', 'Remove')}</span>
+                    </button>
+                  </>
                 )}
               </div>
               <p className="text-[10px] text-muted-foreground">{t('student.avatar_help', 'Select a picture file to update your student profile avatar.')}</p>
@@ -1099,6 +1130,13 @@ export default function StudentDashboard() {
         {showReportCardModal && (
           <TerminalReportCard onClose={() => setShowReportCardModal(false)} />
         )}
+
+        <ImageCropModal
+          isOpen={cropModalOpen}
+          imageSrc={pendingCropImage}
+          onClose={() => setCropModalOpen(false)}
+          onSave={handleSaveCroppedAvatar}
+        />
       </PortalLayout>
     </ProtectedRoute>
   );

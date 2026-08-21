@@ -9,13 +9,14 @@ import {
   User, BookOpen, Award, ShieldCheck, CreditCard, Printer, Download,
   Edit2, Bell, Lock, CheckCircle2, X, Mail, Phone, MapPin, Calendar,
   Briefcase, GraduationCap, Save, ArrowLeft, Check, Star, Layers, Users,
-  Fingerprint, Smartphone, BarChart2, ChevronDown, Upload, Trash2
+  Fingerprint, Smartphone, BarChart2, ChevronDown, Upload, Trash2, Scissors
 } from 'lucide-react';
 
 import { authClient } from '@/lib/api-auth';
 import { getStoredTeachers, saveTeacher, broadcastRealtimeEvent, addRealtimeActivity, syncTeachersWithBackend } from '@/lib/cbt-store';
 import { addRealtimeNotification } from '@/lib/notifications-store';
 import { isBiometricsSupported, isBiometricsEnabled, enrollBiometrics, unenrollBiometrics } from '@/lib/biometrics';
+import { ImageCropModal } from '@/components/ui/ImageCropModal';
 
 export default function TeacherProfile() {
   const { t } = useTranslation();
@@ -28,6 +29,9 @@ export default function TeacherProfile() {
   const [showActionsDropdown, setShowActionsDropdown] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'details' | 'teaching' | 'qualifications' | 'settings'>('details');
 
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [pendingCropImage, setPendingCropImage] = useState('');
+
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
@@ -37,6 +41,68 @@ export default function TeacherProfile() {
     return isBiometricsEnabled(email);
   });
   const [biometricLoading, setBiometricLoading] = useState(false);
+
+  const handleApplyCroppedPhoto = (croppedBase64: string) => {
+    const updated = { ...profileForm, profileImage: croppedBase64 };
+    setProfileForm(updated);
+    updateUser({
+      profile_image: croppedBase64,
+      profile: {
+        ...(user?.profile || {}),
+        profile_image: croppedBase64,
+        profileImage: croppedBase64,
+      }
+    });
+    saveTeacher({
+      id: user?.id,
+      email: profileForm.email || user?.email,
+      staffId: profileForm.staffId,
+      name: profileForm.fullName || `${profileForm.firstName} ${profileForm.lastName}`,
+      profileImage: croppedBase64,
+    });
+    authClient.put('/auth/me/', {
+      profile_image: croppedBase64,
+      profile: {
+        profile_image: croppedBase64,
+        profileImage: croppedBase64,
+      }
+    }).then(() => {
+      refreshUserProfile().catch(() => {});
+    }).catch(() => {});
+    broadcastRealtimeEvent();
+    showToast('Profile photo cropped and updated in real time!');
+  };
+
+  const handleDeletePhoto = () => {
+    const updated = { ...profileForm, profileImage: '' };
+    setProfileForm(updated);
+    updateUser({
+      profile_image: '',
+      profile: {
+        ...(user?.profile || {}),
+        profile_image: '',
+        profileImage: '',
+      }
+    });
+    saveTeacher({
+      id: user?.id,
+      email: profileForm.email || user?.email,
+      staffId: profileForm.staffId,
+      name: profileForm.fullName || `${profileForm.firstName} ${profileForm.lastName}`,
+      profileImage: '',
+    });
+    authClient.put('/auth/me/', {
+      profile_image: '',
+      profile: {
+        profile_image: '',
+        profileImage: '',
+      }
+    }).then(() => {
+      refreshUserProfile().catch(() => {});
+    }).catch(() => {});
+    broadcastRealtimeEvent();
+    showToast('Profile photo deleted successfully.');
+  };
 
   const getInitialProfile = () => {
     const prof = (user?.profile as any) || {};
@@ -407,53 +473,63 @@ export default function TeacherProfile() {
                     onChange={e => {
                       const file = e.target.files?.[0];
                       if (file) {
-                        if (file.size > 5 * 1024 * 1024) {
-                          showToast('Image size exceeds 5MB limit.');
+                        if (file.size > 10 * 1024 * 1024) {
+                          showToast('Image size exceeds 10MB limit.');
                           return;
                         }
                         const reader = new FileReader();
                         reader.onloadend = () => {
                           const imageBase64 = reader.result as string;
-                          const updated = { ...profileForm, profileImage: imageBase64 };
-                          setProfileForm(updated);
-                          updateUser({
-                            profile_image: imageBase64,
-                            profile: {
-                              ...(user?.profile || {}),
-                              profile_image: imageBase64,
-                              profileImage: imageBase64,
-                            }
-                          });
-                          saveTeacher({
-                            id: user?.id,
-                            email: profileForm.email || user?.email,
-                            staffId: profileForm.staffId,
-                            name: profileForm.fullName || `${profileForm.firstName} ${profileForm.lastName}`,
-                            profileImage: imageBase64,
-                          });
-                          authClient.put('/auth/me/', {
-                            profile_image: imageBase64,
-                            profile: {
-                              profile_image: imageBase64,
-                              profileImage: imageBase64,
-                            }
-                          }).then(() => {
-                            refreshUserProfile().catch(() => {});
-                          }).catch(() => {});
-                          broadcastRealtimeEvent();
-                          showToast('Profile photo updated in real time!');
+                          setPendingCropImage(imageBase64);
+                          setCropModalOpen(true);
                         };
                         reader.readAsDataURL(file);
+                        e.target.value = '';
                       }
                     }}
                   />
                   <label
                     htmlFor="teacherProfileAvatarPicker"
-                    className="absolute -bottom-1 -right-1 p-1.5 bg-emerald-700 text-white rounded-lg shadow cursor-pointer hover:scale-105 transition-all border border-card"
-                    title="Upload Photo"
+                    className="absolute -bottom-1 -right-1 p-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg shadow cursor-pointer hover:scale-105 transition-all border border-card"
+                    title="Upload New Photo"
                   >
                     <Edit2 className="w-3 h-3" />
                   </label>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
+                  <label
+                    htmlFor="teacherProfileAvatarPicker"
+                    className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition-all cursor-pointer inline-flex items-center gap-1 shadow-xs"
+                    title="Upload & Crop Photo"
+                  >
+                    <Upload className="w-3 h-3" /> Change
+                  </label>
+
+                  {profileForm.profileImage && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPendingCropImage(profileForm.profileImage);
+                          setCropModalOpen(true);
+                        }}
+                        className="px-2 py-1 rounded-lg bg-muted hover:bg-accent text-foreground text-[11px] font-bold border border-border transition-all cursor-pointer inline-flex items-center gap-1"
+                        title="Crop / Resize current photo"
+                      >
+                        <Scissors className="w-3 h-3 text-emerald-600" /> Crop
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleDeletePhoto}
+                        className="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-900/40 text-rose-600 text-[11px] font-bold border border-rose-200 dark:border-rose-800/40 transition-all cursor-pointer inline-flex items-center gap-1"
+                        title="Delete profile picture"
+                      >
+                        <Trash2 className="w-3 h-3" /> Remove
+                      </button>
+                    </>
+                  )}
                 </div>
                 <div className="space-y-1">
                   <span className="px-3 py-1 rounded-full text-[10px] font-extrabold bg-emerald-500/15 text-emerald-700 border border-emerald-500/30 uppercase tracking-wider block">
@@ -589,38 +665,18 @@ export default function TeacherProfile() {
                         onChange={e => {
                           const file = e.target.files?.[0];
                           if (file) {
+                            if (file.size > 10 * 1024 * 1024) {
+                              showToast('Image size exceeds 10MB limit.');
+                              return;
+                            }
                             const reader = new FileReader();
                             reader.onloadend = () => {
-                              const updatedImg = reader.result as string;
-                              setProfileForm(prev => ({ ...prev, profileImage: updatedImg }));
-                              updateUser({
-                                profile_image: updatedImg,
-                                profile: {
-                                  ...(user?.profile || {}),
-                                  profile_image: updatedImg,
-                                  profileImage: updatedImg,
-                                }
-                              });
-                              saveTeacher({
-                                id: user?.id,
-                                email: profileForm.email || user?.email,
-                                staffId: profileForm.staffId,
-                                name: profileForm.fullName || `${profileForm.firstName} ${profileForm.lastName}`,
-                                profileImage: updatedImg,
-                              });
-                              authClient.put('/auth/me/', {
-                                profile_image: updatedImg,
-                                profile: {
-                                  profile_image: updatedImg,
-                                  profileImage: updatedImg,
-                                }
-                              }).then(() => {
-                                refreshUserProfile().catch(() => {});
-                              }).catch(() => {});
-                              broadcastRealtimeEvent();
-                              showToast('Photo uploaded and applied in real time!');
+                              const imageBase64 = reader.result as string;
+                              setPendingCropImage(imageBase64);
+                              setCropModalOpen(true);
                             };
                             reader.readAsDataURL(file);
+                            e.target.value = '';
                           }
                         }}
                       />
@@ -630,20 +686,30 @@ export default function TeacherProfile() {
                           className="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-sm transition-all"
                         >
                           <Upload className="w-3.5 h-3.5" />
-                          <span>Upload New Photo</span>
+                          <span>Upload & Crop Photo</span>
                         </label>
                         {profileForm.profileImage && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setProfileForm(prev => ({ ...prev, profileImage: '' }));
-                              showToast('Photo removed.');
-                            }}
-                            className="px-3 py-1.5 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold hover:bg-rose-50 flex items-center gap-1"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            <span>Remove</span>
-                          </button>
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPendingCropImage(profileForm.profileImage);
+                                setCropModalOpen(true);
+                              }}
+                              className="px-3 py-1.5 text-foreground border border-border rounded-xl text-xs font-bold hover:bg-muted inline-flex items-center gap-1 cursor-pointer"
+                            >
+                              <Scissors className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>Crop / Resize</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleDeletePhoto}
+                              className="px-3 py-1.5 text-rose-600 border border-rose-200 dark:border-rose-800/40 rounded-xl text-xs font-bold hover:bg-rose-50 dark:hover:bg-rose-950/30 inline-flex items-center gap-1 cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Remove</span>
+                            </button>
+                          </>
                         )}
                       </div>
                       <p className="text-[10px] text-muted-foreground">JPG, PNG, or WEBP. Image updates real-time across Teacher & Admin views.</p>
@@ -985,6 +1051,13 @@ export default function TeacherProfile() {
             </div>
           </div>
         )}
+
+        <ImageCropModal
+          isOpen={cropModalOpen}
+          imageSrc={pendingCropImage}
+          onClose={() => setCropModalOpen(false)}
+          onSave={handleApplyCroppedPhoto}
+        />
       </PortalLayout>
   );
 }
