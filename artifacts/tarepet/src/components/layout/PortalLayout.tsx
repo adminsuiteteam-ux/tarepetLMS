@@ -13,7 +13,7 @@ import {
   Briefcase, PenLine, Star, Library, ClipboardList, Trophy,
   CreditCard, HeartHandshake, School, Shield, Search,
   Megaphone, CalendarCheck, ChevronRight, Sun, Moon, DollarSign,
-  ArrowRight, Radio, Activity
+  ArrowRight, Radio, Activity, Home
 } from 'lucide-react';
 
 export interface NavSection {
@@ -98,6 +98,44 @@ function getRoleNav(role?: string): NavSection[] {
   }
 }
 
+function getMobileNavItems(role?: string): NavSection[] {
+  switch (role) {
+    case 'ADMIN':
+      return [
+        { id: 'overview', label: 'Home', icon: Home },
+        { id: 'users', label: 'Students', icon: Users },
+        { id: 'exams', label: 'Exams', icon: FileText },
+        { id: 'profile', label: 'Profile', icon: UserCheck },
+      ];
+    case 'TEACHER':
+      return [
+        { id: 'overview', label: 'Home', icon: Home },
+        { id: 'students', label: 'Students', icon: Users },
+        { id: 'exams', label: 'Exams', icon: FileText },
+        { id: 'profile', label: 'Profile', icon: UserCheck },
+      ];
+    case 'STUDENT':
+      return [
+        { id: 'overview', label: 'Home', icon: Home },
+        { id: 'courses', label: 'Subjects', icon: BookOpen },
+        { id: 'exams', label: 'Exams', icon: FileText },
+        { id: 'settings', label: 'Profile', icon: UserCheck },
+      ];
+    case 'PARENT':
+      return [
+        { id: 'overview', label: 'Home', icon: Home },
+        { id: 'academic', label: 'Progress', icon: GraduationCap },
+        { id: 'fees', label: 'Fees', icon: CreditCard },
+        { id: 'settings', label: 'Profile', icon: UserCheck },
+      ];
+    default:
+      return [
+        { id: 'overview', label: 'Home', icon: Home },
+        { id: 'profile', label: 'Profile', icon: UserCheck },
+      ];
+  }
+}
+
 export const PortalLayout: React.FC<PortalLayoutProps> = ({
   children, title, activeSection, onNavigate,
 }) => {
@@ -140,6 +178,7 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
 
   const roleColor = getRoleColor(user?.role);
   const navItems = getRoleNav(user?.role);
+  const mobileNavItems = getMobileNavItems(user?.role);
   const userAvatar = user?.profile_image || (user as any)?.profileImage || user?.profile?.profile_image || user?.profile?.profileImage;
 
   const searchResults = useMemo(() => {
@@ -344,7 +383,7 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
           <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
             <button
               onClick={() => setMobileSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-xl text-muted-foreground hover:bg-accent transition-colors shrink-0"
+              className="lg:hidden p-2 rounded-full text-muted-foreground hover:bg-accent transition-colors shrink-0"
               title="Open Menu"
             >
               <Menu className="w-5 h-5" />
@@ -352,7 +391,7 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
 
             {/* Mobile Logo & Portal Title */}
             <div className="flex items-center gap-2 lg:hidden shrink-0">
-              <img src={tarepetLogo} alt="Logo" className="w-6 h-6 object-contain rounded-md" />
+              <img src={tarepetLogo} alt="Logo" className="w-6 h-6 object-contain rounded-full" />
               <span className="font-bold text-xs sm:text-sm text-foreground truncate max-w-[130px] sm:max-w-[200px]">
                 {title || 'Tarepet LMS'}
               </span>
@@ -375,18 +414,18 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
               title="Click to open Search Page"
             >
               <div className="relative flex items-center w-full">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-hover:text-emerald-600 transition-colors" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
                 <input
                   type="text"
                   readOnly
                   placeholder="Click to search students, teachers, exams, pages..."
-                  className="w-full pl-9 pr-4 py-2 text-xs bg-muted/50 border border-border rounded-xl focus:outline-none text-foreground placeholder:text-muted-foreground cursor-pointer hover:bg-muted/80 transition-all"
+                  className="w-full pl-9 pr-4 py-2 text-xs bg-muted/50 border border-border rounded-full focus:outline-none text-foreground placeholder:text-muted-foreground cursor-pointer hover:bg-muted/80 transition-all"
                 />
               </div>
             </div>
           </div>
 
-          {/* Right actions: Normal Navigation UI Icons */}
+          {/* Right actions: Completely Rounded Action Buttons */}
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             {/* Mobile Search Icon Button */}
             <button
@@ -394,7 +433,7 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
                 if (typeof window !== 'undefined') window.location.href = '/search';
               }}
               title="Search Portal"
-              className="md:hidden p-2 rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              className="md:hidden p-2 rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
             >
               <Search className="w-5 h-5" />
             </button>
@@ -406,7 +445,7 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
             <button
               onClick={toggleDarkMode}
               title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              className="p-2 rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              className="p-2 rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
             >
               {isDarkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5" />}
             </button>
@@ -433,31 +472,33 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
         </header>
 
         {/* Page body */}
-        <main className="flex-1 p-4 sm:p-5 md:p-7 pb-20 lg:pb-7 overflow-y-auto">
+        <main className="flex-1 p-4 sm:p-5 md:p-7 pb-24 lg:pb-7 overflow-y-auto">
           {children}
         </main>
 
-        {/* Mobile Sticky Bottom Navigation Bar with Normal UI Icons */}
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/95 backdrop-blur-md border-t border-border px-2 py-1.5 flex items-center justify-around shadow-lg">
-          {navItems.slice(0, 5).map((item) => {
-            const Icon = item.icon;
-            const isActive = activeSection === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => onNavigate(item.id)}
-                className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all ${
-                  isActive
-                    ? 'text-primary font-bold scale-105'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5]' : 'stroke-[1.75]'}`} />
-                <span className="text-[10px] mt-0.5 leading-tight truncate max-w-[54px]">{item.label}</span>
-              </button>
-            );
-          })}
-        </nav>
+        {/* Floating Minimalist Homebar with Completely Rounded Border Radius matching @jsav.design mockup */}
+        <div className="lg:hidden fixed bottom-5 left-0 right-0 z-50 flex justify-center pointer-events-none px-4">
+          <nav className="pointer-events-auto bg-zinc-950/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-white/10 shadow-2xl rounded-full p-1.5 flex items-center gap-2 sm:gap-4 transition-all duration-300">
+            {mobileNavItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeSection === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => onNavigate(item.id)}
+                  title={item.label}
+                  className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 relative ${
+                    isActive
+                      ? 'bg-white text-zinc-950 shadow-md scale-105 font-bold'
+                      : 'text-zinc-400 hover:text-white hover:bg-white/10 active:scale-95'
+                  }`}
+                >
+                  <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5]' : 'stroke-[2]'}`} />
+                </button>
+              );
+            })}
+          </nav>
+        </div>
       </div>
     </div>
   );
