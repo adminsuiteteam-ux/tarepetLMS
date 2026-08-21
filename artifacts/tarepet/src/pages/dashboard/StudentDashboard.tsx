@@ -60,7 +60,7 @@ function getTimetableForDay(day: DayKey) {
 
 export default function StudentDashboard() {
   const { t } = useTranslation();
-  const { user, isStudent, isAdmin, refreshUserProfile } = useAuth();
+  const { user, isStudent, isAdmin, refreshUserProfile, updateUser } = useAuth();
 
   if (!user || (!isStudent && !isAdmin) || (user.role !== 'STUDENT' && user.role !== 'ADMIN')) {
     return (
@@ -769,10 +769,36 @@ export default function StudentDashboard() {
                 onChange={e => {
                   const file = e.target.files?.[0];
                   if (file) {
+                    if (file.size > 5 * 1024 * 1024) {
+                      showToast('Image size exceeds 5MB limit.');
+                      return;
+                    }
                     const reader = new FileReader();
                     reader.onloadend = () => {
-                      const updated = { ...profileForm, profileImage: reader.result as string };
+                      const imageBase64 = reader.result as string;
+                      const updated = { ...profileForm, profileImage: imageBase64 };
                       setProfileForm(updated);
+                      updateUser({
+                        profile: {
+                          ...(user?.profile || {}),
+                          profile_image: imageBase64,
+                          profileImage: imageBase64,
+                        }
+                      });
+                      saveStudent({
+                        admissionNo: profileForm.studentId,
+                        name: `${profileForm.firstName} ${profileForm.lastName}`.trim(),
+                        profileImage: imageBase64,
+                      });
+                      authClient.patch('/auth/me/', {
+                        profile: {
+                          profile_image: imageBase64,
+                          profileImage: imageBase64,
+                        }
+                      }).then(() => {
+                        refreshUserProfile().catch(() => {});
+                      }).catch(() => {});
+                      broadcastRealtimeEvent();
                       showToast('Profile photo updated in real time!');
                     };
                     reader.readAsDataURL(file);
@@ -789,6 +815,27 @@ export default function StudentDashboard() {
                     onClick={() => {
                       const updated = { ...profileForm, profileImage: '' };
                       setProfileForm(updated);
+                      updateUser({
+                        profile: {
+                          ...(user?.profile || {}),
+                          profile_image: '',
+                          profileImage: '',
+                        }
+                      });
+                      saveStudent({
+                        admissionNo: profileForm.studentId,
+                        name: `${profileForm.firstName} ${profileForm.lastName}`.trim(),
+                        profileImage: '',
+                      });
+                      authClient.patch('/auth/me/', {
+                        profile: {
+                          profile_image: '',
+                          profileImage: '',
+                        }
+                      }).then(() => {
+                        refreshUserProfile().catch(() => {});
+                      }).catch(() => {});
+                      broadcastRealtimeEvent();
                       showToast('Photo removed!');
                     }}
                     className="px-3 py-1.5 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold hover:bg-rose-50"

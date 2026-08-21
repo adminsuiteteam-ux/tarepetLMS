@@ -92,13 +92,13 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
 class ParentProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = ParentProfile
-        fields = ['id', 'occupation', 'address', 'preferred_language', 'newsletter_subscription']
+        fields = ['id', 'occupation', 'address', 'preferred_language', 'newsletter_subscription', 'profile_image']
 
 
 class StudentProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = StudentProfile
-        fields = ['id', 'student_id', 'grade_level', 'house', 'admission_date', 'date_of_birth', 'medical_conditions', 'allergies', 'emergency_contact']
+        fields = ['id', 'student_id', 'grade_level', 'house', 'admission_date', 'date_of_birth', 'medical_conditions', 'allergies', 'emergency_contact', 'profile_image']
 
 
 class TeacherProfileSerializer(serializers.ModelSerializer):
@@ -107,14 +107,14 @@ class TeacherProfileSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'teacher_id', 'department', 'specialization', 'subjects_taught',
             'hire_date', 'qualifications', 'gender', 'dob', 'address', 'salary',
-            'bank_name', 'account_number', 'form_teacher_of', 'bio'
+            'bank_name', 'account_number', 'form_teacher_of', 'bio', 'profile_image'
         ]
 
 
 class AdminProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdminProfile
-        fields = ['id', 'role_type', 'permissions']
+        fields = ['id', 'role_type', 'permissions', 'profile_image']
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -122,7 +122,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'first_name', 'last_name', 'phone', 'role', 'date_joined', 'is_active', 'profile']
+        fields = ['id', 'email', 'first_name', 'last_name', 'phone', 'role', 'profile_image', 'date_joined', 'is_active', 'profile']
         read_only_fields = ['id', 'date_joined', 'is_active']
 
     def get_profile(self, obj):
@@ -148,6 +148,10 @@ class UserSerializer(serializers.ModelSerializer):
         instance.first_name = validated_data.get('first_name', raw_data.get('first_name', instance.first_name))
         instance.last_name = validated_data.get('last_name', raw_data.get('last_name', instance.last_name))
         instance.phone = validated_data.get('phone', raw_data.get('phone', instance.phone))
+        if 'profile_image' in merged_profile or 'profileImage' in merged_profile:
+            img_val = merged_profile.get('profile_image') or merged_profile.get('profileImage')
+            if img_val is not None:
+                instance.profile_image = img_val
         if 'email' in validated_data and validated_data['email']:
             instance.email = validated_data['email']
         elif 'email' in raw_data and raw_data.get('email'):
@@ -196,6 +200,8 @@ class UserSerializer(serializers.ModelSerializer):
                 'medical_conditions': 'medical_conditions',
                 'allergies': 'allergies',
                 'emergency_contact': 'emergency_contact',
+                'profile_image': 'profile_image',
+                'profileImage': 'profile_image',
             }
             for key, attr in student_field_map.items():
                 if key in merged_profile:
@@ -204,12 +210,20 @@ class UserSerializer(serializers.ModelSerializer):
                         setattr(s_prof, attr, val)
             s_prof.save()
 
+        elif instance.role == User.Role.PARENT:
+            p_prof, _ = ParentProfile.objects.get_or_create(user=instance)
+            if 'profile_image' in merged_profile or 'profileImage' in merged_profile:
+                p_prof.profile_image = merged_profile.get('profile_image') or merged_profile.get('profileImage')
+            p_prof.save()
+
         elif instance.role == User.Role.ADMIN:
             a_prof, _ = AdminProfile.objects.get_or_create(user=instance)
             if 'role_type' in merged_profile:
                 a_prof.role_type = merged_profile['role_type']
             if 'permissions' in merged_profile:
                 a_prof.permissions = merged_profile['permissions']
+            if 'profile_image' in merged_profile or 'profileImage' in merged_profile:
+                a_prof.profile_image = merged_profile.get('profile_image') or merged_profile.get('profileImage')
             a_prof.save()
 
         return instance

@@ -135,6 +135,7 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
 
   const roleColor = getRoleColor(user?.role);
   const navItems = getRoleNav(user?.role);
+  const userAvatar = user?.profile?.profile_image || user?.profile?.profileImage || (user as any)?.profile_image || (user as any)?.profileImage;
 
   const searchResults = useMemo(() => {
     const q = searchValue.trim().toLowerCase();
@@ -280,10 +281,14 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
           <div
             onClick={() => onNavigate('profile')}
             className="flex items-center gap-2.5 min-w-0 cursor-pointer group"
-            title="View Admin Profile"
+            title="View Profile"
           >
-            <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-sm shrink-0 group-hover:bg-primary group-hover:text-white transition-colors">
-              {user?.first_name?.[0] ?? 'A'}
+            <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-sm shrink-0 group-hover:bg-primary group-hover:text-white transition-colors overflow-hidden border border-border">
+              {userAvatar ? (
+                <img src={userAvatar} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                user?.first_name?.[0] ?? 'A'
+              )}
             </div>
             <div className="min-w-0">
               <p className="text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors">{user?.first_name} {user?.last_name}</p>
@@ -385,14 +390,18 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
             <div
               onClick={() => onNavigate('profile')}
               className="flex items-center gap-2 pl-2 border-l border-border cursor-pointer group"
-              title="Click to view Admin Profile"
+              title="Click to view Profile"
             >
-              <div className="w-8 h-8 rounded-full bg-primary text-white font-bold flex items-center justify-center text-sm group-hover:scale-105 transition-transform shadow-xs">
-                {user?.first_name?.[0] ?? 'A'}
+              <div className="w-8 h-8 rounded-full bg-primary text-white font-bold flex items-center justify-center text-sm group-hover:scale-105 transition-transform shadow-xs overflow-hidden border border-border">
+                {userAvatar ? (
+                  <img src={userAvatar} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  user?.first_name?.[0] ?? 'A'
+                )}
               </div>
               <div className="hidden sm:block">
-                <p className="text-xs font-bold text-foreground leading-tight group-hover:text-primary transition-colors">{user?.first_name ?? 'Principal'} {user?.last_name ?? ''}</p>
-                <p className="text-[10px] text-muted-foreground">{t('common.administrator', 'Administrator')}</p>
+                <p className="text-xs font-bold text-foreground leading-tight group-hover:text-primary transition-colors">{user?.first_name ?? 'User'} {user?.last_name ?? ''}</p>
+                <p className="text-[10px] text-muted-foreground">{user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase() : 'Member'}</p>
               </div>
             </div>
           </div>

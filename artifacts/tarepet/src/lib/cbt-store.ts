@@ -652,7 +652,8 @@ export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
             status: 'ACTIVE',
             studyMode: 'Full Time',
             attendance: '100%',
-            atRisk: false
+            atRisk: false,
+            profileImage: u.profile?.profile_image || u.profile_image || u.profile?.profileImage || '',
           };
         });
 
@@ -663,7 +664,7 @@ export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
           (ls.email && bs.email && ls.email.toLowerCase() === bs.email.toLowerCase()) || 
           (ls.code && bs.code && ls.code.toLowerCase() === bs.code.toLowerCase())
         );
-        return localMatch ? { ...localMatch, ...bs, grade: bs.grade || localMatch.grade } : bs;
+        return localMatch ? { ...localMatch, ...bs, grade: bs.grade || localMatch.grade, profileImage: bs.profileImage || localMatch.profileImage } : bs;
       });
 
       const unbackedLocal = localStudents.filter(ls => !fetched.some(bs => 

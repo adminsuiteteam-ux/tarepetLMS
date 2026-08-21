@@ -412,13 +412,30 @@ export default function TeacherProfile() {
                         }
                         const reader = new FileReader();
                         reader.onloadend = () => {
-                          const updated = { ...profileForm, profileImage: reader.result as string };
+                          const imageBase64 = reader.result as string;
+                          const updated = { ...profileForm, profileImage: imageBase64 };
                           setProfileForm(updated);
+                          updateUser({
+                            profile: {
+                              ...(user?.profile || {}),
+                              profile_image: imageBase64,
+                              profileImage: imageBase64,
+                            }
+                          });
                           saveTeacher({
                             staffId: profileForm.staffId,
                             name: profileForm.fullName || `${profileForm.firstName} ${profileForm.lastName}`,
-                            profileImage: reader.result as string,
+                            profileImage: imageBase64,
                           });
+                          authClient.put('/auth/me/', {
+                            profile: {
+                              profile_image: imageBase64,
+                              profileImage: imageBase64,
+                            }
+                          }).then(() => {
+                            refreshUserProfile().catch(() => {});
+                          }).catch(() => {});
+                          broadcastRealtimeEvent();
                           showToast('Profile photo updated in real time!');
                         };
                         reader.readAsDataURL(file);

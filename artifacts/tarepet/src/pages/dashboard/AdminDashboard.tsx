@@ -1735,7 +1735,7 @@ const APP_DATA_VERSION = 'v2.0.0';
 
 // ── Main Component ───────────────────────────────────────────
 export default function AdminDashboard() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, updateUser, refreshUserProfile } = useAuth();
   const { t } = useTranslation();
 
   if (!user || !isAdmin || user.role !== 'ADMIN') {
@@ -5336,7 +5336,37 @@ s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 t
                   <button
                     onClick={() => {
                       setAdminProfileData(editProfileForm);
-                      
+                      const nameParts = (editProfileForm.name || '').trim().split(' ');
+                      const fName = nameParts[0] || 'Admin';
+                      const lName = nameParts.slice(1).join(' ') || 'System';
+
+                      updateUser({
+                        first_name: fName,
+                        last_name: lName,
+                        phone: editProfileForm.phone,
+                        profile_image: editProfileForm.profileImage,
+                        profile: {
+                          ...(user?.profile || {}),
+                          profile_image: editProfileForm.profileImage,
+                          profileImage: editProfileForm.profileImage,
+                        }
+                      });
+
+                      authClient.put('/auth/me/', {
+                        first_name: fName,
+                        last_name: lName,
+                        phone: editProfileForm.phone,
+                        profile_image: editProfileForm.profileImage,
+                        profile: {
+                          profile_image: editProfileForm.profileImage,
+                          profileImage: editProfileForm.profileImage,
+                        }
+                      }).then(() => {
+                        refreshUserProfile().catch(() => {});
+                      }).catch(() => {});
+
+                      broadcastRealtimeEvent();
+
                       setProfileUpdateSuccess(true);
                       setTimeout(() => {
                         setProfileUpdateSuccess(false);

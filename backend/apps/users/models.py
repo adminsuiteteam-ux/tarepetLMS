@@ -41,6 +41,7 @@ class CustomUser(AbstractUser):
         choices=Role.choices,
         default=Role.STUDENT,
     )
+    profile_image = models.TextField(blank=True, null=True)
 
     objects = CustomUserManager()
 
@@ -79,6 +80,7 @@ class ParentProfile(models.Model):
     address = models.TextField(blank=True, null=True)
     preferred_language = models.CharField(max_length=50, default='English')
     newsletter_subscription = models.BooleanField(default=True)
+    profile_image = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"Parent: {self.user.get_full_name()}"
@@ -99,6 +101,7 @@ class StudentProfile(models.Model):
     medical_conditions = models.TextField(blank=True, null=True)
     allergies = models.TextField(blank=True, null=True)
     emergency_contact = models.CharField(max_length=100, blank=True, null=True)
+    profile_image = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"Student: {self.user.get_full_name()} ({self.student_id or 'No ID'})"
@@ -122,6 +125,7 @@ class TeacherProfile(models.Model):
     account_number = models.CharField(max_length=50, blank=True, null=True)
     form_teacher_of = models.CharField(max_length=100, blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
+    profile_image = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"Teacher: {self.user.get_full_name()} ({self.teacher_id or 'No ID'})"
@@ -133,6 +137,7 @@ class AdminProfile(models.Model):
     )
     role_type = models.CharField(max_length=50, default='Super Admin')
     permissions = models.JSONField(default=dict, blank=True)
+    profile_image = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"Admin: {self.user.get_full_name()} ({self.role_type})"

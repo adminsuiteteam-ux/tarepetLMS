@@ -56,7 +56,7 @@ const PTA_EVENTS = [
 ];
 
 export default function ParentDashboard() {
-  const { user, refreshUserProfile } = useAuth();
+  const { user, refreshUserProfile, updateUser } = useAuth();
   const { t } = useTranslation();
   const [activeSection, setActiveSectionState] = useState<string>(() => {
     if (typeof window !== 'undefined') {
@@ -91,7 +91,7 @@ export default function ParentDashboard() {
   const [showReportCardModal, setShowReportCardModal] = useState(false);
   const [parentProfile, setParentProfile] = useState(() => ({
     name: user?.first_name ? `${user.first_name} ${user.last_name}` : 'Parent Member',
-    profileImage: '',
+    profileImage: user?.profile?.profile_image || (user as any)?.profile_image || user?.profile?.profileImage || '',
   }));
   const [biometricsEnabled, setBiometricsEnabled] = useState<boolean>(() => {
     return isBiometricsEnabled(user?.email || 'parent@tarepet.com');
@@ -522,10 +522,34 @@ export default function ParentDashboard() {
                 onChange={e => {
                   const file = e.target.files?.[0];
                   if (file) {
+                    if (file.size > 5 * 1024 * 1024) {
+                      showToast('Image size exceeds 5MB limit.');
+                      return;
+                    }
                     const reader = new FileReader();
                     reader.onloadend = () => {
-                      const updated = { ...parentProfile, profileImage: reader.result as string };
+                      const imageBase64 = reader.result as string;
+                      const updated = { ...parentProfile, profileImage: imageBase64 };
                       setParentProfile(updated);
+                      updateUser({
+                        profile_image: imageBase64,
+                        profile: {
+                          ...(user?.profile || {}),
+                          profile_image: imageBase64,
+                          profileImage: imageBase64,
+                        }
+                      });
+                      authClient.put('/auth/me/', {
+                        profile_image: imageBase64,
+                        profile: {
+                          profile_image: imageBase64,
+                          profileImage: imageBase64,
+                        }
+                      }).then(() => {
+                        refreshUserProfile().catch(() => {});
+                      }).catch(() => {});
+                      broadcastRealtimeEvent();
+                      showToast('Profile photo updated in real time!');
                     };
                     reader.readAsDataURL(file);
                   }
@@ -541,6 +565,25 @@ export default function ParentDashboard() {
                     onClick={() => {
                       const updated = { ...parentProfile, profileImage: '' };
                       setParentProfile(updated);
+                      updateUser({
+                        profile_image: '',
+                        profile: {
+                          ...(user?.profile || {}),
+                          profile_image: '',
+                          profileImage: '',
+                        }
+                      });
+                      authClient.put('/auth/me/', {
+                        profile_image: '',
+                        profile: {
+                          profile_image: '',
+                          profileImage: '',
+                        }
+                      }).then(() => {
+                        refreshUserProfile().catch(() => {});
+                      }).catch(() => {});
+                      broadcastRealtimeEvent();
+                      showToast('Photo removed!');
                     }}
                     className="px-3 py-1.5 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold hover:bg-rose-50"
                   >
