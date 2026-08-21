@@ -27,14 +27,65 @@ function getTypeStyle(type: Notification['type']): { icon: React.ElementType; bg
   }
 }
 
+function parseDate(iso: any): Date {
+  if (!iso) return new Date();
+  if (iso instanceof Date) return isNaN(iso.getTime()) ? new Date() : iso;
+  
+  if (typeof iso === 'number' || (/^\d+$/.test(String(iso).trim()))) {
+    const num = Number(iso);
+    return new Date(num > 1e11 ? num : num * 1000);
+  }
+
+  const str = String(iso).trim();
+  const normalized = str.includes('T') ? str : str.replace(' ', 'T');
+  const withZ = (normalized.endsWith('Z') || normalized.includes('+') || (normalized.length > 10 && normalized.slice(10).includes('-')))
+    ? normalized
+    : `${normalized}Z`;
+  
+  const d = new Date(withZ);
+  if (!isNaN(d.getTime())) return d;
+
+  const direct = new Date(str);
+  return isNaN(direct.getTime()) ? new Date() : direct;
+}
+
 function timeAgo(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
+  try {
+    const date = parseDate(iso);
+    const now = Date.now();
+    const diff = now - date.getTime();
+
+    if (diff < 45000) return 'just now';
+
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins}m ago`;
+
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+
+    const days = Math.floor(hrs / 24);
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days}d ago`;
+
+    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  } catch (e) {
+    return 'just now';
+  }
+}
+
+function formatExactTime(iso: string): string {
+  try {
+    const date = parseDate(iso);
+    return date.toLocaleString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  } catch (e) {
+    return '';
+  }
 }
 
 // ─── Notification Panel ───────────────────────────────────────────────────────
@@ -211,7 +262,9 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ role }) =>
                           <p className={`text-xs font-bold leading-tight ${n.read ? 'text-muted-foreground' : 'text-foreground'}`}>
                             {n.title}
                           </p>
-                          <span className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0">{timeAgo(n.time)}</span>
+                          <span className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0" title={formatExactTime(n.time)}>
+                            {timeAgo(n.time)}
+                          </span>
                         </div>
                         <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{n.message}</p>
                       </div>

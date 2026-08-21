@@ -38,14 +38,65 @@ function getTypeStyle(type: Notification['type']): { icon: React.ElementType; bg
   }
 }
 
+function parseDate(iso: any): Date {
+  if (!iso) return new Date();
+  if (iso instanceof Date) return isNaN(iso.getTime()) ? new Date() : iso;
+  
+  if (typeof iso === 'number' || (/^\d+$/.test(String(iso).trim()))) {
+    const num = Number(iso);
+    return new Date(num > 1e11 ? num : num * 1000);
+  }
+
+  const str = String(iso).trim();
+  const normalized = str.includes('T') ? str : str.replace(' ', 'T');
+  const withZ = (normalized.endsWith('Z') || normalized.includes('+') || (normalized.length > 10 && normalized.slice(10).includes('-')))
+    ? normalized
+    : `${normalized}Z`;
+  
+  const d = new Date(withZ);
+  if (!isNaN(d.getTime())) return d;
+
+  const direct = new Date(str);
+  return isNaN(direct.getTime()) ? new Date() : direct;
+}
+
 function timeAgo(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'Just now';
-  if (mins < 60) return `${mins} minutes ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs} hours ago`;
-  return `${Math.floor(hrs / 24)} days ago`;
+  try {
+    const date = parseDate(iso);
+    const now = Date.now();
+    const diff = now - date.getTime();
+
+    if (diff < 45000) return 'Just now';
+
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins}m ago`;
+
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+
+    const days = Math.floor(hrs / 24);
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days}d ago`;
+
+    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  } catch (e) {
+    return 'Just now';
+  }
+}
+
+function formatExactTime(iso: string): string {
+  try {
+    const date = parseDate(iso);
+    return date.toLocaleString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  } catch (e) {
+    return '';
+  }
 }
 
 export default function NotificationsPage() {
@@ -239,7 +290,7 @@ export default function NotificationsPage() {
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${style.bg} ${style.text}`}>
                         {style.label}
                       </span>
-                      <span className="text-[11px] text-muted-foreground">{timeAgo(n.time)}</span>
+                      <span className="text-[11px] text-muted-foreground" title={formatExactTime(n.time)}>{timeAgo(n.time)}</span>
                       {!n.read && (
                         <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-600 text-white uppercase tracking-wider">
                           NEW
