@@ -17,6 +17,19 @@ if env_file.exists():
 import logging
 import secrets
 
+def get_secret_key():
+    secret = env('SECRET_KEY', default=None) or os.getenv('SECRET_KEY')
+    if secret:
+        return secret
+    secret_file = BASE_DIR / 'secret_key.txt'
+    if secret_file.exists():
+        return secret_file.read_text().strip()
+    logging.warning("Generating ephemeral SECRET_KEY. Instance-isolated!")
+    return secrets.token_hex(32)
+
+SECRET_KEY = get_secret_key()
+DEBUG = env.bool('DEBUG', default=True)
+
 try:
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
@@ -33,19 +46,6 @@ try:
         )
 except ImportError:
     pass
-
-def get_secret_key():
-    secret = env('SECRET_KEY', default=None) or os.getenv('SECRET_KEY')
-    if secret:
-        return secret
-    secret_file = BASE_DIR / 'secret_key.txt'
-    if secret_file.exists():
-        return secret_file.read_text().strip()
-    logging.warning("Generating ephemeral SECRET_KEY. Instance-isolated!")
-    return secrets.token_hex(32)
-
-SECRET_KEY = get_secret_key()
-DEBUG = env.bool('DEBUG', default=True)
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[
     '*',
     '.onrender.com',
