@@ -20,6 +20,7 @@ ignore_missing_imports = true
 # `untyped-import` fires because django doesn't ship inline type stubs.
 # -----------------------------------------------------------------------
 [errors]
+missing-import = false
 missing-attribute = false
 bad-override-mutable-attribute = false
 untyped-import = false

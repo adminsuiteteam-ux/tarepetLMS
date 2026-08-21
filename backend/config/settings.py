@@ -31,8 +31,11 @@ SECRET_KEY = get_secret_key()
 DEBUG = env.bool('DEBUG', default=True)
 
 try:
+    # pyrefly: ignore [missing-import]
     import sentry_sdk
+    # pyrefly: ignore [missing-import]
     from sentry_sdk.integrations.django import DjangoIntegration
+    # pyrefly: ignore [missing-import]
     from sentry_sdk.integrations.celery import CeleryIntegration
     _sentry_dsn = env('SENTRY_DSN', default=None) or os.getenv('SENTRY_DSN')
     if _sentry_dsn:
@@ -211,6 +214,7 @@ SPECTACULAR_SETTINGS = {
 _redis_url = env('REDIS_URL', default='')
 if _redis_url:
     try:
+        # pyrefly: ignore [missing-import]
         import django_redis
         CACHES = {
             'default': {

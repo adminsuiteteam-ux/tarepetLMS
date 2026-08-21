@@ -1,4 +1,5 @@
 import React from 'react';
+import { t } from '@/lib/i18n';
 
 // Sentry Client Instrumentation for Vite / React
 export interface SentryConfig {
@@ -92,9 +93,9 @@ export class SentryErrorBoundary extends React.Component<
             <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto text-xl font-bold">
               !
             </div>
-            <h2 className="text-xl font-bold text-slate-900">Something went wrong</h2>
+            <h2 className="text-xl font-bold text-slate-900">{t('common.somethingWentWrong', 'Something went wrong')}</h2>
             <p className="text-xs text-slate-500">
-              An unexpected error occurred. The incident has been recorded for review.
+              {t('common.unexpectedErrorDesc', 'An unexpected error occurred. The incident has been recorded for review.')}
             </p>
             <button
               onClick={() => {
@@ -103,7 +104,7 @@ export class SentryErrorBoundary extends React.Component<
               }}
               className="px-5 py-2.5 bg-primary text-white rounded-xl font-semibold text-xs hover:bg-primary/90 transition shadow-md"
             >
-              Reload Application
+              {t('common.reloadApp', 'Reload Application')}
             </button>
           </div>
         </div>
