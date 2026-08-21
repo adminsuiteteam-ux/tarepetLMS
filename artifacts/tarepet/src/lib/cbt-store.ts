@@ -763,6 +763,11 @@ export function saveTeacher(teacherData: Partial<TeacherRecord> & { name: string
     account_number: newTeacher.accountNumber,
     form_teacher_of: newTeacher.formTeacherOf,
     bio: newTeacher.bio || '',
+    profile_image: newTeacher.profileImage || '',
+    profile: {
+      profile_image: newTeacher.profileImage || '',
+      profileImage: newTeacher.profileImage || '',
+    }
   };
 
   if (typeof newTeacher.id === 'number' && newTeacher.id < 1000000000) {
@@ -1049,7 +1054,7 @@ export async function syncTeachersWithBackend(): Promise<TeacherRecord[]> {
               bio: localMatch.bio || backendT.bio,
               formTeacherOf: localMatch.formTeacherOf && localMatch.formTeacherOf !== 'None' ? localMatch.formTeacherOf : backendT.formTeacherOf,
               department: localMatch.department || backendT.department,
-              profileImage: localMatch.profileImage || backendT.profileImage,
+              profileImage: backendT.profileImage || localMatch.profileImage || '',
               bankName: localMatch.bankName || backendT.bankName,
               accountNumber: localMatch.accountNumber || backendT.accountNumber,
             };

@@ -105,7 +105,7 @@ export default function TeacherProfile() {
       emailAlerts: true,
       cbtAlerts: true,
       smsAlerts: false,
-      profileImage: stored?.profileImage || prof.profile_image || prof.profileImage || '',
+      profileImage: user?.profile_image || (user as any)?.profileImage || prof.profile_image || prof.profileImage || stored?.profileImage || '',
     };
   };
 
@@ -146,6 +146,7 @@ export default function TeacherProfile() {
           salary: p.salary || prev.salary,
           bankName: p.bank_name || prev.bankName,
           accountNumber: p.account_number || prev.accountNumber,
+          profileImage: res.data.profile_image || p.profile_image || p.profileImage || prev.profileImage,
         }));
       }
     }).catch(() => {});
