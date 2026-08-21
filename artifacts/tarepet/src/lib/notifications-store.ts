@@ -2,6 +2,7 @@
 // Pure API-backed notification store. No localStorage. In-memory state only.
 // ─────────────────────────────────────────────────────────────────────────────
 import { authClient } from './api-auth';
+import { sendWebSocketEvent, subscribeToWebSocketEvents } from './websocket-client';
 
 export type NotifRole = 'ADMIN' | 'TEACHER' | 'STUDENT' | 'PARENT';
 
@@ -37,6 +38,29 @@ function notifyListeners() {
 export function subscribeToNotifications(fn: Listener): () => void {
   listeners.add(fn);
   return () => { listeners.delete(fn); };
+}
+
+// Listen to incoming real-time notifications from WebSocket
+if (typeof window !== 'undefined') {
+  subscribeToWebSocketEvents((event) => {
+    if (event.type === 'NOTIFICATION_RECEIVED' && event.payload) {
+      const p = event.payload;
+      const notifId = String(p.id || `notif-${Date.now()}`);
+      if (!_notifications.some(n => n.id === notifId)) {
+        const incomingNotif: Notification = {
+          id: notifId,
+          title: p.title || 'Notification',
+          message: p.message || '',
+          time: p.time || new Date().toISOString(),
+          read: Boolean(p.read),
+          type: (p.type || 'info').toLowerCase() as any,
+          role: (p.role || 'ALL') as NotifRole,
+        };
+        _notifications = [incomingNotif, ..._notifications];
+        notifyListeners();
+      }
+    }
+  });
 }
 
 // ── Backend API Sync Integration ─────────────────────────────────────────────
@@ -131,6 +155,9 @@ export function addNotification(notif: Omit<Notification, 'id' | 'read' | 'time'
   };
   setAll([newNotif, ...getAll()]);
   notifyListeners();
+
+  // Send real-time notification to all connected portal sessions via WebSocket
+  sendWebSocketEvent('NOTIFICATION_RECEIVED', newNotif);
 
   // Async persist to Django backend database
   authClient.post(`/communication/notifications/`, {

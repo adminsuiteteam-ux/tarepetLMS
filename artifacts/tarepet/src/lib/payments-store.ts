@@ -1,5 +1,6 @@
 import { authClient } from './api-auth';
 import { addRealtimeNotification } from './notifications-store';
+import { sendWebSocketEvent } from './websocket-client';
 
 export interface PaymentItem {
   id: string;
@@ -309,6 +310,8 @@ function broadcastPaymentMutation() {
       paymentBroadcastChannel.postMessage({ type: 'PAYMENTS_MUTATED', timestamp: Date.now() });
     } catch (e) { /* ignore */ }
   }
+  // Send via WebSocket to sync fee transactions live across tabs and devices
+  sendWebSocketEvent('PAYMENTS_MUTATED');
 }
 
 export function subscribeToPaymentStore(callback: () => void): () => void {

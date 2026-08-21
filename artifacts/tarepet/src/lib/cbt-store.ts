@@ -1,6 +1,7 @@
 // Central CBT & LMS Engine for Tare Pet Montessori School
 // All data lives in module-level memory and localStorage sync. Syncs with backend API.
 import { addRealtimeNotification } from './notifications-store';
+import { sendWebSocketEvent, initWebSocket } from './websocket-client';
 
 function safeGetProp<T>(obj: Record<string | number, T> | null | undefined, key: string | number): T | undefined {
   if (!obj) return undefined;
@@ -916,10 +917,13 @@ export function broadcastRealtimeEvent() {
       broadcastChannel.postMessage({ type: 'CBT_STORE_MUTATED', timestamp: Date.now() });
     } catch (e) { /* fallback */ }
   }
+  // Send via WebSocket to sync all connected clients and portals across devices
+  sendWebSocketEvent('CBT_STORE_MUTATED');
 }
 
 export function initCBTStore() {
   if (typeof window !== 'undefined') {
+    initWebSocket();
     syncBroadsheetWithBackend().catch(() => {});
     syncPromotionsWithBackend().catch(() => {});
     syncActivitiesWithBackend().catch(() => {});

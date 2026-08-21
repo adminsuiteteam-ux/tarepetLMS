@@ -5,6 +5,7 @@ import { useTranslation } from '@/lib/i18n';
 import tarepetLogo from '@assets/tarepet__1784835204178.png';
 import { NotificationPanel } from '@/components/ui/NotificationPanel';
 import { getStoredStudents, getStoredTeachers, getStoredExams } from '@/lib/cbt-store';
+import { initWebSocket, subscribeToWebSocketStatus, type WSConnectionStatus } from '@/lib/websocket-client';
 import {
   LayoutDashboard, BookOpen, GraduationCap, Users, Award,
   Calendar, LogOut, Menu, X, UserCheck, ShieldAlert,
@@ -12,7 +13,7 @@ import {
   Briefcase, PenLine, Star, Library, ClipboardList, Trophy,
   CreditCard, HeartHandshake, School, Shield, Search,
   Megaphone, CalendarCheck, ChevronRight, Sun, Moon, DollarSign,
-  ArrowRight
+  ArrowRight, Radio, Activity
 } from 'lucide-react';
 
 export interface NavSection {
@@ -127,10 +128,18 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
     });
   };
 
+  const [wsStatus, setWsStatus] = useState<WSConnectionStatus>('disconnected');
+
   React.useEffect(() => {
     if (localStorage.getItem('theme') === 'dark') {
       document.documentElement.classList.add('dark');
     }
+    const unsubWs = initWebSocket();
+    const unsubStatus = subscribeToWebSocketStatus(setWsStatus);
+    return () => {
+      unsubWs();
+      unsubStatus();
+    };
   }, []);
 
   const roleColor = getRoleColor(user?.role);
@@ -374,6 +383,29 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
 
           {/* Right actions */}
           <div className="flex items-center gap-2 shrink-0">
+            {/* Live WebSocket Real-Time Badge */}
+            <div
+              className={`hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border transition-colors ${
+                wsStatus === 'connected'
+                  ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                  : wsStatus === 'connecting'
+                  ? 'bg-amber-500/10 text-amber-600 border-amber-500/20'
+                  : 'bg-muted text-muted-foreground border-border'
+              }`}
+              title={
+                wsStatus === 'connected'
+                  ? 'WebSocket Connected: Instant cross-portal real-time updates active'
+                  : wsStatus === 'connecting'
+                  ? 'Connecting to real-time gateway...'
+                  : 'Operating in local real-time sync mode'
+              }
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${
+                wsStatus === 'connected' ? 'bg-emerald-500 animate-pulse' : wsStatus === 'connecting' ? 'bg-amber-500 animate-ping' : 'bg-muted-foreground'
+              }`} />
+              <span>{wsStatus === 'connected' ? 'Live Real-Time' : wsStatus === 'connecting' ? 'Connecting...' : 'Real-Time Sync'}</span>
+            </div>
+
             {/* Notifications */}
             <NotificationPanel role={(user?.role ?? 'STUDENT') as any} />
 
