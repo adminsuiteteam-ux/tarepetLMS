@@ -48,16 +48,14 @@ function parseDate(iso: any): Date {
   }
 
   const str = String(iso).trim();
-  const normalized = str.includes('T') ? str : str.replace(' ', 'T');
-  const withZ = (normalized.endsWith('Z') || normalized.includes('+') || (normalized.length > 10 && normalized.slice(10).includes('-')))
-    ? normalized
-    : `${normalized}Z`;
-  
-  const d = new Date(withZ);
+  const d = new Date(str);
   if (!isNaN(d.getTime())) return d;
 
-  const direct = new Date(str);
-  return isNaN(direct.getTime()) ? new Date() : direct;
+  const normalized = str.includes('T') ? str : str.replace(' ', 'T');
+  const d2 = new Date(normalized);
+  if (!isNaN(d2.getTime())) return d2;
+
+  return new Date();
 }
 
 function timeAgo(iso: string): string {
@@ -66,7 +64,7 @@ function timeAgo(iso: string): string {
     const now = Date.now();
     const diff = now - date.getTime();
 
-    if (diff < 45000) return 'Just now';
+    if (diff <= 60000) return 'Just now';
 
     const mins = Math.floor(diff / 60000);
     if (mins < 60) return `${mins}m ago`;
