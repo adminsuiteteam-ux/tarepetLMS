@@ -250,7 +250,7 @@ export default function TeacherDashboard() {
   const [selectedAttendanceExam, setSelectedAttendanceExam] = useState<any | null>(null);
   const [examAttendanceState, setExamAttendanceState] = useState<any[]>([]);
   const [examStartMode, setExamStartMode] = useState<'GENERAL' | 'INDIVIDUAL'>('GENERAL');
-  const [selectedStudentForIndividual, setSelectedStudentForIndividual] = useState<string>('TMS/SS1/SCI/4821');
+  const [selectedStudentForIndividual, setSelectedStudentForIndividual] = useState<string>('');
   const [previewSubmissionModal, setPreviewSubmissionModal] = useState<any | null>(null);
 
   // Broadsheet & Detailed Student Score Table State

@@ -1450,9 +1450,9 @@ export function submitStudentCBTAttempt(
   });
 
   const percentage = total_possible > 0 ? Math.round((score / total_possible) * 100) : 100;
-  const sName = studentInfo.name || 'Emeka Amadi';
+  const sName = studentInfo.name || 'Student';
   const autoEmail = studentInfo.email || formatStudentEmail(sName);
-  const autoId = studentInfo.student_id || 'TMS/SS1/SCI/4821';
+  const autoId = studentInfo.student_id || `TMS/STU/${Date.now()}`;
 
   const newSub: CBTSubmission = {
     id: Date.now(),
@@ -1496,7 +1496,7 @@ export function hasStudentSubmittedExam(examId: number, studentIdentifier?: stri
   const lower = studentIdentifier.trim().toLowerCase();
   return _submissions.some(s =>
     s.exam_id === examId &&
-    (s.student_email.toLowerCase() === lower || s.student_id.toLowerCase() === lower || lower === 'student' || lower === 'emeka.amadi@tarepet.com' || lower === 'tms/ss1/sci/4821')
+    (s.student_email.toLowerCase() === lower || s.student_id.toLowerCase() === lower)
   );
 }
 
@@ -1507,7 +1507,7 @@ export function getStudentSubmission(examId: number, studentIdentifier?: string)
   const lower = studentIdentifier.trim().toLowerCase();
   return _submissions.find(s =>
     s.exam_id === examId &&
-    (s.student_email.toLowerCase() === lower || s.student_id.toLowerCase() === lower || lower === 'student' || lower === 'emeka.amadi@tarepet.com' || lower === 'tms/ss1/sci/4821')
+    (s.student_email.toLowerCase() === lower || s.student_id.toLowerCase() === lower)
   );
 }
 

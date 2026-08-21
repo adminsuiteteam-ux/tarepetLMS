@@ -217,8 +217,8 @@ export default function StudentCBTExam() {
 
   const handleStartExam = async () => {
     if (!selectedExam) return;
-    const studentIdentifier = user?.email || (user?.profile as any)?.studentId || 'TMS/SS1/SCI/4821';
-    const studentName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Emeka Amadi' : 'Emeka Amadi';
+    const studentIdentifier = user?.email || (user?.profile as any)?.studentId || (user as any)?.student_id || '';
+    const studentName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email : 'Student';
 
     if (hasStudentSubmittedExam(selectedExam.id, studentIdentifier)) {
       alert('Security Notice: You have already completed this examination. Re-entry is restricted to a single attempt per student.');
