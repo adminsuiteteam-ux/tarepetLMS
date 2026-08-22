@@ -2710,8 +2710,8 @@ export default function AdminDashboard() {
   const activeType = USER_TYPES.find(t => t.key === userSubPage);
 
   const renderSection = () => {
-    // MY PROFILE & PASSWORD SETTINGS SECTION
-    if (activeSection === 'profile' || activeSection === 'settings') {
+    // MY PASSWORD SETTINGS SECTION
+    if (activeSection === 'settings') {
       return (
         <div className="space-y-6 max-w-4xl mx-auto">
           {/* Header Banner */}

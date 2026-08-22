@@ -454,10 +454,12 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
 
             {/* Profile Avatar Trigger in Top Navbar */}
             <button
-              onClick={() => onNavigate('profile')}
+              onClick={() => onNavigate(user?.role === 'STUDENT' ? 'settings' : 'profile')}
               title="View Profile"
               className={`p-0.5 rounded-full border-2 transition-all cursor-pointer overflow-hidden ${
-                activeSection === 'profile' ? 'border-primary ring-2 ring-primary/20' : 'border-transparent hover:border-border'
+                activeSection === 'profile' || (activeSection === 'settings' && user?.role === 'STUDENT')
+                  ? 'border-primary ring-2 ring-primary/20'
+                  : 'border-transparent hover:border-border'
               }`}
             >
               <div className="w-8 h-8 rounded-full overflow-hidden bg-primary/10 text-primary font-bold flex items-center justify-center text-xs shadow-xs">
