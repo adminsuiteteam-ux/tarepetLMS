@@ -18,8 +18,8 @@ export interface ProfileCardItem {
 }
 
 export interface MobileProfileViewProps {
-  name: string;
-  email: string;
+  name?: string;
+  email?: string;
   staffId?: string;
   roleTitle?: string;
   formClass?: string;
@@ -29,12 +29,17 @@ export interface MobileProfileViewProps {
   subjectsAssigned?: Array<any>;
   avatarUrl?: string;
   roleBadge?: string;
+  subtitle?: string;
   location?: string;
   onBack?: () => void;
-  onEditProfile: () => void;
+  onEditProfile?: () => void;
   onLogout?: () => void;
   onNavigateSection?: (sectionId: string) => void;
   customCards?: ProfileCardItem[];
+  extraMenuItems?: ProfileCardItem[];
+  onChangePassword?: () => void;
+  onPrintProfile?: () => void;
+  onViewIdCard?: () => void;
 }
 
 export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
@@ -49,19 +54,24 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
   subjectsAssigned = [],
   avatarUrl,
   roleBadge,
+  subtitle,
   location = 'Tarepet Montessori Academy, Yenagoa',
   onBack,
   onEditProfile,
   onLogout,
   onNavigateSection,
-  customCards
+  customCards,
+  extraMenuItems,
+  onChangePassword,
+  onPrintProfile,
+  onViewIdCard,
 }) => {
   const { user, logout } = useAuth();
   const { t } = useTranslation();
 
   const effectiveStaffId = staffId || (user as any)?.staffId || (user?.profile as any)?.teacher_id || (user?.profile as any)?.student_id || 'TMS/TCH/0007';
   const effectiveName = name || (user?.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : '') || 'Abiola Adeniyi Adegemo';
-  const effectiveRole = roleTitle || (formClass && formClass !== 'None' ? `Form Teacher (${formClass})` : (user?.role === 'TEACHER' ? 'Form Teacher (Senior Science)' : (user?.role || 'Staff Member')));
+  const effectiveRole = roleTitle || subtitle || (formClass && formClass !== 'None' ? `Form Teacher (${formClass})` : (user?.role === 'TEACHER' ? 'Form Teacher (Senior Science)' : (user?.role || 'Staff Member')));
   const effectiveFormClass = formClass || 'Senior Science';
   const effectiveSpecialization = specialization || 'Physics (PRI - SS3) & Financial Accounting (JSS 1)';
   const effectiveQualification = qualification || 'Not Specified';
@@ -69,10 +79,10 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
   const effectiveEmail = email || user?.email || 'adeniyiabiola2@gmail.com';
 
   const subjectsList = subjectsAssigned && subjectsAssigned.length > 0
-    ? subjectsAssigned.map(s => (typeof s === 'string' ? s : s.name || 'Physics'))
+    ? subjectsAssigned.map(s => (typeof s === 'string' ? s : s?.name || 'Physics'))
     : ['Physics'];
 
-  const officialCards: ProfileCardItem[] = customCards || [
+  const officialCards: ProfileCardItem[] = customCards || extraMenuItems || [
     {
       icon: FileBadge,
       label: 'Staff ID Number',
