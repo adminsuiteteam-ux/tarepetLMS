@@ -11,7 +11,7 @@ import {
   TrendingUp, Play, Lock, MessageSquare, ChevronDown, ChevronRight, ChevronLeft,
   CheckSquare, XCircle, RefreshCw, PenLine, Globe, Layers, ArrowUpRight,
   ClipboardList, Settings, ShieldCheck, User, Bell, Printer, CreditCard, GraduationCap, Zap, School,
-  Save, History, Sparkles, RotateCcw, FileSpreadsheet, Check, Scissors
+  Save, History, Sparkles, RotateCcw, FileSpreadsheet, Check, Scissors, Sun, Moon
 } from 'lucide-react';
 
 import { authClient } from '@/lib/api-auth';
