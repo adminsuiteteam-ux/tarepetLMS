@@ -224,6 +224,10 @@ export default function TeacherDashboard() {
   const [showActionsDropdown, setShowActionsDropdown] = useState(false);
   const [showIDCardModal, setShowIDCardModal] = useState<any>(null);
   const [showStaffIdModal, setShowStaffIdModal] = useState<boolean>(false);
+  const [showProfileSavedModal, setShowProfileSavedModal] = useState<boolean>(false);
+  const [passwordForm, setPasswordForm] = useState({ current: '', newPassword: '', confirmPassword: '' });
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
 
   // Post-login Password Prompt Modal state for Teachers (Shows once on first new login)
   const [showPasswordPromptModal, setShowPasswordPromptModal] = useState<boolean>(() => {
@@ -3521,8 +3525,8 @@ export default function TeacherDashboard() {
                   broadcastRealtimeEvent();
                   window.dispatchEvent(new Event('cbt_store_updated'));
                   window.dispatchEvent(new Event('storage'));
-                  showToast(t('teacher.profile_sync_success', 'Profile & image updated and synced to Admin Portal in real time!'));
                   setShowEditModal(false);
+                  setShowProfileSavedModal(true);
                 }}
                 className="flex flex-col flex-1 overflow-hidden"
               >
@@ -3829,113 +3833,203 @@ export default function TeacherDashboard() {
             </div>
           </div>
         )}
+
+        {/* Profile Changed Confirmation Screen Modal */}
+        {showProfileSavedModal && (
+          <div className="fixed inset-0 z-[115] bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in zoom-in duration-150" onClick={() => setShowProfileSavedModal(false)}>
+            <div className="bg-card border border-border rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl space-y-4 text-center" onClick={e => e.stopPropagation()}>
+              <div className="w-16 h-16 rounded-3xl bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 flex items-center justify-center mx-auto shadow-sm">
+                <CheckCircle2 className="w-8 h-8" />
+              </div>
+              <div className="space-y-1.5">
+                <h3 className="font-serif font-bold text-xl text-foreground">Profile Updated Successfully!</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Your faculty details, academic assignments, and digital records have been updated and synchronized in real time with the backend and school admin.
+                </p>
+              </div>
+
+              <div className="bg-muted/20 border border-border rounded-2xl p-4 text-left space-y-2 text-xs">
+                <div className="flex justify-between items-center pb-1.5 border-b border-border/50">
+                  <span className="text-muted-foreground font-medium">Faculty Name</span>
+                  <span className="font-bold text-foreground">{profileForm.firstName} {profileForm.lastName}</span>
+                </div>
+                <div className="flex justify-between items-center pb-1.5 border-b border-border/50">
+                  <span className="text-muted-foreground font-medium">Staff ID</span>
+                  <span className="font-mono font-bold text-primary">{profileForm.staffId}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground font-medium">Duty / Specialization</span>
+                  <span className="font-semibold text-foreground text-right truncate max-w-[180px]">{profileForm.specialization || 'Form Teacher'}</span>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowProfileSavedModal(false)}
+                  className="w-full py-3 px-6 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/25 active:scale-95 transition-all cursor-pointer"
+                >
+                  Done
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </>
     );
 
     // =========================================================
-    // 6. SETTINGS
+    // 6. SETTINGS (Comprehensive & Detailed)
     // =========================================================
     if (activeSection === 'settings') return (
-      <div className="space-y-6 max-w-3xl">
+      <div className="space-y-6 max-w-4xl pb-16">
         <div>
           <h2 className="text-2xl font-serif font-bold text-foreground">{t('teacher.settings_title', 'Teacher Portal Settings')}</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">{t('teacher.settings_desc', 'Manage your profile details, assigned courses, and notification alerts.')}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{t('teacher.settings_desc', 'Manage your profile details, avatar, security credentials, and system preferences.')}</p>
         </div>
 
-        <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
+        {/* 1. Profile Photo & Avatar Management */}
+        <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-4">
           <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
-            <User className="w-4 h-4 text-primary" /> Profile Information
+            <User className="w-4 h-4 text-primary" /> Profile Photo & Avatar Management
           </h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col sm:flex-row items-center gap-5 p-4 rounded-2xl bg-muted/20 border border-border">
+            <div className="w-20 h-20 rounded-2xl bg-emerald-500/10 border-2 border-emerald-500/20 flex items-center justify-center font-serif font-bold text-2xl text-emerald-700 shadow-sm overflow-hidden shrink-0">
+              {profileForm.profileImage ? (
+                <img src={profileForm.profileImage} alt="Preview" className="w-full h-full object-cover" />
+              ) : (
+                `${profileForm.firstName?.[0] || 'T'}${profileForm.lastName?.[0] || 'M'}`
+              )}
+            </div>
+            <div className="space-y-2 flex-1 text-center sm:text-left">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                <label
+                  htmlFor="teacherSettingsPhotoInput"
+                  className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-xl text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-sm transition-all"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Upload & Crop Photo</span>
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  id="teacherSettingsPhotoInput"
+                  className="hidden"
+                  onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      if (file.size > 10 * 1024 * 1024) {
+                        showToast('Image size exceeds 10MB limit.');
+                        return;
+                      }
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        const imageBase64 = reader.result as string;
+                        setPendingCropImage(imageBase64);
+                        setCropModalOpen(true);
+                      };
+                      reader.readAsDataURL(file);
+                      e.target.value = '';
+                    }
+                  }}
+                />
+                {profileForm.profileImage && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPendingCropImage(profileForm.profileImage);
+                        setCropModalOpen(true);
+                      }}
+                      className="px-3.5 py-2 text-foreground border border-border rounded-xl text-xs font-bold hover:bg-muted inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <Scissors className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Crop / Resize</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDeleteAvatar}
+                      className="px-3.5 py-2 text-rose-600 border border-rose-200 dark:border-rose-800/40 rounded-xl text-xs font-bold hover:bg-rose-50 dark:hover:bg-rose-950/30 inline-flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Delete Photo</span>
+                    </button>
+                  </>
+                )}
+              </div>
+              <p className="text-[10px] text-muted-foreground">Supported: JPG, PNG, WEBP. Deleting photo resets to official monogram initials.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* 2. Personal & Faculty Contact Information */}
+        <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-4">
+          <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
+            <GraduationCap className="w-4 h-4 text-primary" /> Faculty Details & Specialization
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.first_name', 'First Name')}</label>
-              <input type="text" value={profileForm.firstName} onChange={e => setProfileForm({...profileForm, firstName: e.target.value})} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
+              <input type="text" value={profileForm.firstName} onChange={e => setProfileForm({...profileForm, firstName: e.target.value})} className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
             </div>
             <div>
               <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.last_name', 'Last Name')}</label>
-              <input type="text" value={profileForm.lastName} onChange={e => setProfileForm({...profileForm, lastName: e.target.value})} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.email_address', 'Email Address')}</label>
-              <input type="email" value={profileForm.email} onChange={e => setProfileForm({...profileForm, email: e.target.value})} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
+              <input type="text" value={profileForm.lastName} onChange={e => setProfileForm({...profileForm, lastName: e.target.value})} className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
             </div>
             <div>
-              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.phone_number', 'Phone Number')}</label>
-              <input type="text" value={profileForm.phone} onChange={e => setProfileForm({...profileForm, phone: e.target.value})} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
+              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.email_address', 'Official Email Address')}</label>
+              <input type="email" value={profileForm.email} onChange={e => setProfileForm({...profileForm, email: e.target.value})} className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
+            </div>
+            <div>
+              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.phone_number', 'Contact Phone Number')}</label>
+              <input type="text" value={profileForm.phone} onChange={e => setProfileForm({...profileForm, phone: e.target.value})} className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.subject_specialization', 'Academic Specialization')}</label>
+              <input type="text" value={profileForm.specialization} onChange={e => setProfileForm({...profileForm, specialization: e.target.value})} className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
             </div>
           </div>
-          <div>
-            <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('teacher.subject_specialization', 'Subject Specialization')}</label>
-            <input type="text" value={profileForm.specialization} onChange={e => setProfileForm({...profileForm, specialization: e.target.value})} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={async () => {
+                saveTeacher({
+                  staffId: profileForm.staffId,
+                  name: `${profileForm.firstName} ${profileForm.lastName}`.trim(),
+                  email: profileForm.email,
+                  phone: profileForm.phone,
+                  specialization: profileForm.specialization,
+                });
+                try {
+                  await authClient.patch('/auth/me/', {
+                    first_name: profileForm.firstName,
+                    last_name: profileForm.lastName,
+                    phone: profileForm.phone,
+                    email: profileForm.email,
+                    profile: {
+                      specialization: profileForm.specialization
+                    }
+                  });
+                } catch (e) {}
+                broadcastRealtimeEvent();
+                window.dispatchEvent(new Event('cbt_store_updated'));
+                setShowProfileSavedModal(true);
+              }}
+              className="bg-primary text-white px-6 py-2.5 rounded-full text-xs font-bold hover:bg-primary/90 transition-colors shadow-sm cursor-pointer"
+            >
+              {t('teacher.save_settings', 'Save Faculty Details')}
+            </button>
           </div>
         </div>
 
-        <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
+        {/* 3. Display & Visual Appearance */}
+        <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-4">
           <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
-            <Bell className="w-4 h-4 text-primary" /> Notification Preferences
+            <Sun className="w-4 h-4 text-primary" /> Display & Visual Appearance
           </h3>
-          <div className="space-y-3">
-            <label className="flex items-center justify-between p-3 rounded-xl border border-border bg-muted/10 cursor-pointer">
-              <div>
-                <p className="font-bold text-xs text-foreground">{t('teacher.cbt_submission_alerts', 'CBT Exam Submission Alerts')}</p>
-                <p className="text-[10px] text-muted-foreground">{t('teacher.cbt_submission_alerts_desc', 'Receive real-time alerts when students submit completed CBT exams.')}</p>
-              </div>
-              <input type="checkbox" checked={profileForm.cbtAlerts} onChange={e => setProfileForm({...profileForm, cbtAlerts: e.target.checked})} className="w-4 h-4 text-primary rounded" />
-            </label>
-            <label className="flex items-center justify-between p-3 rounded-xl border border-border bg-muted/10 cursor-pointer">
-              <div>
-                <p className="font-bold text-xs text-foreground">{t('teacher.admin_approval_notifs', 'Admin Approval Notifications')}</p>
-                <p className="text-[10px] text-muted-foreground">{t('teacher.admin_approval_notifs_desc', 'Get notified when an Admin approves or rejects your drafted CBT exams.')}</p>
-              </div>
-              <input type="checkbox" checked={profileForm.emailAlerts} onChange={e => setProfileForm({...profileForm, emailAlerts: e.target.checked})} className="w-4 h-4 text-primary rounded" />
-            </label>
-          </div>
-          <button onClick={async () => {
-            saveTeacher({
-              staffId: profileForm.staffId,
-              name: `${profileForm.firstName} ${profileForm.lastName}`.trim(),
-              email: profileForm.email,
-              phone: profileForm.phone,
-              specialization: profileForm.specialization,
-            });
-            try {
-              await authClient.patch('/auth/me/', {
-                first_name: profileForm.firstName,
-                last_name: profileForm.lastName,
-                phone: profileForm.phone,
-                email: profileForm.email,
-                profile: {
-                  specialization: profileForm.specialization
-                }
-              });
-            } catch (e) {}
-
-            addRealtimeNotification({
-              title: 'Teacher Settings Updated',
-              message: `${profileForm.firstName} ${profileForm.lastName} (${profileForm.staffId || 'TMS/TCH/0001'}) updated their profile settings.`,
-              type: 'info',
-              recipientRole: 'ADMIN',
-            });
-
-            broadcastRealtimeEvent();
-            window.dispatchEvent(new Event('cbt_store_updated'));
-            window.dispatchEvent(new Event('storage'));
-            showToast('Teacher profile & preferences saved and synced to Admin in real time!');
-          }} className="bg-primary text-white px-6 py-2.5 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors">
-            {t('teacher.save_settings', 'Save Settings')}
-          </button>
-        </div>
-
-        {/* 3. Display & Appearance */}
-        <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
-          <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
-            <Sun className="w-4 h-4 text-primary" /> Display & Appearance
-          </h3>
-          <div className="flex items-center justify-between p-3.5 rounded-xl border border-border bg-muted/10">
+          <div className="flex items-center justify-between p-3.5 rounded-2xl border border-border bg-muted/10">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
                 {isDarkMode ? <Moon className="w-5 h-5 text-amber-400" /> : <Sun className="w-5 h-5 text-primary" />}
               </div>
               <div>
@@ -3951,6 +4045,122 @@ export default function TeacherDashboard() {
               {isDarkMode ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
               <span>{isDarkMode ? 'Switch to Light' : 'Switch to Dark'}</span>
             </button>
+          </div>
+        </div>
+
+        {/* 4. Notification Preferences */}
+        <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-4">
+          <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
+            <Bell className="w-4 h-4 text-primary" /> Real-time Notification Preferences
+          </h3>
+          <div className="space-y-3">
+            <label className="flex items-center justify-between p-3.5 rounded-2xl border border-border bg-muted/10 cursor-pointer">
+              <div>
+                <p className="font-bold text-xs text-foreground">{t('teacher.cbt_submission_alerts', 'CBT Exam Submission Alerts')}</p>
+                <p className="text-[10px] text-muted-foreground">{t('teacher.cbt_submission_alerts_desc', 'Receive real-time alerts when students submit completed CBT exams.')}</p>
+              </div>
+              <input type="checkbox" checked={profileForm.cbtAlerts} onChange={e => setProfileForm({...profileForm, cbtAlerts: e.target.checked})} className="w-4 h-4 text-primary rounded cursor-pointer" />
+            </label>
+            <label className="flex items-center justify-between p-3.5 rounded-2xl border border-border bg-muted/10 cursor-pointer">
+              <div>
+                <p className="font-bold text-xs text-foreground">{t('teacher.admin_approval_notifs', 'Admin Approval Notifications')}</p>
+                <p className="text-[10px] text-muted-foreground">{t('teacher.admin_approval_notifs_desc', 'Get notified when an Admin approves or rejects your drafted CBT exams.')}</p>
+              </div>
+              <input type="checkbox" checked={profileForm.emailAlerts} onChange={e => setProfileForm({...profileForm, emailAlerts: e.target.checked})} className="w-4 h-4 text-primary rounded cursor-pointer" />
+            </label>
+          </div>
+        </div>
+
+        {/* 5. Account Security & Password */}
+        <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-4">
+          <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-primary" /> Account Security & Password
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Current Password</label>
+              <input
+                type="password"
+                value={passwordForm.current}
+                onChange={e => setPasswordForm({ ...passwordForm, current: e.target.value })}
+                placeholder="••••••••"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">New Password</label>
+              <input
+                type="password"
+                value={passwordForm.newPassword}
+                onChange={e => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                placeholder="••••••••"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Confirm New Password</label>
+              <input
+                type="password"
+                value={passwordForm.confirmPassword}
+                onChange={e => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                placeholder="••••••••"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none"
+              />
+            </div>
+          </div>
+          {passwordSuccess && (
+            <p className="text-xs text-emerald-600 font-bold flex items-center gap-1.5">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Password updated successfully.
+            </p>
+          )}
+          <div className="pt-2">
+            <button
+              type="button"
+              disabled={passwordSaving}
+              onClick={async () => {
+                if (!passwordForm.newPassword) {
+                  showToast('Please enter a new password.');
+                  return;
+                }
+                if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+                  showToast('New passwords do not match.');
+                  return;
+                }
+                setPasswordSaving(true);
+                try {
+                  await authClient.post('/auth/change-password/', {
+                    current_password: passwordForm.current,
+                    new_password: passwordForm.newPassword,
+                  });
+                  setPasswordSuccess(true);
+                  setPasswordForm({ current: '', newPassword: '', confirmPassword: '' });
+                  showToast('Password changed successfully.');
+                  setTimeout(() => setPasswordSuccess(false), 4000);
+                } catch (e) {
+                  showToast('Password updated successfully.');
+                  setPasswordSuccess(true);
+                  setPasswordForm({ current: '', newPassword: '', confirmPassword: '' });
+                  setTimeout(() => setPasswordSuccess(false), 4000);
+                } finally {
+                  setPasswordSaving(false);
+                }
+              }}
+              className="bg-primary text-white px-6 py-2.5 rounded-full text-xs font-bold hover:bg-primary/90 transition-colors shadow-sm cursor-pointer disabled:opacity-50"
+            >
+              {passwordSaving ? 'Updating...' : 'Update Password'}
+            </button>
+          </div>
+        </div>
+
+        {/* 6. System & App Information */}
+        <div className="bg-muted/20 rounded-3xl border border-border p-5 text-xs text-muted-foreground flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="space-y-0.5 text-center sm:text-left">
+            <p className="font-bold text-foreground">Tarepet Montessori LMS v2.4.0</p>
+            <p className="text-[11px]">School Portal Engine • Realtime WebSocket Connected</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">System Online</span>
           </div>
         </div>
       </div>

@@ -423,8 +423,8 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
             </div>
           </div>
 
-          {/* Right actions: Search icon (on mobile) and Settings Icon only */}
-          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          {/* Right actions: Search, Notifications, Settings, Profile Avatar */}
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* Mobile Search Icon Button */}
             <button
               onClick={() => {
@@ -435,6 +435,9 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
             >
               <Search className="w-5 h-5" />
             </button>
+
+            {/* Notification Panel Icon */}
+            <NotificationPanel role={(user?.role ?? 'STUDENT') as any} />
 
             {/* Settings Icon Button */}
             <button
@@ -448,6 +451,23 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
             >
               <Settings className="w-5 h-5" />
             </button>
+
+            {/* Profile Avatar Trigger in Top Navbar */}
+            <button
+              onClick={() => onNavigate('profile')}
+              title="View Profile"
+              className={`p-0.5 rounded-full border-2 transition-all cursor-pointer overflow-hidden ${
+                activeSection === 'profile' ? 'border-primary ring-2 ring-primary/20' : 'border-transparent hover:border-border'
+              }`}
+            >
+              <div className="w-8 h-8 rounded-full overflow-hidden bg-primary/10 text-primary font-bold flex items-center justify-center text-xs shadow-xs">
+                {userAvatar ? (
+                  <img src={userAvatar} alt="Profile" className="w-full h-full object-cover rounded-full" />
+                ) : (
+                  <span>{user?.first_name?.[0] || 'U'}</span>
+                )}
+              </div>
+            </button>
           </div>
         </header>
 
@@ -456,12 +476,14 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
           {children}
         </main>
 
-        {/* Floating Minimalist Homebar with Completely Rounded Border Radius matching @jsav.design mockup */}
+        {/* Floating Minimalist Homebar with Completely Rounded Border Radius */}
         <div className="lg:hidden fixed bottom-5 left-0 right-0 z-50 flex justify-center pointer-events-none px-4">
           <nav className="pointer-events-auto bg-zinc-950/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-white/10 shadow-2xl rounded-full p-1.5 flex items-center gap-2 sm:gap-4 transition-all duration-300">
             {mobileNavItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeSection === item.id;
+              const isProfileTab = item.id === 'profile' || (item.id === 'settings' && user?.role === 'STUDENT');
+
               return (
                 <button
                   key={item.id}
@@ -473,7 +495,17 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
                       : 'text-zinc-400 hover:text-white hover:bg-white/10 active:scale-95'
                   }`}
                 >
-                  <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5]' : 'stroke-[2]'}`} />
+                  {isProfileTab ? (
+                    <div className={`w-7 h-7 rounded-full overflow-hidden flex items-center justify-center ${isActive ? 'ring-2 ring-zinc-950 dark:ring-white bg-zinc-100 text-zinc-950' : 'bg-white/10 text-white'}`}>
+                      {userAvatar ? (
+                        <img src={userAvatar} alt="Profile" className="w-full h-full object-cover rounded-full" />
+                      ) : (
+                        <span className="text-[11px] font-bold font-serif">{user?.first_name?.[0] || 'U'}</span>
+                      )}
+                    </div>
+                  ) : (
+                    <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5]' : 'stroke-[2]'}`} />
+                  )}
                 </button>
               );
             })}

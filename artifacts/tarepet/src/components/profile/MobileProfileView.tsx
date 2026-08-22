@@ -149,7 +149,14 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
     },
   ];
 
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
   const handleSignOut = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmSignOut = () => {
+    setShowLogoutConfirm(false);
     if (onLogout) {
       onLogout();
     } else {
@@ -197,11 +204,11 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
           </div>
         </div>
 
-        <div className="pt-1">
+        <div className="pt-1 flex items-center justify-center gap-2">
           <button
             type="button"
             onClick={onEditProfile}
-            className="px-8 py-2.5 rounded-full bg-primary hover:bg-primary/90 text-white font-bold text-xs shadow-md shadow-primary/25 active:scale-95 transition-all inline-flex items-center gap-2 cursor-pointer"
+            className="px-6 py-2.5 rounded-full bg-primary hover:bg-primary/90 text-white font-bold text-xs shadow-md shadow-primary/25 active:scale-95 transition-all inline-flex items-center gap-2 cursor-pointer"
           >
             <Edit3 className="w-3.5 h-3.5" />
             <span>{t('profile.edit_profile', 'Edit Profile')}</span>
@@ -310,6 +317,39 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Logout Confirmation Screen Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-[110] bg-black/75 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in zoom-in duration-150" onClick={() => setShowLogoutConfirm(false)}>
+          <div className="bg-card border border-border rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 text-center" onClick={e => e.stopPropagation()}>
+            <div className="w-14 h-14 rounded-2xl bg-rose-500/10 text-rose-600 flex items-center justify-center mx-auto">
+              <LogOut className="w-7 h-7" />
+            </div>
+            <div className="space-y-1.5">
+              <h3 className="font-serif font-bold text-lg text-foreground">Sign Out of Tarepet Portal?</h3>
+              <p className="text-xs text-muted-foreground">
+                Are you sure you want to end your active session? You will need to enter your login credentials to sign in again.
+              </p>
+            </div>
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 py-2.5 px-4 rounded-full border border-border text-foreground hover:bg-muted text-xs font-semibold cursor-pointer transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmSignOut}
+                className="flex-1 py-2.5 px-4 rounded-full bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md shadow-rose-600/20 active:scale-95 transition-all cursor-pointer"
+              >
+                Yes, Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
