@@ -184,18 +184,18 @@ const StudentIDModal = ({ student, onClose }: { student: any; onClose: () => voi
               <div className="w-20 h-24 rounded-xl bg-muted/50 border-2 border-border flex items-center justify-center shrink-0">
                 <div className="text-center">
                   <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto">
-                    <span className="text-2xl font-serif font-bold text-primary">{student.name[0]}</span>
+                    <span className="text-2xl font-serif font-bold text-primary">{student?.name?.[0] || 'S'}</span>
                   </div>
                 </div>
               </div>
               <div className="flex-1">
-                <h4 className="font-serif font-bold text-foreground text-lg leading-tight">{student.name}</h4>
-                <p className="text-xs text-muted-foreground font-medium mt-1">{student.grade || t('idCard.class')}</p>
-                <p className="text-xs text-muted-foreground">{student.house || t('idCard.house')}</p>
+                <h4 className="font-serif font-bold text-foreground text-lg leading-tight">{student?.name || 'Student'}</h4>
+                <p className="text-xs text-muted-foreground font-medium mt-1">{student?.grade || t('idCard.class')}</p>
+                <p className="text-xs text-muted-foreground">{student?.house || t('idCard.house')}</p>
                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                   <div>
                     <span className="text-muted-foreground">{t('idCard.studentId')}</span>
-                    <p className="font-bold text-foreground">{student.admissionNo || t('idCard.sampleId')}</p>
+                    <p className="font-bold text-foreground">{student?.admissionNo || t('idCard.sampleId')}</p>
                   </div>
                   <div>
                     <span className="text-muted-foreground">{t('idCard.validUntil')}</span>
@@ -242,12 +242,12 @@ const TeacherIDCardModal = ({ teacher, onClose }: { teacher: any; onClose: () =>
             </div>
             <div className="p-5 flex gap-5 items-center">
               <div className="w-24 h-28 rounded-xl bg-muted/60 border-2 border-emerald-500/30 flex items-center justify-center shrink-0 shadow-inner overflow-hidden">
-                {teacher.profileImage ? (
+                {teacher?.profileImage ? (
                   <img src={teacher.profileImage} alt={teacher.name} className="w-full h-full object-cover" />
                 ) : (
                   <div className="text-center">
                     <div className="w-14 h-14 bg-emerald-500/20 text-emerald-700 rounded-full flex items-center justify-center mx-auto text-2xl font-serif font-bold">
-                      {teacher.name[0]}
+                      {teacher?.name?.[0] || 'T'}
                     </div>
                   </div>
                 )}
@@ -3178,7 +3178,17 @@ export default function AdminDashboard() {
       // ── LEVEL 3: Individual Student Profile Page ──────────────────────
       if (selectedUser) {
         const liveStudent = studentsList.find((s: any) => (selectedUser.id && s.id === selectedUser.id) || (selectedUser.admissionNo && s.admissionNo === selectedUser.admissionNo) || (selectedUser.studentId && s.studentId === selectedUser.studentId) || (selectedUser.email && s.email === selectedUser.email));
-        const u = liveStudent || selectedUser;
+        const u = {
+          ...selectedUser,
+          ...(liveStudent || {}),
+          name: (liveStudent?.name || selectedUser?.name || (selectedUser?.first_name ? `${selectedUser.first_name} ${selectedUser.last_name || ''}`.trim() : '') || selectedUser?.email || 'Student'),
+          studentId: (liveStudent?.studentId || selectedUser?.studentId || selectedUser?.admissionNo || selectedUser?.code || (selectedUser?.id ? `TMS/STU/${selectedUser.id}` : 'TMS/STU/001')),
+          grade: (liveStudent?.grade || selectedUser?.grade || selectedUser?.class || 'SS 1'),
+          stream: (liveStudent?.stream || selectedUser?.stream || 'Science'),
+          status: (liveStudent?.status || selectedUser?.status || 'Active'),
+          house: (liveStudent?.house || selectedUser?.house || 'School House'),
+          profileImage: liveStudent?.profileImage || selectedUser?.profileImage || selectedUser?.profile_image || selectedUser?.profile?.profile_image || '',
+        };
 
         return (
           <div className="space-y-6">
@@ -3263,7 +3273,7 @@ export default function AdminDashboard() {
                       {u.profileImage ? (
                         <img src={u.profileImage} alt={u.name} className="w-full h-full object-cover" />
                       ) : (
-                        u.name[0]
+                        u?.name?.[0] || 'S'
                       )}
                     </div>
                     <input
@@ -3686,7 +3696,7 @@ export default function AdminDashboard() {
                               {s.profileImage ? (
                                 <img src={s.profileImage} alt={s.name} className="w-full h-full object-cover rounded-xl" />
                               ) : (
-                                s.name[0]
+                                s?.name?.[0] || 'S'
                               )}
                             </div>
                             <div>
@@ -5817,7 +5827,16 @@ export default function AdminDashboard() {
     if (activeSection === 'teachers') {
       if (selectedTeacher) {
         const liveTeacher = teachersList.find((t: any) => (selectedTeacher.id && t.id === selectedTeacher.id) || (selectedTeacher.staffId && t.staffId === selectedTeacher.staffId) || (selectedTeacher.email && t.email === selectedTeacher.email));
-        const tchr = liveTeacher || selectedTeacher;
+        const tchr = {
+          ...selectedTeacher,
+          ...(liveTeacher || {}),
+          name: (liveTeacher?.name || selectedTeacher?.name || (selectedTeacher?.first_name ? `${selectedTeacher.first_name} ${selectedTeacher.last_name || ''}`.trim() : '') || selectedTeacher?.email || 'Teacher'),
+          staffId: (liveTeacher?.staffId || selectedTeacher?.staffId || selectedTeacher?.teacher_id || (selectedTeacher?.id ? `TMS/TCH/${selectedTeacher.id}` : 'TMS/TCH/001')),
+          department: (liveTeacher?.department || selectedTeacher?.department || 'Academic Staff'),
+          specialization: (liveTeacher?.specialization || selectedTeacher?.specialization || 'Educator'),
+          status: (liveTeacher?.status || selectedTeacher?.status || 'Active'),
+          profileImage: liveTeacher?.profileImage || selectedTeacher?.profileImage || selectedTeacher?.profile_image || selectedTeacher?.profile?.profile_image || '',
+        };
         return (
           <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
             {/* Breadcrumb Navigation */}
@@ -5932,7 +5951,7 @@ export default function AdminDashboard() {
                       <img src={tchr.profileImage} alt={tchr.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-emerald-500/10 to-teal-500/10 flex items-center justify-center text-4xl font-serif font-bold text-emerald-700">
-                        {tchr.name[0]}
+                        {tchr?.name?.[0] || 'T'}
                       </div>
                     )}
                     <input
@@ -6379,7 +6398,7 @@ export default function AdminDashboard() {
                               {tchr.profileImage ? (
                                 <img src={tchr.profileImage} alt={tchr.name} className="w-full h-full object-cover rounded-xl" />
                               ) : (
-                                tchr.name[0]
+                                tchr?.name?.[0] || 'T'
                               )}
                             </div>
                             <div>
@@ -7018,7 +7037,7 @@ export default function AdminDashboard() {
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-border">
-                          {MOCK_STUDENTS.filter(s => s.grade === selectedClassRosterModal.code || s.grade === selectedClassRosterModal.id.split('-')[0]).map(std => (
+                          {MOCK_STUDENTS.filter(s => s.grade === selectedClassRosterModal.code || s.grade === String(selectedClassRosterModal.id || '').split('-')[0]).map(std => (
                             <tr key={std.id} className="hover:bg-muted/30">
                               <td className="py-2.5 px-3 font-mono font-bold text-primary">{std.admissionNo}</td>
                               <td className="py-2.5 px-3 font-bold text-foreground">{std.name}</td>
