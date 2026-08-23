@@ -2258,12 +2258,12 @@ export function clearAllSiteDefaultData(): void {
  * Admin Password Storage & Management
  */
 export function getAdminPassword(): string {
-  if (typeof window === 'undefined') return 'Admin@12345';
+  if (typeof window === 'undefined') return 'TarepetAdmin@2026!';
   try {
     const saved = localStorage.getItem('tarepet_admin_password');
     if (saved && saved.trim()) return saved.trim();
   } catch {}
-  return 'Admin@12345';
+  return 'TarepetAdmin@2026!';
 }
 
 export function setAdminPassword(newPassword: string): void {

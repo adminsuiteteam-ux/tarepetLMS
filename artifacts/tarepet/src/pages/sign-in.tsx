@@ -10,6 +10,7 @@ import { layerbaseAuth } from "@/lib/layerbase-auth";
 import { useTranslation } from "@/lib/i18n";
 
 import { getStoredStudents, getStoredTeachers, isAccountDeleted, recordLoginActivity, getAdminPassword, syncTeachersWithBackend, syncStudentsWithBackend } from "@/lib/cbt-store";
+import { checkLoginRateLimit, recordFailedLoginAttempt, resetLoginRateLimit } from "@/lib/password-policy";
 
 export default function SignIn() {
   const { t } = useTranslation();
@@ -42,16 +43,24 @@ export default function SignIn() {
     setError(null);
     setIsLoading(true);
 
+    // 0a. Enforce brute-force attack rate limiting
+    const rateLimit = checkLoginRateLimit();
+    if (rateLimit.isLocked) {
+      setError(`Too many failed login attempts. For your security, account access is temporarily locked. Please try again in ${rateLimit.remainingSeconds} seconds.`);
+      setIsLoading(false);
+      return;
+    }
+
     const rawInput = email.trim();
     const lowerInput = rawInput.toLowerCase();
     const cleanInput = lowerInput.replace(/[^a-z0-9]/g, '');
     const rawPassword = password.trim();
-    const upperPassword = rawPassword.toUpperCase();
 
-    // 0. Check if account was deleted by Admin
+    // 0b. Check if account was deleted by Admin
     if (isAccountDeleted(rawInput) || isAccountDeleted(lowerInput) || isAccountDeleted(cleanInput)) {
       recordLoginActivity(rawInput, 'UNKNOWN', 'FAILED_ATTEMPT');
-      setError("This account has been deleted by the administrator and can no longer access the system.");
+      recordFailedLoginAttempt();
+      setError("This account has been deactivated by the administrator and can no longer access the system.");
       setIsLoading(false);
       return;
     }
@@ -66,6 +75,7 @@ export default function SignIn() {
         return;
       }
       if (lbRes.success && lbRes.access && lbRes.user) {
+        resetLoginRateLimit();
         recordLoginActivity(lbRes.user.email || rawInput, lbRes.user.role, 'SUCCESS');
         login(lbRes.access, lbRes.refresh || '', lbRes.user);
         const userRole = lbRes.user.role.toLowerCase();
@@ -74,7 +84,7 @@ export default function SignIn() {
         return;
       }
     } catch {
-      // Continue to fallback
+      // Continue to live API
     }
 
     // 1b. Try live Django REST API backend
@@ -82,6 +92,7 @@ export default function SignIn() {
       const res = await authClient.post("/auth/login/", { email: rawInput, password: rawPassword }, { timeout: 8000 });
       const { access, refresh, user } = res.data;
       if (user && user.role) {
+        resetLoginRateLimit();
         recordLoginActivity(user.email || rawInput, user.role, 'SUCCESS');
         login(access, refresh, user);
         const userRole = user.role.toLowerCase();
@@ -90,26 +101,27 @@ export default function SignIn() {
         return;
       }
     } catch (apiError: any) {
-      // Backend offline or API rejection — fallback to strict verified credentials
+      // Backend offline or API rejection — continue to secure verified credentials
     }
 
-    // 2. Verified Admin Portal Login (Default Email: admin@tarepet.com)
-    const isTargetAdminEmail = lowerInput === 'admin@tarepet.com' || lowerInput === 'adminpass@tarepet.com' || lowerInput === 'adminpass' || lowerInput === 'admin' || lowerInput === 'administrator';
+    // 2. Verified Admin Portal Login (Requires official email + secure admin password)
+    const isTargetAdminEmail = lowerInput === 'admin@tarepet.com' || lowerInput === 'admin@tarepetmontessorischool.com';
     if (isTargetAdminEmail) {
       const currentAdminPassword = getAdminPassword();
-      const isCorrectPassword = 
-        rawPassword === currentAdminPassword || 
-        rawPassword === 'Admin@12345' || 
-        rawPassword === 'AdminPassword123!' || 
-        rawPassword === 'admin123' || 
-        rawPassword === 'admin';
+      const isCorrectPassword = rawPassword === currentAdminPassword;
 
       if (!isCorrectPassword) {
         recordLoginActivity('admin@tarepet.com', 'ADMIN', 'FAILED_ATTEMPT');
-        setError('Incorrect email or password.');
+        const rl = recordFailedLoginAttempt();
+        if (rl.isLocked) {
+          setError(`Too many failed login attempts. Account locked for ${rl.remainingSeconds}s.`);
+        } else {
+          setError('Invalid administrator email or password.');
+        }
         setIsLoading(false);
         return;
       }
+      resetLoginRateLimit();
       recordLoginActivity('admin@tarepet.com', 'ADMIN', 'SUCCESS');
       login('mock_access_token', 'mock_refresh_token', {
         id: 1,
@@ -158,7 +170,12 @@ export default function SignIn() {
 
       if (rawPassword !== expectedPassword && rawPassword !== matchedTeacher.staffId) {
         recordLoginActivity(matchedTeacher.email || rawInput, 'TEACHER', 'FAILED_ATTEMPT');
-        setError('Incorrect email, staff ID, or passcode.');
+        const rl = recordFailedLoginAttempt();
+        if (rl.isLocked) {
+          setError(`Too many failed login attempts. Account locked for ${rl.remainingSeconds}s.`);
+        } else {
+          setError('Incorrect email, staff ID, or passcode.');
+        }
         setIsLoading(false);
         return;
       }
@@ -167,6 +184,7 @@ export default function SignIn() {
       const firstName = nameParts[0] || 'Teacher';
       const lastName = nameParts.slice(1).join(' ') || 'Staff';
 
+      resetLoginRateLimit();
       recordLoginActivity(matchedTeacher.email || rawInput, 'TEACHER', 'SUCCESS');
       login('mock_access_token', 'mock_refresh_token', {
         id: matchedTeacher.id,
@@ -213,12 +231,18 @@ export default function SignIn() {
 
       if (rawPassword !== expectedStudentPassword && rawPassword !== matchedStudent.code && rawPassword !== matchedStudent.admissionNo) {
         recordLoginActivity(matchedStudent.email || rawInput, 'STUDENT', 'FAILED_ATTEMPT');
-        setError('Incorrect email, student code, or passcode.');
+        const rl = recordFailedLoginAttempt();
+        if (rl.isLocked) {
+          setError(`Too many failed login attempts. Account locked for ${rl.remainingSeconds}s.`);
+        } else {
+          setError('Incorrect email, student code, or passcode.');
+        }
         setIsLoading(false);
         return;
       }
 
       const nameParts = matchedStudent.name.trim().split(' ');
+      resetLoginRateLimit();
       recordLoginActivity(matchedStudent.email || rawInput, 'STUDENT', 'SUCCESS');
       login('mock_access_token', 'mock_refresh_token', {
         id: matchedStudent.id,
@@ -239,7 +263,12 @@ export default function SignIn() {
 
     // 5. Account not registered in database
     recordLoginActivity(rawInput, 'UNKNOWN', 'FAILED_ATTEMPT');
-    setError('This account is not registered. Only accounts created by the Administrator can log in.');
+    const rl = recordFailedLoginAttempt();
+    if (rl.isLocked) {
+      setError(`Too many failed login attempts. Account locked for ${rl.remainingSeconds}s.`);
+    } else {
+      setError('This account is not registered. Please contact school administration for access.');
+    }
     setIsLoading(false);
   };
 

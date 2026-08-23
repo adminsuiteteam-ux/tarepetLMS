@@ -10,6 +10,7 @@ import { AdminManagementPanel } from '@/components/dashboard/AdminManagementPane
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
 import { ImageCropModal } from '@/components/ui/ImageCropModal';
 import { MobileProfileView } from '@/components/profile/MobileProfileView';
+import { validatePasswordStrength } from '@/lib/password-policy';
 import {
   getPaymentItems,
   getPaymentTransactions,
@@ -5754,20 +5755,26 @@ export default function AdminDashboard() {
                     <div className="flex gap-3 pt-2">
                       <button
                         onClick={() => {
-                          if (passwordForm.newPass && passwordForm.newPass === passwordForm.confirm) {
-                            setPasswordSuccess(true);
-                            setTimeout(() => setShowChangePasswordModal(false), 1500);
-                          } else {
+                          if (!passwordForm.newPass || passwordForm.newPass !== passwordForm.confirm) {
                             alert('Passwords do not match or are empty!');
+                            return;
                           }
+                          const check = validatePasswordStrength(passwordForm.newPass);
+                          if (!check.isValid) {
+                            alert('Password does not meet security requirements:\n• ' + check.errors.join('\n• '));
+                            return;
+                          }
+                          setAdminPassword(passwordForm.newPass);
+                          setPasswordSuccess(true);
+                          setTimeout(() => setShowChangePasswordModal(false), 1500);
                         }}
-                        className="flex-1 py-3 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all"
+                        className="flex-1 py-3 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all cursor-pointer shadow-sm"
                       >
                         Update Password
                       </button>
                       <button
                         onClick={() => setShowChangePasswordModal(false)}
-                        className="px-5 py-3 border border-border rounded-xl text-xs font-bold hover:bg-accent transition-all"
+                        className="px-5 py-3 border border-border rounded-xl text-xs font-bold hover:bg-accent transition-all cursor-pointer"
                       >
                         Cancel
                       </button>

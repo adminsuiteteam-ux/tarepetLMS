@@ -25,7 +25,7 @@ class Command(BaseCommand):
         # 2. Create / Reset Admin Superuser Account from Environment Variables
         import os
         adm_email = os.environ.get('ADMIN_EMAIL', 'admin@tarepetmontessorischool.com').strip().lower()
-        adm_password = os.environ.get('ADMIN_PASSWORD', 'ChangeMeInProd2026!')
+        adm_password = os.environ.get('ADMIN_PASSWORD', 'TarepetAdmin@2026!')
 
         adm_user = User.objects.filter(email=adm_email).first() or User.objects.filter(username=adm_email).first()
         if not adm_user:
