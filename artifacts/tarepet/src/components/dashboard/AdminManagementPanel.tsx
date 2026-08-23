@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { authClient } from '@/lib/api-auth';
 import { addRealtimeNotification } from '@/lib/notifications-store';
+import { useCustomDialog } from '@/context/DialogContext';
 
 export interface SubAdminUser {
   id: string;
@@ -32,26 +33,26 @@ export interface AdminAuditLog {
 
 const INITIAL_SUB_ADMINS: SubAdminUser[] = [
   {
-    id: 'admin_1',
-    name: 'Mrs. Cynthia Egbe',
-    email: 'finance.bursar@tarepet.com',
+    id: 'subadmin_1',
+    name: 'Mrs. Folashade Adeleke',
+    email: 'folashade.adeleke@tarepetmontessorischool.com',
     staffId: 'TMS/ADM/0101',
     role: 'FINANCIAL_MANAGER',
     status: 'ACTIVE',
-    createdAt: '2026-01-15T08:30:00Z',
-    lastLogin: '2026-08-10T14:22:10Z',
+    createdAt: '2026-01-15',
+    lastLogin: '2026-08-10 14:22',
     lastIp: '197.210.65.18',
-    lastDevice: 'Chrome (Windows 11)'
+    lastDevice: 'Chrome (Windows)'
   },
   {
-    id: 'admin_2',
+    id: 'subadmin_2',
     name: 'Dr. Emmanuel Okafor',
-    email: 'principal.okafor@tarepet.com',
+    email: 'emmanuel.okafor@tarepetmontessorischool.com',
     staffId: 'TMS/ADM/0102',
     role: 'PRINCIPAL',
     status: 'ACTIVE',
-    createdAt: '2026-02-01T09:00:00Z',
-    lastLogin: '2026-08-10T16:05:44Z',
+    createdAt: '2026-02-01',
+    lastLogin: '2026-08-10 16:05',
     lastIp: '102.89.44.112',
     lastDevice: 'Safari (macOS)'
   }
@@ -60,7 +61,7 @@ const INITIAL_SUB_ADMINS: SubAdminUser[] = [
 const INITIAL_AUDIT_LOGS: AdminAuditLog[] = [
   {
     id: 'log_1',
-    adminName: 'Mrs. Cynthia Egbe',
+    adminName: 'Mrs. Folashade Adeleke',
     staffId: 'TMS/ADM/0101',
     role: 'FINANCIAL_MANAGER',
     action: 'Logged into Financial Management Portal',
@@ -81,6 +82,7 @@ const INITIAL_AUDIT_LOGS: AdminAuditLog[] = [
 ];
 
 export function AdminManagementPanel() {
+  const { showAlert } = useCustomDialog();
   const [subAdmins, setSubAdmins] = useState<SubAdminUser[]>(INITIAL_SUB_ADMINS);
   const [auditLogs, setAuditLogs] = useState<AdminAuditLog[]>(INITIAL_AUDIT_LOGS);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -98,7 +100,12 @@ export function AdminManagementPanel() {
   const handleCreateSubAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canAddAdmin) {
-      alert('Maximum limit of 3 sub-administrators reached.');
+      showAlert({
+        title: 'Quota Reached',
+        message: 'Maximum limit of 3 designated sub-administrators has been reached for this institution.',
+        type: 'warning',
+        badge: 'Admin Quota',
+      });
       return;
     }
 

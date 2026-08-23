@@ -7,6 +7,7 @@ import {
   BookOpen, Timer, Send, Shield, ChevronLeft, Calculator, Flag, GraduationCap
 } from 'lucide-react';
 import { Link } from 'wouter';
+import { useCustomDialog } from '@/context/DialogContext';
 
 interface Question {
   id: number;
@@ -120,6 +121,7 @@ function safeEval(expr: string): number {
 
 export default function StudentCBTExam() {
   const { user } = useAuth();
+  const { showAlert, showConfirm } = useCustomDialog();
   const [phase, setPhase] = useState<Phase>('list');
   const [exams, setExams] = useState<AvailableExam[]>([]);
   const [selectedExam, setSelectedExam] = useState<AvailableExam | null>(null);
@@ -221,7 +223,13 @@ export default function StudentCBTExam() {
     const studentName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email : 'Student';
 
     if (hasStudentSubmittedExam(selectedExam.id, studentIdentifier)) {
-      alert('Security Notice: You have already completed this examination. Re-entry is restricted to a single attempt per student.');
+      showAlert({
+        title: 'Single Attempt Restriction',
+        message: 'Security Notice: You have already completed this examination. Re-entry is restricted to a single attempt per student.',
+        type: 'warning',
+        badge: 'CBT Anti-Cheat',
+        confirmText: 'Return to Exams',
+      });
       setPhase('list');
       return;
     }
@@ -252,7 +260,11 @@ export default function StudentCBTExam() {
       submittedRef.current = false;
       setPhase('exam');
     } catch (err: any) {
-      alert('Failed to start exam');
+      showAlert({
+        title: 'Exam Launch Failed',
+        message: 'Unable to start examination. Please contact your invigilator or administrator.',
+        type: 'error',
+      });
     } finally {
       setLoading(false);
     }
@@ -295,12 +307,16 @@ export default function StudentCBTExam() {
 
       setPhase('result');
     } catch (err: any) {
-      alert('Submission failed');
+      showAlert({
+        title: 'Submission Error',
+        message: 'Failed to record your exam attempt. Please check your internet connection and retry.',
+        type: 'error',
+      });
       submittedRef.current = false;
     } finally {
       setIsSubmitting(false);
     }
-  }, [selectedExam, examData, answers, user]);
+  }, [selectedExam, examData, answers, user, showAlert]);
 
   // Pagination
   const questionsPerPage = examData?.questions_per_page || 1;
@@ -364,7 +380,13 @@ export default function StudentCBTExam() {
                           });
                           setPhase('result');
                         } else {
-                          alert('Security Notice: You have already completed this examination. Single attempt restriction is enforced. Results are currently withheld until released by school administration.');
+                          showAlert({
+                            title: 'Results Withheld',
+                            message: 'Security Notice: You have already completed this examination. Single attempt restriction is enforced. Results are currently withheld until officially released by school administration.',
+                            type: 'info',
+                            badge: 'Attempt Recorded',
+                            confirmText: 'Understood',
+                          });
                         }
                       } else {
                         setSelectedExam(exam);
@@ -555,7 +577,17 @@ export default function StudentCBTExam() {
                 </span>
               )}
               <button
-                onClick={() => { if (confirm('Are you sure you want to submit your exam now?')) handleSubmit(false); }}
+                onClick={async () => {
+                  const confirmed = await showConfirm({
+                    title: 'Submit Examination?',
+                    message: `You have answered ${answeredCount} of ${examData?.questions.length || 0} questions.\n\nAre you sure you want to finish and submit your exam now?`,
+                    type: 'confirm',
+                    badge: 'Final Submission',
+                    confirmText: 'Yes, Submit Exam',
+                    cancelText: 'Continue Testing',
+                  });
+                  if (confirmed) handleSubmit(false);
+                }}
                 disabled={isSubmitting}
                 className="bg-emerald-400 hover:bg-emerald-300 text-emerald-950 font-bold px-3.5 py-2 rounded-xl text-xs transition shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
@@ -831,11 +863,19 @@ export default function StudentCBTExam() {
                     </div>
 
                     <button
-                      onClick={() => {
+                      onClick={async () => {
                         if (currentPage < examData.questions.length - 1) {
                           setCurrentPage(p => p + 1);
                         } else {
-                          if (confirm('You have reached the last question. Would you like to submit your exam now?')) {
+                          const confirmed = await showConfirm({
+                            title: 'Submit Examination?',
+                            message: `You have answered ${answeredCount} of ${examData.questions.length} questions.\n\nAre you sure you want to finish and submit your exam now?`,
+                            type: 'confirm',
+                            badge: 'Final Submission',
+                            confirmText: 'Yes, Submit Exam',
+                            cancelText: 'Continue Testing',
+                          });
+                          if (confirmed) {
                             handleSubmit(false);
                           }
                         }

@@ -11,6 +11,7 @@ import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
 import { ImageCropModal } from '@/components/ui/ImageCropModal';
 import { MobileProfileView } from '@/components/profile/MobileProfileView';
 import { validatePasswordStrength } from '@/lib/password-policy';
+import { useCustomDialog } from '@/context/DialogContext';
 import {
   getPaymentItems,
   getPaymentTransactions,
@@ -1997,6 +1998,7 @@ const APP_DATA_VERSION = 'v2.0.0';
 export default function AdminDashboard() {
   const { user, isAdmin, updateUser, refreshUserProfile } = useAuth();
   const { t } = useTranslation();
+  const { showAlert, showConfirm } = useCustomDialog();
 
   if (!user || !isAdmin || user.role !== 'ADMIN') {
     return (
@@ -3242,14 +3244,26 @@ export default function AdminDashboard() {
                           Edit Student Profile
                         </button>
                         <button
-                          onClick={() => {
-                            if (confirm(`Are you sure you want to delete student ${u.name}? This action cannot be undone.`)) {
+                          onClick={async () => {
+                            const confirmed = await showConfirm({
+                              title: 'Delete Student Record',
+                              message: `Are you sure you want to delete student ${u.name}? All broadsheets and test records for this student will be removed.`,
+                              type: 'delete',
+                              badge: 'Student Directory',
+                              confirmText: 'Yes, Delete Student',
+                              cancelText: 'Keep Student',
+                            });
+                            if (confirmed) {
                               deleteStudent(u.id);
                               setStudentsList(getStoredStudents());
                               setSelectedUser(null);
                               setShowActionsDropdown(false);
                               broadcastRealtimeEvent();
-                              showToast(`Student ${u.name} deleted.`);
+                              showAlert({
+                                title: 'Student Removed',
+                                message: `Student ${u.name} has been deleted.`,
+                                type: 'success',
+                              });
                             }
                           }}
                           className="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold text-rose-600 hover:bg-rose-500/10 transition-colors text-left border-t border-border cursor-pointer"
@@ -5928,12 +5942,25 @@ export default function AdminDashboard() {
                         </button>
                         {/* Delete */}
                         <button
-                          onClick={() => {
-                            if (confirm(`Are you sure you want to permanently delete ${tchr.name}'s profile? This action cannot be undone.`)) {
+                          onClick={async () => {
+                            const confirmed = await showConfirm({
+                              title: 'Delete Teacher Profile',
+                              message: `Are you sure you want to permanently delete ${tchr.name}'s profile? This action cannot be undone.`,
+                              type: 'delete',
+                              badge: 'Teacher Directory',
+                              confirmText: 'Yes, Delete Teacher',
+                              cancelText: 'Keep Teacher',
+                            });
+                            if (confirmed) {
                               deleteTeacher(tchr.id);
                               setTeachersList(getStoredTeachers());
                               setSelectedTeacher(null);
                               setShowTeacherActionsDropdown(false);
+                              showAlert({
+                                title: 'Teacher Profile Deleted',
+                                message: `Teacher ${tchr.name}'s profile has been removed.`,
+                                type: 'success',
+                              });
                             }
                           }}
                           className="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors text-left"

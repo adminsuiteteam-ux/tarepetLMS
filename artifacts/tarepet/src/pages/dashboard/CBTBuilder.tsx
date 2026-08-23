@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { useTranslation } from '@/lib/i18n';
+import { useCustomDialog } from '@/context/DialogContext';
 
 interface ExamForm {
   title: string;
@@ -124,6 +125,7 @@ const ALL_CLASS_CARDS = [
 export default function CBTBuilder() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { showAlert } = useCustomDialog();
 
   const isAuthorizedToUseCBT = useMemo(() => {
     if (!user) return false;
@@ -214,7 +216,7 @@ export default function CBTBuilder() {
 
   const handleCreateExam = async () => {
     if (!form.title) {
-      alert('Please enter exam title');
+      showAlert({ title: 'Title Required', message: 'Please enter exam title', type: 'warning' });
       return;
     }
     setLoading(true);
@@ -241,7 +243,7 @@ export default function CBTBuilder() {
       setView('questions');
       fetchExams();
     } catch (err: any) {
-      alert('Failed to create exam');
+      showAlert({ title: 'Error', message: 'Failed to create exam', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -316,9 +318,9 @@ export default function CBTBuilder() {
       fetchQuestions(selectedExamId);
       setBulkCsvText('');
       setShowBulkModal(false);
-      alert(`Successfully imported ${addedCount} questions into exam!`);
+      showAlert({ title: 'Success', message: `Successfully imported ${addedCount} questions into exam!`, type: 'success' });
     } else {
-      alert('Could not parse questions. Expected format: question_text, option_a, option_b, option_c, option_d, correct_option, points, explanation, image_url');
+      showAlert({ title: 'Error', message: 'Could not parse questions. Expected format: question_text, option_a, option_b, option_c, option_d, correct_option, points, explanation, image_url', type: 'error' });
     }
   };
 
@@ -334,14 +336,14 @@ export default function CBTBuilder() {
       type: 'exam',
       recipientRole: 'ADMIN'
     });
-    alert(`Success! Exam "${ex?.title || 'Exam'}" has been sent to School Admin for approval! You can track its status under the "Sent for Approval" tab.`);
+    showAlert({ title: 'Success', message: `Exam "${ex?.title || 'Exam'}" has been sent to School Admin for approval!`, type: 'success' });
     fetchExams();
     setView('list');
   };
 
   const handleActivateProceed = (examId: number) => {
     updateExamStatus(examId, 'ACTIVE');
-    alert('Exam has been activated and proceeded! Students can now see and start this exam in their portal.');
+    showAlert({ title: 'Success', message: 'Exam has been activated and proceeded! Students can now see and start this exam in their portal.', type: 'success' });
     fetchExams();
   };
 
@@ -372,7 +374,7 @@ export default function CBTBuilder() {
   };
 
   const handleSyncGradebook = async (attemptId: number) => {
-    alert('Score synced to gradebook!');
+    showAlert({ title: 'Success', message: 'Score synced to gradebook!', type: 'success' });
     if (selectedExamId) fetchAttempts(selectedExamId);
   };
 
@@ -651,7 +653,12 @@ export default function CBTBuilder() {
                                 const examObj = getStoredExams().find(e => e.id === exam.id);
                                 const nextState = !examObj?.results_released;
                                 setExamResultsReleased(exam.id, nextState);
-                                alert(nextState ? `Results for "${exam.title}" have been released to students!` : `Results for "${exam.title}" are now withheld from students.`);
+                                showAlert({
+                                  title: nextState ? 'Results Released' : 'Results Withheld',
+                                  message: nextState ? `Examination results for "${exam.title}" are now visible to students in their portal!` : `Examination results for "${exam.title}" are now withheld from student view.`,
+                                  type: nextState ? 'success' : 'info',
+                                  badge: 'CBT Results',
+                                });
                                 fetchExams();
                               }}
                               className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${

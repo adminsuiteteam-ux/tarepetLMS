@@ -148,16 +148,20 @@ function getRouterBase() {
   return base.replace(/\/$/, '');
 }
 
+import { DialogProvider } from '@/context/DialogContext';
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          <WouterRouter base={getRouterBase()}>
-            <Router />
-          </WouterRouter>
-          <Toaster />
-        </TooltipProvider>
+        <DialogProvider>
+          <TooltipProvider>
+            <WouterRouter base={getRouterBase()}>
+              <Router />
+            </WouterRouter>
+            <Toaster />
+          </TooltipProvider>
+        </DialogProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

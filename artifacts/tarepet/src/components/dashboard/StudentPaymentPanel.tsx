@@ -17,6 +17,7 @@ import {
   PaymentTransaction
 } from '@/lib/payments-store';
 import { useTranslation } from '@/lib/i18n';
+import { useCustomDialog } from '@/context/DialogContext';
 
 interface StudentPaymentPanelProps {
   studentId: string | number;
@@ -71,6 +72,7 @@ const EXTRA_ITEMS: PaymentItem[] = [
 
 export function StudentPaymentPanel({ studentId, studentName, studentEmail, gradeLevel = 'SS1' }: StudentPaymentPanelProps) {
   const { t } = useTranslation();
+  const { showAlert } = useCustomDialog();
   const [storeItems, setStoreItems] = useState<PaymentItem[]>(() => getPaymentItems());
   const [transactions, setTransactions] = useState<PaymentTransaction[]>(() => getStudentTransactions(studentId));
   const [activeSection, setActiveSection] = useState<string>('school_fees');

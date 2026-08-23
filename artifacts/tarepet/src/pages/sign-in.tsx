@@ -11,9 +11,11 @@ import { useTranslation } from "@/lib/i18n";
 
 import { getStoredStudents, getStoredTeachers, isAccountDeleted, recordLoginActivity, getAdminPassword, syncTeachersWithBackend, syncStudentsWithBackend } from "@/lib/cbt-store";
 import { checkLoginRateLimit, recordFailedLoginAttempt, resetLoginRateLimit } from "@/lib/password-policy";
+import { useCustomDialog } from "@/context/DialogContext";
 
 export default function SignIn() {
   const { t } = useTranslation();
+  const { showAlert } = useCustomDialog();
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -376,8 +378,14 @@ export default function SignIn() {
               <div className="flex items-center justify-end px-1 pt-0.5">
                 <button
                   type="button"
-                  onClick={() => alert("Please contact Tarepet School Administrator or ICT department to reset your portal passcode.")}
-                  className="text-[11px] text-primary hover:underline font-semibold"
+                  onClick={() => showAlert({
+                    title: "Portal Passcode Assistance",
+                    message: "Please contact Tarepet School Administrator or the ICT department to reset your portal passcode or retrieve your credentials.\n\n📍 ICT Office / Admin Desk\n✉️ admin@tarepetmontessorischool.com",
+                    type: "help",
+                    badge: "Passcode Help",
+                    confirmText: "Got It, Thanks",
+                  })}
+                  className="text-[11px] text-primary hover:underline font-semibold cursor-pointer"
                 >
                   Forgot password?
                 </button>

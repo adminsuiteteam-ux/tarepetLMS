@@ -22,6 +22,7 @@ import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEm
 import { useTranslation } from '@/lib/i18n';
 import { TerminalReportCard, ReportCardData, SubjectScore } from '@/components/reports/TerminalReportCard';
 import { getTimeGreeting } from '@/lib/utils';
+import { useCustomDialog } from '@/context/DialogContext';
 
 function getSafeProperty<T>(obj: Record<string | number, T> | null | undefined, key: string | number): T | undefined {
   if (obj && typeof obj === 'object' && Object.prototype.hasOwnProperty.call(obj, key)) {
@@ -41,6 +42,7 @@ const TIMETABLE: any[] = [];
 export default function TeacherDashboard() {
   const { t } = useTranslation();
   const { user, isTeacher, isAdmin, updateUser, refreshUserProfile } = useAuth();
+  const { showAlert, showConfirm } = useCustomDialog();
 
   if (!user || (!isTeacher && !isAdmin) || (user.role !== 'TEACHER' && user.role !== 'ADMIN')) {
     return (
@@ -4706,7 +4708,13 @@ export default function TeacherDashboard() {
                     onClick={() => {
                       const presentCount = examAttendanceState.filter(r => r.markedPresent).length;
                       if (presentCount === 0) {
-                        alert('Please mark at least 1 student as Present in the examination hall before starting the exam.');
+                        showAlert({
+                          title: 'Attendance Verification Required',
+                          message: 'Please mark at least 1 student as Present in the examination hall before starting the CBT examination.',
+                          type: 'warning',
+                          badge: 'CBT Hall Check',
+                          confirmText: 'Understood',
+                        });
                         return;
                       }
                       updateExamStatus(selectedAttendanceExam.id, 'ACTIVE');

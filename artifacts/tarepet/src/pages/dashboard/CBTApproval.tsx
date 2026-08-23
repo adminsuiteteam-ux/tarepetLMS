@@ -56,6 +56,7 @@ function getQuestionOptionText(q: any, opt: string): string {
 
 export default function AdminCBTApproval() {
   const { t } = useTranslation();
+  const { showAlert } = useCustomDialog();
   const [view, setView] = useState<View>('queue');
   const [exams, setExams] = useState<PendingExam[]>([]);
   const [selectedExam, setSelectedExam] = useState<PendingExam | null>(null);
@@ -82,7 +83,12 @@ export default function AdminCBTApproval() {
 
   const handleApprove = async (examId: number) => {
     updateExamStatus(examId, 'APPROVED');
-    alert('Exam approved! The teacher can now click "Proceed / Activate Exam" in their portal.');
+    showAlert({
+      title: 'Exam Approved',
+      message: 'Examination approved! The teacher can now click "Proceed / Activate Exam" in their portal to begin the test session.',
+      type: 'success',
+      badge: 'Admin Approved',
+    });
     fetchExams();
     setView('queue');
     setSelectedExam(null);
@@ -92,7 +98,12 @@ export default function AdminCBTApproval() {
     updateExamStatus(examId, 'REJECTED', rejectReason || 'Requires revision');
     setShowRejectModal(false);
     setRejectReason('');
-    alert('Exam rejected and returned to teacher with feedback notes.');
+    showAlert({
+      title: 'Exam Returned for Revision',
+      message: 'Examination rejected and returned to the form/subject teacher with your feedback notes.',
+      type: 'warning',
+      badge: 'Revision Requested',
+    });
     fetchExams();
     setView('queue');
     setSelectedExam(null);
