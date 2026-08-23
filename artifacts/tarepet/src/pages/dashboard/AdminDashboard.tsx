@@ -2346,8 +2346,14 @@ export default function AdminDashboard() {
       handleSyncFromStore();
     });
 
-    window.addEventListener('storage', handleSyncFromStore);
-    window.addEventListener('cbt_store_updated', handleSyncFromStore);
+    const handleAvatarOrStoreUpdate = () => {
+      handleSyncFromStore();
+    };
+
+    window.addEventListener('storage', handleAvatarOrStoreUpdate);
+    window.addEventListener('cbt_store_updated', handleAvatarOrStoreUpdate);
+    window.addEventListener('tarepet_avatar_deleted', handleAvatarOrStoreUpdate);
+    window.addEventListener('tarepet_user_updated', handleAvatarOrStoreUpdate);
 
     // 3. Periodic backend polling
     fetchBackendUsers();
@@ -2355,8 +2361,10 @@ export default function AdminDashboard() {
 
     return () => {
       unsubscribe();
-      window.removeEventListener('storage', handleSyncFromStore);
-      window.removeEventListener('cbt_store_updated', handleSyncFromStore);
+      window.removeEventListener('storage', handleAvatarOrStoreUpdate);
+      window.removeEventListener('cbt_store_updated', handleAvatarOrStoreUpdate);
+      window.removeEventListener('tarepet_avatar_deleted', handleAvatarOrStoreUpdate);
+      window.removeEventListener('tarepet_user_updated', handleAvatarOrStoreUpdate);
       clearInterval(intervalId);
     };
   }, []);
