@@ -178,10 +178,41 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
     };
   }, []);
 
+  const [, setAvatarUpdateTick] = useState(0);
+
+  useEffect(() => {
+    const handleAvatarChange = () => {
+      setAvatarUpdateTick(t => t + 1);
+    };
+    window.addEventListener('tarepet_avatar_deleted', handleAvatarChange);
+    window.addEventListener('tarepet_user_updated', handleAvatarChange);
+    window.addEventListener('cbt_store_updated', handleAvatarChange);
+    return () => {
+      window.removeEventListener('tarepet_avatar_deleted', handleAvatarChange);
+      window.removeEventListener('tarepet_user_updated', handleAvatarChange);
+      window.removeEventListener('cbt_store_updated', handleAvatarChange);
+    };
+  }, []);
+
   const roleColor = getRoleColor(user?.role);
   const navItems = getRoleNav(user?.role);
   const mobileNavItems = getMobileNavItems(user?.role);
-  const userAvatar = user?.profile_image || (user as any)?.profileImage || user?.profile?.profile_image || user?.profile?.profileImage;
+  const userAvatar = useMemo(() => {
+    if (!user) return null;
+    const candidates = [
+      user.profile_image,
+      (user as any).profileImage,
+      user.profile?.profile_image,
+      user.profile?.profileImage,
+      user.profile?.avatar,
+    ];
+    for (const c of candidates) {
+      if (typeof c === 'string' && c.trim().length > 0) {
+        return c;
+      }
+    }
+    return null;
+  }, [user]);
 
   const searchResults = useMemo(() => {
     const q = searchValue.trim().toLowerCase();

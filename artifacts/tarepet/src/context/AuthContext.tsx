@@ -144,6 +144,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const updateUser = (updatedData: Partial<User>) => {
     setUser(prev => {
       if (!prev) return null;
+      const isAvatarCleared = 
+        updatedData.profile_image === '' || 
+        (updatedData as any).profileImage === '' ||
+        (updatedData.profile && (updatedData.profile.profile_image === '' || updatedData.profile.profileImage === ''));
+
       const merged = {
         ...prev,
         ...updatedData,
@@ -153,6 +158,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
         role: (updatedData.role || prev.role).toUpperCase() as UserRole
       };
+
+      if (isAvatarCleared) {
+        merged.profile_image = '';
+        (merged as any).profileImage = '';
+        if (merged.profile) {
+          merged.profile.profile_image = '';
+          merged.profile.profileImage = '';
+          merged.profile.avatar = '';
+        }
+      }
+
       try {
         localStorage.setItem('tarepet_auth_user', JSON.stringify(merged));
         sessionStorage.setItem('tarepet_auth_user', JSON.stringify(merged));
@@ -161,8 +177,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Dispatch real-time events locally and across WebSockets
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('tarepet_user_updated', { detail: merged }));
+        if (isAvatarCleared) {
+          window.dispatchEvent(new CustomEvent('tarepet_avatar_deleted', { detail: merged }));
+        }
         window.dispatchEvent(new Event('storage'));
-        sendWebSocketEvent('PROFILE_UPDATED', merged);
+        sendWebSocketEvent(isAvatarCleared ? 'AVATAR_UPDATED' : 'PROFILE_UPDATED', merged);
       }
       return merged;
     });

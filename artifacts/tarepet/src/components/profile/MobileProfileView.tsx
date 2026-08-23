@@ -4,7 +4,7 @@ import { useTranslation } from '@/lib/i18n';
 import {
   Edit3, User, School, BookOpen, GraduationCap,
   Award, Phone, Mail, LogOut, CheckCircle2, MapPin,
-  FileBadge, CreditCard, BarChart2, ClipboardList, Users
+  FileBadge, CreditCard, BarChart2, ClipboardList, Users, Trash2
 } from 'lucide-react';
 
 export interface ProfileCardItem {
@@ -33,6 +33,7 @@ export interface MobileProfileViewProps {
   location?: string;
   onBack?: () => void;
   onEditProfile?: () => void;
+  onDeletePhoto?: () => void;
   onLogout?: () => void;
   onNavigateSection?: (sectionId: string) => void;
   customCards?: ProfileCardItem[];
@@ -58,6 +59,7 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
   location = 'Tarepet Montessori Academy, Yenagoa',
   onBack,
   onEditProfile,
+  onDeletePhoto,
   onLogout,
   onNavigateSection,
   customCards,
@@ -214,15 +216,47 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
           </div>
         </div>
 
-        <div className="pt-1 flex items-center justify-center gap-2">
+        <div className="pt-1 flex items-center justify-center gap-2 flex-wrap">
           <button
             type="button"
             onClick={onEditProfile}
-            className="px-6 py-2.5 rounded-full bg-primary hover:bg-primary/90 text-white font-bold text-xs shadow-md shadow-primary/25 active:scale-95 transition-all inline-flex items-center gap-2 cursor-pointer"
+            className="px-5 py-2.5 rounded-full bg-primary hover:bg-primary/90 text-white font-bold text-xs shadow-md shadow-primary/25 active:scale-95 transition-all inline-flex items-center gap-2 cursor-pointer"
           >
             <Edit3 className="w-3.5 h-3.5" />
             <span>{t('profile.edit_profile', 'Edit Profile')}</span>
           </button>
+
+          {avatarUrl && (
+            <button
+              type="button"
+              onClick={() => {
+                if (onDeletePhoto) {
+                  onDeletePhoto();
+                } else {
+                  updateUser({
+                    profile_image: '',
+                    profile: {
+                      ...(user?.profile || {}),
+                      profile_image: '',
+                      profileImage: '',
+                      avatar: '',
+                    }
+                  });
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('tarepet_avatar_deleted'));
+                    window.dispatchEvent(new CustomEvent('tarepet_user_updated'));
+                    window.dispatchEvent(new Event('cbt_store_updated'));
+                    window.dispatchEvent(new Event('storage'));
+                  }
+                }
+              }}
+              className="px-4 py-2.5 rounded-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 font-bold text-xs active:scale-95 transition-all inline-flex items-center gap-1.5 cursor-pointer"
+              title="Remove profile image"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Remove Photo</span>
+            </button>
+          )}
         </div>
       </div>
 

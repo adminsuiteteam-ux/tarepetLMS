@@ -68,14 +68,14 @@ export default function TeacherProfile() {
   };
 
   const handleDeletePhoto = () => {
-    const updated = { ...profileForm, profileImage: '' };
-    setProfileForm(updated);
+    setProfileForm(prev => ({ ...prev, profileImage: '' }));
     updateUser({
       profile_image: '',
       profile: {
         ...(user?.profile || {}),
         profile_image: '',
         profileImage: '',
+        avatar: '',
       }
     });
     saveTeacher({
@@ -91,11 +91,15 @@ export default function TeacherProfile() {
         profile_image: '',
         profileImage: '',
       }
-    }).then(() => {
-      refreshUserProfile().catch(() => {});
     }).catch(() => {});
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('tarepet_avatar_deleted'));
+      window.dispatchEvent(new CustomEvent('tarepet_user_updated'));
+      window.dispatchEvent(new Event('cbt_store_updated'));
+      window.dispatchEvent(new Event('storage'));
+    }
     broadcastRealtimeEvent();
-    showToast('Profile photo deleted successfully.');
+    showToast('Profile photo deleted across portal in real time.');
   };
 
   const getInitialProfile = () => {
@@ -135,6 +139,28 @@ export default function TeacherProfile() {
       ? stored.subjectsAssigned
       : (Array.isArray(prof.subjects_taught) ? prof.subjects_taught : []);
 
+    const isExplicitlyCleared = 
+      user?.profile_image === '' || 
+      (user as any)?.profileImage === '' || 
+      (user?.profile && (user.profile.profile_image === '' || user.profile.profileImage === ''));
+
+    let activeImg = '';
+    if (!isExplicitlyCleared) {
+      const candidates = [
+        user?.profile_image,
+        (user as any)?.profileImage,
+        prof.profile_image,
+        prof.profileImage,
+        stored?.profileImage,
+      ];
+      for (const c of candidates) {
+        if (typeof c === 'string' && c.trim().length > 0) {
+          activeImg = c;
+          break;
+        }
+      }
+    }
+
     return {
       firstName: fName,
       lastName: lName,
@@ -165,7 +191,7 @@ export default function TeacherProfile() {
       emailAlerts: true,
       cbtAlerts: true,
       smsAlerts: false,
-      profileImage: user?.profile_image || (user as any)?.profileImage || prof.profile_image || prof.profileImage || stored?.profileImage || '',
+      profileImage: activeImg,
     };
   };
 
@@ -391,11 +417,11 @@ export default function TeacherProfile() {
             formClass={profileForm.formClass || 'Senior Science'}
             phone={profileForm.phone || '+234 800 000 0000'}
             email={profileForm.email || user?.email || 'adeniyiabiola2@gmail.com'}
-            subjectsAssigned={profileForm.subjectsAssigned && profileForm.subjectsAssigned.length > 0 ? profileForm.subjectsAssigned : [{ name: 'Physics', grade: 'Senior Science' }]}
-            avatarUrl={profileForm.profileImage || (user as any)?.profile_image}
+            avatarUrl={profileForm.profileImage}
             location="Tarepet Montessori Academy, Yenagoa"
             onBack={() => setLocation('/dashboard/teacher')}
             onEditProfile={() => setShowEditModal(true)}
+            onDeletePhoto={handleDeletePhoto}
           />
         </div>
 

@@ -532,6 +532,28 @@ export default function TeacherDashboard() {
       ? t.subjectsAssigned
       : (Array.isArray(prof.subjects_taught) ? prof.subjects_taught : []);
 
+    const isExplicitlyCleared = 
+      user?.profile_image === '' || 
+      (user as any)?.profileImage === '' || 
+      (user?.profile && (user.profile.profile_image === '' || user.profile.profileImage === ''));
+
+    let activeImg = '';
+    if (!isExplicitlyCleared) {
+      const candidates = [
+        user?.profile_image,
+        (user as any)?.profileImage,
+        prof.profile_image,
+        prof.profileImage,
+        t?.profileImage,
+      ];
+      for (const c of candidates) {
+        if (typeof c === 'string' && c.trim().length > 0) {
+          activeImg = c;
+          break;
+        }
+      }
+    }
+
     return {
       firstName: fName,
       lastName: lName,
@@ -552,7 +574,7 @@ export default function TeacherDashboard() {
       subjectsAssigned: subs,
       studentsCount: t?.studentsCount ?? 0,
       cbtExamsCount: t?.cbtExamsCount ?? 0,
-      profileImage: user?.profile_image || (user as any)?.profileImage || prof.profile_image || prof.profileImage || t?.profileImage || '',
+      profileImage: activeImg,
       salary: t?.salary || prof.salary || '',
       bankName: t?.bankName || prof.bank_name || '',
       accountNumber: t?.accountNumber || prof.account_number || '',
@@ -571,18 +593,17 @@ export default function TeacherDashboard() {
     return false;
   });
 
-  const toggleDarkMode = () => {
-    setIsDarkMode(prev => {
-      const next = !prev;
-      if (next) {
+  const toggleTheme = (dark: boolean) => {
+    setIsDarkMode(dark);
+    if (typeof window !== 'undefined') {
+      if (dark) {
         document.documentElement.classList.add('dark');
         localStorage.setItem('theme', 'dark');
       } else {
         document.documentElement.classList.remove('dark');
         localStorage.setItem('theme', 'light');
       }
-      return next;
-    });
+    }
   };
 
   const [profileActiveTab, setProfileActiveTab] = useState<'details' | 'teaching' | 'qualifications' | 'settings'>('details');
@@ -590,7 +611,8 @@ export default function TeacherDashboard() {
   const [cropModalOpen, setCropModalOpen] = useState(false);
   const [pendingCropImage, setPendingCropImage] = useState('');
 
-  const handleSaveCroppedAvatar = (croppedBase64: string) => {
+  const handleCropComplete = (croppedBase64: string) => {
+    setCropModalOpen(false);
     const updated = { ...profileForm, profileImage: croppedBase64 };
     setProfileForm(updated);
     updateUser({
@@ -622,14 +644,14 @@ export default function TeacherDashboard() {
   };
 
   const handleDeleteAvatar = () => {
-    const updated = { ...profileForm, profileImage: '' };
-    setProfileForm(updated);
+    setProfileForm(prev => ({ ...prev, profileImage: '' }));
     updateUser({
       profile_image: '',
       profile: {
         ...(user?.profile || {}),
         profile_image: '',
         profileImage: '',
+        avatar: '',
       }
     });
     saveTeacher({
@@ -645,11 +667,15 @@ export default function TeacherDashboard() {
         profile_image: '',
         profileImage: '',
       }
-    }).then(() => {
-      refreshUserProfile().catch(() => {});
     }).catch(() => {});
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('tarepet_avatar_deleted'));
+      window.dispatchEvent(new CustomEvent('tarepet_user_updated'));
+      window.dispatchEvent(new Event('cbt_store_updated'));
+      window.dispatchEvent(new Event('storage'));
+    }
     broadcastRealtimeEvent();
-    showToast('Profile photo deleted successfully.');
+    showToast('Profile photo deleted across portal in real time.');
   };
 
   React.useEffect(() => {
@@ -3130,10 +3156,11 @@ export default function TeacherDashboard() {
             phone={profileForm.phone || '+234 800 000 0000'}
             email={profileForm.email || user?.email || 'adeniyiabiola2@gmail.com'}
             subjectsAssigned={profileForm.subjectsAssigned && profileForm.subjectsAssigned.length > 0 ? profileForm.subjectsAssigned : [{ name: 'Physics', grade: 'Senior Science' }]}
-            avatarUrl={profileForm.profileImage || (user as any)?.profile_image}
+            avatarUrl={profileForm.profileImage}
             location="Tarepet Montessori Academy, Yenagoa"
             onBack={() => setActiveSection('overview')}
             onEditProfile={() => setShowEditModal(true)}
+            onDeletePhoto={handleDeleteAvatar}
             onNavigateSection={setActiveSection}
           />
         </div>
