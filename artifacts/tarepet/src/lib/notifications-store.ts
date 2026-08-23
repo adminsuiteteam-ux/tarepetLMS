@@ -4,7 +4,7 @@
 import { authClient } from './api-auth';
 import { sendWebSocketEvent, subscribeToWebSocketEvents } from './websocket-client';
 
-export type NotifRole = 'ADMIN' | 'TEACHER' | 'STUDENT' | 'PARENT';
+export type NotifRole = 'ADMIN' | 'TEACHER' | 'STUDENT' | 'PARENT' | 'ALL';
 
 export interface Notification {
   id: string;

@@ -12,7 +12,8 @@ import {
   Video, Phone, User, Users, ChevronRight, Lock, Bell,
   DollarSign, Check, ChevronDown, Zap, ShieldCheck
 } from 'lucide-react';
-import { getStoredExams, getStoredSubmissions, subscribeToCBTStore, getCoursesForClass, getStudentBroadsheet, calculateWAECGrade, syncStudentsWithBackend } from '@/lib/cbt-store';
+import { authClient } from '@/lib/api-auth';
+import { getStoredExams, getStoredSubmissions, subscribeToCBTStore, getCoursesForClass, getStudentBroadsheet, calculateWAECGrade, syncStudentsWithBackend, broadcastRealtimeEvent } from '@/lib/cbt-store';
 import { subscribeToPaymentStore, syncPaymentsWithBackend } from '@/lib/payments-store';
 import { RealTimeSyncStatus } from '@/components/cbt/RealTimeSyncStatus';
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
@@ -497,8 +498,8 @@ export default function ParentDashboard() {
         {/* Mobile View Profile */}
         <div className="md:hidden">
           <MobileProfileView
-            name={parentProfile.fullName || `${parentProfile.firstName} ${parentProfile.lastName}`}
-            email={parentProfile.email || user?.email || ''}
+            name={parentProfile.name || (user?.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : 'Parent Member')}
+            email={user?.email || 'parent@tarepet.com'}
             subtitle="Montessori Parent / Guardian"
             avatarUrl={parentProfile.profileImage}
             roleBadge="PARENT"

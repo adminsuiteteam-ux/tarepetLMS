@@ -292,7 +292,7 @@ function persistExams(exams: CBTExam[]) {
 }
 
 export interface TeacherRecord {
-  id: number;
+  id: number | string;
   staffId: string;
   name: string;
   email: string;
@@ -750,34 +750,34 @@ export function saveTeacher(teacherData: Partial<TeacherRecord> & { name: string
   }
 
   // Real-time async sync to Django backend database
-  const tNames = (newTeacher.name || '').trim().split(' ');
+  const tNames = (updatedTeacher.name || '').trim().split(' ');
   const tPayload = {
-    email: newTeacher.email,
-    first_name: tNames[0] || newTeacher.name,
+    email: updatedTeacher.email,
+    first_name: tNames[0] || updatedTeacher.name,
     last_name: tNames.slice(1).join(' ') || 'Teacher',
-    phone: newTeacher.phone,
+    phone: updatedTeacher.phone,
     role: 'TEACHER',
-    teacher_id: newTeacher.staffId,
-    department: newTeacher.department,
-    specialization: newTeacher.specialization,
-    qualifications: newTeacher.qualification,
-    gender: newTeacher.gender,
-    dob: newTeacher.dob || null,
-    address: newTeacher.address,
-    salary: newTeacher.salary,
-    bank_name: newTeacher.bankName,
-    account_number: newTeacher.accountNumber,
-    form_teacher_of: newTeacher.formTeacherOf,
-    bio: newTeacher.bio || '',
-    profile_image: newTeacher.profileImage || '',
+    teacher_id: updatedTeacher.staffId,
+    department: updatedTeacher.department,
+    specialization: updatedTeacher.specialization,
+    qualifications: updatedTeacher.qualification,
+    gender: updatedTeacher.gender,
+    dob: updatedTeacher.dob || null,
+    address: updatedTeacher.address,
+    salary: updatedTeacher.salary,
+    bank_name: updatedTeacher.bankName,
+    account_number: updatedTeacher.accountNumber,
+    form_teacher_of: updatedTeacher.formTeacherOf,
+    bio: updatedTeacher.bio || '',
+    profile_image: updatedTeacher.profileImage || '',
     profile: {
-      profile_image: newTeacher.profileImage || '',
-      profileImage: newTeacher.profileImage || '',
+      profile_image: updatedTeacher.profileImage || '',
+      profileImage: updatedTeacher.profileImage || '',
     }
   };
 
-  if (typeof newTeacher.id === 'number' && newTeacher.id < 1000000000) {
-    authClient.patch(`/auth/users/${newTeacher.id}/`, tPayload).catch(() => {});
+  if (typeof updatedTeacher.id === 'number' && updatedTeacher.id < 1000000000) {
+    authClient.patch(`/auth/users/${updatedTeacher.id}/`, tPayload).catch(() => {});
   } else {
     authClient.post('/auth/register/', tPayload).catch(() => {});
   }

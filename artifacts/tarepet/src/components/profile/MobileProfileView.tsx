@@ -68,7 +68,7 @@ export const MobileProfileView: React.FC<MobileProfileViewProps> = ({
   onPrintProfile,
   onViewIdCard,
 }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const { t } = useTranslation();
 
   const effectiveStaffId = staffId || (user as any)?.staffId || (user?.profile as any)?.teacher_id || (user?.profile as any)?.student_id || 'TMS/TCH/0007';

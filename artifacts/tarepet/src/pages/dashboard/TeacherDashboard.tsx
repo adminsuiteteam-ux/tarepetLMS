@@ -40,7 +40,7 @@ const TIMETABLE: any[] = [];
 
 export default function TeacherDashboard() {
   const { t } = useTranslation();
-  const { user, isTeacher, isAdmin, updateUser } = useAuth();
+  const { user, isTeacher, isAdmin, updateUser, refreshUserProfile } = useAuth();
 
   if (!user || (!isTeacher && !isAdmin) || (user.role !== 'TEACHER' && user.role !== 'ADMIN')) {
     return (
@@ -4066,7 +4066,7 @@ export default function TeacherDashboard() {
             </div>
             <button
               type="button"
-              onClick={toggleDarkMode}
+              onClick={() => toggleTheme(!isDarkMode)}
               className="px-4 py-2 rounded-full bg-primary hover:bg-primary/90 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
             >
               {isDarkMode ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
@@ -5323,7 +5323,7 @@ export default function TeacherDashboard() {
           isOpen={cropModalOpen}
           imageSrc={pendingCropImage}
           onClose={() => setCropModalOpen(false)}
-          onSave={handleSaveCroppedAvatar}
+          onSave={handleCropComplete}
         />
       </PortalLayout>
     </ProtectedRoute>

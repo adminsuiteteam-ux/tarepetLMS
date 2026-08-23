@@ -316,6 +316,13 @@ const EMPTY_TEACHER_FORM = {
 const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSave: (t: any) => void }) => {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({ ...EMPTY_TEACHER_FORM });
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [pendingCropImage, setPendingCropImage] = useState('');
+
+  const triggerCropModal = (imageSrc: string, onSaveCropped?: (cropped: string) => void) => {
+    setPendingCropImage(imageSrc);
+    setCropModalOpen(true);
+  };
 
   const setF = (key: string, val: any) => setForm(prev => ({ ...prev, [key]: val }));
 
@@ -875,6 +882,15 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
 
         </div>
 
+        <ImageCropModal
+          isOpen={cropModalOpen}
+          imageSrc={pendingCropImage}
+          onClose={() => setCropModalOpen(false)}
+          onSave={(cropped) => {
+            setCropModalOpen(false);
+            setF('profileImage', cropped);
+          }}
+        />
       </div>
     </div>
   );
@@ -3722,117 +3738,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       );
-      // ── LEVEL 2: User type list (clickable rows) ───────────────
-      if (userSubPage && activeType) {
-        const usersForType = filteredUsers(activeType.key === 'STAFF' ? 'PARENT' : activeType.key);
-        const TypeIcon = activeType.Icon;
-        return (
-          <div className="space-y-5">
-            {/* Header */}
-            <div className="flex items-center gap-3">
-              <button onClick={() => { setUserSubPage(null); setUserSearch(''); }}
-                className="p-2 rounded-xl border border-border hover:bg-accent transition-colors text-muted-foreground hover:text-foreground flex items-center gap-1.5 text-sm font-medium">
-                <ChevronLeft className="w-4 h-4" /> {t('common.back')}
-              </button>
-              <div className="flex items-center gap-2.5">
-                <div className={`p-2 rounded-xl ${activeType.iconBg}`}>
-                  <TypeIcon className="w-4 h-4" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-serif font-bold text-foreground">{activeType.label}</h2>
-                  <p className="text-xs text-muted-foreground">{activeType.description}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Toolbar */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <input type="text" value={userSearch} onChange={e => setUserSearch(e.target.value)}
-                  placeholder={`Search ${activeType.label.toLowerCase()}...`}
-                  className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-muted/20 text-sm focus:outline-none focus:ring-2 focus:ring-primary" />
-              </div>
-              <button onClick={() => setShowBulkImport(true)}
-                className="bg-secondary text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-secondary/90 transition-colors flex items-center gap-1.5 whitespace-nowrap">
-                <Upload className="w-4 h-4" /> Bulk CSV
-              </button>
-              <button onClick={() => setShowCreateForType(true)}
-                className="bg-primary text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors flex items-center gap-1.5 whitespace-nowrap">
-                <Plus className="w-4 h-4" /> Add {activeType.label.replace(/s$/, '')}
-              </button>
-            </div>
-
-            {/* Clickable table — NO actions column */}
-            <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
-              <table className="w-full text-xs text-left">
-                <thead className="bg-muted/30 text-muted-foreground uppercase text-[10px] tracking-wider">
-                  <tr>
-                    <th className="py-3 px-4">{t('userList.fullName')}</th>
-                    <th className="py-3 px-4">{t('userList.email')}</th>
-                    <th className="py-3 px-4">{t('userList.dateJoined')}</th>
-                    <th className="py-3 px-4">{t('userList.status')}</th>
-                    <th className="py-3 px-4 text-right text-[10px]">{t('userList.clickToView')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {usersForType.length > 0 ? usersForType.map(u => (
-                    <tr key={u.id}
-                      onClick={() => setSelectedUser(u)}
-                      className="hover:bg-muted/20 cursor-pointer transition-colors group">
-                      <td className="py-4 px-4">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-xl font-bold text-sm flex items-center justify-center shrink-0 ${activeType.badgeColor}`}>
-                            {u.name[0]}
-                          </div>
-                          <div>
-                            <p className="font-bold text-foreground group-hover:text-primary transition-colors">{u.name}</p>
-                            <p className="text-[10px] text-muted-foreground">{u.phone ?? ''}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4 text-muted-foreground">{u.email}</td>
-                      <td className="py-4 px-4 text-muted-foreground">{u.joined}</td>
-                      <td className="py-4 px-4">
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          u.status === 'Active'
-                            ? 'bg-emerald-500/10 text-emerald-600'
-                            : 'bg-rose-500/10 text-rose-600'
-                        }`}>{u.status}</span>
-                      </td>
-                      <td className="py-4 px-4 text-right">
-                        <span className="text-[10px] text-primary font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-end gap-1">
-                          {t('userList.viewProfile')} <ArrowUpRight className="w-3 h-3" />
-                        </span>
-                      </td>
-                    </tr>
-                  )) : (
-                    <tr>
-                      <td colSpan={5} className="py-12 text-center text-muted-foreground">
-                        <Users className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                        <p className="text-xs">{t('userList.noUser')}{activeType.label.toLowerCase()} found.</p>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {showCreateForType && activeType && (
-              <CreateUserForTypeModal
-                typeLabel={activeType.label}
-                defaultRole={activeType.formRole}
-                onClose={() => setShowCreateForType(false)}
-                onCreated={(newUser: any) => {
-                  setUsersList(prev => [...prev, { ...newUser, id: prev.length + 1, status: 'Active', joined: '2026-07-24', lastLogin: '2026-07-24', phone: '', location: '' }]);
-                  setShowCreateForType(false);
-                }}
-              />
-            )}
-          </div>
-        );
-      }
-
     }
 
     // 3-EX. MANAGE EXAMS
@@ -5707,7 +5612,7 @@ export default function AdminDashboard() {
                               <button
                                 type="button"
                                 onClick={() => {
-                                  triggerCropModal(editProfileForm.profileImage, (cropped) => {
+                                  triggerCropModal(editProfileForm.profileImage || '', (cropped: string) => {
                                     setEditProfileForm(prev => ({ ...prev, profileImage: cropped }));
                                   });
                                 }}

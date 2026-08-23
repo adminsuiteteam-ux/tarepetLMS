@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'wouter';
 import { useAuth } from '@/context/AuthContext';
 import { useTranslation } from '@/lib/i18n';

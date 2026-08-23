@@ -10,7 +10,7 @@ import {
   Settings, User, Bell, Lock, AlertCircle,
   BarChart2, Shield, Play, ArrowUpRight, Trophy, ClipboardList,
   CheckSquare, Filter, Search, Sparkles, Zap, Printer, ShieldCheck,
-  Scissors, Trash2, Upload
+  Scissors, Trash2, Upload, CreditCard
 } from 'lucide-react';
 
 import { getStoredExams, getStoredSubmissions, subscribeToCBTStore, getCoursesForClass, getStudentBroadsheet, calculateWAECGrade, calculateBECEGrade, isSeniorSecondaryClass, getStoredStudents, saveStudent, broadcastRealtimeEvent, syncStudentsWithBackend } from '@/lib/cbt-store';
@@ -386,7 +386,7 @@ export default function StudentDashboard() {
                     <div>
                       <span className="text-[10px] font-bold uppercase text-primary bg-primary/10 px-2.5 py-1 rounded-lg font-mono">{c.code}</span>
                       <h3 className="font-serif font-bold text-lg text-foreground mt-2">{c.name}</h3>
-                      <p className="text-xs text-muted-foreground mt-0.5">{t('student.instructor_label', 'Subject Lead:')} {c.teacher || 'Department Staff'}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{t('student.instructor_label', 'Subject Lead:')} {(c as any).teacher || 'Department Staff'}</p>
                     </div>
                     <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
                       {totalScore > 0 ? `${gradeLetter} (${totalScore}%)` : 'In Progress'}
@@ -835,9 +835,9 @@ export default function StudentDashboard() {
         {/* Mobile View Profile */}
         <div className="md:hidden">
           <MobileProfileView
-            name={profileForm.fullName || `${profileForm.firstName} ${profileForm.lastName}`}
+            name={`${profileForm.firstName} ${profileForm.lastName}`.trim() || user?.email || 'Student'}
             email={profileForm.email || user?.email || ''}
-            subtitle={`${profileForm.grade || 'Student'} • ${profileForm.stream || 'Senior Secondary'}`}
+            subtitle={`${profileForm.grade || 'Student'} • Senior Secondary`}
             avatarUrl={profileForm.profileImage}
             roleBadge="STUDENT"
             location="Yenagoa Campus, Nigeria"
@@ -858,7 +858,7 @@ export default function StudentDashboard() {
               {
                 icon: BookOpen,
                 label: 'Enrolled Academic Courses',
-                value: `${courses.length} Subjects`,
+                value: 'Academic Subjects',
                 onClick: () => setActiveSection('courses'),
                 color: 'bg-blue-500/10 text-blue-600',
               },
