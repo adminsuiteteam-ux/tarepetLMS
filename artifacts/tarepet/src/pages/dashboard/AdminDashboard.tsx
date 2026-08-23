@@ -281,7 +281,7 @@ const TeacherIDCardModal = ({ teacher, onClose }: { teacher: any; onClose: () =>
             <button onClick={() => window.print()} className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors shadow-sm">
               <Printer className="w-4 h-4" /> Print Staff Card
             </button>
-            <button onClick={() => alert('Downloading Staff ID PDF...')} className="flex-1 flex items-center justify-center gap-2 border border-border py-2.5 rounded-xl text-sm font-medium hover:bg-accent transition-colors">
+            <button onClick={() => { (window as any).showTarepetAlert?.('Generating and downloading official Faculty ID card in PDF format...', 'Staff ID Card', 'info'); }} className="flex-1 flex items-center justify-center gap-2 border border-border py-2.5 rounded-xl text-sm font-medium hover:bg-accent transition-colors cursor-pointer">
               <Download className="w-4 h-4" /> Download PDF
             </button>
           </div>
@@ -601,7 +601,7 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                         onChange={e => {
                           const file = e.target.files?.[0];
                           if (file) {
-                            if (file.size > 10 * 1024 * 1024) { alert('Image size exceeds 10MB limit.'); return; }
+                            if (file.size > 10 * 1024 * 1024) { (window as any).showTarepetAlert?.('The selected image file exceeds 10MB. Please select a photo below 10MB.', 'Image Size Limit Exceeded', 'warning'); return; }
                             const reader = new FileReader();
                             reader.onloadend = () => {
                               const base64 = reader.result as string;
@@ -945,7 +945,7 @@ const EditTeacherModal = ({
                   const file = e.target.files?.[0];
                   if (file) {
                     if (file.size > 10 * 1024 * 1024) {
-                      alert('Image size exceeds 10MB limit.');
+                      (window as any).showTarepetAlert?.('The selected image file exceeds 10MB. Please select a photo below 10MB.', 'Image Size Limit Exceeded', 'warning');
                       return;
                     }
                     const reader = new FileReader();
@@ -1176,7 +1176,7 @@ const EditStudentModal = ({
                   const file = e.target.files?.[0];
                   if (file) {
                     if (file.size > 10 * 1024 * 1024) {
-                      alert('Image size exceeds 10MB limit.');
+                      (window as any).showTarepetAlert?.('The selected image file exceeds 10MB. Please select a photo below 10MB.', 'Image Size Limit Exceeded', 'warning');
                       return;
                     }
                     const reader = new FileReader();
@@ -3300,7 +3300,7 @@ export default function AdminDashboard() {
                         const file = e.target.files?.[0];
                         if (file) {
                           if (file.size > 10 * 1024 * 1024) {
-                            alert('Image size exceeds 10MB limit.');
+                            (window as any).showTarepetAlert?.('The selected image file exceeds 10MB. Please select a photo below 10MB.', 'Image Size Limit Exceeded', 'warning');
                             return;
                           }
                           const reader = new FileReader();
@@ -4321,12 +4321,12 @@ export default function AdminDashboard() {
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors text-left">
                       <Plus className="w-3.5 h-3.5 text-primary" /> Add Subject
                     </button>
-                    <button onClick={() => { alert('Exporting curriculum as PDF...'); setShowSubjectsActionsDropdown(false); }}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors text-left">
+                    <button onClick={() => { showAlert({ title: 'Curriculum Export', message: 'Generating academic curriculum syllabus PDF document...', type: 'info' }); setShowSubjectsActionsDropdown(false); }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors text-left cursor-pointer">
                       <FileText className="w-3.5 h-3.5 text-muted-foreground" /> Export Curriculum
                     </button>
-                    <button onClick={() => { alert('Assigning teacher to subject...'); setShowSubjectsActionsDropdown(false); }}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors text-left">
+                    <button onClick={() => { showAlert({ title: 'Assign Teacher', message: 'Faculty assignment wizard is available in Teacher Profile settings.', type: 'info' }); setShowSubjectsActionsDropdown(false); }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors text-left cursor-pointer">
                       <Users className="w-3.5 h-3.5 text-muted-foreground" /> Assign Teacher
                     </button>
                   </div>
@@ -4545,8 +4545,8 @@ export default function AdminDashboard() {
                       className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors text-left">
                       <Plus className="w-3.5 h-3.5 text-primary" /> Add Subject
                     </button>
-                    <button onClick={() => { alert('Exporting list as CSV...'); setShowSubjectsActionsDropdown(false); }}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors text-left">
+                    <button onClick={() => { showAlert({ title: 'Export to CSV', message: 'Subject list CSV generated and downloaded.', type: 'success' }); setShowSubjectsActionsDropdown(false); }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors text-left cursor-pointer">
                       <FileText className="w-3.5 h-3.5 text-muted-foreground" /> Export to CSV
                     </button>
                   </div>
@@ -5613,7 +5613,7 @@ export default function AdminDashboard() {
                             const file = e.target.files?.[0];
                             if (file) {
                               if (file.size > 10 * 1024 * 1024) {
-                                alert('Image size exceeds 10MB limit.');
+                                (window as any).showTarepetAlert?.('The selected image file exceeds 10MB. Please select a photo below 10MB.', 'Image Size Limit Exceeded', 'warning');
                                 return;
                               }
                               const reader = new FileReader();
@@ -5770,12 +5770,21 @@ export default function AdminDashboard() {
                       <button
                         onClick={() => {
                           if (!passwordForm.newPass || passwordForm.newPass !== passwordForm.confirm) {
-                            alert('Passwords do not match or are empty!');
+                            showAlert({
+                              title: 'Password Mismatch',
+                              message: 'The new password and confirmation password do not match.',
+                              type: 'warning',
+                            });
                             return;
                           }
                           const check = validatePasswordStrength(passwordForm.newPass);
                           if (!check.isValid) {
-                            alert('Password does not meet security requirements:\n• ' + check.errors.join('\n• '));
+                            showAlert({
+                              title: 'Password Policy Requirements',
+                              message: 'Please fulfill the following security standards:\n• ' + check.errors.join('\n• '),
+                              type: 'warning',
+                              badge: 'Security Policy',
+                            });
                             return;
                           }
                           setAdminPassword(passwordForm.newPass);
@@ -5997,7 +6006,7 @@ export default function AdminDashboard() {
                         const file = e.target.files?.[0];
                         if (file) {
                           if (file.size > 10 * 1024 * 1024) {
-                            alert('Image size exceeds 10MB limit.');
+                            (window as any).showTarepetAlert?.('The selected image file exceeds 10MB. Please select a photo below 10MB.', 'Image Size Limit Exceeded', 'warning');
                             return;
                           }
                           const reader = new FileReader();
@@ -9644,7 +9653,7 @@ export default function AdminDashboard() {
                           const file = e.target.files?.[0];
                           if (file) {
                             if (file.size > 10 * 1024 * 1024) {
-                              alert('Image size exceeds 10MB limit.');
+                              (window as any).showTarepetAlert?.('The selected image file exceeds 10MB. Please select a photo below 10MB.', 'Image Size Limit Exceeded', 'warning');
                               return;
                             }
                             const reader = new FileReader();

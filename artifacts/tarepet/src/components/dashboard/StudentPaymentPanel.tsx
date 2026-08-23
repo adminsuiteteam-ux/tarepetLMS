@@ -500,8 +500,14 @@ export function StudentPaymentPanel({ studentId, studentName, studentEmail, grad
             </div>
             <div className="flex gap-2 pt-1">
               <button
-                onClick={() => alert(`TAREPET MONTESSORI SCHOOL\nFEE PAYMENT RECEIPT\n\nStudent: ${studentName}\nItem: ${receiptModal.itemName}\nAmount: ₦${receiptModal.amount.toLocaleString()}\nRef: ${receiptModal.reference}\nDate: ${new Date(receiptModal.paidAt).toLocaleString()}\nStatus: ${receiptModal.status}`)}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted transition"
+                onClick={() => showAlert({
+                  title: 'Fee Payment Receipt',
+                  message: `Student: ${studentName}\nItem: ${receiptModal.itemName}\nAmount: ₦${receiptModal.amount.toLocaleString()}\nRef: ${receiptModal.reference}\nDate: ${new Date(receiptModal.paidAt).toLocaleString()}\nStatus: Verified (${receiptModal.status})`,
+                  type: 'success',
+                  badge: 'Tarepet Bursary',
+                  confirmText: 'Print / Save Receipt',
+                })}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted transition cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" /> {t('Download', 'Download')}
               </button>

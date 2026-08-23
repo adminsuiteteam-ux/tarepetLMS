@@ -687,15 +687,13 @@ export async function processPaystackPayment({
   }
 
   // Fallback simulator for offline environments or blocked CDN scripts
-  const isConfirmed = window.confirm(
-    `[Paystack Payment Portal]\n\n` +
-    `School: Tarepet Montessori School\n` +
-    `Item: ${itemName}\n` +
-    `Student: ${studentName}\n` +
-    `Amount Due: ₦${amount.toLocaleString()}\n` +
-    `Ref: ${ref}\n\n` +
-    `Click OK to complete payment.`
-  );
+  let isConfirmed = false;
+  if (typeof window !== 'undefined' && (window as any).showTarepetConfirm) {
+    isConfirmed = await (window as any).showTarepetConfirm(
+      `Item: ${itemName}\nStudent: ${studentName}\nAmount Due: ₦${amount.toLocaleString()}\nRef: ${ref}\n\nConfirm to process settlement with Tarepet Bursary.`,
+      'Paystack Payment Portal'
+    );
+  }
 
   if (isConfirmed) {
     const tx = recordTransaction({
