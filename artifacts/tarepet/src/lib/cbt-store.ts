@@ -1183,14 +1183,49 @@ export function clearAllStoredStudents() {
 }
 
 export function deleteStudent(studentId: number | string): boolean {
-  const target = _students.find(s => s.id === studentId || s.code === studentId || s.admissionNo === studentId || s.email === studentId || s.studentId === studentId);
-  if (target) {
-    recordDeletedAccount([target.id, target.code, target.admissionNo, target.email, target.name, target.studentId]);
-  } else {
-    recordDeletedAccount([studentId]);
-  }
+  const cleanId = String(studentId).trim();
+  _students = loadSavedStudents();
+  const target = _students.find(s => 
+    String(s.id) === cleanId || 
+    String(s.code || '').toLowerCase() === cleanId.toLowerCase() || 
+    String(s.admissionNo || '').toLowerCase() === cleanId.toLowerCase() || 
+    String(s.email || '').toLowerCase() === cleanId.toLowerCase() || 
+    String(s.studentId || '').toLowerCase() === cleanId.toLowerCase() ||
+    String(s.name || '').toLowerCase() === cleanId.toLowerCase()
+  );
 
-  _students = _students.filter(s => s.id !== studentId && s.code !== studentId && s.admissionNo !== studentId && s.email !== studentId && s.studentId !== studentId);
+  const idsToRecord: (string | number)[] = [studentId];
+  if (target) {
+    if (target.id) idsToRecord.push(target.id);
+    if (target.code) idsToRecord.push(target.code);
+    if (target.admissionNo) idsToRecord.push(target.admissionNo);
+    if (target.email) idsToRecord.push(target.email);
+    if (target.studentId) idsToRecord.push(target.studentId);
+    if (target.name) idsToRecord.push(target.name);
+  }
+  recordDeletedAccount(idsToRecord);
+
+  _students = _students.filter(s => {
+    const sId = String(s.id);
+    const sCode = String(s.code || '').toLowerCase();
+    const sAdm = String(s.admissionNo || '').toLowerCase();
+    const sEmail = String(s.email || '').toLowerCase();
+    const sStuId = String(s.studentId || '').toLowerCase();
+    const sName = String(s.name || '').toLowerCase();
+
+    if (target) {
+      if (s.id && target.id && String(s.id) === String(target.id)) return false;
+      if (sCode && target.code && sCode === String(target.code).toLowerCase()) return false;
+      if (sAdm && target.admissionNo && sAdm === String(target.admissionNo).toLowerCase()) return false;
+      if (sEmail && target.email && sEmail === String(target.email).toLowerCase()) return false;
+      if (sStuId && target.studentId && sStuId === String(target.studentId).toLowerCase()) return false;
+    }
+
+    if (sId === cleanId || sCode === cleanId.toLowerCase() || sAdm === cleanId.toLowerCase() || sEmail === cleanId.toLowerCase() || sStuId === cleanId.toLowerCase() || sName === cleanId.toLowerCase()) {
+      return false;
+    }
+    return !isAccountDeleted(s.id) && !isAccountDeleted(s.email) && !isAccountDeleted(s.code) && !isAccountDeleted(s.admissionNo) && !isAccountDeleted(s.studentId);
+  });
 
   if (typeof window !== 'undefined') {
     try {
@@ -1199,9 +1234,9 @@ export function deleteStudent(studentId: number | string): boolean {
   }
 
   // Attempt backend API deletion
-  authClient.delete(`/auth/users/${studentId}/`).catch(() => {
-    authClient.delete(`/api/users/${studentId}/`).catch(() => {});
-  });
+  if (target?.id) authClient.delete(`/auth/users/${target.id}/`).catch(() => {});
+  if (target?.email) authClient.delete(`/auth/users/${target.email}/`).catch(() => {});
+  if (cleanId) authClient.delete(`/auth/users/${cleanId}/`).catch(() => {});
 
   broadcastRealtimeEvent();
   return true;

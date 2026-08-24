@@ -1871,11 +1871,12 @@ export default function TeacherDashboard() {
                 </button>
                 <button
                   onClick={() => {
-                    deleteStudent(deletingStudent.id);
+                    deleteStudent(deletingStudent.id || deletingStudent.studentId || deletingStudent.code || deletingStudent.email);
+                    setRoster(getStoredStudents());
                     showToast(`Deleted ${deletingStudent.name} from class roster.`);
                     setDeletingStudent(null);
                   }}
-                  className="flex-1 py-2.5 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition-colors shadow-sm"
+                  className="flex-1 py-2.5 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-700 transition-colors shadow-sm cursor-pointer"
                 >
                   {t('teacher.delete', 'Delete')}
                 </button>

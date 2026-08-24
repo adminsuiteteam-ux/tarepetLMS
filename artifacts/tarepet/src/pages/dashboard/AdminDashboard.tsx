@@ -2488,7 +2488,9 @@ export default function AdminDashboard() {
           .filter((u: any) => {
             const email = (u.email || '').toLowerCase();
             const sId = (u.student_id || u.profile?.student_id || '').toLowerCase();
-            return !mockEmails.includes(email) && !sId.includes('tp-stu-088') && !sId.includes('tp-stu-089') && !sId.includes('tp-stu-090') && !sId.includes('tp-stu-101') && !sId.includes('tp-stu-112');
+            const uName = `${u.first_name || ''} ${u.last_name || ''}`.trim().toLowerCase();
+            const isDeleted = isAccountDeleted(email) || isAccountDeleted(u.id) || isAccountDeleted(sId) || isAccountDeleted(uName);
+            return !mockEmails.includes(email) && !sId.includes('tp-stu-088') && !sId.includes('tp-stu-089') && !sId.includes('tp-stu-090') && !sId.includes('tp-stu-101') && !sId.includes('tp-stu-112') && !isDeleted;
           })
           .map((u: any) => ({
             id: u.id,
@@ -3949,9 +3951,43 @@ export default function AdminDashboard() {
                           </span>
                         </td>
                         <td className="py-4 px-4 text-right">
-                          <span className="text-[10px] text-primary font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-end gap-1">
-                            View Profile <ArrowUpRight className="w-3.5 h-3.5" />
-                          </span>
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedUser(s);
+                              }}
+                              className="text-[11px] text-primary font-bold hover:underline inline-flex items-center gap-1 cursor-pointer"
+                            >
+                              View <ArrowUpRight className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                const confirmed = await showConfirm({
+                                  title: 'Delete Student Record',
+                                  message: `Are you sure you want to delete student ${s.name} (${s.studentId || s.code || s.admissionNo})? This action cannot be undone.`,
+                                  type: 'delete',
+                                  badge: 'Student Directory',
+                                  confirmText: 'Yes, Delete Student',
+                                  cancelText: 'Keep Student',
+                                });
+                                if (confirmed) {
+                                  deleteStudent(s.id || s.studentId || s.code || s.email);
+                                  setStudentsList(getStoredStudents());
+                                  if (selectedUser?.id === s.id) setSelectedUser(null);
+                                  broadcastRealtimeEvent();
+                                  showToast(`Student ${s.name} removed.`);
+                                }
+                              }}
+                              className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                              title="Delete Student"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))

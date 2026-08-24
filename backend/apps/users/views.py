@@ -157,6 +157,25 @@ class UserViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(role=role)
         return queryset
 
+    def get_object(self):
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+        lookup_value = self.kwargs.get(lookup_url_kwarg)
+        
+        if lookup_value:
+            if str(lookup_value).isdigit():
+                user = User.objects.filter(pk=int(lookup_value)).first()
+                if user:
+                    self.check_object_permissions(self.request, user)
+                    return user
+            
+            q_filter = Q(email__iexact=lookup_value) | Q(username__iexact=lookup_value) | Q(student_profile__student_id__iexact=lookup_value) | Q(teacher_profile__teacher_id__iexact=lookup_value)
+            user = User.objects.filter(q_filter).first()
+            if user:
+                self.check_object_permissions(self.request, user)
+                return user
+                
+        return super().get_object()
+
 
 class AdminAnalyticsView(APIView):
     """
