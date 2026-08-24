@@ -321,13 +321,13 @@ class BulkUserImportView(APIView):
                 )
 
                 if role == 'STUDENT':
-                    StudentProfile.objects.create(user=user, student_id=user_id_val, grade_level=row.get('grade_level', 'Primary 1'))
+                    StudentProfile.objects.update_or_create(user=user, defaults={'student_id': user_id_val, 'grade_level': row.get('grade_level', 'Primary 1')})
                 elif role == 'TEACHER':
-                    TeacherProfile.objects.create(user=user, teacher_id=user_id_val)
+                    TeacherProfile.objects.update_or_create(user=user, defaults={'teacher_id': user_id_val})
                 elif role == 'PARENT':
-                    ParentProfile.objects.create(user=user)
+                    ParentProfile.objects.get_or_create(user=user)
                 elif role == 'ADMIN':
-                    AdminProfile.objects.create(user=user)
+                    AdminProfile.objects.get_or_create(user=user)
 
                 created.append({'email': email, 'user_id': user_id_val, 'role': role})
             except Exception as e:

@@ -172,7 +172,7 @@ def create_or_ensure_user_profile(sender, instance, created, **kwargs):
                 user=instance,
                 teacher_id=f"TMS/TCH/{instance.id:04d}",
                 department="Montessori Primary",
-                specialization="Education Specialist",
+                specialization="",
             )
     elif instance.role == CustomUser.Role.STUDENT:
         if not hasattr(instance, 'student_profile'):

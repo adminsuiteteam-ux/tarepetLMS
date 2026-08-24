@@ -761,6 +761,9 @@ export function saveTeacher(teacherData: Partial<TeacherRecord> & { name: string
     department: updatedTeacher.department,
     specialization: updatedTeacher.specialization,
     qualifications: updatedTeacher.qualification,
+    qualification: updatedTeacher.qualification,
+    subjects_taught: updatedTeacher.subjectsAssigned || [],
+    subjectsAssigned: updatedTeacher.subjectsAssigned || [],
     gender: updatedTeacher.gender,
     dob: updatedTeacher.dob || null,
     address: updatedTeacher.address,
@@ -1060,6 +1063,12 @@ export async function syncTeachersWithBackend(): Promise<TeacherRecord[]> {
               bio: localMatch.bio || backendT.bio,
               formTeacherOf: localMatch.formTeacherOf && localMatch.formTeacherOf !== 'None' ? localMatch.formTeacherOf : backendT.formTeacherOf,
               department: localMatch.department || backendT.department,
+              subjectsAssigned: (Array.isArray(backendT.subjectsAssigned) && backendT.subjectsAssigned.length > 0)
+                ? backendT.subjectsAssigned
+                : (Array.isArray(localMatch.subjectsAssigned) && localMatch.subjectsAssigned.length > 0 ? localMatch.subjectsAssigned : []),
+              classesCount: (Array.isArray(backendT.subjectsAssigned) && backendT.subjectsAssigned.length > 0)
+                ? backendT.subjectsAssigned.length
+                : (Array.isArray(localMatch.subjectsAssigned) ? localMatch.subjectsAssigned.length : (localMatch.classesCount || 0)),
               profileImage: backendT.profileImage || localMatch.profileImage || '',
               bankName: localMatch.bankName || backendT.bankName,
               accountNumber: localMatch.accountNumber || backendT.accountNumber,

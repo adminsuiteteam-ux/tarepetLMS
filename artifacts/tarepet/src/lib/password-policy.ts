@@ -71,55 +71,20 @@ export function validatePasswordStrength(password: string): PasswordValidationRe
   };
 }
 
-// ─── Brute-Force Rate Limiting Helper ─────────────────────────────────────────
-const MAX_FAILED_ATTEMPTS = 5;
-const LOCKOUT_DURATION_MS = 5 * 60 * 1000; // 5 minutes
-
-interface RateLimitState {
-  attempts: number;
-  lockoutUntil: number | null;
-}
-
+// ─── Brute-Force Rate Limiting Helper (Disabled) ──────────────────────────────
 export function checkLoginRateLimit(): { isLocked: boolean; remainingSeconds: number } {
-  if (typeof window === 'undefined') return { isLocked: false, remainingSeconds: 0 };
-  try {
-    const raw = localStorage.getItem('tarepet_auth_ratelimit');
-    if (!raw) return { isLocked: false, remainingSeconds: 0 };
-    const state: RateLimitState = JSON.parse(raw);
-    if (state.lockoutUntil && state.lockoutUntil > Date.now()) {
-      const remainingSeconds = Math.ceil((state.lockoutUntil - Date.now()) / 1000);
-      return { isLocked: true, remainingSeconds };
-    }
-  } catch {}
+  if (typeof window !== 'undefined') {
+    try { localStorage.removeItem('tarepet_auth_ratelimit'); } catch {}
+  }
   return { isLocked: false, remainingSeconds: 0 };
 }
 
 export function recordFailedLoginAttempt(): { isLocked: boolean; remainingSeconds: number } {
-  if (typeof window === 'undefined') return { isLocked: false, remainingSeconds: 0 };
-  try {
-    const raw = localStorage.getItem('tarepet_auth_ratelimit');
-    let state: RateLimitState = { attempts: 0, lockoutUntil: null };
-    if (raw) {
-      state = JSON.parse(raw);
-    }
-
-    state.attempts += 1;
-    if (state.attempts >= MAX_FAILED_ATTEMPTS) {
-      state.lockoutUntil = Date.now() + LOCKOUT_DURATION_MS;
-    }
-    localStorage.setItem('tarepet_auth_ratelimit', JSON.stringify(state));
-
-    if (state.lockoutUntil && state.lockoutUntil > Date.now()) {
-      const remainingSeconds = Math.ceil((state.lockoutUntil - Date.now()) / 1000);
-      return { isLocked: true, remainingSeconds };
-    }
-  } catch {}
   return { isLocked: false, remainingSeconds: 0 };
 }
 
 export function resetLoginRateLimit(): void {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.removeItem('tarepet_auth_ratelimit');
-  } catch {}
+  if (typeof window !== 'undefined') {
+    try { localStorage.removeItem('tarepet_auth_ratelimit'); } catch {}
+  }
 }

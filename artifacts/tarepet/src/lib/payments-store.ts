@@ -349,8 +349,11 @@ export function getStudentTransactions(studentId: string | number): PaymentTrans
 }
 
 export function getItemAmountForGrade(item: PaymentItem, grade?: string): number {
-  if (grade && item.gradeAmounts && item.gradeAmounts[grade] !== undefined) {
-    return item.gradeAmounts[grade];
+  if (grade && item.gradeAmounts && Object.prototype.hasOwnProperty.call(item.gradeAmounts, grade)) {
+    const customAmount = item.gradeAmounts[grade];
+    if (typeof customAmount === 'number') {
+      return customAmount;
+    }
   }
   return item.amount;
 }
@@ -509,9 +512,9 @@ export function updateFeeItemAmount(id: string, amount: number, targetGrade: str
 
   if (targetGrade === 'ALL') {
     item.amount = validAmount;
-  } else {
+  } else if (targetGrade && typeof targetGrade === 'string' && !['__proto__', 'constructor', 'prototype'].includes(targetGrade)) {
     if (!item.gradeAmounts) item.gradeAmounts = {};
-    item.gradeAmounts[targetGrade] = validAmount;
+    Object.assign(item.gradeAmounts, { [targetGrade]: validAmount });
   }
 
   if (typeof window !== 'undefined') {
