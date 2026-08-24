@@ -439,8 +439,8 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
     onSave(created);
   };
 
-  const inputCls = 'w-full border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all';
-  const labelCls = 'text-[10px] font-extrabold uppercase tracking-wider text-slate-600 block mb-1.5';
+  const inputCls = 'w-full border-2 border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-400 placeholder:font-normal';
+  const labelCls = 'text-[11px] font-black uppercase tracking-wider text-slate-800 block mb-1.5';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
@@ -455,8 +455,8 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                 <GraduationCap className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="font-serif font-bold text-sm text-slate-900 leading-tight">Tarepet Montessori</h2>
-                <p className="text-[10px] font-extrabold uppercase tracking-wider text-primary">Teacher Registration</p>
+                <h2 className="font-serif font-black text-sm text-slate-950 leading-tight">Tarepet Montessori</h2>
+                <p className="text-[11px] font-black uppercase tracking-wider text-primary">Teacher Registration</p>
               </div>
             </div>
 
@@ -471,29 +471,31 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                     {/* Connecting Vertical Line */}
                     {idx < WIZARD_STEPS.length - 1 && (
                       <div className={`absolute left-4 top-8 bottom-0 w-0.5 transition-colors ${
-                        isCompleted ? 'bg-primary' : 'bg-slate-200'
+                        isCompleted ? 'bg-primary' : 'bg-slate-300'
                       }`} />
                     )}
 
                     {/* Step Icon Badge */}
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition-all z-10 ${
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs shrink-0 transition-all z-10 ${
                       isActive
                         ? 'bg-primary text-white ring-4 ring-primary/20 shadow-sm'
                         : isCompleted
                           ? 'bg-primary text-white'
-                          : 'bg-white text-slate-400 border border-slate-200'
+                          : 'bg-white text-slate-700 font-bold border-2 border-slate-300'
                     }`}>
                       {isCompleted ? '✓' : s.step}
                     </div>
 
                     {/* Step Text Label */}
                     <div className="min-w-0 pt-0.5">
-                      <p className={`text-xs font-bold transition-colors ${
-                        isActive ? 'text-primary font-extrabold' : isCompleted ? 'text-slate-800 font-semibold' : 'text-slate-400'
+                      <p className={`text-xs transition-colors ${
+                        isActive ? 'text-primary font-black' : isCompleted ? 'text-slate-900 font-bold' : 'text-slate-800 font-bold'
                       }`}>
                         {s.label}
                       </p>
-                      <p className="text-[10px] text-slate-500 font-medium truncate">{s.sub}</p>
+                      <p className={`text-[10px] truncate ${
+                        isActive ? 'text-primary/90 font-bold' : isCompleted ? 'text-slate-700 font-semibold' : 'text-slate-600 font-semibold'
+                      }`}>{s.sub}</p>
                     </div>
                   </div>
                 );
@@ -501,8 +503,8 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
             </div>
           </div>
 
-          <div className="pt-4 border-t border-primary/20 text-[11px] text-slate-600 font-medium">
-            Step <span className="font-bold text-primary">{step}</span> of 5
+          <div className="pt-4 border-t border-primary/20 text-xs text-slate-700 font-bold">
+            Step <span className="font-black text-primary">{step}</span> of <span className="font-black text-slate-950">5</span>
           </div>
         </div>
 
@@ -512,10 +514,10 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
           {/* Form Header */}
           <div className="flex items-center justify-between px-8 py-5 border-b border-slate-100 shrink-0">
             <div>
-              <h3 className="font-serif font-bold text-xl text-slate-900">{WIZARD_STEPS[step - 1].label}</h3>
-              <p className="text-xs text-slate-500 mt-0.5">{WIZARD_STEPS[step - 1].sub}</p>
+              <h3 className="font-serif font-black text-xl text-slate-950">{WIZARD_STEPS[step - 1].label}</h3>
+              <p className="text-xs text-slate-600 font-bold mt-0.5">{WIZARD_STEPS[step - 1].sub}</p>
             </div>
-            <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 transition cursor-pointer">
+            <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-700 font-bold transition cursor-pointer">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -576,7 +578,7 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                           <Camera className="w-4 h-4" />
                         </label>
                       </div>
-                      <span className="text-[9px] font-extrabold uppercase tracking-wider text-slate-400 mt-2.5">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-600 mt-2.5">
                         {form.profileImage ? 'Photo Attached' : 'No Photo Selected'}
                       </span>
                     </div>
@@ -591,7 +593,7 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                         <p className="text-xs font-bold text-slate-800">
                           Click to browse <span className="text-primary">or drag & drop photo here</span>
                         </p>
-                        <p className="text-[10px] text-slate-500 mt-0.5 font-medium">Supports PNG, JPG, WEBP or SVG (Max 10MB)</p>
+                        <p className="text-[10px] text-slate-600 mt-0.5 font-bold">Supports PNG, JPG, WEBP or SVG (Max 10MB)</p>
                       </label>
                       <input
                         type="file"
@@ -614,10 +616,10 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                       />
 
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 shrink-0">Or Image URL:</span>
+                        <span className="text-[11px] font-black uppercase tracking-wider text-slate-800 shrink-0">Or Image URL:</span>
                         <input
                           type="url"
-                          className="flex-1 border border-slate-200 rounded-xl px-3 py-1.5 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                          className="flex-1 border-2 border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-900 font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                           value={form.profileImage.startsWith('data:') ? '' : form.profileImage}
                           onChange={e => setF('profileImage', e.target.value)}
                           placeholder="https://example.com/photo.jpg"
@@ -2988,12 +2990,7 @@ export default function AdminDashboard() {
                 const currentPass = getAdminPassword();
                 const isCurrentValid = 
                   adminPasswordForm.current === currentPass ||
-                  adminPasswordForm.current === '@Admin2210' ||
-                  adminPasswordForm.current === 'Admin2210' ||
-                  adminPasswordForm.current === 'TarepetAdmin@2026!' ||
-                  adminPasswordForm.current === 'TarepetAdmin2026!' ||
-                  adminPasswordForm.current === 'admin@12345' ||
-                  adminPasswordForm.current === 'admin123';
+                  adminPasswordForm.current === 'TarepetAdmin@2026!';
 
                 if (!isCurrentValid) {
                   setAdminPasswordStatus({

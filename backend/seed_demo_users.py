@@ -23,13 +23,13 @@ def seed():
         'is_staff': True,
         'is_superuser': True,
     })
-    admin_user.set_password("admin123")
+    admin_user.set_password("TarepetAdmin@2026!")
     admin_user.role = User.Role.ADMIN
     admin_user.is_staff = True
     admin_user.is_superuser = True
     admin_user.save()
     AdminProfile.objects.get_or_create(user=admin_user, defaults={'role_type': 'Super Admin'})
-    print(f"[OK] Admin Account: {admin_email} / admin123")
+    print(f"[OK] Admin Account: {admin_email} / TarepetAdmin@2026!")
 
     # 2. Teacher Account
     teacher_email = "teacher@tarepet.com"

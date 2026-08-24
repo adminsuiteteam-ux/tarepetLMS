@@ -330,6 +330,12 @@ class Command(BaseCommand):
                 t_user.save()
 
             t_prof, _ = TeacherProfile.objects.get_or_create(user=t_user)
+            # Reassign any conflicting teacher profile that might already hold this ID
+            conflicting_prof = TeacherProfile.objects.filter(teacher_id=tr['teacher_id']).exclude(pk=t_prof.pk).first()
+            if conflicting_prof:
+                conflicting_prof.teacher_id = f"TMS/TCH/TMP_{conflicting_prof.pk}"
+                conflicting_prof.save(update_fields=['teacher_id'])
+
             t_prof.teacher_id = tr['teacher_id']
             t_prof.department = tr['department']
             t_prof.specialization = tr['specialization']

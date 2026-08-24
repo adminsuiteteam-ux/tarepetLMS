@@ -168,17 +168,23 @@ from django.dispatch import receiver
 def create_or_ensure_user_profile(sender, instance, created, **kwargs):
     if instance.role == CustomUser.Role.TEACHER:
         if not hasattr(instance, 'teacher_profile'):
+            candidate_id = f"TMS/TCH/{instance.id:04d}"
+            if TeacherProfile.objects.filter(teacher_id=candidate_id).exists():
+                candidate_id = f"TMS/TCH/{instance.id:04d}_{instance.pk}"
             TeacherProfile.objects.create(
                 user=instance,
-                teacher_id=f"TMS/TCH/{instance.id:04d}",
+                teacher_id=candidate_id,
                 department="Montessori Primary",
                 specialization="",
             )
     elif instance.role == CustomUser.Role.STUDENT:
         if not hasattr(instance, 'student_profile'):
+            candidate_stu_id = f"TP-STU-{instance.id:04d}"
+            if StudentProfile.objects.filter(student_id=candidate_stu_id).exists():
+                candidate_stu_id = f"TP-STU-{instance.id:04d}_{instance.pk}"
             StudentProfile.objects.create(
                 user=instance,
-                student_id=f"TP-STU-{instance.id:04d}",
+                student_id=candidate_stu_id,
                 grade_level="Primary 1",
             )
     elif instance.role == CustomUser.Role.PARENT:

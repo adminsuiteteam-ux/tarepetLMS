@@ -51,10 +51,10 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
             teacher_id = getattr(getattr(target_user, 'teacher_profile', None), 'teacher_id', None)
             student_id = getattr(getattr(target_user, 'student_profile', None), 'student_id', None)
 
-            # Auto-repair default password hash if matching Staff ID, Student ID, or standard Admin Passwords
+            # Auto-repair default password hash if matching Staff ID, Student ID, or standard Admin Password
             if (teacher_id and (password.upper() == teacher_id.upper())) or \
                (student_id and (password.upper() == student_id.upper())) or \
-               (target_user.role == User.Role.ADMIN and password in ['@Admin2210', 'Admin2210', 'TarepetAdmin@2026!', 'TarepetAdmin2026!', 'admin123']):
+               (target_user.role == User.Role.ADMIN and password == 'TarepetAdmin@2026!'):
                 target_user.set_password(password)
                 target_user.save()
 

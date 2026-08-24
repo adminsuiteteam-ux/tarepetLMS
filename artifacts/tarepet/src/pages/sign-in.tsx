@@ -55,12 +55,8 @@ export default function SignIn() {
     if (isTargetAdminEmail) {
       const currentAdminPassword = getAdminPassword();
       const isAdminPassValid = 
-        rawPassword === '@Admin2210' ||
-        rawPassword === 'Admin2210' ||
-        rawPassword === currentAdminPassword ||
         rawPassword === 'TarepetAdmin@2026!' ||
-        rawPassword === 'TarepetAdmin2026!' ||
-        rawPassword === 'admin123';
+        rawPassword === currentAdminPassword;
 
       if (isAdminPassValid) {
         setAdminPassword(rawPassword);

@@ -49,14 +49,9 @@ try:
         )
 except ImportError:
     pass
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[
-    '*',
-    '.onrender.com',
-    'localhost',
-    '127.0.0.1',
-    'tarepetmontessorischool.com',
-    'www.tarepetmontessorischool.com',
-])
+ALLOWED_HOSTS = ['*']
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
 
 # Security settings
 CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[
@@ -70,6 +65,9 @@ CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[
     'https://www.tarepetmontessorischool.com',
     'https://tarepet-backend-4iw6.onrender.com',
     'https://*.onrender.com',
+    'https://*.serveousercontent.com',
+    'https://*.lhr.life',
+    'https://*.loca.lt',
 ])
 SECURE_SSL_REDIRECT = env.bool('SECURE_SSL_REDIRECT', default=not DEBUG)
 SESSION_COOKIE_SECURE = env.bool('SESSION_COOKIE_SECURE', default=not DEBUG)
