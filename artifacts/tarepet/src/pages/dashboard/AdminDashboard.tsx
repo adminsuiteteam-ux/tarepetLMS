@@ -299,7 +299,7 @@ const WIZARD_STEPS = [
   { step: 5, label: 'Review & Save',     sub: 'Confirm Profile' },
 ];
 
-const GRADE_OPTIONS = ['Nursery 1', 'Nursery 2', 'Nursery 3', 'Primary 1', 'Primary 2', 'Primary 3', 'Primary 4', 'Primary 5', 'JSS 1', 'JSS 2', 'JSS 3', 'SS 1 Science', 'SS 1 Art', 'SS 2 Science', 'SS 2 Art', 'SS 3 Science', 'SS 3 Art'];
+const GRADE_OPTIONS = ['Nursery 1', 'Nursery 2', 'Nursery 3', 'Primary 1', 'Primary 2', 'Primary 3', 'Primary 4', 'Primary 5', 'Primary 6', 'JSS 1', 'JSS 2', 'JSS 3', 'SS 1 Science', 'SS 1 Art', 'SS 2 Science', 'SS 2 Art', 'SS 3 Science', 'SS 3 Art'];
 
 const EMPTY_TEACHER_FORM = {
   // Step 1 — Personal Details
@@ -1164,7 +1164,7 @@ const EditTeacherModal = ({
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
                 <option value="Senior Secondary (SS 1 - SS 3)">Senior Secondary (SS 1 - SS 3)</option>
                 <option value="Junior Secondary (JSS 1 - JSS 3)">Junior Secondary (JSS 1 - JSS 3)</option>
-                <option value="Primary Department (Primary 1 - 5)">Primary Department (Primary 1 - 5)</option>
+                <option value="Primary Department (Primary 1 - 6)">Primary Department (Primary 1 - 6)</option>
                 <option value="Nursery Department (Nursery 1 - 3)">Nursery Department (Nursery 1 - 3)</option>
               </select>
             </div>
@@ -1181,6 +1181,7 @@ const EditTeacherModal = ({
                 <option value="Primary 3">Primary 3</option>
                 <option value="Primary 4">Primary 4</option>
                 <option value="Primary 5">Primary 5</option>
+                <option value="Primary 6">Primary 6</option>
                 <option value="JSS 1">JSS 1</option>
                 <option value="JSS 2">JSS 2</option>
                 <option value="JSS 3">JSS 3</option>
@@ -1786,6 +1787,7 @@ const CreateSubjectModal = ({ onClose, onCreated, defaultClass, defaultStream }:
                 <option value="PRI3">Primary 3</option>
                 <option value="PRI4">Primary 4</option>
                 <option value="PRI5">Primary 5</option>
+                <option value="PRI6">Primary 6</option>
                 <option value="JSS1">JSS 1</option>
                 <option value="JSS2">JSS 2</option>
                 <option value="JSS3">JSS 3</option>
@@ -2021,6 +2023,7 @@ const CreateUserForTypeModal = ({
                       <option value="PRI3 General">Primary 3 Form Teacher</option>
                       <option value="PRI4 General">Primary 4 Form Teacher</option>
                       <option value="PRI5 General">Primary 5 Form Teacher</option>
+                      <option value="PRI6 General">Primary 6 Form Teacher</option>
                       <option value="JSS1 General">JSS 1 Form Teacher</option>
                       <option value="JSS2 General">JSS 2 Form Teacher</option>
                       <option value="JSS3 General">JSS 3 Form Teacher</option>
@@ -2086,6 +2089,7 @@ const CreateUserForTypeModal = ({
                         <option value="PRI3">Primary 3</option>
                         <option value="PRI4">Primary 4</option>
                         <option value="PRI5">Primary 5</option>
+                        <option value="PRI6">Primary 6</option>
                         <option value="JSS1">JSS 1</option>
                         <option value="JSS2">JSS 2</option>
                         <option value="JSS3">JSS 3</option>
@@ -2332,7 +2336,7 @@ export default function AdminDashboard() {
       ],
       divisionsSupervised: [
         'Montessori Crèche & Nursery (Nursery 1 - 3)',
-        'Montessori Primary Department (Primary 1 - 5)',
+        'Montessori Primary Department (Primary 1 - 6)',
         'Junior Secondary School (JSS 1 - JSS 3)',
         'Senior Secondary School (SS 1 - SS 3 Sciences & Arts)'
       ]
@@ -2868,6 +2872,8 @@ export default function AdminDashboard() {
       totalCount: studentsList.filter(s => matchStudentClass(s.grade, 'PRI4')).length },
     { label: 'Primary 5', key: 'PRI5', hasStreams: false, color: 'border-primary/20 bg-primary/5 hover:border-primary/40', iconBg: 'bg-primary/10 text-primary', accent: 'text-primary',
       totalCount: studentsList.filter(s => matchStudentClass(s.grade, 'PRI5')).length },
+    { label: 'Primary 6', key: 'PRI6', hasStreams: false, color: 'border-primary/20 bg-primary/5 hover:border-primary/40', iconBg: 'bg-primary/10 text-primary', accent: 'text-primary',
+      totalCount: studentsList.filter(s => matchStudentClass(s.grade, 'PRI6')).length },
     { label: 'JSS 1', key: 'JSS1', hasStreams: false, color: 'border-primary/20 bg-primary/5 hover:border-primary/40', iconBg: 'bg-primary/10 text-primary', accent: 'text-primary',
       totalCount: studentsList.filter(s => matchStudentClass(s.grade, 'JSS1')).length },
     { label: 'JSS 2', key: 'JSS2', hasStreams: false, color: 'border-primary/20 bg-primary/5 hover:border-primary/40', iconBg: 'bg-primary/10 text-primary', accent: 'text-primary',
@@ -3658,7 +3664,7 @@ export default function AdminDashboard() {
         {
           key: 'PRIMARY',
           title: 'Primary Division',
-          subtitle: 'Primary 1–5',
+          subtitle: 'Primary 1–6',
           description: 'Foundational Elementary Curriculum & Basic Quantitative Skills',
           filterFn: (s: any) => s.grade && (s.grade.toUpperCase().includes('PRI') || s.grade.toUpperCase().includes('BASIC')),
           icon: BookOpen
@@ -5860,7 +5866,7 @@ export default function AdminDashboard() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
                     {[
                       { division: 'Montessori Crèche & Nursery', classes: 'Crèche, Nursery 1, 2, 3', head: 'Mrs. A. Johnson', learners: '85 Learners', color: 'border-amber-500/30 bg-amber-500/5' },
-                      { division: 'Montessori Primary Department', classes: 'Primary 1 to 5', head: 'Mr. S. Chigozie', learners: '190 Learners', color: 'border-emerald-500/30 bg-emerald-500/5' },
+                      { division: 'Montessori Primary Department', classes: 'Primary 1 to 6', head: 'Mr. S. Chigozie', learners: '190 Learners', color: 'border-emerald-500/30 bg-emerald-500/5' },
                       { division: 'Junior Secondary School', classes: 'JSS 1, JSS 2, JSS 3', head: 'Mrs. R. Bello', learners: '145 Learners', color: 'border-blue-500/30 bg-blue-500/5' },
                       { division: 'Senior Secondary School', classes: 'SS 1, SS 2, SS 3 (Science & Art)', head: 'Mr. E. Amadi', learners: '120 Learners', color: 'border-purple-500/30 bg-purple-500/5' },
                     ].map((div, i) => (
@@ -6970,7 +6976,7 @@ export default function AdminDashboard() {
         {
           key: 'NURSERY_PRIMARY',
           title: 'Nursery & Primary Teachers',
-          subtitle: 'Nursery 1–3, Primary 1–5',
+          subtitle: 'Nursery 1–3, Primary 1–6',
           description: 'Early childhood and elementary educators teaching foundational curriculum levels.',
           filterFn: (t: any) => {
             const div = (t.teachingDivision || t.department || '').toLowerCase();
@@ -7927,7 +7933,7 @@ export default function AdminDashboard() {
         {
           key: 'NURSERY_PRIMARY',
           title: 'Nursery & Primary Subjects',
-          subtitle: 'Nursery 1–3, Primary 1–5',
+          subtitle: 'Nursery 1–3, Primary 1–6',
           description: 'Core foundational subjects covering early childhood literacy, numeracy, and basic sciences.',
           icon: School,
           filterFn: (s: any) => s.grade?.startsWith('NUR') || s.grade?.startsWith('PRI'),
@@ -8506,6 +8512,7 @@ export default function AdminDashboard() {
                         <option value="PRI3">🎒 Primary 3</option>
                         <option value="PRI4">🎒 Primary 4</option>
                         <option value="PRI5">🎒 Primary 5</option>
+                        <option value="PRI6">🎒 Primary 6</option>
                         <option value="JSS1">📘 JSS 1</option>
                         <option value="JSS2">📘 JSS 2</option>
                         <option value="JSS3">📘 JSS 3</option>
@@ -8635,6 +8642,7 @@ export default function AdminDashboard() {
                         <option value="PRI3">Primary 3</option>
                         <option value="PRI4">Primary 4</option>
                         <option value="PRI5">Primary 5</option>
+                        <option value="PRI6">Primary 6</option>
                         <option value="JSS1">JSS 1</option>
                         <option value="JSS2">JSS 2</option>
                         <option value="JSS3">JSS 3</option>
@@ -9787,6 +9795,7 @@ export default function AdminDashboard() {
                       <option value="PRI3">🎒 Primary 3</option>
                       <option value="PRI4">🎒 Primary 4</option>
                       <option value="PRI5">🎒 Primary 5</option>
+                      <option value="PRI6">🎒 Primary 6</option>
                       <option value="JSS1">📘 JSS 1</option>
                       <option value="JSS2">📘 JSS 2</option>
                       <option value="JSS3">📘 JSS 3</option>

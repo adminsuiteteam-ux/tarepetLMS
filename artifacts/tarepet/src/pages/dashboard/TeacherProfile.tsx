@@ -863,7 +863,7 @@ export default function TeacherProfile() {
                         >
                           <option value="Senior Secondary (SS 1 - SS 3)">Senior Secondary (SS 1 - SS 3)</option>
                           <option value="Junior Secondary (JSS 1 - JSS 3)">Junior Secondary (JSS 1 - JSS 3)</option>
-                          <option value="Primary Department (Primary 1 - 5)">Primary Department (Primary 1 - 5)</option>
+                          <option value="Primary Department (Primary 1 - 6)">Primary Department (Primary 1 - 6)</option>
                           <option value="Nursery Department (Nursery 1 - 3)">Nursery Department (Nursery 1 - 3)</option>
                         </select>
                       </div>
@@ -883,6 +883,7 @@ export default function TeacherProfile() {
                           <option value="Primary 3">Primary 3</option>
                           <option value="Primary 4">Primary 4</option>
                           <option value="Primary 5">Primary 5</option>
+                          <option value="Primary 6">Primary 6</option>
                           <option value="JSS 1">JSS 1</option>
                           <option value="JSS 2">JSS 2</option>
                           <option value="JSS 3">JSS 3</option>

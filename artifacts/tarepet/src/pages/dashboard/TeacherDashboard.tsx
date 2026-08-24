@@ -3733,7 +3733,7 @@ export default function TeacherDashboard() {
                           onChange={e => setProfileForm({ ...profileForm, department: e.target.value })}
                           className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
                         >
-                          <option value="Primary Education (Basic 1 - 5)">Primary Education (Basic 1 - 5)</option>
+                          <option value="Primary Education (Basic 1 - 6)">Primary Education (Basic 1 - 6)</option>
                           <option value="Junior Secondary (JSS 1 - JSS 3)">Junior Secondary (JSS 1 - JSS 3)</option>
                           <option value="Senior Secondary (SS 1 - SS 3)">Senior Secondary (SS 1 - SS 3)</option>
                           <option value="Physical & Applied Sciences">Physical & Applied Sciences</option>
