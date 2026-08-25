@@ -114,11 +114,22 @@ INSTALLED_APPS = [
 
 ASGI_APPLICATION = 'config.asgi.application'
 
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+_redis_url = env('REDIS_URL', default='')
+if _redis_url:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                'hosts': [_redis_url],
+            },
+        }
     }
-}
+else:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        }
+    }
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -224,7 +235,6 @@ SPECTACULAR_SETTINGS = {
 }
 
 # Persistent Cache Settings (PostgreSQL Database Cache + Redis if available)
-_redis_url = env('REDIS_URL', default='')
 if _redis_url:
     try:
         # pyrefly: ignore [missing-import]
