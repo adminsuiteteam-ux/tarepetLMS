@@ -2409,8 +2409,6 @@ export default function AdminDashboard() {
       profileImage: '',
       bio: 'Visionary educational leader with over 18 years of pioneering excellence in Montessori and Nigerian National Curriculum pedagogy. Committed to nurturing intellectual curiosity, ethical character, and academic brilliance across all learners.',
       rank: 'Chief Executive Administrator (Super Admin)',
-      qualifications: 'Ph.D. Educational Leadership & Management (UNILAG), M.Ed. Montessori Early Childhood & Primary Education, B.Ed. Curriculum Studies',
-      certifications: 'TRCN Certified Teacher (Reg No: TRCN/BY/2012/8821), Cambridge International Educational Leadership Diploma, Member National Association of Proprietors of Private Schools (NAPPS)',
       bloodGroup: 'O+',
       stateOfOrigin: 'Bayelsa State, Nigeria',
       emergencyContact: 'Mrs. Florence Montessori (Spouse)',
@@ -5983,10 +5981,10 @@ export default function AdminDashboard() {
               <div className="absolute -right-16 -top-16 w-64 h-64 bg-primary/30 rounded-full blur-3xl pointer-events-none" />
               <div className="absolute -left-12 -bottom-12 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
               
-              {/* School Crest & Accreditations Watermark */}
+              {/* School Crest & Leadership Watermark */}
               <div className="relative sm:absolute top-0 sm:top-4 right-0 sm:right-6 flex flex-wrap items-center gap-2 sm:gap-3 mb-3 sm:mb-0">
                 <span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-[10px] sm:text-[11px] font-bold tracking-wider uppercase flex items-center gap-1.5 shadow-xs">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> TRCN Certified Leader
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Tarepet Executive Leadership
                 </span>
                 <span className="px-3 py-1 rounded-full bg-emerald-500/20 backdrop-blur-md border border-emerald-400/30 text-emerald-300 text-[10px] sm:text-[11px] font-bold tracking-wider uppercase flex items-center gap-1.5 shadow-xs">
                   <Sparkles className="w-3.5 h-3.5" /> Tier 1 Super Admin
@@ -6235,69 +6233,6 @@ export default function AdminDashboard() {
                     <div className="md:col-span-2 lg:col-span-3 space-y-1 bg-muted/20 p-4 rounded-xl border border-border">
                       <p className="text-muted-foreground font-bold uppercase text-[10px]">Official Residential Address</p>
                       <p className="font-bold text-foreground text-sm">{adminProfileData.address}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Academic Qualifications & Professional Certifications */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
-                    <div className="flex items-center gap-2.5 pb-2 border-b border-border">
-                      <GraduationCap className="w-4 h-4 text-primary" />
-                      <h3 className="font-serif font-bold text-base text-foreground">Academic Qualifications</h3>
-                    </div>
-                    <div className="space-y-3 text-xs">
-                      <div className="p-3.5 bg-muted/20 rounded-xl border border-border space-y-1">
-                        <div className="flex items-center justify-between">
-                          <p className="font-bold text-foreground">Ph.D. Educational Leadership &amp; Administration</p>
-                          <span className="text-[10px] font-mono text-primary font-bold">2014</span>
-                        </div>
-                        <p className="text-muted-foreground text-[11px]">University of Lagos (UNILAG) • Doctoral Dissertation on Montessori Integration</p>
-                      </div>
-                      <div className="p-3.5 bg-muted/20 rounded-xl border border-border space-y-1">
-                        <div className="flex items-center justify-between">
-                          <p className="font-bold text-foreground">M.Ed. Montessori Early Childhood &amp; Curriculum</p>
-                          <span className="text-[10px] font-mono text-primary font-bold">2008</span>
-                        </div>
-                        <p className="text-muted-foreground text-[11px]">University of Ibadan (UI) • Distinction</p>
-                      </div>
-                      <div className="p-3.5 bg-muted/20 rounded-xl border border-border space-y-1">
-                        <div className="flex items-center justify-between">
-                          <p className="font-bold text-foreground">B.Ed. Educational Foundations &amp; Pedagogy</p>
-                          <span className="text-[10px] font-mono text-primary font-bold">2004</span>
-                        </div>
-                        <p className="text-muted-foreground text-[11px]">First Class Honours • Faculty Valedictorian</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
-                    <div className="flex items-center gap-2.5 pb-2 border-b border-border">
-                      <Award className="w-4 h-4 text-emerald-600" />
-                      <h3 className="font-serif font-bold text-base text-foreground">Professional Certifications &amp; Accreditations</h3>
-                    </div>
-                    <div className="space-y-3 text-xs">
-                      <div className="p-3.5 bg-muted/20 rounded-xl border border-border space-y-1">
-                        <div className="flex items-center justify-between">
-                          <p className="font-bold text-foreground">TRCN Licensed Professional Teacher</p>
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 font-bold border border-emerald-200">Active License</span>
-                        </div>
-                        <p className="text-muted-foreground text-[11px] font-mono">Reg No: TRCN/BY/2012/8821</p>
-                      </div>
-                      <div className="p-3.5 bg-muted/20 rounded-xl border border-border space-y-1">
-                        <div className="flex items-center justify-between">
-                          <p className="font-bold text-foreground">Cambridge International Educational Leader</p>
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-bold border border-primary/20">Certified</span>
-                        </div>
-                        <p className="text-muted-foreground text-[11px]">Cambridge Assessment International Education</p>
-                      </div>
-                      <div className="p-3.5 bg-muted/20 rounded-xl border border-border space-y-1">
-                        <div className="flex items-center justify-between">
-                          <p className="font-bold text-foreground">NAPPS Executive Council Member</p>
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 font-bold border border-blue-200">Fellow</span>
-                        </div>
-                        <p className="text-muted-foreground text-[11px]">National Assoc. of Proprietors of Private Schools</p>
-                      </div>
                     </div>
                   </div>
                 </div>
