@@ -23,7 +23,9 @@ from apps.courses.models import Course
 # pyrefly: ignore [missing-import]
 from apps.assessments.models import Attendance, BehaviorLog, House, Submission, Assignment
 
-from .models import CustomUser, StudentProfile, TeacherProfile, ParentProfile, AdminProfile, LoginActivityLog
+from .models import CustomUser, StudentProfile, TeacherProfile, ParentProfile, AdminProfile, LoginActivityLog, OTPVerification
+from .email_service import send_otp_email, mask_email
+from rest_framework_simplejwt.tokens import RefreshToken
 
 User = get_user_model()
 
@@ -51,6 +53,37 @@ class CustomTokenObtainPairView(APIView):
             ip = get_client_ip(request)
             ua = request.META.get('HTTP_USER_AGENT', 'Unknown')
 
+            # Fetch authoritative user instance
+            user_obj = User.objects.filter(email__iexact=email).first()
+
+            # Enforce 2FA Email OTP ONLY for TEACHER and ADMIN roles
+            if user_obj and user_obj.role in [CustomUser.Role.TEACHER, CustomUser.Role.ADMIN]:
+                raw_code, temp_token, otp_obj = OTPVerification.create_otp(
+                    user=user_obj,
+                    purpose=OTPVerification.Purpose.LOGIN_2FA,
+                    validity_minutes=5
+                )
+                send_otp_email(user_obj, raw_code, validity_minutes=5)
+
+                LoginActivityLog.objects.create(
+                    email=email,
+                    role=role,
+                    ip_address=ip,
+                    user_agent=ua,
+                    device_info=ua[:150] if ua else 'Unknown Browser/Device',
+                    status='PENDING_OTP'
+                )
+
+                return Response({
+                    'requires_otp': True,
+                    'temp_token': temp_token,
+                    'role': user_obj.role,
+                    'email': user_obj.email,
+                    'email_masked': mask_email(user_obj.email),
+                    'detail': f'A 6-digit authentication code has been sent to your email ({mask_email(user_obj.email)}).'
+                }, status=status.HTTP_200_OK)
+
+            # Direct login for STUDENT and PARENT roles
             LoginActivityLog.objects.create(
                 email=email,
                 role=role,
@@ -73,6 +106,93 @@ class CustomTokenObtainPairView(APIView):
                 status='FAILED_ATTEMPT'
             )
             raise e
+
+
+class OTPVerifyView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        temp_token = request.data.get('temp_token', '').strip()
+        otp_code = request.data.get('otp_code', '').strip()
+
+        if not temp_token or not otp_code:
+            return Response({'detail': 'Both temp_token and 6-digit otp_code are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        otp_record = OTPVerification.objects.filter(temp_token=temp_token).first()
+        if not otp_record:
+            return Response({'detail': 'Invalid or expired authentication session. Please sign in again.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        is_valid, msg = otp_record.verify(otp_code)
+        ip = get_client_ip(request)
+        ua = request.META.get('HTTP_USER_AGENT', 'Unknown')
+
+        if not is_valid:
+            LoginActivityLog.objects.create(
+                email=otp_record.user.email,
+                role=otp_record.user.role,
+                ip_address=ip,
+                user_agent=ua,
+                device_info=ua[:150] if ua else 'Unknown Browser/Device',
+                status='OTP_FAILED'
+            )
+            return Response({'detail': msg}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = otp_record.user
+        refresh = RefreshToken.for_user(user)
+        refresh['email'] = user.email
+        refresh['role'] = user.role
+        refresh['name'] = user.get_full_name() or user.email
+
+        LoginActivityLog.objects.create(
+            email=user.email,
+            role=user.role,
+            ip_address=ip,
+            user_agent=ua,
+            device_info=ua[:150] if ua else 'Unknown Browser/Device',
+            status='SUCCESS'
+        )
+
+        user_serializer = UserSerializer(user, context={'request': request})
+        return Response({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'user': user_serializer.data,
+            'detail': 'Authentication successful.'
+        }, status=status.HTTP_200_OK)
+
+
+class OTPResendView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        temp_token = request.data.get('temp_token', '').strip()
+        if not temp_token:
+            return Response({'detail': 'temp_token is required to resend OTP.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        old_otp = OTPVerification.objects.filter(temp_token=temp_token).first()
+        if not old_otp:
+            return Response({'detail': 'Authentication session not found. Please sign in again.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = old_otp.user
+        # Rate limit: minimum 30 seconds between resends
+        seconds_since = (timezone.now() - old_otp.created_at).total_seconds()
+        if seconds_since < 30:
+            remaining_secs = int(30 - seconds_since)
+            return Response({'detail': f'Please wait {remaining_secs} seconds before requesting a new code.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
+        raw_code, new_temp_token, _ = OTPVerification.create_otp(
+            user=user,
+            purpose=OTPVerification.Purpose.LOGIN_2FA,
+            validity_minutes=5
+        )
+        send_otp_email(user, raw_code, validity_minutes=5)
+
+        return Response({
+            'success': True,
+            'temp_token': new_temp_token,
+            'email_masked': mask_email(user.email),
+            'detail': f'A new 6-digit authentication code was sent to {mask_email(user.email)}.'
+        }, status=status.HTTP_200_OK)
 
 
 class LoginActivityLogView(APIView):

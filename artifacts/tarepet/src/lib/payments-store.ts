@@ -320,7 +320,7 @@ if (typeof window !== 'undefined') {
 
 // ── ADMIN CATEGORY / ITEM MANAGEMENT ─────────────────────────────────────────
 
-export function savePaymentItem(itemData: Partial<PaymentItem> & { name: string; amount: number }): PaymentItem {
+export async function savePaymentItem(itemData: Partial<PaymentItem> & { name: string; amount: number }): Promise<PaymentItem> {
   const id = itemData.id || `item_${Date.now()}`;
   const newItem: PaymentItem = {
     id,
@@ -348,15 +348,15 @@ export function savePaymentItem(itemData: Partial<PaymentItem> & { name: string;
     try { localStorage.setItem('tarepet_fee_items', JSON.stringify(_paymentItems)); } catch (e) {}
   }
 
+  try {
+    await authClient.post('/finance/fee-items/bulk-save/', { items: [newItem] });
+  } catch (err) {}
+
   broadcastPaymentMutation();
-
-  // Save to Django PostgreSQL/SQLite backend in real-time
-  authClient.post('/finance/fee-items/bulk-save/', { items: [newItem] }).catch(() => {});
-
   return newItem;
 }
 
-export function updateFeeItemAmount(id: string, amount: number, targetGrade: string = 'ALL'): boolean {
+export async function updateFeeItemAmount(id: string, amount: number, targetGrade: string = 'ALL'): Promise<boolean> {
   const item = _paymentItems.find(i => i.id === id);
   if (!item) return false;
 
@@ -373,30 +373,31 @@ export function updateFeeItemAmount(id: string, amount: number, targetGrade: str
     try { localStorage.setItem('tarepet_fee_items', JSON.stringify(_paymentItems)); } catch (e) {}
   }
 
+  try {
+    await authClient.post('/finance/fee-items/bulk-save/', { items: [item] });
+  } catch (err) {}
+
   broadcastPaymentMutation();
-
-  // Save updated price to Django backend
-  authClient.post('/finance/fee-items/bulk-save/', { items: [item] }).catch(() => {});
-
   return true;
 }
 
-export function deletePaymentItem(itemId: string): boolean {
+export async function deletePaymentItem(itemId: string): Promise<boolean> {
   _paymentItems = _paymentItems.filter(i => i.id !== itemId && i.parentId !== itemId);
   if (typeof window !== 'undefined') {
     try { localStorage.setItem('tarepet_fee_items', JSON.stringify(_paymentItems)); } catch (e) {}
   }
+
+  try {
+    await authClient.delete(`/finance/fee-items/${itemId}/`);
+  } catch (err) {}
+
   broadcastPaymentMutation();
-
-  // Async delete from Django API backend
-  authClient.delete(`/finance/fee-items/${itemId}/`).catch(() => {});
-
   return true;
 }
 
 // ── TRANSACTION / PAYMENT RECORDING ──────────────────────────────────────────
 
-export function recordTransaction(txData: Omit<PaymentTransaction, 'id' | 'paidAt'>): PaymentTransaction {
+export async function recordTransaction(txData: Omit<PaymentTransaction, 'id' | 'paidAt'>): Promise<PaymentTransaction> {
   const newTx: PaymentTransaction = {
     ...txData,
     id: `tx_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
@@ -407,9 +408,13 @@ export function recordTransaction(txData: Omit<PaymentTransaction, 'id' | 'paidA
   if (typeof window !== 'undefined') {
     try { localStorage.setItem('tarepet_fee_transactions', JSON.stringify(_transactions)); } catch (e) {}
   }
+
+  try {
+    await authClient.post('/finance/transactions/', newTx);
+  } catch (err) {}
+
   broadcastPaymentMutation();
 
-  // Trigger real-time notification to admin
   addRealtimeNotification({
     title: '💳 Payment Received',
     message: `${newTx.studentName} paid ₦${newTx.amount.toLocaleString()} for ${newTx.itemName}`,
@@ -417,9 +422,6 @@ export function recordTransaction(txData: Omit<PaymentTransaction, 'id' | 'paidA
     type: 'fee',
     recipientRole: 'ADMIN'
   });
-
-  // Async sync with Django API backend
-  authClient.post('/finance/transactions/', newTx).catch(() => {});
 
   return newTx;
 }
@@ -512,8 +514,8 @@ export async function processPaystackPayment({
             { display_name: 'Item Name', variable_name: 'item_name', value: itemName }
           ]
         },
-        callback: (response: { reference: string; status: string }) => {
-          const tx = recordTransaction({
+        callback: async (response: { reference: string; status: string }) => {
+          const tx = await recordTransaction({
             studentId,
             studentName,
             studentEmail: email || 'student@tarepetmontessori.org',
@@ -551,7 +553,7 @@ export async function processPaystackPayment({
   }
 
   if (isConfirmed) {
-    const tx = recordTransaction({
+    const tx = await recordTransaction({
       studentId,
       studentName,
       studentEmail: email || 'student@tarepetmontessori.org',

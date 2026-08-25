@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Eye, EyeOff, Lock, Mail, AlertCircle, CheckCircle2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Eye, EyeOff, Lock, Mail, AlertCircle, CheckCircle2, ShieldCheck, ArrowLeft, RotateCcw, KeyRound, Sparkles } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import tarepetLogo from "@assets/tarepet__1784835204178.png";
 import heroImg from "@assets/classroom_hero.jpg";
@@ -27,10 +27,33 @@ export default function SignIn() {
   const [, setLocation] = useLocation();
   const { user, isAuthenticated, login } = useAuth();
 
+  // ── Email OTP 2FA State ───────────────────────────────────────────────────
+  const [otpPending, setOtpPending] = useState(false);
+  const [tempToken, setTempToken] = useState("");
+  const [maskedEmail, setMaskedEmail] = useState("");
+  const [pendingRole, setPendingRole] = useState("");
+  const [otpDigits, setOtpDigits] = useState<string[]>(["", "", "", "", "", ""]);
+  const [otpCountdown, setOtpCountdown] = useState(60);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [isResendingOtp, setIsResendingOtp] = useState(false);
+  const [otpSuccessMsg, setOtpSuccessMsg] = useState<string | null>(null);
+  const digitInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
   useEffect(() => {
     syncTeachersWithBackend();
     syncStudentsWithBackend();
   }, []);
+
+  // OTP Countdown timer
+  useEffect(() => {
+    let timer: any;
+    if (otpPending && otpCountdown > 0) {
+      timer = setInterval(() => {
+        setOtpCountdown((prev) => (prev > 0 ? prev - 1 : 0));
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [otpPending, otpCountdown]);
 
   // If already authenticated and cached, redirect immediately to dashboard
   useEffect(() => {
@@ -40,9 +63,106 @@ export default function SignIn() {
     }
   }, [isAuthenticated, user, setLocation]);
 
+  const handleOtpDigitChange = (index: number, val: string) => {
+    const numeric = val.replace(/[^0-9]/g, "");
+    
+    // Check if full 6-digit code was pasted
+    if (numeric.length === 6) {
+      const splitDigits = numeric.split("").slice(0, 6);
+      setOtpDigits(splitDigits);
+      digitInputRefs.current[5]?.focus();
+      return;
+    }
+
+    const singleDigit = numeric.slice(-1);
+    const newDigits = [...otpDigits];
+    newDigits[index] = singleDigit;
+    setOtpDigits(newDigits);
+
+    // Auto-advance to next input
+    if (singleDigit && index < 5) {
+      digitInputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace") {
+      if (!otpDigits[index] && index > 0) {
+        digitInputRefs.current[index - 1]?.focus();
+      }
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setOtpSuccessMsg(null);
+    const code = otpDigits.join("");
+    if (code.length < 6) {
+      setError("Please enter the complete 6-digit authentication code.");
+      return;
+    }
+
+    setIsVerifyingOtp(true);
+    try {
+      const res = await authClient.post("/auth/otp/verify/", {
+        temp_token: tempToken,
+        otp_code: code,
+      });
+
+      if (res.data && res.data.access && res.data.user) {
+        resetLoginRateLimit();
+        recordLoginActivity(res.data.user.email || email, res.data.user.role, "SUCCESS");
+        login(res.data.access, res.data.refresh || "", res.data.user);
+        const rolePath = res.data.user.role.toLowerCase();
+        setLocation(`/dashboard/${rolePath}`);
+        return;
+      }
+    } catch (err: any) {
+      const detail = err.response?.data?.detail || "Invalid or expired verification code. Please try again.";
+      setError(detail);
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (otpCountdown > 0 || isResendingOtp) return;
+    setIsResendingOtp(true);
+    setError(null);
+    setOtpSuccessMsg(null);
+
+    try {
+      const res = await authClient.post("/auth/otp/resend/", {
+        temp_token: tempToken,
+      });
+      if (res.data && res.data.temp_token) {
+        setTempToken(res.data.temp_token);
+        setOtpCountdown(60);
+        setOtpDigits(["", "", "", "", "", ""]);
+        setOtpSuccessMsg(res.data.detail || "A fresh 6-digit verification code has been dispatched to your email.");
+        digitInputRefs.current[0]?.focus();
+      }
+    } catch (err: any) {
+      const detail = err.response?.data?.detail || "Could not resend code at this time. Please wait a moment.";
+      setError(detail);
+    } finally {
+      setIsResendingOtp(false);
+    }
+  };
+
+  const handleCancelOtp = () => {
+    setOtpPending(false);
+    setTempToken("");
+    setOtpDigits(["", "", "", "", "", ""]);
+    setError(null);
+    setOtpSuccessMsg(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setOtpSuccessMsg(null);
     setIsLoading(true);
 
     const rawInput = email.trim();
@@ -50,92 +170,41 @@ export default function SignIn() {
     const cleanInput = lowerInput.replace(/[^a-z0-9]/g, '');
     const rawPassword = password.trim();
 
-    // 0a. Check admin credentials exclusively for admin@tarepet.com
-    const isTargetAdminEmail = lowerInput === 'admin@tarepet.com';
-    if (isTargetAdminEmail) {
-      const isAdminPassValid = rawPassword === 'TarepetAdmin@2026!';
-
-      if (isAdminPassValid) {
-        resetLoginRateLimit();
-        recordLoginActivity('admin@tarepet.com', 'ADMIN', 'SUCCESS');
-        
-        try {
-          const apiRes = await authClient.post('/auth/login/', {
-            email: 'admin@tarepet.com',
-            password: rawPassword,
-          }, { timeout: 6000 });
-          if (apiRes.data && apiRes.data.access) {
-            login(apiRes.data.access, apiRes.data.refresh || '', apiRes.data.user || {
-              id: 1,
-              email: 'admin@tarepet.com',
-              first_name: 'Super',
-              last_name: 'Administrator',
-              role: 'ADMIN',
-            });
-            setLocation('/dashboard/admin');
-            setIsLoading(false);
-            return;
-          }
-        } catch {
-          // Fallback if offline
-        }
-
-        login('tarepet_admin_persistent_access_token', 'tarepet_admin_persistent_refresh_token', {
-          id: 1,
-          email: 'admin@tarepet.com',
-          first_name: 'Super',
-          last_name: 'Administrator',
-          role: 'ADMIN',
-        });
-        setLocation('/dashboard/admin');
-        setIsLoading(false);
-        return;
-      }
-    }
-
-    // 0b. Check if account was deleted by Admin
-    if (isAccountDeleted(rawInput) || isAccountDeleted(lowerInput) || isAccountDeleted(cleanInput)) {
-      recordLoginActivity(rawInput, 'UNKNOWN', 'FAILED_ATTEMPT');
-      setError("This account has been deactivated by the administrator and can no longer access the system.");
-      setIsLoading(false);
-      return;
-    }
-
-    // 1. Try Layerbase Auth client first
-    try {
-      const lbRes = await layerbaseAuth.login(rawInput, rawPassword);
-      if (lbRes.mfaRequired && lbRes.mfaToken) {
-        setMfaRequired(true);
-        setMfaToken(lbRes.mfaToken);
-        setIsLoading(false);
-        return;
-      }
-      if (lbRes.success && lbRes.access && lbRes.user) {
-        recordLoginActivity(lbRes.user.email || rawInput, lbRes.user.role, 'SUCCESS');
-        login(lbRes.access, lbRes.refresh || '', lbRes.user);
-        const userRole = lbRes.user.role.toLowerCase();
-        setLocation(`/dashboard/${userRole}`);
-        setIsLoading(false);
-        return;
-      }
-    } catch {
-      // Continue to live API
-    }
-
-    // 1b. Try live Django REST API backend
+    // 0a. Live Django REST API Backend Call (handles OTP for Teacher & Admin)
     try {
       const res = await authClient.post("/auth/login/", { email: rawInput, password: rawPassword }, { timeout: 8000 });
-      const { access, refresh, user } = res.data;
-      if (user && user.role) {
-        recordLoginActivity(user.email || rawInput, user.role, 'SUCCESS');
-        login(access, refresh, user);
-        const userRole = user.role.toLowerCase();
+      
+      // If 2FA OTP is required for Teacher or Admin
+      if (res.data && res.data.requires_otp) {
+        setOtpPending(true);
+        setTempToken(res.data.temp_token);
+        setMaskedEmail(res.data.email_masked || res.data.email || rawInput);
+        setPendingRole(res.data.role || "STAFF");
+        setOtpCountdown(60);
+        setOtpDigits(["", "", "", "", "", ""]);
+        setIsLoading(false);
+        setTimeout(() => {
+          digitInputRefs.current[0]?.focus();
+        }, 150);
+        return;
+      }
+
+      // Direct login for Student & Parent roles
+      const { access, refresh, user: apiUser } = res.data;
+      if (apiUser && apiUser.role) {
+        recordLoginActivity(apiUser.email || rawInput, apiUser.role, 'SUCCESS');
+        login(access, refresh, apiUser);
+        const userRole = apiUser.role.toLowerCase();
         setLocation(`/dashboard/${userRole}`);
         setIsLoading(false);
         return;
       }
     } catch (apiError: any) {
-      // Backend offline or API rejection — continue to secure verified credentials
+      if (apiError.response?.data?.detail) {
+        setError(apiError.response.data.detail);
+        setIsLoading(false);
+        return;
+      }
     }
 
     if (isTargetAdminEmail) {
@@ -412,10 +481,10 @@ export default function SignIn() {
             {/* Title & Tagline matching reference mockup */}
             <div className="relative z-10">
               <h1 className="text-2xl font-bold font-serif text-white tracking-tight leading-snug drop-shadow-xs">
-                Tarepet Portal
+                {otpPending ? "Two-Factor Security" : "Tarepet Portal"}
               </h1>
               <p className="text-[11px] text-white/90 font-medium tracking-wide uppercase mt-0.5">
-                Sign in to your account
+                {otpPending ? `${pendingRole} Email Authentication` : "Sign in to your account"}
               </p>
             </div>
           </div>
@@ -448,90 +517,189 @@ export default function SignIn() {
               </motion.div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-3.5">
-              {/* Email / ID Input Pill */}
-              <div className="space-y-1">
-                <label htmlFor="email" className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-1">
-                  Email / Staff ID / Student Code
-                </label>
-                <div className="relative">
-                  <input
-                    id="email"
-                    type="text"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter email or registration code"
-                    className="w-full px-5 py-3.5 bg-zinc-100 dark:bg-zinc-800/90 border border-transparent rounded-2xl text-xs font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:bg-white dark:focus:bg-zinc-800 transition-all shadow-inner"
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-              </div>
+            {/* OTP Success Feedback Message */}
+            {otpSuccessMsg && (
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-2 p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-medium"
+              >
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>{otpSuccessMsg}</span>
+              </motion.div>
+            )}
 
-              {/* Password Input Pill */}
-              <div className="space-y-1">
-                <div className="flex items-center justify-between px-1">
-                  <label htmlFor="password" className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                    Password / Access Passcode
-                  </label>
+            {otpPending ? (
+              /* ── 2FA Email OTP Verification Form ── */
+              <form onSubmit={handleVerifyOtp} className="space-y-5">
+                <div className="text-center space-y-1.5">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold tracking-wide uppercase">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>Identity Verification</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    We sent a 6-digit authentication code to <br />
+                    <span className="font-bold text-foreground font-mono">{maskedEmail}</span>
+                  </p>
                 </div>
-                <div className="relative">
-                  <input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••••••"
-                    className="w-full pl-5 pr-11 py-3.5 bg-zinc-100 dark:bg-zinc-800/90 border border-transparent rounded-2xl text-xs font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:bg-white dark:focus:bg-zinc-800 transition-all shadow-inner font-mono"
-                    required
-                    disabled={isLoading}
-                  />
+
+                {/* 6 Digit Input Boxes */}
+                <div className="flex justify-between gap-1.5 sm:gap-2">
+                  {otpDigits.map((digit, index) => (
+                    <input
+                      key={index}
+                      ref={(el) => { digitInputRefs.current[index] = el; }}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleOtpDigitChange(index, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                      onFocus={(e) => e.target.select()}
+                      className="w-11 h-13 sm:w-12 sm:h-14 text-center text-xl font-bold font-mono bg-zinc-100 dark:bg-zinc-800/90 border border-border/80 rounded-2xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all shadow-inner"
+                      required
+                      autoComplete="one-time-code"
+                    />
+                  ))}
+                </div>
+
+                {/* Countdown & Resend Option */}
+                <div className="flex items-center justify-between text-xs px-1">
+                  <span className="text-muted-foreground text-[11px]">Didn&apos;t get code?</span>
+                  {otpCountdown > 0 ? (
+                    <span className="text-[11px] font-mono text-muted-foreground font-semibold">
+                      Resend in <strong className="text-primary">{otpCountdown}s</strong>
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleResendOtp}
+                      disabled={isResendingOtp}
+                      className="text-[11px] text-primary font-bold hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                    >
+                      <RotateCcw className={`w-3 h-3 ${isResendingOtp ? 'animate-spin' : ''}`} />
+                      <span>{isResendingOtp ? 'Resending…' : 'Resend Code'}</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Verify Submit Button */}
+                <div className="space-y-2 pt-1">
+                  <button
+                    type="submit"
+                    disabled={isVerifyingOtp || otpDigits.join('').length < 6}
+                    className="w-full bg-zinc-950 hover:bg-black text-white dark:bg-primary dark:hover:bg-primary/90 transition-all rounded-full py-4 text-xs font-bold uppercase tracking-wider shadow-xl active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    {isVerifyingOtp ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <span>Verifying Security Code...</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShieldCheck className="w-4 h-4" />
+                        <span>Verify &amp; Sign In</span>
+                      </>
+                    )}
+                  </button>
+
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    onClick={handleCancelOtp}
+                    className="w-full py-2.5 text-[11px] text-muted-foreground hover:text-foreground font-semibold transition-colors flex items-center justify-center gap-1 cursor-pointer"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Use different account</span>
                   </button>
                 </div>
-              </div>
+              </form>
+            ) : (
+              /* ── Standard Email + Password Form ── */
+              <form onSubmit={handleSubmit} className="space-y-3.5">
+                {/* Email / ID Input Pill */}
+                <div className="space-y-1">
+                  <label htmlFor="email" className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider px-1">
+                    Email / Staff ID / Student Code
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="email"
+                      type="text"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Enter email or registration code"
+                      className="w-full px-5 py-3.5 bg-zinc-100 dark:bg-zinc-800/90 border border-transparent rounded-2xl text-xs font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:bg-white dark:focus:bg-zinc-800 transition-all shadow-inner"
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
 
-              {/* Forgot Password Link */}
-              <div className="flex items-center justify-end px-1 pt-0.5">
-                <button
-                  type="button"
-                  onClick={() => showAlert({
-                    title: "Portal Passcode Assistance",
-                    message: "Please contact Tarepet School Administrator or the ICT department to reset your portal passcode or retrieve your credentials.\n\n📍 ICT Office / Admin Desk\n✉️ admin@tarepet.com",
-                    type: "help",
-                    badge: "Passcode Help",
-                    confirmText: "Got It, Thanks",
-                  })}
-                  className="text-[11px] text-primary hover:underline font-semibold cursor-pointer"
-                >
-                  Forgot password?
-                </button>
-              </div>
+                {/* Password Input Pill */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between px-1">
+                    <label htmlFor="password" className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                      Password / Access Passcode
+                    </label>
+                  </div>
+                  <div className="relative">
+                    <input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••••••"
+                      className="w-full pl-5 pr-11 py-3.5 bg-zinc-100 dark:bg-zinc-800/90 border border-transparent rounded-2xl text-xs font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 focus:bg-white dark:focus:bg-zinc-800 transition-all shadow-inner font-mono"
+                      required
+                      disabled={isLoading}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
 
-              {/* Main Pill Submit Button matching the dark rounded pill in mockup */}
-              <div className="pt-2">
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full bg-zinc-950 hover:bg-black text-white dark:bg-primary dark:hover:bg-primary/90 transition-all rounded-full py-4 text-xs font-bold uppercase tracking-wider shadow-xl active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  {isLoading ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      <span>Verifying Credentials...</span>
-                    </>
-                  ) : (
-                    <span>Sign in to Portal</span>
-                  )}
-                </button>
-              </div>
-            </form>
+                {/* Forgot Password Link */}
+                <div className="flex items-center justify-end px-1 pt-0.5">
+                  <button
+                    type="button"
+                    onClick={() => showAlert({
+                      title: "Portal Passcode Assistance",
+                      message: "Please contact Tarepet School Administrator or the ICT department to reset your portal passcode or retrieve your credentials.\n\n📍 ICT Office / Admin Desk\n✉️ admin@tarepet.com",
+                      type: "help",
+                      badge: "Passcode Help",
+                      confirmText: "Got It, Thanks",
+                    })}
+                    className="text-[11px] text-primary hover:underline font-semibold cursor-pointer"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+
+                {/* Main Pill Submit Button matching the dark rounded pill in mockup */}
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full bg-zinc-950 hover:bg-black text-white dark:bg-primary dark:hover:bg-primary/90 transition-all rounded-full py-4 text-xs font-bold uppercase tracking-wider shadow-xl active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    {isLoading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <span>Verifying Credentials...</span>
+                      </>
+                    ) : (
+                      <span>Sign in to Portal</span>
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
 
             {/* Terms of Service & Privacy Notice matching mockup style */}
             <div className="pt-3 text-center space-y-3">

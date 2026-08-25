@@ -3,6 +3,8 @@ from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenRefreshView, TokenBlacklistView
 from .views import (
     CustomTokenObtainPairView,
+    OTPVerifyView,
+    OTPResendView,
     RegisterView,
     UserProfileView,
     UserViewSet,
@@ -17,6 +19,8 @@ router.register(r'users', UserViewSet, basename='user-management')
 
 urlpatterns = [
     path('login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('otp/verify/', OTPVerifyView.as_view(), name='otp_verify'),
+    path('otp/resend/', OTPResendView.as_view(), name='otp_resend'),
     path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('logout/', TokenBlacklistView.as_view(), name='token_blacklist'),
     path('register/', RegisterView.as_view(), name='user_register'),

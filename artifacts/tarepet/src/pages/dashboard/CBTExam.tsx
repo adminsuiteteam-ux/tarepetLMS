@@ -285,7 +285,7 @@ export default function StudentCBTExam() {
       const studentEmail = user?.email || 'emeka.amadi@tarepet.edu.ng';
       const studentId = (user?.profile as any)?.studentId || 'TMS-2024-101';
 
-      const subResult = submitStudentCBTAttempt(selectedExam.id, answers, {
+      const subResult = await submitStudentCBTAttempt(selectedExam.id, answers, {
         name: studentName,
         email: studentEmail,
         student_id: studentId,

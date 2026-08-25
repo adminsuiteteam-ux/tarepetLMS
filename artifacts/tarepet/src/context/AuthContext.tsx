@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authClient, setTokens, clearTokens, getRefreshToken, safeRedirect } from '@/lib/api-auth';
 import { sendWebSocketEvent, subscribeToWebSocketEvents } from '@/lib/websocket-client';
+import { clearCBTStoreCache } from '@/lib/cbt-store';
+import { clearPaymentStoreData } from '@/lib/payments-store';
 
 export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT' | 'PARENT';
 
@@ -201,6 +203,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err) {
       console.warn('Could not clear auth storage', err);
     }
+    // Flush local caches securely
+    try {
+      clearCBTStoreCache();
+      clearPaymentStoreData();
+    } catch (e) {}
+
     // Update browser history cleanly without hard reload
     if (typeof window !== 'undefined' && window.location.pathname !== '/sign-in') {
       window.history.pushState(null, '', '/sign-in');

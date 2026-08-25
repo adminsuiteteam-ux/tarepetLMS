@@ -485,7 +485,7 @@ export default function TeacherDashboard() {
     setShowPromotionModal(true);
   };
 
-  const handleExecutePromotionSubmit = (currentClass: string, targetRoster: any[]) => {
+  const handleExecutePromotionSubmit = async (currentClass: string, targetRoster: any[]) => {
     const teacherProfile = getTeacherProfileData();
     const promotionsPayload = targetRoster.map(s => {
       const sel = promotionSelections[s.id] || {
@@ -504,7 +504,7 @@ export default function TeacherDashboard() {
       };
     });
 
-    const result = executeStudentPromotions({
+    const result = await executeStudentPromotions({
       teacherId: teacherProfile.staffId,
       teacherName: teacherProfile.fullName,
       fromClass: currentClass,
@@ -514,6 +514,7 @@ export default function TeacherDashboard() {
     });
 
     if (result.success) {
+      await syncStudentsWithBackend();
       setShowPromotionModal(false);
       showToast(`🎉 Successfully promoted ${result.count} students! Historical cohort archived to Academic History.`);
     }
@@ -760,7 +761,7 @@ export default function TeacherDashboard() {
       house: '',
     };
 
-    // Save locally and sync with Django backend in real time
+    // Save directly to Django backend in real time
     await saveStudent(studentRecord);
 
     // Live Real-Time Admin Notification
@@ -774,7 +775,8 @@ export default function TeacherDashboard() {
 
     broadcastRealtimeEvent();
 
-    setRoster(getStoredStudents());
+    const liveStudents = await syncStudentsWithBackend();
+    setRoster(liveStudents);
     setShowAddStudentModal(false);
     showToast(`Registered ${addStudentForm.name} (${selectedGrade})! Student ID: ${autoCode}`);
     setAddStudentForm({

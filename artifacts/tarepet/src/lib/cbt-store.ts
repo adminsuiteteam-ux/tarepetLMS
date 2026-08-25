@@ -1118,7 +1118,7 @@ export function getStoredStudents(): StudentRecord[] {
 
 export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
   try {
-    const res = await authClient.get('/auth/users/?role=STUDENT&page_size=500');
+    const res = await authClient.get('/auth/users/?role=STUDENT&page_size=1000');
     if (res.data) {
       const dataArr = Array.isArray(res.data?.results) ? res.data.results : Array.isArray(res.data) ? res.data : [];
       const mockEmails = ['civa.media@tarepet.com', 'student@tarepet.com', 'emeka.amadi@tarepet.com', 'hacker@evil.com', 'wronguser@fake.com', 'chidinma.okoro@tarepet.com', 'kelechi.eze@tarepet.com', 'somto.nnamdi@tarepet.com', 'tari.powei@tarepet.com'];
@@ -1131,53 +1131,51 @@ export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
           return !isMock && !isAccountDeleted(u.email) && !isAccountDeleted(u.id) && !isAccountDeleted(uCode) && !isAccountDeleted(uName);
         })
         .map((u: any) => {
-          const rawGrade = u.profile?.grade_level || u.profile?.grade || u.grade_level || u.grade || '';
+          const prof = u.profile || {};
+          const rawGrade = prof.grade_level || prof.grade || u.grade_level || u.grade || 'SS1';
+          const autoCode = prof.student_id || u.student_id || `TMS/STU/${String(u.id).padStart(4, '0')}`;
           return {
             id: u.id,
-            code: u.student_id || u.profile?.student_id || `TMS/STU/${u.id}`,
-            admissionNo: u.student_id || u.profile?.student_id || `TMS/STU/${u.id}`,
+            code: autoCode,
+            admissionNo: autoCode,
+            admission_number: autoCode,
             name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
             email: u.email,
-            gender: u.profile?.gender || '',
+            password: autoCode,
+            gender: prof.gender || 'Male',
             maritalStatus: 'Single',
-            dob: u.profile?.date_of_birth || u.profile?.dob || '',
-            phone: u.phone || u.profile?.phone || '',
+            dob: prof.date_of_birth || prof.dob || 'Not Available',
+            phone: u.phone || prof.phone || 'Not Available',
             country: 'Nigeria',
-            stateOfOrigin: u.profile?.stateOfOrigin || '',
-            lga: u.profile?.lga || '',
-            address: u.profile?.address || '',
-            grade: rawGrade || 'SS1',
-            stream: u.profile?.stream || 'Science',
-            programme: 'Senior Secondary Certificate (SSCE)',
-            parentName: u.profile?.parentName || '',
-            parentPhone: u.profile?.parentPhone || u.profile?.emergency_contact || '',
-            status: 'ACTIVE',
-            studyMode: 'Full Time',
+            stateOfOrigin: prof.state_of_origin || prof.stateOfOrigin || 'Bayelsa',
+            lga: prof.lga || 'Yenagoa',
+            address: prof.address || 'Yenagoa, Bayelsa State',
+            grade: rawGrade,
+            stream: prof.stream || (rawGrade.toUpperCase().startsWith('SS') ? 'Science' : 'General'),
+            programme: prof.programme || (rawGrade.toUpperCase().startsWith('SS') ? 'Senior Secondary Certificate (SSCE)' : 'Montessori Primary Education'),
+            parentName: prof.parent_name || prof.parentName || 'Parent / Guardian',
+            parentPhone: prof.parent_phone || prof.parentPhone || prof.emergency_contact || '',
+            status: u.is_active !== false ? 'ACTIVE' : 'INACTIVE',
+            studyMode: prof.study_mode || prof.studyMode || 'Full Time',
             attendance: '100%',
             atRisk: false,
-            profileImage: u.profile?.profile_image || u.profile_image || u.profile?.profileImage || '',
+            profileImage: prof.profile_image || u.profile_image || '',
+            house: prof.house || '',
           };
         });
 
       if (fetched.length > 0) {
-        const merged = [...fetched];
-        _students.forEach(localS => {
-          const exists = merged.some(b => 
-            b.id === localS.id || 
-            (localS.email && b.email && b.email.toLowerCase() === localS.email.toLowerCase()) ||
-            (localS.code && b.code && b.code.toLowerCase() === localS.code.toLowerCase())
-          );
-          if (!exists) {
-            merged.push(localS);
-          }
-        });
-        _students = merged;
-        saveStoredStudents(merged);
+        _students = fetched;
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('tarepet_students_list', JSON.stringify(_students));
+          } catch (e) {}
+        }
         broadcastRealtimeEvent();
       }
     }
   } catch (err) {
-    // Graceful fallback to in-memory records if backend API is not serving /users/
+    // Fallback to memory cache
   }
   return _students;
 }
@@ -1273,43 +1271,102 @@ export async function syncTeachersWithBackend(): Promise<TeacherRecord[]> {
   return _teachers;
 }
 
-export function saveStudent(studentData: Partial<StudentRecord> & { name: string }): StudentRecord {
+export async function saveStudent(studentData: Partial<StudentRecord> & { name: string }): Promise<StudentRecord> {
   const assignedGrade = studentData.grade || 'SS1';
-  const autoCode = studentData.code || studentData.admissionNo || generateAdmissionNumber(assignedGrade, studentData.stream);
+  const autoCode = studentData.code || studentData.admissionNo || studentData.student_id || generateAdmissionNumber(assignedGrade, studentData.stream);
   const autoEmail = studentData.email || formatStudentEmail(studentData.name);
 
-  const existingIdx = _students.findIndex(s => s.id === studentData.id || (studentData.email && s.email.toLowerCase() === studentData.email.toLowerCase()) || (autoCode && (s.code === autoCode || s.admissionNo === autoCode)));
+  const existingIdx = _students.findIndex(s => 
+    (studentData.id && s.id === studentData.id) || 
+    (studentData.email && s.email.toLowerCase() === studentData.email.toLowerCase()) || 
+    (autoCode && (s.code === autoCode || s.admissionNo === autoCode))
+  );
+
+  const sNames = (studentData.name || '').trim().split(' ');
+  const firstName = sNames[0] || studentData.name;
+  const lastName = sNames.slice(1).join(' ') || 'Student';
 
   const newStudent: StudentRecord = {
     id: studentData.id || (existingIdx >= 0 ? _students[existingIdx].id : Date.now()),
     code: autoCode,
     admissionNo: autoCode,
+    admission_number: autoCode,
     name: studentData.name.trim(),
     email: autoEmail,
     password: studentData.password || autoCode,
-    gender: studentData.gender || 'Male',
+    gender: studentData.gender || (existingIdx >= 0 ? _students[existingIdx].gender : 'Male'),
     maritalStatus: studentData.maritalStatus || 'Single',
-    dob: studentData.dob || 'Not Available',
-    phone: studentData.phone || 'Not Available',
+    dob: studentData.dob || (existingIdx >= 0 ? _students[existingIdx].dob : '2012-05-14'),
+    phone: studentData.phone || (existingIdx >= 0 ? _students[existingIdx].phone : 'Not Available'),
     country: studentData.country || 'Nigeria',
-    stateOfOrigin: studentData.stateOfOrigin || 'Bayelsa',
-    lga: studentData.lga || 'Yenagoa',
-    address: studentData.address || 'Not Available',
+    stateOfOrigin: studentData.stateOfOrigin || (existingIdx >= 0 ? _students[existingIdx].stateOfOrigin : 'Bayelsa'),
+    lga: studentData.lga || (existingIdx >= 0 ? _students[existingIdx].lga : 'Yenagoa'),
+    address: studentData.address || (existingIdx >= 0 ? _students[existingIdx].address : 'Yenagoa, Bayelsa State'),
     grade: assignedGrade,
-    stream: studentData.stream || 'Science',
-    programme: studentData.programme || 'Senior Secondary Certificate (SSCE)',
-    parentName: studentData.parentName || 'Not Available',
-    parentPhone: studentData.parentPhone || 'Not Available',
+    stream: studentData.stream || (assignedGrade.startsWith('SS') ? 'Science' : 'General'),
+    programme: studentData.programme || (assignedGrade.startsWith('SS') ? 'Senior Secondary Certificate (SSCE)' : 'Montessori Primary Education'),
+    parentName: studentData.parentName || (existingIdx >= 0 ? _students[existingIdx].parentName : 'Parent / Guardian'),
+    parentPhone: studentData.parentPhone || (existingIdx >= 0 ? _students[existingIdx].parentPhone : ''),
     status: studentData.status || 'ACTIVE',
     studyMode: studentData.studyMode || 'Full Time',
     attendance: studentData.attendance || '100%',
     atRisk: studentData.atRisk || false,
-    profileImage: studentData.profileImage || '',
-    house: studentData.house || '',
+    profileImage: studentData.profileImage || (existingIdx >= 0 ? _students[existingIdx].profileImage : ''),
+    house: studentData.house || (existingIdx >= 0 ? _students[existingIdx].house : ''),
   };
 
-  if (existingIdx >= 0) {
-    _students[existingIdx] = { ..._students[existingIdx], ...newStudent };
+  // Construct full live Django REST payload
+  const sPayload = {
+    email: newStudent.email,
+    password: newStudent.password || newStudent.code,
+    first_name: firstName,
+    last_name: lastName,
+    phone: newStudent.phone !== 'Not Available' ? newStudent.phone : '',
+    role: 'STUDENT',
+    student_id: newStudent.code,
+    grade: newStudent.grade,
+    grade_level: newStudent.grade,
+    stream: newStudent.stream,
+    gender: newStudent.gender,
+    house: newStudent.house,
+    dob: newStudent.dob !== 'Not Available' && newStudent.dob ? newStudent.dob : null,
+    date_of_birth: newStudent.dob !== 'Not Available' && newStudent.dob ? newStudent.dob : null,
+    address: newStudent.address !== 'Not Available' ? newStudent.address : '',
+    state_of_origin: newStudent.stateOfOrigin,
+    lga: newStudent.lga,
+    parent_name: newStudent.parentName,
+    parent_phone: newStudent.parentPhone,
+    emergency_contact: newStudent.parentPhone || newStudent.phone,
+    programme: newStudent.programme,
+    study_mode: newStudent.studyMode,
+    profile_image: newStudent.profileImage,
+  };
+
+  try {
+    if (typeof newStudent.id === 'number' && newStudent.id < 1000000000) {
+      const res = await authClient.patch(`/auth/users/${newStudent.id}/`, sPayload);
+      if (res.data && res.data.id) {
+        newStudent.id = res.data.id;
+      }
+    } else {
+      const res = await authClient.post('/auth/register/', sPayload);
+      if (res.data && (res.data.id || res.data.user?.id)) {
+        newStudent.id = res.data.id || res.data.user.id;
+        if (res.data.email) newStudent.email = res.data.email;
+      }
+    }
+  } catch (err: any) {
+    console.warn('Backend student sync response:', err?.response?.data || err?.message);
+    // If registration failed due to existing user email, attempt patch
+    if (err?.response?.data?.email && typeof newStudent.id === 'number' && newStudent.id < 1000000000) {
+      await authClient.patch(`/auth/users/${newStudent.id}/`, sPayload).catch(() => {});
+    }
+  }
+
+  // Update in-memory live store
+  const targetIdx = _students.findIndex(s => s.id === newStudent.id || (newStudent.email && s.email.toLowerCase() === newStudent.email.toLowerCase()) || (newStudent.code && s.code === newStudent.code));
+  if (targetIdx >= 0) {
+    _students[targetIdx] = newStudent;
   } else {
     _students = [newStudent, ..._students];
   }
@@ -1320,43 +1377,13 @@ export function saveStudent(studentData: Partial<StudentRecord> & { name: string
     } catch (e) {}
   }
 
-  // Real-time async sync to Django backend database
-  const sNames = (newStudent.name || '').trim().split(' ');
-  const sPayload = {
-    email: newStudent.email,
-    password: newStudent.password || newStudent.code,
-    first_name: sNames[0] || newStudent.name,
-    last_name: sNames.slice(1).join(' ') || 'Student',
-    phone: newStudent.phone !== 'Not Available' ? newStudent.phone : '',
-    role: 'STUDENT',
-    student_id: newStudent.code,
-    grade: newStudent.grade,
-    grade_level: newStudent.grade,
-    house: newStudent.house,
-    dob: newStudent.dob !== 'Not Available' && newStudent.dob ? newStudent.dob : null,
-    address: newStudent.address !== 'Not Available' ? newStudent.address : '',
-    emergency_contact: newStudent.parentPhone !== 'Not Available' ? newStudent.parentPhone : '',
-  };
-
-  if (typeof newStudent.id === 'number' && newStudent.id < 1000000000) {
-    authClient.patch(`/auth/users/${newStudent.id}/`, sPayload).catch(() => {});
-  } else {
-    authClient.post('/auth/register/', sPayload).then((res) => {
-      if (res.data && res.data.id) {
-        newStudent.id = res.data.id;
-        try {
-          localStorage.setItem('tarepet_students_list', JSON.stringify(_students));
-        } catch (e) {}
-        broadcastRealtimeEvent();
-      }
-    }).catch((err) => {
-      console.warn('Backend student register attempt:', err);
-    });
-  }
-
+  sendWebSocketEvent({
+    type: 'ROSTER_UPDATED',
+    payload: { student: newStudent, action: 'SAVE' }
+  });
   broadcastRealtimeEvent();
-  const targetIdx = Math.max(0, existingIdx);
-  return _students[targetIdx] || _students[0];
+
+  return newStudent;
 }
 
 export function saveStoredStudents(students: StudentRecord[]) {
@@ -1510,7 +1537,7 @@ export function saveStoredExams(exams: CBTExam[]) {
   broadcastRealtimeEvent();
 }
 
-export function saveCBTExam(examData: Partial<CBTExam> & { title: string; course_code?: string }): CBTExam {
+export async function saveCBTExam(examData: Partial<CBTExam> & { title: string; course_code?: string }): Promise<CBTExam> {
   _exams = loadSavedExams();
   const foundCourse = SENIOR_COURSES.find(c => c.code === examData.course_code || c.name === examData.course_name) || SENIOR_COURSES[0];
 
@@ -1534,6 +1561,23 @@ export function saveCBTExam(examData: Partial<CBTExam> & { title: string; course
     created_at: examData.created_at || new Date().toISOString(),
   };
 
+  try {
+    const res = await authClient.post('/assessments/cbt-exams/', {
+      title: newExam.title,
+      description: newExam.description,
+      instructions: newExam.instructions,
+      assessment_type: newExam.assessment_type,
+      term: newExam.term,
+      duration_minutes: newExam.duration_minutes,
+      questions_per_page: newExam.questions_per_page,
+      status: newExam.status,
+      questions: newExam.questions
+    });
+    if (res?.data?.id) {
+      newExam.id = res.data.id;
+    }
+  } catch (err) {}
+
   const existingIdx = _exams.findIndex(e => e.id === newExam.id);
   if (existingIdx >= 0) {
     _exams[existingIdx] = newExam;
@@ -1546,7 +1590,6 @@ export function saveCBTExam(examData: Partial<CBTExam> & { title: string; course
 
   addRealtimeActivity('EXAM_CREATED', `CBT Exam Created: ${newExam.title}`, `Subject: ${newExam.course_name} (${newExam.class} ${newExam.stream})`, newExam.teacher_name);
 
-  // Send real-time notification alert to Admin
   addRealtimeNotification({
     title: '📝 Exam Pending Approval',
     message: `${newExam.teacher_name} submitted "${newExam.title}" (${newExam.course_name} - ${newExam.class}) for Admin approval.`,
@@ -1554,19 +1597,6 @@ export function saveCBTExam(examData: Partial<CBTExam> & { title: string; course
     type: 'exam',
     recipientRole: 'ADMIN'
   });
-
-  // Real-time backend API dispatch
-  authClient.post('/assessments/cbt-exams/', {
-    title: newExam.title,
-    description: newExam.description,
-    instructions: newExam.instructions,
-    assessment_type: newExam.assessment_type,
-    term: newExam.term,
-    duration_minutes: newExam.duration_minutes,
-    questions_per_page: newExam.questions_per_page,
-    status: newExam.status,
-    questions: newExam.questions
-  }).catch(() => {});
 
   sendWebSocketEvent('EXAM_CREATED', { exam: newExam });
 
@@ -1651,18 +1681,20 @@ export async function syncExamsWithBackend(): Promise<CBTExam[]> {
   return _exams;
 }
 
-export function updateExamStatus(examId: number, status: CBTExam['status'], reason?: string): CBTExam | null {
+export async function updateExamStatus(examId: number, status: CBTExam['status'], reason?: string): Promise<CBTExam | null> {
   _exams = loadSavedExams();
   const exam = _exams.find(e => e.id === examId);
   if (!exam) return null;
 
   exam.status = status;
 
-  // Real-time backend API update
-  authClient.patch(`/assessments/cbt-exams/${examId}/`, {
-    status: status,
-    rejection_reason: reason
-  }).catch(() => {});
+  try {
+    await authClient.patch(`/assessments/cbt-exams/${examId}/`, {
+      status: status,
+      rejection_reason: reason
+    });
+  } catch (e) {}
+
   if (status === 'ACTIVE') {
     exam.activated_at = new Date().toISOString();
     addRealtimeActivity('EXAM_ACTIVATED', `Exam Activated for Students: ${exam.title}`, `Now live for ${exam.class} ${exam.stream} students.`, exam.teacher_name);
@@ -1723,7 +1755,6 @@ export function addRealtimeActivity(type: LMSActivity['type'], title: string, de
   _activities = [newAct, ..._activities].slice(0, 50);
   broadcastRealtimeEvent();
 
-  // Async persist to Django backend database
   authClient.post('/communication/activities/', {
     type,
     activity_type: type,
@@ -1754,9 +1785,7 @@ export async function syncActivitiesWithBackend(): Promise<LMSActivity[]> {
         broadcastRealtimeEvent();
       }
     }
-  } catch (e) {
-    // Offline fallback to in-memory
-  }
+  } catch (e) {}
   return _activities;
 }
 
@@ -1770,11 +1799,11 @@ export function getStoredSubmissions(): CBTSubmission[] {
   return _submissions;
 }
 
-export function submitStudentCBTAttempt(
+export async function submitStudentCBTAttempt(
   examId: number,
   answers: Record<number, string>,
   studentInfo: { name?: string; email?: string; student_id?: string }
-): CBTSubmission {
+): Promise<CBTSubmission> {
   const exam = _exams.find(e => e.id === examId) || _exams[0];
 
   let score = 0;
@@ -1811,6 +1840,24 @@ export function submitStudentCBTAttempt(
   };
 
   _submissions = [newSub, ..._submissions];
+
+  // Auto-sync CBT score directly to student's live broadsheet mark in Django backend
+  const calculatedCbtScore = Math.round((percentage / 100) * 30);
+  try {
+    const existingScores = getStudentBroadsheet(autoId);
+    const updatedScores = {
+      ...existingScores,
+      [exam.course_code]: {
+        ...(existingScores[exam.course_code] || { ca1: 0, ca2: 0, exam: 0 }),
+        cbtScore: calculatedCbtScore,
+        cbtExam: calculatedCbtScore,
+        courseCode: exam.course_code,
+        courseName: exam.course_name,
+      }
+    };
+    await saveStudentBroadsheet(autoId, updatedScores);
+  } catch (e) {}
+
   addRealtimeActivity(
     'SUBMISSION_RECEIVED',
     `CBT Submission: ${sName}`,
@@ -1917,7 +1964,6 @@ export function getExamAttendance(examId: number, className: string = 'SS1', str
   const list = safeGetProp(_examAttendance, examId);
   if (list && list.length > 0) return list;
 
-  // Initialize from actual class roster
   const classStudents = getStudentsForClass(className, stream);
   const seeded: CBTAttendanceRecord[] = classStudents.map(s => ({
     examId,
@@ -1969,7 +2015,6 @@ export function setStudentExamAttendance(
   safeSetProp(_examAttendance, key, list);
   persistAttendance(_examAttendance);
 
-  // Real-time backend API dispatch
   authClient.post('/assessments/attendance/', {
     date: new Date().toISOString().split('T')[0],
     status: markedPresent ? 'present' : 'absent',
@@ -2100,7 +2145,6 @@ export function isSeniorSecondaryClass(gradeOrClass?: string): boolean {
   const clean = gradeOrClass.toUpperCase().trim();
   if (!clean || clean === 'NONE' || clean === 'UNASSIGNED' || clean.startsWith('NO')) return false;
 
-  // Reject lower classes immediately
   if (
     clean.includes('JSS') ||
     clean.includes('JS ') ||
@@ -2116,11 +2160,8 @@ export function isSeniorSecondaryClass(gradeOrClass?: string): boolean {
     return false;
   }
 
-  // Explicit match for SS1, SS2, SS3 (Science, Art, Commercial)
   return /\b(SS\s*[123]|SENIOR\s*SECONDARY\s*[123]|SS\s*ONE|SS\s*TWO|SS\s*THREE)\b/.test(clean);
 }
-
-
 
 const DEFAULT_BROADSHEET_SCORES: Record<string, Record<string, CourseBroadsheetScore>> = {};
 
@@ -2154,12 +2195,10 @@ export async function syncBroadsheetWithBackend(): Promise<void> {
       }
       broadcastRealtimeEvent();
     }
-  } catch (err) {
-    // Network fallback
-  }
+  } catch (err) {}
 }
 
-export function saveStudentBroadsheet(studentIdOrCode: string | number, courseScores: Record<string, CourseBroadsheetScore>) {
+export async function saveStudentBroadsheet(studentIdOrCode: string | number, courseScores: Record<string, CourseBroadsheetScore>): Promise<void> {
   _broadsheetScores = loadSavedBroadsheet();
   const key = String(studentIdOrCode);
   _broadsheetScores[key] = courseScores;
@@ -2169,11 +2208,12 @@ export function saveStudentBroadsheet(studentIdOrCode: string | number, courseSc
     } catch (e) {}
   }
 
-  // Real-time async sync to Django backend /api/v1/academics/broadsheet/
-  authClient.post('/academics/broadsheet/batch-save/', {
-    student_id: key,
-    scores: courseScores
-  }).catch(() => {});
+  try {
+    await authClient.post('/academics/broadsheet/batch-save/', {
+      student_id: key,
+      scores: courseScores
+    });
+  } catch (e) {}
 
   broadcastRealtimeEvent();
 }
@@ -2255,8 +2295,6 @@ export function getNextProgressiveClass(currentClass: string, stream?: string): 
   return 'SS 1 Science';
 }
 
-const INITIAL_PROMOTION_HISTORY: PromotionRecord[] = [];
-
 export function getPromotionHistory(): PromotionRecord[] {
   if (typeof window === 'undefined') return [];
   try {
@@ -2264,7 +2302,6 @@ export function getPromotionHistory(): PromotionRecord[] {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed)) {
-        // Filter out any legacy dummy/mock seeds
         const realRecords = parsed.filter((r: any) => 
           r && r.id && !String(r.id).startsWith('PROM-2025-') && !String(r.studentId).startsWith('std-2025-')
         );
@@ -2331,14 +2368,14 @@ export async function syncPromotionsWithBackend(): Promise<PromotionRecord[]> {
   return getPromotionHistory();
 }
 
-export function executeStudentPromotions(payload: ExecutePromotionsPayload): { success: boolean; count: number } {
+export async function executeStudentPromotions(payload: ExecutePromotionsPayload): Promise<{ success: boolean; count: number }> {
   const currentHistory = getPromotionHistory();
   const students = getStoredStudents();
   const timestamp = new Date().toISOString();
   const newRecords: PromotionRecord[] = [];
 
-  payload.studentPromotions.forEach((sp, idx) => {
-    // 1. Create Promotion Record
+  for (let idx = 0; idx < payload.studentPromotions.length; idx++) {
+    const sp = payload.studentPromotions[idx];
     const recordId = `PROM-${payload.academicSession.replace('/', '-')}-${Date.now().toString(36)}-${idx + 1}`;
     newRecords.push({
       id: recordId,
@@ -2357,12 +2394,10 @@ export function executeStudentPromotions(payload: ExecutePromotionsPayload): { s
       broadsheetSnapshot: sp.broadsheetSnapshot || getStudentBroadsheet(sp.studentId)
     });
 
-    // 2. Update Student Active Grade/Class in Student Directory
     const studentIdx = students.findIndex(s => String(s.id) === String(sp.studentId) || s.code === sp.studentCode);
     if (studentIdx !== -1) {
       if (sp.status === 'promoted') {
         students[studentIdx].grade = sp.toClass;
-        // Infer stream if SS class
         if (sp.toClass.includes('Art')) students[studentIdx].stream = 'Art';
         else if (sp.toClass.includes('Commercial')) students[studentIdx].stream = 'Commercial';
         else if (sp.toClass.includes('Science')) students[studentIdx].stream = 'Science';
@@ -2370,25 +2405,24 @@ export function executeStudentPromotions(payload: ExecutePromotionsPayload): { s
         students[studentIdx].grade = 'Alumni / Graduated';
         students[studentIdx].status = 'Alumni';
       }
-      saveStudent(students[studentIdx]);
+      await saveStudent(students[studentIdx]);
 
-      // 3. Clear/Reset active broadsheet for the student for the upcoming new session
       if (sp.status === 'promoted') {
-        saveStudentBroadsheet(sp.studentId, {});
+        await saveStudentBroadsheet(sp.studentId, {});
       }
     }
-  });
+  }
 
-  // Save all history
   savePromotionHistory([...newRecords, ...currentHistory]);
 
-  // Real-time backend batch execution
-  authClient.post('/academics/promotions/execute-batch/', {
-    promotions: payload.studentPromotions,
-    promotedBy: payload.teacherName,
-    academicSession: payload.academicSession,
-    term: payload.term
-  }).catch(() => {});
+  try {
+    await authClient.post('/academics/promotions/execute-batch/', {
+      promotions: payload.studentPromotions,
+      promotedBy: payload.teacherName,
+      academicSession: payload.academicSession,
+      term: payload.term
+    });
+  } catch (e) {}
 
   broadcastRealtimeEvent();
   return { success: true, count: newRecords.length };

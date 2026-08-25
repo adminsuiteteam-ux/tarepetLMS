@@ -95,12 +95,21 @@ class StudentProfile(models.Model):
         ParentProfile, related_name='students', blank=True
     )
     grade_level = models.CharField(max_length=50, default='Primary 1')
+    stream = models.CharField(max_length=50, blank=True, null=True)
+    gender = models.CharField(max_length=20, blank=True, null=True)
     house = models.CharField(max_length=50, blank=True, null=True)
     admission_date = models.DateField(auto_now_add=True)
     date_of_birth = models.DateField(blank=True, null=True)
     medical_conditions = models.TextField(blank=True, null=True)
     allergies = models.TextField(blank=True, null=True)
     emergency_contact = models.CharField(max_length=100, blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    state_of_origin = models.CharField(max_length=100, blank=True, null=True)
+    lga = models.CharField(max_length=100, blank=True, null=True)
+    parent_name = models.CharField(max_length=255, blank=True, null=True)
+    parent_phone = models.CharField(max_length=50, blank=True, null=True)
+    programme = models.CharField(max_length=150, blank=True, null=True)
+    study_mode = models.CharField(max_length=50, default='Full Time', blank=True, null=True)
     profile_image = models.TextField(blank=True, null=True)
 
     def __str__(self):
@@ -193,6 +202,82 @@ def create_or_ensure_user_profile(sender, instance, created, **kwargs):
     elif instance.role == CustomUser.Role.ADMIN:
         if not hasattr(instance, 'admin_profile'):
             AdminProfile.objects.create(user=instance)
+
+
+# ── OTP 2FA Model ─────────────────────────────────────────────────────────────
+import secrets
+import hashlib
+import uuid
+from datetime import timedelta
+from django.utils import timezone
+
+
+class OTPVerification(models.Model):
+    class Purpose(models.TextChoices):
+        LOGIN_2FA = 'LOGIN', _('Login 2FA')
+        PASSWORD_RESET = 'RESET', _('Password Reset')
+
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='otp_verifications')
+    temp_token = models.CharField(max_length=64, unique=True, default=uuid.uuid4, db_index=True)
+    code_hash = models.CharField(max_length=128)
+    purpose = models.CharField(max_length=20, choices=Purpose.choices, default=Purpose.LOGIN_2FA)
+    expires_at = models.DateTimeField()
+    is_used = models.BooleanField(default=False)
+    attempts = models.PositiveSmallIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"OTP for {self.user.email} [{self.purpose}] - {'Used' if self.is_used else 'Active'}"
+
+    @property
+    def is_expired(self) -> bool:
+        return timezone.now() > self.expires_at
+
+    @classmethod
+    def create_otp(cls, user, purpose=Purpose.LOGIN_2FA, validity_minutes=5):
+        # Invalidate any existing active OTPs for this user & purpose
+        cls.objects.filter(user=user, purpose=purpose, is_used=False).update(is_used=True)
+
+        raw_code = f"{secrets.randbelow(900000) + 100000:06d}"
+        code_hash = hashlib.sha256(raw_code.encode()).hexdigest()
+        temp_token = uuid.uuid4().hex
+
+        otp_obj = cls.objects.create(
+            user=user,
+            temp_token=temp_token,
+            code_hash=code_hash,
+            purpose=purpose,
+            expires_at=timezone.now() + timedelta(minutes=validity_minutes),
+        )
+        return raw_code, temp_token, otp_obj
+
+    def verify(self, raw_code: str) -> tuple[bool, str]:
+        if self.is_used:
+            return False, "This OTP has already been used. Please request a new one."
+        if self.is_expired:
+            return False, "This OTP has expired. Please request a new code."
+        if self.attempts >= 3:
+            self.is_used = True
+            self.save(update_fields=['is_used'])
+            return False, "Too many failed attempts. Please request a new code."
+
+        input_hash = hashlib.sha256(str(raw_code).strip().encode()).hexdigest()
+        if input_hash == self.code_hash:
+            self.is_used = True
+            self.save(update_fields=['is_used'])
+            return True, "Verification successful."
+        else:
+            self.attempts += 1
+            self.save(update_fields=['attempts'])
+            remaining = 3 - self.attempts
+            if remaining <= 0:
+                self.is_used = True
+                self.save(update_fields=['is_used'])
+                return False, "Too many failed attempts. This code has been invalidated."
+            return False, f"Incorrect code. {remaining} attempt(s) remaining."
 
 
 

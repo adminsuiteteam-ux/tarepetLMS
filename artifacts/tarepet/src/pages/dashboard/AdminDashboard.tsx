@@ -1842,27 +1842,15 @@ const AddUserModal = ({ onClose }: { onClose: () => void }) => {
     setForm(updatedForm);
   };
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!form.name.trim()) return;
     const finalEmail = form.role === 'STUDENT' ? formatStudentEmail(form.name) : (form.email || formatStudentEmail(form.name));
     const schoolId = form.role === 'TEACHER' 
       ? `TMS/TCH/${Math.floor(1000 + Math.random() * 9000)}`
       : generateAdmissionNumber('SS1', 'Science');
 
-    // Post to Django REST API
-    authClient.post('/auth/register/', {
-      email: finalEmail,
-      password: schoolId,
-      first_name: form.name.trim().split(' ')[0],
-      last_name: form.name.trim().split(' ').slice(1).join(' ') || 'Staff',
-      role: form.role,
-      teacher_id: form.role === 'TEACHER' ? schoolId : undefined,
-      student_id: form.role === 'STUDENT' ? schoolId : undefined,
-    }).catch(() => {});
-
     if (form.role === 'STUDENT') {
-      saveStudent({
-        id: Date.now(),
+      await saveStudent({
         name: form.name.trim(),
         email: finalEmail,
         code: schoolId,
@@ -1872,6 +1860,21 @@ const AddUserModal = ({ onClose }: { onClose: () => void }) => {
         stream: 'Science',
         status: 'ACTIVE'
       });
+      await syncStudentsWithBackend();
+    } else {
+      // Post to Django REST API for TEACHER / ADMIN
+      authClient.post('/auth/register/', {
+        email: finalEmail,
+        password: schoolId,
+        first_name: form.name.trim().split(' ')[0],
+        last_name: form.name.trim().split(' ').slice(1).join(' ') || 'Staff',
+        role: form.role,
+        teacher_id: form.role === 'TEACHER' ? schoolId : undefined,
+      }).then(async () => {
+        if (form.role === 'TEACHER') {
+          await syncTeachersWithBackend();
+        }
+      }).catch(() => {});
     }
 
     setForm({ ...form, email: finalEmail });
@@ -10763,12 +10766,11 @@ export default function AdminDashboard() {
                   </button>
                 ) : (
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       const generatedId = currentWizardAdmissionNo;
                       const autoEmail = formatStudentEmail(newStudentForm.name);
 
-                      saveStudent({
-                        id: Date.now(),
+                      await saveStudent({
                         name: newStudentForm.name,
                         code: generatedId,
                         admissionNo: generatedId,
@@ -10788,6 +10790,7 @@ export default function AdminDashboard() {
                         parentPhone: newStudentForm.parentPhone,
                         profileImage: newStudentForm.profileImage,
                       });
+                      await syncStudentsWithBackend();
                       setShowAddStudentModal(false);
                     }}
                     className="px-6 py-2.5 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 transition-colors shadow-md flex items-center gap-1.5">
