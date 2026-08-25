@@ -893,7 +893,7 @@ function loadSavedSubjects(): SubjectRecord[] {
   let list: SubjectRecord[] = [];
   if (typeof window !== 'undefined') {
     try {
-      const saved = localStorage.getItem('tarepet_subjects_list');
+      const saved = localStorage.getItem('tarepet_subjects_list_v2') || localStorage.getItem('tarepet_subjects_list');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -902,21 +902,21 @@ function loadSavedSubjects(): SubjectRecord[] {
       }
     } catch (e) {}
   }
-  if (list.length === 0) {
-    list = [...DEFAULT_SUBJECTS];
-  } else {
-    // Retain only official default subjects plus any explicitly created custom subjects
-    const validCodes = new Set(DEFAULT_SUBJECTS.map(d => `${d.code}_${d.grade}`));
-    list = list.filter(s => validCodes.has(`${s.code}_${s.grade}`) || !s.code.includes('-001'));
-    for (const def of DEFAULT_SUBJECTS) {
-      if (!list.some(s => s.code === def.code && s.grade === def.grade)) {
-        list.push(def);
-      }
+  
+  const validCodes = new Set(DEFAULT_SUBJECTS.map(d => `${d.code.toUpperCase()}_${d.grade.toUpperCase()}`));
+  // Retain only valid official Science subjects plus any user-created subjects
+  list = list.filter(s => validCodes.has(`${(s.code || '').toUpperCase()}_${(s.grade || '').toUpperCase()}`));
+
+  for (const def of DEFAULT_SUBJECTS) {
+    if (!list.some(s => s.code.toUpperCase() === def.code.toUpperCase() && s.grade.toUpperCase() === def.grade.toUpperCase())) {
+      list.push(def);
     }
   }
+
   if (typeof window !== 'undefined') {
     try {
       localStorage.setItem('tarepet_subjects_list', JSON.stringify(list));
+      localStorage.setItem('tarepet_subjects_list_v2', JSON.stringify(list));
     } catch (e) {}
   }
   return list;
