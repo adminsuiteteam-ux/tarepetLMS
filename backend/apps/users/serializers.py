@@ -234,6 +234,20 @@ class UserSerializer(serializers.ModelSerializer):
         return instance
 
 
+def parse_date_safe(val):
+    if not val or str(val).strip() in ['Not Available', 'null', 'None', '', 'undefined']:
+        return None
+    try:
+        from datetime import datetime, date
+        if isinstance(val, date):
+            return val
+        if isinstance(val, str):
+            return datetime.strptime(val.strip()[:10], '%Y-%m-%d').date()
+    except Exception:
+        pass
+    return None
+
+
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False, allow_blank=True)
     role = serializers.ChoiceField(choices=User.Role.choices, default=User.Role.STUDENT)
@@ -247,9 +261,9 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     specialization = serializers.CharField(write_only=True, required=False, allow_blank=True)
     qualifications = serializers.CharField(write_only=True, required=False, allow_blank=True)
     subjects_taught = serializers.JSONField(write_only=True, required=False, default=list)
-    hire_date = serializers.DateField(write_only=True, required=False, allow_null=True)
+    hire_date = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
     gender = serializers.CharField(write_only=True, required=False, allow_blank=True)
-    dob = serializers.DateField(write_only=True, required=False, allow_null=True)
+    dob = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
     address = serializers.CharField(write_only=True, required=False, allow_blank=True)
     salary = serializers.CharField(write_only=True, required=False, allow_blank=True)
     bank_name = serializers.CharField(write_only=True, required=False, allow_blank=True)
@@ -272,8 +286,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         email = validated_data.get('email', '').strip().lower()
 
         # Extract student profile extra fields
-        grade_val = validated_data.pop('grade_level', None) or validated_data.pop('grade', 'Primary 1')
-        house_val = validated_data.pop('house', 'Blue House')
+        grade_val = validated_data.pop('grade_level', None) or validated_data.pop('grade', 'SS1')
+        house_val = validated_data.pop('house', '')
         emerg_val = validated_data.pop('emergency_contact', '')
 
         # Extract teacher profile extra fields
@@ -281,9 +295,9 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         spec = validated_data.pop('specialization', '')
         qual = validated_data.pop('qualifications', '')
         subs = validated_data.pop('subjects_taught', [])
-        hire = validated_data.pop('hire_date', None)
+        hire = parse_date_safe(validated_data.pop('hire_date', None))
         gen = validated_data.pop('gender', '')
-        dob_val = validated_data.pop('dob', None)
+        dob_val = parse_date_safe(validated_data.pop('dob', None))
         addr = validated_data.pop('address', '')
         sal = validated_data.pop('salary', '')
         bank = validated_data.pop('bank_name', '')

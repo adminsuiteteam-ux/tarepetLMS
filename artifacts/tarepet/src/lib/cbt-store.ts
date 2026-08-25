@@ -1146,7 +1146,7 @@ export function saveStudent(studentData: Partial<StudentRecord> & { name: string
     student_id: newStudent.code,
     grade: newStudent.grade,
     house: newStudent.house,
-    dob: newStudent.dob !== 'Not Available' ? newStudent.dob : null,
+    dob: newStudent.dob !== 'Not Available' && newStudent.dob ? newStudent.dob : null,
     address: newStudent.address !== 'Not Available' ? newStudent.address : '',
     emergency_contact: newStudent.parentPhone !== 'Not Available' ? newStudent.parentPhone : '',
   };
@@ -1154,7 +1154,15 @@ export function saveStudent(studentData: Partial<StudentRecord> & { name: string
   if (typeof newStudent.id === 'number' && newStudent.id < 1000000000) {
     authClient.patch(`/auth/users/${newStudent.id}/`, sPayload).catch(() => {});
   } else {
-    authClient.post('/auth/register/', sPayload).catch(() => {});
+    authClient.post('/auth/register/', sPayload).then((res) => {
+      if (res.data && res.data.id) {
+        newStudent.id = res.data.id;
+        try {
+          localStorage.setItem('tarepet_students_list', JSON.stringify(_students));
+        } catch (e) {}
+        broadcastRealtimeEvent();
+      }
+    }).catch(() => {});
   }
 
   broadcastRealtimeEvent();
