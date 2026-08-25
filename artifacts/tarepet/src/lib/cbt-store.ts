@@ -321,6 +321,21 @@ export interface TeacherRecord {
 
 export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [
   {
+    id: 1,
+    staffId: 'TMS/TCH/0001',
+    name: 'Ms. Allison Victoria',
+    email: 'allison.victoria@tarepet.com',
+    phone: '08062571566',
+    gender: 'Female',
+    formTeacherOf: 'SS 1',
+    department: 'Senior Secondary Section',
+    specialization: 'Senior Secondary Language Arts & English',
+    qualification: 'B.Ed. English & Literature',
+    status: 'Active',
+    joined: '2022-09-01',
+    bio: 'Form Teacher for SS 1 guiding students in English Language and Senior Secondary curriculum.'
+  },
+  {
     id: 2,
     staffId: 'TMS/TCH/0002',
     name: 'Mrs. Timi Porbeni',

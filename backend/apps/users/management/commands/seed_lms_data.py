@@ -54,26 +54,37 @@ class Command(BaseCommand):
         # 3. Seed Teachers from Official Paper Roster (Exact 19 Teachers)
         teachers_roster = [
             {
+                'teacher_id': 'TMS/TCH/0001',
+                'first_name': 'Ms. Allison',
+                'last_name': 'Victoria',
+                'email': 'allison.victoria@tarepet.com',
+                'phone': '08062571566',
+                'gender': 'Female',
+                'form_teacher_of': 'SS 1',
+                'department': 'Senior Secondary Section',
+                'specialization': 'Senior Secondary Language Arts & English',
+                'subjects_taught': [{'name': 'English Language', 'grade': 'SS 1'}],
+                'bio': 'Form Teacher for SS 1 guiding students in English Language and Senior Secondary curriculum.'
+            },
+            {
+                'teacher_id': 'TMS/TCH/0002',
                 'first_name': 'Mrs. Timi',
                 'last_name': 'Porbeni',
                 'email': 'isaactimi16@gmail.com',
                 'phone': '07068523730',
-                'teacher_id': 'TMS/TCH/0002',
                 'gender': 'Female',
+                'form_teacher_of': 'SS 2',
                 'department': 'Senior Secondary Humanities Department',
                 'specialization': 'English Language & Literature in English (SS1, SS2, SS3)',
-                'class_assigned': 'SS 2',
-                'bio': 'Senior Instructor in English Language & Literature in English across SS 1, SS 2, and SS 3.',
-                'subjects_taught': [{'name': 'English Language', 'grade': 'SS 2'}, {'name': 'Literature in English', 'grade': 'SS 2'}]
+                'subjects_taught': [{'name': 'English Language', 'grade': 'SS 2'}, {'name': 'Literature in English', 'grade': 'SS 2'}, {'name': 'English Language', 'grade': 'SS 3'}, {'name': 'Literature in English', 'grade': 'SS 3'}],
+                'bio': 'Senior Instructor in English Language & Literature in English across SS 1, SS 2, and SS 3.'
             },
             {
-                'first_name': 'Samuel',
-                'last_name': 'Hannah',
+                'teacher_id': 'TMS/TCH/0003',
+                'first_name': 'Hannah',
+                'last_name': 'Samuel',
                 'email': 'hannah.samuel@tarepet.com',
                 'phone': '08062429432',
-                'teacher_id': 'TMS/TCH/0003',
-                'gender': 'Female',
-                'department': 'Early Years & Vocational Studies',
                 'specialization': 'Prevocational Studies (NUR - SS3) & Creche',
                 'class_assigned': 'Creche',
                 'bio': 'Form Educator for Creche and Prevocational Studies instructor from Nursery to SS 3.',
