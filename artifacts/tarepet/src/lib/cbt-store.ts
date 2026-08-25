@@ -1,7 +1,7 @@
 // Central CBT & LMS Engine for Tare Pet Montessori School
 // All data lives in module-level memory and localStorage sync. Syncs with backend API.
 import { addRealtimeNotification } from './notifications-store';
-import { sendWebSocketEvent, initWebSocket } from './websocket-client';
+import { sendWebSocketEvent, initWebSocket, subscribeToWebSocketEvents } from './websocket-client';
 
 function safeGetProp<T>(obj: Record<string | number, T> | null | undefined, key: string | number): T | undefined {
   if (!obj) return undefined;
@@ -2323,6 +2323,15 @@ export function setAdminPassword(newPassword: string): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem('tarepet_admin_password', newPassword.trim());
-    broadcastRealtimeEvent();
+    broadcastRealtimeEvent('ADMIN_PASSWORD_UPDATED');
   } catch {}
+}
+
+export function broadcastRealtimeEvent(eventType: string = 'CBT_STORE_UPDATED', payload?: any): void {
+  sendWebSocketEvent(eventType, payload);
+  listeners.forEach(fn => fn());
+}
+
+export function listenToRealtimeEvents(callback: (event: any) => void): () => void {
+  return subscribeToWebSocketEvents(callback);
 }

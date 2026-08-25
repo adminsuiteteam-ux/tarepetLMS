@@ -3,9 +3,9 @@ import { useTranslation } from '@/i18n';
 import { Link } from 'wouter';
 import { authClient, sanitizeMailto } from '@/lib/api-auth';
 import { PortalLayout } from '@/components/layout/PortalLayout';
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
 import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, clearAllStoredStudents, deleteStudent, syncStudentsWithBackend, getStoredTeachers, saveTeacher, saveStoredTeachers, clearAllStoredTeachers, deleteTeacher, syncTeachersWithBackend, listenToRealtimeEvents, clearCBTStoreCache, clearAllSiteDefaultData, isAccountDeleted, getAdminPassword, setAdminPassword, matchStudentClass, broadcastRealtimeEvent } from '@/lib/cbt-store';
+import { subscribeToWebSocketEvents } from '@/lib/websocket-client';
 import { AdminManagementPanel } from '@/components/dashboard/AdminManagementPanel';
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
 import { ImageCropModal } from '@/components/ui/ImageCropModal';
@@ -2214,12 +2214,16 @@ export default function AdminDashboard() {
     const unsub = subscribeToCBTStore(() => {
       setStudentsList(getStoredStudents());
     });
-    const unsubEvents = listenToRealtimeEvents((event) => {
+    const unsubEvents = subscribeToWebSocketEvents((event: any) => {
       if (event.type === 'STUDENT_ENROLLED_BY_TEACHER' && event.payload) {
         setStudentsList(getStoredStudents());
         syncStudentsWithBackend().then(res => setStudentsList(res));
         const p = event.payload;
-        showAlert?.(`🔔 Live Notification: Form Teacher ${p.registeredBy || 'Staff'} has enrolled a new student: "${p.student?.name || 'Student'}" into ${p.classLevel || 'Class'}.`, 'Live Student Registration Alert', 'info');
+        showAlert?.({
+          title: 'Live Student Registration Alert',
+          message: `🔔 Live Notification: Form Teacher ${p.registeredBy || 'Staff'} has enrolled a new student: "${p.student?.name || 'Student'}" into ${p.classLevel || 'Class'}.`,
+          type: 'info'
+        });
       }
     });
     return () => {

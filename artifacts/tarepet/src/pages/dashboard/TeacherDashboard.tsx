@@ -194,12 +194,7 @@ export default function TeacherDashboard() {
   });
   
   // Modals & toast
-  const { showAlert, showConfirm } = useCustomDialog();
   const [toastMsg, setToastMsg] = useState<string | null>(null);
-  const showToast = (msg: string) => {
-    setToastMsg(msg);
-    setTimeout(() => setToastMsg(null), 4000);
-  };
   const [showAddStudentModal, setShowAddStudentModal] = useState(false);
   const [addStudentForm, setAddStudentForm] = useState({
     code: '',
@@ -590,92 +585,6 @@ export default function TeacherDashboard() {
     };
   };
 
-  const handleAddStudentSubmit = async () => {
-    if (!formClass && user?.role !== 'ADMIN') {
-      showAlert('Student registration is restricted exclusively to Form Teachers and System Administrators.', 'Permission Denied', 'error');
-      return;
-    }
-
-    if (!addStudentForm.name.trim()) {
-      showAlert('Please enter the student full name.', 'Validation Error', 'warning');
-      return;
-    }
-
-    const targetGrade = formClass || addStudentForm.grade || 'SS1';
-    const targetStream = addStudentForm.stream || (targetGrade.startsWith('SS') ? 'Science' : 'General');
-    const targetCode = addStudentForm.code.trim() || generateAdmissionNumber(targetGrade, targetStream);
-    const targetEmail = addStudentForm.email.trim() || formatStudentEmail(addStudentForm.name);
-
-    const studentRecord = {
-      id: Date.now(),
-      name: addStudentForm.name.trim(),
-      code: targetCode,
-      admissionNo: targetCode,
-      admission_number: targetCode,
-      email: targetEmail,
-      gender: addStudentForm.gender || 'Male',
-      dob: addStudentForm.dob || '2012-05-14',
-      grade: targetGrade,
-      stream: targetStream,
-      phone: addStudentForm.phone || '',
-      country: addStudentForm.country || 'Nigeria',
-      stateOfOrigin: addStudentForm.stateOfOrigin || 'Bayelsa',
-      lga: addStudentForm.lga || 'Yenagoa',
-      address: addStudentForm.address || 'Yenagoa, Bayelsa State',
-      parentName: addStudentForm.parentName || 'Parent / Guardian',
-      parentPhone: addStudentForm.parentPhone || '',
-      status: addStudentForm.status || 'ACTIVE',
-      studyMode: addStudentForm.studyMode || 'Full Time',
-      programme: addStudentForm.programme || (targetGrade.startsWith('SS') ? 'Senior Secondary Certificate (SSCE)' : 'Basic Education Certificate (BECE)'),
-      house: '',
-    };
-
-    // Save locally and sync immediately with Django backend in real time
-    await saveStudent(studentRecord);
-
-    // Live Real-Time Admin Notification
-    const teacherName = matchedStoredTeacher?.name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Form Teacher';
-    addRealtimeNotification({
-      title: 'New Student Registered by Form Teacher',
-      message: `${studentRecord.name} (${targetCode}) was enrolled in ${targetGrade} (${studentRecord.stream}) by Form Teacher ${teacherName}.`,
-      type: 'success',
-      recipientRole: 'ADMIN',
-    });
-
-    broadcastRealtimeEvent('STUDENT_ENROLLED_BY_TEACHER', {
-      student: studentRecord,
-      registeredBy: teacherName,
-      classLevel: targetGrade,
-      timestamp: new Date().toISOString(),
-    });
-
-    // Update local state and close modal
-    setRoster(getStoredStudents());
-    setShowAddStudentModal(false);
-    setAddStudentForm({
-      code: '',
-      name: '',
-      email: '',
-      gender: 'Male',
-      maritalStatus: 'Single',
-      dob: '',
-      phone: '',
-      country: 'Nigeria',
-      stateOfOrigin: '',
-      lga: '',
-      address: '',
-      grade: formClass || 'SS1',
-      stream: 'Science',
-      programme: 'Senior Secondary Certificate (SSCE)',
-      parentName: '',
-      parentPhone: '',
-      status: 'ACTIVE',
-      studyMode: 'Full Time'
-    });
-
-    showAlert(`🎉 Student "${studentRecord.name}" (${targetCode}) was successfully registered and synced with the database in real time. The Admin has been notified.`, 'Student Enrolled Successfully', 'success');
-  };
-
   const [profileForm, setProfileForm] = useState(getTeacherProfileData);
 
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -791,11 +700,29 @@ export default function TeacherDashboard() {
     showToast(`Graded submission for ${selectedSub.student} successfully!`);
   };
 
-  const handleAddStudentSubmit = (e?: React.FormEvent) => {
+  const handleAddStudentSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!addStudentForm.name.trim()) return;
-    const selectedGrade = addStudentForm.grade || formClass || 'Nursery 1';
-    const autoCode = addStudentForm.code.trim() || generateAdmissionNumber(selectedGrade, addStudentForm.stream);
+    if (!formClass && user?.role !== 'ADMIN') {
+      showAlert({
+        title: 'Permission Denied',
+        message: 'Student registration is restricted exclusively to Form Teachers and System Administrators.',
+        type: 'error'
+      });
+      return;
+    }
+
+    if (!addStudentForm.name.trim()) {
+      showAlert({
+        title: 'Validation Error',
+        message: 'Please enter the student full name.',
+        type: 'warning'
+      });
+      return;
+    }
+
+    const selectedGrade = formClass || addStudentForm.grade || 'Nursery 1';
+    const targetStream = addStudentForm.stream || (selectedGrade.startsWith('SS') ? 'Science' : 'General');
+    const autoCode = addStudentForm.code.trim() || generateAdmissionNumber(selectedGrade, targetStream);
     const autoEmail = addStudentForm.email.trim() || formatStudentEmail(addStudentForm.name);
 
     let defaultProg = 'Montessori Early Childhood Education';
@@ -805,31 +732,48 @@ export default function TeacherDashboard() {
       defaultProg = 'Senior Secondary Certificate (SSCE)';
     }
 
-    saveStudent({
+    const studentRecord = {
       id: Date.now(),
       code: autoCode,
       admissionNo: autoCode,
+      admission_number: autoCode,
       name: addStudentForm.name.trim(),
       email: autoEmail,
       password: autoCode,
-      gender: addStudentForm.gender,
-      maritalStatus: addStudentForm.maritalStatus,
-      dob: addStudentForm.dob || 'Not Available',
+      gender: addStudentForm.gender || 'Male',
+      maritalStatus: addStudentForm.maritalStatus || 'Single',
+      dob: addStudentForm.dob || '2012-05-14',
       phone: addStudentForm.phone || 'Not Available',
       country: addStudentForm.country || 'Nigeria',
       stateOfOrigin: addStudentForm.stateOfOrigin || 'Bayelsa',
       lga: addStudentForm.lga || 'Yenagoa',
-      address: addStudentForm.address || 'Not Available',
+      address: addStudentForm.address || 'Yenagoa, Bayelsa State',
       grade: selectedGrade,
-      stream: addStudentForm.stream,
+      stream: targetStream,
       programme: addStudentForm.programme || defaultProg,
-      parentName: addStudentForm.parentName || 'Not Available',
-      parentPhone: addStudentForm.parentPhone || 'Not Available',
+      parentName: addStudentForm.parentName || 'Parent / Guardian',
+      parentPhone: addStudentForm.parentPhone || '',
       status: addStudentForm.status || 'ACTIVE',
       studyMode: addStudentForm.studyMode || 'Full Time',
       attendance: '100%',
-      atRisk: false
+      atRisk: false,
+      house: '',
+    };
+
+    // Save locally and sync with Django backend in real time
+    await saveStudent(studentRecord);
+
+    // Live Real-Time Admin Notification
+    const teacherName = matchedStoredTeacher?.name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Form Teacher';
+    addRealtimeNotification({
+      title: 'New Student Registered by Form Teacher',
+      message: `${studentRecord.name} (${autoCode}) was enrolled in ${selectedGrade} (${targetStream}) by Form Teacher ${teacherName}.`,
+      type: 'success',
+      recipientRole: 'ADMIN',
     });
+
+    broadcastRealtimeEvent();
+
     setRoster(getStoredStudents());
     setShowAddStudentModal(false);
     showToast(`Registered ${addStudentForm.name} (${selectedGrade})! Student ID: ${autoCode}`);
@@ -852,6 +796,12 @@ export default function TeacherDashboard() {
       parentPhone: '',
       status: 'ACTIVE',
       studyMode: 'Full Time'
+    });
+
+    showAlert({
+      title: 'Student Enrolled Successfully',
+      message: `🎉 Student "${studentRecord.name}" (${autoCode}) was successfully registered and synced with the database in real time. The Admin has received a live notification.`,
+      type: 'success'
     });
   };
 
