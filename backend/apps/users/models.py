@@ -144,12 +144,168 @@ class AdminProfile(models.Model):
     user = models.OneToOneField(
         CustomUser, on_delete=models.CASCADE, related_name='admin_profile'
     )
+    admin_id = models.CharField(max_length=50, blank=True, null=True, default='TMS/ADM/2018/001')
+    title = models.CharField(max_length=150, default='School Principal & Chief Administrator', blank=True, null=True)
+    department = models.CharField(max_length=150, default='Executive Governance & Academics', blank=True, null=True)
     role_type = models.CharField(max_length=50, default='Super Admin')
+    gender = models.CharField(max_length=20, blank=True, null=True, default='Male')
+    dob = models.CharField(max_length=50, blank=True, null=True, default='1978-08-15')
+    state_of_origin = models.CharField(max_length=100, blank=True, null=True, default='Bayelsa State, Nigeria')
+    address = models.TextField(blank=True, null=True, default='12 Kpansia-Epie Road, Yenagoa, Bayelsa State')
+    emergency_contact = models.CharField(max_length=150, blank=True, null=True, default='Mrs. Florence Montessori (Spouse)')
+    emergency_phone = models.CharField(max_length=50, blank=True, null=True, default='+234 802 987 6543')
+    office_location = models.CharField(max_length=200, blank=True, null=True, default="Principal's Office Suite, Block A Executive Wing")
+    direct_extension = models.CharField(max_length=50, blank=True, null=True, default='Ext. 101 (Direct Intercom)')
+    bio = models.TextField(
+        blank=True,
+        null=True,
+        default='Visionary educational leader with over 18 years of pioneering excellence in Montessori and Nigerian National Curriculum pedagogy. Committed to nurturing intellectual curiosity, ethical character, and academic brilliance across all learners.'
+    )
+    rank = models.CharField(max_length=100, blank=True, null=True, default='Chief Executive Administrator (Super Admin)')
+    blood_group = models.CharField(max_length=20, blank=True, null=True, default='O+')
+    qualifications = models.TextField(blank=True, null=True)
+    certifications = models.TextField(blank=True, null=True)
+    committees = models.JSONField(default=list, blank=True)
+    divisions_supervised = models.JSONField(default=list, blank=True)
     permissions = models.JSONField(default=dict, blank=True)
     profile_image = models.TextField(blank=True, null=True)
+    extra_data = models.JSONField(default=dict, blank=True)
 
     def __str__(self):
-        return f"Admin: {self.user.get_full_name()} ({self.role_type})"
+        return f"Admin: {self.user.get_full_name()} ({self.admin_id or 'TMS/ADM/2018/001'})"
+
+
+class SystemSettings(models.Model):
+    """
+    Central institutional configuration holding all settings sections
+    from the Administrator Settings console in the database.
+    """
+    # 1. Multi-Factor & Authentication
+    enforce_2fa = models.BooleanField(default=True)
+    otp_channels = models.JSONField(default=list, blank=True)
+    otp_expiry_minutes = models.IntegerField(default=5)
+    max_otp_attempts = models.IntegerField(default=3)
+    send_welcome_email_with_credentials = models.BooleanField(default=True)
+    allow_direct_student_pin_login = models.BooleanField(default=True)
+    min_password_length = models.IntegerField(default=8)
+    require_special_char = models.BooleanField(default=True)
+    require_number = models.BooleanField(default=True)
+    password_expiry_months = models.IntegerField(default=6)
+    failed_login_lockout_attempts = models.IntegerField(default=5)
+
+    # 2. School Identity
+    school_name = models.CharField(max_length=200, default='Tare Pet Montessori School')
+    short_name = models.CharField(max_length=50, default='TPMS')
+    motto = models.CharField(max_length=255, default='Excellence Through Observation & Character')
+    official_email = models.EmailField(default='info@tarepet.edu.ng')
+    phone = models.CharField(max_length=50, default='+234 803 123 4567')
+    address = models.TextField(default='12 Kpansia-Epie Road, Yenagoa, Bayelsa State, Nigeria')
+    ministry_reg_no = models.CharField(max_length=100, default='EDU/BY/SCH/2009/0421')
+    proprietress = models.CharField(max_length=150, default='Mrs. Tare Pet')
+    principal = models.CharField(max_length=150, default='Dr. T. Montessori')
+    vice_principal = models.CharField(max_length=150, default='Mr. James Eze')
+    accreditations = models.TextField(blank=True, null=True)
+
+    # 3. Academic & Grading
+    session = models.CharField(max_length=50, default='2025/2026')
+    term = models.CharField(max_length=50, default='2nd Term')
+    term_start = models.CharField(max_length=50, default='2026-01-12')
+    term_end = models.CharField(max_length=50, default='2026-04-04')
+    min_pass_mark = models.IntegerField(default=50)
+    ca1_weight = models.IntegerField(default=15)
+    ca2_weight = models.IntegerField(default=15)
+    exam_weight = models.IntegerField(default=70)
+    grading_scale = models.JSONField(default=dict, blank=True)
+
+    # 4. Session & Access
+    session_timeout_minutes = models.IntegerField(default=30)
+    single_session_per_user = models.BooleanField(default=True)
+    rbac_roles = models.JSONField(default=dict, blank=True)
+
+    # 5. Notifications & SMS
+    sms_provider = models.CharField(max_length=100, default='Termii (Nigeria)')
+    sms_sender_id = models.CharField(max_length=50, default='TPMS-School')
+    sms_balance = models.IntegerField(default=4820)
+    notify_results_sms = models.BooleanField(default=True)
+    notify_attendance_sms = models.BooleanField(default=True)
+    notify_fees_sms = models.BooleanField(default=True)
+    notify_cbt_exams = models.BooleanField(default=True)
+
+    # 6. Fees
+    late_fee_penalty = models.CharField(max_length=100, default='₦2,000 flat fee after due date')
+    scholarship_slots = models.IntegerField(default=10)
+    fee_schedules = models.JSONField(default=dict, blank=True)
+
+    # 7. Portal Theme & Preferences
+    portal_language = models.CharField(max_length=50, default='en-NG')
+    color_scheme = models.CharField(max_length=50, default='system')
+    date_format = models.CharField(max_length=50, default='YYYY-MM-DD')
+    currency = models.CharField(max_length=20, default='NGN')
+
+    # Comprehensive JSON holding all arbitrary settings sections
+    settings_data = models.JSONField(default=dict, blank=True)
+
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "System Settings"
+        verbose_name_plural = "System Settings"
+
+    def __str__(self):
+        return f"System Settings (Updated: {self.updated_at.strftime('%Y-%m-%d %H:%M') if self.updated_at else 'Initial'})"
+
+    @classmethod
+    def get_settings(cls):
+        obj, created = cls.objects.get_or_create(id=1)
+        if created or not obj.settings_data:
+            obj.settings_data = {
+                'enforce2FA': obj.enforce_2fa,
+                'otpChannels': obj.otp_channels or ['EMAIL'],
+                'otpExpiryMinutes': obj.otp_expiry_minutes,
+                'maxOtpAttempts': obj.max_otp_attempts,
+                'sendWelcomeEmailWithCredentials': obj.send_welcome_email_with_credentials,
+                'allowDirectStudentPinLogin': obj.allow_direct_student_pin_login,
+                'minPasswordLength': obj.min_password_length,
+                'requireSpecialChar': obj.require_special_char,
+                'requireNumber': obj.require_number,
+                'passwordExpiryMonths': obj.password_expiry_months,
+                'failedLoginLockoutAttempts': obj.failed_login_lockout_attempts,
+                'schoolName': obj.school_name,
+                'shortName': obj.short_name,
+                'motto': obj.motto,
+                'officialEmail': obj.official_email,
+                'phone': obj.phone,
+                'address': obj.address,
+                'ministryRegNo': obj.ministry_reg_no,
+                'proprietress': obj.proprietress,
+                'principal': obj.principal,
+                'vicePrincipal': obj.vice_principal,
+                'session': obj.session,
+                'term': obj.term,
+                'termStart': obj.term_start,
+                'termEnd': obj.term_end,
+                'minPassMark': obj.min_pass_mark,
+                'ca1Weight': obj.ca1_weight,
+                'ca2Weight': obj.ca2_weight,
+                'examWeight': obj.exam_weight,
+                'sessionTimeoutMinutes': obj.session_timeout_minutes,
+                'singleSessionPerUser': obj.single_session_per_user,
+                'smsProvider': obj.sms_provider,
+                'smsSenderId': obj.sms_sender_id,
+                'smsBalance': obj.sms_balance,
+                'notifyResultsSMS': obj.notify_results_sms,
+                'notifyAttendanceSMS': obj.notify_attendance_sms,
+                'notifyFeesSMS': obj.notify_fees_sms,
+                'notifyCBTExams': obj.notify_cbt_exams,
+                'lateFeePenalty': obj.late_fee_penalty,
+                'scholarshipSlots': obj.scholarship_slots,
+                'portalLanguage': obj.portal_language,
+                'colorScheme': obj.color_scheme,
+                'dateFormat': obj.date_format,
+                'currency': obj.currency,
+            }
+            obj.save()
+        return obj
 
 
 class LoginActivityLog(models.Model):

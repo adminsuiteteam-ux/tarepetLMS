@@ -12,6 +12,7 @@ from .views import (
     BulkUserImportView,
     SystemAuditLogView,
     LoginActivityLogView,
+    SystemSettingsView,
 )
 
 router = DefaultRouter()
@@ -25,6 +26,7 @@ urlpatterns = [
     path('logout/', TokenBlacklistView.as_view(), name='token_blacklist'),
     path('register/', RegisterView.as_view(), name='user_register'),
     path('me/', UserProfileView.as_view(), name='user_profile'),
+    path('settings/', SystemSettingsView.as_view(), name='system_settings'),
 
     # Enterprise Admin Endpoints
     path('admin-analytics/', AdminAnalyticsView.as_view(), name='admin_analytics'),

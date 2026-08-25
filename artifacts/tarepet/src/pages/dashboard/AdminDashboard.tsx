@@ -2508,12 +2508,30 @@ export default function AdminDashboard() {
     };
   });
 
+  // Synchronize System Settings with Django backend on mount
+  useEffect(() => {
+    authClient.get('/auth/settings/')
+      .then(res => {
+        if (res.data) {
+          setSystemSettings((prev: any) => {
+            const merged = { ...prev, ...(res.data.settings_data || {}), ...res.data };
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('tarepet_system_settings', JSON.stringify(merged));
+            }
+            return merged;
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const triggerSave = (newValues?: any) => {
     const updated = newValues ? { ...systemSettings, ...newValues } : { ...systemSettings };
     setSystemSettings(updated);
     if (typeof window !== 'undefined') {
       localStorage.setItem('tarepet_system_settings', JSON.stringify(updated));
     }
+    authClient.patch('/auth/settings/', updated).catch(() => {});
     broadcastRealtimeEvent();
     setSettingsSaved(true);
     showToast('System settings updated and synchronized in real time!');

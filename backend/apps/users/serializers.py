@@ -2,7 +2,7 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
 from django.db.models import Q
-from .models import StudentProfile, TeacherProfile, ParentProfile, AdminProfile
+from .models import StudentProfile, TeacherProfile, ParentProfile, AdminProfile, SystemSettings
 
 User = get_user_model()
 
@@ -120,7 +120,19 @@ class TeacherProfileSerializer(serializers.ModelSerializer):
 class AdminProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = AdminProfile
-        fields = ['id', 'role_type', 'permissions', 'profile_image']
+        fields = [
+            'id', 'admin_id', 'title', 'department', 'role_type', 'gender',
+            'dob', 'state_of_origin', 'address', 'emergency_contact', 'emergency_phone',
+            'office_location', 'direct_extension', 'bio', 'rank', 'blood_group',
+            'qualifications', 'certifications', 'committees', 'divisions_supervised',
+            'permissions', 'profile_image', 'extra_data'
+        ]
+
+
+class SystemSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SystemSettings
+        fields = '__all__'
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -247,12 +259,47 @@ class UserSerializer(serializers.ModelSerializer):
 
         elif instance.role == User.Role.ADMIN:
             a_prof, _ = AdminProfile.objects.get_or_create(user=instance)
-            if 'role_type' in merged_profile:
-                a_prof.role_type = merged_profile['role_type']
-            if 'permissions' in merged_profile:
-                a_prof.permissions = merged_profile['permissions']
-            if 'profile_image' in merged_profile or 'profileImage' in merged_profile:
-                a_prof.profile_image = merged_profile.get('profile_image') or merged_profile.get('profileImage')
+            admin_field_map = {
+                'admin_id': 'admin_id',
+                'adminId': 'admin_id',
+                'id': 'admin_id',
+                'title': 'title',
+                'department': 'department',
+                'role_type': 'role_type',
+                'roleType': 'role_type',
+                'gender': 'gender',
+                'dob': 'dob',
+                'date_of_birth': 'dob',
+                'state_of_origin': 'state_of_origin',
+                'stateOfOrigin': 'state_of_origin',
+                'address': 'address',
+                'emergency_contact': 'emergency_contact',
+                'emergencyContact': 'emergency_contact',
+                'emergency_phone': 'emergency_phone',
+                'emergencyPhone': 'emergency_phone',
+                'office_location': 'office_location',
+                'officeLocation': 'office_location',
+                'direct_extension': 'direct_extension',
+                'directExtension': 'direct_extension',
+                'bio': 'bio',
+                'rank': 'rank',
+                'blood_group': 'blood_group',
+                'bloodGroup': 'blood_group',
+                'qualifications': 'qualifications',
+                'certifications': 'certifications',
+                'committees': 'committees',
+                'divisions_supervised': 'divisions_supervised',
+                'divisionsSupervised': 'divisions_supervised',
+                'permissions': 'permissions',
+                'profile_image': 'profile_image',
+                'profileImage': 'profile_image',
+                'extra_data': 'extra_data',
+            }
+            for key, attr in admin_field_map.items():
+                if key in merged_profile:
+                    val = merged_profile[key]
+                    if val is not None:
+                        setattr(a_prof, attr, val)
             a_prof.save()
 
         return instance

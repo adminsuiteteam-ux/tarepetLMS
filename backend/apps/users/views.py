@@ -16,6 +16,7 @@ from .serializers import (
     TeacherProfileSerializer,
     ParentProfileSerializer,
     AdminProfileSerializer,
+    SystemSettingsSerializer,
 )
 from .permissions import IsAdmin, IsSelfOrAdmin
 # pyrefly: ignore [missing-import]
@@ -23,7 +24,7 @@ from apps.courses.models import Course
 # pyrefly: ignore [missing-import]
 from apps.assessments.models import Attendance, BehaviorLog, House, Submission, Assignment
 
-from .models import CustomUser, StudentProfile, TeacherProfile, ParentProfile, AdminProfile, LoginActivityLog, OTPVerification
+from .models import CustomUser, StudentProfile, TeacherProfile, ParentProfile, AdminProfile, LoginActivityLog, OTPVerification, SystemSettings
 from .email_service import send_otp_email, mask_email
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -500,3 +501,97 @@ class SystemAuditLogView(APIView):
             {'id': 7, 'user': 'admin@tarepet.edu.ng', 'action': 'UPDATE_SETTINGS', 'target': 'School Config (Grading Schema)', 'ip': '127.0.0.1', 'timestamp': '2026-07-24T09:45:00Z', 'status': 'SUCCESS'},
         ]
         return Response({'count': len(audit_logs), 'results': audit_logs})
+
+
+class SystemSettingsView(APIView):
+    """
+    GET: Retrieve system and school configuration settings.
+    PUT/PATCH: Update institutional system settings (Admin only).
+    """
+    def get_permissions(self):
+        if self.request.method in ['PUT', 'PATCH', 'POST']:
+            return [IsAdmin()]
+        return [permissions.AllowAny()]
+
+    def get(self, request):
+        settings_obj = SystemSettings.get_settings()
+        serializer = SystemSettingsSerializer(settings_obj)
+        res_data = {
+            **serializer.data,
+            **(settings_obj.settings_data or {})
+        }
+        return Response(res_data, status=status.HTTP_200_OK)
+
+    def put(self, request):
+        return self.patch(request)
+
+    def patch(self, request):
+        settings_obj = SystemSettings.get_settings()
+        data = request.data if isinstance(request.data, dict) else {}
+
+        # Merge with existing settings_data
+        existing_data = settings_obj.settings_data or {}
+        merged_data = {**existing_data, **data}
+        settings_obj.settings_data = merged_data
+
+        # Update specific model fields if present
+        field_map = {
+            'enforce2FA': 'enforce_2fa',
+            'enforce_2fa': 'enforce_2fa',
+            'otpChannels': 'otp_channels',
+            'otpExpiryMinutes': 'otp_expiry_minutes',
+            'maxOtpAttempts': 'max_otp_attempts',
+            'sendWelcomeEmailWithCredentials': 'send_welcome_email_with_credentials',
+            'allowDirectStudentPinLogin': 'allow_direct_student_pin_login',
+            'minPasswordLength': 'min_password_length',
+            'requireSpecialChar': 'require_special_char',
+            'requireNumber': 'require_number',
+            'passwordExpiryMonths': 'password_expiry_months',
+            'failedLoginLockoutAttempts': 'failed_login_lockout_attempts',
+            'schoolName': 'school_name',
+            'shortName': 'short_name',
+            'motto': 'motto',
+            'officialEmail': 'official_email',
+            'phone': 'phone',
+            'address': 'address',
+            'ministryRegNo': 'ministry_reg_no',
+            'proprietress': 'proprietress',
+            'principal': 'principal',
+            'vicePrincipal': 'vice_principal',
+            'session': 'session',
+            'term': 'term',
+            'termStart': 'term_start',
+            'termEnd': 'term_end',
+            'minPassMark': 'min_pass_mark',
+            'ca1Weight': 'ca1_weight',
+            'ca2Weight': 'ca2_weight',
+            'examWeight': 'exam_weight',
+            'sessionTimeoutMinutes': 'session_timeout_minutes',
+            'singleSessionPerUser': 'single_session_per_user',
+            'smsProvider': 'sms_provider',
+            'smsSenderId': 'sms_sender_id',
+            'smsBalance': 'sms_balance',
+            'notifyResultsSMS': 'notify_results_sms',
+            'notifyAttendanceSMS': 'notify_attendance_sms',
+            'notifyFeesSMS': 'notify_fees_sms',
+            'notifyCBTExams': 'notify_cbt_exams',
+            'lateFeePenalty': 'late_fee_penalty',
+            'scholarshipSlots': 'scholarship_slots',
+            'portalLanguage': 'portal_language',
+            'colorScheme': 'color_scheme',
+            'dateFormat': 'date_format',
+            'currency': 'currency',
+        }
+
+        for key, field_name in field_map.items():
+            if key in data:
+                val = data[key]
+                if hasattr(settings_obj, field_name):
+                    setattr(settings_obj, field_name, val)
+
+        settings_obj.save()
+        serializer = SystemSettingsSerializer(settings_obj)
+        return Response({
+            **serializer.data,
+            **(settings_obj.settings_data or {})
+        }, status=status.HTTP_200_OK)
