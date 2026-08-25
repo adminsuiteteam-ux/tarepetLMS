@@ -10436,7 +10436,7 @@ export default function AdminDashboard() {
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.parentName')}</label>
-                        <input type="text" placeholder="e.g. Ayaebi Dimaro" value={newStudentForm.parentName}
+                        <input type="text" placeholder="e.g. Parent / Guardian Full Name" value={newStudentForm.parentName}
                           onChange={e => setNewStudentForm({ ...newStudentForm, parentName: e.target.value })}
                           className="w-full px-3 py-2 rounded-xl border border-border bg-background text-xs focus:ring-2 focus:ring-primary focus:outline-none" />
                       </div>
