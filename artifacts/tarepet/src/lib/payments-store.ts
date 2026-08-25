@@ -141,8 +141,84 @@ function loadSavedTransactions(): PaymentTransaction[] {
   return [];
 }
 
+export interface ClassFeeSchedule {
+  id?: number | string;
+  class_level: string;
+  division: 'CRECHE_NURSERY' | 'PRIMARY' | 'JUNIOR_SECONDARY' | 'SENIOR_SECONDARY';
+  tuition_fee: number;
+  development_levy: number;
+  books_materials: number;
+  uniform_sports: number;
+  pta_medical: number;
+  exam_levy: number;
+  total_fee?: number;
+  session?: string;
+  term?: string;
+}
+
+export interface DiscountPolicy {
+  id?: number | string;
+  code: string;
+  name: string;
+  discount_type: 'PERCENTAGE' | 'FIXED';
+  value: number;
+  description?: string;
+  is_active: boolean;
+}
+
+export const DEFAULT_CLASS_FEE_SCHEDULES: ClassFeeSchedule[] = [
+  { class_level: 'Nursery 1', division: 'CRECHE_NURSERY', tuition_fee: 35000, development_levy: 5000, books_materials: 10000, uniform_sports: 8000, pta_medical: 3000, exam_levy: 2000, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'Nursery 2', division: 'CRECHE_NURSERY', tuition_fee: 35000, development_levy: 5000, books_materials: 10000, uniform_sports: 8000, pta_medical: 3000, exam_levy: 2000, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'Nursery 3', division: 'CRECHE_NURSERY', tuition_fee: 38000, development_levy: 5000, books_materials: 10000, uniform_sports: 8000, pta_medical: 3000, exam_levy: 2000, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'Primary 1', division: 'PRIMARY', tuition_fee: 40000, development_levy: 6000, books_materials: 12000, uniform_sports: 9000, pta_medical: 3000, exam_levy: 2000, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'Primary 2', division: 'PRIMARY', tuition_fee: 40000, development_levy: 6000, books_materials: 12000, uniform_sports: 9000, pta_medical: 3000, exam_levy: 2000, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'Primary 3', division: 'PRIMARY', tuition_fee: 42000, development_levy: 6000, books_materials: 12000, uniform_sports: 9000, pta_medical: 3000, exam_levy: 2000, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'Primary 4', division: 'PRIMARY', tuition_fee: 42000, development_levy: 6000, books_materials: 12000, uniform_sports: 9000, pta_medical: 3000, exam_levy: 2000, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'Primary 5', division: 'PRIMARY', tuition_fee: 45000, development_levy: 6000, books_materials: 14000, uniform_sports: 9000, pta_medical: 3000, exam_levy: 3000, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'Primary 6', division: 'PRIMARY', tuition_fee: 48000, development_levy: 6000, books_materials: 14000, uniform_sports: 9000, pta_medical: 3000, exam_levy: 5000, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'JSS 1', division: 'JUNIOR_SECONDARY', tuition_fee: 45000, development_levy: 8000, books_materials: 15000, uniform_sports: 10000, pta_medical: 4000, exam_levy: 3000, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'JSS 2', division: 'JUNIOR_SECONDARY', tuition_fee: 45000, development_levy: 8000, books_materials: 15000, uniform_sports: 10000, pta_medical: 4000, exam_levy: 3000, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'JSS 3', division: 'JUNIOR_SECONDARY', tuition_fee: 50000, development_levy: 8000, books_materials: 15000, uniform_sports: 10000, pta_medical: 4000, exam_levy: 10000, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'SS 1', division: 'SENIOR_SECONDARY', tuition_fee: 55000, development_levy: 10000, books_materials: 18000, uniform_sports: 12000, pta_medical: 5000, exam_levy: 4000, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'SS 2', division: 'SENIOR_SECONDARY', tuition_fee: 55000, development_levy: 10000, books_materials: 18000, uniform_sports: 12000, pta_medical: 5000, exam_levy: 4000, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'SS 3', division: 'SENIOR_SECONDARY', tuition_fee: 60000, development_levy: 10000, books_materials: 18000, uniform_sports: 12000, pta_medical: 5000, exam_levy: 15000, session: '2025/2026', term: '2nd Term' },
+];
+
+export const DEFAULT_DISCOUNT_POLICIES: DiscountPolicy[] = [
+  { code: 'SIBLING_2ND', name: '2nd Sibling Concession', discount_type: 'PERCENTAGE', value: 10.00, description: '10% discount on tuition for second enrolled child in family.', is_active: true },
+  { code: 'SIBLING_3RD', name: '3rd Sibling Concession', discount_type: 'PERCENTAGE', value: 15.00, description: '15% discount on tuition for third and subsequent children.', is_active: true },
+  { code: 'STAFF_CHILD', name: 'Faculty & Staff Child Waiver', discount_type: 'PERCENTAGE', value: 50.00, description: '50% tuition waiver for biological children of active Tarepet educators.', is_active: true },
+  { code: 'SCHOLARSHIP_MERIT', name: 'Academic Merit Scholarship', discount_type: 'PERCENTAGE', value: 100.00, description: '100% full tuition scholarship award for exceptional scholars.', is_active: true },
+];
+
+function loadSavedClassSchedules(): ClassFeeSchedule[] {
+  if (typeof window === 'undefined') return DEFAULT_CLASS_FEE_SCHEDULES;
+  try {
+    const saved = localStorage.getItem('tarepet_class_fee_schedules');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {}
+  return DEFAULT_CLASS_FEE_SCHEDULES;
+}
+
+function loadSavedDiscountPolicies(): DiscountPolicy[] {
+  if (typeof window === 'undefined') return DEFAULT_DISCOUNT_POLICIES;
+  try {
+    const saved = localStorage.getItem('tarepet_discount_policies');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {}
+  return DEFAULT_DISCOUNT_POLICIES;
+}
+
 let _paymentItems: PaymentItem[] = loadSavedPaymentItems();
 let _transactions: PaymentTransaction[] = loadSavedTransactions();
+let _classSchedules: ClassFeeSchedule[] = loadSavedClassSchedules();
+let _discountPolicies: DiscountPolicy[] = loadSavedDiscountPolicies();
 
 // Broadcast Channel for real-time payments across tabs
 let paymentBroadcastChannel: BroadcastChannel | null = null;
@@ -244,11 +320,58 @@ export function getStudentItemStatus(studentId: string | number, itemId: string,
   };
 }
 
+export function getClassFeeSchedules(): ClassFeeSchedule[] {
+  return _classSchedules;
+}
+
+export function updateClassFeeSchedule(schedule: ClassFeeSchedule): void {
+  const idx = _classSchedules.findIndex(s => s.class_level === schedule.class_level);
+  if (idx >= 0) {
+    _classSchedules[idx] = { ..._classSchedules[idx], ...schedule };
+  } else {
+    _classSchedules.push(schedule);
+  }
+  if (typeof window !== 'undefined') {
+    try { localStorage.setItem('tarepet_class_fee_schedules', JSON.stringify(_classSchedules)); } catch (e) {}
+  }
+  authClient.post('/finance/fee-schedules/bulk-update/', { schedules: [schedule] }).catch(() => {});
+  broadcastPaymentMutation();
+}
+
+export async function bulkUpdateClassFeeSchedules(schedules: ClassFeeSchedule[]): Promise<void> {
+  _classSchedules = schedules;
+  if (typeof window !== 'undefined') {
+    try { localStorage.setItem('tarepet_class_fee_schedules', JSON.stringify(_classSchedules)); } catch (e) {}
+  }
+  await authClient.post('/finance/fee-schedules/bulk-update/', { schedules }).catch(() => {});
+  broadcastPaymentMutation();
+}
+
+export function getDiscountPolicies(): DiscountPolicy[] {
+  return _discountPolicies;
+}
+
+export async function saveDiscountPolicy(policy: DiscountPolicy): Promise<void> {
+  const idx = _discountPolicies.findIndex(p => p.code === policy.code);
+  if (idx >= 0) {
+    _discountPolicies[idx] = { ..._discountPolicies[idx], ...policy };
+  } else {
+    _discountPolicies.push(policy);
+  }
+  if (typeof window !== 'undefined') {
+    try { localStorage.setItem('tarepet_discount_policies', JSON.stringify(_discountPolicies)); } catch (e) {}
+  }
+  await authClient.post('/finance/discount-policies/', policy).catch(() => {});
+  broadcastPaymentMutation();
+}
+
 export async function syncPaymentsWithBackend(): Promise<void> {
   try {
-    const [itemsRes, txRes] = await Promise.allSettled([
+    const [itemsRes, txRes, schedulesRes, discountsRes] = await Promise.allSettled([
       authClient.get('/finance/fee-items/?page_size=200'),
-      authClient.get('/finance/transactions/?page_size=500')
+      authClient.get('/finance/transactions/?page_size=500'),
+      authClient.get('/finance/fee-schedules/?page_size=100'),
+      authClient.get('/finance/discount-policies/?page_size=50'),
     ]);
 
     if (itemsRes.status === 'fulfilled' && itemsRes.value.data) {
@@ -277,6 +400,51 @@ export async function syncPaymentsWithBackend(): Promise<void> {
       } else {
         // If backend database is empty, seed it with DEFAULT_PAYMENT_ITEMS automatically
         authClient.post('/finance/fee-items/bulk-save/', { items: DEFAULT_PAYMENT_ITEMS }).catch(() => {});
+      }
+    }
+
+    if (schedulesRes.status === 'fulfilled' && schedulesRes.value.data) {
+      const schResults = Array.isArray(schedulesRes.value.data?.results)
+        ? schedulesRes.value.data.results
+        : (Array.isArray(schedulesRes.value.data) ? schedulesRes.value.data : []);
+      if (schResults.length > 0) {
+        _classSchedules = schResults.map((s: any) => ({
+          id: s.id,
+          class_level: s.class_level,
+          division: s.division,
+          tuition_fee: Number(s.tuitionFee || s.tuition_fee) || 0,
+          development_levy: Number(s.devLevy || s.development_levy) || 0,
+          books_materials: Number(s.booksMaterials || s.books_materials) || 0,
+          uniform_sports: Number(s.uniformSports || s.uniform_sports) || 0,
+          pta_medical: Number(s.ptaMedical || s.pta_medical) || 0,
+          exam_levy: Number(s.examLevy || s.exam_levy) || 0,
+          total_fee: Number(s.totalFee || s.total_fee) || 0,
+          session: s.session || '2025/2026',
+          term: s.term || '2nd Term'
+        }));
+        if (typeof window !== 'undefined') {
+          try { localStorage.setItem('tarepet_class_fee_schedules', JSON.stringify(_classSchedules)); } catch (e) {}
+        }
+      }
+    }
+
+    if (discountsRes.status === 'fulfilled' && discountsRes.value.data) {
+      const discResults = Array.isArray(discountsRes.value.data?.results)
+        ? discountsRes.value.data.results
+        : (Array.isArray(discountsRes.value.data) ? discountsRes.value.data : []);
+      if (discResults.length > 0) {
+        _discountPolicies = discResults.map((d: any) => ({
+          id: d.id,
+          code: d.code,
+          name: d.name,
+          discount_type: d.discount_type,
+          value: Number(d.value) || 0,
+          description: d.description || '',
+          is_active: d.is_active ?? true
+        }));
+        if (typeof window !== 'undefined') {
+          try { localStorage.setItem('tarepet_discount_policies', JSON.stringify(_discountPolicies)); } catch (e) {}
+        }
       }
     }
 

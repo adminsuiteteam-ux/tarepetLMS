@@ -23,8 +23,15 @@ import {
   savePaymentItem,
   recordTransaction,
   subscribeToPaymentStore,
+  getClassFeeSchedules,
+  updateClassFeeSchedule,
+  bulkUpdateClassFeeSchedules,
+  getDiscountPolicies,
+  saveDiscountPolicy,
   PaymentItem,
-  PaymentTransaction
+  PaymentTransaction,
+  ClassFeeSchedule,
+  DiscountPolicy,
 } from '@/lib/payments-store';
 
 import {
@@ -2553,6 +2560,16 @@ export default function AdminDashboard() {
   // Fee Ledger & Payment Real-time State
   const [adminPaymentItems, setAdminPaymentItems] = useState<PaymentItem[]>(() => getPaymentItems());
   const [adminTransactions, setAdminTransactions] = useState<PaymentTransaction[]>(() => getPaymentTransactions());
+  const [classFeeSchedules, setClassFeeSchedules] = useState<ClassFeeSchedule[]>(() => getClassFeeSchedules());
+  const [discountPolicies, setDiscountPolicies] = useState<DiscountPolicy[]>(() => getDiscountPolicies());
+  const [selectedScheduleDivision, setSelectedScheduleDivision] = useState<string>('ALL');
+  const [editingSchedule, setEditingSchedule] = useState<ClassFeeSchedule | null>(null);
+  const [showAddDiscountModal, setShowAddDiscountModal] = useState(false);
+  const [discountForm, setDiscountForm] = useState({ code: '', name: '', discount_type: 'PERCENTAGE', value: 10, description: '' });
+  const [recordPaymentStudent, setRecordPaymentStudent] = useState<any | null>(null);
+  const [recordPaymentAmount, setRecordPaymentAmount] = useState<string>('');
+  const [recordPaymentChannel, setRecordPaymentChannel] = useState<'cash' | 'bank_transfer' | 'paystack'>('bank_transfer');
+  const [recordPaymentNotes, setRecordPaymentNotes] = useState<string>('');
   const [selectedReviewStudent, setSelectedReviewStudent] = useState<any | null>(null);
   const [bursaryClassFilter, setBursaryClassFilter] = useState<string>('ALL');
   const [bursaryStatusFilter, setBursaryStatusFilter] = useState<string>('ALL');
@@ -2569,6 +2586,8 @@ export default function AdminDashboard() {
     const syncPayments = () => {
       setAdminPaymentItems(getPaymentItems());
       setAdminTransactions(getPaymentTransactions());
+      setClassFeeSchedules(getClassFeeSchedules());
+      setDiscountPolicies(getDiscountPolicies());
     };
     syncPayments();
     const unsub = subscribeToPaymentStore(syncPayments);
@@ -2576,10 +2595,10 @@ export default function AdminDashboard() {
   }, []);
 
   const [showAddPaymentModal, setShowAddPaymentModal] = useState(false);
-  const [paymentForm, setPaymentForm] = useState({ studentId: 1, amount: 0, method: 'Bank Transfer', reference: '' });
+  const [paymentForm, setPaymentForm] = useState({ studentId: '', itemId: 'school_fees', amount: 0, channel: 'bank_transfer', status: 'SUCCESS' });
   const [receiptModalData, setReceiptModalData] = useState<any>(null);
 
-  // Announcements & Broadcast Center State
+  // Announcement & Communication Center
   const [announcementsListState, setAnnouncementsListState] = useState<any[]>(() => {
     const saved = null;
     if (saved) {
@@ -2592,7 +2611,7 @@ export default function AdminDashboard() {
   const [announcementSuccessAlert, setAnnouncementSuccessAlert] = useState(false);
 
   // Finance & Bursary State
-  const [financeTab, setFinanceTab] = useState<'overview' | 'income' | 'expenses' | 'budget'>('overview');
+  const [financeTab, setFinanceTab] = useState<'overview' | 'fee_schedule' | 'student_billing' | 'income' | 'expenses' | 'discounts' | 'budget'>('fee_schedule');
   const [financeExpenses, setFinanceExpenses] = useState<any[]>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -9462,23 +9481,395 @@ export default function AdminDashboard() {
           </div>
 
           {/* Sub-tabs */}
-          <div className="flex gap-1 border-b border-border">
-            {(['overview', 'income', 'expenses', 'budget'] as const).map(tab => (
+          <div className="flex gap-1 border-b border-border overflow-x-auto pb-0.5">
+            {[
+              { id: 'fee_schedule', label: 'Fee Schedule Matrix', icon: <DollarSign className="w-3.5 h-3.5 text-primary" /> },
+              { id: 'student_billing', label: 'Student Billing & Debtors', icon: <Users className="w-3.5 h-3.5 text-blue-500" /> },
+              { id: 'discounts', label: 'Sibling & Concessions', icon: <Tag className="w-3.5 h-3.5 text-amber-500" /> },
+              { id: 'overview', label: 'Financial Overview', icon: <BarChart3 className="w-3.5 h-3.5" /> },
+              { id: 'income', label: 'Income Records', icon: <ArrowUpRight className="w-3.5 h-3.5 text-emerald-500" /> },
+              { id: 'expenses', label: 'Expense Log', icon: <TrendingDown className="w-3.5 h-3.5 text-rose-500" /> },
+              { id: 'budget', label: 'Budget Plan', icon: <ClipboardList className="w-3.5 h-3.5" /> },
+            ].map(tab => (
               <button
-                key={tab}
-                onClick={() => setFinanceTab(tab)}
-                className={`px-5 py-2.5 text-xs font-bold capitalize rounded-t-xl border-b-2 transition-colors ${
-                  financeTab === tab
+                key={tab.id}
+                onClick={() => setFinanceTab(tab.id as any)}
+                className={`px-4 py-2.5 text-xs font-bold capitalize rounded-t-xl border-b-2 whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+                  financeTab === tab.id
                     ? 'border-primary text-primary bg-primary/5'
                     : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/40'
                 }`}
               >
-                {tab === 'overview' ? <span className="flex items-center gap-1.5"><BarChart3 className="w-3.5 h-3.5" /> Overview</span> : tab === 'income' ? <span className="flex items-center gap-1.5"><DollarSign className="w-3.5 h-3.5 text-emerald-500" /> Income Records</span> : tab === 'expenses' ? <span className="flex items-center gap-1.5"><TrendingDown className="w-3.5 h-3.5 text-rose-500" /> Expense Log</span> : <span className="flex items-center gap-1.5"><ClipboardList className="w-3.5 h-3.5" /> Budget Plan</span>}
+                {tab.icon}
+                {tab.label}
               </button>
             ))}
           </div>
 
-          {/* ── OVERVIEW TAB ── */}
+          {/* ── 1. FEE SCHEDULE MATRIX TAB (OPTION A) ── */}
+          {financeTab === 'fee_schedule' && (
+            <div className="space-y-6">
+              {/* Controls & Division Filter */}
+              <div className="bg-card rounded-2xl border border-border p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h3 className="font-serif font-bold text-base text-foreground flex items-center gap-2">
+                    <DollarSign className="w-4 h-4 text-primary" /> Institutional Fee Pricing Matrix (2025/2026 Academic Session)
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">Configure approved tuition, development levy, curriculum materials, sports uniform, and terminal assessment fees per class level.</p>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-xl border border-border">
+                    {[
+                      { id: 'ALL', label: 'All Levels' },
+                      { id: 'CRECHE_NURSERY', label: 'Nursery' },
+                      { id: 'PRIMARY', label: 'Primary' },
+                      { id: 'JUNIOR_SECONDARY', label: 'JSS' },
+                      { id: 'SENIOR_SECONDARY', label: 'SS' },
+                    ].map(div => (
+                      <button
+                        key={div.id}
+                        onClick={() => setSelectedScheduleDivision(div.id)}
+                        className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all ${
+                          selectedScheduleDivision === div.id
+                            ? 'bg-primary text-white shadow-xs'
+                            : 'text-muted-foreground hover:text-foreground hover:bg-card'
+                        }`}
+                      >
+                        {div.label}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={async () => {
+                      await bulkUpdateClassFeeSchedules(classFeeSchedules);
+                      setFinanceSaveAlert('Successfully synchronized all 15 class fee schedules with backend database!');
+                      setTimeout(() => setFinanceSaveAlert(''), 4000);
+                    }}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs transition-colors"
+                  >
+                    <CheckCircle2 className="w-4 h-4" /> Bulk Sync to Database
+                  </button>
+                </div>
+              </div>
+
+              {/* Pricing Matrix Summary Cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {[
+                  { label: 'Levels Configured', val: `${classFeeSchedules.length} Classes`, sub: 'Crèche to SS3 Exam', color: 'text-primary' },
+                  { label: 'Lowest Term Fee', val: fmtCurrency(Math.min(...classFeeSchedules.map(s => (s.tuition_fee + s.development_levy + s.books_materials + s.uniform_sports + s.pta_medical + s.exam_levy)))), sub: 'Nursery 1 & 2', color: 'text-emerald-600' },
+                  { label: 'Highest Term Fee', val: fmtCurrency(Math.max(...classFeeSchedules.map(s => (s.tuition_fee + s.development_levy + s.books_materials + s.uniform_sports + s.pta_medical + s.exam_levy)))), sub: 'SS3 Exam Class', color: 'text-indigo-600' },
+                  { label: 'Average Mandatory Levy', val: fmtCurrency(Math.round(classFeeSchedules.reduce((sum, s) => sum + (s.tuition_fee + s.development_levy + s.books_materials + s.uniform_sports + s.pta_medical + s.exam_levy), 0) / (classFeeSchedules.length || 1))), sub: 'Across all 15 classes', color: 'text-amber-600' },
+                ].map(stat => (
+                  <div key={stat.label} className="bg-card p-4 rounded-2xl border border-border space-y-1">
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">{stat.label}</p>
+                    <p className={`text-lg font-bold font-serif ${stat.color}`}>{stat.val}</p>
+                    <p className="text-[10px] text-muted-foreground">{stat.sub}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Matrix Table */}
+              <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+                <div className="p-4 border-b border-border flex items-center justify-between">
+                  <h4 className="font-serif font-bold text-sm text-foreground">Class-by-Class Approved Fee Schedule</h4>
+                  <span className="text-[11px] font-bold text-muted-foreground">Showing {classFeeSchedules.filter(s => selectedScheduleDivision === 'ALL' || s.division === selectedScheduleDivision).length} class levels</span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-muted/30 text-muted-foreground uppercase text-[10px] tracking-wider">
+                      <tr>
+                        <th className="py-3 px-4">Class Level</th>
+                        <th className="py-3 px-4">Division</th>
+                        <th className="py-3 px-3 text-right">Tuition</th>
+                        <th className="py-3 px-3 text-right">Dev. Levy</th>
+                        <th className="py-3 px-3 text-right">Books & Mat.</th>
+                        <th className="py-3 px-3 text-right">Uniform</th>
+                        <th className="py-3 px-3 text-right">PTA/Medical</th>
+                        <th className="py-3 px-3 text-right">Exam Levy</th>
+                        <th className="py-3 px-4 text-right">Total Term Fee</th>
+                        <th className="py-3 px-4 text-center">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {classFeeSchedules
+                        .filter(s => selectedScheduleDivision === 'ALL' || s.division === selectedScheduleDivision)
+                        .map(sched => {
+                          const total = sched.tuition_fee + sched.development_levy + sched.books_materials + sched.uniform_sports + sched.pta_medical + sched.exam_levy;
+                          return (
+                            <tr key={sched.class_level} className="hover:bg-muted/20 transition-colors">
+                              <td className="py-3.5 px-4 font-bold text-foreground">{sched.class_level}</td>
+                              <td className="py-3.5 px-4">
+                                <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${
+                                  sched.division === 'CRECHE_NURSERY' ? 'bg-amber-500/10 text-amber-600 border-amber-200' :
+                                  sched.division === 'PRIMARY' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200' :
+                                  sched.division === 'JUNIOR_SECONDARY' ? 'bg-blue-500/10 text-blue-600 border-blue-200' :
+                                  'bg-purple-500/10 text-purple-600 border-purple-200'
+                                }`}>
+                                  {sched.division === 'CRECHE_NURSERY' ? 'Nursery' : sched.division === 'PRIMARY' ? 'Primary' : sched.division === 'JUNIOR_SECONDARY' ? 'JSS' : 'SS'}
+                                </span>
+                              </td>
+                              <td className="py-3.5 px-3 text-right font-mono font-semibold text-foreground">{fmtCurrency(sched.tuition_fee)}</td>
+                              <td className="py-3.5 px-3 text-right font-mono text-muted-foreground">{fmtCurrency(sched.development_levy)}</td>
+                              <td className="py-3.5 px-3 text-right font-mono text-muted-foreground">{fmtCurrency(sched.books_materials)}</td>
+                              <td className="py-3.5 px-3 text-right font-mono text-muted-foreground">{fmtCurrency(sched.uniform_sports)}</td>
+                              <td className="py-3.5 px-3 text-right font-mono text-muted-foreground">{fmtCurrency(sched.pta_medical)}</td>
+                              <td className="py-3.5 px-3 text-right font-mono text-muted-foreground">{fmtCurrency(sched.exam_levy)}</td>
+                              <td className="py-3.5 px-4 text-right font-mono font-bold text-primary font-serif text-sm">{fmtCurrency(total)}</td>
+                              <td className="py-3.5 px-4 text-center">
+                                <button
+                                  onClick={() => setEditingSchedule({ ...sched })}
+                                  className="px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl text-xs font-bold transition-colors"
+                                >
+                                  Edit Breakdown
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── 2. STUDENT BILLING & DEBTORS LEDGER TAB ── */}
+          {financeTab === 'student_billing' && (
+            <div className="space-y-6">
+              {/* Header & Filter Controls */}
+              <div className="bg-card rounded-2xl border border-border p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h3 className="font-serif font-bold text-base text-foreground flex items-center gap-2">
+                    <Users className="w-4 h-4 text-primary" /> Student Fee Billing Ledger & Debtors Roster
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">Live student-by-student fee balances, sibling concessions, recorded payments, and collection receipts.</p>
+                </div>
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <input
+                    type="text"
+                    placeholder="Search student or Admission No..."
+                    value={bursarySearchQuery}
+                    onChange={e => setBursarySearchQuery(e.target.value)}
+                    className="px-3.5 py-2 border border-border rounded-xl bg-background text-xs font-medium focus:ring-2 focus:ring-primary w-52"
+                  />
+                  <select
+                    value={bursaryClassFilter}
+                    onChange={e => setBursaryClassFilter(e.target.value)}
+                    className="px-3 py-2 border border-border rounded-xl bg-background text-xs font-bold focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="ALL">All Classes</option>
+                    {classFeeSchedules.map(c => <option key={c.class_level} value={c.class_level}>{c.class_level}</option>)}
+                  </select>
+                  <select
+                    value={bursaryStatusFilter}
+                    onChange={e => setBursaryStatusFilter(e.target.value)}
+                    className="px-3 py-2 border border-border rounded-xl bg-background text-xs font-bold focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="ALL">All Statuses</option>
+                    <option value="PAID">Fully Settled (Paid)</option>
+                    <option value="PARTIAL">Partial Payment</option>
+                    <option value="UNPAID">Outstanding (Debtors)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Billing Summary Cards */}
+              {(() => {
+                const totalStudentsCount = studentsList.length || 1;
+                let billedSum = 0;
+                let paidSum = 0;
+                let debtorsCount = 0;
+
+                studentsList.forEach(std => {
+                  const sched = classFeeSchedules.find(s => matchStudentClass(s.class_level, std.classLevel || std.grade || '')) || classFeeSchedules[3];
+                  const feeBilled = sched ? (sched.tuition_fee + sched.development_levy + sched.books_materials + sched.uniform_sports + sched.pta_medical + sched.exam_levy) : 65000;
+                  billedSum += feeBilled;
+
+                  const stdTxs = adminTransactions.filter(t => (String(t.studentId) === String(std.id) || String(t.studentId) === String(std.admissionNo) || t.studentName === std.name) && t.status === 'SUCCESS');
+                  const stdPaid = stdTxs.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+                  paidSum += stdPaid;
+
+                  if (stdPaid < feeBilled) debtorsCount++;
+                });
+
+                const outstandingDebt = Math.max(0, billedSum - paidSum);
+                const collectionRate = billedSum > 0 ? ((paidSum / billedSum) * 100).toFixed(1) : '0';
+
+                return (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="bg-card p-4 rounded-2xl border border-border space-y-1">
+                      <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Total Term Billing</p>
+                      <p className="text-xl font-bold font-serif text-foreground">{fmtCurrency(billedSum)}</p>
+                      <p className="text-[10px] text-muted-foreground">{studentsList.length} Active Students</p>
+                    </div>
+                    <div className="bg-card p-4 rounded-2xl border border-border space-y-1">
+                      <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Total Collected</p>
+                      <p className="text-xl font-bold font-serif text-emerald-600">{fmtCurrency(paidSum)}</p>
+                      <p className="text-[10px] text-muted-foreground">{collectionRate}% Recovery Rate</p>
+                    </div>
+                    <div className="bg-card p-4 rounded-2xl border border-border space-y-1">
+                      <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Outstanding Debt</p>
+                      <p className="text-xl font-bold font-serif text-rose-600">{fmtCurrency(outstandingDebt)}</p>
+                      <p className="text-[10px] text-muted-foreground">{debtorsCount} Students with Balance</p>
+                    </div>
+                    <div className="bg-card p-4 rounded-2xl border border-border space-y-1">
+                      <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Clearance Status</p>
+                      <p className="text-xl font-bold font-serif text-primary">{studentsList.length - debtorsCount} / {studentsList.length}</p>
+                      <p className="text-[10px] text-muted-foreground">Students Fully Cleared</p>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Student Billing Table */}
+              <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-muted/30 text-muted-foreground uppercase text-[10px] tracking-wider">
+                      <tr>
+                        <th className="py-3 px-4">Student Details</th>
+                        <th className="py-3 px-3">Class Level</th>
+                        <th className="py-3 px-3 text-right">Total Billed</th>
+                        <th className="py-3 px-3 text-right">Paid to Date</th>
+                        <th className="py-3 px-3 text-right">Balance Due</th>
+                        <th className="py-3 px-4 text-center">Status</th>
+                        <th className="py-3 px-4 text-center">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {studentsList
+                        .filter(std => {
+                          const matchesSearch = !bursarySearchQuery || std.name.toLowerCase().includes(bursarySearchQuery.toLowerCase()) || (std.admissionNo && std.admissionNo.toLowerCase().includes(bursarySearchQuery.toLowerCase()));
+                          const matchesClass = bursaryClassFilter === 'ALL' || std.classLevel === bursaryClassFilter || std.grade === bursaryClassFilter;
+                          return matchesSearch && matchesClass;
+                        })
+                        .map(std => {
+                          const sched = classFeeSchedules.find(s => matchStudentClass(s.class_level, std.classLevel || std.grade || '')) || classFeeSchedules[3];
+                          const feeBilled = sched ? (sched.tuition_fee + sched.development_levy + sched.books_materials + sched.uniform_sports + sched.pta_medical + sched.exam_levy) : 65000;
+
+                          const stdTxs = adminTransactions.filter(t => (String(t.studentId) === String(std.id) || String(t.studentId) === String(std.admissionNo) || t.studentName === std.name) && t.status === 'SUCCESS');
+                          const stdPaid = stdTxs.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+                          const balance = Math.max(0, feeBilled - stdPaid);
+
+                          let status: 'PAID' | 'PARTIAL' | 'UNPAID' = 'UNPAID';
+                          if (stdPaid >= feeBilled && feeBilled > 0) status = 'PAID';
+                          else if (stdPaid > 0) status = 'PARTIAL';
+
+                          if (bursaryStatusFilter !== 'ALL' && status !== bursaryStatusFilter) return null;
+
+                          return (
+                            <tr key={std.id} className="hover:bg-muted/20 transition-colors">
+                              <td className="py-3 px-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center text-xs shrink-0 overflow-hidden">
+                                    {std.profileImage ? <img src={std.profileImage} alt={std.name} className="w-full h-full object-cover" /> : std.name.charAt(0)}
+                                  </div>
+                                  <div>
+                                    <p className="font-bold text-foreground">{std.name}</p>
+                                    <p className="text-[10px] text-muted-foreground font-mono">{std.admissionNo || `TMS-STD-${std.id}`}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-3 px-3 font-semibold text-muted-foreground">{std.classLevel || std.grade || 'Primary 1'}</td>
+                              <td className="py-3 px-3 text-right font-mono font-bold text-foreground">{fmtCurrency(feeBilled)}</td>
+                              <td className="py-3 px-3 text-right font-mono font-bold text-emerald-600">{fmtCurrency(stdPaid)}</td>
+                              <td className="py-3 px-3 text-right font-mono font-bold text-rose-600">{fmtCurrency(balance)}</td>
+                              <td className="py-3 px-4 text-center">
+                                <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${
+                                  status === 'PAID' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200' :
+                                  status === 'PARTIAL' ? 'bg-amber-500/10 text-amber-600 border-amber-200' :
+                                  'bg-rose-500/10 text-rose-600 border-rose-200'
+                                }`}>
+                                  {status === 'PAID' ? '✓ Fully Paid' : status === 'PARTIAL' ? 'Part Payment' : 'Unpaid Debtor'}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-center">
+                                <button
+                                  onClick={() => {
+                                    setRecordPaymentStudent(std);
+                                    setRecordPaymentAmount(String(balance > 0 ? balance : 25000));
+                                    setRecordPaymentNotes(`Termly School Fee settlement for ${std.name}`);
+                                  }}
+                                  className="px-3 py-1.5 bg-primary text-white hover:bg-primary/90 rounded-xl text-xs font-bold transition-all shadow-xs"
+                                >
+                                  + Record Payment
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── 3. SIBLING & CONCESSION POLICIES TAB ── */}
+          {financeTab === 'discounts' && (
+            <div className="space-y-6">
+              <div className="bg-card rounded-2xl border border-border p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="font-serif font-bold text-base text-foreground flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-amber-500" /> Sibling Discounts, Concession & Scholarship Quotas
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">Manage automated discount rules applied to tuition fees for multiple enrolled siblings, staff children, and merit scholars.</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setDiscountForm({ code: `CONCESSION_${Date.now()}`, name: '', discount_type: 'PERCENTAGE', value: 10, description: '' });
+                    setShowAddDiscountModal(true);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 shadow-sm transition-colors shrink-0"
+                >
+                  <Plus className="w-4 h-4" /> Add New Concession Rule
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {discountPolicies.map(policy => (
+                  <div key={policy.code} className="bg-card rounded-2xl border border-border p-5 shadow-sm space-y-3 flex flex-col justify-between">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-md">{policy.code}</span>
+                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                          policy.is_active ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200' : 'bg-muted text-muted-foreground'
+                        }`}>
+                          {policy.is_active ? 'Active Policy' : 'Inactive'}
+                        </span>
+                      </div>
+                      <h4 className="font-serif font-bold text-base text-foreground">{policy.name}</h4>
+                      <p className="text-xs text-muted-foreground leading-relaxed">{policy.description}</p>
+                    </div>
+                    <div className="pt-3 border-t border-border flex items-center justify-between">
+                      <div>
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground">Concession Benefit</p>
+                        <p className="text-lg font-bold font-serif text-primary">
+                          {policy.value}{policy.discount_type === 'PERCENTAGE' ? '% Tuition Waiver' : ' NGN Flat Deduct'}
+                        </p>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          const updated = { ...policy, is_active: !policy.is_active };
+                          await saveDiscountPolicy(updated);
+                          setDiscountPolicies(getDiscountPolicies());
+                          setFinanceSaveAlert(`Updated ${policy.name} active status.`);
+                          setTimeout(() => setFinanceSaveAlert(''), 3000);
+                        }}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors ${
+                          policy.is_active ? 'bg-rose-50 border-rose-200 text-rose-600 hover:bg-rose-100' : 'bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100'
+                        }`}
+                      >
+                        {policy.is_active ? 'Deactivate' : 'Activate'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── 4. FINANCIAL OVERVIEW TAB ── */}
           {financeTab === 'overview' && (
             <div className="space-y-5">
               {/* Chart */}
@@ -9556,7 +9947,7 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* ── INCOME TAB ── */}
+          {/* ── 5. INCOME TAB ── */}
           {financeTab === 'income' && (
             <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
               <div className="p-4 border-b border-border flex items-center justify-between">
@@ -9610,7 +10001,7 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* ── EXPENSES TAB ── */}
+          {/* ── 6. EXPENSES TAB ── */}
           {financeTab === 'expenses' && (
             <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
               <div className="p-4 border-b border-border flex items-center justify-between">
@@ -9690,7 +10081,7 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* ── BUDGET TAB ── */}
+          {/* ── 7. BUDGET TAB ── */}
           {financeTab === 'budget' && (
             <div className="space-y-5">
               <div className="bg-card rounded-2xl border border-border p-5 shadow-sm space-y-4">
@@ -9724,6 +10115,334 @@ export default function AdminDashboard() {
                       </div>
                     );
                   })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── EDIT CLASS FEE BREAKDOWN MODAL ── */}
+          {editingSchedule && (
+            <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+              <div className="bg-card border border-border rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                <div className="p-5 border-b border-border flex items-center justify-between bg-muted/20">
+                  <div>
+                    <h3 className="font-serif font-bold text-base text-foreground flex items-center gap-2">
+                      <DollarSign className="w-4 h-4 text-primary" /> Edit Fee Breakdown — {editingSchedule.class_level}
+                    </h3>
+                    <p className="text-xs text-muted-foreground">Adjust individual tuition and levy components. Total calculates automatically.</p>
+                  </div>
+                  <button onClick={() => setEditingSchedule(null)} className="p-2 rounded-xl text-muted-foreground hover:bg-muted/50 transition-colors"><X className="w-5 h-5" /></button>
+                </div>
+
+                <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold mb-1.5 text-foreground">Tuition Fee (₦)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={editingSchedule.tuition_fee}
+                        onChange={e => setEditingSchedule({ ...editingSchedule, tuition_fee: Number(e.target.value) || 0 })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs font-mono font-bold focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold mb-1.5 text-foreground">Development Levy (₦)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={editingSchedule.development_levy}
+                        onChange={e => setEditingSchedule({ ...editingSchedule, development_levy: Number(e.target.value) || 0 })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs font-mono font-bold focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold mb-1.5 text-foreground">Books & Materials (₦)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={editingSchedule.books_materials}
+                        onChange={e => setEditingSchedule({ ...editingSchedule, books_materials: Number(e.target.value) || 0 })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs font-mono font-bold focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold mb-1.5 text-foreground">Uniform & Sports Attire (₦)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={editingSchedule.uniform_sports}
+                        onChange={e => setEditingSchedule({ ...editingSchedule, uniform_sports: Number(e.target.value) || 0 })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs font-mono font-bold focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold mb-1.5 text-foreground">PTA & Medical Retainership (₦)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={editingSchedule.pta_medical}
+                        onChange={e => setEditingSchedule({ ...editingSchedule, pta_medical: Number(e.target.value) || 0 })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs font-mono font-bold focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold mb-1.5 text-foreground">Exam / Assessment Levy (₦)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={editingSchedule.exam_levy}
+                        onChange={e => setEditingSchedule({ ...editingSchedule, exam_levy: Number(e.target.value) || 0 })}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs font-mono font-bold focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Dynamic Total Banner */}
+                  <div className="p-4 bg-primary/10 rounded-2xl border border-primary/20 flex items-center justify-between">
+                    <div>
+                      <p className="text-[10px] uppercase font-bold text-primary">Computed Total Term Fee</p>
+                      <p className="text-xs text-muted-foreground">Applicable to all students enrolled in {editingSchedule.class_level}</p>
+                    </div>
+                    <p className="text-xl font-bold font-serif text-primary">
+                      {fmtCurrency(editingSchedule.tuition_fee + editingSchedule.development_levy + editingSchedule.books_materials + editingSchedule.uniform_sports + editingSchedule.pta_medical + editingSchedule.exam_levy)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-5 border-t border-border bg-muted/20 flex items-center justify-between">
+                  <button onClick={() => setEditingSchedule(null)} className="px-4 py-2 rounded-xl border border-border text-xs font-semibold hover:bg-muted transition-colors">Cancel</button>
+                  <button
+                    onClick={() => {
+                      updateClassFeeSchedule(editingSchedule);
+                      setClassFeeSchedules(getClassFeeSchedules());
+                      setFinanceSaveAlert(`Successfully updated fee breakdown for ${editingSchedule.class_level}!`);
+                      setEditingSchedule(null);
+                      setTimeout(() => setFinanceSaveAlert(''), 4000);
+                    }}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary/90 shadow-sm transition-colors"
+                  >
+                    <CheckCircle2 className="w-4 h-4" /> Save Fee Changes
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── RECORD STUDENT PAYMENT MODAL ── */}
+          {recordPaymentStudent && (
+            <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+              <div className="bg-card border border-border rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                <div className="p-5 border-b border-border flex items-center justify-between bg-muted/20">
+                  <div>
+                    <h3 className="font-serif font-bold text-base text-foreground flex items-center gap-2">
+                      <CreditCard className="w-4 h-4 text-emerald-600" /> Record Fee Settlement
+                    </h3>
+                    <p className="text-xs text-muted-foreground">{recordPaymentStudent.name} · {recordPaymentStudent.admissionNo || recordPaymentStudent.classLevel}</p>
+                  </div>
+                  <button onClick={() => setRecordPaymentStudent(null)} className="p-2 rounded-xl text-muted-foreground hover:bg-muted/50 transition-colors"><X className="w-5 h-5" /></button>
+                </div>
+
+                <div className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold mb-1.5 text-foreground">Amount Received (₦) *</label>
+                    <input
+                      type="number"
+                      min="1"
+                      placeholder="0"
+                      value={recordPaymentAmount}
+                      onChange={e => setRecordPaymentAmount(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm font-mono font-bold focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold mb-1.5 text-foreground">Payment Channel</label>
+                      <select
+                        value={recordPaymentChannel}
+                        onChange={e => setRecordPaymentChannel(e.target.value as any)}
+                        className="w-full px-3 py-2.5 rounded-xl border border-border bg-background text-xs font-bold focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="bank_transfer">Direct Bank Transfer</option>
+                        <option value="cash">Cash at Bursary</option>
+                        <option value="paystack">Paystack Online POS</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold mb-1.5 text-foreground">Fee Component</label>
+                      <select className="w-full px-3 py-2.5 rounded-xl border border-border bg-background text-xs font-bold focus:ring-2 focus:ring-primary">
+                        <option>Full Composite Term Fee</option>
+                        <option>Tuition Fee Only</option>
+                        <option>Books & Materials</option>
+                        <option>Development Levy</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold mb-1.5 text-foreground">Payment Remarks / Narrative</label>
+                    <input
+                      type="text"
+                      value={recordPaymentNotes}
+                      onChange={e => setRecordPaymentNotes(e.target.value)}
+                      placeholder="e.g. 2nd Term Tuition Bank Deposit — GTBank"
+                      className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-xs focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-5 border-t border-border bg-muted/20 flex items-center justify-between">
+                  <button onClick={() => setRecordPaymentStudent(null)} className="px-4 py-2 rounded-xl border border-border text-xs font-semibold hover:bg-muted transition-colors">Cancel</button>
+                  <button
+                    disabled={!recordPaymentAmount || Number(recordPaymentAmount) <= 0}
+                    onClick={async () => {
+                      const refCode = `REC-${Date.now().toString().slice(-6)}`;
+                      const amt = Number(recordPaymentAmount);
+                      await recordTransaction({
+                        studentId: recordPaymentStudent.id || recordPaymentStudent.admissionNo,
+                        studentName: recordPaymentStudent.name,
+                        studentEmail: recordPaymentStudent.email || 'parent@tarepetmontessori.org',
+                        itemId: 'school_fees',
+                        itemName: 'Termly School Tuition Fee',
+                        amount: amt,
+                        currency: 'NGN',
+                        reference: refCode,
+                        channel: recordPaymentChannel,
+                        status: 'SUCCESS',
+                        term: '2nd Term',
+                        session: '2025/2026'
+                      });
+
+                      // Also add to income list
+                      const incRec = {
+                        id: Date.now(),
+                        reference: refCode,
+                        date: new Date().toISOString().split('T')[0],
+                        description: `Fee Settlement: ${recordPaymentStudent.name} (${recordPaymentStudent.classLevel || 'Primary'})`,
+                        category: 'School Fees',
+                        amount: amt,
+                        status: 'RECEIVED',
+                        ref: refCode,
+                      };
+                      const updatedInc = [incRec, ...financeIncome];
+                      setFinanceIncome(updatedInc);
+                      if (typeof window !== 'undefined') {
+                        try { localStorage.setItem('tarepet_finance_income', JSON.stringify(updatedInc)); } catch (e) {}
+                      }
+                      authClient.post('/finance/income/', incRec).catch(() => {});
+
+                      setReceiptModalData({
+                        reference: refCode,
+                        studentName: recordPaymentStudent.name,
+                        studentId: recordPaymentStudent.admissionNo || recordPaymentStudent.id,
+                        classLevel: recordPaymentStudent.classLevel || 'Primary',
+                        amount: amt,
+                        channel: recordPaymentChannel,
+                        paidAt: new Date().toISOString(),
+                        notes: recordPaymentNotes
+                      });
+
+                      setRecordPaymentStudent(null);
+                      setFinanceSaveAlert(`Successfully recorded ₦${amt.toLocaleString()} payment for ${recordPaymentStudent.name}!`);
+                      setTimeout(() => setFinanceSaveAlert(''), 4000);
+                    }}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 disabled:opacity-50 shadow-sm transition-colors"
+                  >
+                    <CheckCircle2 className="w-4 h-4" /> Confirm & Issue Receipt
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── ADD DISCOUNT POLICY MODAL ── */}
+          {showAddDiscountModal && (
+            <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+              <div className="bg-card border border-border rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                <div className="p-5 border-b border-border flex items-center justify-between bg-muted/20">
+                  <h3 className="font-serif font-bold text-base text-foreground flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-amber-500" /> Create Fee Concession Policy
+                  </h3>
+                  <button onClick={() => setShowAddDiscountModal(false)} className="p-2 rounded-xl text-muted-foreground hover:bg-muted/50 transition-colors"><X className="w-5 h-5" /></button>
+                </div>
+
+                <div className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold mb-1.5 text-foreground">Policy Code / Key *</label>
+                    <input
+                      type="text"
+                      value={discountForm.code}
+                      onChange={e => setDiscountForm({ ...discountForm, code: e.target.value.toUpperCase().replace(/\s+/g, '_') })}
+                      placeholder="e.g. SIBLING_4TH"
+                      className="w-full px-3.5 py-2 rounded-xl border border-border bg-background text-xs font-mono font-bold focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold mb-1.5 text-foreground">Policy Name *</label>
+                    <input
+                      type="text"
+                      value={discountForm.name}
+                      onChange={e => setDiscountForm({ ...discountForm, name: e.target.value })}
+                      placeholder="e.g. 4th Sibling Family Discount"
+                      className="w-full px-3.5 py-2 rounded-xl border border-border bg-background text-xs font-bold focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold mb-1.5 text-foreground">Discount Type</label>
+                      <select
+                        value={discountForm.discount_type}
+                        onChange={e => setDiscountForm({ ...discountForm, discount_type: e.target.value as any })}
+                        className="w-full px-3 py-2 rounded-xl border border-border bg-background text-xs font-bold focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="PERCENTAGE">Percentage (%)</option>
+                        <option value="FIXED">Fixed Amount (₦)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold mb-1.5 text-foreground">Benefit Value *</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={discountForm.value}
+                        onChange={e => setDiscountForm({ ...discountForm, value: Number(e.target.value) || 0 })}
+                        className="w-full px-3.5 py-2 rounded-xl border border-border bg-background text-xs font-mono font-bold focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold mb-1.5 text-foreground">Policy Eligibility Description</label>
+                    <textarea
+                      rows={2}
+                      value={discountForm.description}
+                      onChange={e => setDiscountForm({ ...discountForm, description: e.target.value })}
+                      placeholder="Explain who qualifies for this institutional discount..."
+                      className="w-full px-3.5 py-2 rounded-xl border border-border bg-background text-xs focus:ring-2 focus:ring-primary resize-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-5 border-t border-border bg-muted/20 flex items-center justify-between">
+                  <button onClick={() => setShowAddDiscountModal(false)} className="px-4 py-2 rounded-xl border border-border text-xs font-semibold hover:bg-muted transition-colors">Cancel</button>
+                  <button
+                    disabled={!discountForm.code || !discountForm.name}
+                    onClick={async () => {
+                      await saveDiscountPolicy({
+                        code: discountForm.code,
+                        name: discountForm.name,
+                        discount_type: discountForm.discount_type as any,
+                        value: discountForm.value,
+                        description: discountForm.description,
+                        is_active: true
+                      });
+                      setDiscountPolicies(getDiscountPolicies());
+                      setShowAddDiscountModal(false);
+                      setFinanceSaveAlert(`Successfully added ${discountForm.name} concession policy!`);
+                      setTimeout(() => setFinanceSaveAlert(''), 4000);
+                    }}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary/90 disabled:opacity-50 shadow-sm transition-colors"
+                  >
+                    <CheckCircle2 className="w-4 h-4" /> Save Policy
+                  </button>
                 </div>
               </div>
             </div>
@@ -9983,6 +10702,111 @@ export default function AdminDashboard() {
                     className="flex items-center gap-2 px-5 py-2.5 bg-rose-600 text-white text-xs font-bold rounded-xl hover:bg-rose-700 disabled:opacity-50 shadow-sm transition-colors"
                   >
                     <CheckCircle2 className="w-4 h-4" /> Save Expense
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── PRINTABLE DIGITAL RECEIPT MODAL ── */}
+          {receiptModalData && (
+            <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+              <div className="bg-card border border-border rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                <div className="p-4 border-b border-border flex items-center justify-between bg-muted/20 print:hidden">
+                  <div className="flex items-center gap-2 text-emerald-600 font-bold text-xs">
+                    <CheckCircle2 className="w-4 h-4" /> Official Bursary Receipt Generated
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => window.print()}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white rounded-xl text-xs font-bold shadow-xs hover:bg-primary/90 transition-colors"
+                    >
+                      <Download className="w-3.5 h-3.5" /> Print / Save PDF
+                    </button>
+                    <button onClick={() => setReceiptModalData(null)} className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted/50 transition-colors">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div id="printable-receipt" className="p-6 space-y-5 bg-white text-slate-900 font-sans">
+                  {/* Receipt Header */}
+                  <div className="text-center border-b-2 border-slate-900/10 pb-4 space-y-1">
+                    <div className="flex items-center justify-center gap-2">
+                      <img src={tarepetLogo} alt="Tarepet Logo" className="w-10 h-10 object-contain" />
+                      <h2 className="font-serif font-black text-xl tracking-tight text-slate-900 uppercase">Tarepet Montessori School</h2>
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-semibold tracking-wider uppercase">Excellence in Montessori & Academic Education</p>
+                    <p className="text-[9px] text-slate-400">Kpansia-Epie, Yenagoa, Bayelsa State · bursary@tarepetmontessori.org · +234 803 123 4567</p>
+                    <div className="inline-block mt-2 px-3 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-[10px] font-extrabold uppercase tracking-widest">
+                      Official Payment Receipt
+                    </div>
+                  </div>
+
+                  {/* Receipt Meta */}
+                  <div className="grid grid-cols-2 gap-3 text-xs bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Receipt Reference</span>
+                      <span className="font-mono font-bold text-slate-900">{receiptModalData.reference}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Date & Time</span>
+                      <span className="font-medium text-slate-700">{new Date(receiptModalData.paidAt || Date.now()).toLocaleString()}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Student Name</span>
+                      <span className="font-bold text-slate-900">{receiptModalData.studentName}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Admission No / Class</span>
+                      <span className="font-medium text-slate-700">{receiptModalData.studentId} ({receiptModalData.classLevel || 'General'})</span>
+                    </div>
+                  </div>
+
+                  {/* Receipt Items Breakdown */}
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-200 text-slate-400 uppercase text-[9px]">
+                        <th className="py-2 text-left">Description</th>
+                        <th className="py-2 text-center">Channel</th>
+                        <th className="py-2 text-right">Amount (₦)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-medium">
+                      <tr>
+                        <td className="py-2.5 text-slate-800 font-semibold">{receiptModalData.notes || 'Termly School Fee Settlement & Instruction Levy'}</td>
+                        <td className="py-2.5 text-center text-slate-500 uppercase text-[10px] font-bold">{receiptModalData.channel?.replace('_', ' ')}</td>
+                        <td className="py-2.5 text-right font-mono font-bold text-slate-900">₦{Number(receiptModalData.amount || 0).toLocaleString()}</td>
+                      </tr>
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t-2 border-slate-900 text-slate-900 font-bold">
+                        <td colSpan={2} className="py-2.5 text-right uppercase text-[10px]">Total Amount Paid:</td>
+                        <td className="py-2.5 text-right font-mono text-base text-emerald-700 font-serif">₦{Number(receiptModalData.amount || 0).toLocaleString()}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+
+                  {/* Stamp & Authorized Signature */}
+                  <div className="pt-4 border-t border-slate-200 flex items-center justify-between">
+                    <div className="space-y-1">
+                      <div className="w-20 h-10 border border-dashed border-emerald-500 rounded-lg flex items-center justify-center bg-emerald-50 text-[9px] font-black text-emerald-700 tracking-tighter uppercase rotate-[-6deg]">
+                        PAID & VERIFIED
+                      </div>
+                      <p className="text-[8px] text-slate-400">Electronic Bursary Ledger</p>
+                    </div>
+                    <div className="text-right space-y-1">
+                      <div className="w-32 border-b border-slate-400 pb-1">
+                        <span className="font-serif italic font-bold text-xs text-slate-800">T. Montessori</span>
+                      </div>
+                      <p className="text-[9px] font-bold text-slate-600">Bursar / Accounts Officer</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 border-t border-border bg-muted/20 flex items-center justify-end print:hidden">
+                  <button onClick={() => setReceiptModalData(null)} className="px-5 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition-colors">
+                    Close Receipt
                   </button>
                 </div>
               </div>

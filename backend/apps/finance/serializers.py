@@ -1,5 +1,8 @@
 from rest_framework import serializers
-from .models import FeeItem, FeeTransaction, IncomeRecord, ExpenseRecord
+from .models import (
+    FeeItem, FeeTransaction, IncomeRecord, ExpenseRecord,
+    ClassFeeSchedule, DiscountPolicy, StudentFeeAccount
+)
 
 
 class FeeItemSerializer(serializers.ModelSerializer):
@@ -25,6 +28,32 @@ class FeeItemSerializer(serializers.ModelSerializer):
             item_key = name.lower().replace(' ', '_')
         validated_data['item_key'] = item_key
         return FeeItem.objects.create(**validated_data)
+
+
+class ClassFeeScheduleSerializer(serializers.ModelSerializer):
+    totalFee = serializers.DecimalField(source='total_fee', max_digits=12, decimal_places=2, read_only=True)
+    tuitionFee = serializers.DecimalField(source='tuition_fee', max_digits=12, decimal_places=2)
+    devLevy = serializers.DecimalField(source='development_levy', max_digits=12, decimal_places=2)
+    booksMaterials = serializers.DecimalField(source='books_materials', max_digits=12, decimal_places=2)
+    uniformSports = serializers.DecimalField(source='uniform_sports', max_digits=12, decimal_places=2)
+    ptaMedical = serializers.DecimalField(source='pta_medical', max_digits=12, decimal_places=2)
+    examLevy = serializers.DecimalField(source='exam_levy', max_digits=12, decimal_places=2)
+
+    class Meta:
+        model = ClassFeeSchedule
+        fields = '__all__'
+
+
+class DiscountPolicySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DiscountPolicy
+        fields = '__all__'
+
+
+class StudentFeeAccountSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StudentFeeAccount
+        fields = '__all__'
 
 
 class FeeTransactionSerializer(serializers.ModelSerializer):
