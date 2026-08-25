@@ -49,19 +49,6 @@ class Command(BaseCommand):
         # 3. Seed Teachers from Official Paper Roster (Exact 19 Teachers)
         teachers_roster = [
             {
-                'first_name': 'Ms. Allison',
-                'last_name': 'Victoria',
-                'email': 'allison.victoria@tarepet.com',
-                'phone': '08062571566',
-                'teacher_id': 'TMS/TCH/0001',
-                'gender': 'Female',
-                'department': 'Senior Secondary Section',
-                'specialization': 'Senior Secondary Language Arts & English',
-                'class_assigned': 'SS 1',
-                'bio': 'Form Teacher for SS 1 guiding students in English Language and Senior Secondary curriculum.',
-                'subjects_taught': [{'name': 'English Language', 'grade': 'SS 1'}]
-            },
-            {
                 'first_name': 'Mrs. Timi',
                 'last_name': 'Porbeni',
                 'email': 'isaactimi16@gmail.com',
@@ -351,26 +338,14 @@ class Command(BaseCommand):
                 teacher_email = tr['email']
                 teacher_id_val = tr['teacher_id']
 
-        # 4. Create Parent Account
-        parent_email = 'ebi.amadi@tarepet.com'
-        parent_user = User.objects.filter(email=parent_email).first()
-        if not parent_user:
-            parent_user = User.objects.create_user(
-                email=parent_email,
-                password='ParentPassword123!',
-                first_name='Ebi',
-                last_name='Amadi',
-                role=User.Role.PARENT,
-            )
-        parent_prof, _ = ParentProfile.objects.get_or_create(
-            user=parent_user,
-            defaults={'occupation': 'Civil Engineer', 'address': 'Yenagoa, Bayelsa State'}
-        )
-
-        # 5. Clean up and purge any mock student accounts
+        # 4. Clean up and purge all mock parent & student accounts
+        ParentProfile.objects.all().delete()
+        User.objects.filter(role=User.Role.PARENT).delete()
         StudentProfile.objects.all().delete()
         User.objects.filter(role=User.Role.STUDENT).delete()
         User.objects.filter(email__in=[
+            'allison.victoria@tarepet.com',
+            'ebi.amadi@tarepet.com',
             'civa.media@tarepet.com',
             'student@tarepet.com',
             'emeka.amadi@tarepet.com',
