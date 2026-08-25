@@ -870,11 +870,27 @@ export const DEFAULT_SUBJECTS: SubjectRecord[] = [
   { id: 211, code: 'ART-101', title: 'Fine Arts', grade: 'SS 1 - SS 3', stream: 'Art', category: 'Creative Arts', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Studio', passMark: 50, periods: '3 Periods/wk' },
 ];
 
+function deduplicateSubjects(subjects: SubjectRecord[]): SubjectRecord[] {
+  const seen = new Set<string>();
+  const deduped: SubjectRecord[] = [];
+  for (const s of subjects) {
+    const key = `${(s.code || '').toUpperCase()}_${(s.stream || 'General').toUpperCase()}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      deduped.push({
+        ...s,
+        grade: s.grade && s.grade.startsWith('SS') ? 'SS 1 - SS 3' : s.grade,
+      });
+    }
+  }
+  return deduped;
+}
+
 function loadSavedSubjects(): SubjectRecord[] {
   let list: SubjectRecord[] = [];
   if (typeof window !== 'undefined') {
     try {
-      const saved = localStorage.getItem('tarepet_subjects_list_v4') || localStorage.getItem('tarepet_subjects_list_v3') || localStorage.getItem('tarepet_subjects_list');
+      const saved = localStorage.getItem('tarepet_subjects_v5') || localStorage.getItem('tarepet_subjects_list_v4') || localStorage.getItem('tarepet_subjects_list');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -886,17 +902,19 @@ function loadSavedSubjects(): SubjectRecord[] {
   
   const validCodes = new Set(DEFAULT_SUBJECTS.map(d => `${d.code.toUpperCase()}_${d.stream.toUpperCase()}`));
   list = list.filter(s => validCodes.has(`${(s.code || '').toUpperCase()}_${(s.stream || 'General').toUpperCase()}`));
+  list = deduplicateSubjects(list);
 
   for (const def of DEFAULT_SUBJECTS) {
     if (!list.some(s => s.code.toUpperCase() === def.code.toUpperCase() && (s.stream || 'General').toUpperCase() === def.stream.toUpperCase())) {
       list.push(def);
     }
   }
+  list = deduplicateSubjects(list);
 
   if (typeof window !== 'undefined') {
     try {
       localStorage.setItem('tarepet_subjects_list', JSON.stringify(list));
-      localStorage.setItem('tarepet_subjects_list_v4', JSON.stringify(list));
+      localStorage.setItem('tarepet_subjects_v5', JSON.stringify(list));
     } catch (e) {}
   }
   return list;
