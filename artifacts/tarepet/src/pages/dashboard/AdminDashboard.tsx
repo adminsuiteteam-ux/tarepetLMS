@@ -8088,7 +8088,7 @@ export default function AdminDashboard() {
             <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Science & STEM</p>
-                <h3 className="text-2xl font-serif font-bold text-primary mt-1">{subjectsListState.filter(s => (s.grade || '').toUpperCase().startsWith('SS') && (s.stream === 'Science' || s.category === 'STEM' || s.category === 'Science' || s.category === 'STEM & Environmental' || s.category === 'Life Sciences' || s.category === 'Technical & Applied')).length}</h3>
+                <h3 className="text-2xl font-serif font-bold text-primary mt-1">{subjectsListState.filter(s => s.stream === 'Science').length}</h3>
                 <p className="text-[11px] text-muted-foreground mt-0.5">Lab & Practical</p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><FlaskConical className="w-5 h-5" /></div>

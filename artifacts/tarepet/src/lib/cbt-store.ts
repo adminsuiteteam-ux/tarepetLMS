@@ -840,99 +840,41 @@ export interface SubjectRecord {
 }
 
 export const DEFAULT_SUBJECTS: SubjectRecord[] = [
-  // ── Senior Secondary 1 (SS 1) Science Stream ──
-  { id: 101, code: 'ENG-101', title: 'English Language', grade: 'SS 1', stream: 'Science', category: 'General Core', teacher: 'Mrs. Timi Porbeni', teacherStaffId: 'TMS/TCH/0002', studentsCount: 0, status: 'Active', room: 'Hall A', passMark: 50, periods: '5 Periods/wk' },
-  { id: 102, code: 'MTH-101', title: 'Mathematics', grade: 'SS 1', stream: 'Science', category: 'STEM', teacher: 'Eli Idua', teacherStaffId: 'TMS/TCH/0017', studentsCount: 0, status: 'Active', room: 'Hall A', passMark: 50, periods: '5 Periods/wk' },
-  { id: 103, code: 'BIO-101', title: 'Biology', grade: 'SS 1', stream: 'Science', category: 'STEM', teacher: 'Emmanuel U. Joseph', teacherStaffId: 'TMS/TCH/0019', studentsCount: 0, status: 'Active', room: 'Biology Lab', passMark: 50, periods: '4 Periods/wk' },
-  { id: 104, code: 'CHM-101', title: 'Chemistry', grade: 'SS 1', stream: 'Science', category: 'STEM', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Chemistry Lab', passMark: 50, periods: '4 Periods/wk' },
-  { id: 105, code: 'PHY-101', title: 'Physics', grade: 'SS 1', stream: 'Science', category: 'STEM', teacher: 'Abiola Adeniyi Adegemo', teacherStaffId: 'TMS/TCH/0007', studentsCount: 0, status: 'Active', room: 'Physics Lab', passMark: 50, periods: '4 Periods/wk' },
-  { id: 106, code: 'FMTH-101', title: 'Further Mathematics', grade: 'SS 1', stream: 'Science', category: 'STEM', teacher: 'Eli Idua', teacherStaffId: 'TMS/TCH/0017', studentsCount: 0, status: 'Active', room: 'Hall A', passMark: 50, periods: '3 Periods/wk' },
-  { id: 107, code: 'AGR-101', title: 'Agricultural Science', grade: 'SS 1', stream: 'Science', category: 'STEM', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Agric Plot', passMark: 50, periods: '3 Periods/wk' },
-  { id: 108, code: 'GEO-101', title: 'Geography', grade: 'SS 1', stream: 'Science', category: 'STEM & Environmental', teacher: 'Alex I. Akpokulokenei Maria', teacherStaffId: 'TMS/TCH/0018', studentsCount: 0, status: 'Active', room: 'Geo Lab', passMark: 50, periods: '3 Periods/wk' },
-  { id: 109, code: 'CIV-101', title: 'Civic Education', grade: 'SS 1', stream: 'Science', category: 'General Core', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Hall A', passMark: 50, periods: '2 Periods/wk' },
-  { id: 110, code: 'ICT-101', title: 'Computer Studies (ICT)', grade: 'SS 1', stream: 'Science', category: 'STEM', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'ICT Lab', passMark: 50, periods: '3 Periods/wk' },
-  { id: 111, code: 'TD-101', title: 'Technical Drawing', grade: 'SS 1', stream: 'Science', category: 'Technical & Applied', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Studio 1', passMark: 50, periods: '2 Periods/wk' },
-  { id: 112, code: 'HED-101', title: 'Health Education', grade: 'SS 1', stream: 'Science', category: 'Life Sciences', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Hall A', passMark: 50, periods: '2 Periods/wk' },
-  { id: 113, code: 'PHE-101', title: 'Physical Education', grade: 'SS 1', stream: 'Science', category: 'Physical & Health', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Sports Complex', passMark: 50, periods: '2 Periods/wk' },
-  { id: 114, code: 'TRD-101', title: 'Trade/Entrepreneurship Subject', grade: 'SS 1', stream: 'Science', category: 'Trade & Entrepreneurship', teacher: 'Iwu Adanma', teacherStaffId: 'TMS/TCH/0014', studentsCount: 0, status: 'Active', room: 'Vocational Studio', passMark: 50, periods: '2 Periods/wk' },
+  // ── Senior Secondary Science Stream (14 Unique Subjects) ──
+  { id: 101, code: 'ENG-101', title: 'English Language', grade: 'SS 1 - SS 3', stream: 'Science', category: 'General Core', teacher: 'Mrs. Timi Porbeni', teacherStaffId: 'TMS/TCH/0002', studentsCount: 0, status: 'Active', room: 'Hall A', passMark: 50, periods: '5 Periods/wk' },
+  { id: 102, code: 'MTH-101', title: 'Mathematics', grade: 'SS 1 - SS 3', stream: 'Science', category: 'STEM', teacher: 'Eli Idua', teacherStaffId: 'TMS/TCH/0017', studentsCount: 0, status: 'Active', room: 'Hall A', passMark: 50, periods: '5 Periods/wk' },
+  { id: 103, code: 'BIO-101', title: 'Biology', grade: 'SS 1 - SS 3', stream: 'Science', category: 'STEM', teacher: 'Emmanuel U. Joseph', teacherStaffId: 'TMS/TCH/0019', studentsCount: 0, status: 'Active', room: 'Biology Lab', passMark: 50, periods: '4 Periods/wk' },
+  { id: 104, code: 'CHM-101', title: 'Chemistry', grade: 'SS 1 - SS 3', stream: 'Science', category: 'STEM', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Chemistry Lab', passMark: 50, periods: '4 Periods/wk' },
+  { id: 105, code: 'PHY-101', title: 'Physics', grade: 'SS 1 - SS 3', stream: 'Science', category: 'STEM', teacher: 'Abiola Adeniyi Adegemo', teacherStaffId: 'TMS/TCH/0007', studentsCount: 0, status: 'Active', room: 'Physics Lab', passMark: 50, periods: '4 Periods/wk' },
+  { id: 106, code: 'FMTH-101', title: 'Further Mathematics', grade: 'SS 1 - SS 3', stream: 'Science', category: 'STEM', teacher: 'Eli Idua', teacherStaffId: 'TMS/TCH/0017', studentsCount: 0, status: 'Active', room: 'Hall A', passMark: 50, periods: '3 Periods/wk' },
+  { id: 107, code: 'AGR-101', title: 'Agricultural Science', grade: 'SS 1 - SS 3', stream: 'Science', category: 'STEM', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Agric Plot', passMark: 50, periods: '3 Periods/wk' },
+  { id: 108, code: 'GEO-101', title: 'Geography', grade: 'SS 1 - SS 3', stream: 'Science', category: 'STEM & Environmental', teacher: 'Alex I. Akpokulokenei Maria', teacherStaffId: 'TMS/TCH/0018', studentsCount: 0, status: 'Active', room: 'Geo Lab', passMark: 50, periods: '3 Periods/wk' },
+  { id: 109, code: 'CIV-101', title: 'Civic Education', grade: 'SS 1 - SS 3', stream: 'Science', category: 'General Core', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Hall A', passMark: 50, periods: '2 Periods/wk' },
+  { id: 110, code: 'ICT-101', title: 'Computer Studies (ICT)', grade: 'SS 1 - SS 3', stream: 'Science', category: 'STEM', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'ICT Lab', passMark: 50, periods: '3 Periods/wk' },
+  { id: 111, code: 'TD-101', title: 'Technical Drawing', grade: 'SS 1 - SS 3', stream: 'Science', category: 'Technical & Applied', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Studio 1', passMark: 50, periods: '2 Periods/wk' },
+  { id: 112, code: 'HED-101', title: 'Health Education', grade: 'SS 1 - SS 3', stream: 'Science', category: 'Life Sciences', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Hall A', passMark: 50, periods: '2 Periods/wk' },
+  { id: 113, code: 'PHE-101', title: 'Physical Education', grade: 'SS 1 - SS 3', stream: 'Science', category: 'Physical & Health', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Sports Complex', passMark: 50, periods: '2 Periods/wk' },
+  { id: 114, code: 'TRD-101', title: 'Trade/Entrepreneurship Subject', grade: 'SS 1 - SS 3', stream: 'Science', category: 'Trade & Entrepreneurship', teacher: 'Iwu Adanma', teacherStaffId: 'TMS/TCH/0014', studentsCount: 0, status: 'Active', room: 'Vocational Studio', passMark: 50, periods: '2 Periods/wk' },
 
-  // ── Senior Secondary 2 (SS 2) Science Stream ──
-  { id: 201, code: 'ENG-101', title: 'English Language', grade: 'SS 2', stream: 'Science', category: 'General Core', teacher: 'Mrs. Timi Porbeni', teacherStaffId: 'TMS/TCH/0002', studentsCount: 0, status: 'Active', room: 'Hall B', passMark: 50, periods: '5 Periods/wk' },
-  { id: 202, code: 'MTH-101', title: 'Mathematics', grade: 'SS 2', stream: 'Science', category: 'STEM', teacher: 'Ogbe Andrew', teacherStaffId: 'TMS/TCH/0006', studentsCount: 0, status: 'Active', room: 'Hall B', passMark: 50, periods: '5 Periods/wk' },
-  { id: 203, code: 'BIO-101', title: 'Biology', grade: 'SS 2', stream: 'Science', category: 'STEM', teacher: 'Emmanuel U. Joseph', teacherStaffId: 'TMS/TCH/0019', studentsCount: 0, status: 'Active', room: 'Biology Lab', passMark: 50, periods: '4 Periods/wk' },
-  { id: 204, code: 'CHM-101', title: 'Chemistry', grade: 'SS 2', stream: 'Science', category: 'STEM', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Chemistry Lab', passMark: 50, periods: '4 Periods/wk' },
-  { id: 205, code: 'PHY-101', title: 'Physics', grade: 'SS 2', stream: 'Science', category: 'STEM', teacher: 'Abiola Adeniyi Adegemo', teacherStaffId: 'TMS/TCH/0007', studentsCount: 0, status: 'Active', room: 'Physics Lab', passMark: 50, periods: '4 Periods/wk' },
-  { id: 206, code: 'FMTH-101', title: 'Further Mathematics', grade: 'SS 2', stream: 'Science', category: 'STEM', teacher: 'Eli Idua', teacherStaffId: 'TMS/TCH/0017', studentsCount: 0, status: 'Active', room: 'Hall B', passMark: 50, periods: '3 Periods/wk' },
-  { id: 207, code: 'AGR-101', title: 'Agricultural Science', grade: 'SS 2', stream: 'Science', category: 'STEM', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Agric Plot', passMark: 50, periods: '3 Periods/wk' },
-  { id: 208, code: 'GEO-101', title: 'Geography', grade: 'SS 2', stream: 'Science', category: 'STEM & Environmental', teacher: 'Alex I. Akpokulokenei Maria', teacherStaffId: 'TMS/TCH/0018', studentsCount: 0, status: 'Active', room: 'Geo Lab', passMark: 50, periods: '3 Periods/wk' },
-  { id: 209, code: 'CIV-101', title: 'Civic Education', grade: 'SS 2', stream: 'Science', category: 'General Core', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Hall B', passMark: 50, periods: '2 Periods/wk' },
-  { id: 210, code: 'ICT-101', title: 'Computer Studies (ICT)', grade: 'SS 2', stream: 'Science', category: 'STEM', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'ICT Lab', passMark: 50, periods: '3 Periods/wk' },
-  { id: 211, code: 'TD-101', title: 'Technical Drawing', grade: 'SS 2', stream: 'Science', category: 'Technical & Applied', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Studio 1', passMark: 50, periods: '2 Periods/wk' },
-  { id: 212, code: 'HED-101', title: 'Health Education', grade: 'SS 2', stream: 'Science', category: 'Life Sciences', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Hall B', passMark: 50, periods: '2 Periods/wk' },
-  { id: 213, code: 'PHE-101', title: 'Physical Education', grade: 'SS 2', stream: 'Science', category: 'Physical & Health', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Sports Complex', passMark: 50, periods: '2 Periods/wk' },
-  { id: 214, code: 'TRD-101', title: 'Trade/Entrepreneurship Subject', grade: 'SS 2', stream: 'Science', category: 'Trade & Entrepreneurship', teacher: 'Iwu Adanma', teacherStaffId: 'TMS/TCH/0014', studentsCount: 0, status: 'Active', room: 'Vocational Studio', passMark: 50, periods: '2 Periods/wk' },
-
-  // ── Senior Secondary 3 (SS 3) Science Stream ──
-  { id: 301, code: 'ENG-101', title: 'English Language', grade: 'SS 3', stream: 'Science', category: 'General Core', teacher: 'Mrs. Timi Porbeni', teacherStaffId: 'TMS/TCH/0002', studentsCount: 0, status: 'Active', room: 'Hall C', passMark: 50, periods: '5 Periods/wk' },
-  { id: 302, code: 'MTH-101', title: 'Mathematics', grade: 'SS 3', stream: 'Science', category: 'STEM', teacher: 'Eli Idua', teacherStaffId: 'TMS/TCH/0017', studentsCount: 0, status: 'Active', room: 'Hall C', passMark: 50, periods: '5 Periods/wk' },
-  { id: 303, code: 'BIO-101', title: 'Biology', grade: 'SS 3', stream: 'Science', category: 'STEM', teacher: 'Emmanuel U. Joseph', teacherStaffId: 'TMS/TCH/0019', studentsCount: 0, status: 'Active', room: 'Biology Lab', passMark: 50, periods: '4 Periods/wk' },
-  { id: 304, code: 'CHM-101', title: 'Chemistry', grade: 'SS 3', stream: 'Science', category: 'STEM', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Chemistry Lab', passMark: 50, periods: '4 Periods/wk' },
-  { id: 305, code: 'PHY-101', title: 'Physics', grade: 'SS 3', stream: 'Science', category: 'STEM', teacher: 'Abiola Adeniyi Adegemo', teacherStaffId: 'TMS/TCH/0007', studentsCount: 0, status: 'Active', room: 'Physics Lab', passMark: 50, periods: '4 Periods/wk' },
-  { id: 306, code: 'FMTH-101', title: 'Further Mathematics', grade: 'SS 3', stream: 'Science', category: 'STEM', teacher: 'Eli Idua', teacherStaffId: 'TMS/TCH/0017', studentsCount: 0, status: 'Active', room: 'Hall C', passMark: 50, periods: '3 Periods/wk' },
-  { id: 307, code: 'AGR-101', title: 'Agricultural Science', grade: 'SS 3', stream: 'Science', category: 'STEM', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Agric Plot', passMark: 50, periods: '3 Periods/wk' },
-  { id: 308, code: 'GEO-101', title: 'Geography', grade: 'SS 3', stream: 'Science', category: 'STEM & Environmental', teacher: 'Alex I. Akpokulokenei Maria', teacherStaffId: 'TMS/TCH/0018', studentsCount: 0, status: 'Active', room: 'Geo Lab', passMark: 50, periods: '3 Periods/wk' },
-  { id: 309, code: 'CIV-101', title: 'Civic Education', grade: 'SS 3', stream: 'Science', category: 'General Core', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Hall C', passMark: 50, periods: '2 Periods/wk' },
-  { id: 310, code: 'ICT-101', title: 'Computer Studies (ICT)', grade: 'SS 3', stream: 'Science', category: 'STEM', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'ICT Lab', passMark: 50, periods: '3 Periods/wk' },
-  { id: 311, code: 'TD-101', title: 'Technical Drawing', grade: 'SS 3', stream: 'Science', category: 'Technical & Applied', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Studio 1', passMark: 50, periods: '2 Periods/wk' },
-  { id: 312, code: 'HED-101', title: 'Health Education', grade: 'SS 3', stream: 'Science', category: 'Life Sciences', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Hall C', passMark: 50, periods: '2 Periods/wk' },
-  { id: 313, code: 'PHE-101', title: 'Physical Education', grade: 'SS 3', stream: 'Science', category: 'Physical & Health', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Sports Complex', passMark: 50, periods: '2 Periods/wk' },
-  { id: 314, code: 'TRD-101', title: 'Trade/Entrepreneurship Subject', grade: 'SS 3', stream: 'Science', category: 'Trade & Entrepreneurship', teacher: 'Iwu Adanma', teacherStaffId: 'TMS/TCH/0014', studentsCount: 0, status: 'Active', room: 'Vocational Studio', passMark: 50, periods: '2 Periods/wk' },
-
-  // ── Senior Secondary 1 (SS 1) Art & Humanities Stream ──
-  { id: 401, code: 'ENG-101', title: 'English Language', grade: 'SS 1', stream: 'Art', category: 'General Core', teacher: 'Mrs. Timi Porbeni', teacherStaffId: 'TMS/TCH/0002', studentsCount: 0, status: 'Active', room: 'Art Block 1', passMark: 50, periods: '5 Periods/wk' },
-  { id: 402, code: 'MTH-101', title: 'Mathematics', grade: 'SS 1', stream: 'Art', category: 'General Core', teacher: 'Eli Idua', teacherStaffId: 'TMS/TCH/0017', studentsCount: 0, status: 'Active', room: 'Art Block 1', passMark: 50, periods: '5 Periods/wk' },
-  { id: 403, code: 'LIT-101', title: 'Literature in English', grade: 'SS 1', stream: 'Art', category: 'Humanities', teacher: 'Mrs. Timi Porbeni', teacherStaffId: 'TMS/TCH/0002', studentsCount: 0, status: 'Active', room: 'Art Block 1', passMark: 50, periods: '4 Periods/wk' },
-  { id: 404, code: 'GOV-101', title: 'Government', grade: 'SS 1', stream: 'Art', category: 'Humanities', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Block 1', passMark: 50, periods: '4 Periods/wk' },
-  { id: 405, code: 'CRS-101', title: 'Christian Religious Studies (CRS) / IRS', grade: 'SS 1', stream: 'Art', category: 'Humanities', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Block 1', passMark: 50, periods: '3 Periods/wk' },
-  { id: 406, code: 'CIV-101', title: 'Civic Education', grade: 'SS 1', stream: 'Art', category: 'General Core', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Block 1', passMark: 50, periods: '2 Periods/wk' },
-  { id: 407, code: 'ECO-101', title: 'Economics', grade: 'SS 1', stream: 'Art', category: 'Humanities', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Block 1', passMark: 50, periods: '4 Periods/wk' },
-  { id: 408, code: 'HIS-101', title: 'History', grade: 'SS 1', stream: 'Art', category: 'Humanities', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Block 1', passMark: 50, periods: '3 Periods/wk' },
-  { id: 409, code: 'ICT-101', title: 'Computer Studies (ICT)', grade: 'SS 1', stream: 'Art', category: 'STEM', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'ICT Lab', passMark: 50, periods: '3 Periods/wk' },
-  { id: 410, code: 'LANG-101', title: 'Yoruba / Igbo / Hausa', grade: 'SS 1', stream: 'Art', category: 'Languages', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Block 1', passMark: 50, periods: '2 Periods/wk' },
-  { id: 411, code: 'ART-101', title: 'Fine Arts', grade: 'SS 1', stream: 'Art', category: 'Creative Arts', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Studio', passMark: 50, periods: '3 Periods/wk' },
-
-  // ── Senior Secondary 2 (SS 2) Art & Humanities Stream ──
-  { id: 501, code: 'ENG-101', title: 'English Language', grade: 'SS 2', stream: 'Art', category: 'General Core', teacher: 'Mrs. Timi Porbeni', teacherStaffId: 'TMS/TCH/0002', studentsCount: 0, status: 'Active', room: 'Art Block 2', passMark: 50, periods: '5 Periods/wk' },
-  { id: 502, code: 'MTH-101', title: 'Mathematics', grade: 'SS 2', stream: 'Art', category: 'General Core', teacher: 'Ogbe Andrew', teacherStaffId: 'TMS/TCH/0006', studentsCount: 0, status: 'Active', room: 'Art Block 2', passMark: 50, periods: '5 Periods/wk' },
-  { id: 503, code: 'LIT-101', title: 'Literature in English', grade: 'SS 2', stream: 'Art', category: 'Humanities', teacher: 'Mrs. Timi Porbeni', teacherStaffId: 'TMS/TCH/0002', studentsCount: 0, status: 'Active', room: 'Art Block 2', passMark: 50, periods: '4 Periods/wk' },
-  { id: 504, code: 'GOV-101', title: 'Government', grade: 'SS 2', stream: 'Art', category: 'Humanities', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Block 2', passMark: 50, periods: '4 Periods/wk' },
-  { id: 505, code: 'CRS-101', title: 'Christian Religious Studies (CRS) / IRS', grade: 'SS 2', stream: 'Art', category: 'Humanities', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Block 2', passMark: 50, periods: '3 Periods/wk' },
-  { id: 506, code: 'CIV-101', title: 'Civic Education', grade: 'SS 2', stream: 'Art', category: 'General Core', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Block 2', passMark: 50, periods: '2 Periods/wk' },
-  { id: 507, code: 'ECO-101', title: 'Economics', grade: 'SS 2', stream: 'Art', category: 'Humanities', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Block 2', passMark: 50, periods: '4 Periods/wk' },
-  { id: 508, code: 'HIS-101', title: 'History', grade: 'SS 2', stream: 'Art', category: 'Humanities', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Block 2', passMark: 50, periods: '3 Periods/wk' },
-  { id: 509, code: 'ICT-101', title: 'Computer Studies (ICT)', grade: 'SS 2', stream: 'Art', category: 'STEM', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'ICT Lab', passMark: 50, periods: '3 Periods/wk' },
-  { id: 510, code: 'LANG-101', title: 'Yoruba / Igbo / Hausa', grade: 'SS 2', stream: 'Art', category: 'Languages', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Block 2', passMark: 50, periods: '2 Periods/wk' },
-  { id: 511, code: 'ART-101', title: 'Fine Arts', grade: 'SS 2', stream: 'Art', category: 'Creative Arts', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Studio', passMark: 50, periods: '3 Periods/wk' },
-
-  // ── Senior Secondary 3 (SS 3) Art & Humanities Stream ──
-  { id: 601, code: 'ENG-101', title: 'English Language', grade: 'SS 3', stream: 'Art', category: 'General Core', teacher: 'Mrs. Timi Porbeni', teacherStaffId: 'TMS/TCH/0002', studentsCount: 0, status: 'Active', room: 'Art Block 3', passMark: 50, periods: '5 Periods/wk' },
-  { id: 602, code: 'MTH-101', title: 'Mathematics', grade: 'SS 3', stream: 'Art', category: 'General Core', teacher: 'Eli Idua', teacherStaffId: 'TMS/TCH/0017', studentsCount: 0, status: 'Active', room: 'Art Block 3', passMark: 50, periods: '5 Periods/wk' },
-  { id: 603, code: 'LIT-101', title: 'Literature in English', grade: 'SS 3', stream: 'Art', category: 'Humanities', teacher: 'Mrs. Timi Porbeni', teacherStaffId: 'TMS/TCH/0002', studentsCount: 0, status: 'Active', room: 'Art Block 3', passMark: 50, periods: '4 Periods/wk' },
-  { id: 604, code: 'GOV-101', title: 'Government', grade: 'SS 3', stream: 'Art', category: 'Humanities', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Block 3', passMark: 50, periods: '4 Periods/wk' },
-  { id: 605, code: 'CRS-101', title: 'Christian Religious Studies (CRS) / IRS', grade: 'SS 3', stream: 'Art', category: 'Humanities', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Block 3', passMark: 50, periods: '3 Periods/wk' },
-  { id: 606, code: 'CIV-101', title: 'Civic Education', grade: 'SS 3', stream: 'Art', category: 'General Core', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Block 3', passMark: 50, periods: '2 Periods/wk' },
-  { id: 607, code: 'ECO-101', title: 'Economics', grade: 'SS 3', stream: 'Art', category: 'Humanities', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Block 3', passMark: 50, periods: '4 Periods/wk' },
-  { id: 608, code: 'HIS-101', title: 'History', grade: 'SS 3', stream: 'Art', category: 'Humanities', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Block 3', passMark: 50, periods: '3 Periods/wk' },
-  { id: 609, code: 'ICT-101', title: 'Computer Studies (ICT)', grade: 'SS 3', stream: 'Art', category: 'STEM', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'ICT Lab', passMark: 50, periods: '3 Periods/wk' },
-  { id: 610, code: 'LANG-101', title: 'Yoruba / Igbo / Hausa', grade: 'SS 3', stream: 'Art', category: 'Languages', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Block 3', passMark: 50, periods: '2 Periods/wk' },
-  { id: 611, code: 'ART-101', title: 'Fine Arts', grade: 'SS 3', stream: 'Art', category: 'Creative Arts', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Studio', passMark: 50, periods: '3 Periods/wk' },
+  // ── Senior Secondary Art & Humanities Stream (11 Unique Subjects) ──
+  { id: 201, code: 'ENG-101', title: 'English Language', grade: 'SS 1 - SS 3', stream: 'Art', category: 'General Core', teacher: 'Mrs. Timi Porbeni', teacherStaffId: 'TMS/TCH/0002', studentsCount: 0, status: 'Active', room: 'Art Block', passMark: 50, periods: '5 Periods/wk' },
+  { id: 202, code: 'MTH-101', title: 'Mathematics', grade: 'SS 1 - SS 3', stream: 'Art', category: 'General Core', teacher: 'Eli Idua', teacherStaffId: 'TMS/TCH/0017', studentsCount: 0, status: 'Active', room: 'Art Block', passMark: 50, periods: '5 Periods/wk' },
+  { id: 203, code: 'LIT-101', title: 'Literature in English', grade: 'SS 1 - SS 3', stream: 'Art', category: 'Humanities', teacher: 'Mrs. Timi Porbeni', teacherStaffId: 'TMS/TCH/0002', studentsCount: 0, status: 'Active', room: 'Art Block', passMark: 50, periods: '4 Periods/wk' },
+  { id: 204, code: 'GOV-101', title: 'Government', grade: 'SS 1 - SS 3', stream: 'Art', category: 'Humanities', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Block', passMark: 50, periods: '4 Periods/wk' },
+  { id: 205, code: 'CRS-101', title: 'Christian Religious Studies (CRS) / IRS', grade: 'SS 1 - SS 3', stream: 'Art', category: 'Humanities', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Block', passMark: 50, periods: '3 Periods/wk' },
+  { id: 206, code: 'CIV-101', title: 'Civic Education', grade: 'SS 1 - SS 3', stream: 'Art', category: 'General Core', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Block', passMark: 50, periods: '2 Periods/wk' },
+  { id: 207, code: 'ECO-101', title: 'Economics', grade: 'SS 1 - SS 3', stream: 'Art', category: 'Humanities', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Block', passMark: 50, periods: '4 Periods/wk' },
+  { id: 208, code: 'HIS-101', title: 'History', grade: 'SS 1 - SS 3', stream: 'Art', category: 'Humanities', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Block', passMark: 50, periods: '3 Periods/wk' },
+  { id: 209, code: 'ICT-101', title: 'Computer Studies (ICT)', grade: 'SS 1 - SS 3', stream: 'Art', category: 'STEM', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'ICT Lab', passMark: 50, periods: '3 Periods/wk' },
+  { id: 210, code: 'LANG-101', title: 'Yoruba / Igbo / Hausa', grade: 'SS 1 - SS 3', stream: 'Art', category: 'Languages', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Block', passMark: 50, periods: '2 Periods/wk' },
+  { id: 211, code: 'ART-101', title: 'Fine Arts', grade: 'SS 1 - SS 3', stream: 'Art', category: 'Creative Arts', teacher: 'Not Assigned', teacherStaffId: '', studentsCount: 0, status: 'Active', room: 'Art Studio', passMark: 50, periods: '3 Periods/wk' },
 ];
 
 function loadSavedSubjects(): SubjectRecord[] {
   let list: SubjectRecord[] = [];
   if (typeof window !== 'undefined') {
     try {
-      const saved = localStorage.getItem('tarepet_subjects_list_v3') || localStorage.getItem('tarepet_subjects_list_v2') || localStorage.getItem('tarepet_subjects_list');
+      const saved = localStorage.getItem('tarepet_subjects_list_v4') || localStorage.getItem('tarepet_subjects_list_v3') || localStorage.getItem('tarepet_subjects_list');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -942,11 +884,11 @@ function loadSavedSubjects(): SubjectRecord[] {
     } catch (e) {}
   }
   
-  const validCodes = new Set(DEFAULT_SUBJECTS.map(d => `${d.code.toUpperCase()}_${d.grade.toUpperCase()}_${d.stream.toUpperCase()}`));
-  list = list.filter(s => validCodes.has(`${(s.code || '').toUpperCase()}_${(s.grade || '').toUpperCase()}_${(s.stream || 'General').toUpperCase()}`));
+  const validCodes = new Set(DEFAULT_SUBJECTS.map(d => `${d.code.toUpperCase()}_${d.stream.toUpperCase()}`));
+  list = list.filter(s => validCodes.has(`${(s.code || '').toUpperCase()}_${(s.stream || 'General').toUpperCase()}`));
 
   for (const def of DEFAULT_SUBJECTS) {
-    if (!list.some(s => s.code.toUpperCase() === def.code.toUpperCase() && s.grade.toUpperCase() === def.grade.toUpperCase() && (s.stream || 'General').toUpperCase() === def.stream.toUpperCase())) {
+    if (!list.some(s => s.code.toUpperCase() === def.code.toUpperCase() && (s.stream || 'General').toUpperCase() === def.stream.toUpperCase())) {
       list.push(def);
     }
   }
@@ -954,7 +896,7 @@ function loadSavedSubjects(): SubjectRecord[] {
   if (typeof window !== 'undefined') {
     try {
       localStorage.setItem('tarepet_subjects_list', JSON.stringify(list));
-      localStorage.setItem('tarepet_subjects_list_v3', JSON.stringify(list));
+      localStorage.setItem('tarepet_subjects_list_v4', JSON.stringify(list));
     } catch (e) {}
   }
   return list;
