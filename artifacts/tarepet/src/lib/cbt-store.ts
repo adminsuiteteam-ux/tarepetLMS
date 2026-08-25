@@ -820,6 +820,206 @@ export function clearAllStoredTeachers() {
   broadcastRealtimeEvent();
 }
 
+// ─── Master Subjects & Curriculum System ─────────────────────────────────────
+
+export interface SubjectRecord {
+  id: number | string;
+  code: string;
+  title: string;
+  grade: string;
+  stream: string;
+  category: string;
+  teacher: string;
+  teacherStaffId?: string;
+  studentsCount: number;
+  status: string;
+  room?: string;
+  passMark?: number;
+  periods?: string;
+}
+
+export const DEFAULT_SUBJECTS: SubjectRecord[] = [
+  // ── Senior Secondary 1 (SS 1) Science Stream ──
+  { id: 101, code: 'ENG-101', title: 'English Language', grade: 'SS 1', stream: 'Science', category: 'General Core', teacher: 'Mrs. Timi Porbeni', teacherStaffId: 'TMS/TCH/0002', studentsCount: 32, status: 'Active', room: 'Hall A', passMark: 50, periods: '5 Periods/wk' },
+  { id: 102, code: 'MTH-101', title: 'Mathematics', grade: 'SS 1', stream: 'Science', category: 'STEM', teacher: 'Eli Idua', teacherStaffId: 'TMS/TCH/0017', studentsCount: 32, status: 'Active', room: 'Hall A', passMark: 50, periods: '5 Periods/wk' },
+  { id: 103, code: 'BIO-101', title: 'Biology', grade: 'SS 1', stream: 'Science', category: 'STEM', teacher: 'Emmanuel U. Joseph', teacherStaffId: 'TMS/TCH/0019', studentsCount: 32, status: 'Active', room: 'Biology Lab', passMark: 50, periods: '4 Periods/wk' },
+  { id: 104, code: 'CHM-101', title: 'Chemistry', grade: 'SS 1', stream: 'Science', category: 'STEM', teacher: 'Abiola Adeniyi Adegemo', teacherStaffId: 'TMS/TCH/0007', studentsCount: 32, status: 'Active', room: 'Chemistry Lab', passMark: 50, periods: '4 Periods/wk' },
+  { id: 105, code: 'PHY-101', title: 'Physics', grade: 'SS 1', stream: 'Science', category: 'STEM', teacher: 'Abiola Adeniyi Adegemo', teacherStaffId: 'TMS/TCH/0007', studentsCount: 32, status: 'Active', room: 'Physics Lab', passMark: 50, periods: '4 Periods/wk' },
+  { id: 106, code: 'FMTH-101', title: 'Further Mathematics', grade: 'SS 1', stream: 'Science', category: 'STEM', teacher: 'Eli Idua', teacherStaffId: 'TMS/TCH/0017', studentsCount: 18, status: 'Active', room: 'Hall A', passMark: 50, periods: '3 Periods/wk' },
+  { id: 107, code: 'AGR-101', title: 'Agricultural Science', grade: 'SS 1', stream: 'Science', category: 'STEM', teacher: 'Mr. Joseph Ekenebe', teacherStaffId: 'TMS/TCH/0015', studentsCount: 32, status: 'Active', room: 'Agric Plot', passMark: 50, periods: '3 Periods/wk' },
+  { id: 108, code: 'GEO-101', title: 'Geography', grade: 'SS 1', stream: 'Science', category: 'STEM & Environmental', teacher: 'Alex I. Akpokulokenei Maria', teacherStaffId: 'TMS/TCH/0018', studentsCount: 22, status: 'Active', room: 'Geo Lab', passMark: 50, periods: '3 Periods/wk' },
+  { id: 109, code: 'CIV-101', title: 'Civic Education', grade: 'SS 1', stream: 'Science', category: 'General Core', teacher: 'Agadaga Tari', teacherStaffId: 'TMS/TCH/0012', studentsCount: 32, status: 'Active', room: 'Hall A', passMark: 50, periods: '2 Periods/wk' },
+  { id: 110, code: 'ICT-101', title: 'Computer Studies (ICT)', grade: 'SS 1', stream: 'Science', category: 'STEM', teacher: 'Samuel Hannah', teacherStaffId: 'TMS/TCH/0003', studentsCount: 32, status: 'Active', room: 'ICT Lab', passMark: 50, periods: '3 Periods/wk' },
+  { id: 111, code: 'TD-101', title: 'Technical Drawing', grade: 'SS 1', stream: 'Science', category: 'Technical & Applied', teacher: 'Mrs. Eze Chidubem Janneth', teacherStaffId: 'TMS/TCH/0011', studentsCount: 15, status: 'Active', room: 'Studio 1', passMark: 50, periods: '2 Periods/wk' },
+  { id: 112, code: 'HED-101', title: 'Health Education', grade: 'SS 1', stream: 'Science', category: 'Life Sciences', teacher: 'Emmanuel U. Joseph', teacherStaffId: 'TMS/TCH/0019', studentsCount: 32, status: 'Active', room: 'Hall A', passMark: 50, periods: '2 Periods/wk' },
+  { id: 113, code: 'PHE-101', title: 'Physical Education', grade: 'SS 1', stream: 'Science', category: 'Physical & Health', teacher: 'Egufe B. Austin', teacherStaffId: 'TMS/TCH/0009', studentsCount: 32, status: 'Active', room: 'Sports Complex', passMark: 50, periods: '2 Periods/wk' },
+  { id: 114, code: 'TRD-101', title: 'Trade/Entrepreneurship Subject', grade: 'SS 1', stream: 'Science', category: 'Trade & Entrepreneurship', teacher: 'Iwu Adanma', teacherStaffId: 'TMS/TCH/0014', studentsCount: 32, status: 'Active', room: 'Vocational Studio', passMark: 50, periods: '2 Periods/wk' },
+
+  // ── Senior Secondary 2 (SS 2) Science Stream ──
+  { id: 201, code: 'ENG-101', title: 'English Language', grade: 'SS 2', stream: 'Science', category: 'General Core', teacher: 'Mrs. Timi Porbeni', teacherStaffId: 'TMS/TCH/0002', studentsCount: 28, status: 'Active', room: 'Hall B', passMark: 50, periods: '5 Periods/wk' },
+  { id: 202, code: 'MTH-101', title: 'Mathematics', grade: 'SS 2', stream: 'Science', category: 'STEM', teacher: 'Ogbe Andrew', teacherStaffId: 'TMS/TCH/0006', studentsCount: 28, status: 'Active', room: 'Hall B', passMark: 50, periods: '5 Periods/wk' },
+  { id: 203, code: 'BIO-101', title: 'Biology', grade: 'SS 2', stream: 'Science', category: 'STEM', teacher: 'Emmanuel U. Joseph', teacherStaffId: 'TMS/TCH/0019', studentsCount: 28, status: 'Active', room: 'Biology Lab', passMark: 50, periods: '4 Periods/wk' },
+  { id: 204, code: 'CHM-101', title: 'Chemistry', grade: 'SS 2', stream: 'Science', category: 'STEM', teacher: 'Abiola Adeniyi Adegemo', teacherStaffId: 'TMS/TCH/0007', studentsCount: 28, status: 'Active', room: 'Chemistry Lab', passMark: 50, periods: '4 Periods/wk' },
+  { id: 205, code: 'PHY-101', title: 'Physics', grade: 'SS 2', stream: 'Science', category: 'STEM', teacher: 'Abiola Adeniyi Adegemo', teacherStaffId: 'TMS/TCH/0007', studentsCount: 28, status: 'Active', room: 'Physics Lab', passMark: 50, periods: '4 Periods/wk' },
+  { id: 206, code: 'FMTH-101', title: 'Further Mathematics', grade: 'SS 2', stream: 'Science', category: 'STEM', teacher: 'Eli Idua', teacherStaffId: 'TMS/TCH/0017', studentsCount: 16, status: 'Active', room: 'Hall B', passMark: 50, periods: '3 Periods/wk' },
+  { id: 207, code: 'AGR-101', title: 'Agricultural Science', grade: 'SS 2', stream: 'Science', category: 'STEM', teacher: 'Mr. Joseph Ekenebe', teacherStaffId: 'TMS/TCH/0015', studentsCount: 28, status: 'Active', room: 'Agric Plot', passMark: 50, periods: '3 Periods/wk' },
+  { id: 208, code: 'GEO-101', title: 'Geography', grade: 'SS 2', stream: 'Science', category: 'STEM & Environmental', teacher: 'Alex I. Akpokulokenei Maria', teacherStaffId: 'TMS/TCH/0018', studentsCount: 20, status: 'Active', room: 'Geo Lab', passMark: 50, periods: '3 Periods/wk' },
+  { id: 209, code: 'CIV-101', title: 'Civic Education', grade: 'SS 2', stream: 'Science', category: 'General Core', teacher: 'Agadaga Tari', teacherStaffId: 'TMS/TCH/0012', studentsCount: 28, status: 'Active', room: 'Hall B', passMark: 50, periods: '2 Periods/wk' },
+  { id: 210, code: 'ICT-101', title: 'Computer Studies (ICT)', grade: 'SS 2', stream: 'Science', category: 'STEM', teacher: 'Samuel Hannah', teacherStaffId: 'TMS/TCH/0003', studentsCount: 28, status: 'Active', room: 'ICT Lab', passMark: 50, periods: '3 Periods/wk' },
+  { id: 211, code: 'TD-101', title: 'Technical Drawing', grade: 'SS 2', stream: 'Science', category: 'Technical & Applied', teacher: 'Mrs. Eze Chidubem Janneth', teacherStaffId: 'TMS/TCH/0011', studentsCount: 14, status: 'Active', room: 'Studio 1', passMark: 50, periods: '2 Periods/wk' },
+  { id: 212, code: 'HED-101', title: 'Health Education', grade: 'SS 2', stream: 'Science', category: 'Life Sciences', teacher: 'Emmanuel U. Joseph', teacherStaffId: 'TMS/TCH/0019', studentsCount: 28, status: 'Active', room: 'Hall B', passMark: 50, periods: '2 Periods/wk' },
+  { id: 213, code: 'PHE-101', title: 'Physical Education', grade: 'SS 2', stream: 'Science', category: 'Physical & Health', teacher: 'Egufe B. Austin', teacherStaffId: 'TMS/TCH/0009', studentsCount: 28, status: 'Active', room: 'Sports Complex', passMark: 50, periods: '2 Periods/wk' },
+  { id: 214, code: 'TRD-101', title: 'Trade/Entrepreneurship Subject', grade: 'SS 2', stream: 'Science', category: 'Trade & Entrepreneurship', teacher: 'Iwu Adanma', teacherStaffId: 'TMS/TCH/0014', studentsCount: 28, status: 'Active', room: 'Vocational Studio', passMark: 50, periods: '2 Periods/wk' },
+
+  // ── Senior Secondary 3 (SS 3) Science Stream ──
+  { id: 301, code: 'ENG-101', title: 'English Language', grade: 'SS 3', stream: 'Science', category: 'General Core', teacher: 'Mrs. Timi Porbeni', teacherStaffId: 'TMS/TCH/0002', studentsCount: 25, status: 'Active', room: 'Hall C', passMark: 50, periods: '5 Periods/wk' },
+  { id: 302, code: 'MTH-101', title: 'Mathematics', grade: 'SS 3', stream: 'Science', category: 'STEM', teacher: 'Eli Idua', teacherStaffId: 'TMS/TCH/0017', studentsCount: 25, status: 'Active', room: 'Hall C', passMark: 50, periods: '5 Periods/wk' },
+  { id: 303, code: 'BIO-101', title: 'Biology', grade: 'SS 3', stream: 'Science', category: 'STEM', teacher: 'Emmanuel U. Joseph', teacherStaffId: 'TMS/TCH/0019', studentsCount: 25, status: 'Active', room: 'Biology Lab', passMark: 50, periods: '4 Periods/wk' },
+  { id: 304, code: 'CHM-101', title: 'Chemistry', grade: 'SS 3', stream: 'Science', category: 'STEM', teacher: 'Abiola Adeniyi Adegemo', teacherStaffId: 'TMS/TCH/0007', studentsCount: 25, status: 'Active', room: 'Chemistry Lab', passMark: 50, periods: '4 Periods/wk' },
+  { id: 305, code: 'PHY-101', title: 'Physics', grade: 'SS 3', stream: 'Science', category: 'STEM', teacher: 'Abiola Adeniyi Adegemo', teacherStaffId: 'TMS/TCH/0007', studentsCount: 25, status: 'Active', room: 'Physics Lab', passMark: 50, periods: '4 Periods/wk' },
+  { id: 306, code: 'FMTH-101', title: 'Further Mathematics', grade: 'SS 3', stream: 'Science', category: 'STEM', teacher: 'Eli Idua', teacherStaffId: 'TMS/TCH/0017', studentsCount: 14, status: 'Active', room: 'Hall C', passMark: 50, periods: '3 Periods/wk' },
+  { id: 307, code: 'AGR-101', title: 'Agricultural Science', grade: 'SS 3', stream: 'Science', category: 'STEM', teacher: 'Mr. Joseph Ekenebe', teacherStaffId: 'TMS/TCH/0015', studentsCount: 25, status: 'Active', room: 'Agric Plot', passMark: 50, periods: '3 Periods/wk' },
+  { id: 308, code: 'GEO-101', title: 'Geography', grade: 'SS 3', stream: 'Science', category: 'STEM & Environmental', teacher: 'Alex I. Akpokulokenei Maria', teacherStaffId: 'TMS/TCH/0018', studentsCount: 18, status: 'Active', room: 'Geo Lab', passMark: 50, periods: '3 Periods/wk' },
+  { id: 309, code: 'CIV-101', title: 'Civic Education', grade: 'SS 3', stream: 'Science', category: 'General Core', teacher: 'Agadaga Tari', teacherStaffId: 'TMS/TCH/0012', studentsCount: 25, status: 'Active', room: 'Hall C', passMark: 50, periods: '2 Periods/wk' },
+  { id: 310, code: 'ICT-101', title: 'Computer Studies (ICT)', grade: 'SS 3', stream: 'Science', category: 'STEM', teacher: 'Samuel Hannah', teacherStaffId: 'TMS/TCH/0003', studentsCount: 25, status: 'Active', room: 'ICT Lab', passMark: 50, periods: '3 Periods/wk' },
+  { id: 311, code: 'TD-101', title: 'Technical Drawing', grade: 'SS 3', stream: 'Science', category: 'Technical & Applied', teacher: 'Mrs. Eze Chidubem Janneth', teacherStaffId: 'TMS/TCH/0011', studentsCount: 12, status: 'Active', room: 'Studio 1', passMark: 50, periods: '2 Periods/wk' },
+  { id: 312, code: 'HED-101', title: 'Health Education', grade: 'SS 3', stream: 'Science', category: 'Life Sciences', teacher: 'Emmanuel U. Joseph', teacherStaffId: 'TMS/TCH/0019', studentsCount: 25, status: 'Active', room: 'Hall C', passMark: 50, periods: '2 Periods/wk' },
+  { id: 313, code: 'PHE-101', title: 'Physical Education', grade: 'SS 3', stream: 'Science', category: 'Physical & Health', teacher: 'Egufe B. Austin', teacherStaffId: 'TMS/TCH/0009', studentsCount: 25, status: 'Active', room: 'Sports Complex', passMark: 50, periods: '2 Periods/wk' },
+  { id: 314, code: 'TRD-101', title: 'Trade/Entrepreneurship Subject', grade: 'SS 3', stream: 'Science', category: 'Trade & Entrepreneurship', teacher: 'Iwu Adanma', teacherStaffId: 'TMS/TCH/0014', studentsCount: 25, status: 'Active', room: 'Vocational Studio', passMark: 50, periods: '2 Periods/wk' },
+
+  // ── Senior Secondary Art & Humanities Stream (SS 1 - SS 3) ──
+  { id: 401, code: 'LIT-101', title: 'Literature in English', grade: 'SS 1', stream: 'Art', category: 'Humanities', teacher: 'Mrs. Timi Porbeni', teacherStaffId: 'TMS/TCH/0002', studentsCount: 24, status: 'Active', room: 'Room 201', passMark: 50, periods: '4 Periods/wk' },
+  { id: 402, code: 'GOV-101', title: 'Government', grade: 'SS 1', stream: 'Art', category: 'Humanities', teacher: 'Agadaga Tari', teacherStaffId: 'TMS/TCH/0012', studentsCount: 24, status: 'Active', room: 'Room 201', passMark: 50, periods: '4 Periods/wk' },
+  { id: 403, code: 'CRS-101', title: 'Christian Religious Studies (CRS)', grade: 'SS 1', stream: 'Art', category: 'Humanities', teacher: 'Mrs. Eze Chidubem Janneth', teacherStaffId: 'TMS/TCH/0011', studentsCount: 24, status: 'Active', room: 'Room 201', passMark: 50, periods: '3 Periods/wk' },
+  { id: 404, code: 'HIS-101', title: 'History', grade: 'SS 1', stream: 'Art', category: 'Humanities', teacher: 'Agadaga Tari', teacherStaffId: 'TMS/TCH/0012', studentsCount: 20, status: 'Active', room: 'Room 201', passMark: 50, periods: '3 Periods/wk' },
+  { id: 405, code: 'ECO-101', title: 'Economics & Commerce', grade: 'SS 1', stream: 'Art', category: 'Humanities', teacher: 'Iwu Adanma', teacherStaffId: 'TMS/TCH/0014', studentsCount: 24, status: 'Active', room: 'Room 201', passMark: 50, periods: '4 Periods/wk' },
+
+  // ── Junior Secondary School (JSS 1 - JSS 3) ──
+  { id: 501, code: 'MTH-001', title: 'Junior Mathematics', grade: 'JSS 1', stream: 'General', category: 'STEM', teacher: 'Mrs. Ozichi Nwaudo Arinze', teacherStaffId: 'TMS/TCH/0005', studentsCount: 35, status: 'Active', room: 'JSS Block 1', passMark: 50, periods: '5 Periods/wk' },
+  { id: 502, code: 'ENG-001', title: 'English Language', grade: 'JSS 1', stream: 'General', category: 'General Core', teacher: 'Oyiniki Anita Ojinbrakemi', teacherStaffId: 'TMS/TCH/0010', studentsCount: 35, status: 'Active', room: 'JSS Block 1', passMark: 50, periods: '5 Periods/wk' },
+  { id: 503, code: 'BSC-001', title: 'Basic Science', grade: 'JSS 1', stream: 'General', category: 'STEM', teacher: 'Nwachukwu (O) Edirin', teacherStaffId: 'TMS/TCH/0004', studentsCount: 35, status: 'Active', room: 'Basic Science Lab', passMark: 50, periods: '4 Periods/wk' },
+  { id: 504, code: 'BTC-001', title: 'Basic Technology', grade: 'JSS 1', stream: 'General', category: 'Technical & Applied', teacher: 'Mrs. Eze Chidubem Janneth', teacherStaffId: 'TMS/TCH/0011', studentsCount: 35, status: 'Active', room: 'Workshop 1', passMark: 50, periods: '3 Periods/wk' },
+  { id: 505, code: 'CIV-001', title: 'Civic Education', grade: 'JSS 1', stream: 'General', category: 'General Core', teacher: 'Agadaga Tari', teacherStaffId: 'TMS/TCH/0012', studentsCount: 35, status: 'Active', room: 'JSS Block 1', passMark: 50, periods: '2 Periods/wk' },
+  { id: 506, code: 'SOC-001', title: 'Social Studies', grade: 'JSS 1', stream: 'General', category: 'Humanities', teacher: 'Agadaga Tari', teacherStaffId: 'TMS/TCH/0012', studentsCount: 35, status: 'Active', room: 'JSS Block 1', passMark: 50, periods: '3 Periods/wk' },
+  { id: 507, code: 'AGR-001', title: 'Agricultural Science', grade: 'JSS 1', stream: 'General', category: 'STEM', teacher: 'Samuel Hannah', teacherStaffId: 'TMS/TCH/0003', studentsCount: 35, status: 'Active', room: 'School Farm', passMark: 50, periods: '3 Periods/wk' },
+  { id: 508, code: 'ICT-001', title: 'Computer Studies / ICT', grade: 'JSS 1', stream: 'General', category: 'STEM', teacher: 'Samuel Hannah', teacherStaffId: 'TMS/TCH/0003', studentsCount: 35, status: 'Active', room: 'ICT Lab', passMark: 50, periods: '3 Periods/wk' },
+  { id: 509, code: 'BUS-001', title: 'Business Studies', grade: 'JSS 1', stream: 'General', category: 'Commercial', teacher: 'Amos Godspower', teacherStaffId: 'TMS/TCH/0013', studentsCount: 35, status: 'Active', room: 'JSS Block 1', passMark: 50, periods: '3 Periods/wk' },
+  { id: 510, code: 'CCA-001', title: 'Cultural & Creative Arts', grade: 'JSS 1', stream: 'General', category: 'Creative Arts', teacher: 'Mrs. Eze Chidubem Janneth', teacherStaffId: 'TMS/TCH/0011', studentsCount: 35, status: 'Active', room: 'Art Studio', passMark: 50, periods: '2 Periods/wk' },
+  { id: 511, code: 'HEC-001', title: 'Home Economics', grade: 'JSS 1', stream: 'General', category: 'Vocational', teacher: 'Egufe B. Austin', teacherStaffId: 'TMS/TCH/0009', studentsCount: 35, status: 'Active', room: 'Home Ec Lab', passMark: 50, periods: '2 Periods/wk' },
+  { id: 512, code: 'MUS-001', title: 'Music', grade: 'JSS 1', stream: 'General', category: 'Creative Arts', teacher: 'Simeon Blessed Chigozie', teacherStaffId: 'TMS/TCH/0008', studentsCount: 35, status: 'Active', room: 'Music Room', passMark: 50, periods: '2 Periods/wk' },
+
+  // ── Nursery & Primary (Nursery 1–3, Primary 1–6) ──
+  { id: 601, code: 'NUR-LIT', title: 'Phonics & Early Literacy', grade: 'NUR 1', stream: 'General', category: 'Early Childhood', teacher: 'Samuel Hannah', teacherStaffId: 'TMS/TCH/0003', studentsCount: 20, status: 'Active', room: 'Nursery Wing 1', passMark: 50, periods: 'Daily' },
+  { id: 602, code: 'NUR-NUM', title: 'Early Numeracy & Mathematics', grade: 'NUR 1', stream: 'General', category: 'Early Childhood', teacher: 'Samuel Hannah', teacherStaffId: 'TMS/TCH/0003', studentsCount: 20, status: 'Active', room: 'Nursery Wing 1', passMark: 50, periods: 'Daily' },
+  { id: 603, code: 'NUR-PLE', title: 'Practical Life Exercises (Montessori)', grade: 'NUR 1', stream: 'General', category: 'Montessori', teacher: 'Samuel Hannah', teacherStaffId: 'TMS/TCH/0003', studentsCount: 20, status: 'Active', room: 'Montessori Room', passMark: 50, periods: 'Daily' },
+  { id: 604, code: 'NUR-SEN', title: 'Sensorial Education (Montessori)', grade: 'NUR 1', stream: 'General', category: 'Montessori', teacher: 'Samuel Hannah', teacherStaffId: 'TMS/TCH/0003', studentsCount: 20, status: 'Active', room: 'Montessori Room', passMark: 50, periods: 'Daily' },
+  { id: 605, code: 'PRI-MTH', title: 'Primary Mathematics', grade: 'PRI 2', stream: 'General', category: 'Primary', teacher: 'Nwachukwu (O) Edirin', teacherStaffId: 'TMS/TCH/0004', studentsCount: 26, status: 'Active', room: 'Primary Wing 2', passMark: 50, periods: '5 Periods/wk' },
+  { id: 606, code: 'PRI-ENG', title: 'Primary English Language & Reading', grade: 'PRI 2', stream: 'General', category: 'Primary', teacher: 'Nwachukwu (O) Edirin', teacherStaffId: 'TMS/TCH/0004', studentsCount: 26, status: 'Active', room: 'Primary Wing 2', passMark: 50, periods: '5 Periods/wk' },
+  { id: 607, code: 'PRI-BSC', title: 'Basic Science & Technology', grade: 'PRI 2', stream: 'General', category: 'Primary', teacher: 'Nwachukwu (O) Edirin', teacherStaffId: 'TMS/TCH/0004', studentsCount: 26, status: 'Active', room: 'Primary Wing 2', passMark: 50, periods: '4 Periods/wk' },
+  { id: 608, code: 'PRI-SOC', title: 'Social Studies & Civics', grade: 'PRI 2', stream: 'General', category: 'Primary', teacher: 'Agadaga Tari', teacherStaffId: 'TMS/TCH/0012', studentsCount: 26, status: 'Active', room: 'Primary Wing 2', passMark: 50, periods: '3 Periods/wk' },
+  { id: 609, code: 'PRI-QVR', title: 'Quantitative & Verbal Reasoning', grade: 'PRI 2', stream: 'General', category: 'Primary', teacher: 'Nwachukwu (O) Edirin', teacherStaffId: 'TMS/TCH/0004', studentsCount: 26, status: 'Active', room: 'Primary Wing 2', passMark: 50, periods: '3 Periods/wk' },
+  { id: 610, code: 'PRI-ICT', title: 'Computer Studies / ICT', grade: 'PRI 2', stream: 'General', category: 'Primary', teacher: 'Samuel Hannah', teacherStaffId: 'TMS/TCH/0003', studentsCount: 26, status: 'Active', room: 'Junior ICT Lab', passMark: 50, periods: '2 Periods/wk' },
+  { id: 611, code: 'PRI-MTH4', title: 'Primary Mathematics (Basic 4)', grade: 'PRI 4', stream: 'General', category: 'Primary', teacher: 'Ogbe Andrew', teacherStaffId: 'TMS/TCH/0006', studentsCount: 24, status: 'Active', room: 'Primary Wing 4', passMark: 50, periods: '5 Periods/wk' },
+  { id: 612, code: 'PRI-CCA4', title: 'Cultural & Creative Arts (Basic 4)', grade: 'PRI 4', stream: 'General', category: 'Primary', teacher: 'Simeon Blessed Chigozie', teacherStaffId: 'TMS/TCH/0008', studentsCount: 24, status: 'Active', room: 'Art Room', passMark: 50, periods: '2 Periods/wk' },
+];
+
+function loadSavedSubjects(): SubjectRecord[] {
+  let list: SubjectRecord[] = [];
+  if (typeof window !== 'undefined') {
+    try {
+      const saved = localStorage.getItem('tarepet_subjects_list');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          list = parsed;
+        }
+      }
+    } catch (e) {}
+  }
+  if (list.length === 0) {
+    list = [...DEFAULT_SUBJECTS];
+  } else {
+    // Append any default subjects that may be missing
+    for (const def of DEFAULT_SUBJECTS) {
+      if (!list.some(s => s.code === def.code && s.grade === def.grade)) {
+        list.push(def);
+      }
+    }
+  }
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('tarepet_subjects_list', JSON.stringify(list));
+    } catch (e) {}
+  }
+  return list;
+}
+
+let _subjects: SubjectRecord[] = loadSavedSubjects();
+
+export function getStoredSubjects(): SubjectRecord[] {
+  _subjects = loadSavedSubjects();
+  return _subjects;
+}
+
+export function saveSubject(subjectData: Partial<SubjectRecord> & { title: string; code: string; grade: string }): SubjectRecord {
+  _subjects = loadSavedSubjects();
+  const existingIdx = _subjects.findIndex(s => 
+    (subjectData.id && s.id === subjectData.id) ||
+    (s.code.toLowerCase() === subjectData.code.toLowerCase() && s.grade.toLowerCase() === subjectData.grade.toLowerCase())
+  );
+
+  const updatedSubject: SubjectRecord = {
+    id: subjectData.id || (existingIdx >= 0 ? _subjects[existingIdx].id : Date.now()),
+    code: subjectData.code.trim().toUpperCase(),
+    title: subjectData.title.trim(),
+    grade: subjectData.grade,
+    stream: subjectData.stream || 'General',
+    category: subjectData.category || 'General',
+    teacher: subjectData.teacher || 'Assigned Educator',
+    teacherStaffId: subjectData.teacherStaffId || '',
+    studentsCount: subjectData.studentsCount || (existingIdx >= 0 ? _subjects[existingIdx].studentsCount : 25),
+    status: subjectData.status || 'Active',
+    room: subjectData.room || 'Classroom',
+    passMark: subjectData.passMark || 50,
+    periods: subjectData.periods || '3 Periods/wk',
+  };
+
+  if (existingIdx >= 0) {
+    _subjects[existingIdx] = updatedSubject;
+  } else {
+    _subjects.unshift(updatedSubject);
+  }
+
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('tarepet_subjects_list', JSON.stringify(_subjects));
+    } catch (e) {}
+  }
+
+  broadcastRealtimeEvent();
+  return updatedSubject;
+}
+
+export function deleteSubject(id: number | string) {
+  _subjects = loadSavedSubjects().filter(s => s.id !== id);
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('tarepet_subjects_list', JSON.stringify(_subjects));
+    } catch (e) {}
+  }
+  broadcastRealtimeEvent();
+}
+
+export function saveStoredSubjects(subjects: SubjectRecord[]) {
+  _subjects = subjects;
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('tarepet_subjects_list', JSON.stringify(_subjects));
+    } catch (e) {}
+  }
+  broadcastRealtimeEvent();
+}
+
 function loadDeletedAccounts(): string[] {
   const defaultBlacklist = ['hacker@evil.com', 'wronguser@fake.com', 'tp-stu-090', 'tp-stu-089', 'hacker user', 'wronguser user'];
   if (typeof window === 'undefined') return defaultBlacklist;

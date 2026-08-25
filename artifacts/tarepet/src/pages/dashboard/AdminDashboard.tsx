@@ -3,10 +3,9 @@ import { useTranslation } from '@/i18n';
 import { Link } from 'wouter';
 import { authClient, sanitizeMailto } from '@/lib/api-auth';
 import { PortalLayout } from '@/components/layout/PortalLayout';
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
-import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, clearAllStoredStudents, deleteStudent, syncStudentsWithBackend, getStoredTeachers, saveTeacher, saveStoredTeachers, clearAllStoredTeachers, deleteTeacher, syncTeachersWithBackend, listenToRealtimeEvents, clearCBTStoreCache, clearAllSiteDefaultData, isAccountDeleted, getAdminPassword, setAdminPassword, matchStudentClass, broadcastRealtimeEvent } from '@/lib/cbt-store';
 import { subscribeToWebSocketEvents } from '@/lib/websocket-client';
+import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, clearAllStoredStudents, deleteStudent, syncStudentsWithBackend, getStoredTeachers, saveTeacher, saveStoredTeachers, clearAllStoredTeachers, deleteTeacher, syncTeachersWithBackend, listenToRealtimeEvents, clearCBTStoreCache, clearAllSiteDefaultData, isAccountDeleted, getAdminPassword, setAdminPassword, matchStudentClass, broadcastRealtimeEvent, getStoredSubjects, saveSubject, deleteSubject, DEFAULT_SUBJECTS, SubjectRecord } from '@/lib/cbt-store';
 import { AdminManagementPanel } from '@/components/dashboard/AdminManagementPanel';
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
 import { ImageCropModal } from '@/components/ui/ImageCropModal';
@@ -62,7 +61,7 @@ const MOCK_STUDENTS: any[] = [];
 const MOCK_SS_STUDENTS: any[] = [];
 const MOCK_TEACHERS: any[] = [];
 
-const MOCK_SUBJECTS: any[] = [];
+const MOCK_SUBJECTS = DEFAULT_SUBJECTS;
 
 const MOCK_HOUSES: any[] = [];
 
@@ -2211,9 +2210,11 @@ export default function AdminDashboard() {
 
   React.useEffect(() => {
     setStudentsList(getStoredStudents());
+    setSubjectsListState(getStoredSubjects());
     syncStudentsWithBackend().then(res => setStudentsList(res));
     const unsub = subscribeToCBTStore(() => {
       setStudentsList(getStoredStudents());
+      setSubjectsListState(getStoredSubjects());
     });
     const unsubEvents = subscribeToWebSocketEvents((event: any) => {
       if (event.type === 'STUDENT_ENROLLED_BY_TEACHER' && event.payload) {
@@ -2276,7 +2277,18 @@ export default function AdminDashboard() {
   const [openSubjectClassDropdown, setOpenSubjectClassDropdown] = useState<string | null>(null);
   const [showSubjectsActionsDropdown, setShowSubjectsActionsDropdown] = useState(false);
   const [showCreateSubjectModal, setShowCreateSubjectModal] = useState(false);
-  const [subjectsListState, setSubjectsListState] = useState(MOCK_SUBJECTS);
+  const [newSubjectForm, setNewSubjectForm] = useState({
+    title: '',
+    code: '',
+    grade: 'SS 1',
+    stream: 'Science',
+    category: 'STEM',
+    teacher: 'Mrs. Timi Porbeni',
+    periods: '4 Periods/wk',
+    passMark: 50,
+    room: 'Classroom',
+  });
+  const [subjectsListState, setSubjectsListState] = useState<SubjectRecord[]>(() => getStoredSubjects());
   const [selectedSubjectPreview, setSelectedSubjectPreview] = useState<any>(null);
   const [subjectFilterTab, setSubjectFilterTab] = useState<'ALL' | 'JUNIOR' | 'SENIOR' | 'SCIENCE' | 'ART'>('ALL');
   const [subjectSearch, setSubjectSearch] = useState('');
@@ -4543,10 +4555,11 @@ export default function AdminDashboard() {
     // 3. MANAGE SUBJECTS
     if (activeSection === 'courses') {
       const cls = selectedSubjectClass ? STUDENT_CLASSES.find(c => c.key === selectedSubjectClass) : null;
+      const matchClsKey = (grade: string, targetKey: string) => (grade || '').replace(/\s+/g, '').toUpperCase() === (targetKey || '').replace(/\s+/g, '').toUpperCase();
       const filteredSubjects = subjectsListState.filter(s => {
         const q = userSearch.toLowerCase();
-        const matchClass = !selectedSubjectClass || s.grade === selectedSubjectClass;
-        const matchStream = !selectedSubjectStream || !cls?.hasStreams || s.stream === selectedSubjectStream;
+        const matchClass = !selectedSubjectClass || matchClsKey(s.grade, selectedSubjectClass);
+        const matchStream = !selectedSubjectStream || !cls?.hasStreams || s.stream === selectedSubjectStream || (selectedSubjectStream === 'Art' && s.stream === 'Arts');
         const matchSearch = !q || s.title.toLowerCase().includes(q) || s.code.toLowerCase().includes(q);
         return matchClass && matchStream && matchSearch;
       });
@@ -4568,24 +4581,27 @@ export default function AdminDashboard() {
                   onClick={() => setShowSubjectsActionsDropdown(prev => !prev)}
                   className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors select-none"
                 >
-                  {t('subjects.actions')}
-                  <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${showSubjectsActionsDropdown ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
+                  <Plus className="w-4 h-4" /> Manage Subjects <ChevronDown className="w-3 h-3 ml-0.5" />
                 </button>
 
                 {showSubjectsActionsDropdown && (
-                  <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-2xl shadow-2xl z-50 py-2">
-                    <button onClick={() => { setShowCreateSubjectModal(true); setShowSubjectsActionsDropdown(false); }}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors text-left">
-                      <Plus className="w-3.5 h-3.5 text-primary" /> Add Subject
+                  <div className="absolute right-0 mt-2 w-52 bg-card border border-border rounded-xl shadow-xl z-50 py-1.5 overflow-hidden text-xs">
+                    <button
+                      onClick={() => { setShowSubjectsActionsDropdown(false); setShowCreateSubjectModal(true); }}
+                      className="w-full px-3.5 py-2 text-left text-foreground hover:bg-primary/10 hover:text-primary flex items-center gap-2.5 font-medium transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5 text-primary" /> Add New Subject
                     </button>
-                    <button onClick={() => { showAlert({ title: 'Curriculum Export', message: 'Generating academic curriculum syllabus PDF document...', type: 'info' }); setShowSubjectsActionsDropdown(false); }}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors text-left cursor-pointer">
-                      <FileText className="w-3.5 h-3.5 text-muted-foreground" /> Export Curriculum
+                    <button
+                      onClick={() => { setShowSubjectsActionsDropdown(false); }}
+                      className="w-full px-3.5 py-2 text-left text-foreground hover:bg-muted/60 flex items-center gap-2.5 font-medium transition-colors"
+                    >
+                      <Download className="w-3.5 h-3.5 text-muted-foreground" /> Export Curriculum
                     </button>
-                    <button onClick={() => { showAlert({ title: 'Assign Teacher', message: 'Faculty assignment wizard is available in Teacher Profile settings.', type: 'info' }); setShowSubjectsActionsDropdown(false); }}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-foreground hover:bg-muted/50 transition-colors text-left cursor-pointer">
+                    <button
+                      onClick={() => { setShowSubjectsActionsDropdown(false); }}
+                      className="w-full px-3.5 py-2 text-left text-foreground hover:bg-muted/60 flex items-center gap-2.5 font-medium transition-colors"
+                    >
                       <Users className="w-3.5 h-3.5 text-muted-foreground" /> Assign Teacher
                     </button>
                   </div>
@@ -4596,9 +4612,9 @@ export default function AdminDashboard() {
             {/* Class Cards grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
               {STUDENT_CLASSES.map(cls => {
-                const sciCount = subjectsListState.filter(s => s.grade === cls.key && s.stream === 'Science').length;
-                const artCount = subjectsListState.filter(s => s.grade === cls.key && s.stream === 'Art').length;
-                const genCount = subjectsListState.filter(s => s.grade === cls.key).length;
+                const sciCount = subjectsListState.filter(s => matchClsKey(s.grade, cls.key) && s.stream === 'Science').length;
+                const artCount = subjectsListState.filter(s => matchClsKey(s.grade, cls.key) && (s.stream === 'Art' || s.stream === 'Arts')).length;
+                const genCount = subjectsListState.filter(s => matchClsKey(s.grade, cls.key)).length;
                 const totalCount = cls.hasStreams ? (sciCount + artCount) : genCount;
 
                 return (
@@ -7946,7 +7962,10 @@ export default function AdminDashboard() {
           subtitle: 'Nursery 1–3, Primary 1–6',
           description: 'Core foundational subjects covering early childhood literacy, numeracy, and basic sciences.',
           icon: School,
-          filterFn: (s: any) => s.grade?.startsWith('NUR') || s.grade?.startsWith('PRI'),
+          filterFn: (s: any) => {
+            const g = (s.grade || '').toUpperCase();
+            return g.startsWith('NUR') || g.startsWith('PRI') || g.startsWith('CRECHE') || g.startsWith('BASIC') || s.category === 'Early Childhood' || s.category === 'Primary' || s.category === 'Montessori';
+          },
         },
         {
           key: 'JSS',
@@ -7954,7 +7973,10 @@ export default function AdminDashboard() {
           subtitle: 'JSS 1, JSS 2, JSS 3',
           description: 'Comprehensive curriculum subjects for the Junior Secondary School levels, covering all streams.',
           icon: BookMarked,
-          filterFn: (s: any) => s.grade?.startsWith('JSS'),
+          filterFn: (s: any) => {
+            const g = (s.grade || '').toUpperCase();
+            return g.startsWith('JSS') || g.startsWith('JS') || s.category === 'Junior Secondary' || (g.includes('JSS') && s.stream === 'General');
+          },
         },
         {
           key: 'SS_SCIENCE',
@@ -7962,7 +7984,10 @@ export default function AdminDashboard() {
           subtitle: 'SS 1–3 Science Stream',
           description: 'Mathematics, Physics, Chemistry, Biology and other STEM subjects for the Science stream.',
           icon: FlaskConical,
-          filterFn: (s: any) => s.grade?.startsWith('SS') && (s.stream === 'Science' || s.category === 'Science' || s.category === 'STEM'),
+          filterFn: (s: any) => {
+            const g = (s.grade || '').toUpperCase();
+            return g.startsWith('SS') && (s.stream === 'Science' || s.category === 'STEM' || s.category === 'General Core' || s.category === 'STEM & Environmental' || s.category === 'Technical & Applied' || s.category === 'Life Sciences' || s.category === 'Physical & Health' || s.category === 'Trade & Entrepreneurship');
+          },
         },
         {
           key: 'SS_ART',
@@ -7970,7 +7995,10 @@ export default function AdminDashboard() {
           subtitle: 'SS 1–3 Art & Humanities Stream',
           description: 'Literature, Government, Economics, CRS and Art & Humanities subjects for the Art stream.',
           icon: Palette,
-          filterFn: (s: any) => s.grade?.startsWith('SS') && (s.stream === 'Art' || s.category === 'Art' || s.category === 'Languages'),
+          filterFn: (s: any) => {
+            const g = (s.grade || '').toUpperCase();
+            return g.startsWith('SS') && (s.stream === 'Art' || s.stream === 'Arts' || s.category === 'Humanities' || s.category === 'Art');
+          },
         },
       ];
 
@@ -8043,7 +8071,7 @@ export default function AdminDashboard() {
             <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Junior Subjects</p>
-                <h3 className="text-2xl font-serif font-bold text-primary mt-1">{subjectsListState.filter(s => s.grade?.startsWith('JSS')).length}</h3>
+                <h3 className="text-2xl font-serif font-bold text-primary mt-1">{subjectsListState.filter(s => (s.grade || '').toUpperCase().startsWith('JSS') || (s.grade || '').toUpperCase().startsWith('JS')).length}</h3>
                 <p className="text-[11px] text-muted-foreground mt-0.5">JSS 1–3 classes</p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><BookMarked className="w-5 h-5" /></div>
@@ -8051,7 +8079,7 @@ export default function AdminDashboard() {
             <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Senior Subjects</p>
-                <h3 className="text-2xl font-serif font-bold text-primary mt-1">{subjectsListState.filter(s => s.grade?.startsWith('SS')).length}</h3>
+                <h3 className="text-2xl font-serif font-bold text-primary mt-1">{subjectsListState.filter(s => (s.grade || '').toUpperCase().startsWith('SS')).length}</h3>
                 <p className="text-[11px] text-muted-foreground mt-0.5">SS 1–3 classes</p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><GraduationCap className="w-5 h-5" /></div>
@@ -8059,7 +8087,7 @@ export default function AdminDashboard() {
             <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Science & STEM</p>
-                <h3 className="text-2xl font-serif font-bold text-primary mt-1">{subjectsListState.filter(s => s.stream === 'Science' || s.category === 'Science' || s.category === 'STEM').length}</h3>
+                <h3 className="text-2xl font-serif font-bold text-primary mt-1">{subjectsListState.filter(s => (s.grade || '').toUpperCase().startsWith('SS') && (s.stream === 'Science' || s.category === 'STEM' || s.category === 'Science' || s.category === 'STEM & Environmental' || s.category === 'Life Sciences' || s.category === 'Technical & Applied')).length}</h3>
                 <p className="text-[11px] text-muted-foreground mt-0.5">Lab & Practical</p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><FlaskConical className="w-5 h-5" /></div>
@@ -10799,6 +10827,250 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+        {/* Create New Subject Modal */}
+        {showCreateSubjectModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-card w-full max-w-lg rounded-3xl border border-border shadow-2xl p-6 space-y-5 overflow-hidden">
+              <div className="flex items-center justify-between border-b border-border pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+                    <BookOpen className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-serif font-bold text-lg text-foreground">Add New Curriculum Subject</h3>
+                    <p className="text-xs text-muted-foreground">Register a new academic course or subject</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowCreateSubjectModal(false)}
+                  className="w-8 h-8 rounded-full bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-4 text-xs">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-muted-foreground uppercase mb-1">Subject Title *</label>
+                    <input
+                      type="text"
+                      value={newSubjectForm.title}
+                      onChange={e => setNewSubjectForm({ ...newSubjectForm, title: e.target.value })}
+                      placeholder="e.g. Physics"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-foreground font-medium focus:ring-2 focus:ring-primary focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-muted-foreground uppercase mb-1">Course Code *</label>
+                    <input
+                      type="text"
+                      value={newSubjectForm.code}
+                      onChange={e => setNewSubjectForm({ ...newSubjectForm, code: e.target.value.toUpperCase() })}
+                      placeholder="e.g. PHY-101"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-foreground font-mono font-bold focus:ring-2 focus:ring-primary focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-muted-foreground uppercase mb-1">Target Class *</label>
+                    <select
+                      value={newSubjectForm.grade}
+                      onChange={e => setNewSubjectForm({ ...newSubjectForm, grade: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-foreground font-medium focus:ring-2 focus:ring-primary focus:outline-none"
+                    >
+                      <optgroup label="Early Years & Nursery">
+                        <option value="Creche">Creche</option>
+                        <option value="Nursery 1">NUR 1</option>
+                        <option value="Nursery 2">NUR 2</option>
+                        <option value="Nursery 3">NUR 3</option>
+                      </optgroup>
+                      <optgroup label="Primary School">
+                        <option value="Primary 1">Primary 1</option>
+                        <option value="Primary 2">Primary 2</option>
+                        <option value="Primary 3">Primary 3</option>
+                        <option value="Primary 4">Primary 4</option>
+                        <option value="Primary 5">Primary 5</option>
+                        <option value="Primary 6">Primary 6</option>
+                      </optgroup>
+                      <optgroup label="Junior Secondary">
+                        <option value="JSS 1">JSS 1</option>
+                        <option value="JSS 2">JSS 2</option>
+                        <option value="JSS 3">JSS 3</option>
+                      </optgroup>
+                      <optgroup label="Senior Secondary">
+                        <option value="SS 1">SS 1</option>
+                        <option value="SS 2">SS 2</option>
+                        <option value="SS 3">SS 3</option>
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-muted-foreground uppercase mb-1">Stream / Track</label>
+                    <select
+                      value={newSubjectForm.stream}
+                      onChange={e => setNewSubjectForm({ ...newSubjectForm, stream: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-foreground font-medium focus:ring-2 focus:ring-primary focus:outline-none"
+                    >
+                      <option value="General">General</option>
+                      <option value="Science">Science</option>
+                      <option value="Art">Art & Humanities</option>
+                      <option value="Commercial">Commercial</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-muted-foreground uppercase mb-1">Assigned Teacher</label>
+                    <select
+                      value={newSubjectForm.teacher}
+                      onChange={e => setNewSubjectForm({ ...newSubjectForm, teacher: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-foreground font-medium focus:ring-2 focus:ring-primary focus:outline-none"
+                    >
+                      {getStoredTeachers().map(t => (
+                        <option key={t.staffId || t.name} value={t.name}>{t.name} ({t.specialization || t.department})</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-muted-foreground uppercase mb-1">Category</label>
+                    <select
+                      value={newSubjectForm.category}
+                      onChange={e => setNewSubjectForm({ ...newSubjectForm, category: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-foreground font-medium focus:ring-2 focus:ring-primary focus:outline-none"
+                    >
+                      <option value="STEM">STEM & Sciences</option>
+                      <option value="General Core">General Core</option>
+                      <option value="Humanities">Humanities & Arts</option>
+                      <option value="Technical & Applied">Technical & Applied</option>
+                      <option value="Life Sciences">Life Sciences</option>
+                      <option value="Physical & Health">Physical & Health</option>
+                      <option value="Trade & Entrepreneurship">Trade & Entrepreneurship</option>
+                      <option value="Early Childhood">Early Childhood</option>
+                      <option value="Primary">Primary</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateSubjectModal(false)}
+                  className="px-4 py-2.5 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted/40 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!newSubjectForm.title.trim() || !newSubjectForm.code.trim()) {
+                      showAlert?.({ title: 'Validation Error', message: 'Please enter subject title and course code.', type: 'warning' });
+                      return;
+                    }
+                    const saved = saveSubject({
+                      title: newSubjectForm.title.trim(),
+                      code: newSubjectForm.code.trim(),
+                      grade: newSubjectForm.grade,
+                      stream: newSubjectForm.stream,
+                      category: newSubjectForm.category,
+                      teacher: newSubjectForm.teacher,
+                      periods: newSubjectForm.periods,
+                      passMark: newSubjectForm.passMark,
+                      room: newSubjectForm.room,
+                    });
+                    setSubjectsListState(getStoredSubjects());
+                    setShowCreateSubjectModal(false);
+                    showAlert?.({
+                      title: 'Subject Added',
+                      message: `"${saved.title}" (${saved.code}) was successfully added to the school curriculum for ${saved.grade}.`,
+                      type: 'success'
+                    });
+                  }}
+                  className="px-5 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-colors shadow-sm"
+                >
+                  Save Subject
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Subject Preview Modal */}
+        {selectedSubjectPreview && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-card w-full max-w-md rounded-3xl border border-border shadow-2xl p-6 space-y-5 overflow-hidden">
+              <div className="flex items-center justify-between border-b border-border pb-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-mono font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-xl border border-primary/20">
+                    {selectedSubjectPreview.code}
+                  </span>
+                  <div>
+                    <h3 className="font-serif font-bold text-lg text-foreground">{selectedSubjectPreview.title}</h3>
+                    <p className="text-xs text-muted-foreground">{selectedSubjectPreview.grade} · {selectedSubjectPreview.stream || 'General'}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedSubjectPreview(null)}
+                  className="w-8 h-8 rounded-full bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="space-y-3 text-xs">
+                <div className="p-3.5 rounded-2xl bg-muted/20 border border-border space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground font-semibold">Assigned Educator:</span>
+                    <span className="font-bold text-foreground">{selectedSubjectPreview.teacher}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground font-semibold">Academic Category:</span>
+                    <span className="font-bold text-foreground">{selectedSubjectPreview.category}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground font-semibold">Schedule / Periods:</span>
+                    <span className="font-bold text-foreground">{selectedSubjectPreview.periods || '3 Periods/wk'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground font-semibold">Classroom / Lab:</span>
+                    <span className="font-bold text-foreground">{selectedSubjectPreview.room || 'Main Hall'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground font-semibold">Pass Mark:</span>
+                    <span className="font-bold text-emerald-600">{selectedSubjectPreview.passMark || 50}%</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between border-t border-border pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    deleteSubject(selectedSubjectPreview.id);
+                    setSubjectsListState(getStoredSubjects());
+                    setSelectedSubjectPreview(null);
+                    showAlert?.({ title: 'Subject Deleted', message: 'Subject was removed from the active curriculum.', type: 'info' });
+                  }}
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-500/10 transition-colors flex items-center gap-1.5"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> Remove Subject
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedSubjectPreview(null)}
+                  className="px-5 py-2 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {renderSection()}
 
         {/* Realtime Toast Banner */}
