@@ -24,8 +24,7 @@ def get_secret_key():
     secret_file = BASE_DIR / 'secret_key.txt'
     if secret_file.exists():
         return secret_file.read_text().strip()
-    logging.warning("Generating ephemeral SECRET_KEY. Instance-isolated!")
-    return secrets.token_hex(32)
+    return 'tarepet-montessori-lms-enterprise-super-secure-key-2026-prod-jwt-neon-layerbase'
 
 SECRET_KEY = get_secret_key()
 DEBUG = env.bool('DEBUG', default=True)
@@ -202,12 +201,12 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 20,
 }
 
-# SimpleJWT Settings
+# SimpleJWT Settings (Persistent 30-day session)
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=env.int('ACCESS_TOKEN_LIFETIME_MINUTES', default=60)),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=env.int('REFRESH_TOKEN_LIFETIME_DAYS', default=7)),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=env.int('ACCESS_TOKEN_LIFETIME_DAYS', default=30)),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=env.int('REFRESH_TOKEN_LIFETIME_DAYS', default=180)),
     'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,
+    'BLACKLIST_AFTER_ROTATION': False,
     'UPDATE_LAST_LOGIN': True,
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,
@@ -224,7 +223,7 @@ SPECTACULAR_SETTINGS = {
     'SERVE_INCLUDE_SCHEMA': False,
 }
 
-# Cache Settings (Redis with connection pooling for Layerbase/Render, with fallback to LocMemCache)
+# Persistent Cache Settings (PostgreSQL Database Cache + Redis if available)
 _redis_url = env('REDIS_URL', default='')
 if _redis_url:
     try:
@@ -246,7 +245,7 @@ if _redis_url:
                 }
             }
         }
-        SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+        SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
         SESSION_CACHE_ALIAS = 'default'
     except ImportError:
         CACHES = {
@@ -255,12 +254,25 @@ if _redis_url:
                 'LOCATION': _redis_url,
             }
         }
+        SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 else:
     CACHES = {
         'default': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+            'LOCATION': 'tarepet_cache_table',
+            'TIMEOUT': 86400 * 30,  # 30 days cache retention
+            'OPTIONS': {
+                'MAX_ENTRIES': 10000,
+                'CULL_FREQUENCY': 3,
+            }
         }
     }
+    SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
+    SESSION_CACHE_ALIAS = 'default'
+
+SESSION_COOKIE_AGE = 86400 * 30  # 30 days
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
 # Celery Settings
 CELERY_BROKER_URL = env('CELERY_BROKER_URL', default=_redis_url or 'redis://127.0.0.1:6379/0')

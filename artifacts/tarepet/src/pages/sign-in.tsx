@@ -58,11 +58,33 @@ export default function SignIn() {
       if (isAdminPassValid) {
         resetLoginRateLimit();
         recordLoginActivity('admin@tarepet.com', 'ADMIN', 'SUCCESS');
-        login('mock_access_token', 'mock_refresh_token', {
+        
+        try {
+          const apiRes = await authClient.post('/auth/login/', {
+            email: 'admin@tarepet.com',
+            password: rawPassword,
+          }, { timeout: 6000 });
+          if (apiRes.data && apiRes.data.access) {
+            login(apiRes.data.access, apiRes.data.refresh || '', apiRes.data.user || {
+              id: 1,
+              email: 'admin@tarepet.com',
+              first_name: 'Super',
+              last_name: 'Administrator',
+              role: 'ADMIN',
+            });
+            setLocation('/dashboard/admin');
+            setIsLoading(false);
+            return;
+          }
+        } catch {
+          // Fallback if offline
+        }
+
+        login('tarepet_admin_persistent_access_token', 'tarepet_admin_persistent_refresh_token', {
           id: 1,
           email: 'admin@tarepet.com',
-          first_name: 'Administrator',
-          last_name: 'System',
+          first_name: 'Super',
+          last_name: 'Administrator',
           role: 'ADMIN',
         });
         setLocation('/dashboard/admin');

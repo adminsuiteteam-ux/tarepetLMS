@@ -96,11 +96,12 @@ export const authClient = axios.create({
   },
 });
 
-// Request Interceptor: Attach Access Token from memory
+// Request Interceptor: Attach Access Token reliably from storage or memory
 authClient.interceptors.request.use(
   (config) => {
-    if (_accessToken && config.headers) {
-      config.headers.Authorization = `Bearer ${_accessToken}`;
+    const token = getAccessToken();
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
@@ -114,19 +115,20 @@ authClient.interceptors.response.use(
     const originalRequest = error.config;
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-
-      if (_refreshToken) {
+      const rToken = getRefreshToken();
+      if (rToken && !rToken.startsWith('mock_')) {
         try {
           const res = await axios.post(`${API_BASE_URL}/auth/refresh/`, {
-            refresh: _refreshToken,
+            refresh: rToken,
           });
           const { access, refresh } = res.data;
-          setTokens(access, refresh || _refreshToken || undefined);
-          originalRequest.headers.Authorization = `Bearer ${access}`;
+          setTokens(access, refresh || rToken);
+          if (originalRequest.headers) {
+            originalRequest.headers.Authorization = `Bearer ${access}`;
+          }
           return authClient(originalRequest);
         } catch (refreshError) {
-          // Token refresh failed — clear in-memory tokens silently without forcing browser redirect
-          clearTokens();
+          // Token refresh failed
           return Promise.reject(refreshError);
         }
       }
