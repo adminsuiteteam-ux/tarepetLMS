@@ -13,6 +13,7 @@ import { motion } from "framer-motion";
 import admissionsImg from "@assets/admissions_hero.jpg";
 
 import { authClient } from "@/lib/api-auth";
+import { useTranslation } from "@/lib/i18n";
 
 const inquirySchema = z.object({
   name: z.string().min(2, "Parent/Guardian name is required"),
@@ -23,6 +24,7 @@ const inquirySchema = z.object({
 });
 
 export default function Admissions() {
+  const { t } = useTranslation();
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof inquirySchema>>({
@@ -46,14 +48,14 @@ export default function Admissions() {
         message: values.message,
       });
       toast({
-        title: "Application Submitted Successfully",
-        description: "Thank you for your interest! Your application has been logged and our admissions team will contact you.",
+        title: t('Application Submitted Successfully', 'Application Submitted Successfully'),
+        description: t("Thank you for your interest! Your application has been logged and our admissions team will contact you.", "Thank you for your interest! Your application has been logged and our admissions team will contact you."),
       });
       form.reset();
-    } catch (error) {
+    } catch {
       toast({
-        title: "Submission Received",
-        description: "Thank you for your inquiry! Our admissions team has received your information.",
+        title: t("Inquiry Sent (Offline Mode)", "Inquiry Sent (Offline Mode)"),
+        description: t("Thank you! We will reach out to you as soon as our servers reconnect.", "Thank you! We will reach out to you as soon as our servers reconnect."),
       });
       form.reset();
     }
@@ -61,21 +63,21 @@ export default function Admissions() {
 
   return (
     <PageTransition>
-      {/* Hero Header */}
-      <section className="bg-slate-950 text-white pt-32 pb-24 md:pt-40 md:pb-32 relative overflow-hidden border-b border-white/10">
+      {/* Hero Section */}
+      <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden pt-20">
         {/* Background Image Layer */}
         <div className="absolute inset-0 z-0">
-          <img
-            src={admissionsImg}
-            alt="Tare Pet Montessori Classroom & Learning Environment"
-            className="w-full h-full object-cover object-center opacity-95 scale-105 brightness-100"
+          <img 
+            src={admissionsImg} 
+            alt="Tare Pet Montessori Admissions" 
+            className="w-full h-full object-cover brightness-[0.75]"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/35 to-black/20" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-black/40 to-black/60" />
         </div>
 
-        {/* Subtle Ambient Glass Shimmer */}
-        <div className="absolute inset-0 glass-shimmer pointer-events-none opacity-10 z-0" />
+        {/* Ambient Glows */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/20 rounded-full blur-3xl pointer-events-none" />
 
         <div className="container mx-auto px-4 md:px-6 relative z-10 max-w-4xl text-center">
           <motion.div
@@ -85,7 +87,7 @@ export default function Admissions() {
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-button text-white text-xs font-semibold uppercase tracking-wider mb-6 shadow-lg border border-white/20"
           >
             <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
-            <span>Enrollment Open 2025 / 2026</span>
+            <span>{t('admissions.enrollment_open', 'Enrollment Open 2026 / 2027')}</span>
           </motion.div>
 
           <motion.h1 
@@ -94,7 +96,7 @@ export default function Admissions() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-4xl sm:text-5xl md:text-6xl font-serif font-bold text-white mb-6 tracking-tight drop-shadow-md leading-[1.15]"
           >
-            Begin Your Child's Journey to <span className="text-primary italic font-light">Excellence</span>
+            {t("admissions.hero_prefix", "Begin Your Child's Journey to ")}<span className="text-primary italic font-light">{t("admissions.hero_highlight", "Excellence")}</span>
           </motion.h1>
 
           <motion.p 
@@ -103,7 +105,7 @@ export default function Admissions() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-lg md:text-xl text-white/90 max-w-3xl mx-auto font-sans leading-relaxed font-normal mb-10"
           >
-            We welcome pupils and students dedicated to character development, curiosity, and academic leadership. Secure your child's place today.
+            {t("admissions.hero_desc", "We welcome pupils and students dedicated to character development, curiosity, and academic leadership. Secure your child's place today.")}
           </motion.p>
 
           {/* Quick Highlight Badges */}
@@ -114,13 +116,13 @@ export default function Admissions() {
             className="flex flex-wrap items-center justify-center gap-3 md:gap-4 text-xs md:text-sm font-sans"
           >
             <span className="flex items-center gap-2 px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
-              <FileText className="w-4 h-4 text-blue-400" /> Simple 3-Step Process
+              <FileText className="w-4 h-4 text-blue-400" /> {t("admissions.badge_1", "Simple 3-Step Process")}
             </span>
             <span className="flex items-center gap-2 px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
-              <GraduationCap className="w-4 h-4 text-emerald-400" /> Entrance Assessment
+              <GraduationCap className="w-4 h-4 text-emerald-400" /> {t("admissions.badge_2", "Entrance Assessment")}
             </span>
             <span className="flex items-center gap-2 px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
-              <Building className="w-4 h-4 text-amber-400" /> Schedule Campus Visit
+              <Building className="w-4 h-4 text-amber-400" /> {t("admissions.badge_3", "Schedule Campus Visit")}
             </span>
           </motion.div>
         </div>
@@ -138,7 +140,7 @@ export default function Admissions() {
               transition={{ duration: 0.65 }}
               className="lg:col-span-7"
             >
-              <h2 className="text-3xl font-serif font-bold text-foreground mb-8">Admission Process</h2>
+              <h2 className="text-3xl font-serif font-bold text-foreground mb-8">{t("admissions.process_title", "Admission Process")}</h2>
               
               <div className="space-y-10">
                 <div className="flex gap-6 p-6 rounded-2xl glass-card border border-white/80 shadow-sm hover:shadow-md transition-all">
@@ -146,9 +148,9 @@ export default function Admissions() {
                     <FileText className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-foreground mb-2">1. Application Form</h3>
+                    <h3 className="text-xl font-bold text-foreground mb-2">{t("admissions.step_1_title", "1. Application Form")}</h3>
                     <p className="text-muted-foreground leading-relaxed">
-                      Obtain an admission form from the school office at Kpansia-Epie or fill out the online inquiry form below to initiate the process. A non-refundable application fee is required.
+                      {t("admissions.step_1_desc", "Obtain an admission form from the school office at Kpansia-Epie or fill out the online inquiry form below to initiate the process. A non-refundable application fee is required.")}
                     </p>
                   </div>
                 </div>
@@ -158,9 +160,9 @@ export default function Admissions() {
                     <Calendar className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-foreground mb-2">2. Assessment & Interview</h3>
+                    <h3 className="text-xl font-bold text-foreground mb-2">{t("admissions.step_2_title", "2. Assessment & Interview")}</h3>
                     <p className="text-muted-foreground leading-relaxed">
-                      Prospective pupils for Primary and Secondary levels will take an entrance assessment in Mathematics and English. Both parents and the child will be invited for an informal interactive session.
+                      {t("admissions.step_2_desc", "Prospective pupils for Primary and Secondary levels will take an entrance assessment in Mathematics and English. Both parents and the child will be invited for an informal interactive session.")}
                     </p>
                   </div>
                 </div>
@@ -170,24 +172,24 @@ export default function Admissions() {
                     <GraduationCap className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-foreground mb-2">3. Offer & Acceptance</h3>
+                    <h3 className="text-xl font-bold text-foreground mb-2">{t("admissions.step_3_title", "3. Offer & Acceptance")}</h3>
                     <p className="text-muted-foreground leading-relaxed">
-                      Successful candidates will receive a formal letter of admission. Parents are required to accept the offer by paying the acceptance fee and submitting all required documentation within the stipulated timeframe.
+                      {t("admissions.step_3_desc", "Successful candidates will receive a formal letter of admission. Parents are required to accept the offer by paying the acceptance fee and submitting all required documentation within the stipulated timeframe.")}
                     </p>
                   </div>
                 </div>
               </div>
 
               <div className="mt-16 glass-card p-8 rounded-3xl border border-white/80 shadow-lg">
-                <h3 className="text-2xl font-serif font-bold text-foreground mb-6">Required Documents</h3>
+                <h3 className="text-2xl font-serif font-bold text-foreground mb-6">{t("admissions.required_docs_title", "Required Documents")}</h3>
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {[
-                    "Completed Application Form",
-                    "2 Recent Passport Photographs",
-                    "Birth Certificate / Declaration of Age",
-                    "Immunization Record",
-                    "Last Academic Report (if applicable)",
-                    "Transfer Certificate (for mid-stream entries)"
+                    t("admissions.doc_1", "Completed Application Form"),
+                    t("admissions.doc_2", "2 Recent Passport Photographs"),
+                    t("admissions.doc_3", "Birth Certificate / Declaration of Age"),
+                    t("admissions.doc_4", "Immunization Record"),
+                    t("admissions.doc_5", "Last Academic Report (if applicable)"),
+                    t("admissions.doc_6", "Transfer Certificate (for mid-stream entries)")
                   ].map((doc, i) => (
                     <li key={i} className="flex items-center gap-3">
                       <CheckCircle2 className="w-5 h-5 text-secondary shrink-0" />
@@ -207,9 +209,9 @@ export default function Admissions() {
               className="lg:col-span-5"
             >
               <div className="glass-card p-8 rounded-3xl shadow-2xl border border-white/80 sticky top-32">
-                <h3 className="text-2xl font-serif font-bold text-foreground mb-2">Make an Inquiry</h3>
+                <h3 className="text-2xl font-serif font-bold text-foreground mb-2">{t("admissions.inquiry_title", "Make an Inquiry")}</h3>
                 <p className="text-muted-foreground text-sm mb-8 leading-relaxed">
-                  Fill out this form and our admissions team will get back to you with next steps.
+                  {t("admissions.inquiry_desc", "Fill out this form and our admissions team will get back to you with next steps.")}
                 </p>
 
                 <Form {...form}>
@@ -219,9 +221,17 @@ export default function Admissions() {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-semibold text-foreground">Parent / Guardian Name</FormLabel>
+                          <FormLabel className="font-semibold text-foreground">{t("admissions.parent_name", "Parent / Guardian Name")}</FormLabel>
                           <FormControl>
-                            <Input placeholder="Mrs. Jane Doe" {...field} className="bg-white/80 border-white/80 rounded-xl focus:ring-primary h-11" />
+                            <Input
+                              placeholder="Mrs. Jane Doe"
+                              value={field.value}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
+                              name={field.name}
+                              ref={field.ref}
+                              className="bg-white/80 border-white/80 rounded-xl focus:ring-primary h-11"
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -234,9 +244,18 @@ export default function Admissions() {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="font-semibold text-foreground">Email Address</FormLabel>
+                            <FormLabel className="font-semibold text-foreground">{t("admissions.email_address", "Email Address")}</FormLabel>
                             <FormControl>
-                              <Input placeholder="jane@example.com" {...field} className="bg-white/80 border-white/80 rounded-xl focus:ring-primary h-11" />
+                              <Input
+                                placeholder="jane@example.com"
+                                type="email"
+                                value={field.value}
+                                onChange={field.onChange}
+                                onBlur={field.onBlur}
+                                name={field.name}
+                                ref={field.ref}
+                                className="bg-white/80 border-white/80 rounded-xl focus:ring-primary h-11"
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -247,9 +266,18 @@ export default function Admissions() {
                         name="phone"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="font-semibold text-foreground">Phone Number</FormLabel>
+                            <FormLabel className="font-semibold text-foreground">{t("admissions.phone_number", "Phone Number")}</FormLabel>
                             <FormControl>
-                              <Input placeholder="0800 000 0000" {...field} className="bg-white/80 border-white/80 rounded-xl focus:ring-primary h-11" />
+                              <Input
+                                placeholder="0800 000 0000"
+                                type="tel"
+                                value={field.value}
+                                onChange={field.onChange}
+                                onBlur={field.onBlur}
+                                name={field.name}
+                                ref={field.ref}
+                                className="bg-white/80 border-white/80 rounded-xl focus:ring-primary h-11"
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -262,20 +290,20 @@ export default function Admissions() {
                       name="childAge"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-semibold text-foreground">Child's Age Range</FormLabel>
+                          <FormLabel className="font-semibold text-foreground">{t("admissions.child_age", "Child's Age Range")}</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger className="bg-white/80 border-white/80 rounded-xl h-11">
-                                <SelectValue placeholder="Select an age range" />
+                                <SelectValue placeholder={t("admissions.select_age_placeholder", "Select an age range")} />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="nursery">Nursery School (Ages 2 - 5)</SelectItem>
-                              <SelectItem value="primary">Primary School (Ages 6 - 11)</SelectItem>
-                              <SelectItem value="junior-secondary">Junior Secondary School</SelectItem>
-                              <SelectItem value="senior-secondary">Senior Secondary School</SelectItem>
-                              <SelectItem value="boarding">Boarding School Residence</SelectItem>
-                              <SelectItem value="special-school">Special Needs & Inclusive School</SelectItem>
+                              <SelectItem value="nursery">{t("admissions.age_nursery", "Nursery School (Ages 2 - 5)")}</SelectItem>
+                              <SelectItem value="primary">{t("admissions.age_primary", "Primary School (Ages 6 - 11)")}</SelectItem>
+                              <SelectItem value="junior-secondary">{t("admissions.age_jss", "Junior Secondary School")}</SelectItem>
+                              <SelectItem value="senior-secondary">{t("admissions.age_ss", "Senior Secondary School")}</SelectItem>
+                              <SelectItem value="boarding">{t("admissions.age_boarding", "Boarding School Residence")}</SelectItem>
+                              <SelectItem value="special-school">{t("admissions.age_special", "Special Needs & Inclusive School")}</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -288,12 +316,16 @@ export default function Admissions() {
                       name="message"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-semibold text-foreground">Message / Questions</FormLabel>
+                          <FormLabel className="font-semibold text-foreground">{t("admissions.message_label", "Message / Questions")}</FormLabel>
                           <FormControl>
                             <Textarea 
-                              placeholder="Tell us what you'd like to know..." 
+                              placeholder={t("admissions.message_placeholder", "Tell us what you'd like to know...")} 
                               className="min-h-[120px] bg-white/80 border-white/80 rounded-xl resize-none"
-                              {...field} 
+                              value={field.value}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
+                              name={field.name}
+                              ref={field.ref}
                             />
                           </FormControl>
                           <FormMessage />
@@ -302,7 +334,7 @@ export default function Admissions() {
                     />
 
                     <Button type="submit" className="w-full h-12 rounded-full font-bold uppercase tracking-wider text-white bg-gradient-to-r from-primary to-primary/90 shadow-xl hover:scale-105 active:scale-95 transition-all" data-testid="button-submit-inquiry">
-                      Submit Inquiry
+                      {t("admissions.submit_btn", "Submit Inquiry")}
                     </Button>
                   </form>
                 </Form>

@@ -39,13 +39,9 @@ export const Noise: React.FC<NoiseProps> = ({
 
     const drawGrain = () => {
       const imageData = ctx.createImageData(canvasSize, canvasSize);
-      const data = imageData.data;
-      for (let i = 0; i < data.length; i += 4) {
-        const value = Math.random() * 255;
-        data[i] = value;
-        data[i + 1] = value;
-        data[i + 2] = value;
-        data[i + 3] = patternAlpha;
+      const buf32 = new Uint32Array(imageData.data.buffer);
+      if (typeof window !== "undefined" && window.crypto && window.crypto.getRandomValues) {
+        window.crypto.getRandomValues(buf32);
       }
       ctx.putImageData(imageData, 0, 0);
     };

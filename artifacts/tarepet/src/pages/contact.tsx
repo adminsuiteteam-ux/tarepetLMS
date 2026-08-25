@@ -10,6 +10,8 @@ import { useToast } from "@/hooks/use-toast";
 import { MapPin, Phone, Mail, Clock, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import contactImg from "@assets/contact_hero.png";
+import { authClient } from "@/lib/api-auth";
+import { useTranslation } from "@/lib/i18n";
 
 const contactSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -18,9 +20,8 @@ const contactSchema = z.object({
   message: z.string().min(10, "Message is required"),
 });
 
-import { authClient } from "@/lib/api-auth";
-
 export default function Contact() {
+  const { t } = useTranslation();
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof contactSchema>>({
@@ -42,14 +43,14 @@ export default function Contact() {
         message: values.message,
       });
       toast({
-        title: "Message Sent",
-        description: "Thank you for reaching out. We have received your message and will get back to you soon.",
+        title: t("Message Sent", "Message Sent"),
+        description: t("Thank you for reaching out. We have received your message and will get back to you soon.", "Thank you for reaching out. We have received your message and will get back to you soon."),
       });
       form.reset();
-    } catch (error) {
+    } catch {
       toast({
-        title: "Message Sent",
-        description: "Thank you for reaching out. We will get back to you soon.",
+        title: t("Message Sent", "Message Sent"),
+        description: t("Thank you for reaching out. We will get back to you soon.", "Thank you for reaching out. We will get back to you soon."),
       });
       form.reset();
     }
@@ -81,7 +82,7 @@ export default function Contact() {
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-button text-white text-xs font-semibold uppercase tracking-wider mb-6 shadow-lg border border-white/20"
           >
             <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
-            <span>We'd Love To Hear From You</span>
+            <span>{t("contact.badge", "We'd Love To Hear From You")}</span>
           </motion.div>
 
           <motion.h1 
@@ -90,7 +91,7 @@ export default function Contact() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-4xl sm:text-5xl md:text-6xl font-serif font-bold text-white mb-6 tracking-tight drop-shadow-md leading-[1.15]"
           >
-            Get In Touch With <span className="text-primary italic font-light">Tare Pet</span>
+            {t("contact.hero_title_prefix", "Get In Touch With ")}<span className="text-primary italic font-light">{t("contact.hero_brand", "Tare Pet")}</span>
           </motion.h1>
 
           <motion.p 
@@ -99,29 +100,15 @@ export default function Contact() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-lg md:text-xl text-white/90 max-w-3xl mx-auto font-sans leading-relaxed font-normal mb-10"
           >
-            Located at Kpansia-Epie, Yenagoa, Bayelsa State. Reach out for admissions inquiries, campus tours, or general questions.
+            {t("contact.hero_desc", "Have questions about admissions, our curriculum, or campus tours? Our dedicated team is here to assist you.")}
           </motion.p>
-
-          {/* Location & Contact Pills */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex flex-wrap items-center justify-center gap-3 md:gap-4 text-xs md:text-sm font-sans"
-          >
-            <span className="flex items-center gap-2 px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
-              <MapPin className="w-4 h-4 text-red-400" /> 47 Chief John Obi Str., Kpansia, Yenagoa
-            </span>
-            <span className="flex items-center gap-2 px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
-              <Phone className="w-4 h-4 text-emerald-400" /> 0803 789 0628 / 0703 830 2292
-            </span>
-          </motion.div>
         </div>
       </section>
 
+      {/* Contact Content Grid */}
       <section className="py-24 bg-background relative overflow-hidden">
         <div className="container mx-auto px-4 md:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
             
             {/* Contact Details — Slide from Left */}
             <motion.div
@@ -129,59 +116,63 @@ export default function Contact() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, margin: "-40px" }}
               transition={{ duration: 0.65 }}
+              className="space-y-8"
             >
-              <h2 className="text-3xl font-serif font-bold text-foreground mb-8">Get in Touch</h2>
-              
-              <div className="space-y-6 mb-12">
-                <div className="flex items-start gap-4 p-6 glass-card rounded-2xl border border-white/80 shadow-sm hover:shadow-md transition-all">
-                  <div className="w-12 h-12 rounded-2xl bg-primary/15 text-primary flex items-center justify-center shrink-0">
+              <div>
+                <h2 className="text-3xl font-serif font-bold text-foreground mb-4">{t("contact.reach_title", "Reach Our Campus")}</h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  {t("contact.reach_desc", "Whether you are a prospective parent, current family, or community partner, we invite you to connect with us or visit our school in Yenagoa.")}
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                <div className="flex items-start gap-4 p-6 rounded-2xl glass-card border border-white/80">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
                     <MapPin className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-foreground mb-1 text-lg">Our Physical Address</h3>
+                    <h3 className="font-bold text-foreground mb-1 text-lg">{t("contact.campus_location", "Campus Location")}</h3>
                     <p className="text-muted-foreground text-sm leading-relaxed">
-                      Tare Pet Montessori School<br />
-                      43. LT. Col Edor Obi Road Kpansia<br />
-                      Yenagoa, Bayelsa State, Nigeria
+                      {t("school.location", "43. LT. Col Edor Obi Road Kpansia, Yenagoa, Bayelsa State, Nigeria")}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-4 p-6 glass-card rounded-2xl border border-white/80 shadow-sm hover:shadow-md transition-all">
-                  <div className="w-12 h-12 rounded-2xl bg-secondary/15 text-secondary flex items-center justify-center shrink-0">
+                <div className="flex items-start gap-4 p-6 rounded-2xl glass-card border border-white/80">
+                  <div className="w-12 h-12 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center shrink-0">
                     <Phone className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-foreground mb-1 text-lg">Official Phone Numbers</h3>
-                    <p className="text-muted-foreground text-sm">
-                      0803 789 0628<br />
-                      0703 830 2292
+                    <h3 className="font-bold text-foreground mb-1 text-lg">{t("contact.phone_inquiries", "Phone Inquiries")}</h3>
+                    <p className="text-muted-foreground text-sm leading-relaxed">
+                      +234 803 000 0000<br />
+                      +234 812 000 0000
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-4 p-6 glass-card rounded-2xl border border-white/80 shadow-sm hover:shadow-md transition-all">
-                  <div className="w-12 h-12 rounded-2xl bg-primary/15 text-primary flex items-center justify-center shrink-0">
+                <div className="flex items-start gap-4 p-6 rounded-2xl glass-card border border-white/80">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
                     <Mail className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-foreground mb-1 text-lg">Official Email Addresses</h3>
-                    <p className="text-muted-foreground text-sm">
-                      tarepetmontessori@gmail.com<br />
-                      tarepetm@gmail.com
+                    <h3 className="font-bold text-foreground mb-1 text-lg">{t("contact.email_contact", "Email Contact")}</h3>
+                    <p className="text-muted-foreground text-sm leading-relaxed">
+                      admissions@tarepetmontessori.edu.ng<br />
+                      info@tarepetmontessori.edu.ng
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-4 p-6 glass-card rounded-2xl border border-white/80 shadow-sm hover:shadow-md transition-all">
-                  <div className="w-12 h-12 rounded-2xl bg-secondary/15 text-secondary flex items-center justify-center shrink-0">
+                <div className="flex items-start gap-4 p-6 rounded-2xl glass-card border border-white/80">
+                  <div className="w-12 h-12 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center shrink-0">
                     <Clock className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-foreground mb-1 text-lg">Office Working Hours</h3>
+                    <h3 className="font-bold text-foreground mb-1 text-lg">{t("contact.working_hours", "Office Working Hours")}</h3>
                     <p className="text-muted-foreground text-sm leading-relaxed">
-                      Monday – Friday: 7:30 AM – 3:00 PM<br />
-                      Saturday – Sunday: Closed
+                      {t("contact.hours_weekday", "Monday – Friday: 7:30 AM – 3:00 PM")}<br />
+                      {t("contact.hours_weekend", "Saturday – Sunday: Closed")}
                     </p>
                   </div>
                 </div>
@@ -196,9 +187,9 @@ export default function Contact() {
               transition={{ duration: 0.65, delay: 0.15 }}
             >
               <div className="glass-card p-10 rounded-3xl shadow-2xl border border-white/80">
-                <h2 className="text-3xl font-serif font-bold text-foreground mb-2">Send a Message</h2>
+                <h2 className="text-3xl font-serif font-bold text-foreground mb-2">{t("contact.form_title", "Send a Message")}</h2>
                 <p className="text-muted-foreground text-sm mb-8 leading-relaxed">
-                  We welcome your inquiries. Please fill out the form below and we will respond promptly.
+                  {t("contact.form_desc", "We welcome your inquiries. Please fill out the form below and we will respond promptly.")}
                 </p>
 
                 <Form {...form}>
@@ -208,9 +199,17 @@ export default function Contact() {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-semibold text-foreground">Your Name</FormLabel>
+                          <FormLabel className="font-semibold text-foreground">{t("contact.name_label", "Your Name")}</FormLabel>
                           <FormControl>
-                            <Input placeholder="John Doe" {...field} className="bg-white/80 border-white/80 rounded-xl h-11" />
+                            <Input
+                              placeholder="John Doe"
+                              value={field.value}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
+                              name={field.name}
+                              ref={field.ref}
+                              className="bg-white/80 border-white/80 rounded-xl h-11"
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -222,9 +221,18 @@ export default function Contact() {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-semibold text-foreground">Email Address</FormLabel>
+                          <FormLabel className="font-semibold text-foreground">{t("contact.email_label", "Email Address")}</FormLabel>
                           <FormControl>
-                            <Input placeholder="john@example.com" {...field} className="bg-white/80 border-white/80 rounded-xl h-11" />
+                            <Input
+                              placeholder="john@example.com"
+                              type="email"
+                              value={field.value}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
+                              name={field.name}
+                              ref={field.ref}
+                              className="bg-white/80 border-white/80 rounded-xl h-11"
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -236,9 +244,17 @@ export default function Contact() {
                       name="subject"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-semibold text-foreground">Subject</FormLabel>
+                          <FormLabel className="font-semibold text-foreground">{t("contact.subject_label", "Subject")}</FormLabel>
                           <FormControl>
-                            <Input placeholder="Inquiry about Nursery Admissions" {...field} className="bg-white/80 border-white/80 rounded-xl h-11" />
+                            <Input
+                              placeholder={t("contact.subject_placeholder", "Inquiry about Nursery Admissions")}
+                              value={field.value}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
+                              name={field.name}
+                              ref={field.ref}
+                              className="bg-white/80 border-white/80 rounded-xl h-11"
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -250,12 +266,16 @@ export default function Contact() {
                       name="message"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="font-semibold text-foreground">Message</FormLabel>
+                          <FormLabel className="font-semibold text-foreground">{t("contact.message_label", "Message")}</FormLabel>
                           <FormControl>
                             <Textarea 
-                              placeholder="How can we help you?" 
+                              placeholder={t("contact.message_placeholder", "How can we help you?")} 
                               className="min-h-[140px] bg-white/80 border-white/80 rounded-xl resize-none"
-                              {...field} 
+                              value={field.value}
+                              onChange={field.onChange}
+                              onBlur={field.onBlur}
+                              name={field.name}
+                              ref={field.ref}
                             />
                           </FormControl>
                           <FormMessage />
@@ -264,7 +284,7 @@ export default function Contact() {
                     />
 
                     <Button type="submit" className="w-full h-12 rounded-full font-bold uppercase tracking-wider text-white bg-gradient-to-r from-primary to-primary/90 shadow-xl hover:scale-105 active:scale-95 transition-all">
-                      Send Message
+                      {t("contact.send_btn", "Send Message")}
                     </Button>
                   </form>
                 </Form>

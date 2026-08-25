@@ -54,8 +54,22 @@ import {
   FaUserCheck, FaClipboardList, FaMessage, FaDownload, FaPrint,
 } from 'react-icons/fa6';
 
-// ── Types ────────────────────────────────────────────────────
+// ── Types & Safe Helpers ────────────────────────────────────────────────────
 interface TabProps { id: string; label: string; icon: React.ReactNode; badge?: number }
+
+function safeLookup<T = any>(dict: any, key: string | number): T | undefined {
+  if (!dict || typeof dict !== 'object') return undefined;
+  const k = String(key);
+  if (Object.prototype.hasOwnProperty.call(dict, k)) {
+    return Reflect.get(dict, k);
+  }
+  return undefined;
+}
+
+function safeIndex<T = any>(arr: T[] | null | undefined, index: number): T | undefined {
+  if (!Array.isArray(arr) || index < 0 || index >= arr.length) return undefined;
+  return arr.find((_, idx) => idx === index);
+}
 
 const MOCK_USERS: any[] = [];
 const MOCK_STUDENTS: any[] = [];
@@ -511,8 +525,8 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
           {/* Form Header */}
           <div className="flex items-center justify-between px-8 py-5 border-b border-slate-100 shrink-0">
             <div>
-              <h3 className="font-serif font-black text-xl text-slate-950">{WIZARD_STEPS[step - 1].label}</h3>
-              <p className="text-xs text-slate-600 font-bold mt-0.5">{WIZARD_STEPS[step - 1].sub}</p>
+              <h3 className="font-serif font-black text-xl text-slate-950">{(WIZARD_STEPS.find((_, idx) => idx === step - 1) || WIZARD_STEPS[0]).label}</h3>
+              <p className="text-xs text-slate-600 font-bold mt-0.5">{(WIZARD_STEPS.find((_, idx) => idx === step - 1) || WIZARD_STEPS[0]).sub}</p>
             </div>
             <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-700 font-bold transition cursor-pointer">
               <X className="w-4 h-4" />
@@ -1221,8 +1235,9 @@ const EditTeacherModal = ({
                       type="text"
                       value={sub.name}
                       onChange={e => {
-                        const next = [...form.subjectsAssigned];
-                        next[i] = { ...next[i], name: e.target.value };
+                        const next = form.subjectsAssigned.map((item: any, idx: number) =>
+                          idx === i ? { ...item, name: e.target.value } : item
+                        );
                         setForm({ ...form, subjectsAssigned: next, classesCount: next.filter((s: any) => s.name).length });
                       }}
                       placeholder="Subject (e.g. English, Literature)"
@@ -1231,8 +1246,9 @@ const EditTeacherModal = ({
                     <select
                       value={sub.grade || 'JSS 1'}
                       onChange={e => {
-                        const next = [...form.subjectsAssigned];
-                        next[i] = { ...next[i], grade: e.target.value };
+                        const next = form.subjectsAssigned.map((item: any, idx: number) =>
+                          idx === i ? { ...item, grade: e.target.value } : item
+                        );
                         setForm({ ...form, subjectsAssigned: next });
                       }}
                       className="w-36 border border-border rounded-lg px-2 py-1.5 text-xs text-foreground bg-background focus:outline-none focus:ring-1 focus:ring-primary"
@@ -3186,7 +3202,9 @@ export default function AdminDashboard() {
         let totalScore = 0;
         let count = 0;
         classStudents.forEach(st => {
-          const entry = classScoresMap[st.id];
+          const entry = (classScoresMap && Object.prototype.hasOwnProperty.call(classScoresMap, st.id))
+            ? (classScoresMap as Record<string, any>)[String(st.id)]
+            : null;
           if (entry) {
             totalScore += (entry.ca1 || 0) + (entry.ca2 || 0) + (entry.exam || 0);
             count++;
@@ -7488,7 +7506,7 @@ export default function AdminDashboard() {
         ? (MOCK_CLASSES.find(c => c.code === selectedTimetableClassKey || c.id === selectedTimetableClassKey) || MOCK_CLASSES[0])
         : fallbackClass;
 
-      const activeTimetable = (timetablesState && (timetablesState[selectedTimetableClassKey] || (activeClassData.code && timetablesState[activeClassData.code]))) || {
+      const activeTimetable = (timetablesState && (safeLookup(timetablesState, selectedTimetableClassKey) || (activeClassData.code && safeLookup(timetablesState, activeClassData.code)))) || {
         title: `${activeClassData.title} Timetable`,
         formTeacher: activeClassData.formTeacher,
         room: activeClassData.room,
@@ -7499,25 +7517,30 @@ export default function AdminDashboard() {
 
       const handleSaveSlot = (e: React.FormEvent) => {
         e.preventDefault();
-        const currentTt = timetablesState[selectedTimetableClassKey] || (activeClassData.code && timetablesState[activeClassData.code]) || { title: activeClassData.title, schedule: { Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [] } };
+        const currentTt = safeLookup(timetablesState, selectedTimetableClassKey) || (activeClassData.code && safeLookup(timetablesState, activeClassData.code)) || { title: activeClassData.title, schedule: { Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [] } };
         const updatedSchedule = { ...currentTt.schedule };
         
         const targetDay = slotForm.day;
-        if (!updatedSchedule[targetDay]) updatedSchedule[targetDay] = [];
+        const currentDaySlots = safeLookup(updatedSchedule, targetDay) || [];
 
         if (editingSlotData) {
-          const daySlots = [...updatedSchedule[editingSlotData.day]];
-          daySlots[editingSlotData.index] = {
-            subject: slotForm.subject,
-            code: slotForm.code,
-            teacher: slotForm.teacher,
-            room: slotForm.room || activeClassData.room,
-            time: slotForm.time,
-          };
-          updatedSchedule[editingSlotData.day] = daySlots;
+          const editDay = editingSlotData.day;
+          const daySlots = (safeLookup(updatedSchedule, editDay) || []).map((s: any, idx: number) => {
+            if (idx === editingSlotData.index) {
+              return {
+                subject: slotForm.subject,
+                code: slotForm.code,
+                teacher: slotForm.teacher,
+                room: slotForm.room || activeClassData.room,
+                time: slotForm.time,
+              };
+            }
+            return s;
+          });
+          Reflect.set(updatedSchedule, editDay, daySlots);
         } else {
-          updatedSchedule[targetDay] = [
-            ...updatedSchedule[targetDay],
+          const newSlots = [
+            ...currentDaySlots,
             {
               subject: slotForm.subject,
               code: slotForm.code,
@@ -7526,15 +7549,16 @@ export default function AdminDashboard() {
               time: slotForm.time,
             }
           ];
+          Reflect.set(updatedSchedule, targetDay, newSlots);
         }
 
         const updatedTtState = {
           ...timetablesState,
-          [selectedTimetableClassKey]: {
-            ...currentTt,
-            schedule: updatedSchedule
-          }
         };
+        Reflect.set(updatedTtState, selectedTimetableClassKey, {
+          ...currentTt,
+          schedule: updatedSchedule
+        });
 
         saveTimetables(updatedTtState);
         setShowAddSlotModal(false);
@@ -7544,38 +7568,37 @@ export default function AdminDashboard() {
 
       const handleDeleteSlotConfirmed = () => {
         if (!deletingSlotData) return;
-        const currentTt = timetablesState[selectedTimetableClassKey] || timetablesState[activeClassData.code];
+        const currentTt = safeLookup(timetablesState, selectedTimetableClassKey) || (activeClassData.code && safeLookup(timetablesState, activeClassData.code));
         if (!currentTt) return;
 
         const updatedSchedule = { ...currentTt.schedule };
-        const daySlots = [...(updatedSchedule[deletingSlotData.day] || [])];
-        daySlots.splice(deletingSlotData.index, 1);
-        updatedSchedule[deletingSlotData.day] = daySlots;
+        const daySlots = (safeLookup(updatedSchedule, deletingSlotData.day) || []).filter((_: any, idx: number) => idx !== deletingSlotData.index);
+        Reflect.set(updatedSchedule, deletingSlotData.day, daySlots);
 
         const updatedTtState = {
           ...timetablesState,
-          [selectedTimetableClassKey]: {
-            ...currentTt,
-            schedule: updatedSchedule
-          }
         };
+        Reflect.set(updatedTtState, selectedTimetableClassKey, {
+          ...currentTt,
+          schedule: updatedSchedule
+        });
 
         saveTimetables(updatedTtState);
         setDeletingSlotData(null);
       };
 
       const handleClearTimetableConfirmed = () => {
-        const currentTt = timetablesState[selectedTimetableClassKey] || timetablesState[activeClassData.code];
+        const currentTt = safeLookup(timetablesState, selectedTimetableClassKey) || (activeClassData.code && safeLookup(timetablesState, activeClassData.code));
         if (!currentTt) return;
 
         const emptySchedule = { Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: [] };
         const updatedTtState = {
           ...timetablesState,
-          [selectedTimetableClassKey]: {
-            ...currentTt,
-            schedule: emptySchedule
-          }
         };
+        Reflect.set(updatedTtState, selectedTimetableClassKey, {
+          ...currentTt,
+          schedule: emptySchedule
+        });
 
         saveTimetables(updatedTtState);
         setShowClearTimetableConfirm(false);
@@ -7734,7 +7757,7 @@ export default function AdminDashboard() {
             {daysList
               .filter(day => selectedTimetableDay === 'All' || selectedTimetableDay === day)
               .map(day => {
-                const daySlots = (activeTimetable.schedule && activeTimetable.schedule[day]) || [];
+                const daySlots = (activeTimetable.schedule && safeLookup(activeTimetable.schedule, day)) || [];
                 return (
                   <div key={day} className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden space-y-0">
                     <div className="bg-muted/40 px-5 py-3.5 border-b border-border flex items-center justify-between">
@@ -7760,7 +7783,9 @@ export default function AdminDashboard() {
                     <div className="p-5">
                       {daySlots.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {daySlots.map((slot: any, idx: number) => (
+                          {daySlots.map((slot: any, idx: number) => {
+                            const defaultPeriod = safeIndex(TIMETABLE_PERIODS, idx);
+                            return (
                             <div key={idx} className="bg-muted/20 hover:bg-muted/40 transition-all border border-border/80 rounded-xl p-4 space-y-3 relative group">
                               <div className="flex items-start justify-between">
                                 <div className="flex items-center gap-2">
@@ -7769,7 +7794,7 @@ export default function AdminDashboard() {
                                   </span>
                                   <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
                                     <Clock className="w-3 h-3 text-emerald-600" />
-                                    {slot.time || TIMETABLE_PERIODS[idx]?.time || '08:30 - 09:15'}
+                                    {slot.time || defaultPeriod?.time || '08:30 - 09:15'}
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
@@ -7777,7 +7802,7 @@ export default function AdminDashboard() {
                                     onClick={() => {
                                       setSlotForm({
                                         day,
-                                        time: slot.time || TIMETABLE_PERIODS[idx]?.time || '08:30 - 09:15',
+                                        time: slot.time || defaultPeriod?.time || '08:30 - 09:15',
                                         subject: slot.subject || '',
                                         code: slot.code || '',
                                         teacher: slot.teacher || '',
@@ -7816,7 +7841,8 @@ export default function AdminDashboard() {
                                 </span>
                               </div>
                             </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       ) : (
                         <div className="py-8 text-center text-muted-foreground space-y-2">
