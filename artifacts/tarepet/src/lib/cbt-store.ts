@@ -832,6 +832,7 @@ export interface SubjectRecord {
   teacher: string;
   teacherStaffId?: string;
   studentsCount: number;
+  enrolled?: number;
   status: string;
   room?: string;
   passMark?: number;

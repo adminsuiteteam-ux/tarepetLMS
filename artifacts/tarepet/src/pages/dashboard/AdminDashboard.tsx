@@ -3,6 +3,7 @@ import { useTranslation } from '@/i18n';
 import { Link } from 'wouter';
 import { authClient, sanitizeMailto } from '@/lib/api-auth';
 import { PortalLayout } from '@/components/layout/PortalLayout';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
 import { subscribeToWebSocketEvents } from '@/lib/websocket-client';
 import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, clearAllStoredStudents, deleteStudent, syncStudentsWithBackend, getStoredTeachers, saveTeacher, saveStoredTeachers, clearAllStoredTeachers, deleteTeacher, syncTeachersWithBackend, listenToRealtimeEvents, clearCBTStoreCache, clearAllSiteDefaultData, isAccountDeleted, getAdminPassword, setAdminPassword, matchStudentClass, broadcastRealtimeEvent, getStoredSubjects, saveSubject, deleteSubject, DEFAULT_SUBJECTS, SubjectRecord } from '@/lib/cbt-store';
@@ -4852,7 +4853,7 @@ export default function AdminDashboard() {
                 <h3 className="font-serif font-bold text-foreground text-base group-hover:text-primary transition-colors">{sub.title}</h3>
                 <div className="flex justify-between items-center pt-2 border-t border-border/50 text-xs w-full">
                   <p className="text-muted-foreground">{t('subjects.instructor')}<strong className="text-foreground">{sub.teacher}</strong></p>
-                  <p className="text-muted-foreground"><strong className="text-foreground">{sub.enrolled}</strong> Enrolled</p>
+                  <p className="text-muted-foreground"><strong className="text-foreground">{sub.studentsCount || sub.enrolled || 0}</strong> Enrolled</p>
                 </div>
               </button>
             )) : (
