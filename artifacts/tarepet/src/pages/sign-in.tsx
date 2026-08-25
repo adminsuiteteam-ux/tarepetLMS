@@ -53,18 +53,14 @@ export default function SignIn() {
     // 0a. Check admin credentials immediately
     const isTargetAdminEmail = lowerInput === 'admin@tarepet.com' || lowerInput === 'admin@tarepetmontessorischool.com' || lowerInput === 'admin';
     if (isTargetAdminEmail) {
-      const currentAdminPassword = getAdminPassword();
-      const isAdminPassValid = 
-        rawPassword === 'TarepetAdmin@2026!' ||
-        rawPassword === currentAdminPassword;
+      const isAdminPassValid = rawPassword === 'TarepetAdmin@2026!';
 
       if (isAdminPassValid) {
-        setAdminPassword(rawPassword);
         resetLoginRateLimit();
-        recordLoginActivity('admin@tarepet.com', 'ADMIN', 'SUCCESS');
+        recordLoginActivity('admin@tarepetmontessorischool.com', 'ADMIN', 'SUCCESS');
         login('mock_access_token', 'mock_refresh_token', {
           id: 1,
-          email: 'admin@tarepet.com',
+          email: 'admin@tarepetmontessorischool.com',
           first_name: 'Administrator',
           last_name: 'System',
           role: 'ADMIN',
