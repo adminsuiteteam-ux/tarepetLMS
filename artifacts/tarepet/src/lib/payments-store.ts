@@ -35,67 +35,19 @@ export interface PaymentTransaction {
   session: string;
 }
 
-// Payment items structured with 0 default amounts (configured dynamically by Admin)
+// Payment items structured with 0 default amounts (configured dynamically by Admin/Bursar)
 const DEFAULT_PAYMENT_ITEMS: PaymentItem[] = [
   {
     id: 'school_fees',
-    name: 'School Fees',
+    name: 'School Tuition Fees',
     category: 'Tuition & Basic',
     amount: 0,
     currency: 'NGN',
-    dueDate: '2026-09-15',
-    description: 'Term 1 Tuition and Educational Materials',
+    dueDate: 'Term Scheduled Date',
+    description: 'Core academic tuition and instructional services',
     isRequired: true,
     term: '1ST_TERM',
-    session: '2026/2027'
-  },
-  {
-    id: 'lesson',
-    name: 'Lesson Fee',
-    category: 'Academic Support',
-    amount: 0,
-    currency: 'NGN',
-    dueDate: '2026-09-20',
-    description: 'After-school academic coaching and tutorial lessons',
-    isRequired: false,
-    term: '1ST_TERM',
-    session: '2026/2027'
-  },
-  {
-    id: 'boarding',
-    name: 'Boarding Fee',
-    category: 'Accommodation',
-    amount: 0,
-    currency: 'NGN',
-    dueDate: '2026-09-10',
-    description: 'Full term boarding and hostel accommodation',
-    isRequired: false,
-    term: '1ST_TERM',
-    session: '2026/2027'
-  },
-  {
-    id: 'school_bus',
-    name: 'School Bus',
-    category: 'Transport',
-    amount: 0,
-    currency: 'NGN',
-    dueDate: '2026-09-20',
-    description: 'Daily door-to-door school shuttle service',
-    isRequired: false,
-    term: '1ST_TERM',
-    session: '2026/2027'
-  },
-  {
-    id: 'books',
-    name: 'Books & Workbooks',
-    category: 'Supplies',
-    amount: 0,
-    currency: 'NGN',
-    dueDate: '2026-09-15',
-    description: 'Official curriculum textbooks and exercise workbooks',
-    isRequired: true,
-    term: '1ST_TERM',
-    session: '2026/2027'
+    session: '2025/2026'
   },
   {
     id: 'uniform',
@@ -103,159 +55,59 @@ const DEFAULT_PAYMENT_ITEMS: PaymentItem[] = [
     category: 'Attire',
     amount: 0,
     currency: 'NGN',
-    dueDate: '2026-09-10',
-    description: 'Complete set of regular uniform, sportswear, and cardigan',
-    isRequired: true,
+    dueDate: 'Term Scheduled Date',
+    description: 'Official school uniform set, sports wear, and school cardigan',
+    isRequired: false,
     term: '1ST_TERM',
-    session: '2026/2027'
+    session: '2025/2026'
+  },
+  {
+    id: 'books',
+    name: 'Curriculum Textbooks & Materials',
+    category: 'Educational Supplies',
+    amount: 0,
+    currency: 'NGN',
+    dueDate: 'Term Scheduled Date',
+    description: 'Prescribed academic textbooks, exercise notebooks, and learning materials',
+    isRequired: false,
+    term: '1ST_TERM',
+    session: '2025/2026'
   },
   {
     id: 'exam',
-    name: 'Internal Exam Fee',
+    name: 'Terminal Assessment & Examination Fee',
     category: 'Assessments',
     amount: 0,
     currency: 'NGN',
-    dueDate: '2026-11-01',
-    description: 'Terminal examinations and CBT continuous assessment processing',
-    isRequired: true,
-    term: '1ST_TERM',
-    session: '2026/2027'
-  },
-  {
-    id: 'lab_fee',
-    name: 'Laboratory Fee',
-    category: 'Science & Labs',
-    amount: 0,
-    currency: 'NGN',
-    dueDate: '2026-09-30',
-    description: 'Science lab consumables, chemicals, and equipment maintenance',
-    isRequired: true,
-    term: '1ST_TERM',
-    session: '2026/2027'
-  },
-  {
-    id: 'end_of_year',
-    name: 'End of Year Activities',
-    category: 'Events',
-    amount: 0,
-    currency: 'NGN',
-    dueDate: '2027-06-15',
-    description: 'Graduation, Speech & Prize Giving Day, and Cultural Day celebration',
-    isRequired: false,
-    term: '3RD_TERM',
-    session: '2026/2027'
-  },
-  {
-    id: 'lost_id',
-    name: 'Lost ID Card Replacement',
-    category: 'Identity',
-    amount: 0,
-    currency: 'NGN',
-    dueDate: '2027-06-30',
-    description: 'Replacement of lost or damaged student ID card',
-    isRequired: false,
-    term: 'ALL',
-    session: '2026/2027'
-  },
-  {
-    id: 'extracurricular',
-    name: 'Extracurricular Activities Fee',
-    category: 'Events & Activities',
-    amount: 0,
-    currency: 'NGN',
-    dueDate: '2026-10-15',
-    description: 'Sports clubs, arts, drama, debate, and inter-house competition levy',
+    dueDate: 'Term Scheduled Date',
+    description: 'Continuous assessment and terminal examination processing',
     isRequired: false,
     term: '1ST_TERM',
-    session: '2026/2027'
+    session: '2025/2026'
   },
   {
-    id: 'outstanding_balance',
-    name: 'Outstanding Fee Balance',
-    category: 'Special',
+    id: 'boarding',
+    name: 'Hostel & Boarding Accommodation',
+    category: 'Accommodation',
     amount: 0,
     currency: 'NGN',
-    dueDate: '2027-06-30',
-    description: 'Clear any remaining unpaid balance from previous or current term',
+    dueDate: 'Term Scheduled Date',
+    description: 'Termly hostel accommodation and welfare for boarding students',
     isRequired: false,
-    term: 'ALL',
-    session: '2026/2027'
+    term: '1ST_TERM',
+    session: '2025/2026'
   },
   {
-    id: 'change_of_class',
-    name: 'Change of Class / Stream',
-    category: 'Administrative',
+    id: 'school_bus',
+    name: 'School Bus Transport',
+    category: 'Transport',
     amount: 0,
     currency: 'NGN',
-    dueDate: '2027-06-30',
-    description: 'Administrative processing fee for requesting a class or stream change',
+    dueDate: 'Term Scheduled Date',
+    description: 'Daily school shuttle transport service',
     isRequired: false,
-    term: 'ALL',
-    session: '2026/2027'
-  },
-  {
-    id: 'ext_int_exam_parent',
-    name: 'External / Internal Exam',
-    category: 'External Assessments',
-    amount: 0,
-    currency: 'NGN',
-    dueDate: '2027-03-01',
-    description: 'Standardized national & state board examination fees',
-    isRequired: false,
-    term: 'ALL',
-    session: '2026/2027'
-  },
-  {
-    id: 'waec',
-    name: 'WAEC Examination Fee',
-    category: 'External Assessments',
-    parentId: 'ext_int_exam_parent',
-    amount: 0,
-    currency: 'NGN',
-    dueDate: '2027-01-30',
-    description: 'WASSCE Senior Secondary School Certificate Registration',
-    isRequired: false,
-    term: '2ND_TERM',
-    session: '2026/2027'
-  },
-  {
-    id: 'neco',
-    name: 'NECO Examination Fee',
-    category: 'External Assessments',
-    parentId: 'ext_int_exam_parent',
-    amount: 0,
-    currency: 'NGN',
-    dueDate: '2027-02-15',
-    description: 'National Examinations Council Senior Certificate Registration',
-    isRequired: false,
-    term: '2ND_TERM',
-    session: '2026/2027'
-  },
-  {
-    id: 'jss3_bece',
-    name: 'JSS3 BECE (Basic Education Certificate)',
-    category: 'External Assessments',
-    parentId: 'ext_int_exam_parent',
-    amount: 0,
-    currency: 'NGN',
-    dueDate: '2027-03-10',
-    description: 'Junior Secondary 3 National & State BECE Examination',
-    isRequired: false,
-    term: '2ND_TERM',
-    session: '2026/2027'
-  },
-  {
-    id: 'fslc',
-    name: 'FSLC (First School Leaving Certificate)',
-    category: 'External Assessments',
-    parentId: 'ext_int_exam_parent',
-    amount: 0,
-    currency: 'NGN',
-    dueDate: '2027-04-01',
-    description: 'Primary 5 First School Leaving Certificate State Exam',
-    isRequired: false,
-    term: '3RD_TERM',
-    session: '2026/2027'
+    term: '1ST_TERM',
+    session: '2025/2026'
   }
 ];
 

@@ -35,39 +35,18 @@ interface SidebarSection {
 }
 
 const SIDEBAR_MENU: SidebarSection[] = [
-  { id: 'header_accommodation', label: 'Accommodation', icon: Home, type: 'heading' },
-  { id: 'boarding', label: 'Hostel / Boarding Fee', icon: Home, type: 'item', itemId: 'boarding' },
-  { id: 'header_tuition', label: 'Tuition & Core', icon: BookOpen, type: 'heading' },
-  { id: 'school_fees', label: 'Pay School Fees', icon: BookOpen, type: 'item', itemId: 'school_fees' },
-  { id: 'lesson', label: 'Pay Lesson Fee', icon: BookOpen, type: 'item', itemId: 'lesson' },
-  { id: 'books', label: 'Pay Books & Workbooks', icon: BookOpen, type: 'item', itemId: 'books' },
-  { id: 'header_lab', label: 'Science & Labs', icon: FlaskConical, type: 'heading' },
-  { id: 'lab_fee', label: 'Pay Laboratory Fee', icon: FlaskConical, type: 'item', itemId: 'lab_fee' },
-  { id: 'header_attire', label: 'Attire & Identity', icon: Shirt, type: 'heading' },
-  { id: 'uniform', label: 'Pay School Uniform', icon: Shirt, type: 'item', itemId: 'uniform' },
-  { id: 'lost_id', label: 'Lost ID Card Replacement', icon: BadgeAlert, type: 'item', itemId: 'lost_id' },
-  { id: 'header_transport', label: 'Transport', icon: Bus, type: 'heading' },
-  { id: 'school_bus', label: 'Pay School Bus Fee', icon: Bus, type: 'item', itemId: 'school_bus' },
-  { id: 'header_exams', label: 'Examinations', icon: GraduationCap, type: 'heading' },
-  { id: 'exam', label: 'Pay Internal Exam Fee', icon: GraduationCap, type: 'item', itemId: 'exam' },
-  { id: 'ext_int_exam_parent', label: 'External / Internal Exam', icon: GraduationCap, type: 'item', itemId: 'ext_int_exam_parent' },
-  { id: 'header_activities', label: 'Activities & Events', icon: Trophy, type: 'heading' },
-  { id: 'end_of_year', label: 'End of Year Activities', icon: Trophy, type: 'item', itemId: 'end_of_year' },
-  { id: 'extracurricular', label: 'Pay Extracurricular Fee', icon: Users, type: 'item', itemId: 'extracurricular' },
-  { id: 'header_special', label: 'Special Payments', icon: Banknote, type: 'heading' },
-  { id: 'outstanding_balance', label: 'Pay Outstanding Balance', icon: Banknote, type: 'item', itemId: 'outstanding_balance' },
-  { id: 'change_of_class', label: 'Change of Class / Stream', icon: RefreshCw, type: 'item', itemId: 'change_of_class' },
-  { id: 'header_records', label: 'Records & History', icon: FileText, type: 'heading' },
+  { id: 'header_tuition', label: 'Tuition & Core Fees', icon: BookOpen, type: 'heading' },
+  { id: 'school_fees', label: 'School Tuition Fees', icon: BookOpen, type: 'item', itemId: 'school_fees' },
+  { id: 'exam', label: 'Terminal Exam Fee', icon: GraduationCap, type: 'item', itemId: 'exam' },
+  { id: 'books', label: 'Textbooks & Materials', icon: BookOpen, type: 'item', itemId: 'books' },
+  { id: 'header_attire', label: 'Uniform & Attire', icon: Shirt, type: 'heading' },
+  { id: 'uniform', label: 'School Uniform Package', icon: Shirt, type: 'item', itemId: 'uniform' },
+  { id: 'header_services', label: 'Optional Student Services', icon: Bus, type: 'heading' },
+  { id: 'boarding', label: 'Hostel & Boarding', icon: Home, type: 'item', itemId: 'boarding' },
+  { id: 'school_bus', label: 'School Bus Transport', icon: Bus, type: 'item', itemId: 'school_bus' },
+  { id: 'header_records', label: 'Records & Receipts', icon: FileText, type: 'heading' },
   { id: 'payment_history', label: 'Payment History', icon: History, type: 'action' },
   { id: 'failed_transactions', label: 'Failed Transactions', icon: XCircle, type: 'action' },
-];
-
-const EXTRA_ITEMS: PaymentItem[] = [
-  { id: 'lab_fee', name: 'Laboratory Fee', category: 'Science & Labs', amount: 12000, currency: 'NGN', dueDate: '2026-09-30', description: 'Science lab consumables, chemicals, and equipment maintenance', isRequired: true, term: '1ST_TERM', session: '2026/2027' },
-  { id: 'lost_id', name: 'Lost ID Card Replacement', category: 'Identity', amount: 2500, currency: 'NGN', dueDate: '2027-06-30', description: 'Replacement of lost or damaged student ID card', isRequired: false, term: 'ALL', session: '2026/2027' },
-  { id: 'extracurricular', name: 'Extracurricular Activities Fee', category: 'Events & Activities', amount: 8000, currency: 'NGN', dueDate: '2026-10-15', description: 'Sports clubs, arts, drama, debate, and inter-house competition levy', isRequired: false, term: '1ST_TERM', session: '2026/2027' },
-  { id: 'outstanding_balance', name: 'Outstanding Fee Balance', category: 'Special', amount: 10000, currency: 'NGN', dueDate: '2027-06-30', description: 'Clear any remaining unpaid balance from previous or current term', isRequired: false, term: 'ALL', session: '2026/2027' },
-  { id: 'change_of_class', name: 'Change of Class / Stream', category: 'Administrative', amount: 5000, currency: 'NGN', dueDate: '2027-06-30', description: 'Administrative processing fee for requesting a class or stream change', isRequired: false, term: 'ALL', session: '2026/2027' },
 ];
 
 export function StudentPaymentPanel({ studentId, studentName, studentEmail, gradeLevel = 'SS1' }: StudentPaymentPanelProps) {
@@ -91,10 +70,7 @@ export function StudentPaymentPanel({ studentId, studentName, studentEmail, grad
     return () => unsub();
   }, [studentId]);
 
-  const allItems: PaymentItem[] = [
-    ...storeItems,
-    ...EXTRA_ITEMS.filter(e => !storeItems.find(s => s.id === e.id))
-  ];
+  const allItems: PaymentItem[] = storeItems;
 
   const getItem = (id: string) => allItems.find(i => i.id === id);
   const getChildren = (parentId: string) => allItems.filter(i => i.parentId === parentId);
