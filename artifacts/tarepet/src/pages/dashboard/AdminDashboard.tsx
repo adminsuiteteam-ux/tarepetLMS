@@ -2437,6 +2437,7 @@ export default function AdminDashboard() {
     };
   });
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
+  const [isEditingAdminDetails, setIsEditingAdminDetails] = useState(false);
   const [editProfileForm, setEditProfileForm] = useState(adminProfileData);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [passwordForm, setPasswordForm] = useState({ current: '', newPass: '', confirm: '' });
@@ -6123,13 +6124,41 @@ export default function AdminDashboard() {
                 >
                   <Lock className="w-3.5 h-3.5 text-primary" /> Change Password
                 </button>
-                <button
-                  type="button"
-                  onClick={() => handleSaveProfile(editProfileForm)}
-                  className="px-5 py-2.5 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all flex items-center gap-2 shadow-sm cursor-pointer active:scale-95 flex-1 sm:flex-initial justify-center"
-                >
-                  <CheckCircle2 className="w-4 h-4" /> Save Profile
-                </button>
+                {isEditingAdminDetails ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditProfileForm(adminProfileData);
+                        setIsEditingAdminDetails(false);
+                      }}
+                      className="px-4 py-2.5 bg-muted/60 text-muted-foreground border border-border rounded-xl text-xs font-bold hover:bg-accent hover:text-foreground transition-all flex items-center gap-2 cursor-pointer active:scale-95 flex-1 sm:flex-initial justify-center"
+                    >
+                      <X className="w-3.5 h-3.5" /> Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleSaveProfile(editProfileForm);
+                        setIsEditingAdminDetails(false);
+                      }}
+                      className="px-5 py-2.5 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all flex items-center gap-2 shadow-sm cursor-pointer active:scale-95 flex-1 sm:flex-initial justify-center"
+                    >
+                      <CheckCircle2 className="w-4 h-4" /> Save Profile
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditProfileForm(adminProfileData);
+                      setIsEditingAdminDetails(true);
+                    }}
+                    className="px-5 py-2.5 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all flex items-center gap-2 shadow-sm cursor-pointer active:scale-95 flex-1 sm:flex-initial justify-center"
+                  >
+                    <Pencil className="w-3.5 h-3.5" /> Edit Details
+                  </button>
+                )}
               </div>
             </div>
 
@@ -6140,160 +6169,262 @@ export default function AdminDashboard() {
             )}
           </div>
 
-          {/* Direct Editable Profile Form */}
+          {/* Administrator Details Card (Read-Only View vs Editable Form) */}
           <div className="bg-card rounded-3xl border border-border p-6 sm:p-8 shadow-sm space-y-6">
-            <div className="flex items-center justify-between pb-3 border-b border-border">
+            <div className="flex items-center justify-between pb-4 border-b border-border">
               <div className="flex items-center gap-2.5">
                 <UserCheck className="w-5 h-5 text-primary" />
-                <h3 className="font-serif font-bold text-lg text-foreground">Edit Administrator Details</h3>
+                <h3 className="font-serif font-bold text-lg text-foreground">
+                  {isEditingAdminDetails ? 'Edit Administrator Details' : 'Administrator Details'}
+                </h3>
               </div>
-              <span className="text-[11px] text-muted-foreground font-medium">All changes sync in real time</span>
+              {isEditingAdminDetails ? (
+                <span className="text-[11px] text-muted-foreground font-medium">All changes sync in real time</span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditProfileForm(adminProfileData);
+                    setIsEditingAdminDetails(true);
+                  }}
+                  className="px-3.5 py-1.5 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
+                >
+                  <Pencil className="w-3.5 h-3.5" /> Edit Details
+                </button>
+              )}
             </div>
 
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSaveProfile(editProfileForm);
-              }}
-              className="space-y-6"
-            >
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-xs">
-                <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Full Name</label>
-                  <input
-                    type="text"
-                    value={editProfileForm.name}
-                    onChange={e => setEditProfileForm({ ...editProfileForm, name: e.target.value })}
-                    placeholder="e.g. Dr. T. Montessori"
-                    className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
-                    required
-                  />
+            {isEditingAdminDetails ? (
+              /* Editable Form */
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSaveProfile(editProfileForm);
+                  setIsEditingAdminDetails(false);
+                }}
+                className="space-y-6"
+              >
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-xs">
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Full Name</label>
+                    <input
+                      type="text"
+                      value={editProfileForm.name}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, name: e.target.value })}
+                      placeholder="e.g. Dr. T. Montessori"
+                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Administrator Staff ID</label>
+                    <input
+                      type="text"
+                      value={editProfileForm.id}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, id: e.target.value })}
+                      placeholder="e.g. TMS/ADM/2018/001"
+                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground font-mono font-bold focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Official Executive Title</label>
+                    <input
+                      type="text"
+                      value={editProfileForm.title}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, title: e.target.value })}
+                      placeholder="e.g. School Principal & Chief Administrator"
+                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Department / Governance Unit</label>
+                    <input
+                      type="text"
+                      value={editProfileForm.department}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, department: e.target.value })}
+                      placeholder="e.g. Executive Governance & Academics"
+                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Official Email Address</label>
+                    <input
+                      type="email"
+                      value={editProfileForm.email}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, email: e.target.value })}
+                      placeholder="e.g. admin@tarepet.com"
+                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Direct Phone Contact</label>
+                    <input
+                      type="tel"
+                      value={editProfileForm.phone}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, phone: e.target.value })}
+                      placeholder="e.g. +234 803 123 4567"
+                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Date of Birth</label>
+                    <input
+                      type="date"
+                      value={editProfileForm.dob}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, dob: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">State of Origin / Nationality</label>
+                    <input
+                      type="text"
+                      value={editProfileForm.stateOfOrigin || ''}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, stateOfOrigin: e.target.value })}
+                      placeholder="e.g. Bayelsa State, Nigeria"
+                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Residential / Campus Address</label>
+                    <input
+                      type="text"
+                      value={editProfileForm.address}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, address: e.target.value })}
+                      placeholder="e.g. 12 Kpansia-Epie Road, Yenagoa, Bayelsa State"
+                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Emergency Contact (Next of Kin)</label>
+                    <input
+                      type="text"
+                      value={editProfileForm.emergencyContact || ''}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, emergencyContact: e.target.value })}
+                      placeholder="e.g. Mrs. Florence Montessori (Spouse)"
+                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Emergency Phone Number</label>
+                    <input
+                      type="tel"
+                      value={editProfileForm.emergencyPhone || ''}
+                      onChange={e => setEditProfileForm({ ...editProfileForm, emergencyPhone: e.target.value })}
+                      placeholder="e.g. +234 802 987 6543"
+                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Administrator Staff ID</label>
-                  <input
-                    type="text"
-                    value={editProfileForm.id}
-                    onChange={e => setEditProfileForm({ ...editProfileForm, id: e.target.value })}
-                    placeholder="e.g. TMS/ADM/2018/001"
-                    className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground font-mono font-bold focus:outline-none focus:ring-2 focus:ring-primary"
-                    required
-                  />
+                {/* Submit Actions */}
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditProfileForm(adminProfileData);
+                      setIsEditingAdminDetails(false);
+                    }}
+                    className="px-5 py-2.5 bg-muted/60 text-muted-foreground border border-border text-xs font-bold rounded-xl hover:bg-accent hover:text-foreground transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-2.5 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary/90 transition-all flex items-center gap-2 shadow-sm cursor-pointer active:scale-95"
+                  >
+                    <CheckCircle2 className="w-4 h-4" /> Save Profile Details
+                  </button>
+                </div>
+              </form>
+            ) : (
+              /* Read-Only Details Grid View */
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  <div className="p-4 rounded-2xl bg-muted/30 border border-border/60 space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">Full Name</span>
+                    <p className="font-bold text-sm text-foreground">{adminProfileData.name}</p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-muted/30 border border-border/60 space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">Administrator Staff ID</span>
+                    <p className="font-mono font-bold text-sm text-primary">{adminProfileData.id}</p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-muted/30 border border-border/60 space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">Official Executive Title</span>
+                    <p className="font-semibold text-foreground">{adminProfileData.title}</p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-muted/30 border border-border/60 space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">Department / Governance Unit</span>
+                    <p className="font-semibold text-foreground">{adminProfileData.department}</p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-muted/30 border border-border/60 space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">Official Email Address</span>
+                    <p className="font-medium text-foreground">{adminProfileData.email}</p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-muted/30 border border-border/60 space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">Direct Phone Contact</span>
+                    <p className="font-medium text-foreground">{adminProfileData.phone}</p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-muted/30 border border-border/60 space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">Date of Birth</span>
+                    <p className="font-medium text-foreground">{adminProfileData.dob || '1978-08-15'}</p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-muted/30 border border-border/60 space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">State of Origin / Nationality</span>
+                    <p className="font-medium text-foreground">{adminProfileData.stateOfOrigin || 'Bayelsa State, Nigeria'}</p>
+                  </div>
+
+                  <div className="sm:col-span-2 p-4 rounded-2xl bg-muted/30 border border-border/60 space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">Residential / Campus Address</span>
+                    <p className="font-medium text-foreground">{adminProfileData.address || '12 Kpansia-Epie Road, Yenagoa, Bayelsa State'}</p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-muted/30 border border-border/60 space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">Emergency Contact (Next of Kin)</span>
+                    <p className="font-medium text-foreground">{adminProfileData.emergencyContact || 'Mrs. Florence Montessori (Spouse)'}</p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-muted/30 border border-border/60 space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">Emergency Phone Number</span>
+                    <p className="font-medium text-foreground">{adminProfileData.emergencyPhone || '+234 802 987 6543'}</p>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Official Executive Title</label>
-                  <input
-                    type="text"
-                    value={editProfileForm.title}
-                    onChange={e => setEditProfileForm({ ...editProfileForm, title: e.target.value })}
-                    placeholder="e.g. School Principal & Chief Administrator"
-                    className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Department / Governance Unit</label>
-                  <input
-                    type="text"
-                    value={editProfileForm.department}
-                    onChange={e => setEditProfileForm({ ...editProfileForm, department: e.target.value })}
-                    placeholder="e.g. Executive Governance & Academics"
-                    className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Official Email Address</label>
-                  <input
-                    type="email"
-                    value={editProfileForm.email}
-                    onChange={e => setEditProfileForm({ ...editProfileForm, email: e.target.value })}
-                    placeholder="e.g. admin@tarepet.com"
-                    className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Direct Phone Contact</label>
-                  <input
-                    type="tel"
-                    value={editProfileForm.phone}
-                    onChange={e => setEditProfileForm({ ...editProfileForm, phone: e.target.value })}
-                    placeholder="e.g. +234 803 123 4567"
-                    className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Date of Birth</label>
-                  <input
-                    type="date"
-                    value={editProfileForm.dob}
-                    onChange={e => setEditProfileForm({ ...editProfileForm, dob: e.target.value })}
-                    className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">State of Origin / Nationality</label>
-                  <input
-                    type="text"
-                    value={editProfileForm.stateOfOrigin || ''}
-                    onChange={e => setEditProfileForm({ ...editProfileForm, stateOfOrigin: e.target.value })}
-                    placeholder="e.g. Bayelsa State, Nigeria"
-                    className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Residential / Campus Address</label>
-                  <input
-                    type="text"
-                    value={editProfileForm.address}
-                    onChange={e => setEditProfileForm({ ...editProfileForm, address: e.target.value })}
-                    placeholder="e.g. 12 Kpansia-Epie Road, Yenagoa, Bayelsa State"
-                    className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Emergency Contact (Next of Kin)</label>
-                  <input
-                    type="text"
-                    value={editProfileForm.emergencyContact || ''}
-                    onChange={e => setEditProfileForm({ ...editProfileForm, emergencyContact: e.target.value })}
-                    placeholder="e.g. Mrs. Florence Montessori (Spouse)"
-                    className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Emergency Phone Number</label>
-                  <input
-                    type="tel"
-                    value={editProfileForm.emergencyPhone || ''}
-                    onChange={e => setEditProfileForm({ ...editProfileForm, emergencyPhone: e.target.value })}
-                    placeholder="e.g. +234 802 987 6543"
-                    className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditProfileForm(adminProfileData);
+                      setIsEditingAdminDetails(true);
+                    }}
+                    className="px-6 py-2.5 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary/90 transition-all flex items-center gap-2 shadow-sm cursor-pointer active:scale-95"
+                  >
+                    <Pencil className="w-3.5 h-3.5" /> Edit Administrator Details
+                  </button>
                 </div>
               </div>
-
-              {/* Submit Action */}
-              <div className="flex justify-end pt-4 border-t border-border">
-                <button
-                  type="submit"
-                  className="px-6 py-3 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary/90 transition-all flex items-center gap-2 shadow-sm cursor-pointer active:scale-95"
-                >
-                  <CheckCircle2 className="w-4 h-4" /> Save Profile Details
-                </button>
-              </div>
-            </form>
+            )}
           </div>
 
           {/* Change Password Modal */}
