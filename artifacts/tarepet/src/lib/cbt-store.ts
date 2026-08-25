@@ -121,21 +121,29 @@ export const JUNIOR_COURSES = [
 ];
 
 export const SENIOR_COURSES = [
-  // Science Stream
-  { id: 1, code: 'MTH-101', name: 'Mathematics', stream: 'Science', category: 'STEM' },
-  { id: 2, code: 'PHY-101', name: 'Physics', stream: 'Science', category: 'STEM' },
-  { id: 3, code: 'CHM-101', name: 'Chemistry', stream: 'Science', category: 'STEM' },
-  { id: 4, code: 'BIO-101', name: 'Biology', stream: 'Science', category: 'STEM' },
-  { id: 5, code: 'AGR-101', name: 'Agricultural Science', stream: 'Science', category: 'STEM' },
-  { id: 6, code: 'FMTH-101', name: 'Further Mathematics', stream: 'Science', category: 'STEM' },
-  { id: 7, code: 'CMP-101', name: 'Computer Studies', stream: 'Science', category: 'STEM' },
-  // Arts Stream
-  { id: 8, code: 'ENG-101', name: 'English Language', stream: 'Arts', category: 'Humanities' },
-  { id: 9, code: 'LIT-101', name: 'Literature in English', stream: 'Arts', category: 'Humanities' },
-  { id: 10, code: 'GOV-101', name: 'Government', stream: 'Arts', category: 'Humanities' },
-  { id: 11, code: 'CRS-101', name: 'Christian Religious Studies (CRS)', stream: 'Arts', category: 'Humanities' },
-  { id: 12, code: 'HIS-101', name: 'History', stream: 'Arts', category: 'Humanities' },
-  { id: 13, code: 'CIV-101', name: 'Civic Education', stream: 'Arts', category: 'Humanities' },
+  // ── Senior Secondary Science Stream (SS 1 - SS 3) ──
+  { id: 1, code: 'ENG-101', name: 'English Language', stream: 'Science', category: 'General Core', teacherName: 'Mrs. Timi Porbeni', teacherStaffId: 'TMS/TCH/0002' },
+  { id: 2, code: 'MTH-101', name: 'Mathematics', stream: 'Science', category: 'STEM', teacherName: 'Eli Idua', teacherStaffId: 'TMS/TCH/0017' },
+  { id: 3, code: 'BIO-101', name: 'Biology', stream: 'Science', category: 'STEM', teacherName: 'Emmanuel U. Joseph', teacherStaffId: 'TMS/TCH/0019' },
+  { id: 4, code: 'CHM-101', name: 'Chemistry', stream: 'Science', category: 'STEM', teacherName: 'Abiola Adeniyi Adegemo', teacherStaffId: 'TMS/TCH/0007' },
+  { id: 5, code: 'PHY-101', name: 'Physics', stream: 'Science', category: 'STEM', teacherName: 'Abiola Adeniyi Adegemo', teacherStaffId: 'TMS/TCH/0007' },
+  { id: 6, code: 'FMTH-101', name: 'Further Mathematics', stream: 'Science', category: 'STEM', teacherName: 'Eli Idua', teacherStaffId: 'TMS/TCH/0017' },
+  { id: 7, code: 'AGR-101', name: 'Agricultural Science', stream: 'Science', category: 'STEM', teacherName: 'Mr. Joseph Ekenebe', teacherStaffId: 'TMS/TCH/0015' },
+  { id: 8, code: 'GEO-101', name: 'Geography', stream: 'Science', category: 'STEM & Environmental', teacherName: 'Alex I. Akpokulokenei Maria', teacherStaffId: 'TMS/TCH/0018' },
+  { id: 9, code: 'CIV-101', name: 'Civic Education', stream: 'Science', category: 'General Core', teacherName: 'Agadaga Tari', teacherStaffId: 'TMS/TCH/0012' },
+  { id: 10, code: 'ICT-101', name: 'Computer Studies (ICT)', stream: 'Science', category: 'STEM', teacherName: 'Samuel Hannah', teacherStaffId: 'TMS/TCH/0003' },
+  { id: 11, code: 'TD-101', name: 'Technical Drawing', stream: 'Science', category: 'Technical & Applied', teacherName: 'Mrs. Eze Chidubem Janneth', teacherStaffId: 'TMS/TCH/0011' },
+  { id: 12, code: 'HED-101', name: 'Health Education', stream: 'Science', category: 'Life Sciences', teacherName: 'Emmanuel U. Joseph', teacherStaffId: 'TMS/TCH/0019' },
+  { id: 13, code: 'PHE-101', name: 'Physical Education', stream: 'Science', category: 'Physical & Health', teacherName: 'Egufe B. Austin', teacherStaffId: 'TMS/TCH/0009' },
+  { id: 14, code: 'TRD-101', name: 'Trade/Entrepreneurship Subject', stream: 'Science', category: 'Trade & Entrepreneurship', teacherName: 'Iwu Adanma', teacherStaffId: 'TMS/TCH/0014' },
+
+  // ── Senior Secondary Arts & Humanities Stream (SS 1 - SS 3) ──
+  { id: 15, code: 'ENG-101', name: 'English Language', stream: 'Arts', category: 'Humanities', teacherName: 'Mrs. Timi Porbeni', teacherStaffId: 'TMS/TCH/0002' },
+  { id: 16, code: 'LIT-101', name: 'Literature in English', stream: 'Arts', category: 'Humanities', teacherName: 'Mrs. Timi Porbeni', teacherStaffId: 'TMS/TCH/0002' },
+  { id: 17, code: 'GOV-101', name: 'Government', stream: 'Arts', category: 'Humanities', teacherName: 'Agadaga Tari', teacherStaffId: 'TMS/TCH/0012' },
+  { id: 18, code: 'CRS-101', name: 'Christian Religious Studies (CRS)', stream: 'Arts', category: 'Humanities', teacherName: 'Mrs. Eze Chidubem Janneth', teacherStaffId: 'TMS/TCH/0011' },
+  { id: 19, code: 'HIS-101', name: 'History', stream: 'Arts', category: 'Humanities', teacherName: 'Agadaga Tari', teacherStaffId: 'TMS/TCH/0012' },
+  { id: 20, code: 'CIV-101', name: 'Civic Education', stream: 'Arts', category: 'Humanities', teacherName: 'Agadaga Tari', teacherStaffId: 'TMS/TCH/0012' },
 ];
 
 export const ALL_COURSES = [...NURSERY_COURSES, ...PRIMARY_COURSES, ...JUNIOR_COURSES, ...SENIOR_COURSES];
