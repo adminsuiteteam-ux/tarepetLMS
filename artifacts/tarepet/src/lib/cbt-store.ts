@@ -1159,9 +1159,22 @@ export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
           };
         });
 
-      _students = fetched;
-      saveStoredStudents(fetched);
-      broadcastRealtimeEvent();
+      if (fetched.length > 0) {
+        const merged = [...fetched];
+        _students.forEach(localS => {
+          const exists = merged.some(b => 
+            b.id === localS.id || 
+            (localS.email && b.email && b.email.toLowerCase() === localS.email.toLowerCase()) ||
+            (localS.code && b.code && b.code.toLowerCase() === localS.code.toLowerCase())
+          );
+          if (!exists) {
+            merged.push(localS);
+          }
+        });
+        _students = merged;
+        saveStoredStudents(merged);
+        broadcastRealtimeEvent();
+      }
     }
   } catch (err) {
     // Graceful fallback to in-memory records if backend API is not serving /users/
@@ -1178,25 +1191,22 @@ export async function syncTeachersWithBackend(): Promise<TeacherRecord[]> {
         .filter((u: any) => {
           const uCode = u.profile?.teacher_id || u.teacher_id || '';
           const uName = `${u.first_name || ''} ${u.last_name || ''}`.trim();
-          return !isAccountDeleted(u.email) && !isAccountDeleted(u.id) && !isAccountDeleted(uCode) && !isAccountDeleted(uName);
+          const isMock = u.email === 'teacher@tarepet.com' || uCode === 'TCH001' || uName.toLowerCase().includes('simeon chigozie');
+          return !isMock && !isAccountDeleted(u.email) && !isAccountDeleted(u.id) && !isAccountDeleted(uCode) && !isAccountDeleted(uName);
         })
         .map((u: any) => {
           const prof = u.profile || {};
-          const subs = Array.isArray(prof.subjects_taught) ? prof.subjects_taught : [];
-          const spec = typeof prof.specialization === 'string' && prof.specialization
-            ? prof.specialization
-            : (subs.length > 0 ? (typeof subs[0] === 'string' ? subs[0] : subs[0].name) : '');
-
+          const subs = prof.subjects_taught || prof.subjectsAssigned || [];
           return {
             id: u.id,
             staffId: prof.teacher_id || u.teacher_id || `TMS/TCH/${String(u.id).padStart(4, '0')}`,
             name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
             email: u.email,
             phone: u.phone || prof.phone || '',
-            gender: prof.gender || '',
-            department: prof.department || '',
-            specialization: spec,
-            qualification: prof.qualifications || '',
+            qualification: prof.qualifications || prof.qualification || 'B.Ed, TRCN Certified',
+            specialization: prof.specialization || 'General Education',
+            department: prof.department || 'Academic Department',
+            gender: prof.gender || 'Male',
             status: u.is_active !== false ? 'Active' : 'Inactive',
             joined: prof.hire_date || (u.date_joined ? u.date_joined.split('T')[0] : ''),
             formTeacherOf: prof.form_teacher_of || 'None',
@@ -1314,12 +1324,14 @@ export function saveStudent(studentData: Partial<StudentRecord> & { name: string
   const sNames = (newStudent.name || '').trim().split(' ');
   const sPayload = {
     email: newStudent.email,
+    password: newStudent.password || newStudent.code,
     first_name: sNames[0] || newStudent.name,
     last_name: sNames.slice(1).join(' ') || 'Student',
     phone: newStudent.phone !== 'Not Available' ? newStudent.phone : '',
     role: 'STUDENT',
     student_id: newStudent.code,
     grade: newStudent.grade,
+    grade_level: newStudent.grade,
     house: newStudent.house,
     dob: newStudent.dob !== 'Not Available' && newStudent.dob ? newStudent.dob : null,
     address: newStudent.address !== 'Not Available' ? newStudent.address : '',
@@ -1337,7 +1349,9 @@ export function saveStudent(studentData: Partial<StudentRecord> & { name: string
         } catch (e) {}
         broadcastRealtimeEvent();
       }
-    }).catch(() => {});
+    }).catch((err) => {
+      console.warn('Backend student register attempt:', err);
+    });
   }
 
   broadcastRealtimeEvent();

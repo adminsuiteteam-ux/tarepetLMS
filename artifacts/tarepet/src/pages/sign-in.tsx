@@ -224,17 +224,47 @@ export default function SignIn() {
     }
 
     // 4. Check if input matches a Student account
-    const storedStudents = getStoredStudents();
-    const matchedStudent = storedStudents.find(s => {
+    let storedStudents = getStoredStudents();
+    let matchedStudent = storedStudents.find(s => {
       const sEmail = (s.email || '').toLowerCase();
       const sCode = (s.code || s.admissionNo || '').toLowerCase();
-      return (sEmail && sEmail === lowerInput) || (sCode && sCode === lowerInput) || String(s.id).toLowerCase() === lowerInput;
+      const cleanSCode = sCode.replace(/[^a-z0-9]/g, '');
+      const cleanSEmail = sEmail.replace(/[^a-z0-9]/g, '');
+      return (
+        (sEmail && sEmail === lowerInput) ||
+        (sCode && sCode === lowerInput) ||
+        (cleanInput.length > 2 && (cleanInput === cleanSCode || cleanInput === cleanSEmail)) ||
+        String(s.id).toLowerCase() === lowerInput
+      );
     });
+
+    if (!matchedStudent) {
+      const syncedStudents = await syncStudentsWithBackend();
+      matchedStudent = syncedStudents.find(s => {
+        const sEmail = (s.email || '').toLowerCase();
+        const sCode = (s.code || s.admissionNo || '').toLowerCase();
+        const cleanSCode = sCode.replace(/[^a-z0-9]/g, '');
+        const cleanSEmail = sEmail.replace(/[^a-z0-9]/g, '');
+        return (
+          (sEmail && sEmail === lowerInput) ||
+          (sCode && sCode === lowerInput) ||
+          (cleanInput.length > 2 && (cleanInput === cleanSCode || cleanInput === cleanSEmail)) ||
+          String(s.id).toLowerCase() === lowerInput
+        );
+      });
+    }
 
     if (matchedStudent) {
       const expectedStudentPassword = matchedStudent.password || matchedStudent.code || matchedStudent.admissionNo;
+      const cleanPass = rawPassword.replace(/[^a-z0-9]/gi, '');
+      const cleanExpected = (expectedStudentPassword || '').replace(/[^a-z0-9]/gi, '');
+      const isPasswordValid =
+        rawPassword === expectedStudentPassword ||
+        rawPassword === matchedStudent.code ||
+        rawPassword === matchedStudent.admissionNo ||
+        (cleanPass.length > 2 && cleanPass.toLowerCase() === cleanExpected.toLowerCase());
 
-      if (rawPassword !== expectedStudentPassword && rawPassword !== matchedStudent.code && rawPassword !== matchedStudent.admissionNo) {
+      if (!isPasswordValid) {
         recordLoginActivity(matchedStudent.email || rawInput, 'STUDENT', 'FAILED_ATTEMPT');
         setError('Incorrect email, student code, or passcode.');
         setIsLoading(false);
@@ -249,11 +279,16 @@ export default function SignIn() {
         email: matchedStudent.email || `${matchedStudent.code || matchedStudent.id}@tarepet.com`,
         first_name: nameParts[0] || 'Student',
         last_name: nameParts.slice(1).join(' ') || 'User',
+        phone: matchedStudent.phone,
         role: 'STUDENT',
         profile: {
           student_id: matchedStudent.code || matchedStudent.admissionNo,
           grade_level: matchedStudent.grade,
           gender: matchedStudent.gender,
+          date_of_birth: matchedStudent.dob,
+          address: matchedStudent.address,
+          profile_image: matchedStudent.profileImage,
+          profileImage: matchedStudent.profileImage,
         } as any
       });
       setLocation('/dashboard/student');
