@@ -7987,18 +7987,18 @@ export default function AdminDashboard() {
           icon: FlaskConical,
           filterFn: (s: any) => {
             const g = (s.grade || '').toUpperCase();
-            return g.startsWith('SS') && (s.stream === 'Science' || s.category === 'STEM' || s.category === 'General Core' || s.category === 'STEM & Environmental' || s.category === 'Technical & Applied' || s.category === 'Life Sciences' || s.category === 'Physical & Health' || s.category === 'Trade & Entrepreneurship');
+            return g.startsWith('SS') && s.stream === 'Science';
           },
         },
         {
           key: 'SS_ART',
-          title: 'Senior Secondary — Art',
-          subtitle: 'SS 1–3 Art & Humanities Stream',
-          description: 'Literature, Government, Economics, CRS and Art & Humanities subjects for the Art stream.',
+          title: 'Senior Secondary — Art & Humanities',
+          subtitle: 'SS 1–3 Art Stream',
+          description: 'Literature, Government, Economics, CRS, History, Fine Arts, and Languages for the Art stream.',
           icon: Palette,
           filterFn: (s: any) => {
             const g = (s.grade || '').toUpperCase();
-            return g.startsWith('SS') && (s.stream === 'Art' || s.stream === 'Arts' || s.category === 'Humanities' || s.category === 'Art');
+            return g.startsWith('SS') && (s.stream === 'Art' || s.stream === 'Arts');
           },
         },
       ];
