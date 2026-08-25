@@ -876,12 +876,12 @@ export default function StudentDashboard() {
                 label: 'Official Terminal Report Card',
                 value: selectedTerm,
                 onClick: () => setShowReportCardModal(true),
-                color: 'bg-emerald-500/10 text-emerald-600',
+                color: 'bg-rose-500/10 text-rose-700',
               },
               {
                 icon: BookOpen,
                 label: 'Enrolled Academic Courses',
-                value: 'Academic Subjects',
+                value: `${myEnrolledCourses.length} Subjects`,
                 onClick: () => setActiveSection('courses'),
                 color: 'bg-blue-500/10 text-blue-600',
               },
@@ -897,25 +897,125 @@ export default function StudentDashboard() {
         </div>
 
         {/* Desktop View */}
-        <div className="hidden md:block space-y-6 max-w-3xl">
+        <div className="hidden md:block space-y-6 max-w-4xl pb-10">
           <div>
-            <h2 className="text-2xl font-serif font-bold text-foreground">{t('student.settings_title', 'Setting/profile')}</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">{t('student.settings_desc', 'Manage your student profile, terminal report cards, and account security.')}</p>
+            <h2 className="text-2xl font-serif font-bold text-foreground">{t('student.settings_title', 'Student Profile & Settings')}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">{t('student.settings_desc', 'Official academic credentials, terminal report cards, contact records, and account security.')}</p>
           </div>
 
-          {/* Official Report Card & Academic Term Switcher */}
-          <div className="bg-gradient-to-br from-rose-900/10 via-card to-card rounded-2xl border border-rose-200 dark:border-rose-900/40 p-6 shadow-sm space-y-4">
+          {/* 1. Student Identity & Avatar Card */}
+          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
             <div className="flex items-center justify-between border-b border-border pb-3">
+              <h3 className="font-serif font-bold text-foreground text-sm flex items-center gap-2">
+                <User className="w-4 h-4 text-primary" /> Official Student Identity
+              </h3>
+              <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-500/10 border border-emerald-200 px-3 py-1 rounded-full flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5" /> Enrolled & Verified Student
+              </span>
+            </div>
+
+            {/* Profile Photo Upload */}
+            <div className="flex items-center gap-5">
+              <div className="w-20 h-20 rounded-2xl bg-primary/10 border-2 border-primary/20 flex items-center justify-center font-serif font-bold text-2xl text-primary overflow-hidden shrink-0 shadow-inner">
+                {profileForm.profileImage ? (
+                  <img src={profileForm.profileImage} alt="Student Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  `${profileForm.firstName?.[0] || 'S'}${profileForm.lastName?.[0] || 'T'}`
+                )}
+              </div>
+              <div className="space-y-2 flex-1">
+                <input
+                  type="file"
+                  accept="image/*"
+                  id="studentAvatarInputPicker"
+                  className="hidden"
+                  onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      if (file.size > 10 * 1024 * 1024) {
+                        showToast('Image size exceeds 10MB limit.');
+                        return;
+                      }
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        const imageBase64 = reader.result as string;
+                        setPendingCropImage(imageBase64);
+                        setCropModalOpen(true);
+                      };
+                      reader.readAsDataURL(file);
+                      e.target.value = '';
+                    }
+                  }}
+                />
+                <div className="flex flex-wrap items-center gap-2">
+                  <label htmlFor="studentAvatarInputPicker" className="px-3.5 py-1.5 bg-primary hover:bg-primary/90 text-white rounded-xl text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-sm transition-all active:scale-95">
+                    <Upload className="w-3.5 h-3.5" />
+                    {profileForm.profileImage ? t('student.change_photo', 'Change Photo') : t('student.upload_profile_picture', 'Upload Profile Picture')}
+                  </label>
+                  {profileForm.profileImage && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPendingCropImage(profileForm.profileImage);
+                          setCropModalOpen(true);
+                        }}
+                        className="px-3 py-1.5 text-foreground border border-border rounded-xl text-xs font-bold hover:bg-muted inline-flex items-center gap-1 cursor-pointer transition-all"
+                      >
+                        <Scissors className="w-3.5 h-3.5 text-primary" />
+                        <span>Crop / Resize</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDeleteAvatar}
+                        className="px-3 py-1.5 text-rose-600 border border-rose-200 dark:border-rose-800/40 rounded-xl text-xs font-bold hover:bg-rose-50 dark:hover:bg-rose-950/30 inline-flex items-center gap-1 cursor-pointer transition-all"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>{t('student.remove_photo', 'Remove')}</span>
+                      </button>
+                    </>
+                  )}
+                </div>
+                <p className="text-[11px] text-muted-foreground">{t('student.avatar_help', 'Recommended: Square photo, JPG or PNG. Maximum file size: 10MB.')}</p>
+              </div>
+            </div>
+
+            {/* Read-Only Official Credentials Badges */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+              <div className="bg-muted/30 border border-border rounded-xl p-3">
+                <span className="text-[10px] font-bold uppercase text-muted-foreground block mb-0.5">Student ID Code</span>
+                <span className="font-mono font-bold text-xs text-foreground flex items-center gap-1.5">
+                  <Lock className="w-3 h-3 text-muted-foreground" /> {profileForm.studentId || 'TMS-2024-101'}
+                </span>
+              </div>
+              <div className="bg-muted/30 border border-border rounded-xl p-3">
+                <span className="text-[10px] font-bold uppercase text-muted-foreground block mb-0.5">Academic Class & Stream</span>
+                <span className="font-bold text-xs text-foreground">
+                  {studentGrade} ({studentStream})
+                </span>
+              </div>
+              <div className="bg-muted/30 border border-border rounded-xl p-3">
+                <span className="text-[10px] font-bold uppercase text-muted-foreground block mb-0.5">Enrolled Curriculum</span>
+                <span className="font-bold text-xs text-rose-700 dark:text-rose-400">
+                  {myEnrolledCourses.length} Active Subjects
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* 2. Official Terminal Report Card & Records */}
+          <div className="bg-gradient-to-br from-rose-900/10 via-card to-card rounded-2xl border border-rose-200 dark:border-rose-900/40 p-6 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
               <div>
-                <h3 className="font-serif font-bold text-foreground text-base flex items-center gap-2">
-                  <Printer className="w-4 h-4 text-rose-700" /> Official Terminal Report Card
+                <h3 className="font-serif font-bold text-foreground text-sm flex items-center gap-2">
+                  <Printer className="w-4 h-4 text-rose-700" /> Official Terminal Report Cards & Records
                 </h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Select your academic term to generate and print your official certified report card.
+                  Generate and print your official certified terminal continuous assessment and examination report card.
                 </p>
               </div>
-              <span className="text-xs font-mono font-bold text-rose-700 bg-rose-500/10 border border-rose-200 px-3 py-1 rounded-full">
-                {selectedTerm} 2026
+              <span className="text-[11px] font-mono font-bold text-rose-700 bg-rose-500/10 border border-rose-200 px-3 py-1 rounded-full w-fit">
+                2025/2026 Academic Session
               </span>
             </div>
 
@@ -940,203 +1040,181 @@ export default function StudentDashboard() {
               <button
                 type="button"
                 onClick={() => setShowReportCardModal(true)}
-                className="bg-rose-800 hover:bg-rose-900 active:scale-95 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-md cursor-pointer"
+                className="bg-rose-800 hover:bg-rose-900 active:scale-95 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-md cursor-pointer whitespace-nowrap"
               >
-                <Printer className="w-4 h-4" /> Print / View Report Card
+                <Printer className="w-4 h-4" /> Download / Print Report Card (PDF)
               </button>
             </div>
           </div>
 
+          {/* 3. Personal & Contact Information */}
           <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
-          <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
-            <User className="w-4 h-4 text-primary" /> {t('student.info_header', 'Student Information')}
-          </h3>
+            <h3 className="font-serif font-bold text-foreground text-sm border-b border-border pb-3 flex items-center gap-2">
+              <User className="w-4 h-4 text-primary" /> Personal & Contact Information
+            </h3>
 
-          {/* Profile Photo Upload */}
-          <div className="flex items-center gap-4 pb-3 border-b border-border">
-            <div className="w-16 h-16 rounded-2xl bg-primary/10 border-2 border-primary/20 flex items-center justify-center font-serif font-bold text-xl text-primary overflow-hidden shrink-0">
-              {profileForm.profileImage ? (
-                <img src={profileForm.profileImage} alt="Student Avatar" className="w-full h-full object-cover" />
-              ) : (
-                `${profileForm.firstName?.[0] || 'S'}${profileForm.lastName?.[0] || 'T'}`
-              )}
-            </div>
-            <div className="space-y-1.5 flex-1">
-              <input
-                type="file"
-                accept="image/*"
-                id="studentAvatarInputPicker"
-                className="hidden"
-                onChange={e => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    if (file.size > 10 * 1024 * 1024) {
-                      showToast('Image size exceeds 10MB limit.');
-                      return;
-                    }
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                      const imageBase64 = reader.result as string;
-                      setPendingCropImage(imageBase64);
-                      setCropModalOpen(true);
-                    };
-                    reader.readAsDataURL(file);
-                    e.target.value = '';
-                  }
-                }}
-              />
-              <div className="flex flex-wrap items-center gap-2">
-                <label htmlFor="studentAvatarInputPicker" className="px-3.5 py-1.5 bg-primary hover:bg-primary/90 text-white rounded-xl text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-sm transition-all">
-                  <Upload className="w-3.5 h-3.5" />
-                  {profileForm.profileImage ? t('student.change_photo', 'Change Photo') : t('student.upload_profile_picture', 'Upload Profile Picture')}
-                </label>
-                {profileForm.profileImage && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPendingCropImage(profileForm.profileImage);
-                        setCropModalOpen(true);
-                      }}
-                      className="px-3 py-1.5 text-foreground border border-border rounded-xl text-xs font-bold hover:bg-muted inline-flex items-center gap-1 cursor-pointer"
-                    >
-                      <Scissors className="w-3.5 h-3.5 text-primary" />
-                      <span>Crop / Resize</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDeleteAvatar}
-                      className="px-3 py-1.5 text-rose-600 border border-rose-200 dark:border-rose-800/40 rounded-xl text-xs font-bold hover:bg-rose-50 dark:hover:bg-rose-950/30 inline-flex items-center gap-1 cursor-pointer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>{t('student.remove_photo', 'Remove')}</span>
-                    </button>
-                  </>
-                )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-foreground block mb-1.5">{t('student.first_name', 'First Name')}</label>
+                <input
+                  type="text"
+                  value={profileForm.firstName}
+                  onChange={e => setProfileForm({...profileForm, firstName: e.target.value})}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                  placeholder="Enter first name"
+                />
               </div>
-              <p className="text-[10px] text-muted-foreground">{t('student.avatar_help', 'Select a picture file to update your student profile avatar.')}</p>
+              <div>
+                <label className="text-xs font-semibold text-foreground block mb-1.5">{t('student.last_name', 'Last Name')}</label>
+                <input
+                  type="text"
+                  value={profileForm.lastName}
+                  onChange={e => setProfileForm({...profileForm, lastName: e.target.value})}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                  placeholder="Enter last name"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-foreground block mb-1.5">{t('student.email_address', 'Email Address')}</label>
+                <input
+                  type="email"
+                  value={profileForm.email}
+                  onChange={e => setProfileForm({...profileForm, email: e.target.value})}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                  placeholder="student@tarepet.edu.ng"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-foreground block mb-1.5">{t('student.phone_number', 'Contact Phone Number')}</label>
+                <input
+                  type="text"
+                  value={profileForm.phone}
+                  onChange={e => setProfileForm({...profileForm, phone: e.target.value})}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                  placeholder="e.g. +234 803 123 4567"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-foreground block mb-1.5">Gender</label>
+                <select
+                  value={profileForm.gender || 'Male'}
+                  onChange={e => setProfileForm({...profileForm, gender: e.target.value})}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                >
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-foreground block mb-1.5">Date of Birth</label>
+                <input
+                  type="date"
+                  value={profileForm.dob || '2010-05-15'}
+                  onChange={e => setProfileForm({...profileForm, dob: e.target.value})}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-foreground block mb-1.5">Residential / Campus Address</label>
+              <input
+                type="text"
+                value={profileForm.address || ''}
+                onChange={e => setProfileForm({...profileForm, address: e.target.value})}
+                placeholder="e.g. Azikoro Road, Yenagoa, Bayelsa State"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+              />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('student.first_name', 'First Name')}</label>
-              <input type="text" value={profileForm.firstName} onChange={e => setProfileForm({...profileForm, firstName: e.target.value})} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('student.last_name', 'Last Name')}</label>
-              <input type="text" value={profileForm.lastName} onChange={e => setProfileForm({...profileForm, lastName: e.target.value})} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
-            </div>
-          </div>
-          <div>
-            <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('student.student_id', 'Student ID Code')}</label>
-            <input type="text" disabled value={profileForm.studentId} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted text-xs font-mono font-bold outline-none cursor-not-allowed" />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('student.email_address', 'Email Address')}</label>
-              <input type="email" value={profileForm.email} onChange={e => setProfileForm({...profileForm, email: e.target.value})} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
-            </div>
-            <div>
-              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">{t('student.phone_number', 'Phone Number')}</label>
-              <input type="text" value={profileForm.phone} onChange={e => setProfileForm({...profileForm, phone: e.target.value})} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
+          {/* 4. Notification Preferences */}
+          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
+            <h3 className="font-serif font-bold text-foreground text-sm border-b border-border pb-3 flex items-center gap-2">
+              <Bell className="w-4 h-4 text-primary" /> Notification & Alert Preferences
+            </h3>
+            <div className="space-y-3">
+              <label className="flex items-center justify-between p-3.5 rounded-xl border border-border bg-muted/10 hover:bg-muted/20 cursor-pointer transition-all">
+                <div>
+                  <p className="font-semibold text-xs text-foreground">{t('student.email_notifications', 'CBT Examination & Test Alerts')}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Receive immediate notifications when new CBT exams are scheduled or activated.</p>
+                </div>
+                <input type="checkbox" checked={profileForm.emailNotifications} onChange={e => setProfileForm({...profileForm, emailNotifications: e.target.checked})} className="w-4 h-4 text-primary rounded accent-primary" />
+              </label>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Gender</label>
-              <select value={profileForm.gender || 'Male'} onChange={e => setProfileForm({...profileForm, gender: e.target.value})} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none">
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Date of Birth</label>
-              <input type="date" value={profileForm.dob || '2010-05-15'} onChange={e => setProfileForm({...profileForm, dob: e.target.value})} className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
-            </div>
-          </div>
-          <div>
-            <label className="text-xs font-bold text-muted-foreground uppercase block mb-1">Residential Address</label>
-            <input type="text" value={profileForm.address || ''} onChange={e => setProfileForm({...profileForm, address: e.target.value})} placeholder="e.g. Tarepet School Campus, Yenagoa" className="w-full px-3 py-2.5 rounded-xl border border-border bg-muted/20 text-xs focus:ring-2 focus:ring-primary outline-none" />
+
+          {/* Save Profile Button */}
+          <div className="flex justify-end pt-2">
+            <button
+              onClick={() => {
+                const fullName = `${profileForm.firstName} ${profileForm.lastName}`.trim();
+                saveStudent({
+                  admissionNo: profileForm.studentId,
+                  name: fullName,
+                  email: profileForm.email,
+                  phone: profileForm.phone,
+                  gender: profileForm.gender,
+                  dob: profileForm.dob,
+                  address: profileForm.address,
+                  profileImage: profileForm.profileImage,
+                });
+
+                updateUser({
+                  first_name: profileForm.firstName,
+                  last_name: profileForm.lastName,
+                  phone: profileForm.phone,
+                  profile_image: profileForm.profileImage,
+                  profile: {
+                    ...(user?.profile || {}),
+                    student_id: profileForm.studentId,
+                    gender: profileForm.gender,
+                    date_of_birth: profileForm.dob,
+                    address: profileForm.address,
+                    profile_image: profileForm.profileImage,
+                    profileImage: profileForm.profileImage,
+                  }
+                });
+
+                authClient.patch('/auth/me/', {
+                  first_name: profileForm.firstName,
+                  last_name: profileForm.lastName,
+                  phone: profileForm.phone,
+                  profile_image: profileForm.profileImage,
+                  profile: {
+                    student_id: profileForm.studentId,
+                    gender: profileForm.gender,
+                    date_of_birth: profileForm.dob,
+                    address: profileForm.address,
+                    profile_image: profileForm.profileImage,
+                    profileImage: profileForm.profileImage,
+                  }
+                }).then(() => {
+                  refreshUserProfile().catch(() => {});
+                }).catch(() => {});
+
+                broadcastRealtimeEvent();
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new Event('cbt_store_updated'));
+                  window.dispatchEvent(new Event('storage'));
+                }
+
+                showToast('Student profile & preferences updated successfully!');
+              }}
+              className="bg-primary hover:bg-primary/90 active:scale-95 text-white px-8 py-3 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer"
+            >
+              <CheckCircle2 className="w-4 h-4" /> {t('student.save_settings', 'Save Profile Settings')}
+            </button>
           </div>
         </div>
-
-        <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
-          <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
-            <Bell className="w-4 h-4 text-primary" /> {t('student.notifications_header', 'Notifications')}
-          </h3>
-          <label className="flex items-center justify-between p-3 rounded-xl border border-border bg-muted/10 cursor-pointer">
-            <div>
-              <p className="font-bold text-xs text-foreground">{t('student.email_notifications', 'Email Notifications')}</p>
-              <p className="text-[10px] text-muted-foreground">{t('student.email_notifications_desc', 'Receive email alerts for published CBT exams and graded results.')}</p>
-            </div>
-            <input type="checkbox" checked={profileForm.emailNotifications} onChange={e => setProfileForm({...profileForm, emailNotifications: e.target.checked})} className="w-4 h-4 text-primary rounded" />
-          </label>
-          <button
-            onClick={() => {
-              const fullName = `${profileForm.firstName} ${profileForm.lastName}`.trim();
-              saveStudent({
-                admissionNo: profileForm.studentId,
-                name: fullName,
-                email: profileForm.email,
-                phone: profileForm.phone,
-                gender: profileForm.gender,
-                dob: profileForm.dob,
-                address: profileForm.address,
-                profileImage: profileForm.profileImage,
-              });
-
-              // Sync auth session in context and localStorage immediately
-              updateUser({
-                first_name: profileForm.firstName,
-                last_name: profileForm.lastName,
-                phone: profileForm.phone,
-                profile_image: profileForm.profileImage,
-                profile: {
-                  ...(user?.profile || {}),
-                  student_id: profileForm.studentId,
-                  gender: profileForm.gender,
-                  date_of_birth: profileForm.dob,
-                  address: profileForm.address,
-                  profile_image: profileForm.profileImage,
-                  profileImage: profileForm.profileImage,
-                }
-              });
-
-              // Send to backend DB and re-fetch authoritative profile
-              authClient.patch('/auth/me/', {
-                first_name: profileForm.firstName,
-                last_name: profileForm.lastName,
-                phone: profileForm.phone,
-                profile_image: profileForm.profileImage,
-                profile: {
-                  student_id: profileForm.studentId,
-                  gender: profileForm.gender,
-                  date_of_birth: profileForm.dob,
-                  address: profileForm.address,
-                  profile_image: profileForm.profileImage,
-                  profileImage: profileForm.profileImage,
-                }
-              }).then(() => {
-                refreshUserProfile().catch(() => {});
-              }).catch(() => {});
-
-              broadcastRealtimeEvent();
-              if (typeof window !== 'undefined') {
-                window.dispatchEvent(new Event('cbt_store_updated'));
-                window.dispatchEvent(new Event('storage'));
-              }
-
-              showToast('Student profile & photo updated in real time!');
-            }}
-            className="bg-primary text-white px-6 py-2.5 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors shadow-sm"
-          >
-            {t('student.save_settings', 'Save Profile Settings')}
-          </button>
-        </div>
-      </div>
-    </>
+      </>
     );
 
     // Fallback if section is not matched
