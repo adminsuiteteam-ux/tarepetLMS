@@ -278,7 +278,23 @@ export default function StudentDashboard() {
     }
   });
   const calculatedAvg = scoredCount > 0 ? Math.round(totalScoreSum / scoredCount) : 0;
-  const attendanceRate = matchedStoredStudent?.attendance || '98%';
+
+  const myCompletedCBTCount = React.useMemo(() => {
+    const uEmail = (user?.email || '').toLowerCase().trim();
+    const uAdm = ((user?.profile as any)?.student_id || (user?.profile as any)?.studentId || (user as any)?.admissionNo || (user as any)?.admissionNumber || '').toString().toLowerCase().trim();
+    const uName = `${user?.first_name || ''} ${user?.last_name || ''}`.toLowerCase().trim();
+
+    return submissionsList.filter(s => {
+      const sEmail = (s.student_email || '').toLowerCase().trim();
+      const sAdm = (s.student_id || '').toLowerCase().trim();
+      const sName = (s.student_name || '').toLowerCase().trim();
+      return (sEmail && sEmail === uEmail) || (sAdm && (sAdm === uAdm || uAdm.includes(sAdm))) || (sName && (sName === uName || (uName && sName.includes(uName))));
+    }).length;
+  }, [user, submissionsList]);
+
+  const activeLiveExamsCount = React.useMemo(() => {
+    return examsList.filter(e => e.status === 'ACTIVE').length;
+  }, [examsList]);
 
   const renderSection = () => {
     // =========================================================
@@ -323,7 +339,13 @@ export default function StudentDashboard() {
           {[
             { label: 'Active Subjects', val: `${myEnrolledCourses.length}`, sub: `${myEnrolledCourses.length} curriculum courses`, icon: BookOpen, color: 'text-rose-700 bg-rose-500/10 border-rose-200' },
             { label: 'Overall Average', val: scoredCount > 0 ? `${calculatedAvg}%` : '—', sub: scoredCount > 0 ? 'Cumulative performance' : 'No graded tests yet', icon: Award, color: 'text-emerald-600 bg-emerald-500/10 border-emerald-200' },
-            { label: 'Attendance', val: attendanceRate, sub: 'Term Attendance', icon: UserCheck, color: 'text-blue-600 bg-blue-500/10 border-blue-200' },
+            {
+              label: 'CBT Assessments',
+              val: `${myCompletedCBTCount} Completed`,
+              sub: activeLiveExamsCount > 0 ? `${activeLiveExamsCount} Live test${activeLiveExamsCount > 1 ? 's' : ''} available` : 'All tests up to date',
+              icon: ClipboardList,
+              color: 'text-blue-600 bg-blue-500/10 border-blue-200'
+            },
           ].map((s, i) => (
             <div key={i} className={`bg-card rounded-2xl border p-4 shadow-sm ${s.color.split(' ').slice(2).join(' ')}`}>
               <div className="flex items-center justify-between mb-2">
