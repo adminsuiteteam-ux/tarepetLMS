@@ -465,7 +465,7 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
               </div>
               <div className="min-w-0">
                 {(() => {
-                  const currentStepInfo = WIZARD_STEPS.find(s => s.id === step) || WIZARD_STEPS[0];
+                  const currentStepInfo = WIZARD_STEPS.find(s => s.step === step) || WIZARD_STEPS[0];
                   return (
                     <>
                       <div className="flex items-center gap-2 flex-wrap">
@@ -2522,7 +2522,7 @@ export default function AdminDashboard() {
   // Class Marksheet / Score Entry State
   const [resultsViewTab, setResultsViewTab] = useState<'roster' | 'marksheet' | 'fees'>('roster');
   const [marksheetSubject, setMarksheetSubject] = useState('Mathematics');
-  const [classScoresMap, setClassScoresMap] = useState<Record<number, { ca1: number; ca2: number; exam: number }>>(() => {
+  const [classScoresMap, setClassScoresMap] = useState<Record<string, { ca1: number; ca2: number; exam: number }>>(() => {
     const saved = null;
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
@@ -5625,12 +5625,26 @@ export default function AdminDashboard() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                   {[
-                    { key: 'notifyResultsSMS' as const, label: 'Terminal Results Publication SMS', desc: 'Dispatches instant SMS to registered guardian phone with student summary score & position.' },
-                    { key: 'notifyAttendanceSMS' as const, label: 'Student Absence & Attendance Alert', desc: 'Notifies parents immediately when their child is marked absent on morning roll call.' },
-                    { key: 'notifyFeesSMS' as const, label: 'Term Fee Due & Balance Reminders', desc: 'Auto-sends reminders for outstanding fee invoices 7 days prior to school due dates.' },
-                    { key: 'notifyCBTExams' as const, label: 'CBT Examination & Test Schedules', desc: 'Notifies candidates 24 hours before their scheduled online assessment session.' },
+                    { key: 'notifyResultsSMS', label: 'Terminal Results Publication SMS', desc: 'Dispatches instant SMS to registered guardian phone with student summary score & position.' },
+                    { key: 'notifyAttendanceSMS', label: 'Student Absence & Attendance Alert', desc: 'Notifies parents immediately when their child is marked absent on morning roll call.' },
+                    { key: 'notifyFeesSMS', label: 'Term Fee Due & Balance Reminders', desc: 'Auto-sends reminders for outstanding fee invoices 7 days prior to school due dates.' },
+                    { key: 'notifyCBTExams', label: 'CBT Examination & Test Schedules', desc: 'Notifies candidates 24 hours before their scheduled online assessment session.' },
                   ].map((item) => {
-                    const isChecked = Boolean(systemSettings[item.key]);
+                    const isChecked = item.key === 'notifyResultsSMS'
+                      ? Boolean(systemSettings.notifyResultsSMS)
+                      : item.key === 'notifyAttendanceSMS'
+                      ? Boolean(systemSettings.notifyAttendanceSMS)
+                      : item.key === 'notifyFeesSMS'
+                      ? Boolean(systemSettings.notifyFeesSMS)
+                      : Boolean(systemSettings.notifyCBTExams);
+
+                    const handleChange = (checked: boolean) => {
+                      if (item.key === 'notifyResultsSMS') triggerSave({ notifyResultsSMS: checked });
+                      else if (item.key === 'notifyAttendanceSMS') triggerSave({ notifyAttendanceSMS: checked });
+                      else if (item.key === 'notifyFeesSMS') triggerSave({ notifyFeesSMS: checked });
+                      else if (item.key === 'notifyCBTExams') triggerSave({ notifyCBTExams: checked });
+                    };
+
                     return (
                       <div key={item.key} className="p-4 border border-border rounded-xl bg-muted/10 flex items-start justify-between gap-3">
                         <div>
@@ -5640,7 +5654,7 @@ export default function AdminDashboard() {
                         <input
                           type="checkbox"
                           checked={isChecked}
-                          onChange={(e) => triggerSave({ [item.key]: e.target.checked })}
+                          onChange={(e) => handleChange(e.target.checked)}
                           className="w-5 h-5 accent-primary cursor-pointer shrink-0 mt-1"
                         />
                       </div>
