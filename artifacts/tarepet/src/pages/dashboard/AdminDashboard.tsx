@@ -464,15 +464,22 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                 <GraduationCap className="w-5 h-5 text-white" />
               </div>
               <div className="min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="font-serif font-bold text-sm sm:text-base text-white truncate">Teacher Registration</h2>
-                  <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full bg-primary/20 text-primary-foreground border border-primary/30 text-[10px] font-bold">
-                    Step {step} of 5
-                  </span>
-                </div>
-                <p className="text-[11px] text-slate-400 font-medium truncate">
-                  <span className="text-white font-bold">{WIZARD_STEPS[step - 1]?.label}</span> — {WIZARD_STEPS[step - 1]?.sub}
-                </p>
+                {(() => {
+                  const currentStepInfo = WIZARD_STEPS.find(s => s.id === step) || WIZARD_STEPS[0];
+                  return (
+                    <>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h2 className="font-serif font-bold text-sm sm:text-base text-white truncate">Teacher Registration</h2>
+                        <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full bg-primary/20 text-primary-foreground border border-primary/30 text-[10px] font-bold">
+                          Step {step} of 5
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 font-medium truncate">
+                        <span className="text-white font-bold">{currentStepInfo.label}</span> — {currentStepInfo.sub}
+                      </p>
+                    </>
+                  );
+                })()}
               </div>
             </div>
 
@@ -5618,24 +5625,27 @@ export default function AdminDashboard() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                   {[
-                    { key: 'notifyResultsSMS', label: 'Terminal Results Publication SMS', desc: 'Dispatches instant SMS to registered guardian phone with student summary score & position.' },
-                    { key: 'notifyAttendanceSMS', label: 'Student Absence & Attendance Alert', desc: 'Notifies parents immediately when their child is marked absent on morning roll call.' },
-                    { key: 'notifyFeesSMS', label: 'Term Fee Due & Balance Reminders', desc: 'Auto-sends reminders for outstanding fee invoices 7 days prior to school due dates.' },
-                    { key: 'notifyCBTExams', label: 'CBT Examination & Test Schedules', desc: 'Notifies candidates 24 hours before their scheduled online assessment session.' },
-                  ].map((item) => (
-                    <div key={item.key} className="p-4 border border-border rounded-xl bg-muted/10 flex items-start justify-between gap-3">
-                      <div>
-                        <p className="font-bold text-foreground">{item.label}</p>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">{item.desc}</p>
+                    { key: 'notifyResultsSMS' as const, label: 'Terminal Results Publication SMS', desc: 'Dispatches instant SMS to registered guardian phone with student summary score & position.' },
+                    { key: 'notifyAttendanceSMS' as const, label: 'Student Absence & Attendance Alert', desc: 'Notifies parents immediately when their child is marked absent on morning roll call.' },
+                    { key: 'notifyFeesSMS' as const, label: 'Term Fee Due & Balance Reminders', desc: 'Auto-sends reminders for outstanding fee invoices 7 days prior to school due dates.' },
+                    { key: 'notifyCBTExams' as const, label: 'CBT Examination & Test Schedules', desc: 'Notifies candidates 24 hours before their scheduled online assessment session.' },
+                  ].map((item) => {
+                    const isChecked = Boolean(systemSettings[item.key]);
+                    return (
+                      <div key={item.key} className="p-4 border border-border rounded-xl bg-muted/10 flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-bold text-foreground">{item.label}</p>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">{item.desc}</p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => triggerSave({ [item.key]: e.target.checked })}
+                          className="w-5 h-5 accent-primary cursor-pointer shrink-0 mt-1"
+                        />
                       </div>
-                      <input
-                        type="checkbox"
-                        checked={Boolean(systemSettings[item.key])}
-                        onChange={(e) => triggerSave({ [item.key]: e.target.checked })}
-                        className="w-5 h-5 accent-primary cursor-pointer shrink-0 mt-1"
-                      />
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
@@ -8153,9 +8163,24 @@ export default function AdminDashboard() {
                     </thead>
                     <tbody className="divide-y divide-border">
                       {classStudents.map(std => {
-                        const scores = classScoresMap[std.id] || { ca1: 12, ca2: 13, exam: 50 };
+                        const stdKey = String(std.id);
+                        const scores = Object.prototype.hasOwnProperty.call(classScoresMap, stdKey)
+                          ? classScoresMap[stdKey]
+                          : { ca1: 12, ca2: 13, exam: 50 };
                         const total = scores.ca1 + scores.ca2 + scores.exam;
                         const grade = total >= 75 ? 'A' : total >= 65 ? 'B' : total >= 55 ? 'C' : total >= 50 ? 'D' : 'F';
+                        
+                        const handleScoreChange = (field: 'ca1' | 'ca2' | 'exam', rawVal: string, max: number) => {
+                          const val = Math.min(max, Math.max(0, parseInt(rawVal, 10) || 0));
+                          setClassScoresMap(prev => ({
+                            ...prev,
+                            [stdKey]: {
+                              ...(prev[stdKey] || { ca1: 12, ca2: 13, exam: 50 }),
+                              [field]: val,
+                            }
+                          }));
+                        };
+
                         return (
                           <tr key={std.id} className="hover:bg-muted/10">
                             <td className="py-3 px-3 font-mono font-bold text-primary">{std.admissionNo}</td>
@@ -8166,10 +8191,7 @@ export default function AdminDashboard() {
                                 min="0"
                                 max="15"
                                 value={scores.ca1}
-                                onChange={e => {
-                                  const val = Math.min(15, Math.max(0, parseInt(e.target.value) || 0));
-                                  setClassScoresMap({ ...classScoresMap, [std.id]: { ...scores, ca1: val } });
-                                }}
+                                onChange={e => handleScoreChange('ca1', e.target.value, 15)}
                                 className="w-16 border border-border rounded-lg text-center py-1 bg-card text-foreground font-bold focus:ring-2 focus:ring-primary"
                               />
                             </td>
@@ -8179,10 +8201,7 @@ export default function AdminDashboard() {
                                 min="0"
                                 max="15"
                                 value={scores.ca2}
-                                onChange={e => {
-                                  const val = Math.min(15, Math.max(0, parseInt(e.target.value) || 0));
-                                  setClassScoresMap({ ...classScoresMap, [std.id]: { ...scores, ca2: val } });
-                                }}
+                                onChange={e => handleScoreChange('ca2', e.target.value, 15)}
                                 className="w-16 border border-border rounded-lg text-center py-1 bg-card text-foreground font-bold focus:ring-2 focus:ring-primary"
                               />
                             </td>
@@ -8192,10 +8211,7 @@ export default function AdminDashboard() {
                                 min="0"
                                 max="70"
                                 value={scores.exam}
-                                onChange={e => {
-                                  const val = Math.min(70, Math.max(0, parseInt(e.target.value) || 0));
-                                  setClassScoresMap({ ...classScoresMap, [std.id]: { ...scores, exam: val } });
-                                }}
+                                onChange={e => handleScoreChange('exam', e.target.value, 70)}
                                 className="w-20 border border-border rounded-lg text-center py-1 bg-card text-foreground font-bold focus:ring-2 focus:ring-primary"
                               />
                             </td>
