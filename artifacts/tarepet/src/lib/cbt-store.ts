@@ -791,7 +791,23 @@ export function saveTeacher(teacherData: Partial<TeacherRecord> & { name: string
   if (typeof updatedTeacher.id === 'number' && updatedTeacher.id < 1000000000) {
     authClient.patch(`/auth/users/${updatedTeacher.id}/`, tPayload).catch(() => {});
   } else {
-    authClient.post('/auth/register/', tPayload).catch(() => {});
+    authClient.post('/auth/register/', tPayload).then((res) => {
+      if (res.data?.id) {
+        const list = loadSavedTeachers();
+        const foundIdx = list.findIndex(t => 
+          t.staffId === updatedTeacher.staffId || 
+          t.email.toLowerCase() === updatedTeacher.email.toLowerCase()
+        );
+        if (foundIdx >= 0) {
+          list[foundIdx].id = res.data.id;
+          _teachers = list;
+          if (typeof window !== 'undefined') {
+            try { localStorage.setItem('tarepet_teachers_list', JSON.stringify(_teachers)); } catch (e) {}
+          }
+          broadcastRealtimeEvent();
+        }
+      }
+    }).catch(() => {});
   }
 
   broadcastRealtimeEvent();
@@ -799,8 +815,23 @@ export function saveTeacher(teacherData: Partial<TeacherRecord> & { name: string
   return _teachers[targetIdx] || _teachers[0];
 }
 
-export function saveStoredTeachers(teachers: TeacherRecord[]) {
-  _teachers = deduplicateTeachers(teachers);
+export function saveStoredTeachers(backendTeachers: TeacherRecord[]) {
+  const existingLocal = loadSavedTeachers();
+  const merged: TeacherRecord[] = [...backendTeachers];
+
+  // Preserve any local teacher that has not been received from backend yet
+  for (const local of existingLocal) {
+    const isAlreadyInBackend = backendTeachers.some(b => 
+      (local.id && b.id === local.id) ||
+      (local.staffId && b.staffId && b.staffId.toLowerCase().replace(/[^a-z0-9]/g, '') === (local.staffId || '').toLowerCase().replace(/[^a-z0-9]/g, '')) ||
+      (local.email && b.email && b.email.toLowerCase().trim() === (local.email || '').toLowerCase().trim())
+    );
+    if (!isAlreadyInBackend) {
+      merged.push(local);
+    }
+  }
+
+  _teachers = deduplicateTeachers(merged);
   if (typeof window !== 'undefined') {
     try {
       localStorage.setItem('tarepet_teachers_list', JSON.stringify(_teachers));
@@ -808,6 +839,7 @@ export function saveStoredTeachers(teachers: TeacherRecord[]) {
   }
   broadcastRealtimeEvent();
 }
+
 
 export function clearAllStoredTeachers() {
   _teachers = [];

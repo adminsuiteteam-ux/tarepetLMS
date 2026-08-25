@@ -7271,28 +7271,13 @@ export default function AdminDashboard() {
           {showAddTeacherModal && (
             <AddTeacherWizardModal
               onClose={() => setShowAddTeacherModal(false)}
-              onSave={async (created) => {
-                try {
-                  const nameParts = (created.name || '').trim().split(' ');
-                  const fn = nameParts[0] || 'Teacher';
-                  const ln = nameParts.slice(1).join(' ') || 'Staff';
-                  await authClient.post('/auth/users/', {
-                    email: created.email,
-                    password: created.staffId || 'TMS/TCH/0001',
-                    first_name: fn,
-                    last_name: ln,
-                    role: 'TEACHER',
-                    phone: created.phone,
-                    teacher_id: created.staffId,
-                    department: created.department,
-                    specialization: created.specialization,
-                    form_teacher_of: created.formTeacherOf,
-                  });
-                } catch (e) {
-                  console.warn('API teacher creation fallback local save');
-                }
+              onSave={(created) => {
                 saveTeacher(created);
+                const updatedList = getStoredTeachers();
+                setTeachersList(updatedList);
+                setSelectedTeacher(created);
                 setShowAddTeacherModal(false);
+                showToast(`Teacher profile for ${created.name} successfully registered and saved!`);
               }}
             />
           )}

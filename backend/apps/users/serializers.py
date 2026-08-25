@@ -417,7 +417,6 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             if not custom_stu_id:
                 count = StudentProfile.objects.count() + 1
                 custom_stu_id = f"TP-STU-{count:03d}"
-            # Strictly: Password for student is their Student ID
             if not password:
                 password = custom_stu_id
 
@@ -425,24 +424,40 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             if not custom_tch_id:
                 count = TeacherProfile.objects.count() + 1
                 custom_tch_id = f"TMS/TCH/{count:04d}"
-            # Strictly: Password for teacher is their Teacher ID
             if not password:
                 password = custom_tch_id
 
         if not password:
             password = "DefaultPassword123!"
 
-        user = User.objects.create_user(
-            email=email,
-            password=password,
-            first_name=first_name,
-            last_name=last_name,
-            phone=validated_data.get('phone', ''),
-            role=role,
-        )
+        # Handle existing user with same email gracefully
+        user = User.objects.filter(email__iexact=email).first()
+        if user:
+            user.first_name = first_name or user.first_name
+            user.last_name = last_name or user.last_name
+            if validated_data.get('phone'):
+                user.phone = validated_data.get('phone')
+            if password:
+                user.set_password(password)
+            user.role = role
+            user.save()
+        else:
+            user = User.objects.create_user(
+                email=email,
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
+                phone=validated_data.get('phone', ''),
+                role=role,
+            )
 
         # Create or update role profile with strictly assigned ID and individual fields
         if role == User.Role.STUDENT:
+            # Check student ID uniqueness
+            conflicting_stu = StudentProfile.objects.filter(student_id=custom_stu_id).exclude(user=user).first()
+            if conflicting_stu:
+                custom_stu_id = f"TP-STU-{StudentProfile.objects.count() + 1:03d}"
+
             StudentProfile.objects.update_or_create(
                 user=user,
                 defaults={
@@ -463,6 +478,11 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
                 }
             )
         elif role == User.Role.TEACHER:
+            # Check teacher ID uniqueness
+            conflicting_tch = TeacherProfile.objects.filter(teacher_id=custom_tch_id).exclude(user=user).first()
+            if conflicting_tch:
+                custom_tch_id = f"TMS/TCH/{TeacherProfile.objects.count() + 1:04d}"
+
             TeacherProfile.objects.update_or_create(
                 user=user,
                 defaults={
