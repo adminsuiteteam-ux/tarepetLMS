@@ -2214,7 +2214,18 @@ export default function AdminDashboard() {
     const unsub = subscribeToCBTStore(() => {
       setStudentsList(getStoredStudents());
     });
-    return () => unsub();
+    const unsubEvents = listenToRealtimeEvents((event) => {
+      if (event.type === 'STUDENT_ENROLLED_BY_TEACHER' && event.payload) {
+        setStudentsList(getStoredStudents());
+        syncStudentsWithBackend().then(res => setStudentsList(res));
+        const p = event.payload;
+        showAlert?.(`🔔 Live Notification: Form Teacher ${p.registeredBy || 'Staff'} has enrolled a new student: "${p.student?.name || 'Student'}" into ${p.classLevel || 'Class'}.`, 'Live Student Registration Alert', 'info');
+      }
+    });
+    return () => {
+      unsub();
+      unsubEvents();
+    };
   }, []);
   const [showAddStudentModal, setShowAddStudentModal] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
@@ -10359,41 +10370,65 @@ export default function AdminDashboard() {
                 {/* Slide 2: Class & Stream Assignment */}
                 {wizardStep === 2 && (
                   <div className="space-y-4">
-                    <h4 className="text-sm font-bold text-foreground">{t('wizard.academicLevel')}</h4>
+                    <h4 className="text-sm font-bold text-foreground">{t('wizard.academicLevel', 'Academic Level & Target Class')}</h4>
                     <div>
-                      <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.targetClass')}</label>
+                      <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.targetClass', 'Target Class Level *')}</label>
                       <select value={newStudentForm.grade}
                         onChange={e => {
                           const val = e.target.value;
-                          const isJSS = val.startsWith('JSS');
+                          const isSS = val.startsWith('SS');
                           setNewStudentForm({
                             ...newStudentForm,
                             grade: val,
-                            stream: isJSS ? 'General' : 'Science',
+                            stream: isSS ? 'Science' : 'General',
                           });
                         }}
                         className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none">
-                        <option value="JSS1">{t('wizard.jss1')}</option>
-                        <option value="JSS2">{t('wizard.jss2')}</option>
-                        <option value="JSS3">{t('wizard.jss3')}</option>
-                        <option value="SS1">{t('wizard.ss1')}</option>
-                        <option value="SS2">{t('wizard.ss2')}</option>
-                        <option value="SS3">{t('wizard.ss3')}</option>
+                        <optgroup label="Early Years & Nursery">
+                          <option value="Creche">Creche / Toddler</option>
+                          <option value="Nursery 1">Nursery 1 (NUR 1)</option>
+                          <option value="Nursery 2">Nursery 2 (NUR 2)</option>
+                          <option value="Nursery 3">Nursery 3 (NUR 3 / Kindergarten)</option>
+                        </optgroup>
+                        <optgroup label="Primary School (Basic 1 - 6)">
+                          <option value="Primary 1">Primary 1 (Basic 1)</option>
+                          <option value="Primary 2">Primary 2 (Basic 2)</option>
+                          <option value="Primary 3">Primary 3 (Basic 3)</option>
+                          <option value="Primary 4">Primary 4 (Basic 4)</option>
+                          <option value="Primary 5">Primary 5 (Basic 5)</option>
+                          <option value="Primary 6">Primary 6 (Basic 6)</option>
+                        </optgroup>
+                        <optgroup label="Junior Secondary School">
+                          <option value="JSS1">Junior Secondary 1 (JSS 1)</option>
+                          <option value="JSS2">Junior Secondary 2 (JSS 2)</option>
+                          <option value="JSS3">Junior Secondary 3 (JSS 3)</option>
+                        </optgroup>
+                        <optgroup label="Senior Secondary School">
+                          <option value="SS1">Senior Secondary 1 (SS 1)</option>
+                          <option value="SS2">Senior Secondary 2 (SS 2)</option>
+                          <option value="SS3">Senior Secondary 3 (SS 3)</option>
+                        </optgroup>
                       </select>
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.streamAssignment')}</label>
-                      {newStudentForm.grade.startsWith('JSS') ? (
-                        <div className="p-3.5 rounded-xl bg-muted/40 border border-border text-xs text-muted-foreground font-medium">
-                          {t('wizard.jssGeneralNote')}
-                        </div>
+                      <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.streamAssignment', 'Class Stream / Arm Assignment')}</label>
+                      {newStudentForm.grade.startsWith('SS') ? (
+                        <select value={newStudentForm.stream}
+                          onChange={e => setNewStudentForm({ ...newStudentForm, stream: e.target.value })}
+                          className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none">
+                          <option value="Science">Science Stream</option>
+                          <option value="Art">Art & Humanities Stream</option>
+                          <option value="Commercial">Commercial / Business Stream</option>
+                        </select>
                       ) : (
                         <select value={newStudentForm.stream}
                           onChange={e => setNewStudentForm({ ...newStudentForm, stream: e.target.value })}
                           className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none">
-                          <option value="Science">{t('wizard.sciOption')}</option>
-                          <option value="Art">{t('wizard.artOption')}</option>
+                          <option value="General">General (Core Curriculum)</option>
+                          <option value="Faith">Faith Arm</option>
+                          <option value="Love">Love Arm</option>
+                          <option value="Grace">Grace Arm</option>
                         </select>
                       )}
                     </div>

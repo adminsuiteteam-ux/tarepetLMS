@@ -194,7 +194,12 @@ export default function TeacherDashboard() {
   });
   
   // Modals & toast
+  const { showAlert, showConfirm } = useCustomDialog();
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 4000);
+  };
   const [showAddStudentModal, setShowAddStudentModal] = useState(false);
   const [addStudentForm, setAddStudentForm] = useState({
     code: '',
@@ -583,6 +588,92 @@ export default function TeacherDashboard() {
       emailAlerts: true,
       cbtAlerts: true,
     };
+  };
+
+  const handleAddStudentSubmit = async () => {
+    if (!formClass && user?.role !== 'ADMIN') {
+      showAlert('Student registration is restricted exclusively to Form Teachers and System Administrators.', 'Permission Denied', 'error');
+      return;
+    }
+
+    if (!addStudentForm.name.trim()) {
+      showAlert('Please enter the student full name.', 'Validation Error', 'warning');
+      return;
+    }
+
+    const targetGrade = formClass || addStudentForm.grade || 'SS1';
+    const targetStream = addStudentForm.stream || (targetGrade.startsWith('SS') ? 'Science' : 'General');
+    const targetCode = addStudentForm.code.trim() || generateAdmissionNumber(targetGrade, targetStream);
+    const targetEmail = addStudentForm.email.trim() || formatStudentEmail(addStudentForm.name);
+
+    const studentRecord = {
+      id: Date.now(),
+      name: addStudentForm.name.trim(),
+      code: targetCode,
+      admissionNo: targetCode,
+      admission_number: targetCode,
+      email: targetEmail,
+      gender: addStudentForm.gender || 'Male',
+      dob: addStudentForm.dob || '2012-05-14',
+      grade: targetGrade,
+      stream: targetStream,
+      phone: addStudentForm.phone || '',
+      country: addStudentForm.country || 'Nigeria',
+      stateOfOrigin: addStudentForm.stateOfOrigin || 'Bayelsa',
+      lga: addStudentForm.lga || 'Yenagoa',
+      address: addStudentForm.address || 'Yenagoa, Bayelsa State',
+      parentName: addStudentForm.parentName || 'Parent / Guardian',
+      parentPhone: addStudentForm.parentPhone || '',
+      status: addStudentForm.status || 'ACTIVE',
+      studyMode: addStudentForm.studyMode || 'Full Time',
+      programme: addStudentForm.programme || (targetGrade.startsWith('SS') ? 'Senior Secondary Certificate (SSCE)' : 'Basic Education Certificate (BECE)'),
+      house: '',
+    };
+
+    // Save locally and sync immediately with Django backend in real time
+    await saveStudent(studentRecord);
+
+    // Live Real-Time Admin Notification
+    const teacherName = matchedStoredTeacher?.name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'Form Teacher';
+    addRealtimeNotification({
+      title: 'New Student Registered by Form Teacher',
+      message: `${studentRecord.name} (${targetCode}) was enrolled in ${targetGrade} (${studentRecord.stream}) by Form Teacher ${teacherName}.`,
+      type: 'success',
+      recipientRole: 'ADMIN',
+    });
+
+    broadcastRealtimeEvent('STUDENT_ENROLLED_BY_TEACHER', {
+      student: studentRecord,
+      registeredBy: teacherName,
+      classLevel: targetGrade,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Update local state and close modal
+    setRoster(getStoredStudents());
+    setShowAddStudentModal(false);
+    setAddStudentForm({
+      code: '',
+      name: '',
+      email: '',
+      gender: 'Male',
+      maritalStatus: 'Single',
+      dob: '',
+      phone: '',
+      country: 'Nigeria',
+      stateOfOrigin: '',
+      lga: '',
+      address: '',
+      grade: formClass || 'SS1',
+      stream: 'Science',
+      programme: 'Senior Secondary Certificate (SSCE)',
+      parentName: '',
+      parentPhone: '',
+      status: 'ACTIVE',
+      studyMode: 'Full Time'
+    });
+
+    showAlert(`🎉 Student "${studentRecord.name}" (${targetCode}) was successfully registered and synced with the database in real time. The Admin has been notified.`, 'Student Enrolled Successfully', 'success');
   };
 
   const [profileForm, setProfileForm] = useState(getTeacherProfileData);
@@ -1073,9 +1164,21 @@ export default function TeacherDashboard() {
             <p className="text-xs text-muted-foreground mt-0.5">{t('teacher.manage_students_desc', 'Roster profiles, daily attendance, and student registration.')}</p>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => setShowAddStudentModal(true)} className="flex items-center gap-1.5 bg-primary text-white hover:bg-primary/90 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm">
-              <Plus className="w-4 h-4" /> {t('teacher.add_student', 'Add Student')}
-            </button>
+            {formClass || user?.role === 'ADMIN' ? (
+              <button
+                onClick={() => setShowAddStudentModal(true)}
+                className="flex items-center gap-1.5 bg-primary text-white hover:bg-primary/90 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer"
+              >
+                <Plus className="w-4 h-4" /> {t('teacher.add_student', 'Add Student')}
+              </button>
+            ) : (
+              <div
+                title="Student registration is restricted to Form Teachers and System Administrators"
+                className="flex items-center gap-1.5 bg-muted/60 text-muted-foreground border border-border px-3.5 py-2 rounded-xl text-xs font-medium cursor-not-allowed"
+              >
+                <Lock className="w-3.5 h-3.5 text-muted-foreground" /> {t('teacher.form_teachers_only', 'Enrollment: Form Teachers Only')}
+              </div>
+            )}
           </div>
         </div>
 

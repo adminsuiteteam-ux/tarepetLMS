@@ -163,6 +163,7 @@ export const SCHOOL_CLASSES = [
   { id: 'Creche', label: 'Creche / Toddler', category: 'Nursery', level: 'Early Years', arms: NURSERY_ARMS },
   { id: 'Nursery 1', label: 'Nursery 1 (NUR 1)', category: 'Nursery', level: 'Early Years', arms: NURSERY_ARMS },
   { id: 'Nursery 2', label: 'Nursery 2 (NUR 2)', category: 'Nursery', level: 'Early Years', arms: NURSERY_ARMS },
+  { id: 'Nursery 3', label: 'Nursery 3 (NUR 3 / Kindergarten)', category: 'Nursery', level: 'Early Years', arms: NURSERY_ARMS },
   // Primary (Arms: Faith, Love)
   { id: 'Primary 1', label: 'Primary 1 (Basic 1)', category: 'Primary', level: 'Primary', arms: PRIMARY_ARMS },
   { id: 'Primary 2', label: 'Primary 2 (Basic 2)', category: 'Primary', level: 'Primary', arms: PRIMARY_ARMS },
