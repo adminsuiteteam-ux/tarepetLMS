@@ -2323,15 +2323,6 @@ export function setAdminPassword(newPassword: string): void {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem('tarepet_admin_password', newPassword.trim());
-    broadcastRealtimeEvent('ADMIN_PASSWORD_UPDATED');
+    broadcastRealtimeEvent();
   } catch {}
-}
-
-export function broadcastRealtimeEvent(eventType: string = 'CBT_STORE_UPDATED', payload?: any): void {
-  sendWebSocketEvent(eventType, payload);
-  listeners.forEach(fn => fn());
-}
-
-export function listenToRealtimeEvents(callback: (event: any) => void): () => void {
-  return subscribeToWebSocketEvents(callback);
 }
