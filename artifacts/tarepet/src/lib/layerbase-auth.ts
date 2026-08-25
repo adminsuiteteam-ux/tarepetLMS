@@ -4,7 +4,9 @@ import axios from 'axios';
 const LAYERBASE_API_URL =
   import.meta.env.VITE_LAYERBASE_API_URL ||
   import.meta.env.VITE_API_URL ||
-  'https://tarepet-backend-4iw6.onrender.com/api/v1';
+  (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://127.0.0.1:8000/api/v1'
+    : 'https://f3751efe2160a214-102-89-47-67.serveousercontent.com/api/v1');
 
 export interface LayerbaseUser {
   id: number | string;
