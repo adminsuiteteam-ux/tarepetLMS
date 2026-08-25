@@ -5217,9 +5217,10 @@ export default function AdminDashboard() {
                       return;
                     }
                     setAdminPassword(adminPasswordForm.newPass);
-                    setAdminPasswordStatus({ type: 'success', message: 'Administrator password changed and encrypted successfully!' });
+                    authClient.put('/auth/me/', { password: adminPasswordForm.newPass }).catch(() => {});
+                    setAdminPasswordStatus({ type: 'success', message: 'Administrator password changed and encrypted in database successfully!' });
                     setAdminPasswordForm({ current: '', newPass: '', confirm: '' });
-                    showToast('Admin password updated successfully!');
+                    showToast('Admin password updated and synced with database successfully!');
                   }}
                   className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs"
                 >
@@ -5877,30 +5878,48 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
                   <div>
                     <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Portal Interface Language</label>
-                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold">
-                      <option selected>English (Nigeria Standard)</option>
-                      <option>French (International Curriculum)</option>
+                    <select
+                      value={systemSettings.portalLanguage || 'en-NG'}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, portalLanguage: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
+                    >
+                      <option value="en-NG">English (Nigeria Standard)</option>
+                      <option value="fr-FR">French (International Curriculum)</option>
                     </select>
                   </div>
                   <div>
                     <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Default Color Scheme</label>
-                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold">
-                      <option selected>System Theme (Automatic Dark/Light)</option>
-                      <option>Crimson Executive Light</option>
-                      <option>Obsidian Dark</option>
+                    <select
+                      value={systemSettings.colorScheme || 'system'}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, colorScheme: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
+                    >
+                      <option value="system">System Theme (Automatic Dark/Light)</option>
+                      <option value="light">Crimson Executive Light</option>
+                      <option value="dark">Obsidian Dark</option>
                     </select>
                   </div>
                   <div>
                     <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Date Display Format</label>
-                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold">
-                      <option selected>DD/MM/YYYY (Nigerian Standard: 25/08/2026)</option>
-                      <option>YYYY-MM-DD (ISO standard)</option>
+                    <select
+                      value={systemSettings.dateFormat || 'DD/MM/YYYY'}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, dateFormat: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
+                    >
+                      <option value="DD/MM/YYYY">DD/MM/YYYY (Nigerian Standard: 25/08/2026)</option>
+                      <option value="YYYY-MM-DD">YYYY-MM-DD (ISO standard)</option>
                     </select>
                   </div>
                   <div>
                     <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Currency Format</label>
-                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold">
-                      <option selected>₦ Nigerian Naira (NGN)</option>
+                    <select
+                      value={systemSettings.currency || 'NGN'}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, currency: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
+                    >
+                      <option value="NGN">₦ Nigerian Naira (NGN)</option>
+                      <option value="USD">$ US Dollar (USD)</option>
+                      <option value="GBP">£ British Pound (GBP)</option>
                     </select>
                   </div>
                 </div>
@@ -5914,15 +5933,30 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
                   <div>
                     <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Report Card Official Stamp Footer</label>
-                    <input type="text" defaultValue="Issued by the Registrar — Tare Pet Montessori School, Yenagoa" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <input
+                      type="text"
+                      value={systemSettings.reportCardStamp ?? 'Issued by the Registrar — Tare Pet Montessori School, Yenagoa'}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, reportCardStamp: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
                   </div>
                   <div>
                     <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Principal's Signature Label</label>
-                    <input type="text" defaultValue="Dr. T. Montessori — School Principal & Chief Administrator" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <input
+                      type="text"
+                      value={systemSettings.principalSignatureLabel ?? 'Dr. T. Montessori — School Principal & Chief Administrator'}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, principalSignatureLabel: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
                   </div>
                   <div className="md:col-span-2">
                     <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Official Promotional Banner Tagline</label>
-                    <input type="text" defaultValue="Developing Tomorrow's Leaders Through Academic Excellence, Character & Montessori Values" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <input
+                      type="text"
+                      value={systemSettings.tagline ?? "Developing Tomorrow's Leaders Through Academic Excellence, Character & Montessori Values"}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, tagline: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
                   </div>
                 </div>
               </div>

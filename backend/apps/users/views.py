@@ -271,6 +271,14 @@ class UserViewSet(viewsets.ModelViewSet):
             return [permissions.AllowAny()]
         return [IsAdmin()]
 
+    def create(self, request, *args, **kwargs):
+        serializer = UserRegistrationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        read_serializer = UserSerializer(user)
+        headers = self.get_success_headers(serializer.data)
+        return Response(read_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
     def get_queryset(self):
         queryset = super().get_queryset()
         role = self.request.query_params.get('role', None)

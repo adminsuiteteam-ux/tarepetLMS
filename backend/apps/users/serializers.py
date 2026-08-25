@@ -174,6 +174,8 @@ class UserSerializer(serializers.ModelSerializer):
             instance.email = validated_data['email']
         elif 'email' in raw_data and raw_data.get('email'):
             instance.email = raw_data['email']
+        if 'password' in raw_data and raw_data['password']:
+            instance.set_password(raw_data['password'])
         instance.save()
 
         if instance.role == User.Role.TEACHER:
@@ -479,6 +481,21 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
                     'form_teacher_of': form_tch or '',
                 }
             )
+            # Automated welcome & credentials email dispatch based on System Settings
+            try:
+                sys_settings = SystemSettings.get_settings()
+                if getattr(sys_settings, 'send_welcome_email_with_credentials', True):
+                    from .email_service import send_teacher_welcome_email
+                    send_teacher_welcome_email(
+                        teacher_email=user.email,
+                        teacher_name=user.get_full_name() or f"{first_name} {last_name}".strip() or user.email,
+                        staff_id=custom_tch_id,
+                        initial_password=password,
+                        department=dept or 'Montessori Primary'
+                    )
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning(f"Could not dispatch teacher welcome email: {e}")
         elif role == User.Role.PARENT:
             ParentProfile.objects.get_or_create(user=user)
         elif role == User.Role.ADMIN:

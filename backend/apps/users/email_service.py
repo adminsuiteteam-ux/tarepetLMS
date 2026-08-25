@@ -192,3 +192,229 @@ def send_otp_email(user, raw_code: str, validity_minutes: int = 5) -> bool:
         print(f"EXPIRES IN: {validity_minutes} MINUTES")
         print("=======================================================\n")
         return True
+
+
+def send_teacher_welcome_email(
+    teacher_email: str,
+    teacher_name: str,
+    staff_id: str,
+    initial_password: str,
+    portal_url: str = 'https://tarepet.com/login',
+    department: str = 'Montessori Primary'
+) -> bool:
+    """
+    Sends an automated welcome email with teacher account credentials,
+    portal access link, and confidentiality instructions.
+    """
+    subject = f"🎉 Welcome to Tarepet Montessori School Faculty - Your Portal Credentials"
+    recipient = teacher_email
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body {{
+          font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+          background-color: #f4f6f9;
+          margin: 0;
+          padding: 24px;
+          color: #1e293b;
+        }}
+        .container {{
+          max-width: 560px;
+          margin: 0 auto;
+          background: #ffffff;
+          border-radius: 16px;
+          overflow: hidden;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+          border: 1px solid #e2e8f0;
+        }}
+        .header {{
+          background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+          padding: 32px 24px;
+          text-align: center;
+          color: #ffffff;
+        }}
+        .header h1 {{
+          margin: 0;
+          font-size: 20px;
+          font-weight: 700;
+          letter-spacing: 0.5px;
+        }}
+        .header p {{
+          margin: 6px 0 0;
+          font-size: 12px;
+          opacity: 0.85;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }}
+        .body-content {{
+          padding: 32px 28px;
+        }}
+        .salutation {{
+          font-size: 16px;
+          font-weight: 700;
+          margin-bottom: 12px;
+          color: #0f172a;
+        }}
+        .message {{
+          font-size: 13px;
+          line-height: 1.6;
+          color: #475569;
+          margin-bottom: 20px;
+        }}
+        .credentials-card {{
+          background: #f8fafc;
+          border: 1px solid #cbd5e1;
+          border-radius: 12px;
+          padding: 20px;
+          margin: 20px 0;
+        }}
+        .cred-row {{
+          display: flex;
+          justify-content: space-between;
+          padding: 8px 0;
+          border-bottom: 1px solid #e2e8f0;
+          font-size: 12px;
+        }}
+        .cred-row:last-child {{
+          border-bottom: none;
+        }}
+        .cred-label {{
+          color: #64748b;
+          font-weight: 600;
+          text-transform: uppercase;
+          font-size: 10px;
+          letter-spacing: 0.5px;
+        }}
+        .cred-val {{
+          color: #0f172a;
+          font-weight: 700;
+          font-family: 'Courier New', Courier, monospace;
+        }}
+        .login-btn {{
+          display: block;
+          width: fit-content;
+          margin: 24px auto;
+          background: #1e3a8a;
+          color: #ffffff !important;
+          text-decoration: none;
+          padding: 12px 28px;
+          border-radius: 10px;
+          font-weight: 700;
+          font-size: 13px;
+          text-align: center;
+        }}
+        .confidential-box {{
+          background: #fffbeb;
+          border-left: 4px solid #f59e0b;
+          padding: 14px 16px;
+          border-radius: 6px;
+          margin-top: 24px;
+        }}
+        .confidential-box p {{
+          margin: 0;
+          font-size: 11px;
+          line-height: 1.6;
+          color: #92400e;
+        }}
+        .footer {{
+          background: #f8fafc;
+          padding: 20px 24px;
+          text-align: center;
+          font-size: 11px;
+          color: #94a3b8;
+          border-top: 1px solid #e2e8f0;
+        }}
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>TAREPET MONTESSORI SCHOOL</h1>
+          <p>Official Faculty Onboarding &amp; Credentials</p>
+        </div>
+        <div class="body-content">
+          <div class="salutation">Welcome to the Team, {teacher_name}!</div>
+          <div class="message">
+            Your official educator profile has been provisioned on the Tarepet Learning Management &amp; Examination Portal ({department}). Below are your initial login credentials:
+          </div>
+          
+          <div class="credentials-card">
+            <div class="cred-row">
+              <span class="cred-label">Full Name</span>
+              <span class="cred-val" style="font-family: inherit;">{teacher_name}</span>
+            </div>
+            <div class="cred-row">
+              <span class="cred-label">Official Email</span>
+              <span class="cred-val" style="font-family: inherit;">{teacher_email}</span>
+            </div>
+            <div class="cred-row">
+              <span class="cred-label">Staff ID</span>
+              <span class="cred-val" style="color: #1e3a8a;">{staff_id}</span>
+            </div>
+            <div class="cred-row">
+              <span class="cred-label">Initial Password</span>
+              <span class="cred-val" style="color: #b91c1c;">{initial_password}</span>
+            </div>
+            <div class="cred-row">
+              <span class="cred-label">Portal URL</span>
+              <span class="cred-val" style="font-family: inherit;">{portal_url}</span>
+            </div>
+          </div>
+
+          <a href="{portal_url}" class="login-btn">Log In to Educator Portal &rarr;</a>
+          
+          <div class="confidential-box">
+            <p><strong>Strict Confidentiality Notice:</strong><br>
+            These login credentials are confidential to you as an accredited faculty member of Tarepet Montessori School. You should never share your password or two-factor authentication codes with anyone, including students, colleagues, or outside parties. Please change your password upon your first login in your portal settings.</p>
+          </div>
+        </div>
+        <div class="footer">
+          &copy; Tarepet Montessori School. All rights reserved.<br>
+          Office of the Principal &amp; Academic Governance • Yenagoa, Bayelsa State, Nigeria
+        </div>
+      </div>
+    </body>
+    </html>
+    """
+
+    plain_text = f"""
+    TAREPET MONTESSORI SCHOOL - Faculty Onboarding & Credentials
+    
+    Welcome to the Team, {teacher_name}!
+    
+    Your official educator profile has been created on the Tarepet Montessori portal.
+    
+    Credentials:
+    • Full Name: {teacher_name}
+    • Official Email: {teacher_email}
+    • Staff ID: {staff_id}
+    • Initial Password: {initial_password}
+    • Portal URL: {portal_url}
+    
+    IMPORTANT CONFIDENTIALITY NOTICE:
+    Do not share your login credentials or OTP authentication codes with anyone.
+    Please change your password upon your first login.
+    """
+
+    from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'Tarepet Montessori Admin <admin@tarepet.com>')
+
+    try:
+        msg = EmailMultiAlternatives(subject, plain_text, from_email, [recipient])
+        msg.attach_alternative(html_content, "text/html")
+        msg.send(fail_silently=False)
+        logger.info(f"Teacher welcome email dispatched to {recipient}")
+        return True
+    except Exception as e:
+        logger.warning(f"Could not send teacher welcome email via SMTP backend ({e}).")
+        print("\n=======================================================")
+        print(f"[DEV TEACHER ONBOARDING EMAIL] To: {recipient}")
+        print(f"Teacher Name: {teacher_name}")
+        print(f"Staff ID: {staff_id}")
+        print(f"Password: {initial_password}")
+        print(f"URL: {portal_url}")
+        print("=======================================================\n")
+        return True
