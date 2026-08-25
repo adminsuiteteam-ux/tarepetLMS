@@ -12,6 +12,7 @@ import { ImageCropModal } from '@/components/ui/ImageCropModal';
 import { MobileProfileView } from '@/components/profile/MobileProfileView';
 import { validatePasswordStrength } from '@/lib/password-policy';
 import { useCustomDialog } from '@/context/DialogContext';
+import tarepetLogo from '@assets/tarepet__1784835204178.png';
 import {
   getPaymentItems,
   getPaymentTransactions,
@@ -2231,6 +2232,7 @@ export default function AdminDashboard() {
     parentName: '',
     parentPhone: '',
     profileImage: '',
+    house: '',
   });
 
   const currentWizardAdmissionNo = React.useMemo(() => {
@@ -3759,7 +3761,7 @@ export default function AdminDashboard() {
                 onClick={() => {
                   setWizardStep(1);
                   setNewStudentForm({
-                    name: '', dob: '', gender: 'Male', grade: 'SS1', stream: 'Science', country: 'Nigeria', stateOfOrigin: 'Bayelsa', lga: 'Yenagoa', address: '', phone: '', parentName: '', parentPhone: '', profileImage: ''
+                    name: '', dob: '', gender: 'Male', grade: 'SS1', stream: 'Science', country: 'Nigeria', stateOfOrigin: 'Bayelsa', lga: 'Yenagoa', address: '', phone: '', parentName: '', parentPhone: '', profileImage: '', house: ''
                   });
                   setShowAddStudentModal(true);
                 }}

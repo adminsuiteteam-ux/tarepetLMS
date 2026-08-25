@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { useTranslation } from '@/lib/i18n';
+import { useCustomDialog } from '@/context/DialogContext';
 import { getStoredExams, updateExamStatus, subscribeToCBTStore } from '@/lib/cbt-store';
 
 interface PendingExam {

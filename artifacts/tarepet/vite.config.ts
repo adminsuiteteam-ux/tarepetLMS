@@ -30,6 +30,7 @@ export default defineConfig({
     sourcemap: false, // Do not expose source maps in production
     outDir: path.resolve(import.meta.dirname, 'dist/public'),
     emptyOutDir: true,
+    chunkSizeWarningLimit: 3000,
   },
   server: {
     port,
