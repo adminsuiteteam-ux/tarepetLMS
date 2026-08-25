@@ -5971,963 +5971,314 @@ export default function AdminDashboard() {
 
     // 8. ADMIN PROFILE PAGE
     if (activeSection === 'profile') {
-      return (
-        <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
-          {/* Executive Profile Header Banner */}
-          <div className="relative rounded-3xl overflow-hidden border border-border/80 shadow-lg bg-card">
-            {/* Glassmorphic Ambient Cover Gradient */}
-            <div className="min-h-44 bg-gradient-to-r from-zinc-950 via-zinc-900 to-primary/80 relative overflow-hidden flex flex-col justify-between sm:flex-row sm:items-end p-4 sm:p-6 pb-20 sm:pb-6">
-              <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
-              <div className="absolute -right-16 -top-16 w-64 h-64 bg-primary/30 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -left-12 -bottom-12 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
-              
-              {/* School Crest & Leadership Watermark */}
-              <div className="relative sm:absolute top-0 sm:top-4 right-0 sm:right-6 flex flex-wrap items-center gap-2 sm:gap-3 mb-3 sm:mb-0">
-                <span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-[10px] sm:text-[11px] font-bold tracking-wider uppercase flex items-center gap-1.5 shadow-xs">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Tarepet Executive Leadership
-                </span>
-                <span className="px-3 py-1 rounded-full bg-emerald-500/20 backdrop-blur-md border border-emerald-400/30 text-emerald-300 text-[10px] sm:text-[11px] font-bold tracking-wider uppercase flex items-center gap-1.5 shadow-xs">
-                  <Sparkles className="w-3.5 h-3.5" /> Tier 1 Super Admin
-                </span>
-              </div>
-            </div>
+      const handleSaveProfile = (formData: typeof adminProfileData) => {
+        setAdminProfileData(formData);
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('tarepet_admin_profile_data', JSON.stringify(formData));
+          } catch (e) {}
+        }
+        const nameParts = (formData.name || '').trim().split(' ');
+        const fName = nameParts[0] || 'Admin';
+        const lName = nameParts.slice(1).join(' ') || 'Principal';
 
-            {/* Profile Bar Overlap Card */}
-            <div className="px-4 sm:px-8 pb-6 pt-0 relative flex flex-col lg:flex-row items-center lg:items-end justify-between gap-6 -mt-16">
-              <div className="flex flex-col sm:flex-row items-center sm:items-end gap-5 text-center sm:text-left">
-                {/* Photo Avatar with Live Hover Crop / Change Trigger */}
+        updateUser({
+          first_name: fName,
+          last_name: lName,
+          phone: formData.phone,
+          profile_image: formData.profileImage,
+          profile: {
+            ...(user?.profile || {}),
+            profile_image: formData.profileImage,
+            profileImage: formData.profileImage,
+          }
+        });
+
+        authClient.put('/auth/me/', {
+          first_name: fName,
+          last_name: lName,
+          phone: formData.phone,
+          profile_image: formData.profileImage,
+          profile: {
+            profile_image: formData.profileImage,
+            profileImage: formData.profileImage,
+          }
+        }).then(() => {
+          refreshUserProfile().catch(() => {});
+        }).catch(() => {});
+
+        broadcastRealtimeEvent();
+        setProfileUpdateSuccess(true);
+        showToast('Administrator profile updated successfully!');
+        setTimeout(() => setProfileUpdateSuccess(false), 3000);
+      };
+
+      return (
+        <div className="space-y-6 max-w-5xl mx-auto" style={{ fontFamily: 'var(--font-poppins)' }}>
+          {/* Clean Profile Header Card */}
+          <div className="bg-card rounded-3xl border border-border p-6 sm:p-8 shadow-sm relative overflow-hidden">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
+              <div className="flex flex-col sm:flex-row items-center sm:items-center gap-5 text-center sm:text-left">
+                {/* Photo Avatar with Direct Upload & Change Trigger */}
                 <div className="relative group shrink-0">
-                  <div className="w-28 h-28 rounded-3xl bg-zinc-950 text-white font-bold text-4xl flex items-center justify-center shadow-2xl border-4 border-card overflow-hidden ring-2 ring-primary/30 relative">
+                  <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl sm:rounded-3xl bg-zinc-950 text-white font-bold text-3xl sm:text-4xl flex items-center justify-center shadow-lg border-4 border-card overflow-hidden ring-2 ring-primary/20 relative">
                     {adminProfileData.profileImage ? (
                       <img src={adminProfileData.profileImage} alt={adminProfileData.name} className="w-full h-full object-cover" />
                     ) : (
                       <span className="bg-gradient-to-tr from-primary to-amber-500 bg-clip-text text-transparent">
-                        {adminProfileData.name.split(' ').map(n => n[0]).join('')}
+                        {adminProfileData.name ? adminProfileData.name.split(' ').map(n => n[0]).join('') : 'TP'}
                       </span>
                     )}
-                    {/* Hover Overlay to Edit Photo */}
-                    <button
-                      onClick={() => { setEditProfileForm(adminProfileData); setShowEditProfileModal(true); }}
+                    {/* Hover Change Photo Overlay */}
+                    <label
+                      htmlFor="directAdminAvatarInput"
                       className="absolute inset-0 bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 text-[10px] font-bold cursor-pointer backdrop-blur-xs"
                     >
                       <Camera className="w-5 h-5" />
-                      <span>Update Photo</span>
-                    </button>
+                      <span>Change</span>
+                    </label>
                   </div>
-                  <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-4 border-card shadow-sm flex items-center justify-center" title="Account Active">
-                    <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    id="directAdminAvatarInput"
+                    className="hidden"
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        if (file.size > 10 * 1024 * 1024) {
+                          showToast('Please select a photo below 10MB.');
+                          return;
+                        }
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          const base64 = reader.result as string;
+                          triggerCropModal(base64, (cropped) => {
+                            const updated = { ...adminProfileData, profileImage: cropped };
+                            handleSaveProfile(updated);
+                          });
+                        };
+                        reader.readAsDataURL(file);
+                        e.target.value = '';
+                      }
+                    }}
+                  />
+                  <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-card shadow-sm flex items-center justify-center" title="Account Active">
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                   </span>
                 </div>
 
                 <div className="space-y-1.5">
-                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
-                    <h2 className="font-bold font-serif text-2xl lg:text-3xl text-foreground tracking-tight">{adminProfileData.name}</h2>
-                    <span className="px-3 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 text-[11px] font-extrabold uppercase tracking-wider">
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                    <h2 className="font-bold font-serif text-2xl sm:text-3xl text-foreground">{adminProfileData.name}</h2>
+                    <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 text-[10px] font-extrabold uppercase tracking-wider">
                       Chief Administrator
                     </span>
                   </div>
-                  <p className="text-xs font-semibold text-primary flex items-center justify-center sm:justify-start gap-2">
-                    <Award className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                    <span>{adminProfileData.title}</span>
-                  </p>
-                  <p className="text-xs text-muted-foreground flex flex-wrap items-center justify-center sm:justify-start gap-3 pt-0.5 font-sans">
+                  <p className="text-xs font-semibold text-primary">{adminProfileData.title}</p>
+                  <p className="text-xs text-muted-foreground flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-0.5">
                     <span className="font-mono font-bold text-foreground bg-muted/40 px-2 py-0.5 rounded-md border border-border/60">ID: {adminProfileData.id}</span>
                     <span>•</span>
-                    <span>{adminProfileData.department}</span>
+                    <span>{adminProfileData.email}</span>
                     <span>•</span>
-                    <span className="text-emerald-600 font-semibold flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Full Governance Authority
-                    </span>
+                    <span>{adminProfileData.phone}</span>
                   </p>
                 </div>
               </div>
 
-              {/* Direct Action Chips */}
-              <div className="flex flex-wrap items-center justify-center gap-2.5 shrink-0 pt-2 lg:pt-0 w-full sm:w-auto">
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center justify-center gap-2.5 shrink-0 w-full sm:w-auto">
                 <button
-                  onClick={() => { setEditProfileForm(adminProfileData); setShowEditProfileModal(true); }}
-                  className="px-4 py-2.5 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all flex items-center gap-2 shadow-sm cursor-pointer active:scale-95 flex-1 sm:flex-initial justify-center"
+                  type="button"
+                  onClick={() => {
+                    setPasswordForm({ current: '', newPass: '', confirm: '' });
+                    setPasswordSuccess(false);
+                    setShowChangePasswordModal(true);
+                  }}
+                  className="px-4 py-2.5 bg-muted/60 text-foreground border border-border rounded-xl text-xs font-bold hover:bg-accent transition-all flex items-center gap-2 cursor-pointer active:scale-95 flex-1 sm:flex-initial justify-center"
                 >
-                  <Pencil className="w-3.5 h-3.5" /> Edit Full Dossier
+                  <Lock className="w-3.5 h-3.5 text-primary" /> Change Password
                 </button>
                 <button
-                  onClick={() => { setPasswordForm({ current: '', newPass: '', confirm: '' }); setPasswordSuccess(false); setShowChangePasswordModal(true); }}
-                  className="px-4 py-2.5 bg-muted/80 text-foreground border border-border rounded-xl text-xs font-bold hover:bg-accent transition-all flex items-center gap-2 cursor-pointer active:scale-95 flex-1 sm:flex-initial justify-center"
+                  type="button"
+                  onClick={() => handleSaveProfile(editProfileForm)}
+                  className="px-5 py-2.5 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all flex items-center gap-2 shadow-sm cursor-pointer active:scale-95 flex-1 sm:flex-initial justify-center"
                 >
-                  <Lock className="w-3.5 h-3.5 text-primary" /> Security & Passcode
-                </button>
-                <button
-                  onClick={() => setProfileTab('idcard')}
-                  className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-xl text-xs font-bold hover:from-amber-600 hover:to-amber-700 transition-all flex items-center gap-2 shadow-xs cursor-pointer active:scale-95 w-full sm:w-auto justify-center"
-                >
-                  <CreditCard className="w-3.5 h-3.5" /> View Official ID
+                  <CheckCircle2 className="w-4 h-4" /> Save Profile
                 </button>
               </div>
             </div>
 
-            {/* Quick Metrics Bar */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-border/60 border-t border-border/80 text-xs">
-              <div className="bg-card p-4 hover:bg-muted/10 transition-colors flex items-center justify-between">
+            {profileUpdateSuccess && (
+              <div className="mt-4 p-3 bg-emerald-500/10 border border-emerald-200 text-emerald-600 rounded-xl text-xs font-bold flex items-center gap-2 animate-in fade-in duration-150">
+                <CheckCircle2 className="w-4 h-4 shrink-0" /> Administrator profile saved and synchronized successfully!
+              </div>
+            )}
+          </div>
+
+          {/* Direct Editable Profile Form */}
+          <div className="bg-card rounded-3xl border border-border p-6 sm:p-8 shadow-sm space-y-6">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <div className="flex items-center gap-2.5">
+                <UserCheck className="w-5 h-5 text-primary" />
+                <h3 className="font-serif font-bold text-lg text-foreground">Edit Administrator Details</h3>
+              </div>
+              <span className="text-[11px] text-muted-foreground font-medium">All changes sync in real time</span>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSaveProfile(editProfileForm);
+              }}
+              className="space-y-6"
+            >
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-xs">
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Admin Status</p>
-                    <p className="text-sm font-bold text-emerald-600 mt-1 flex items-center gap-1.5">
-                      <CheckCircle2 className="w-4 h-4" /> Active & Verified
-                    </p>
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
-                    <ShieldCheck className="w-5 h-5" />
-                  </div>
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Full Name</label>
+                  <input
+                    type="text"
+                    value={editProfileForm.name}
+                    onChange={e => setEditProfileForm({ ...editProfileForm, name: e.target.value })}
+                    placeholder="e.g. Dr. T. Montessori"
+                    className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
+                    required
+                  />
                 </div>
 
-                <div className="bg-card p-4 hover:bg-muted/10 transition-colors flex items-center justify-between">
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Tenure Commissioned</p>
-                    <p className="text-sm font-bold text-foreground mt-1">{adminProfileData.dateJoined}</p>
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                    <Calendar className="w-5 h-5" />
-                  </div>
+                <div>
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Administrator Staff ID</label>
+                  <input
+                    type="text"
+                    value={editProfileForm.id}
+                    onChange={e => setEditProfileForm({ ...editProfileForm, id: e.target.value })}
+                    placeholder="e.g. TMS/ADM/2018/001"
+                    className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground font-mono font-bold focus:outline-none focus:ring-2 focus:ring-primary"
+                    required
+                  />
                 </div>
 
-                <div className="bg-card p-4 hover:bg-muted/10 transition-colors flex items-center justify-between">
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">2FA Multi-Factor</p>
-                    <p className="text-sm font-bold text-emerald-600 mt-1">TOTP Enforced</p>
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
-                    <Lock className="w-5 h-5" />
-                  </div>
+                <div>
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Official Executive Title</label>
+                  <input
+                    type="text"
+                    value={editProfileForm.title}
+                    onChange={e => setEditProfileForm({ ...editProfileForm, title: e.target.value })}
+                    placeholder="e.g. School Principal & Chief Administrator"
+                    className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
+                    required
+                  />
                 </div>
 
-                <div className="bg-card p-4 hover:bg-muted/10 transition-colors flex items-center justify-between">
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">System Scope</p>
-                    <p className="text-sm font-bold text-primary mt-1">Root Authority (Tier 1)</p>
-                  </div>
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                    <Award className="w-5 h-5" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Sub Navigation Tabs */}
-            <div className="flex border-b border-border gap-1 overflow-x-auto pb-px text-xs font-bold">
-              {[
-                { id: 'info', label: 'Executive Dossier & Identity', icon: UserCheck },
-                { id: 'governance', label: 'Institutional Governance', icon: Building2 },
-                { id: 'security', label: 'Security & Active Sessions', icon: Lock },
-                { id: 'permissions', label: 'Access Rights Matrix (RBAC)', icon: Shield },
-                { id: 'activity', label: 'Activity Audit Trail', icon: Activity },
-                { id: 'idcard', label: 'Official Executive Digital ID Card', icon: CreditCard },
-              ].map(tab => {
-                const TabIcon = tab.icon;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setProfileTab(tab.id as any)}
-                    className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors whitespace-nowrap cursor-pointer ${
-                      profileTab === tab.id
-                        ? 'border-primary text-primary bg-primary/5 rounded-t-xl shadow-xs'
-                        : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/20 rounded-t-xl'
-                    }`}
-                  >
-                    <TabIcon className="w-3.5 h-3.5" />
-                    {tab.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Tab 1: Personal & Academic Dossier */}
-            {profileTab === 'info' && (
-              <div className="space-y-6">
-                {/* Executive Bio / Pedagogical Statement */}
-                <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-3 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl pointer-events-none" />
-                  <div className="flex items-center justify-between pb-2 border-b border-border">
-                    <div className="flex items-center gap-2.5">
-                      <BookOpen className="w-4 h-4 text-primary" />
-                      <h3 className="font-serif font-bold text-base text-foreground">Executive Biography &amp; Pedagogical Vision</h3>
-                    </div>
-                    <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 text-[10px] font-bold">
-                      Institutional Record
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed italic font-serif">
-                    &ldquo;{adminProfileData.bio || 'Visionary educational leader with over 18 years of pioneering excellence in Montessori and Nigerian National Curriculum pedagogy. Committed to nurturing intellectual curiosity, ethical character, and academic brilliance across all learners.'}&rdquo;
-                  </p>
+                <div>
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Department / Governance Unit</label>
+                  <input
+                    type="text"
+                    value={editProfileForm.department}
+                    onChange={e => setEditProfileForm({ ...editProfileForm, department: e.target.value })}
+                    placeholder="e.g. Executive Governance & Academics"
+                    className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
                 </div>
 
-                {/* Primary Administrative Identity */}
-                <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
-                  <div className="flex items-center justify-between pb-3 border-b border-border">
-                    <div className="flex items-center gap-2.5">
-                      <UserCheck className="w-4 h-4 text-primary" />
-                      <h3 className="font-serif font-bold text-base text-foreground">Primary Administrative Identity &amp; Credentials</h3>
-                    </div>
-                    <span className="text-xs text-muted-foreground font-mono">Verified by Board of Governors</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
-                    <div className="space-y-1 bg-muted/20 p-4 rounded-xl border border-border">
-                      <p className="text-muted-foreground font-bold uppercase text-[10px]">Full Name</p>
-                      <p className="font-bold text-foreground text-sm">{adminProfileData.name}</p>
-                    </div>
-
-                    <div className="space-y-1 bg-muted/20 p-4 rounded-xl border border-border">
-                      <p className="text-muted-foreground font-bold uppercase text-[10px]">Administrator Staff ID</p>
-                      <p className="font-mono font-bold text-primary text-sm">{adminProfileData.id}</p>
-                    </div>
-
-                    <div className="space-y-1 bg-muted/20 p-4 rounded-xl border border-border">
-                      <p className="text-muted-foreground font-bold uppercase text-[10px]">Official Executive Title</p>
-                      <p className="font-bold text-foreground text-sm">{adminProfileData.title}</p>
-                    </div>
-
-                    <div className="space-y-1 bg-muted/20 p-4 rounded-xl border border-border">
-                      <p className="text-muted-foreground font-bold uppercase text-[10px]">Cadre / Administrative Rank</p>
-                      <p className="font-bold text-foreground text-sm">{adminProfileData.rank || 'Chief Executive Administrator (Super Admin)'}</p>
-                    </div>
-
-                    <div className="space-y-1 bg-muted/20 p-4 rounded-xl border border-border">
-                      <p className="text-muted-foreground font-bold uppercase text-[10px]">Official Email Address</p>
-                      <p className="font-bold text-foreground text-sm">{adminProfileData.email}</p>
-                    </div>
-
-                    <div className="space-y-1 bg-muted/20 p-4 rounded-xl border border-border">
-                      <p className="text-muted-foreground font-bold uppercase text-[10px]">Direct Phone Contact</p>
-                      <p className="font-bold text-foreground text-sm">{adminProfileData.phone}</p>
-                    </div>
-
-                    <div className="space-y-1 bg-muted/20 p-4 rounded-xl border border-border">
-                      <p className="text-muted-foreground font-bold uppercase text-[10px]">Date of Birth</p>
-                      <p className="font-bold text-foreground text-sm">{adminProfileData.dob}</p>
-                    </div>
-
-                    <div className="space-y-1 bg-muted/20 p-4 rounded-xl border border-border">
-                      <p className="text-muted-foreground font-bold uppercase text-[10px]">State of Origin / Nationality</p>
-                      <p className="font-bold text-foreground text-sm">{adminProfileData.stateOfOrigin || 'Bayelsa State, Nigeria'}</p>
-                    </div>
-
-                    <div className="md:col-span-2 lg:col-span-3 space-y-1 bg-muted/20 p-4 rounded-xl border border-border">
-                      <p className="text-muted-foreground font-bold uppercase text-[10px]">Official Residential Address</p>
-                      <p className="font-bold text-foreground text-sm">{adminProfileData.address}</p>
-                    </div>
-                  </div>
+                <div>
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Official Email Address</label>
+                  <input
+                    type="email"
+                    value={editProfileForm.email}
+                    onChange={e => setEditProfileForm({ ...editProfileForm, email: e.target.value })}
+                    placeholder="e.g. admin@tarepet.com"
+                    className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    required
+                  />
                 </div>
 
-                {/* Emergency & Next of Kin Contact */}
-                <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
-                  <div className="flex items-center gap-2.5 pb-2 border-b border-border">
-                    <Phone className="w-4 h-4 text-primary" />
-                    <h3 className="font-serif font-bold text-base text-foreground">Emergency &amp; Next of Kin Information</h3>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                    <div className="p-4 bg-muted/20 rounded-xl border border-border space-y-1">
-                      <p className="text-muted-foreground font-bold uppercase text-[10px]">Emergency Contact / Next of Kin</p>
-                      <p className="font-bold text-foreground text-sm">{adminProfileData.emergencyContact || 'Mrs. Florence Montessori (Spouse)'}</p>
-                    </div>
-                    <div className="p-4 bg-muted/20 rounded-xl border border-border space-y-1">
-                      <p className="text-muted-foreground font-bold uppercase text-[10px]">Emergency Direct Hotline</p>
-                      <p className="font-bold text-foreground text-sm">{adminProfileData.emergencyPhone || '+234 802 987 6543'}</p>
-                    </div>
-                  </div>
+                <div>
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Direct Phone Contact</label>
+                  <input
+                    type="tel"
+                    value={editProfileForm.phone}
+                    onChange={e => setEditProfileForm({ ...editProfileForm, phone: e.target.value })}
+                    placeholder="e.g. +234 803 123 4567"
+                    className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Date of Birth</label>
+                  <input
+                    type="date"
+                    value={editProfileForm.dob}
+                    onChange={e => setEditProfileForm({ ...editProfileForm, dob: e.target.value })}
+                    className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">State of Origin / Nationality</label>
+                  <input
+                    type="text"
+                    value={editProfileForm.stateOfOrigin || ''}
+                    onChange={e => setEditProfileForm({ ...editProfileForm, stateOfOrigin: e.target.value })}
+                    placeholder="e.g. Bayelsa State, Nigeria"
+                    className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Residential / Campus Address</label>
+                  <input
+                    type="text"
+                    value={editProfileForm.address}
+                    onChange={e => setEditProfileForm({ ...editProfileForm, address: e.target.value })}
+                    placeholder="e.g. 12 Kpansia-Epie Road, Yenagoa, Bayelsa State"
+                    className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Emergency Contact (Next of Kin)</label>
+                  <input
+                    type="text"
+                    value={editProfileForm.emergencyContact || ''}
+                    onChange={e => setEditProfileForm({ ...editProfileForm, emergencyContact: e.target.value })}
+                    placeholder="e.g. Mrs. Florence Montessori (Spouse)"
+                    className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Emergency Phone Number</label>
+                  <input
+                    type="tel"
+                    value={editProfileForm.emergencyPhone || ''}
+                    onChange={e => setEditProfileForm({ ...editProfileForm, emergencyPhone: e.target.value })}
+                    placeholder="e.g. +234 802 987 6543"
+                    className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
                 </div>
               </div>
-            )}
 
-            {/* Tab 2: Governance & Institutional Portfolios */}
-            {profileTab === 'governance' && (
-              <div className="space-y-6">
-                {/* Academic Divisions Supervised */}
-                <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
-                  <div className="flex items-center justify-between pb-3 border-b border-border">
-                    <div className="flex items-center gap-2.5">
-                      <Building2 className="w-4 h-4 text-primary" />
-                      <h3 className="font-serif font-bold text-base text-foreground">Academic Divisions Supervised</h3>
-                    </div>
-                    <span className="text-xs text-muted-foreground">4 Active Educational Wings</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-                    {[
-                      { division: 'Montessori Crèche & Nursery', classes: 'Crèche, Nursery 1, 2, 3', head: 'Mrs. A. Johnson', learners: '85 Learners', color: 'border-amber-500/30 bg-amber-500/5' },
-                      { division: 'Montessori Primary Department', classes: 'Primary 1 to 6', head: 'Mr. S. Chigozie', learners: '190 Learners', color: 'border-emerald-500/30 bg-emerald-500/5' },
-                      { division: 'Junior Secondary School', classes: 'JSS 1, JSS 2, JSS 3', head: 'Mrs. R. Bello', learners: '145 Learners', color: 'border-blue-500/30 bg-blue-500/5' },
-                      { division: 'Senior Secondary School', classes: 'SS 1, SS 2, SS 3 (Science & Art)', head: 'Mr. E. Amadi', learners: '120 Learners', color: 'border-purple-500/30 bg-purple-500/5' },
-                    ].map((div, i) => (
-                      <div key={i} className={`p-4 rounded-xl border ${div.color} space-y-2.5`}>
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-foreground text-sm">{div.division}</span>
-                        </div>
-                        <p className="text-muted-foreground text-[11px]">Class Levels: <strong className="text-foreground">{div.classes}</strong></p>
-                        <p className="text-muted-foreground text-[11px]">Division Head: <span className="font-semibold text-foreground">{div.head}</span></p>
-                        <div className="pt-2 flex items-center justify-between border-t border-border/50 text-[10px]">
-                          <span className="font-bold text-primary">{div.learners}</span>
-                          <span className="text-emerald-600 font-bold">100% In Good Standing</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Committees Chaired & Statutory Responsibilities */}
-                <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
-                  <div className="flex items-center gap-2.5 pb-3 border-b border-border">
-                    <ShieldCheck className="w-4 h-4 text-primary" />
-                    <h3 className="font-serif font-bold text-base text-foreground">Standing Committees Chaired &amp; Statutory Portfolios</h3>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                    {[
-                      {
-                        name: 'School Academic & Examination Board',
-                        role: 'Permanent Chairman',
-                        scope: 'Final approval authority for terminal exam questions, WAEC/BECE candidate screening, and grading policy enforcement.'
-                      },
-                      {
-                        name: 'Disciplinary Council & Student Welfare',
-                        role: 'Committee Chair',
-                        scope: 'Oversight of code of conduct, anti-bullying protocols, house point discipline, and parent-student consultations.'
-                      },
-                      {
-                        name: 'Bursary & Financial Procurement Board',
-                        role: 'Principal Accounting Officer',
-                        scope: 'Authorization of school operating budgets, fee schedule approvals, teacher payroll release, and infrastructural procurement.'
-                      },
-                      {
-                        name: 'Parent-Teacher Association (PTA) Executive',
-                        role: 'School Management Liaison',
-                        scope: 'Executive liaison with PTA executive committee on developmental levies, school projects, and parent feedback forums.'
-                      }
-                    ].map((com, i) => (
-                      <div key={i} className="p-4 rounded-xl bg-muted/20 border border-border space-y-1.5">
-                        <div className="flex items-center justify-between">
-                          <p className="font-bold text-foreground">{com.name}</p>
-                          <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-bold text-[10px]">{com.role}</span>
-                        </div>
-                        <p className="text-muted-foreground text-[11px] leading-relaxed">{com.scope}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Signatory Authority Matrix */}
-                <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
-                  <div className="flex items-center justify-between pb-3 border-b border-border">
-                    <div className="flex items-center gap-2.5">
-                      <FileText className="w-4 h-4 text-primary" />
-                      <h3 className="font-serif font-bold text-base text-foreground">Signatory Powers &amp; Official Endorsement</h3>
-                    </div>
-                    <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-200 text-xs font-bold">
-                      Authorized Signatory
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-                    <div className="p-4 bg-muted/20 rounded-xl border border-border space-y-1">
-                      <p className="font-bold text-foreground">Terminal Report Cards</p>
-                      <p className="text-muted-foreground text-[11px]">Official digital signature attached on all broadsheets &amp; term score sheets.</p>
-                    </div>
-                    <div className="p-4 bg-muted/20 rounded-xl border border-border space-y-1">
-                      <p className="font-bold text-foreground">Graduation &amp; Testimonials</p>
-                      <p className="text-muted-foreground text-[11px]">Primary 5 &amp; SS3 Graduation Certificates and Character Testimonials.</p>
-                    </div>
-                    <div className="p-4 bg-muted/20 rounded-xl border border-border space-y-1">
-                      <p className="font-bold text-foreground">Staff Employment Contracts</p>
-                      <p className="text-muted-foreground text-[11px]">Faculty appointment letters, commendations, and official memos.</p>
-                    </div>
-                  </div>
-                </div>
+              {/* Submit Action */}
+              <div className="flex justify-end pt-4 border-t border-border">
+                <button
+                  type="submit"
+                  className="px-6 py-3 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary/90 transition-all flex items-center gap-2 shadow-sm cursor-pointer active:scale-95"
+                >
+                  <CheckCircle2 className="w-4 h-4" /> Save Profile Details
+                </button>
               </div>
-            )}
-
-            {/* Tab 3: Account Security & Active Sessions */}
-            {profileTab === 'security' && (
-              <div className="space-y-6">
-                {/* Password Security Status */}
-                <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
-                  <div className="flex items-center justify-between pb-3 border-b border-border">
-                    <div className="flex items-center gap-2.5">
-                      <Lock className="w-4 h-4 text-primary" />
-                      <h3 className="font-serif font-bold text-base text-foreground">Password &amp; Credential Security</h3>
-                    </div>
-                    <span className="text-xs text-muted-foreground font-mono">Encrypted SHA-256 / Django PBKDF2</span>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-3 text-xs">
-                      <p className="text-muted-foreground leading-relaxed">
-                        Your administrator password grants full administrative control over learner records, exams, financial records, and staff profiles. Ensure your password is strong and unique.
-                      </p>
-                      <div className="space-y-2 p-3.5 bg-muted/20 rounded-xl border border-border">
-                        <div className="flex items-center gap-2 text-foreground font-semibold">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Minimum 6+ characters (8+ recommended)
-                        </div>
-                        <div className="flex items-center gap-2 text-foreground font-semibold">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Includes numbers &amp; special characters
-                        </div>
-                        <div className="flex items-center gap-2 text-foreground font-semibold">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Instant lockout after 5 consecutive failures
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="bg-muted/10 p-5 rounded-xl border border-border space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-foreground text-xs">Update Administrator Credentials</span>
-                        <button
-                          onClick={() => { setPasswordForm({ current: '', newPass: '', confirm: '' }); setPasswordSuccess(false); setShowChangePasswordModal(true); }}
-                          className="px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-sm"
-                        >
-                          <Key className="w-3.5 h-3.5" /> Launch Password Reset
-                        </button>
-                      </div>
-                      <p className="text-[11px] text-muted-foreground">
-                        Updating your password immediately invalidates all default passwords and restricts portal login strictly to your new secret credentials.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Two-Factor Authentication (2FA) */}
-                <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
-                  <div className="flex items-center justify-between pb-3 border-b border-border">
-                    <div className="flex items-center gap-2.5">
-                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                      <h3 className="font-serif font-bold text-base text-foreground">Two-Factor Authentication (2FA / TOTP)</h3>
-                    </div>
-                    <span className="px-3 py-1 bg-emerald-500/10 text-emerald-600 rounded-full font-bold border border-emerald-200 text-xs">Active &amp; Enforced</span>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                    <div className="p-4 border border-border rounded-xl bg-muted/10 space-y-1">
-                      <p className="font-bold text-foreground">Authenticator App (Google / Microsoft Authenticator)</p>
-                      <p className="text-muted-foreground text-[11px]">Time-based 6-digit one-time passcodes required for high-privilege configuration changes and grade releases.</p>
-                    </div>
-                    <div className="p-4 border border-border rounded-xl bg-muted/10 space-y-1">
-                      <p className="font-bold text-foreground">Emergency Recovery Codes</p>
-                      <p className="text-muted-foreground text-[11px]">8 one-time emergency backup keys generated and stored securely with the School Board.</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Active Device Sessions */}
-                <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
-                  <div className="flex items-center justify-between pb-3 border-b border-border">
-                    <div className="flex items-center gap-2.5">
-                      <Activity className="w-4 h-4 text-primary" />
-                      <h3 className="font-serif font-bold text-base text-foreground">Active Login Sessions</h3>
-                    </div>
-                    <span className="text-xs text-muted-foreground">Auto-timeout after 30 mins of inactivity</span>
-                  </div>
-                  <div className="space-y-3 text-xs">
-                    <div className="flex items-center justify-between p-3.5 border border-border rounded-xl bg-muted/10">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold">
-                          <CheckCircle2 className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <p className="font-bold text-foreground">Current Active Session (Desktop / Web)</p>
-                          <p className="text-muted-foreground text-[11px]">IP: 127.0.0.1 · Authenticated via Official Administrator Key · Yenagoa, Nigeria</p>
-                        </div>
-                      </div>
-                      <span className="px-3 py-1 bg-emerald-500/10 text-emerald-600 rounded-full font-bold border border-emerald-200 text-[10px]">
-                        This Device
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Tab 4: Access Rights Matrix (RBAC) */}
-            {profileTab === 'permissions' && (
-              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
-                <div className="flex items-center justify-between pb-3 border-b border-border">
-                  <div className="flex items-center gap-2.5">
-                    <Shield className="w-4 h-4 text-primary" />
-                    <h3 className="font-serif font-bold text-base text-foreground">Granted Administrative Privileges (Role-Based Access)</h3>
-                  </div>
-                  <span className="px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 text-xs font-bold">
-                    Tier 1 Super Admin
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                  {[
-                    { module: 'Student Directory & Admissions Hub', desc: 'Full authority to enroll, transfer, suspend, promote, and assign admission numbers to students.', level: 'Full Read / Write / Delete' },
-                    { module: 'Faculty Staffing & Form Teacher Duty', desc: 'Assign form teachers, update academic specializations, view salaries, and manage credentials.', level: 'Full Read / Write / Delete' },
-                    { module: 'Master Timetable & Classroom Allocation', desc: 'Author, reassign, adjust periods, and publish weekly timetables across JSS1-SS3.', level: 'Full Master Scheduling' },
-                    { module: 'CBT Exam Authoring & Review Board', desc: 'Approve teacher exam submissions, import question banks, publish exams, and sync CBT scores.', level: 'Executive Approval Authority' },
-                    { module: 'Bursary Ledger, Invoices & Fee Setup', desc: 'Configure fee items, update per-grade prices, log manual payments, and issue official receipts.', level: 'Full Financial Oversight' },
-                    { module: 'Terminal Report Card & Broadsheet Engine', desc: 'Compute continuous assessment scores, WAEC/BECE grades, apply principal stamps, and release cards.', level: 'Full Grade Release Power' },
-                    { module: 'System Settings & School Accreditation', desc: 'Configure academic sessions, term dates, grading weights, and institutional profile.', level: 'Unrestricted System Config' },
-                    { module: 'Broadcast Center & SMS Gateways', desc: 'Dispatch SMS notifications, school announcements, emergency alerts, and parent memos.', level: 'Full Broadcast Access' },
-                  ].map((p, i) => (
-                    <div key={i} className="p-4 border border-border rounded-xl bg-muted/10 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <p className="font-bold text-foreground">{p.module}</p>
-                        <span className="px-2.5 py-0.5 bg-emerald-500/10 text-emerald-600 font-bold rounded-full border border-emerald-200 text-[10px]">{p.level}</span>
-                      </div>
-                      <p className="text-muted-foreground text-[11px] leading-relaxed">{p.desc}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Tab 5: Activity Audit Log */}
-            {profileTab === 'activity' && (
-              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
-                <div className="flex items-center justify-between pb-3 border-b border-border">
-                  <div className="flex items-center gap-2.5">
-                    <Activity className="w-4 h-4 text-primary" />
-                    <h3 className="font-serif font-bold text-base text-foreground">Administrative Security &amp; Activity Audit Trail</h3>
-                  </div>
-                  <span className="text-xs text-muted-foreground font-mono">Immutable System Journal</span>
-                </div>
-
-                <div className="space-y-3 text-xs">
-                  {[
-                    { action: 'Updated Administrator Security Password', target: 'Security credentials updated for admin@tarepet.com', time: 'Just now', ip: '127.0.0.1', status: 'SUCCESS' },
-                    { action: 'Configured Master Timetable Schedules', target: 'Updated period slots for JSS 1 — SS 3 classes', time: '15 minutes ago', ip: '127.0.0.1', status: 'SUCCESS' },
-                    { action: 'Generated Terminal Report Card', target: 'Computed term report card for Student TMS/JS1/4092', time: '40 minutes ago', ip: '127.0.0.1', status: 'SUCCESS' },
-                    { action: 'Published Updated Fee Structure', target: 'Updated tuition & development levy in Bursary Ledger', time: '1 hour ago', ip: '127.0.0.1', status: 'SUCCESS' },
-                    { action: 'Approved CBT Test Submission', target: 'Approved Mathematics Mid-Term Exam for JSS 2', time: '2 hours ago', ip: '127.0.0.1', status: 'SUCCESS' },
-                    { action: 'Admin Portal Authentication', target: 'Chief Administrator session signed in from Windows Desktop', time: '3 hours ago', ip: '127.0.0.1', status: 'SUCCESS' },
-                  ].map((log, i) => (
-                    <div key={i} className="flex items-center justify-between p-3.5 border border-border rounded-xl bg-muted/10 gap-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold">
-                          <Activity className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <p className="font-bold text-foreground">{log.action}</p>
-                          <p className="text-muted-foreground text-[11px]">{log.target}</p>
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-600 rounded-full font-bold text-[9px] border border-emerald-200 mr-2">
-                          {log.status}
-                        </span>
-                        <span className="font-mono text-muted-foreground text-[11px]">{log.time}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Tab 6: Official Executive Digital ID Card */}
-            {profileTab === 'idcard' && (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-serif font-bold text-lg text-foreground">Official Administrator Identity Badge</h3>
-                    <p className="text-xs text-muted-foreground">Certified Digital ID Badge of Tarepet Montessori School Chief Executive</p>
-                  </div>
-                  <button
-                    onClick={() => window.print()}
-                    className="px-4 py-2.5 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all flex items-center gap-2 shadow-sm cursor-pointer"
-                  >
-                    <Printer className="w-3.5 h-3.5" /> Print / Export ID Badge
-                  </button>
-                </div>
-
-                <div className="flex flex-col lg:flex-row items-center justify-center gap-8 py-6">
-                  {/* FRONT OF ID BADGE */}
-                  <div className="w-full max-w-sm rounded-3xl overflow-hidden border-2 border-primary/30 shadow-2xl bg-zinc-950 text-white relative">
-                    {/* Top Header */}
-                    <div className="p-4 bg-gradient-to-r from-[#E4583E] via-[#D4AF37] to-[#10B981] flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-white p-1 shadow-md shrink-0 flex items-center justify-center">
-                        <img src={tarepetLogo} alt="Logo" className="w-8 h-8 object-contain rounded-full" />
-                      </div>
-                      <div className="leading-tight">
-                        <h4 className="font-serif font-bold text-sm text-white tracking-tight uppercase">Tarepet Montessori</h4>
-                        <p className="text-[10px] text-white/90 font-medium tracking-widest uppercase">Executive Governance Badge</p>
-                      </div>
-                    </div>
-
-                    {/* Badge Body */}
-                    <div className="p-6 text-center space-y-4 relative">
-                      <div className="relative inline-block">
-                        <div className="w-28 h-28 mx-auto rounded-2xl bg-zinc-800 border-4 border-white/20 overflow-hidden shadow-lg">
-                          {adminProfileData.profileImage ? (
-                            <img src={adminProfileData.profileImage} alt={adminProfileData.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-3xl font-bold text-white bg-primary">
-                              {adminProfileData.name.split(' ').map(n => n[0]).join('')}
-                            </div>
-                          )}
-                        </div>
-                        <span className="absolute -bottom-1 right-2 px-2 py-0.5 rounded-full bg-emerald-500 text-white font-extrabold text-[9px] uppercase tracking-wider shadow-sm">
-                          Verified
-                        </span>
-                      </div>
-
-                      <div>
-                        <h3 className="font-serif font-bold text-lg text-white">{adminProfileData.name}</h3>
-                        <p className="text-xs font-semibold text-amber-400">{adminProfileData.title}</p>
-                        <p className="text-[11px] text-zinc-400 pt-0.5">{adminProfileData.department}</p>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2 text-left text-[10px] bg-white/5 p-3 rounded-xl border border-white/10">
-                        <div>
-                          <p className="text-zinc-400 font-bold uppercase">Staff ID</p>
-                          <p className="font-mono font-bold text-white text-xs">{adminProfileData.id}</p>
-                        </div>
-                        <div>
-                          <p className="text-zinc-400 font-bold uppercase">Blood Group</p>
-                          <p className="font-bold text-white text-xs">{adminProfileData.bloodGroup || 'O+'}</p>
-                        </div>
-                        <div>
-                          <p className="text-zinc-400 font-bold uppercase">Appointed</p>
-                          <p className="font-bold text-white">{adminProfileData.dateJoined}</p>
-                        </div>
-                        <div>
-                          <p className="text-zinc-400 font-bold uppercase">Status</p>
-                          <p className="font-bold text-emerald-400">ACTIVE</p>
-                        </div>
-                      </div>
-
-                      {/* Barcode representation */}
-                      <div className="pt-2 border-t border-white/10 flex flex-col items-center">
-                        <div className="h-7 w-44 bg-white/20 rounded-xs flex items-center justify-center tracking-[0.3em] font-mono text-[9px] text-zinc-300">
-                          ||| | |||| || ||| |||| | ||
-                        </div>
-                        <span className="text-[9px] font-mono text-zinc-400 mt-1">TMS-EXEC-2018-001-AUTH</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* BACK OF ID BADGE */}
-                  <div className="w-full max-w-sm rounded-3xl overflow-hidden border-2 border-zinc-700 shadow-2xl bg-zinc-900 text-white p-6 flex flex-col justify-between space-y-4">
-                    <div className="space-y-3 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        <ShieldCheck className="w-5 h-5 text-amber-400" />
-                        <h4 className="font-serif font-bold text-sm uppercase text-white">Official Terms of Identity</h4>
-                      </div>
-                      <p className="text-[10px] text-zinc-400 leading-relaxed text-left">
-                        This credential is the official institutional property of <strong>Tarepet Montessori School</strong>. The bearer is authorized to exercise chief administrative, supervisory, and academic signatory functions within the institution.
-                      </p>
-                    </div>
-
-                    <div className="space-y-2 bg-white/5 p-3 rounded-xl border border-white/10 text-[10px]">
-                      <div className="flex justify-between">
-                        <span className="text-zinc-400">Campus Address:</span>
-                        <span className="font-semibold text-right">12 Kpansia-Epie Rd, Yenagoa</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-zinc-400">Emergency Hotline:</span>
-                        <span className="font-mono font-bold text-amber-400">+234 803 123 4567</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-zinc-400">Accreditation:</span>
-                        <span className="font-semibold text-emerald-400">TRCN / NAPPS / WAEC</span>
-                      </div>
-                    </div>
-
-                    <div className="text-center pt-2 border-t border-white/10 space-y-1">
-                      <p className="text-[10px] text-zinc-400">Authorized by</p>
-                      <p className="font-serif font-bold text-xs text-white">Board of Governors — Tarepet Montessori</p>
-                      <p className="text-[9px] text-zinc-500">If found, please return to the School Admissions &amp; ICT Office.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-          {/* Edit Profile Modal */}
-          {showEditProfileModal && (
-            <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-              <div className="bg-card rounded-2xl border border-border p-6 shadow-2xl max-w-2xl w-full my-8 space-y-5 animate-in fade-in zoom-in duration-200">
-                <div className="flex items-center justify-between pb-3 border-b border-border">
-                  <div className="flex items-center gap-2">
-                    <UserCheck className="w-5 h-5 text-primary" />
-                    <h3 className="font-serif font-bold text-lg text-foreground">Edit Administrator Dossier</h3>
-                  </div>
-                  <button onClick={() => setShowEditProfileModal(false)} className="p-1 rounded-lg text-muted-foreground hover:bg-accent cursor-pointer">
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-                {profileUpdateSuccess && (
-                  <div className="p-3 bg-emerald-500/10 border border-emerald-200 text-emerald-600 rounded-xl text-xs font-bold flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4" /> Profile dossier updated and saved successfully!
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs max-h-[60vh] overflow-y-auto pr-1">
-                  <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Full Name</label>
-                    <input
-                      type="text"
-                      value={editProfileForm.name}
-                      onChange={e => setEditProfileForm({ ...editProfileForm, name: e.target.value })}
-                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:ring-2 focus:ring-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Official Title</label>
-                    <input
-                      type="text"
-                      value={editProfileForm.title}
-                      onChange={e => setEditProfileForm({ ...editProfileForm, title: e.target.value })}
-                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:ring-2 focus:ring-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Administrative Cadre / Rank</label>
-                    <input
-                      type="text"
-                      value={editProfileForm.rank || ''}
-                      onChange={e => setEditProfileForm({ ...editProfileForm, rank: e.target.value })}
-                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:ring-2 focus:ring-primary"
-                      placeholder="e.g. Chief Executive Administrator"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Department</label>
-                    <input
-                      type="text"
-                      value={editProfileForm.department}
-                      onChange={e => setEditProfileForm({ ...editProfileForm, department: e.target.value })}
-                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:ring-2 focus:ring-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Email Address</label>
-                    <input
-                      type="email"
-                      value={editProfileForm.email}
-                      onChange={e => setEditProfileForm({ ...editProfileForm, email: e.target.value })}
-                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:ring-2 focus:ring-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Direct Phone Contact</label>
-                    <input
-                      type="tel"
-                      value={editProfileForm.phone}
-                      onChange={e => setEditProfileForm({ ...editProfileForm, phone: e.target.value })}
-                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:ring-2 focus:ring-primary"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Office Location</label>
-                    <input
-                      type="text"
-                      value={editProfileForm.officeLocation || ''}
-                      onChange={e => setEditProfileForm({ ...editProfileForm, officeLocation: e.target.value })}
-                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:ring-2 focus:ring-primary"
-                      placeholder="e.g. Principal's Office Suite, Block A"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Direct Intercom Extension</label>
-                    <input
-                      type="text"
-                      value={editProfileForm.directExtension || ''}
-                      onChange={e => setEditProfileForm({ ...editProfileForm, directExtension: e.target.value })}
-                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:ring-2 focus:ring-primary"
-                      placeholder="e.g. Ext. 101"
-                    />
-                  </div>
-                  <div className="sm:col-span-2">
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Executive Biography & Pedagogical Vision</label>
-                    <textarea
-                      rows={2}
-                      value={editProfileForm.bio || ''}
-                      onChange={e => setEditProfileForm({ ...editProfileForm, bio: e.target.value })}
-                      className="w-full border border-border rounded-xl px-4 py-2 bg-card text-foreground focus:ring-2 focus:ring-primary resize-none"
-                      placeholder="Visionary educational leader..."
-                    />
-                  </div>
-                  <div className="sm:col-span-2">
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Academic Qualifications (Degrees & Universities)</label>
-                    <input
-                      type="text"
-                      value={editProfileForm.qualifications || ''}
-                      onChange={e => setEditProfileForm({ ...editProfileForm, qualifications: e.target.value })}
-                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:ring-2 focus:ring-primary"
-                      placeholder="e.g. Ph.D. Educational Leadership (UNILAG), M.Ed. Montessori Early Childhood, B.Ed."
-                    />
-                  </div>
-                  <div className="sm:col-span-2">
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Professional Certifications & Memberships</label>
-                    <input
-                      type="text"
-                      value={editProfileForm.certifications || ''}
-                      onChange={e => setEditProfileForm({ ...editProfileForm, certifications: e.target.value })}
-                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:ring-2 focus:ring-primary"
-                      placeholder="e.g. TRCN Licensed Teacher, Cambridge International Leader, NAPPS Member"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Emergency Contact / Next of Kin</label>
-                    <input
-                      type="text"
-                      value={editProfileForm.emergencyContact || ''}
-                      onChange={e => setEditProfileForm({ ...editProfileForm, emergencyContact: e.target.value })}
-                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:ring-2 focus:ring-primary"
-                      placeholder="e.g. Mrs. Florence Montessori (Spouse)"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Emergency Phone Number</label>
-                    <input
-                      type="tel"
-                      value={editProfileForm.emergencyPhone || ''}
-                      onChange={e => setEditProfileForm({ ...editProfileForm, emergencyPhone: e.target.value })}
-                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:ring-2 focus:ring-primary"
-                      placeholder="e.g. +234 802 987 6543"
-                    />
-                  </div>
-                  <div className="sm:col-span-2">
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Official Residential Address</label>
-                    <input
-                      type="text"
-                      value={editProfileForm.address}
-                      onChange={e => setEditProfileForm({ ...editProfileForm, address: e.target.value })}
-                      className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:ring-2 focus:ring-primary"
-                    />
-                  </div>
-                  <div className="sm:col-span-2 space-y-1 pt-2 border-t border-border">
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block">Official Profile Avatar / Photograph</label>
-                    <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 text-primary font-bold text-xl flex items-center justify-center overflow-hidden shrink-0">
-                        {editProfileForm.profileImage ? (
-                          <img src={editProfileForm.profileImage} alt="Preview" className="w-full h-full object-cover" />
-                        ) : (
-                          editProfileForm.name?.[0] || 'A'
-                        )}
-                      </div>
-                      <div className="space-y-1.5 flex-1">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          id="adminAvatarFilePicker"
-                          className="hidden"
-                          onChange={e => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              if (file.size > 10 * 1024 * 1024) {
-                                (window as any).showTarepetAlert?.('The selected image file exceeds 10MB. Please select a photo below 10MB.', 'Image Size Limit Exceeded', 'warning');
-                                return;
-                              }
-                              const reader = new FileReader();
-                              reader.onloadend = () => {
-                                const base64 = reader.result as string;
-                                triggerCropModal(base64, (cropped) => {
-                                  setEditProfileForm(prev => ({ ...prev, profileImage: cropped }));
-                                });
-                              };
-                              reader.readAsDataURL(file);
-                              e.target.value = '';
-                            }
-                          }}
-                        />
-                        <div className="flex flex-wrap items-center gap-2">
-                          <label htmlFor="adminAvatarFilePicker" className="px-3.5 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 cursor-pointer inline-flex items-center gap-1.5 shadow-sm transition-all">
-                            <Upload className="w-3.5 h-3.5" /> {editProfileForm.profileImage ? 'Change Photo' : 'Select Image File'}
-                          </label>
-                          {editProfileForm.profileImage && (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  triggerCropModal(editProfileForm.profileImage || '', (cropped: string) => {
-                                    setEditProfileForm(prev => ({ ...prev, profileImage: cropped }));
-                                  });
-                                }}
-                                className="px-3 py-2 text-foreground border border-border rounded-xl text-xs font-bold hover:bg-muted inline-flex items-center gap-1 cursor-pointer"
-                              >
-                                <Scissors className="w-3.5 h-3.5 text-primary" /> Crop / Resize
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setEditProfileForm({ ...editProfileForm, profileImage: '' })}
-                                className="px-3 py-2 text-rose-600 border border-rose-200 dark:border-rose-800/40 rounded-xl text-xs font-bold hover:bg-rose-50 dark:hover:bg-rose-950/30 inline-flex items-center gap-1 cursor-pointer"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" /> Clear Photo
-                              </button>
-                            </>
-                          )}
-                        </div>
-                        <p className="text-[10px] text-muted-foreground">Supported formats: JPG, PNG, WEBP. Real-time preview applied.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 pt-2 border-t border-border">
-                  <button
-                    onClick={() => {
-                      setAdminProfileData(editProfileForm);
-                      if (typeof window !== 'undefined') {
-                        try {
-                          localStorage.setItem('tarepet_admin_profile_data', JSON.stringify(editProfileForm));
-                        } catch (e) {}
-                      }
-                      const nameParts = (editProfileForm.name || '').trim().split(' ');
-                      const fName = nameParts[0] || 'Admin';
-                      const lName = nameParts.slice(1).join(' ') || 'System';
-
-                      updateUser({
-                        first_name: fName,
-                        last_name: lName,
-                        phone: editProfileForm.phone,
-                        profile_image: editProfileForm.profileImage,
-                        profile: {
-                          ...(user?.profile || {}),
-                          profile_image: editProfileForm.profileImage,
-                          profileImage: editProfileForm.profileImage,
-                        }
-                      });
-
-                      authClient.put('/auth/me/', {
-                        first_name: fName,
-                        last_name: lName,
-                        phone: editProfileForm.phone,
-                        profile_image: editProfileForm.profileImage,
-                        profile: {
-                          profile_image: editProfileForm.profileImage,
-                          profileImage: editProfileForm.profileImage,
-                        }
-                      }).then(() => {
-                        refreshUserProfile().catch(() => {});
-                      }).catch(() => {});
-
-                      broadcastRealtimeEvent();
-
-                      setProfileUpdateSuccess(true);
-                      setTimeout(() => {
-                        setProfileUpdateSuccess(false);
-                        setShowEditProfileModal(false);
-                      }, 1000);
-                    }}
-                    className="flex-1 py-3 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all cursor-pointer shadow-sm"
-                  >
-                    Save & Apply Changes
-                  </button>
-                  <button
-                    onClick={() => setShowEditProfileModal(false)}
-                    className="px-5 py-3 border border-border rounded-xl text-xs font-bold hover:bg-accent transition-all cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+            </form>
+          </div>
 
           {/* Change Password Modal */}
           {showChangePasswordModal && (
             <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
               <div className="bg-card rounded-2xl border border-border p-6 shadow-2xl max-w-md w-full space-y-5 animate-in fade-in zoom-in duration-200">
                 <div className="flex items-center justify-between pb-3 border-b border-border">
-                  <h3 className="font-serif font-bold text-lg text-foreground">Change Password</h3>
-                  <button onClick={() => setShowChangePasswordModal(false)} className="p-1 rounded-lg text-muted-foreground hover:bg-accent">
+                  <h3 className="font-serif font-bold text-lg text-foreground">Change Administrator Password</h3>
+                  <button onClick={() => setShowChangePasswordModal(false)} className="p-1 rounded-lg text-muted-foreground hover:bg-accent cursor-pointer">
                     <X className="w-5 h-5" />
                   </button>
                 </div>
@@ -6935,7 +6286,7 @@ export default function AdminDashboard() {
                 {passwordSuccess ? (
                   <div className="p-4 bg-emerald-500/10 border border-emerald-200 text-emerald-600 rounded-xl text-xs font-bold text-center space-y-2">
                     <CheckCircle2 className="w-8 h-8 mx-auto" />
-                    <p>Password updated successfully!</p>
+                    <p>Password updated and secured successfully!</p>
                   </div>
                 ) : (
                   <div className="space-y-4 text-xs">
@@ -6953,7 +6304,7 @@ export default function AdminDashboard() {
                       <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">New Password</label>
                       <input
                         type="password"
-                        placeholder="••••••••"
+                        placeholder="Min 8 chars, 1 uppercase, 1 symbol"
                         value={passwordForm.newPass}
                         onChange={e => setPasswordForm({ ...passwordForm, newPass: e.target.value })}
                         className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:ring-2 focus:ring-primary"
@@ -6963,7 +6314,7 @@ export default function AdminDashboard() {
                       <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Confirm New Password</label>
                       <input
                         type="password"
-                        placeholder="••••••••"
+                        placeholder="Repeat new password"
                         value={passwordForm.confirm}
                         onChange={e => setPasswordForm({ ...passwordForm, confirm: e.target.value })}
                         className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground focus:ring-2 focus:ring-primary"
@@ -6974,25 +6325,17 @@ export default function AdminDashboard() {
                       <button
                         onClick={() => {
                           if (!passwordForm.newPass || passwordForm.newPass !== passwordForm.confirm) {
-                            showAlert({
-                              title: 'Password Mismatch',
-                              message: 'The new password and confirmation password do not match.',
-                              type: 'warning',
-                            });
+                            showToast('The new password and confirmation password do not match.');
                             return;
                           }
                           const check = validatePasswordStrength(passwordForm.newPass);
                           if (!check.isValid) {
-                            showAlert({
-                              title: 'Password Policy Requirements',
-                              message: 'Please fulfill the following security standards:\n• ' + check.errors.join('\n• '),
-                              type: 'warning',
-                              badge: 'Security Policy',
-                            });
+                            showToast('Password must be 8+ chars with uppercase, number and symbol.');
                             return;
                           }
                           setAdminPassword(passwordForm.newPass);
                           setPasswordSuccess(true);
+                          showToast('Admin password updated successfully!');
                           setTimeout(() => setShowChangePasswordModal(false), 1500);
                         }}
                         className="flex-1 py-3 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all cursor-pointer shadow-sm"
@@ -7011,7 +6354,6 @@ export default function AdminDashboard() {
               </div>
             </div>
           )}
-
         </div>
       );
     }
