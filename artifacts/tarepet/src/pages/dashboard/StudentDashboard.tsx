@@ -10,7 +10,7 @@ import {
   Settings, User, Bell, Lock, AlertCircle,
   BarChart2, Shield, Play, ArrowUpRight, Trophy, ClipboardList,
   CheckSquare, Filter, Search, Sparkles, Zap, Printer, ShieldCheck,
-  Scissors, Trash2, Upload, CreditCard
+  Scissors, Trash2, Upload, CreditCard, Edit3
 } from 'lucide-react';
 
 import { getStoredExams, getStoredSubmissions, subscribeToCBTStore, getCoursesForClass, getStudentBroadsheet, calculateWAECGrade, calculateBECEGrade, isSeniorSecondaryClass, getStoredStudents, saveStudent, broadcastRealtimeEvent, syncStudentsWithBackend, getStoredSubjects, matchStudentClass, SubjectRecord } from '@/lib/cbt-store';
@@ -174,8 +174,65 @@ export default function StudentDashboard() {
 
   // Settings form state (synced with actual admin data)
   const [profileForm, setProfileForm] = useState(getStudentProfileData);
+  const [isEditingPersonal, setIsEditingPersonal] = useState(false);
   const [cropModalOpen, setCropModalOpen] = useState(false);
   const [pendingCropImage, setPendingCropImage] = useState('');
+
+  const handleSaveProfile = () => {
+    const fullName = `${profileForm.firstName} ${profileForm.lastName}`.trim();
+    saveStudent({
+      admissionNo: profileForm.studentId,
+      name: fullName,
+      email: profileForm.email,
+      phone: profileForm.phone,
+      gender: profileForm.gender,
+      dob: profileForm.dob,
+      address: profileForm.address,
+      profileImage: profileForm.profileImage,
+    });
+
+    updateUser({
+      first_name: profileForm.firstName,
+      last_name: profileForm.lastName,
+      phone: profileForm.phone,
+      profile_image: profileForm.profileImage,
+      profile: {
+        ...(user?.profile || {}),
+        student_id: profileForm.studentId,
+        gender: profileForm.gender,
+        date_of_birth: profileForm.dob,
+        address: profileForm.address,
+        profile_image: profileForm.profileImage,
+        profileImage: profileForm.profileImage,
+      }
+    });
+
+    authClient.patch('/auth/me/', {
+      first_name: profileForm.firstName,
+      last_name: profileForm.lastName,
+      phone: profileForm.phone,
+      profile_image: profileForm.profileImage,
+      profile: {
+        student_id: profileForm.studentId,
+        gender: profileForm.gender,
+        date_of_birth: profileForm.dob,
+        address: profileForm.address,
+        profile_image: profileForm.profileImage,
+        profileImage: profileForm.profileImage,
+      }
+    }).then(() => {
+      refreshUserProfile().catch(() => {});
+    }).catch(() => {});
+
+    broadcastRealtimeEvent();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('cbt_store_updated'));
+      window.dispatchEvent(new Event('storage'));
+    }
+
+    setIsEditingPersonal(false);
+    showToast('Personal information updated successfully!');
+  };
 
   const handleSaveCroppedAvatar = (croppedBase64: string) => {
     const updated = { ...profileForm, profileImage: croppedBase64 };
@@ -1049,90 +1106,158 @@ export default function StudentDashboard() {
 
           {/* 3. Personal & Contact Information */}
           <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
-            <h3 className="font-serif font-bold text-foreground text-sm border-b border-border pb-3 flex items-center gap-2">
-              <User className="w-4 h-4 text-primary" /> Personal & Contact Information
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs font-semibold text-foreground block mb-1.5">{t('student.first_name', 'First Name')}</label>
-                <input
-                  type="text"
-                  value={profileForm.firstName}
-                  onChange={e => setProfileForm({...profileForm, firstName: e.target.value})}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all"
-                  placeholder="Enter first name"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-foreground block mb-1.5">{t('student.last_name', 'Last Name')}</label>
-                <input
-                  type="text"
-                  value={profileForm.lastName}
-                  onChange={e => setProfileForm({...profileForm, lastName: e.target.value})}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all"
-                  placeholder="Enter last name"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs font-semibold text-foreground block mb-1.5">{t('student.email_address', 'Email Address')}</label>
-                <input
-                  type="email"
-                  value={profileForm.email}
-                  onChange={e => setProfileForm({...profileForm, email: e.target.value})}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all"
-                  placeholder="student@tarepet.edu.ng"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-foreground block mb-1.5">{t('student.phone_number', 'Contact Phone Number')}</label>
-                <input
-                  type="text"
-                  value={profileForm.phone}
-                  onChange={e => setProfileForm({...profileForm, phone: e.target.value})}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all"
-                  placeholder="e.g. +234 803 123 4567"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs font-semibold text-foreground block mb-1.5">Gender</label>
-                <select
-                  value={profileForm.gender || 'Male'}
-                  onChange={e => setProfileForm({...profileForm, gender: e.target.value})}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <h3 className="font-serif font-bold text-foreground text-sm flex items-center gap-2">
+                <User className="w-4 h-4 text-primary" /> Personal & Contact Information
+              </h3>
+              {!isEditingPersonal ? (
+                <button
+                  type="button"
+                  onClick={() => setIsEditingPersonal(true)}
+                  className="px-3.5 py-1.5 rounded-xl border border-border bg-background hover:bg-muted text-foreground text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
                 >
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-foreground block mb-1.5">Date of Birth</label>
-                <input
-                  type="date"
-                  value={profileForm.dob || '2010-05-15'}
-                  onChange={e => setProfileForm({...profileForm, dob: e.target.value})}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all"
-                />
-              </div>
+                  <Edit3 className="w-3.5 h-3.5 text-primary" />
+                  <span>Edit Information</span>
+                </button>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProfileForm(getStudentProfileData());
+                      setIsEditingPersonal(false);
+                    }}
+                    className="px-3 py-1.5 rounded-xl border border-border text-muted-foreground hover:bg-muted text-xs font-semibold transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSaveProfile}
+                    className="px-3.5 py-1.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-95"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Save Changes</span>
+                  </button>
+                </div>
+              )}
             </div>
 
-            <div>
-              <label className="text-xs font-semibold text-foreground block mb-1.5">Residential / Campus Address</label>
-              <input
-                type="text"
-                value={profileForm.address || ''}
-                onChange={e => setProfileForm({...profileForm, address: e.target.value})}
-                placeholder="e.g. Azikoro Road, Yenagoa, Bayelsa State"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all"
-              />
-            </div>
+            {!isEditingPersonal ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div className="bg-muted/20 border border-border/80 rounded-xl p-3.5">
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase block mb-1">First Name</span>
+                  <p className="font-semibold text-xs text-foreground">{profileForm.firstName || 'Not Specified'}</p>
+                </div>
+                <div className="bg-muted/20 border border-border/80 rounded-xl p-3.5">
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase block mb-1">Last Name</span>
+                  <p className="font-semibold text-xs text-foreground">{profileForm.lastName || 'Not Specified'}</p>
+                </div>
+                <div className="bg-muted/20 border border-border/80 rounded-xl p-3.5">
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase block mb-1">Email Address</span>
+                  <p className="font-semibold text-xs text-foreground">{profileForm.email || 'Not Available'}</p>
+                </div>
+                <div className="bg-muted/20 border border-border/80 rounded-xl p-3.5">
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase block mb-1">Contact Phone Number</span>
+                  <p className="font-semibold text-xs text-foreground">{profileForm.phone || 'Not Available'}</p>
+                </div>
+                <div className="bg-muted/20 border border-border/80 rounded-xl p-3.5">
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase block mb-1">Gender</span>
+                  <p className="font-semibold text-xs text-foreground">{profileForm.gender || 'Not Specified'}</p>
+                </div>
+                <div className="bg-muted/20 border border-border/80 rounded-xl p-3.5">
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase block mb-1">Date of Birth</span>
+                  <p className="font-semibold text-xs text-foreground">{profileForm.dob || 'Not Specified'}</p>
+                </div>
+                <div className="sm:col-span-2 bg-muted/20 border border-border/80 rounded-xl p-3.5">
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase block mb-1">Residential / Campus Address</span>
+                  <p className="font-semibold text-xs text-foreground">{profileForm.address || 'Not Available'}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-foreground block mb-1.5">{t('student.first_name', 'First Name')}</label>
+                    <input
+                      type="text"
+                      value={profileForm.firstName}
+                      onChange={e => setProfileForm({...profileForm, firstName: e.target.value})}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                      placeholder="Enter first name"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-foreground block mb-1.5">{t('student.last_name', 'Last Name')}</label>
+                    <input
+                      type="text"
+                      value={profileForm.lastName}
+                      onChange={e => setProfileForm({...profileForm, lastName: e.target.value})}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                      placeholder="Enter last name"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-foreground block mb-1.5">{t('student.email_address', 'Email Address')}</label>
+                    <input
+                      type="email"
+                      value={profileForm.email}
+                      onChange={e => setProfileForm({...profileForm, email: e.target.value})}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                      placeholder="student@tarepet.edu.ng"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-foreground block mb-1.5">{t('student.phone_number', 'Contact Phone Number')}</label>
+                    <input
+                      type="text"
+                      value={profileForm.phone}
+                      onChange={e => setProfileForm({...profileForm, phone: e.target.value})}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                      placeholder="e.g. +234 803 123 4567"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-foreground block mb-1.5">Gender</label>
+                    <select
+                      value={profileForm.gender || 'Male'}
+                      onChange={e => setProfileForm({...profileForm, gender: e.target.value})}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                    >
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-foreground block mb-1.5">Date of Birth</label>
+                    <input
+                      type="date"
+                      value={profileForm.dob || '2010-05-15'}
+                      onChange={e => setProfileForm({...profileForm, dob: e.target.value})}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-foreground block mb-1.5">Residential / Campus Address</label>
+                  <input
+                    type="text"
+                    value={profileForm.address || ''}
+                    onChange={e => setProfileForm({...profileForm, address: e.target.value})}
+                    placeholder="e.g. Azikoro Road, Yenagoa, Bayelsa State"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* 4. Notification Preferences */}
