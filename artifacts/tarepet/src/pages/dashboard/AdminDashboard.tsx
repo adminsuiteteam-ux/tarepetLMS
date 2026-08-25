@@ -8162,45 +8162,53 @@ export default function AdminDashboard() {
                   </thead>
                   <tbody className="divide-y divide-border">
                     {filteredSubjects.length > 0 ? (
-                      filteredSubjects.map(sub => (
-                        <tr
-                          key={sub.id}
-                          className="hover:bg-primary/5 transition-colors cursor-pointer group"
-                          onClick={() => setSelectedSubjectPreview(sub)}
-                        >
-                          <td className="py-3.5 px-4">
-                            <div className="flex items-center gap-3">
-                              <span className="text-xs font-mono font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-lg border border-primary/20">
-                                {sub.code}
-                              </span>
-                              <div>
-                                <p className="font-bold text-foreground text-sm group-hover:text-primary transition-colors">{sub.title}</p>
+                      filteredSubjects.map(sub => {
+                        const dynamicEnrolledCount = studentsList.filter(st => {
+                          const matchGrade = matchStudentClass(st.grade, sub.grade);
+                          const matchStream = !sub.stream || sub.stream === 'General' || (st.stream || 'Science') === sub.stream;
+                          return matchGrade && matchStream;
+                        }).length;
+
+                        return (
+                          <tr
+                            key={sub.id}
+                            className="hover:bg-primary/5 transition-colors cursor-pointer group"
+                            onClick={() => setSelectedSubjectPreview({ ...sub, studentsCount: dynamicEnrolledCount })}
+                          >
+                            <td className="py-3.5 px-4">
+                              <div className="flex items-center gap-3">
+                                <span className="text-xs font-mono font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-lg border border-primary/20">
+                                  {sub.code}
+                                </span>
+                                <div>
+                                  <p className="font-bold text-foreground text-sm group-hover:text-primary transition-colors">{sub.title}</p>
+                                </div>
                               </div>
-                            </div>
-                          </td>
-                          <td className="py-3.5 px-4">
-                            <span className="inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full border bg-primary/10 text-primary border-primary/20">
-                              {sub.grade}
-                            </span>
-                          </td>
-                          <td className="py-3.5 px-4 font-medium text-foreground">
-                            <span className={`inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
-                              sub.stream === 'Science' ? 'bg-primary/10 text-primary border-primary/20' :
-                              sub.stream === 'Art' ? 'bg-primary/10 text-primary border-primary/20' :
-                              'bg-muted text-muted-foreground border-border'
-                            }`}>
-                              {sub.stream || 'General'}
-                            </span>
-                          </td>
-                          <td className="py-3.5 px-4 font-semibold text-foreground">{sub.teacher}</td>
-                          <td className="py-3.5 px-4 font-bold text-foreground">{sub.studentsCount || sub.enrolled || 0} Students</td>
-                          <td className="py-3.5 px-4 text-right">
-                            <span className="text-[10px] font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full border border-primary/20">
-                              Active Course
-                            </span>
-                          </td>
-                        </tr>
-                      ))
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <span className="inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full border bg-primary/10 text-primary border-primary/20">
+                                {sub.grade}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-4 font-medium text-foreground">
+                              <span className={`inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                                sub.stream === 'Science' ? 'bg-primary/10 text-primary border-primary/20' :
+                                sub.stream === 'Art' ? 'bg-primary/10 text-primary border-primary/20' :
+                                'bg-muted text-muted-foreground border-border'
+                              }`}>
+                                {sub.stream || 'General'}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-4 font-semibold text-foreground">{sub.teacher}</td>
+                            <td className="py-3.5 px-4 font-bold text-foreground">{dynamicEnrolledCount} Student{dynamicEnrolledCount !== 1 ? 's' : ''}</td>
+                            <td className="py-3.5 px-4 text-right">
+                              <span className="text-[10px] font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full border border-primary/20">
+                                Active Course
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
                     ) : (
                       <tr>
                         <td colSpan={6} className="py-12 text-center text-muted-foreground">
