@@ -288,31 +288,10 @@ export default function StudentDashboard() {
       <div className="space-y-6">
         {/* Welcome Banner */}
         <div className="bg-gradient-to-r from-rose-800 via-red-900 to-rose-950 text-white p-5 sm:p-7 rounded-2xl sm:rounded-3xl shadow-lg relative overflow-hidden">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5 mb-4">
+          <div className="flex items-center justify-between gap-3 mb-4">
             <span className="w-fit text-[11px] sm:text-xs font-bold uppercase tracking-widest bg-white/20 backdrop-blur-md px-3.5 py-1.5 rounded-full shadow-sm">
-              {`${studentGrade.toUpperCase()} ${studentStream.toUpperCase()} · ${selectedTerm.toUpperCase()} 2026`}
+              {`${studentGrade.toUpperCase()} ${studentStream.toUpperCase()} · 2025/2026 ACADEMIC SESSION`}
             </span>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
-              <button
-                onClick={() => setShowReportCardModal(true)}
-                className="bg-white/20 hover:bg-white/30 active:scale-95 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm border border-white/15 cursor-pointer"
-              >
-                <Printer className="w-3.5 h-3.5" /> Official Report Card
-              </button>
-              <div className="flex items-center justify-between sm:justify-start gap-1 bg-black/30 backdrop-blur-md p-1 rounded-xl w-full sm:w-auto border border-white/15">
-                {(['1st Term', '2nd Term', '3rd Term'] as const).map(term => (
-                  <button
-                    key={term}
-                    onClick={() => setSelectedTerm(term)}
-                    className={`flex-1 sm:flex-initial text-center px-3 py-1.5 rounded-lg text-xs sm:text-[11px] font-bold transition-all whitespace-nowrap cursor-pointer ${
-                      selectedTerm === term ? 'bg-white text-rose-950 shadow-md scale-[1.02]' : 'text-rose-100/80 hover:text-white'
-                    }`}
-                  >
-                    {term}
-                  </button>
-                ))}
-              </div>
-            </div>
           </div>
           <h2 className="text-2xl sm:text-3xl font-serif font-bold mb-1.5">
             {getTimeGreeting()}, {user?.first_name ?? t('student.role_student', 'Student')}!
@@ -899,7 +878,51 @@ export default function StudentDashboard() {
         <div className="hidden md:block space-y-6 max-w-3xl">
           <div>
             <h2 className="text-2xl font-serif font-bold text-foreground">{t('student.settings_title', 'Setting/profile')}</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">{t('student.settings_desc', 'Manage your student profile, account security, and notifications.')}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{t('student.settings_desc', 'Manage your student profile, terminal report cards, and account security.')}</p>
+          </div>
+
+          {/* Official Report Card & Academic Term Switcher */}
+          <div className="bg-gradient-to-br from-rose-900/10 via-card to-card rounded-2xl border border-rose-200 dark:border-rose-900/40 p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div>
+                <h3 className="font-serif font-bold text-foreground text-base flex items-center gap-2">
+                  <Printer className="w-4 h-4 text-rose-700" /> Official Terminal Report Card
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Select your academic term to generate and print your official certified report card.
+                </p>
+              </div>
+              <span className="text-xs font-mono font-bold text-rose-700 bg-rose-500/10 border border-rose-200 px-3 py-1 rounded-full">
+                {selectedTerm} 2026
+              </span>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-1">
+              <div className="flex items-center gap-1.5 bg-muted/40 p-1.5 rounded-xl border border-border">
+                {(['1st Term', '2nd Term', '3rd Term'] as const).map(term => (
+                  <button
+                    key={term}
+                    type="button"
+                    onClick={() => setSelectedTerm(term)}
+                    className={`flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                      selectedTerm === term
+                        ? 'bg-rose-800 text-white shadow-sm scale-[1.02]'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                    }`}
+                  >
+                    {term}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowReportCardModal(true)}
+                className="bg-rose-800 hover:bg-rose-900 active:scale-95 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-md cursor-pointer"
+              >
+                <Printer className="w-4 h-4" /> Print / View Report Card
+              </button>
+            </div>
           </div>
 
           <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
