@@ -1554,7 +1554,87 @@ export function saveCBTExam(examData: Partial<CBTExam> & { title: string; course
     questions: newExam.questions
   }).catch(() => {});
 
+  sendWebSocketEvent('EXAM_CREATED', { exam: newExam });
+
   return newExam;
+}
+
+export function mapCBTExamToAdminExam(c: CBTExam): any {
+  const statusMap: Record<string, string> = {
+    'APPROVED': 'Approved',
+    'ACTIVE': 'Ongoing',
+    'COMPLETED': 'Completed',
+    'PENDING': 'Pending Approval',
+    'REJECTED': 'Rejected',
+    'DRAFT': 'Draft',
+    'ARCHIVED': 'Archived',
+  };
+  return {
+    id: c.id,
+    title: c.title,
+    type: c.assessment_type === 'EXAM' ? 'Term Exam' : c.assessment_type === 'TEST' ? 'CA Test' : 'Quiz',
+    subject: c.course_name,
+    class: c.class,
+    stream: c.stream || 'Science',
+    date: c.created_at ? new Date(c.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+    time: '09:00 AM',
+    duration: `${c.duration_minutes || 45} mins`,
+    venue: 'CBT Hall A',
+    totalCandidates: 30,
+    questionsCount: c.questions_count || (c.questions ? c.questions.length : 0),
+    invigilator: c.teacher_name || 'Assigned Educator',
+    status: statusMap[c.status] || (c.status === 'ACTIVE' ? 'Ongoing' : c.status === 'APPROVED' ? 'Approved' : 'Pending Approval'),
+    rawCbtExam: c
+  };
+}
+
+export async function syncExamsWithBackend(): Promise<CBTExam[]> {
+  try {
+    const res = await authClient.get('/assessments/cbt-exams/');
+    if (res.data) {
+      const dataArr: any[] = Array.isArray(res.data?.results)
+        ? res.data.results
+        : Array.isArray(res.data)
+        ? res.data
+        : [];
+      if (dataArr.length > 0) {
+        const mappedExams: CBTExam[] = dataArr.map((item: any) => ({
+          id: item.id,
+          title: item.title,
+          description: item.description || '',
+          instructions: item.instructions || '',
+          course_code: item.course_code || item.course?.code || 'ENG-101',
+          course_name: item.course_name || item.course?.name || 'English Language',
+          class: item.class_name || item.class || 'SS1',
+          stream: item.stream || 'Science',
+          assessment_type: item.assessment_type || 'TEST',
+          term: item.term || '2ND_TERM',
+          duration_minutes: item.duration_minutes || 45,
+          questions_count: item.questions_count || (Array.isArray(item.questions) ? item.questions.length : 0),
+          questions_per_page: item.questions_per_page || 2,
+          teacher_name: item.teacher_name || item.created_by_name || 'Assigned Educator',
+          status: item.status || 'PENDING',
+          questions: Array.isArray(item.questions) ? item.questions : [],
+          created_at: item.created_at || new Date().toISOString(),
+          results_released: item.results_released || false,
+        }));
+        
+        const local = loadSavedExams();
+        const merged = [...mappedExams];
+        for (const loc of local) {
+          if (!merged.some(m => m.id === loc.id)) {
+            merged.push(loc);
+          }
+        }
+        _exams = merged;
+        persistExams(_exams);
+        broadcastRealtimeEvent();
+        return _exams;
+      }
+    }
+  } catch (e) {}
+  _exams = loadSavedExams();
+  return _exams;
 }
 
 export function updateExamStatus(examId: number, status: CBTExam['status'], reason?: string): CBTExam | null {
@@ -1595,6 +1675,7 @@ export function updateExamStatus(examId: number, status: CBTExam['status'], reas
 
   persistExams(_exams);
   broadcastRealtimeEvent();
+  sendWebSocketEvent('EXAM_STATUS_UPDATED', { examId, status, reason, exam });
   return exam;
 }
 

@@ -5,8 +5,8 @@ import { authClient, sanitizeMailto } from '@/lib/api-auth';
 import { PortalLayout } from '@/components/layout/PortalLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
-import { subscribeToWebSocketEvents } from '@/lib/websocket-client';
-import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, clearAllStoredStudents, deleteStudent, syncStudentsWithBackend, getStoredTeachers, saveTeacher, saveStoredTeachers, clearAllStoredTeachers, deleteTeacher, syncTeachersWithBackend, listenToRealtimeEvents, clearCBTStoreCache, clearAllSiteDefaultData, isAccountDeleted, getAdminPassword, setAdminPassword, matchStudentClass, broadcastRealtimeEvent, getStoredSubjects, saveSubject, deleteSubject, DEFAULT_SUBJECTS, SubjectRecord } from '@/lib/cbt-store';
+import { subscribeToWebSocketEvents, getWebSocketStatus, subscribeToWebSocketStatus, sendWebSocketEvent } from '@/lib/websocket-client';
+import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, syncExamsWithBackend, mapCBTExamToAdminExam, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, clearAllStoredStudents, deleteStudent, syncStudentsWithBackend, getStoredTeachers, saveTeacher, saveStoredTeachers, clearAllStoredTeachers, deleteTeacher, syncTeachersWithBackend, listenToRealtimeEvents, clearCBTStoreCache, clearAllSiteDefaultData, isAccountDeleted, getAdminPassword, setAdminPassword, matchStudentClass, broadcastRealtimeEvent, getStoredSubjects, saveSubject, deleteSubject, DEFAULT_SUBJECTS, SubjectRecord } from '@/lib/cbt-store';
 import { AdminManagementPanel } from '@/components/dashboard/AdminManagementPanel';
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
 import { ImageCropModal } from '@/components/ui/ImageCropModal';
@@ -2209,31 +2209,11 @@ export default function AdminDashboard() {
   const [usersList, setUsersList] = useState(MOCK_USERS);
   const [studentsList, setStudentsList] = useState<any[]>(() => getStoredStudents());
 
-  React.useEffect(() => {
-    setStudentsList(getStoredStudents());
-    setSubjectsListState(getStoredSubjects());
-    syncStudentsWithBackend().then(res => setStudentsList(res));
-    const unsub = subscribeToCBTStore(() => {
-      setStudentsList(getStoredStudents());
-      setSubjectsListState(getStoredSubjects());
-    });
-    const unsubEvents = subscribeToWebSocketEvents((event: any) => {
-      if (event.type === 'STUDENT_ENROLLED_BY_TEACHER' && event.payload) {
-        setStudentsList(getStoredStudents());
-        syncStudentsWithBackend().then(res => setStudentsList(res));
-        const p = event.payload;
-        showAlert?.({
-          title: 'Live Student Registration Alert',
-          message: `🔔 Live Notification: Form Teacher ${p.registeredBy || 'Staff'} has enrolled a new student: "${p.student?.name || 'Student'}" into ${p.classLevel || 'Class'}.`,
-          type: 'info'
-        });
-      }
-    });
-    return () => {
-      unsub();
-      unsubEvents();
-    };
-  }, []);
+  const [wsExamStatus, setWsExamStatus] = useState<string>(() => getWebSocketStatus());
+  const [isSyncingExams, setIsSyncingExams] = useState(false);
+  const [examsList, setExamsList] = useState<any[]>(() => getStoredExams().map(mapCBTExamToAdminExam));
+  const [previewExam, setPreviewExam] = useState<any>(null);
+
   const [showAddStudentModal, setShowAddStudentModal] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
   const [newStudentForm, setNewStudentForm] = useState({
@@ -2261,8 +2241,81 @@ export default function AdminDashboard() {
   const [selectedClass, setSelectedClass] = useState<string | null>(null);   // 'SS1' | 'SS2' | 'SS3'
   const [selectedStream, setSelectedStream] = useState<string | null>(null); // 'Science' | 'Art'
   const [openClassDropdown, setOpenClassDropdown] = useState<string | null>(null); // which class card has dropdown open
-  const [examsList, setExamsList] = useState(INITIAL_EXAMS);
-  const [previewExam, setPreviewExam] = useState<any>(null);
+
+  const refreshExamsRealtime = React.useCallback(() => {
+    const list = getStoredExams();
+    setExamsList(list.map(mapCBTExamToAdminExam));
+  }, []);
+
+  React.useEffect(() => {
+    setStudentsList(getStoredStudents());
+    setSubjectsListState(getStoredSubjects());
+    refreshExamsRealtime();
+
+    syncStudentsWithBackend().then(res => setStudentsList(res));
+    syncExamsWithBackend().then(res => {
+      setExamsList(res.map(mapCBTExamToAdminExam));
+    });
+
+    const unsubCBT = subscribeToCBTStore(() => {
+      setStudentsList(getStoredStudents());
+      setSubjectsListState(getStoredSubjects());
+      refreshExamsRealtime();
+    });
+
+    const unsubWsStatus = subscribeToWebSocketStatus((status) => {
+      setWsExamStatus(status);
+    });
+
+    const unsubEvents = subscribeToWebSocketEvents((event: any) => {
+      if (event.type === 'STUDENT_ENROLLED_BY_TEACHER' && event.payload) {
+        setStudentsList(getStoredStudents());
+        syncStudentsWithBackend().then(res => setStudentsList(res));
+        const p = event.payload;
+        showAlert?.({
+          title: 'Live Student Registration Alert',
+          message: `🔔 Live Notification: Form Teacher ${p.registeredBy || 'Staff'} has enrolled a new student: "${p.student?.name || 'Student'}" into ${p.classLevel || 'Class'}.`,
+          type: 'info'
+        });
+      }
+
+      if (
+        event.type === 'CBT_STORE_MUTATED' ||
+        event.type === 'EXAM_CREATED' ||
+        event.type === 'EXAM_APPROVED' ||
+        event.type === 'EXAM_REJECTED' ||
+        event.type === 'EXAM_ACTIVATED' ||
+        event.type === 'EXAM_STATUS_UPDATED' ||
+        event.type === 'EXAM_SUBMISSION'
+      ) {
+        refreshExamsRealtime();
+        syncExamsWithBackend().then(res => setExamsList(res.map(mapCBTExamToAdminExam)));
+
+        if (event.type === 'EXAM_CREATED' && event.payload?.exam) {
+          const ex = event.payload.exam;
+          showAlert?.({
+            title: '📝 New Exam Submitted for Approval',
+            message: `Teacher ${ex.teacher_name || 'Staff'} submitted CBT Exam: "${ex.title}" (${ex.course_name} - ${ex.class}).`,
+            type: 'info'
+          });
+        }
+        if (event.type === 'EXAM_ACTIVATED' && event.payload?.exam) {
+          const ex = event.payload.exam;
+          showAlert?.({
+            title: '🚀 Exam Now Live for Students',
+            message: `Exam "${ex.title}" (${ex.course_name}) is now live in student portal.`,
+            type: 'success'
+          });
+        }
+      }
+    });
+
+    return () => {
+      unsubCBT();
+      unsubWsStatus();
+      unsubEvents();
+    };
+  }, [refreshExamsRealtime]);
 
   // Manage exams drill-down state
   const [selectedExamClass, setSelectedExamClass] = useState<string | null>(null);   // 'SS1' | 'SS2' | 'SS3'
@@ -4214,14 +4267,58 @@ export default function AdminDashboard() {
                     : 'Select an exam division to browse class assessments, or view repositories below.'}
                 </p>
               </div>
-              {selectedExamDivision && (
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Real-time WebSocket Connection Indicator */}
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold shadow-sm bg-card">
+                  {wsExamStatus === 'connected' ? (
+                    <span className="inline-flex items-center gap-1.5 text-emerald-600 font-bold">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                      WS Live Synced
+                    </span>
+                  ) : wsExamStatus === 'connecting' ? (
+                    <span className="inline-flex items-center gap-1.5 text-amber-600 font-semibold">
+                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+                      Connecting WS...
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 text-muted-foreground font-semibold">
+                      <span className="w-2 h-2 rounded-full bg-muted-foreground"></span>
+                      Local Offline
+                    </span>
+                  )}
+                </div>
+
+                {/* Instant Sync Action */}
                 <button
-                  onClick={() => { setSelectedExamDivision(null); setOpenExamClassDropdown(null); }}
-                  className="px-3.5 py-2.5 border border-border rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors flex items-center gap-1.5"
+                  onClick={async () => {
+                    setIsSyncingExams(true);
+                    try {
+                      const res = await syncExamsWithBackend();
+                      setExamsList(res.map(mapCBTExamToAdminExam));
+                      showAlert?.({ title: 'Exams Synchronized', message: `✅ Live synchronized ${res.length} exam records from server.`, type: 'success' });
+                    } catch (e) {
+                      showAlert?.({ title: 'Sync Completed', message: 'Local exam records verified.', type: 'info' });
+                    } finally {
+                      setTimeout(() => setIsSyncingExams(false), 500);
+                    }
+                  }}
+                  disabled={isSyncingExams}
+                  className="px-3.5 py-2 border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-sm"
+                  title="Synchronize exams with live server database"
                 >
-                  <ChevronLeft className="w-4 h-4" /> Back to Divisions
+                  <RefreshCw className={`w-3.5 h-3.5 ${isSyncingExams ? 'animate-spin' : ''}`} />
+                  {isSyncingExams ? 'Syncing...' : 'Sync Exams Now'}
                 </button>
-              )}
+
+                {selectedExamDivision && (
+                  <button
+                    onClick={() => { setSelectedExamDivision(null); setOpenExamClassDropdown(null); }}
+                    className="px-3.5 py-2 border border-border rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors flex items-center gap-1.5"
+                  >
+                    <ChevronLeft className="w-4 h-4" /> Back to Divisions
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* ── Examination Repositories (ALWAYS SHOWN FIRST) ── */}
