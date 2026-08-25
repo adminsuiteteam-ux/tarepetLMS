@@ -1810,6 +1810,7 @@ export function submitStudentCBTAttempt(
     recipientRole: 'TEACHER'
   });
   broadcastRealtimeEvent();
+  sendWebSocketEvent('EXAM_SUBMISSION', { submission: newSub, examId: exam.id });
   return newSub;
 }
 
