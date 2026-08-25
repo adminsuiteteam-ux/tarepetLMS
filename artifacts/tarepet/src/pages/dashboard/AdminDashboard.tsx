@@ -6201,28 +6201,8 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="space-y-1 bg-muted/20 p-4 rounded-xl border border-border">
-                      <p className="text-muted-foreground font-bold uppercase text-[10px]">Executive Office Suite</p>
-                      <p className="font-bold text-foreground text-sm">{adminProfileData.officeLocation || "Principal's Office Suite, Block A Executive Wing"}</p>
-                    </div>
-
-                    <div className="space-y-1 bg-muted/20 p-4 rounded-xl border border-border">
-                      <p className="text-muted-foreground font-bold uppercase text-[10px]">Direct Intercom Extension</p>
-                      <p className="font-mono font-bold text-primary text-sm">{adminProfileData.directExtension || 'Ext. 101 (Direct Line)'}</p>
-                    </div>
-
-                    <div className="space-y-1 bg-muted/20 p-4 rounded-xl border border-border">
-                      <p className="text-muted-foreground font-bold uppercase text-[10px]">Date of Appointment</p>
-                      <p className="font-bold text-foreground text-sm">{adminProfileData.dateJoined}</p>
-                    </div>
-
-                    <div className="space-y-1 bg-muted/20 p-4 rounded-xl border border-border">
                       <p className="text-muted-foreground font-bold uppercase text-[10px]">Date of Birth</p>
                       <p className="font-bold text-foreground text-sm">{adminProfileData.dob}</p>
-                    </div>
-
-                    <div className="space-y-1 bg-muted/20 p-4 rounded-xl border border-border">
-                      <p className="text-muted-foreground font-bold uppercase text-[10px]">Gender &amp; Blood Group</p>
-                      <p className="font-bold text-foreground text-sm">{adminProfileData.gender} · {adminProfileData.bloodGroup || 'O+'}</p>
                     </div>
 
                     <div className="space-y-1 bg-muted/20 p-4 rounded-xl border border-border">
