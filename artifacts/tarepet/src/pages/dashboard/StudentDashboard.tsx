@@ -954,7 +954,7 @@ export default function StudentDashboard() {
         </div>
 
         {/* Desktop View */}
-        <div className="hidden md:block space-y-6 max-w-4xl pb-10">
+        <div className="hidden md:block space-y-6 w-full pb-10">
           <div>
             <h2 className="text-2xl font-serif font-bold text-foreground">{t('student.settings_title', 'Student Profile & Settings')}</h2>
             <p className="text-xs text-muted-foreground mt-0.5">{t('student.settings_desc', 'Official academic credentials, terminal report cards, contact records, and account security.')}</p>
