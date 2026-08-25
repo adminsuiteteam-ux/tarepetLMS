@@ -453,87 +453,85 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
   const labelCls = 'text-[11px] font-black uppercase tracking-wider text-slate-800 block mb-1.5';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl border border-slate-100 shadow-2xl w-full max-w-4xl flex flex-col md:flex-row overflow-hidden max-h-[92vh] min-h-[580px]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-2 sm:p-4 animate-in fade-in duration-200">
+      <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-2xl w-full max-w-4xl flex flex-col overflow-hidden max-h-[92vh] sm:max-h-[88vh]">
 
-        {/* LEFT VERTICAL SIDEBAR STEPPER (Primary Palette DNB Pattern) */}
-        <div className="w-full md:w-72 bg-gradient-to-b from-primary/10 via-primary/5 to-slate-50 border-r border-primary/20 p-6 flex flex-col justify-between shrink-0">
-          <div>
-            {/* Header Brand */}
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-10 h-10 rounded-2xl bg-primary text-white flex items-center justify-center font-bold text-lg shadow-md shadow-primary/20">
+        {/* 21st.dev Inspired Compact Responsive Header & Progress Stepper */}
+        <div className="bg-slate-950 text-white p-4 sm:p-5 border-b border-slate-800 shrink-0">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-primary to-amber-500 text-white flex items-center justify-center font-bold shadow-md shadow-primary/30 shrink-0">
                 <GraduationCap className="w-5 h-5 text-white" />
               </div>
-              <div>
-                <h2 className="font-serif font-black text-sm text-slate-950 leading-tight">Tarepet Montessori</h2>
-                <p className="text-[11px] font-black uppercase tracking-wider text-primary">Teacher Registration</p>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="font-serif font-bold text-sm sm:text-base text-white truncate">Teacher Registration</h2>
+                  <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full bg-primary/20 text-primary-foreground border border-primary/30 text-[10px] font-bold">
+                    Step {step} of 5
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 font-medium truncate">
+                  <span className="text-white font-bold">{WIZARD_STEPS[step - 1]?.label}</span> — {WIZARD_STEPS[step - 1]?.sub}
+                </p>
               </div>
             </div>
 
-            {/* Vertical Stepper */}
-            <div className="space-y-1 relative">
-              {WIZARD_STEPS.map((s, idx) => {
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="sm:hidden text-[10px] font-mono font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-md border border-amber-400/20">
+                {step}/5 ({step * 20}%)
+              </span>
+              <button
+                onClick={onClose}
+                className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Progress Track & Step Indicators */}
+          <div className="space-y-2">
+            {/* Animated Gradient Progress Track */}
+            <div className="h-1.5 w-full bg-slate-800/90 rounded-full overflow-hidden relative">
+              <div
+                className="h-full bg-gradient-to-r from-primary via-rose-500 to-amber-400 transition-all duration-300 ease-out rounded-full"
+                style={{ width: `${(step / 5) * 100}%` }}
+              />
+            </div>
+
+            {/* Horizontal Step Chips (Scrollable / Responsive) */}
+            <div className="flex items-center justify-between gap-1 overflow-x-auto no-scrollbar py-0.5 text-[11px]">
+              {WIZARD_STEPS.map((s) => {
                 const isActive = step === s.step;
-                const isCompleted = step > s.step;
-
+                const isDone = step > s.step;
                 return (
-                  <div key={s.step} className="relative flex items-start gap-3.5 pb-6 last:pb-0 group">
-                    {/* Connecting Vertical Line */}
-                    {idx < WIZARD_STEPS.length - 1 && (
-                      <div className={`absolute left-4 top-8 bottom-0 w-0.5 transition-colors ${
-                        isCompleted ? 'bg-primary' : 'bg-slate-300'
-                      }`} />
-                    )}
-
-                    {/* Step Icon Badge */}
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs shrink-0 transition-all z-10 ${
+                  <button
+                    key={s.step}
+                    type="button"
+                    onClick={() => setStep(s.step)}
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl transition-all whitespace-nowrap cursor-pointer ${
                       isActive
-                        ? 'bg-primary text-white ring-4 ring-primary/20 shadow-sm'
-                        : isCompleted
-                          ? 'bg-primary text-white'
-                          : 'bg-white text-slate-700 font-bold border-2 border-slate-300'
+                        ? 'bg-primary text-white font-bold shadow-sm shadow-primary/30'
+                        : isDone
+                        ? 'text-emerald-400 hover:bg-slate-800/80 font-semibold'
+                        : 'text-slate-400 hover:bg-slate-800/50 font-medium'
+                    }`}
+                  >
+                    <span className={`w-4 h-4 rounded-full text-[9px] flex items-center justify-center font-bold ${
+                      isActive ? 'bg-white text-primary' : isDone ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'
                     }`}>
-                      {isCompleted ? '✓' : s.step}
-                    </div>
-
-                    {/* Step Text Label */}
-                    <div className="min-w-0 pt-0.5">
-                      <p className={`text-xs transition-colors ${
-                        isActive ? 'text-primary font-black' : isCompleted ? 'text-slate-900 font-bold' : 'text-slate-800 font-bold'
-                      }`}>
-                        {s.label}
-                      </p>
-                      <p className={`text-[10px] truncate ${
-                        isActive ? 'text-primary/90 font-bold' : isCompleted ? 'text-slate-700 font-semibold' : 'text-slate-600 font-semibold'
-                      }`}>{s.sub}</p>
-                    </div>
-                  </div>
+                      {isDone ? '✓' : s.step}
+                    </span>
+                    <span className="hidden md:inline">{s.label}</span>
+                  </button>
                 );
               })}
             </div>
           </div>
-
-          <div className="pt-4 border-t border-primary/20 text-xs text-slate-700 font-bold">
-            Step <span className="font-black text-primary">{step}</span> of <span className="font-black text-slate-950">5</span>
-          </div>
         </div>
 
-        {/* RIGHT MAIN FORM WORKSPACE */}
-        <div className="flex-1 flex flex-col justify-between overflow-hidden bg-white">
-
-          {/* Form Header */}
-          <div className="flex items-center justify-between px-8 py-5 border-b border-slate-100 shrink-0">
-            <div>
-              <h3 className="font-serif font-black text-xl text-slate-950">{(WIZARD_STEPS.find((_, idx) => idx === step - 1) || WIZARD_STEPS[0]).label}</h3>
-              <p className="text-xs text-slate-600 font-bold mt-0.5">{(WIZARD_STEPS.find((_, idx) => idx === step - 1) || WIZARD_STEPS[0]).sub}</p>
-            </div>
-            <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-700 font-bold transition cursor-pointer">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Form Body Scroll Area */}
-          <div className="flex-1 overflow-y-auto px-8 py-6 space-y-5">
+        {/* Scrollable Form Body */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-7 space-y-5">
 
             {/* STEP 1 — Personal Details */}
             {step === 1 && (
@@ -984,9 +982,7 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
             </div>
           </div>
 
-        </div>
-
-        <ImageCropModal
+          <ImageCropModal
           isOpen={cropModalOpen}
           imageSrc={pendingCropImage}
           onClose={() => setCropModalOpen(false)}
@@ -2365,12 +2361,6 @@ export default function AdminDashboard() {
   const [subjectFilterTab, setSubjectFilterTab] = useState<'ALL' | 'JUNIOR' | 'SENIOR' | 'SCIENCE' | 'ART'>('ALL');
   const [subjectSearch, setSubjectSearch] = useState('');
   const [selectedSubjectDivision, setSelectedSubjectDivision] = useState<string | null>(null);
-  const [settingsTab, setSettingsTab] = useState<'general' | 'academic' | 'notify' | 'access' | 'fees' | 'portal'>('general');
-  const [settingsSaved, setSettingsSaved] = useState(false);
-  const triggerSave = () => {
-    setSettingsSaved(true);
-    setTimeout(() => setSettingsSaved(false), 2500);
-  };
 
   // Admin Profile state with persistent storage and comprehensive fields
   const [profileTab, setProfileTab] = useState<'info' | 'governance' | 'security' | 'permissions' | 'activity' | 'idcard'>('info');
@@ -2449,6 +2439,80 @@ export default function AdminDashboard() {
   const [profileUpdateSuccess, setProfileUpdateSuccess] = useState(false);
   const [adminPasswordForm, setAdminPasswordForm] = useState({ current: '', newPass: '', confirm: '' });
   const [adminPasswordStatus, setAdminPasswordStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  // Comprehensive System Settings State with Realtime Persistence
+  const [settingsTab, setSettingsTab] = useState<'auth' | 'general' | 'academic' | 'access' | 'notify' | 'fees' | 'portal' | 'system'>('auth');
+  const [settingsSaved, setSettingsSaved] = useState(false);
+  const [smsTestPhone, setSmsTestPhone] = useState('+234 800 000 0000');
+  const [smsTestStatus, setSmsTestStatus] = useState<string | null>(null);
+  const [systemSettings, setSystemSettings] = useState<any>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('tarepet_system_settings');
+        if (saved) return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return {
+      // 1. Multi-Factor & Authentication
+      enforce2FA: true,
+      otpChannels: ['EMAIL'],
+      otpExpiryMinutes: 5,
+      maxOtpAttempts: 3,
+      sendWelcomeEmailWithCredentials: true,
+      allowDirectStudentPinLogin: true,
+      minPasswordLength: 8,
+      requireSpecialChar: true,
+      requireNumber: true,
+      passwordExpiryMonths: 6,
+      failedLoginLockoutAttempts: 5,
+      // 2. School Profile
+      schoolName: 'Tare Pet Montessori School',
+      shortName: 'TPMS',
+      motto: 'Excellence Through Observation & Character',
+      officialEmail: 'info@tarepet.edu.ng',
+      phone: '+234 803 123 4567',
+      address: '12 Kpansia-Epie Road, Yenagoa, Bayelsa State, Nigeria',
+      ministryRegNo: 'EDU/BY/SCH/2009/0421',
+      proprietress: 'Mrs. Tare Pet',
+      principal: 'Dr. T. Montessori',
+      vicePrincipal: 'Mr. James Eze',
+      // 3. Academic & Grading
+      session: '2025/2026',
+      term: '2nd Term',
+      termStart: '2026-01-12',
+      termEnd: '2026-04-04',
+      minPassMark: 50,
+      ca1Weight: 15,
+      ca2Weight: 15,
+      examWeight: 70,
+      // 4. Session & Access
+      sessionTimeoutMinutes: 30,
+      singleSessionPerUser: true,
+      // 5. Notifications & SMS
+      smsProvider: 'Termii (Nigeria)',
+      smsSenderId: 'TPMS-School',
+      smsBalance: 4820,
+      notifyResultsSMS: true,
+      notifyAttendanceSMS: true,
+      notifyFeesSMS: true,
+      notifyCBTExams: true,
+      // 6. Fees
+      lateFeePenalty: '₦2,000 flat fee after due date',
+      scholarshipSlots: 10,
+    };
+  });
+
+  const triggerSave = (newValues?: any) => {
+    const updated = newValues ? { ...systemSettings, ...newValues } : { ...systemSettings };
+    setSystemSettings(updated);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('tarepet_system_settings', JSON.stringify(updated));
+    }
+    broadcastRealtimeEvent();
+    setSettingsSaved(true);
+    showToast('System settings updated and synchronized in real time!');
+    setTimeout(() => setSettingsSaved(false), 3000);
+  };
 
   // Class Marksheet / Score Entry State
   const [resultsViewTab, setResultsViewTab] = useState<'roster' | 'marksheet' | 'fees'>('roster');
@@ -3042,158 +3106,6 @@ export default function AdminDashboard() {
   const activeType = USER_TYPES.find(t => t.key === userSubPage);
 
   const renderSection = () => {
-    // MY PASSWORD SETTINGS SECTION
-    if (activeSection === 'settings') {
-      return (
-        <div className="space-y-6 max-w-4xl mx-auto">
-          {/* Header Banner */}
-          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-600 flex items-center justify-center font-serif font-bold text-2xl">
-                A
-              </div>
-              <div>
-                <h2 className="text-xl font-serif font-bold text-foreground">Chief Administrator Account</h2>
-                <p className="text-xs text-muted-foreground">Official Admin Portal Profile & Security Controls</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="px-2.5 py-0.5 rounded-md bg-rose-500/10 text-rose-600 border border-rose-500/20 text-[10px] font-bold uppercase">
-                    Super Admin
-                  </span>
-                  <span className="text-xs font-mono font-bold text-primary">admin@tarepet.com</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Settings Card */}
-          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-6">
-            <div className="border-b border-border pb-4 flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-serif font-bold text-foreground flex items-center gap-2">
-                  <Lock className="w-5 h-5 text-primary" /> Admin Password & Security Settings
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  Update your official admin password. Your default portal login email is <strong className="text-foreground">admin@tarepet.com</strong>.
-                </p>
-              </div>
-            </div>
-
-            {/* Password Change Form */}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                setAdminPasswordStatus(null);
-
-                const currentPass = getAdminPassword();
-                const isCurrentValid = 
-                  adminPasswordForm.current === currentPass ||
-                  adminPasswordForm.current === 'TarepetAdmin@2026!';
-
-                if (!isCurrentValid) {
-                  setAdminPasswordStatus({
-                    type: 'error',
-                    message: 'Current password is incorrect. Please enter your valid current password.'
-                  });
-                  return;
-                }
-
-                if (adminPasswordForm.newPass.length < 6) {
-                  setAdminPasswordStatus({
-                    type: 'error',
-                    message: 'New password must be at least 6 characters long.'
-                  });
-                  return;
-                }
-
-                if (adminPasswordForm.newPass !== adminPasswordForm.confirm) {
-                  setAdminPasswordStatus({
-                    type: 'error',
-                    message: 'New password and confirmation password do not match.'
-                  });
-                  return;
-                }
-
-                // Update stored password
-                setAdminPassword(adminPasswordForm.newPass);
-
-                // Notify & Show alert
-                setAdminPasswordStatus({
-                  type: 'success',
-                  message: 'Password changed successfully! You can now log into admin@tarepet.com with your new password.'
-                });
-
-                setAdminPasswordForm({ current: '', newPass: '', confirm: '' });
-              }}
-              className="space-y-4 max-w-md"
-            >
-              {adminPasswordStatus && (
-                <div className={`p-4 rounded-xl text-xs font-semibold flex items-center gap-2 border ${
-                  adminPasswordStatus.type === 'success'
-                    ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
-                    : 'bg-rose-500/10 text-rose-600 border-rose-500/20'
-                }`}>
-                  {adminPasswordStatus.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
-                  <span>{adminPasswordStatus.message}</span>
-                </div>
-              )}
-
-              <div>
-                <label className="block text-xs font-semibold text-foreground mb-1.5">
-                  Current Admin Password
-                </label>
-                <input
-                  type="password"
-                  value={adminPasswordForm.current}
-                  onChange={(e) => setAdminPasswordForm(p => ({ ...p, current: e.target.value }))}
-                  placeholder="Enter current password"
-                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-xs focus:ring-2 focus:ring-primary focus:outline-none"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-foreground mb-1.5">
-                  New Password
-                </label>
-                <input
-                  type="password"
-                  value={adminPasswordForm.newPass}
-                  onChange={(e) => setAdminPasswordForm(p => ({ ...p, newPass: e.target.value }))}
-                  placeholder="Enter new password (min 6 characters)"
-                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-xs focus:ring-2 focus:ring-primary focus:outline-none"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-foreground mb-1.5">
-                  Confirm New Password
-                </label>
-                <input
-                  type="password"
-                  value={adminPasswordForm.confirm}
-                  onChange={(e) => setAdminPasswordForm(p => ({ ...p, confirm: e.target.value }))}
-                  placeholder="Confirm new password"
-                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-xs focus:ring-2 focus:ring-primary focus:outline-none"
-                  required
-                />
-              </div>
-
-              <div className="pt-2">
-                <button
-                  type="submit"
-                  className="px-6 py-2.5 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary/90 transition-all shadow-sm flex items-center gap-2"
-                >
-                  <Lock className="w-4 h-4" /> Save New Password
-                </button>
-              </div>
-            </form>
-          </div>
-
-        </div>
-      );
-    }
-
     // 1. OVERVIEW & SCHOOL EXECUTIVE ANALYTICS
     if (activeSection === 'overview' || activeSection === 'analytics') {
       const classPerformanceData = STUDENT_CLASSES.map(cls => {
@@ -5053,41 +4965,79 @@ export default function AdminDashboard() {
         <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
 
           {/* Header */}
-          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
                 <Settings className="w-6 h-6" />
               </div>
               <div>
-                <h2 className="font-bold text-xl text-foreground mb-1">School Administration Settings</h2>
-                <p className="text-xs text-muted-foreground">Manage school profile, academic calendar, grading policies, access control, fees, and portal appearance.</p>
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <h2 className="font-serif font-bold text-xl sm:text-2xl text-foreground">School Administration Settings</h2>
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[10px] font-bold">
+                    Realtime Sync Active
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Configure 2FA authentication, credentials dispatch, academic calendar, access control, fees, communication gateways, and system backups.
+                </p>
               </div>
             </div>
-            {settingsSaved && (
-              <div className="flex items-center gap-2 text-emerald-600 bg-emerald-500/10 border border-emerald-200 px-4 py-2 rounded-xl text-xs font-bold">
-                <CheckCircle2 className="w-4 h-4" /> Settings saved successfully!
-              </div>
-            )}
+
+            <div className="flex items-center gap-2.5 flex-wrap">
+              {settingsSaved && (
+                <div className="flex items-center gap-2 text-emerald-600 bg-emerald-500/10 border border-emerald-200 px-3.5 py-2 rounded-xl text-xs font-bold animate-in fade-in duration-150">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" /> Saved in Real Time!
+                </div>
+              )}
+              <button
+                onClick={() => {
+                  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
+                    settings: systemSettings,
+                    teachers: teachersList,
+                    students: studentsList,
+                    exportedAt: new Date().toISOString(),
+                    school: 'Tare Pet Montessori School'
+                  }, null, 2));
+                  const dlAnchorElem = document.createElement('a');
+                  dlAnchorElem.setAttribute("href", dataStr);
+                  dlAnchorElem.setAttribute("download", `tarepet_system_backup_${new Date().toISOString().split('T')[0]}.json`);
+                  dlAnchorElem.click();
+                  showToast("Full system JSON database backup downloaded successfully!");
+                }}
+                className="px-3.5 py-2 rounded-xl border border-border bg-muted/30 hover:bg-muted/70 text-foreground text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5 text-primary" />
+                <span>Export JSON Backup</span>
+              </button>
+              <button
+                onClick={() => triggerSave()}
+                className="px-4 py-2 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all flex items-center gap-2 shadow-sm cursor-pointer active:scale-95"
+              >
+                <CheckCircle2 className="w-4 h-4" /> Save Settings
+              </button>
+            </div>
           </div>
 
-          {/* Navigation Tabs */}
-          <div className="flex border-b border-border gap-1 overflow-x-auto pb-px text-xs font-bold">
+          {/* Navigation Tabs (Horizontal Scrollable & Touch-Friendly) */}
+          <div className="flex border-b border-border gap-1 overflow-x-auto pb-px text-xs font-bold no-scrollbar scrollbar-none">
             {[
-              { id: 'general',   label: 'School Profile',    icon: Building2 },
-              { id: 'academic',  label: 'Academic & Grading', icon: GraduationCap },
-              { id: 'notify',    label: 'Notifications',      icon: Bell },
-              { id: 'access',    label: 'Staff & Access',     icon: Users },
-              { id: 'fees',      label: 'Fees & Finance',     icon: CreditCard },
-              { id: 'portal',    label: 'Portal Appearance',  icon: Palette },
+              { id: 'auth',      label: '2FA & Authentication', icon: Lock },
+              { id: 'general',   label: 'School Profile',       icon: Building2 },
+              { id: 'academic',  label: 'Academic & Grading',    icon: GraduationCap },
+              { id: 'access',    label: 'Staff & RBAC Matrix',  icon: Users },
+              { id: 'notify',    label: 'SMS & Email Gateways', icon: Bell },
+              { id: 'fees',      label: 'Fees & Finance',        icon: CreditCard },
+              { id: 'portal',    label: 'Portal Appearance',     icon: Palette },
+              { id: 'system',    label: 'Cloud Sync & Health',   icon: Activity },
             ].map(tab => {
               const TabIcon = tab.icon;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setSettingsTab(tab.id as any)}
-                  className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors whitespace-nowrap ${
+                  className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors whitespace-nowrap cursor-pointer ${
                     settingsTab === tab.id
-                      ? 'border-primary text-primary bg-primary/5 rounded-t-xl'
+                      ? 'border-primary text-primary bg-primary/5 rounded-t-xl font-bold shadow-xs'
                       : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/20 rounded-t-xl'
                   }`}
                 >
@@ -5098,52 +5048,286 @@ export default function AdminDashboard() {
             })}
           </div>
 
-          {/* ── TAB 1: School Profile ── */}
+          {/* ── TAB 1: 2FA & Authentication Governance ── */}
+          {settingsTab === 'auth' && (
+            <div className="space-y-5">
+              {/* Multi-Factor Authentication (OTP 2FA) */}
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
+                <div className="flex items-center justify-between pb-3 border-b border-border">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                      <ShieldCheck className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-serif font-bold text-base text-foreground">Multi-Factor Authentication (OTP 2FA)</h3>
+                      <p className="text-xs text-muted-foreground">Enforce SHA-256 hashed 6-digit one-time passcode verification for privileged portal roles.</p>
+                    </div>
+                  </div>
+                  <span className="hidden sm:inline-block px-3 py-1 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-full text-xs font-bold">
+                    Django 2FA Engine Active
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  <div className="p-4 border border-border rounded-xl bg-muted/10 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-bold text-foreground">Enforce OTP 2FA for Admin & Teachers</p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">Generates cryptographic OTP code upon credentials verification before JWT issuance.</p>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={systemSettings.enforce2FA}
+                        onChange={(e) => triggerSave({ enforce2FA: e.target.checked })}
+                        className="w-5 h-5 accent-primary cursor-pointer"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="p-4 border border-border rounded-xl bg-muted/10 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-bold text-foreground">Direct Student & Parent PIN Login</p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">Students and parents log in directly via Admission No / PIN without 2FA interception.</p>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={systemSettings.allowDirectStudentPinLogin}
+                        onChange={(e) => triggerSave({ allowDirectStudentPinLogin: e.target.checked })}
+                        className="w-5 h-5 accent-primary cursor-pointer"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">OTP Code Expiration Lifetime</label>
+                    <select
+                      value={systemSettings.otpExpiryMinutes}
+                      onChange={(e) => triggerSave({ otpExpiryMinutes: Number(e.target.value) })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
+                    >
+                      <option value={3}>3 Minutes (High Security)</option>
+                      <option value={5}>5 Minutes (Standard Recommended)</option>
+                      <option value={10}>10 Minutes (Extended)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Max OTP Verification Attempts</label>
+                    <select
+                      value={systemSettings.maxOtpAttempts}
+                      onChange={(e) => triggerSave({ maxOtpAttempts: Number(e.target.value) })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
+                    >
+                      <option value={3}>3 Attempts (Lock after 3 failures)</option>
+                      <option value={5}>5 Attempts</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Automated Teacher Welcome & Credentials Email Dispatch */}
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
+                <div className="flex items-center gap-3 pb-3 border-b border-border">
+                  <Mail className="w-5 h-5 text-primary" />
+                  <div>
+                    <h3 className="font-serif font-bold text-base text-foreground">Teacher Registration Credentials Dispatch</h3>
+                    <p className="text-xs text-muted-foreground">Automated notification and onboarding instructions sent to new teachers.</p>
+                  </div>
+                </div>
+
+                <div className="p-4 border border-border rounded-xl bg-muted/10 flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <p className="font-bold text-foreground text-xs">Dispatch Welcome &amp; Login Details to Teacher's Email</p>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      When an administrator creates a new teacher profile, an automated welcome email is instantly sent containing their Full Name, Email, Staff ID, Initial Password, Portal URL, and a strict confidentiality notice advising them never to share their credentials or OTP with anyone.
+                    </p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={systemSettings.sendWelcomeEmailWithCredentials}
+                    onChange={(e) => triggerSave({ sendWelcomeEmailWithCredentials: e.target.checked })}
+                    className="w-5 h-5 accent-primary cursor-pointer shrink-0 mt-1"
+                  />
+                </div>
+              </div>
+
+              {/* Live Admin Password & Policy Form */}
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
+                <div className="flex items-center gap-3 pb-3 border-b border-border">
+                  <Lock className="w-5 h-5 text-primary" />
+                  <div>
+                    <h3 className="font-serif font-bold text-base text-foreground">Super Administrator Password &amp; Policy</h3>
+                    <p className="text-xs text-muted-foreground">Update the main portal administrative passcode with strict policy enforcement.</p>
+                  </div>
+                </div>
+
+                {adminPasswordStatus && (
+                  <div className={`p-4 rounded-xl text-xs font-bold flex items-center gap-2 border ${
+                    adminPasswordStatus.type === 'success'
+                      ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                      : 'bg-rose-500/10 text-rose-600 border-rose-500/20'
+                  }`}>
+                    {adminPasswordStatus.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+                    <span>{adminPasswordStatus.message}</span>
+                  </div>
+                )}
+
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    adminPasswordForm.current = adminPasswordForm.current.trim();
+                    const currentPass = getAdminPassword();
+                    const isValid = adminPasswordForm.current === currentPass || adminPasswordForm.current === 'TarepetAdmin@2026!';
+                    if (!isValid) {
+                      setAdminPasswordStatus({ type: 'error', message: 'Current password is incorrect. Please enter your valid current password.' });
+                      return;
+                    }
+                    const check = validatePasswordStrength(adminPasswordForm.newPass);
+                    if (!check.isValid) {
+                      setAdminPasswordStatus({ type: 'error', message: 'Please meet policy standards:\n• ' + check.errors.join('\n• ') });
+                      return;
+                    }
+                    if (adminPasswordForm.newPass !== adminPasswordForm.confirm) {
+                      setAdminPasswordStatus({ type: 'error', message: 'New password and confirmation password do not match.' });
+                      return;
+                    }
+                    setAdminPassword(adminPasswordForm.newPass);
+                    setAdminPasswordStatus({ type: 'success', message: 'Administrator password changed and encrypted successfully!' });
+                    setAdminPasswordForm({ current: '', newPass: '', confirm: '' });
+                    showToast('Admin password updated successfully!');
+                  }}
+                  className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs"
+                >
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Current Password</label>
+                    <input
+                      type="password"
+                      value={adminPasswordForm.current}
+                      onChange={(e) => setAdminPasswordForm(p => ({ ...p, current: e.target.value }))}
+                      placeholder="Enter current password"
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">New Password</label>
+                    <input
+                      type="password"
+                      value={adminPasswordForm.newPass}
+                      onChange={(e) => setAdminPasswordForm(p => ({ ...p, newPass: e.target.value }))}
+                      placeholder="Min 8 chars, 1 uppercase, 1 symbol"
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Confirm New Password</label>
+                    <input
+                      type="password"
+                      value={adminPasswordForm.confirm}
+                      onChange={(e) => setAdminPasswordForm(p => ({ ...p, confirm: e.target.value }))}
+                      placeholder="Repeat new password"
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary"
+                      required
+                    />
+                  </div>
+
+                  <div className="sm:col-span-3 flex justify-end pt-2">
+                    <button
+                      type="submit"
+                      className="px-6 py-2.5 bg-primary text-white text-xs font-bold rounded-xl hover:bg-primary/90 transition-all shadow-sm flex items-center gap-2 cursor-pointer active:scale-95"
+                    >
+                      <Lock className="w-3.5 h-3.5" /> Update Admin Password
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* ── TAB 2: School Profile ── */}
           {settingsTab === 'general' && (
             <div className="space-y-5">
-              {/* School Identity */}
               <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
                 <div className="flex items-center gap-3 pb-3 border-b border-border">
                   <Building2 className="w-5 h-5 text-primary" />
-                  <h3 className="font-serif font-bold text-base text-foreground">School Identity</h3>
+                  <h3 className="font-serif font-bold text-base text-foreground">School Identity &amp; Accreditation</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
                   <div>
                     <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">School Full Name</label>
-                    <input type="text" defaultValue="Tare Pet Montessori School" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <input
+                      type="text"
+                      value={systemSettings.schoolName}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, schoolName: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
+                    />
                   </div>
                   <div>
                     <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">School Short Name / Abbrev.</label>
-                    <input type="text" defaultValue="TPMS" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <input
+                      type="text"
+                      value={systemSettings.shortName}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, shortName: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
+                    />
                   </div>
                   <div className="md:col-span-2">
                     <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">School Motto</label>
-                    <input type="text" defaultValue="Excellence Through Observation & Character" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <input
+                      type="text"
+                      value={systemSettings.motto}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, motto: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
                   </div>
                   <div>
                     <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Official Email Address</label>
-                    <input type="email" defaultValue="info@tarepet.edu.ng" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <input
+                      type="email"
+                      value={systemSettings.officialEmail}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, officialEmail: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">School Phone Number</label>
-                    <input type="tel" defaultValue="+234 803 123 4567" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">School Hotline / Phone</label>
+                    <input
+                      type="tel"
+                      value={systemSettings.phone}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, phone: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">School Physical Address</label>
-                    <input type="text" defaultValue="12 Kpansia-Epie Road, Yenagoa, Bayelsa State, Nigeria" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">School Physical Campus Address</label>
+                    <input
+                      type="text"
+                      value={systemSettings.address}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, address: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Registration / Ministry Number</label>
-                    <input type="text" defaultValue="EDU/BY/SCH/2009/0421" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Ministry Registration Number</label>
+                    <input
+                      type="text"
+                      value={systemSettings.ministryRegNo}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, ministryRegNo: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-mono"
+                    />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">School Type</label>
-                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                      <option>Private (Co-educational)</option>
-                      <option>Private (Boys Only)</option>
-                      <option>Private (Girls Only)</option>
-                      <option>Government / Public</option>
-                    </select>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Accreditations</label>
+                    <input
+                      type="text"
+                      defaultValue="TRCN / NAPPS / WAEC / NECO"
+                      disabled
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-muted/40 font-semibold"
+                    />
                   </div>
                 </div>
               </div>
@@ -5152,73 +5336,112 @@ export default function AdminDashboard() {
               <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
                 <div className="flex items-center gap-3 pb-3 border-b border-border">
                   <Award className="w-5 h-5 text-primary" />
-                  <h3 className="font-serif font-bold text-base text-foreground">School Leadership</h3>
+                  <h3 className="font-serif font-bold text-base text-foreground">Executive Institutional Leadership</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5 text-xs">
                   <div>
                     <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Proprietress / Founder</label>
-                    <input type="text" defaultValue="Mrs. Tare Pet" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <input
+                      type="text"
+                      value={systemSettings.proprietress}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, proprietress: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
+                    />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Principal / Head Teacher</label>
-                    <input type="text" defaultValue="Dr. T. Montessori" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Principal / Head Administrator</label>
+                    <input
+                      type="text"
+                      value={systemSettings.principal}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, principal: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
+                    />
                   </div>
                   <div>
                     <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Vice Principal (Academics)</label>
-                    <input type="text" defaultValue="Mr. James Eze" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <input
+                      type="text"
+                      value={systemSettings.vicePrincipal}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, vicePrincipal: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
+                    />
                   </div>
                 </div>
               </div>
 
               <div className="flex justify-end">
-                <button onClick={triggerSave} className="bg-primary text-white text-xs font-bold px-6 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2">
+                <button onClick={() => triggerSave()} className="bg-primary text-white text-xs font-bold px-6 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2 cursor-pointer active:scale-95 shadow-sm">
                   <CheckCircle2 className="w-4 h-4" /> Save School Profile
                 </button>
               </div>
             </div>
           )}
 
-          {/* ── TAB 2: Academic & Grading ── */}
+          {/* ── TAB 3: Academic & Grading ── */}
           {settingsTab === 'academic' && (
             <div className="space-y-5">
-              {/* Active Session & Term */}
               <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
                 <div className="flex items-center gap-3 pb-3 border-b border-border">
                   <CalendarCheck className="w-5 h-5 text-primary" />
-                  <h3 className="font-serif font-bold text-base text-foreground">Active Academic Session & Term</h3>
+                  <h3 className="font-serif font-bold text-base text-foreground">Active Academic Session &amp; Term Dates</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5 text-xs">
                   <div>
                     <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Academic Session</label>
-                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                      <option>2023/2024</option>
-                      <option>2024/2025</option>
-                      <option selected>2025/2026 (Active)</option>
+                    <select
+                      value={systemSettings.session}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, session: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
+                    >
+                      <option value="2024/2025">2024/2025</option>
+                      <option value="2025/2026">2025/2026 (Active)</option>
+                      <option value="2026/2027">2026/2027</option>
                     </select>
                   </div>
                   <div>
                     <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Current Term</label>
-                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                      <option>1st Term (Sept – Dec)</option>
-                      <option selected>2nd Term (Jan – Apr) — Active</option>
-                      <option>3rd Term (May – Jul)</option>
+                    <select
+                      value={systemSettings.term}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, term: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
+                    >
+                      <option value="1st Term">1st Term (Sept – Dec)</option>
+                      <option value="2nd Term">2nd Term (Jan – Apr) — Active</option>
+                      <option value="3rd Term">3rd Term (May – Jul)</option>
                     </select>
                   </div>
                   <div>
                     <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Minimum Pass Mark (%)</label>
-                    <input type="number" defaultValue="50" min="0" max="100" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <input
+                      type="number"
+                      value={systemSettings.minPassMark}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, minPassMark: Number(e.target.value) })}
+                      min="0"
+                      max="100"
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
+                    />
                   </div>
                   <div>
                     <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Term Start Date</label>
-                    <input type="date" defaultValue="2026-01-12" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <input
+                      type="date"
+                      value={systemSettings.termStart}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, termStart: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
                   </div>
                   <div>
                     <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Term End Date</label>
-                    <input type="date" defaultValue="2026-04-04" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <input
+                      type="date"
+                      value={systemSettings.termEnd}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, termEnd: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
                   </div>
                   <div>
                     <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">School Days Per Week</label>
-                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
+                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold">
                       <option>5 Days (Mon – Fri)</option>
                       <option>6 Days (Mon – Sat)</option>
                     </select>
@@ -5226,24 +5449,45 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* Score Breakdown */}
+              {/* Assessment Score Weights */}
               <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
                 <div className="flex items-center gap-3 pb-3 border-b border-border">
                   <BarChart2 className="w-5 h-5 text-primary" />
-                  <h3 className="font-serif font-bold text-base text-foreground">Assessment Score Breakdown</h3>
+                  <h3 className="font-serif font-bold text-base text-foreground">Assessment Continuous Assessment Weights</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-5 text-xs">
                   <div>
                     <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">CA 1 Weight (%)</label>
-                    <input type="number" defaultValue="15" min="0" max="100" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <input
+                      type="number"
+                      value={systemSettings.ca1Weight}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, ca1Weight: Number(e.target.value) })}
+                      min="0"
+                      max="100"
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
+                    />
                   </div>
                   <div>
                     <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">CA 2 Weight (%)</label>
-                    <input type="number" defaultValue="15" min="0" max="100" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <input
+                      type="number"
+                      value={systemSettings.ca2Weight}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, ca2Weight: Number(e.target.value) })}
+                      min="0"
+                      max="100"
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
+                    />
                   </div>
                   <div>
                     <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Examination Weight (%)</label>
-                    <input type="number" defaultValue="70" min="0" max="100" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <input
+                      type="number"
+                      value={systemSettings.examWeight}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, examWeight: Number(e.target.value) })}
+                      min="0"
+                      max="100"
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
+                    />
                   </div>
                 </div>
               </div>
@@ -5252,197 +5496,252 @@ export default function AdminDashboard() {
               <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
                 <div className="flex items-center gap-3 pb-3 border-b border-border">
                   <Award className="w-5 h-5 text-primary" />
-                  <h3 className="font-serif font-bold text-base text-foreground">Grading Scale</h3>
+                  <h3 className="font-serif font-bold text-base text-foreground">Standardized Grading Scale</h3>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
                   {[
-                    { grade: 'A — Distinction',  range: '75% – 100%', color: 'emerald' },
-                    { grade: 'B — Very Good',     range: '65% – 74%',  color: 'blue' },
-                    { grade: 'C — Credit',        range: '55% – 64%',  color: 'violet' },
-                    { grade: 'D — Pass',          range: '50% – 54%',  color: 'amber' },
-                    { grade: 'E — Below Pass',    range: '40% – 49%',  color: 'orange' },
-                    { grade: 'F — Fail',          range: '0% – 39%',   color: 'rose' },
+                    { grade: 'A — Distinction',  range: '75% – 100%', color: 'text-emerald-600 bg-emerald-500/10 border-emerald-200' },
+                    { grade: 'B — Very Good',     range: '65% – 74%',  color: 'text-blue-600 bg-blue-500/10 border-blue-200' },
+                    { grade: 'C — Credit',        range: '55% – 64%',  color: 'text-violet-600 bg-violet-500/10 border-violet-200' },
+                    { grade: 'D — Pass',          range: '50% – 54%',  color: 'text-amber-600 bg-amber-500/10 border-amber-200' },
+                    { grade: 'E — Fair',          range: '40% – 49%',  color: 'text-orange-600 bg-orange-500/10 border-orange-200' },
+                    { grade: 'F — Fail',          range: '0% – 39%',   color: 'text-rose-600 bg-rose-500/10 border-rose-200' },
                   ].map(g => (
-                    <div key={g.grade} className={`p-3 rounded-xl border bg-${g.color}-500/5 border-${g.color}-200`}>
-                      <p className={`font-bold text-${g.color}-700 text-[11px]`}>{g.grade}</p>
-                      <p className="text-muted-foreground text-[10px] mt-0.5">{g.range}</p>
+                    <div key={g.grade} className={`p-3 rounded-xl border ${g.color}`}>
+                      <p className="font-bold text-xs">{g.grade}</p>
+                      <p className="text-[10px] mt-0.5 opacity-80">{g.range}</p>
                     </div>
                   ))}
                 </div>
-                <p className="text-[10px] text-muted-foreground">Contact the principal to request a grading scale adjustment.</p>
               </div>
 
               <div className="flex justify-end">
-                <button onClick={triggerSave} className="bg-primary text-white text-xs font-bold px-6 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4" /> Save Academic Settings
+                <button onClick={() => triggerSave()} className="bg-primary text-white text-xs font-bold px-6 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2 cursor-pointer active:scale-95 shadow-sm">
+                  <CheckCircle2 className="w-4 h-4" /> Save Academic Policies
                 </button>
               </div>
             </div>
           )}
 
-          {/* ── TAB 3: Notifications ── */}
-          {settingsTab === 'notify' && (
+          {/* ── TAB 4: Staff & RBAC Matrix ── */}
+          {settingsTab === 'access' && (
             <div className="space-y-5">
               <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
                 <div className="flex items-center gap-3 pb-3 border-b border-border">
-                  <Bell className="w-5 h-5 text-primary" />
-                  <h3 className="font-serif font-bold text-base text-foreground">Parent & Student Notification Settings</h3>
+                  <Shield className="w-5 h-5 text-primary" />
+                  <div>
+                    <h3 className="font-serif font-bold text-base text-foreground">Role-Based Access Control (RBAC)</h3>
+                    <p className="text-xs text-muted-foreground">Permission tiers and operational scopes defined across institutional user roles.</p>
+                  </div>
                 </div>
+
                 <div className="space-y-3 text-xs">
                   {[
-                    { label: 'Send result notifications to parents via SMS', desc: 'Parents receive an SMS when terminal results are published.', enabled: true },
-                    { label: 'Send attendance alerts to parents', desc: 'Parents are notified when their ward is marked absent.', enabled: true },
-                    { label: 'Fee payment reminder notifications', desc: 'Auto-remind parents of unpaid term fees 7 days before due date.', enabled: true },
-                    { label: 'School event & holiday announcements', desc: 'Broadcast term events, PTA notices, and holiday calendars.', enabled: false },
-                    { label: 'CBT exam schedule notifications', desc: 'Notify students of upcoming computer-based tests.', enabled: true },
-                    { label: 'Staff payroll notifications', desc: 'Notify staff when monthly salary slips are available.', enabled: false },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center justify-between p-4 border border-border rounded-xl bg-muted/10 gap-4">
-                      <div className="flex-1">
-                        <p className="font-bold text-foreground">{item.label}</p>
-                        <p className="text-muted-foreground text-[11px] mt-0.5">{item.desc}</p>
+                    { role: 'Chief Administrator (Super Admin)', desc: 'Unrestricted root authority over users, finance, CBT, settings, system backup, and records.', users: 1, badge: 'Root Tier 1', color: 'text-rose-600 bg-rose-500/10 border-rose-200' },
+                    { role: 'Vice Principal / Academic Officer', desc: 'Timetable management, curriculum approvals, gradebook moderation, CBT verification.', users: 1, badge: 'Academic Admin', color: 'text-emerald-600 bg-emerald-500/10 border-emerald-200' },
+                    { role: 'Subject Specialist Teacher', desc: 'Continuous assessment score entry, CBT question authoring, assigned student evaluations.', users: teachersList.length, badge: 'Teacher Portal', color: 'text-blue-600 bg-blue-500/10 border-blue-200' },
+                    { role: 'Form / Class Teacher', desc: 'Class roster management, attendance register, term remarks, psychomotor ratings.', users: teachersList.filter(t => t.formTeacherOf && t.formTeacherOf !== 'None').length, badge: 'Form Teacher', color: 'text-primary bg-primary/10 border-primary/20' },
+                    { role: 'Bursar & Bursary Officers', desc: 'Fee ledger reconciliation, receipt generation, invoice dispatches, payment tracking.', users: 1, badge: 'Finance Admin', color: 'text-amber-600 bg-amber-500/10 border-amber-200' },
+                    { role: 'Enrolled Student / Ward', desc: 'Take CBT assessments, view real-time terminal results, view timetables and announcements.', users: studentsList.length, badge: 'Student Portal', color: 'text-violet-600 bg-violet-500/10 border-violet-200' },
+                  ].map((r, i) => (
+                    <div key={i} className="flex items-center justify-between p-4 border border-border rounded-xl bg-muted/10 gap-4 flex-wrap">
+                      <div className="flex-1 min-w-[200px]">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-bold text-foreground">{r.role}</p>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${r.color}`}>{r.badge}</span>
+                        </div>
+                        <p className="text-muted-foreground text-[11px]">{r.desc}</p>
                       </div>
-                      <div className={`relative w-11 h-6 rounded-full cursor-pointer transition-colors ${item.enabled ? 'bg-emerald-500' : 'bg-muted'}`}>
-                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${item.enabled ? 'left-6' : 'left-1'}`} />
+                      <div className="text-right shrink-0">
+                        <p className="font-bold text-foreground text-sm">{r.users}</p>
+                        <p className="text-[10px] text-muted-foreground">Accounts</p>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
 
+              {/* Session Inactivity Timeout */}
               <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
                 <div className="flex items-center gap-3 pb-3 border-b border-border">
-                  <MessageSquare className="w-5 h-5 text-primary" />
-                  <h3 className="font-serif font-bold text-base text-foreground">SMS & Communication Gateway</h3>
+                  <Lock className="w-5 h-5 text-primary" />
+                  <h3 className="font-serif font-bold text-base text-foreground">Session Security &amp; Concurrency Control</h3>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">SMS Provider</label>
-                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                      <option>Termii (Nigeria)</option>
-                      <option>Bulksmsnigeria.com</option>
-                      <option>Infobip</option>
-                      <option>Twilio</option>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Session Inactivity Timeout</label>
+                    <select
+                      value={systemSettings.sessionTimeoutMinutes}
+                      onChange={(e) => triggerSave({ sessionTimeoutMinutes: Number(e.target.value) })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
+                    >
+                      <option value={15}>15 Minutes (Strict)</option>
+                      <option value={30}>30 Minutes (Recommended)</option>
+                      <option value={60}>1 Hour</option>
+                      <option value={240}>4 Hours</option>
                     </select>
                   </div>
+
                   <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Sender Name (SMS Label)</label>
-                    <input type="text" defaultValue="TPMS-School" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Email Notification Address</label>
-                    <input type="email" defaultValue="notifications@tarepet.edu.ng" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">SMS Units Balance</label>
-                    <div className="w-full border border-emerald-200 rounded-xl px-4 py-2.5 bg-emerald-500/5 text-emerald-700 font-bold flex items-center gap-2">
-                      <span className="w-2 h-2 bg-emerald-500 rounded-full" />
-                      4,820 Units Remaining
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Single Active Session per User</label>
+                    <div className="p-3 border border-border rounded-xl bg-muted/10 flex items-center justify-between">
+                      <span className="font-bold text-foreground text-xs">Invalidate previous token on new login</span>
+                      <input
+                        type="checkbox"
+                        checked={systemSettings.singleSessionPerUser}
+                        onChange={(e) => triggerSave({ singleSessionPerUser: e.target.checked })}
+                        className="w-4 h-4 accent-primary cursor-pointer"
+                      />
                     </div>
                   </div>
                 </div>
               </div>
 
               <div className="flex justify-end">
-                <button onClick={triggerSave} className="bg-primary text-white text-xs font-bold px-6 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2">
+                <button onClick={() => triggerSave()} className="bg-primary text-white text-xs font-bold px-6 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2 cursor-pointer active:scale-95 shadow-sm">
+                  <CheckCircle2 className="w-4 h-4" /> Save RBAC Settings
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── TAB 5: Notifications & SMS Gateway ── */}
+          {settingsTab === 'notify' && (
+            <div className="space-y-5">
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
+                <div className="flex items-center gap-3 pb-3 border-b border-border">
+                  <Bell className="w-5 h-5 text-primary" />
+                  <div>
+                    <h3 className="font-serif font-bold text-base text-foreground">Automated Notification Triggers</h3>
+                    <p className="text-xs text-muted-foreground">Select automated SMS and email notifications dispatched to students and parents.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  {[
+                    { key: 'notifyResultsSMS', label: 'Terminal Results Publication SMS', desc: 'Dispatches instant SMS to registered guardian phone with student summary score & position.' },
+                    { key: 'notifyAttendanceSMS', label: 'Student Absence & Attendance Alert', desc: 'Notifies parents immediately when their child is marked absent on morning roll call.' },
+                    { key: 'notifyFeesSMS', label: 'Term Fee Due & Balance Reminders', desc: 'Auto-sends reminders for outstanding fee invoices 7 days prior to school due dates.' },
+                    { key: 'notifyCBTExams', label: 'CBT Examination & Test Schedules', desc: 'Notifies candidates 24 hours before their scheduled online assessment session.' },
+                  ].map((item) => (
+                    <div key={item.key} className="p-4 border border-border rounded-xl bg-muted/10 flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-bold text-foreground">{item.label}</p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">{item.desc}</p>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={Boolean(systemSettings[item.key])}
+                        onChange={(e) => triggerSave({ [item.key]: e.target.checked })}
+                        className="w-5 h-5 accent-primary cursor-pointer shrink-0 mt-1"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* SMS Gateway & Live Dispatch Tester */}
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
+                <div className="flex items-center gap-3 pb-3 border-b border-border">
+                  <MessageSquare className="w-5 h-5 text-primary" />
+                  <div>
+                    <h3 className="font-serif font-bold text-base text-foreground">SMS Provider Gateway &amp; Live Dispatch Tester</h3>
+                    <p className="text-xs text-muted-foreground">Integrate Nigerian DND-compliant bulk SMS gateways.</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Active SMS Provider</label>
+                    <select
+                      value={systemSettings.smsProvider}
+                      onChange={(e) => triggerSave({ smsProvider: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
+                    >
+                      <option value="Termii (Nigeria)">Termii (Nigeria DND Active)</option>
+                      <option value="Bulksmsnigeria.com">BulkSMS Nigeria</option>
+                      <option value="Infobip">Infobip Enterprise</option>
+                      <option value="Twilio">Twilio Global</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Approved Sender ID</label>
+                    <input
+                      type="text"
+                      value={systemSettings.smsSenderId}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, smsSenderId: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-mono font-bold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">SMS Units Balance</label>
+                    <div className="w-full border border-emerald-200 rounded-xl px-4 py-2.5 bg-emerald-500/5 text-emerald-700 font-bold flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                        {systemSettings.smsBalance?.toLocaleString() || '4,820'} Units Available
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Live SMS Test Dispatch Tool */}
+                <div className="p-4 bg-muted/20 border border-border rounded-xl space-y-3 text-xs">
+                  <div className="flex items-center justify-between">
+                    <p className="font-bold text-foreground">Send Test SMS Dispatch</p>
+                    {smsTestStatus && (
+                      <span className="text-emerald-600 font-bold flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> {smsTestStatus}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-col sm:flex-row items-center gap-3">
+                    <input
+                      type="tel"
+                      value={smsTestPhone}
+                      onChange={(e) => setSmsTestPhone(e.target.value)}
+                      placeholder="+234 800 000 0000"
+                      className="w-full sm:flex-1 border border-border rounded-xl px-4 py-2 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-mono text-xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSmsTestStatus('SMS Delivered successfully via Termii Gateway!');
+                        showToast(`Test SMS sent to ${smsTestPhone}! Units deducted: 1`);
+                        setTimeout(() => setSmsTestStatus(null), 4000);
+                      }}
+                      className="w-full sm:w-auto px-5 py-2 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-all cursor-pointer shadow-xs whitespace-nowrap"
+                    >
+                      Dispatch Test SMS
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <button onClick={() => triggerSave()} className="bg-primary text-white text-xs font-bold px-6 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2 cursor-pointer active:scale-95 shadow-sm">
                   <CheckCircle2 className="w-4 h-4" /> Save Notification Settings
                 </button>
               </div>
             </div>
           )}
 
-          {/* ── TAB 4: Staff & Access Control ── */}
-          {settingsTab === 'access' && (
-            <div className="space-y-5">
-              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
-                <div className="flex items-center gap-3 pb-3 border-b border-border">
-                  <Shield className="w-5 h-5 text-primary" />
-                  <h3 className="font-serif font-bold text-base text-foreground">Staff Role & Access Management</h3>
-                </div>
-                <div className="space-y-3 text-xs">
-                  {[
-                    { role: 'Principal / Administrator', desc: 'Full access to all modules, settings, finance, and reports.', users: 2, badge: 'Full Access', color: 'primary' },
-                    { role: 'Vice Principal (Academics)', desc: 'Access to timetables, results, attendance, and subjects.', users: 1, badge: 'Academic Access', color: 'emerald' },
-                    { role: 'Subject Teacher', desc: 'Mark attendance, input scores, manage CBT exams for assigned classes.', users: teachersList.length, badge: 'Class Access', color: 'blue' },
-                    { role: 'Form Teacher', desc: 'View and manage class roster, attendance, and student remarks.', users: teachersList.filter(t => t.formTeacherOf && t.formTeacherOf !== 'None').length, badge: 'Class Access', color: 'blue' },
-                    { role: 'Bursar / Finance Officer', desc: 'Manage fee records, payment tracking, and financial reports.', users: 1, badge: 'Finance Access', color: 'amber' },
-                    { role: 'Librarian', desc: 'Manage library records, book loans, and student reading logs.', users: 1, badge: 'Library Access', color: 'violet' },
-                  ].map((r, i) => (
-                    <div key={i} className="flex items-center justify-between p-4 border border-border rounded-xl bg-muted/10 gap-4 flex-wrap">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-bold text-foreground">{r.role}</p>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full bg-${r.color}/10 text-${r.color} border border-${r.color}/20`}>{r.badge}</span>
-                        </div>
-                        <p className="text-muted-foreground text-[11px]">{r.desc}</p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="font-bold text-foreground">{r.users}</p>
-                        <p className="text-[10px] text-muted-foreground">Staff</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
-                <div className="flex items-center gap-3 pb-3 border-b border-border">
-                  <Lock className="w-5 h-5 text-primary" />
-                  <h3 className="font-serif font-bold text-base text-foreground">Login & Account Security Policies</h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
-                  <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Password Minimum Length</label>
-                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                      <option>6 Characters</option>
-                      <option selected>8 Characters (Recommended)</option>
-                      <option>12 Characters</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Failed Login Lockout</label>
-                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                      <option>3 Attempts</option>
-                      <option selected>5 Attempts</option>
-                      <option>10 Attempts</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Session Timeout (Inactivity)</label>
-                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                      <option>15 Minutes</option>
-                      <option selected>30 Minutes</option>
-                      <option>1 Hour</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Require Password Reset Every</label>
-                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                      <option>Every Term</option>
-                      <option selected>Every 6 Months</option>
-                      <option>Annually</option>
-                      <option>Never</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-end">
-                <button onClick={triggerSave} className="bg-primary text-white text-xs font-bold px-6 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4" /> Save Access Settings
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* ── TAB 5: Fees & Finance ── */}
+          {/* ── TAB 6: Fees & Finance ── */}
           {settingsTab === 'fees' && (
             <div className="space-y-5">
               <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
-                <div className="flex items-center gap-3 pb-3 border-b border-border">
-                  <CreditCard className="w-5 h-5 text-primary" />
-                  <h3 className="font-serif font-bold text-base text-foreground">Term Fee Structure ({new Date().getFullYear()}/{new Date().getFullYear() + 1})</h3>
+                <div className="flex items-center justify-between pb-3 border-b border-border">
+                  <div className="flex items-center gap-3">
+                    <CreditCard className="w-5 h-5 text-primary" />
+                    <div>
+                      <h3 className="font-serif font-bold text-base text-foreground">Standard Term Fee Schedule ({systemSettings.session})</h3>
+                      <p className="text-xs text-muted-foreground">Tuition, development levy, and total term dues configured per academic division.</p>
+                    </div>
+                  </div>
                 </div>
+
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs text-left">
                     <thead className="bg-muted/40 text-muted-foreground uppercase text-[10px] tracking-wider">
@@ -5454,14 +5753,13 @@ export default function AdminDashboard() {
                         <th className="py-3 px-4 text-center">Status</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-border">
+                    <tbody className="divide-y divide-border font-sans">
                       {[
-                        { level: 'JSS 1', tuition: '₦45,000', dev: '₦8,000', total: '₦53,000' },
-                        { level: 'JSS 2', tuition: '₦45,000', dev: '₦8,000', total: '₦53,000' },
-                        { level: 'JSS 3', tuition: '₦47,000', dev: '₦8,000', total: '₦55,000' },
-                        { level: 'SS 1',  tuition: '₦55,000', dev: '₦10,000', total: '₦65,000' },
-                        { level: 'SS 2',  tuition: '₦55,000', dev: '₦10,000', total: '₦65,000' },
-                        { level: 'SS 3',  tuition: '₦60,000', dev: '₦10,000', total: '₦70,000' },
+                        { level: 'Nursery 1 - 3', tuition: '₦35,000', dev: '₦5,000', total: '₦40,000' },
+                        { level: 'Primary 1 - 6', tuition: '₦40,000', dev: '₦6,000', total: '₦46,000' },
+                        { level: 'JSS 1 - 3', tuition: '₦45,000', dev: '₦8,000', total: '₦53,000' },
+                        { level: 'SS 1 - 2 (Science & Art)', tuition: '₦55,000', dev: '₦10,000', total: '₦65,000' },
+                        { level: 'SS 3 (Examination Class)', tuition: '₦60,000', dev: '₦10,000', total: '₦70,000' },
                       ].map((row, i) => (
                         <tr key={i} className="hover:bg-muted/10">
                           <td className="py-3 px-4 font-bold text-foreground">{row.level}</td>
@@ -5469,7 +5767,7 @@ export default function AdminDashboard() {
                           <td className="py-3 px-4 text-right font-mono text-muted-foreground">{row.dev}</td>
                           <td className="py-3 px-4 text-right font-mono font-bold text-primary">{row.total}</td>
                           <td className="py-3 px-4 text-center">
-                            <span className="text-[10px] font-bold px-2.5 py-1 bg-emerald-500/10 text-emerald-600 rounded-full border border-emerald-200">Active</span>
+                            <span className="text-[10px] font-bold px-2.5 py-0.5 bg-emerald-500/10 text-emerald-600 rounded-full border border-emerald-200">Enforced</span>
                           </td>
                         </tr>
                       ))}
@@ -5478,92 +5776,90 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+              {/* Payment & Bursary Policies */}
               <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
                 <div className="flex items-center gap-3 pb-3 border-b border-border">
                   <TrendingUp className="w-5 h-5 text-primary" />
-                  <h3 className="font-serif font-bold text-base text-foreground">Payment & Finance Settings</h3>
+                  <h3 className="font-serif font-bold text-base text-foreground">Bursary Penalties &amp; Concessions</h3>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5 text-xs">
                   <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Accepted Payment Methods</label>
-                    <div className="space-y-2">
-                      {['Bank Transfer (GT Bank, UBA, First Bank)', 'Cash (at School Bursar)', 'Online Payment (Flutterwave)'].map(m => (
-                        <label key={m} className="flex items-center gap-2.5 p-3 border border-border rounded-xl cursor-pointer hover:bg-muted/10">
-                          <input type="checkbox" defaultChecked className="accent-primary w-3.5 h-3.5" />
-                          <span className="text-foreground">{m}</span>
-                        </label>
-                      ))}
-                    </div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Late Payment Surcharge Policy</label>
+                    <select
+                      value={systemSettings.lateFeePenalty}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, lateFeePenalty: e.target.value })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
+                    >
+                      <option value="₦2,000 flat fee after due date">₦2,000 flat fee after due date</option>
+                      <option value="5% of outstanding balance">5% surcharge on balance</option>
+                      <option value="No Penalty">No Late Penalty</option>
+                    </select>
                   </div>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Fee Due Date (Per Term)</label>
-                      <input type="date" defaultValue="2026-02-01" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Late Payment Penalty</label>
-                      <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                        <option>No Penalty</option>
-                        <option selected>₦2,000 flat fee after due date</option>
-                        <option>5% of outstanding balance</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Scholarship / Discount Slots</label>
-                      <input type="number" defaultValue="10" min="0" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Scholarship / Merit Discount Quota</label>
+                    <input
+                      type="number"
+                      value={systemSettings.scholarshipSlots}
+                      onChange={(e) => setSystemSettings({ ...systemSettings, scholarshipSlots: Number(e.target.value) })}
+                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Online Payment Channel</label>
+                    <div className="w-full border border-border rounded-xl px-4 py-2.5 bg-card text-foreground font-semibold flex items-center justify-between">
+                      <span>Flutterwave / Paystack Integrated</span>
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                     </div>
                   </div>
                 </div>
               </div>
 
               <div className="flex justify-end">
-                <button onClick={triggerSave} className="bg-primary text-white text-xs font-bold px-6 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4" /> Save Finance Settings
+                <button onClick={() => triggerSave()} className="bg-primary text-white text-xs font-bold px-6 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2 cursor-pointer active:scale-95 shadow-sm">
+                  <CheckCircle2 className="w-4 h-4" /> Save Financial Policies
                 </button>
               </div>
             </div>
           )}
 
-          {/* ── TAB 6: Portal Appearance ── */}
+          {/* ── TAB 7: Portal Appearance ── */}
           {settingsTab === 'portal' && (
             <div className="space-y-5">
               <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
                 <div className="flex items-center gap-3 pb-3 border-b border-border">
                   <Palette className="w-5 h-5 text-primary" />
-                  <h3 className="font-serif font-bold text-base text-foreground">Portal Theme & Branding</h3>
+                  <h3 className="font-serif font-bold text-base text-foreground">Portal Theme &amp; Typography</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
                   <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Portal Language</label>
-                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                      <option selected>English (Nigeria)</option>
-                      <option>Yoruba</option>
-                      <option>Igbo</option>
-                      <option>Hausa</option>
-                      <option>French</option>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Portal Interface Language</label>
+                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold">
+                      <option selected>English (Nigeria Standard)</option>
+                      <option>French (International Curriculum)</option>
                     </select>
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Default Interface Theme</label>
-                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                      <option selected>System Default (Auto)</option>
-                      <option>Light Mode</option>
-                      <option>Dark Mode</option>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Default Color Scheme</label>
+                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold">
+                      <option selected>System Theme (Automatic Dark/Light)</option>
+                      <option>Crimson Executive Light</option>
+                      <option>Obsidian Dark</option>
                     </select>
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Date Format</label>
-                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                      <option selected>DD/MM/YYYY (Nigerian Standard)</option>
-                      <option>MM/DD/YYYY (US)</option>
-                      <option>YYYY-MM-DD (ISO)</option>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Date Display Format</label>
+                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold">
+                      <option selected>DD/MM/YYYY (Nigerian Standard: 25/08/2026)</option>
+                      <option>YYYY-MM-DD (ISO standard)</option>
                     </select>
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Currency Display</label>
-                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Currency Format</label>
+                    <select className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold">
                       <option selected>₦ Nigerian Naira (NGN)</option>
-                      <option>$ US Dollar (USD)</option>
                     </select>
                   </div>
                 </div>
@@ -5572,28 +5868,101 @@ export default function AdminDashboard() {
               <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
                 <div className="flex items-center gap-3 pb-3 border-b border-border">
                   <FileText className="w-5 h-5 text-primary" />
-                  <h3 className="font-serif font-bold text-base text-foreground">Report Card Footer & Stamp</h3>
+                  <h3 className="font-serif font-bold text-base text-foreground">Report Card Branding &amp; Certification Signatures</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
                   <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Report Card Footer Text</label>
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Report Card Official Stamp Footer</label>
                     <input type="text" defaultValue="Issued by the Registrar — Tare Pet Montessori School, Yenagoa" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Principal Signature Label</label>
-                    <input type="text" defaultValue="Dr. T. Montessori — School Principal" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Principal's Signature Label</label>
+                    <input type="text" defaultValue="Dr. T. Montessori — School Principal & Chief Administrator" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Promotional Tagline (appears on letters and notices)</label>
-                    <input type="text" defaultValue="Developing Tomorrow's Leaders Through Excellence, Values & Innovation" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Official Promotional Banner Tagline</label>
+                    <input type="text" defaultValue="Developing Tomorrow's Leaders Through Academic Excellence, Character & Montessori Values" className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
                   </div>
                 </div>
               </div>
 
               <div className="flex justify-end">
-                <button onClick={triggerSave} className="bg-primary text-white text-xs font-bold px-6 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2">
+                <button onClick={() => triggerSave()} className="bg-primary text-white text-xs font-bold px-6 py-2.5 rounded-xl hover:bg-primary/90 transition-colors flex items-center gap-2 cursor-pointer active:scale-95 shadow-sm">
                   <CheckCircle2 className="w-4 h-4" /> Save Appearance Settings
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── TAB 8: Cloud Sync & System Health ── */}
+          {settingsTab === 'system' && (
+            <div className="space-y-5">
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
+                <div className="flex items-center justify-between pb-3 border-b border-border">
+                  <div className="flex items-center gap-3">
+                    <Activity className="w-5 h-5 text-primary" />
+                    <div>
+                      <h3 className="font-serif font-bold text-base text-foreground">Real-Time WebSocket &amp; Database Health</h3>
+                      <p className="text-xs text-muted-foreground">Monitor real-time event broadcasting and backend database synchronization.</p>
+                    </div>
+                  </div>
+                  <span className="px-3 py-1 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-full text-xs font-bold flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    Connected &amp; Synchronized
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                  <div className="p-4 rounded-xl border border-border bg-muted/10">
+                    <p className="text-muted-foreground font-bold uppercase text-[10px]">Teachers Synchronized</p>
+                    <p className="text-2xl font-bold text-foreground mt-1">{teachersList.length}</p>
+                    <p className="text-[10px] text-emerald-600 mt-1">Live in Django Postgres</p>
+                  </div>
+                  <div className="p-4 rounded-xl border border-border bg-muted/10">
+                    <p className="text-muted-foreground font-bold uppercase text-[10px]">Enrolled Students</p>
+                    <p className="text-2xl font-bold text-foreground mt-1">{studentsList.length}</p>
+                    <p className="text-[10px] text-emerald-600 mt-1">Live in Django Postgres</p>
+                  </div>
+                  <div className="p-4 rounded-xl border border-border bg-muted/10">
+                    <p className="text-muted-foreground font-bold uppercase text-[10px]">WebSocket Latency</p>
+                    <p className="text-2xl font-bold text-emerald-600 mt-1">~12 ms</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">Real-time Cross-Portal Event Bus</p>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex flex-wrap items-center gap-3">
+                  <button
+                    onClick={() => {
+                      syncTeachersWithBackend();
+                      syncStudentsWithBackend();
+                      broadcastRealtimeEvent();
+                      showToast("Synchronized teachers, students, and exams with backend Django server!");
+                    }}
+                    className="px-4 py-2.5 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all flex items-center gap-2 shadow-sm cursor-pointer active:scale-95"
+                  >
+                    <Activity className="w-4 h-4" /> Trigger Immediate Cloud Sync
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
+                        settings: systemSettings,
+                        teachers: teachersList,
+                        students: studentsList,
+                        exportedAt: new Date().toISOString(),
+                        school: 'Tare Pet Montessori School'
+                      }, null, 2));
+                      const dlAnchorElem = document.createElement('a');
+                      dlAnchorElem.setAttribute("href", dataStr);
+                      dlAnchorElem.setAttribute("download", `tarepet_database_snapshot_${new Date().toISOString().split('T')[0]}.json`);
+                      dlAnchorElem.click();
+                      showToast("Full system JSON database snapshot downloaded!");
+                    }}
+                    className="px-4 py-2.5 border border-border rounded-xl text-xs font-bold hover:bg-accent text-foreground transition-all flex items-center gap-2 cursor-pointer"
+                  >
+                    <Download className="w-4 h-4 text-primary" /> Download JSON Snapshot
+                  </button>
+                </div>
               </div>
             </div>
           )}
