@@ -13,7 +13,7 @@ import {
   Scissors, Trash2, Upload, CreditCard
 } from 'lucide-react';
 
-import { getStoredExams, getStoredSubmissions, subscribeToCBTStore, getCoursesForClass, getStudentBroadsheet, calculateWAECGrade, calculateBECEGrade, isSeniorSecondaryClass, getStoredStudents, saveStudent, broadcastRealtimeEvent, syncStudentsWithBackend } from '@/lib/cbt-store';
+import { getStoredExams, getStoredSubmissions, subscribeToCBTStore, getCoursesForClass, getStudentBroadsheet, calculateWAECGrade, calculateBECEGrade, isSeniorSecondaryClass, getStoredStudents, saveStudent, broadcastRealtimeEvent, syncStudentsWithBackend, getStoredSubjects, matchStudentClass, SubjectRecord } from '@/lib/cbt-store';
 import { authClient } from '@/lib/api-auth';
 import { StudentPaymentPanel } from '@/components/dashboard/StudentPaymentPanel';
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
@@ -21,7 +21,7 @@ import { getTimeGreeting } from '@/lib/utils';
 import { ImageCropModal } from '@/components/ui/ImageCropModal';
 import { MobileProfileView } from '@/components/profile/MobileProfileView';
 
-// ─── Initial Seed Data (SS1 Science) ─────────────────────────
+// ─── Initial Seed Data ─────────────────────────
 const MY_COURSES: any[] = [];
 
 const GRADE_REPORT: any[] = [];
@@ -45,11 +45,15 @@ const CATEGORY_COLORS: Record<string, string> = {
   Event: 'bg-amber-100 text-amber-700',
 };
 
-function getCategoryColorClass(cat: string): string {
+function getCategoryBadge(cat: string) {
   if (Object.prototype.hasOwnProperty.call(CATEGORY_COLORS, cat)) {
     return Reflect.get(CATEGORY_COLORS, cat);
   }
   return 'bg-muted text-muted-foreground';
+}
+
+function getCategoryColorClass(cat: string): string {
+  return getCategoryBadge(cat);
 }
 
 function getTimetableForDay(day: DayKey) {
@@ -103,10 +107,12 @@ export default function StudentDashboard() {
 
   const [examsList, setExamsList] = useState<any[]>([]);
   const [submissionsList, setSubmissionsList] = useState<any[]>([]);
+  const [subjectsListState, setSubjectsListState] = useState<SubjectRecord[]>(() => getStoredSubjects());
 
   const syncStudentCBTData = () => {
     setExamsList(getStoredExams());
     setSubmissionsList(getStoredSubmissions());
+    setSubjectsListState(getStoredSubjects());
   };
 
   React.useEffect(() => {
@@ -130,12 +136,15 @@ export default function StudentDashboard() {
 
   const matchedStoredStudent = React.useMemo(() => {
     if (!user) return null;
-    const uEmail = (user.email || '').toLowerCase();
-    const uAdm = ((user.profile as any)?.student_id || (user as any).admissionNumber || (user as any).id || '').toString().toLowerCase();
+    const uEmail = (user.email || '').toLowerCase().trim();
+    const uAdm = ((user.profile as any)?.student_id || (user.profile as any)?.studentId || (user as any).admissionNo || (user as any).admissionNumber || (user as any).id || '').toString().toLowerCase().trim();
+    const uName = `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase().trim();
+
     return getStoredStudents().find((s: any) => {
-      const sEmail = (s.email || '').toLowerCase();
-      const sAdm = (s.admissionNumber || '').toLowerCase();
-      return (sEmail && sEmail === uEmail) || (sAdm && sAdm === uAdm);
+      const sEmail = (s.email || '').toLowerCase().trim();
+      const sAdm = (s.admissionNo || s.admissionNumber || s.code || '').toLowerCase().trim();
+      const sName = (s.name || '').toLowerCase().trim();
+      return (sEmail && sEmail === uEmail) || (sAdm && (sAdm === uAdm || uAdm.includes(sAdm) || sAdm.includes(uAdm))) || (sName && sName === uName);
     });
   }, [user]);
 
@@ -152,7 +161,8 @@ export default function StudentDashboard() {
       email: user?.email || s?.email || '',
       phone: user?.phone || prof.phone || s?.phone || '',
       studentId: prof.student_id || s?.admissionNo || (user as any)?.admissionNo || (user as any)?.admissionNumber || '',
-      grade: prof.grade_level || s?.grade || '',
+      grade: prof.grade_level || prof.grade || s?.grade || '',
+      stream: prof.stream || s?.stream || '',
       house: prof.house || s?.house || '',
       gender: prof.gender || s?.gender || 'Male',
       dob: prof.dob || prof.date_of_birth || s?.dob || '2010-05-15',
@@ -237,9 +247,20 @@ export default function StudentDashboard() {
     setTimeout(() => setToastMsg(null), 3500);
   };
 
-  const studentGrade = profileForm.grade || matchedStoredStudent?.grade || 'SS1';
-  const studentStream = (profileForm as any).stream || matchedStoredStudent?.stream || 'Science';
-  const myEnrolledCourses = getCoursesForClass(studentGrade, studentStream);
+  const studentGrade = profileForm.grade || matchedStoredStudent?.grade || (user?.profile as any)?.grade_level || (user?.profile as any)?.grade || 'SS 1';
+  const studentStream = (profileForm as any).stream || matchedStoredStudent?.stream || (user?.profile as any)?.stream || (studentGrade.toUpperCase().includes('ART') || (user as any)?.admissionNo?.includes('ART') ? 'Art' : 'Science');
+
+  const myEnrolledCourses = React.useMemo(() => {
+    const sGrade = (studentGrade || '').toUpperCase().trim();
+    const sStream = (studentStream || '').toUpperCase().trim();
+    const all = subjectsListState.length > 0 ? subjectsListState : getStoredSubjects();
+    return all.filter(sub => {
+      const matchGrade = matchStudentClass(sGrade, sub.grade) || sub.grade === 'SS 1 - SS 3' || sub.grade.includes('SS');
+      const matchStream = !sub.stream || sub.stream === 'General' || sub.stream.toUpperCase() === sStream || (sStream === 'ART' && sub.stream.toUpperCase() === 'ARTS');
+      return matchGrade && matchStream;
+    });
+  }, [studentGrade, studentStream, subjectsListState]);
+
   const studentIdForScores = matchedStoredStudent?.id || user?.id || 101;
   const broadsheetData = getStudentBroadsheet(studentIdForScores);
   const isSS = isSeniorSecondaryClass(studentGrade);
@@ -256,7 +277,7 @@ export default function StudentDashboard() {
       }
     }
   });
-  const calculatedAvg = scoredCount > 0 ? Math.round(totalScoreSum / scoredCount) : 86;
+  const calculatedAvg = scoredCount > 0 ? Math.round(totalScoreSum / scoredCount) : 0;
   const attendanceRate = matchedStoredStudent?.attendance || '98%';
 
   const renderSection = () => {
@@ -270,7 +291,7 @@ export default function StudentDashboard() {
         <div className="bg-gradient-to-r from-rose-800 via-red-900 to-rose-950 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
           <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
             <span className="text-[10px] font-bold uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full">
-              {`SS1 SCIENCE · ${selectedTerm.toUpperCase()} 2026`}
+              {`${studentGrade.toUpperCase()} ${studentStream.toUpperCase()} · ${selectedTerm.toUpperCase()} 2026`}
             </span>
             <div className="flex items-center gap-2">
               <button
@@ -323,7 +344,7 @@ export default function StudentDashboard() {
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {[
             { label: 'Active Subjects', val: `${myEnrolledCourses.length}`, sub: `${myEnrolledCourses.length} curriculum courses`, icon: BookOpen, color: 'text-rose-700 bg-rose-500/10 border-rose-200' },
-            { label: 'Overall Average', val: `${calculatedAvg}%`, sub: 'Cumulative performance', icon: Award, color: 'text-emerald-600 bg-emerald-500/10 border-emerald-200' },
+            { label: 'Overall Average', val: scoredCount > 0 ? `${calculatedAvg}%` : '—', sub: scoredCount > 0 ? 'Cumulative performance' : 'No graded tests yet', icon: Award, color: 'text-emerald-600 bg-emerald-500/10 border-emerald-200' },
             { label: 'Attendance', val: attendanceRate, sub: 'Term Attendance', icon: UserCheck, color: 'text-blue-600 bg-blue-500/10 border-blue-200' },
           ].map((s, i) => (
             <div key={i} className={`bg-card rounded-2xl border p-4 shadow-sm ${s.color.split(' ').slice(2).join(' ')}`}>
@@ -379,27 +400,39 @@ export default function StudentDashboard() {
               const scoreObj = broadsheetData[c.code];
               const totalScore = scoreObj ? (scoreObj.ca1 || 0) + (scoreObj.ca2 || 0) + (scoreObj.cbtScore || 0) + (scoreObj.paperExam || scoreObj.exam || 0) : 0;
               const gradeLetter = isSS ? calculateWAECGrade(totalScore).grade : calculateBECEGrade(totalScore).grade;
+              const isUnassigned = !c.teacher || c.teacher === 'Not Assigned' || c.teacher === 'Department Staff';
 
               return (
                 <div key={c.code || idx} className="bg-card rounded-2xl border border-border p-5 shadow-sm space-y-4 hover:border-primary/40 transition-colors">
                   <div className="flex items-start justify-between">
                     <div>
                       <span className="text-[10px] font-bold uppercase text-primary bg-primary/10 px-2.5 py-1 rounded-lg font-mono">{c.code}</span>
-                      <h3 className="font-serif font-bold text-lg text-foreground mt-2">{c.name}</h3>
-                      <p className="text-xs text-muted-foreground mt-0.5">{t('student.instructor_label', 'Subject Lead:')} {(c as any).teacher || 'Department Staff'}</p>
+                      <h3 className="font-serif font-bold text-lg text-foreground mt-2">{c.title || (c as any).name}</h3>
+                      <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
+                        <span className="font-medium text-muted-foreground">{t('student.instructor_label', 'Subject Lead:')}</span>
+                        {isUnassigned ? (
+                          <span className="text-amber-600 font-medium bg-amber-500/10 px-2 py-0.5 rounded-full text-[11px] border border-amber-200">
+                            Not Assigned
+                          </span>
+                        ) : (
+                          <span className="text-foreground font-semibold">
+                            {c.teacher}
+                          </span>
+                        )}
+                      </p>
                     </div>
                     <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                      {totalScore > 0 ? `${gradeLetter} (${totalScore}%)` : 'In Progress'}
+                      {totalScore > 0 ? `${gradeLetter} (${totalScore}%)` : 'Active'}
                     </span>
                   </div>
 
                   <div>
                     <div className="flex justify-between text-xs mb-1">
                       <span className="text-muted-foreground">{t('student.syllabus_progress', 'Term Progress')}</span>
-                      <span className="font-bold text-foreground">85%</span>
+                      <span className="font-bold text-foreground">{totalScore > 0 ? `${Math.min(totalScore, 100)}%` : '0% (In Session)'}</span>
                     </div>
                     <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
-                      <div className="bg-primary h-full rounded-full transition-all" style={{ width: '85%' }} />
+                      <div className="bg-primary h-full rounded-full transition-all" style={{ width: `${totalScore > 0 ? Math.min(totalScore, 100) : 5}%` }} />
                     </div>
                   </div>
 
