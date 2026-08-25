@@ -287,26 +287,25 @@ export default function StudentDashboard() {
     if (activeSection === 'overview') return (
       <div className="space-y-6">
         {/* Welcome Banner */}
-
-        <div className="bg-gradient-to-r from-rose-800 via-red-900 to-rose-950 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-            <span className="text-[10px] font-bold uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full">
+        <div className="bg-gradient-to-r from-rose-800 via-red-900 to-rose-950 text-white p-5 sm:p-7 rounded-2xl sm:rounded-3xl shadow-lg relative overflow-hidden">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5 mb-4">
+            <span className="w-fit text-[11px] sm:text-xs font-bold uppercase tracking-widest bg-white/20 backdrop-blur-md px-3.5 py-1.5 rounded-full shadow-sm">
               {`${studentGrade.toUpperCase()} ${studentStream.toUpperCase()} · ${selectedTerm.toUpperCase()} 2026`}
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
               <button
                 onClick={() => setShowReportCardModal(true)}
-                className="bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-1 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
+                className="bg-white/20 hover:bg-white/30 active:scale-95 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all flex items-center justify-center gap-2 shadow-sm border border-white/15 cursor-pointer"
               >
                 <Printer className="w-3.5 h-3.5" /> Official Report Card
               </button>
-              <div className="flex items-center gap-1 bg-black/20 p-1 rounded-xl">
+              <div className="flex items-center justify-between sm:justify-start gap-1 bg-black/30 backdrop-blur-md p-1 rounded-xl w-full sm:w-auto border border-white/15">
                 {(['1st Term', '2nd Term', '3rd Term'] as const).map(term => (
                   <button
                     key={term}
                     onClick={() => setSelectedTerm(term)}
-                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
-                      selectedTerm === term ? 'bg-white text-rose-950 shadow-sm' : 'text-rose-100 hover:text-white'
+                    className={`flex-1 sm:flex-initial text-center px-3 py-1.5 rounded-lg text-xs sm:text-[11px] font-bold transition-all whitespace-nowrap cursor-pointer ${
+                      selectedTerm === term ? 'bg-white text-rose-950 shadow-md scale-[1.02]' : 'text-rose-100/80 hover:text-white'
                     }`}
                   >
                     {term}
@@ -315,33 +314,33 @@ export default function StudentDashboard() {
               </div>
             </div>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-serif font-bold mb-1">
+          <h2 className="text-2xl sm:text-3xl font-serif font-bold mb-1.5">
             {getTimeGreeting()}, {user?.first_name ?? t('student.role_student', 'Student')}!
           </h2>
-          <p className="text-rose-100 text-sm mb-3">
+          <p className="text-rose-100 text-xs sm:text-sm mb-3.5 max-w-2xl leading-relaxed">
             {t('student.welcome_sub', 'Welcome to your student portal. Check your active subjects and upcoming CBT exams.')}
           </p>
-          <p className="text-xs italic text-rose-200/90 font-serif border-t border-white/10 pt-2.5">
+          <p className="text-[11px] sm:text-xs italic text-rose-200/90 font-serif border-t border-white/15 pt-3">
             "{t('student.motto', 'Nurturing Minds, Shaping Character, Empowering Excellence.')}" — {t('student.motto_author', 'Tarepet Guiding Principle')}
           </p>
         </div>
 
         {/* Live CBT Exam Hero Banner */}
-        <div className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-2xl p-5 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <span className="bg-white/20 text-white text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full mb-1.5 inline-block">{t('student.cbt_exams_tag', 'CBT Examinations')}</span>
-            <h3 className="text-xl font-bold">{t('student.cbt_exams_title', 'Online CBT Exams & C.A. Tests')}</h3>
-            <p className="text-emerald-100 text-xs mt-1">{t('student.cbt_exams_desc', 'Take your online tests and exams with automatic timer submission and instant scoring.')}</p>
+        <div className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <span className="bg-white/20 text-white text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full mb-1 inline-block">{t('student.cbt_exams_tag', 'CBT Examinations')}</span>
+            <h3 className="text-lg sm:text-xl font-bold">{t('student.cbt_exams_title', 'Online CBT Exams & C.A. Tests')}</h3>
+            <p className="text-emerald-100 text-xs max-w-xl leading-relaxed">{t('student.cbt_exams_desc', 'Take your online tests and exams with automatic timer submission and instant scoring.')}</p>
           </div>
-          <Link href="/dashboard/cbt-exam">
-            <button className="px-5 py-2.5 rounded-xl bg-white text-emerald-800 font-bold text-sm hover:bg-emerald-50 transition shadow-md whitespace-nowrap">
+          <Link href="/dashboard/cbt-exam" className="w-full sm:w-auto">
+            <button className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white text-emerald-800 font-bold text-sm hover:bg-emerald-50 active:scale-95 transition-all shadow-md whitespace-nowrap text-center justify-center cursor-pointer">
               {t('student.take_cbt_btn', 'Take CBT Exam →')}
             </button>
           </Link>
         </div>
 
         {/* Quick Stats Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
           {[
             { label: 'Active Subjects', val: `${myEnrolledCourses.length}`, sub: `${myEnrolledCourses.length} curriculum courses`, icon: BookOpen, color: 'text-rose-700 bg-rose-500/10 border-rose-200' },
             { label: 'Overall Average', val: scoredCount > 0 ? `${calculatedAvg}%` : '—', sub: scoredCount > 0 ? 'Cumulative performance' : 'No graded tests yet', icon: Award, color: 'text-emerald-600 bg-emerald-500/10 border-emerald-200' },
@@ -361,7 +360,7 @@ export default function StudentDashboard() {
         {/* Quick Student Access Shortcuts */}
         <div className="bg-card rounded-2xl border border-border p-5 shadow-sm">
           <h3 className="font-serif font-bold text-foreground mb-4">{t('student.quick_access', 'Quick Student Access')}</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3">
             {[
               { label: 'My Subjects', section: 'courses', icon: BookOpen },
               { label: 'Exams/Test', section: 'exams', icon: ClipboardList },
