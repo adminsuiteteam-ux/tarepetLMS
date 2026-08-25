@@ -387,7 +387,7 @@ export default function StudentDashboard() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-serif font-bold text-foreground">{t('student.my_courses_title', 'My Subjects')}</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">{t('student.my_courses_desc', 'Active subjects, subject progress, and assigned teachers.')}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{t('student.my_courses_desc', 'Active subjects, curriculum overview, and assigned subject teachers.')}</p>
           </div>
           <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-primary/10 text-primary border border-primary/20">
             {myEnrolledCourses.length} Subjects Enrolled
@@ -424,16 +424,6 @@ export default function StudentDashboard() {
                     <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
                       {totalScore > 0 ? `${gradeLetter} (${totalScore}%)` : 'Active'}
                     </span>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span className="text-muted-foreground">{t('student.syllabus_progress', 'Term Progress')}</span>
-                      <span className="font-bold text-foreground">{totalScore > 0 ? `${Math.min(totalScore, 100)}%` : '0% (In Session)'}</span>
-                    </div>
-                    <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
-                      <div className="bg-primary h-full rounded-full transition-all" style={{ width: `${totalScore > 0 ? Math.min(totalScore, 100) : 5}%` }} />
-                    </div>
                   </div>
 
                   <div className="text-xs text-muted-foreground border-t border-border pt-3 flex justify-between">
