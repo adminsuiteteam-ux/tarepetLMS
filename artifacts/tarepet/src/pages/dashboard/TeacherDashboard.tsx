@@ -1529,8 +1529,9 @@ export default function TeacherDashboard() {
                     </div>
                     <div className="flex-1">
                       <h4 className="font-serif font-bold text-foreground text-lg leading-tight">{showIDCardModal.name}</h4>
-                      <p className="text-xs text-primary font-bold mt-0.5">{showIDCardModal.grade} ({showIDCardModal.stream || t('teacher.general', 'General')})</p>
-                      <p className="text-xs text-muted-foreground">{showIDCardModal.house || t('teacher.default_house', 'Blue House (Eagle)')}</p>
+                      {showIDCardModal.house && (
+                        <p className="text-xs text-muted-foreground">{showIDCardModal.house}</p>
+                      )}
                       <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                         <div>
                           <span className="text-muted-foreground text-[10px] block">{t('teacher.id_card_student_id')}</span>

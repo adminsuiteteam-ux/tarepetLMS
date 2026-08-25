@@ -12,15 +12,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write(self.style.SUCCESS('Seeding Tarepet Montessori LMS database...'))
 
-        # 1. Create Houses
-        houses_data = [
-            {'name': 'Red House (Falcon)', 'color': 'Red', 'motto': 'Soar to Excellence', 'points': 450},
-            {'name': 'Blue House (Eagle)', 'color': 'Blue', 'motto': 'Wisdom & Honor', 'points': 520},
-            {'name': 'Green House (Jaguar)', 'color': 'Green', 'motto': 'Strength & Unity', 'points': 480},
-            {'name': 'Purple House (Phoenix)', 'color': 'Purple', 'motto': 'Rise & Illuminate', 'points': 510},
-        ]
-        for h in houses_data:
-            House.objects.get_or_create(name=h['name'], defaults=h)
+        # 1. Clear any auto-generated mock houses
+        House.objects.all().delete()
 
         # 2. Enforce admin@tarepet.com as the EXCLUSIVE Super Admin account
         adm_email = 'admin@tarepet.com'

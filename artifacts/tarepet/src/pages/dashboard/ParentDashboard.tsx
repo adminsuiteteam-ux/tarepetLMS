@@ -388,10 +388,10 @@ export default function ParentDashboard() {
             <div className="w-12 h-12 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold">
               <Award className="w-6 h-6 text-primary-foreground" />
             </div>
-            <div>
-              <h3 className="font-serif font-bold text-foreground text-lg">{activeChild.name} — Blue House (Eagle)</h3>
-              <p className="text-xs text-muted-foreground">{t('Rank: ')}<strong>#1 Overall</strong> &middot; Motto: &quot;Wisdom &amp; Integrity&quot;</p>
-            </div>
+              <h3 className="font-serif font-bold text-foreground text-lg">{activeChild.name} {activeChild.house ? `— ${activeChild.house}` : ''}</h3>
+              {activeChild.house && (
+                <p className="text-xs text-muted-foreground">{t('House Membership Active')}</p>
+              )}
           </div>
         </div>
       </div>

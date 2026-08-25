@@ -1120,7 +1120,7 @@ export function saveStudent(studentData: Partial<StudentRecord> & { name: string
     attendance: studentData.attendance || '100%',
     atRisk: studentData.atRisk || false,
     profileImage: studentData.profileImage || '',
-    house: studentData.house || 'Blue House (Eagle)',
+    house: studentData.house || '',
   };
 
   if (existingIdx >= 0) {

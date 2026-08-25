@@ -62,12 +62,7 @@ const MOCK_TEACHERS: any[] = [];
 
 const MOCK_SUBJECTS: any[] = [];
 
-const MOCK_HOUSES = [
-  { name: 'Blue House (Eagle)', color: '#3B82F6', motto: 'Wisdom & Integrity', points: 0, students: 0, head: 'Unassigned' },
-  { name: 'Purple House (Phoenix)', color: '#8B5CF6', motto: 'Royalty & Distinction', points: 0, students: 0, head: 'Unassigned' },
-  { name: 'Green House (Jaguar)', color: '#10B981', motto: 'Growth & Resilience', points: 0, students: 0, head: 'Unassigned' },
-  { name: 'Red House (Falcon)', color: '#EF4444', motto: 'Passion & Determination', points: 0, students: 0, head: 'Unassigned' },
-];
+const MOCK_HOUSES: any[] = [];
 
 const MOCK_CLASSES: any[] = [];
 
@@ -10597,7 +10592,7 @@ export default function AdminDashboard() {
                         password: generatedId,
                         grade: newStudentForm.grade,
                         stream: newStudentForm.stream,
-                        house: 'Blue House (Eagle)',
+                        house: newStudentForm.house || '',
                         status: 'ACTIVE',
                         dob: newStudentForm.dob,
                         gender: newStudentForm.gender,
