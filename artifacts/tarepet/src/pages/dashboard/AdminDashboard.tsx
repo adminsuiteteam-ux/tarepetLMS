@@ -10,7 +10,6 @@ import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, syn
 import { AdminManagementPanel } from '@/components/dashboard/AdminManagementPanel';
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
 import { ImageCropModal } from '@/components/ui/ImageCropModal';
-import { MobileProfileView } from '@/components/profile/MobileProfileView';
 import { validatePasswordStrength } from '@/lib/password-policy';
 import { useCustomDialog } from '@/context/DialogContext';
 import tarepetLogo from '@assets/tarepet__1784835204178.png';
@@ -3202,9 +3201,7 @@ export default function AdminDashboard() {
         let totalScore = 0;
         let count = 0;
         classStudents.forEach(st => {
-          const entry = (classScoresMap && Object.prototype.hasOwnProperty.call(classScoresMap, st.id))
-            ? (classScoresMap as Record<string, any>)[String(st.id)]
-            : null;
+          const entry = safeLookup(classScoresMap, st.id);
           if (entry) {
             totalScore += (entry.ca1 || 0) + (entry.ca2 || 0) + (entry.exam || 0);
             count++;
@@ -5608,143 +5605,104 @@ export default function AdminDashboard() {
     // 8. ADMIN PROFILE PAGE
     if (activeSection === 'profile') {
       return (
-        <>
-          {/* Mobile View Profile */}
-          <div className="md:hidden">
-            <MobileProfileView
-              name={adminProfileData.name}
-              email={adminProfileData.email}
-              subtitle={`${adminProfileData.title} • ${adminProfileData.department}`}
-              avatarUrl={adminProfileData.profileImage}
-              roleBadge="ADMIN"
-              location="Yenagoa Campus, Nigeria"
-              onBack={() => setActiveSection('overview')}
-              onEditProfile={() => {
-                setEditProfileForm(adminProfileData);
-                setShowEditProfileModal(true);
-              }}
-              onChangePassword={() => {
-                setShowChangePasswordModal(true);
-              }}
-              onPrintProfile={() => window.print()}
-              extraMenuItems={[
-                {
-                  icon: ShieldCheck,
-                  label: 'Manage Sub-Admins & Permissions',
-                  value: 'Access Control',
-                  onClick: () => setActiveSection('manage_admins'),
-                  color: 'bg-rose-500/10 text-rose-600',
-                },
-                {
-                  icon: DollarSign,
-                  label: 'Financials & Fee Setup',
-                  value: 'School Bursary',
-                  onClick: () => setActiveSection('finance'),
-                  color: 'bg-emerald-500/10 text-emerald-600',
-                }
-              ]}
-            />
-          </div>
+        <div className="space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
+          {/* Executive Profile Header Banner */}
+          <div className="relative rounded-3xl overflow-hidden border border-border/80 shadow-lg bg-card">
+            {/* Glassmorphic Ambient Cover Gradient */}
+            <div className="min-h-44 bg-gradient-to-r from-zinc-950 via-zinc-900 to-primary/80 relative overflow-hidden flex flex-col justify-between sm:flex-row sm:items-end p-4 sm:p-6 pb-20 sm:pb-6">
+              <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
+              <div className="absolute -right-16 -top-16 w-64 h-64 bg-primary/30 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -left-12 -bottom-12 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
+              
+              {/* School Crest & Accreditations Watermark */}
+              <div className="relative sm:absolute top-0 sm:top-4 right-0 sm:right-6 flex flex-wrap items-center gap-2 sm:gap-3 mb-3 sm:mb-0">
+                <span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-[10px] sm:text-[11px] font-bold tracking-wider uppercase flex items-center gap-1.5 shadow-xs">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> TRCN Certified Leader
+                </span>
+                <span className="px-3 py-1 rounded-full bg-emerald-500/20 backdrop-blur-md border border-emerald-400/30 text-emerald-300 text-[10px] sm:text-[11px] font-bold tracking-wider uppercase flex items-center gap-1.5 shadow-xs">
+                  <Sparkles className="w-3.5 h-3.5" /> Tier 1 Super Admin
+                </span>
+              </div>
+            </div>
 
-          {/* Desktop View */}
-          <div className="hidden md:block space-y-6" style={{ fontFamily: 'var(--font-poppins)' }}>
-            {/* Executive Profile Header Banner */}
-            <div className="relative rounded-3xl overflow-hidden border border-border/80 shadow-lg bg-card">
-              {/* Glassmorphic Ambient Cover Gradient */}
-              <div className="h-44 bg-gradient-to-r from-zinc-950 via-zinc-900 to-primary/80 relative overflow-hidden flex items-end p-6">
-                <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
-                <div className="absolute -right-16 -top-16 w-64 h-64 bg-primary/30 rounded-full blur-3xl pointer-events-none" />
-                <div className="absolute -left-12 -bottom-12 w-64 h-64 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
-                
-                {/* School Crest & Accreditations Watermark */}
-                <div className="absolute top-4 right-6 flex items-center gap-3">
-                  <span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-[11px] font-bold tracking-wider uppercase flex items-center gap-1.5 shadow-xs">
-                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> TRCN Certified Leader
-                  </span>
-                  <span className="px-3 py-1 rounded-full bg-emerald-500/20 backdrop-blur-md border border-emerald-400/30 text-emerald-300 text-[11px] font-bold tracking-wider uppercase flex items-center gap-1.5 shadow-xs">
-                    <Sparkles className="w-3.5 h-3.5" /> Tier 1 Super Admin
+            {/* Profile Bar Overlap Card */}
+            <div className="px-4 sm:px-8 pb-6 pt-0 relative flex flex-col lg:flex-row items-center lg:items-end justify-between gap-6 -mt-16">
+              <div className="flex flex-col sm:flex-row items-center sm:items-end gap-5 text-center sm:text-left">
+                {/* Photo Avatar with Live Hover Crop / Change Trigger */}
+                <div className="relative group shrink-0">
+                  <div className="w-28 h-28 rounded-3xl bg-zinc-950 text-white font-bold text-4xl flex items-center justify-center shadow-2xl border-4 border-card overflow-hidden ring-2 ring-primary/30 relative">
+                    {adminProfileData.profileImage ? (
+                      <img src={adminProfileData.profileImage} alt={adminProfileData.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="bg-gradient-to-tr from-primary to-amber-500 bg-clip-text text-transparent">
+                        {adminProfileData.name.split(' ').map(n => n[0]).join('')}
+                      </span>
+                    )}
+                    {/* Hover Overlay to Edit Photo */}
+                    <button
+                      onClick={() => { setEditProfileForm(adminProfileData); setShowEditProfileModal(true); }}
+                      className="absolute inset-0 bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 text-[10px] font-bold cursor-pointer backdrop-blur-xs"
+                    >
+                      <Camera className="w-5 h-5" />
+                      <span>Update Photo</span>
+                    </button>
+                  </div>
+                  <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-4 border-card shadow-sm flex items-center justify-center" title="Account Active">
+                    <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
                   </span>
                 </div>
-              </div>
 
-              {/* Profile Bar Overlap Card */}
-              <div className="px-8 pb-6 pt-0 relative flex flex-col lg:flex-row items-center lg:items-end justify-between gap-6 -mt-16">
-                <div className="flex flex-col sm:flex-row items-center sm:items-end gap-5 text-center sm:text-left">
-                  {/* Photo Avatar with Live Hover Crop / Change Trigger */}
-                  <div className="relative group shrink-0">
-                    <div className="w-28 h-28 rounded-3xl bg-zinc-950 text-white font-bold text-4xl flex items-center justify-center shadow-2xl border-4 border-card overflow-hidden ring-2 ring-primary/30 relative">
-                      {adminProfileData.profileImage ? (
-                        <img src={adminProfileData.profileImage} alt={adminProfileData.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="bg-gradient-to-tr from-primary to-amber-500 bg-clip-text text-transparent">
-                          {adminProfileData.name.split(' ').map(n => n[0]).join('')}
-                        </span>
-                      )}
-                      {/* Hover Overlay to Edit Photo */}
-                      <button
-                        onClick={() => { setEditProfileForm(adminProfileData); setShowEditProfileModal(true); }}
-                        className="absolute inset-0 bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 text-[10px] font-bold cursor-pointer backdrop-blur-xs"
-                      >
-                        <Camera className="w-5 h-5" />
-                        <span>Update Photo</span>
-                      </button>
-                    </div>
-                    <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-4 border-card shadow-sm flex items-center justify-center" title="Account Active">
-                      <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                <div className="space-y-1.5">
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
+                    <h2 className="font-bold font-serif text-2xl lg:text-3xl text-foreground tracking-tight">{adminProfileData.name}</h2>
+                    <span className="px-3 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 text-[11px] font-extrabold uppercase tracking-wider">
+                      Chief Administrator
                     </span>
                   </div>
-
-                  <div className="space-y-1.5">
-                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
-                      <h2 className="font-bold font-serif text-2xl lg:text-3xl text-foreground tracking-tight">{adminProfileData.name}</h2>
-                      <span className="px-3 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 text-[11px] font-extrabold uppercase tracking-wider">
-                        Chief Administrator
-                      </span>
-                    </div>
-                    <p className="text-xs font-semibold text-primary flex items-center justify-center sm:justify-start gap-2">
-                      <Award className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                      <span>{adminProfileData.title}</span>
-                    </p>
-                    <p className="text-xs text-muted-foreground flex flex-wrap items-center justify-center sm:justify-start gap-3 pt-0.5 font-sans">
-                      <span className="font-mono font-bold text-foreground bg-muted/40 px-2 py-0.5 rounded-md border border-border/60">ID: {adminProfileData.id}</span>
-                      <span>•</span>
-                      <span>{adminProfileData.department}</span>
-                      <span>•</span>
-                      <span className="text-emerald-600 font-semibold flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Full Governance Authority
-                      </span>
-                    </p>
-                  </div>
-                </div>
-
-                {/* Direct Action Chips */}
-                <div className="flex flex-wrap items-center justify-center gap-2.5 shrink-0 pt-2 lg:pt-0">
-                  <button
-                    onClick={() => { setEditProfileForm(adminProfileData); setShowEditProfileModal(true); }}
-                    className="px-4 py-2.5 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all flex items-center gap-2 shadow-sm cursor-pointer active:scale-95"
-                  >
-                    <Pencil className="w-3.5 h-3.5" /> Edit Full Dossier
-                  </button>
-                  <button
-                    onClick={() => { setPasswordForm({ current: '', newPass: '', confirm: '' }); setPasswordSuccess(false); setShowChangePasswordModal(true); }}
-                    className="px-4 py-2.5 bg-muted/80 text-foreground border border-border rounded-xl text-xs font-bold hover:bg-accent transition-all flex items-center gap-2 cursor-pointer active:scale-95"
-                  >
-                    <Lock className="w-3.5 h-3.5 text-primary" /> Security & Passcode
-                  </button>
-                  <button
-                    onClick={() => setProfileTab('idcard')}
-                    className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-xl text-xs font-bold hover:from-amber-600 hover:to-amber-700 transition-all flex items-center gap-2 shadow-xs cursor-pointer active:scale-95"
-                  >
-                    <CreditCard className="w-3.5 h-3.5" /> View Official ID
-                  </button>
+                  <p className="text-xs font-semibold text-primary flex items-center justify-center sm:justify-start gap-2">
+                    <Award className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                    <span>{adminProfileData.title}</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground flex flex-wrap items-center justify-center sm:justify-start gap-3 pt-0.5 font-sans">
+                    <span className="font-mono font-bold text-foreground bg-muted/40 px-2 py-0.5 rounded-md border border-border/60">ID: {adminProfileData.id}</span>
+                    <span>•</span>
+                    <span>{adminProfileData.department}</span>
+                    <span>•</span>
+                    <span className="text-emerald-600 font-semibold flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Full Governance Authority
+                    </span>
+                  </p>
                 </div>
               </div>
 
-              {/* Quick Metrics Bar */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-border/60 border-t border-border/80 text-xs">
-                <div className="bg-card p-4 hover:bg-muted/10 transition-colors flex items-center justify-between">
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Admin Status</p>
+              {/* Direct Action Chips */}
+              <div className="flex flex-wrap items-center justify-center gap-2.5 shrink-0 pt-2 lg:pt-0 w-full sm:w-auto">
+                <button
+                  onClick={() => { setEditProfileForm(adminProfileData); setShowEditProfileModal(true); }}
+                  className="px-4 py-2.5 bg-primary text-white rounded-xl text-xs font-bold hover:bg-primary/90 transition-all flex items-center gap-2 shadow-sm cursor-pointer active:scale-95 flex-1 sm:flex-initial justify-center"
+                >
+                  <Pencil className="w-3.5 h-3.5" /> Edit Full Dossier
+                </button>
+                <button
+                  onClick={() => { setPasswordForm({ current: '', newPass: '', confirm: '' }); setPasswordSuccess(false); setShowChangePasswordModal(true); }}
+                  className="px-4 py-2.5 bg-muted/80 text-foreground border border-border rounded-xl text-xs font-bold hover:bg-accent transition-all flex items-center gap-2 cursor-pointer active:scale-95 flex-1 sm:flex-initial justify-center"
+                >
+                  <Lock className="w-3.5 h-3.5 text-primary" /> Security & Passcode
+                </button>
+                <button
+                  onClick={() => setProfileTab('idcard')}
+                  className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-xl text-xs font-bold hover:from-amber-600 hover:to-amber-700 transition-all flex items-center gap-2 shadow-xs cursor-pointer active:scale-95 w-full sm:w-auto justify-center"
+                >
+                  <CreditCard className="w-3.5 h-3.5" /> View Official ID
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Metrics Bar */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-border/60 border-t border-border/80 text-xs">
+              <div className="bg-card p-4 hover:bg-muted/10 transition-colors flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Admin Status</p>
                     <p className="text-sm font-bold text-emerald-600 mt-1 flex items-center gap-1.5">
                       <CheckCircle2 className="w-4 h-4" /> Active & Verified
                     </p>
@@ -6770,8 +6728,7 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          </div>
-        </>
+        </div>
       );
     }
 
