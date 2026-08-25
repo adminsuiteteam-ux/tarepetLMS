@@ -8199,7 +8199,15 @@ export default function AdminDashboard() {
                                 {sub.stream || 'General'}
                               </span>
                             </td>
-                            <td className="py-3.5 px-4 font-semibold text-foreground">{sub.teacher}</td>
+                            <td className="py-3.5 px-4 font-semibold">
+                              {sub.teacher && sub.teacher !== 'Not Assigned' ? (
+                                <span className="text-foreground">{sub.teacher}</span>
+                              ) : (
+                                <span className="inline-block text-[11px] font-bold text-amber-500 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
+                                  Not Assigned
+                                </span>
+                              )}
+                            </td>
                             <td className="py-3.5 px-4 font-bold text-foreground">{dynamicEnrolledCount} Student{dynamicEnrolledCount !== 1 ? 's' : ''}</td>
                             <td className="py-3.5 px-4 text-right">
                               <span className="text-[10px] font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full border border-primary/20">
