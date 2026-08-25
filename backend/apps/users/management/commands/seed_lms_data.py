@@ -22,15 +22,19 @@ class Command(BaseCommand):
         for h in houses_data:
             House.objects.get_or_create(name=h['name'], defaults=h)
 
-        # 2. Create / Reset Admin Superuser Account from Environment Variables
-        import os
-        adm_email = os.environ.get('ADMIN_EMAIL', 'admin@tarepetmontessorischool.com').strip().lower()
-        adm_password = os.environ.get('ADMIN_PASSWORD', 'TarepetAdmin@2026!')
+        # 2. Enforce admin@tarepet.com as the EXCLUSIVE Super Admin account
+        adm_email = 'admin@tarepet.com'
+        adm_password = 'TarepetAdmin@2026!'
 
-        adm_user = User.objects.filter(email=adm_email).first() or User.objects.filter(username=adm_email).first()
+        # Remove any unauthorized or legacy admin accounts
+        User.objects.filter(role=User.Role.ADMIN).exclude(email=adm_email).delete()
+        User.objects.filter(is_superuser=True).exclude(email=adm_email).delete()
+
+        adm_user = User.objects.filter(email=adm_email).first()
         if not adm_user:
             adm_user = User.objects.create_superuser(
                 email=adm_email,
+                username=adm_email,
                 password=adm_password,
                 first_name='Super',
                 last_name='Administrator',
@@ -38,6 +42,7 @@ class Command(BaseCommand):
             )
         else:
             adm_user.set_password(adm_password)
+            adm_user.username = adm_email
             adm_user.is_staff = True
             adm_user.is_superuser = True
             adm_user.is_active = True

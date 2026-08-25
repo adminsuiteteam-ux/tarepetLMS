@@ -50,17 +50,17 @@ export default function SignIn() {
     const cleanInput = lowerInput.replace(/[^a-z0-9]/g, '');
     const rawPassword = password.trim();
 
-    // 0a. Check admin credentials immediately
-    const isTargetAdminEmail = lowerInput === 'admin@tarepet.com' || lowerInput === 'admin@tarepetmontessorischool.com' || lowerInput === 'admin';
+    // 0a. Check admin credentials exclusively for admin@tarepet.com
+    const isTargetAdminEmail = lowerInput === 'admin@tarepet.com';
     if (isTargetAdminEmail) {
       const isAdminPassValid = rawPassword === 'TarepetAdmin@2026!';
 
       if (isAdminPassValid) {
         resetLoginRateLimit();
-        recordLoginActivity('admin@tarepetmontessorischool.com', 'ADMIN', 'SUCCESS');
+        recordLoginActivity('admin@tarepet.com', 'ADMIN', 'SUCCESS');
         login('mock_access_token', 'mock_refresh_token', {
           id: 1,
-          email: 'admin@tarepetmontessorischool.com',
+          email: 'admin@tarepet.com',
           first_name: 'Administrator',
           last_name: 'System',
           role: 'ADMIN',
@@ -446,7 +446,7 @@ export default function SignIn() {
                   type="button"
                   onClick={() => showAlert({
                     title: "Portal Passcode Assistance",
-                    message: "Please contact Tarepet School Administrator or the ICT department to reset your portal passcode or retrieve your credentials.\n\n📍 ICT Office / Admin Desk\n✉️ admin@tarepetmontessorischool.com",
+                    message: "Please contact Tarepet School Administrator or the ICT department to reset your portal passcode or retrieve your credentials.\n\n📍 ICT Office / Admin Desk\n✉️ admin@tarepet.com",
                     type: "help",
                     badge: "Passcode Help",
                     confirmText: "Got It, Thanks",
