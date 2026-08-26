@@ -10,7 +10,7 @@ from apps.users.models import CustomUser, TeacherProfile
 
 OFFICIAL_TEACHERS = [
     {
-        'teacher_id': 'TMS/TCH/6754',
+        'teacher_id': 'TMS/TCH/0060',
         'name': 'Ms. Allison Victoria',
         'email': 'allison.victoria@tarepet.com',
         'phone': '08062571566',
@@ -21,7 +21,7 @@ OFFICIAL_TEACHERS = [
         'form_teacher_of': 'SS 1'
     },
     {
-        'teacher_id': 'TMS/TCH/8965',
+        'teacher_id': 'TMS/TCH/0016',
         'name': 'Mrs. Timi Porbeni',
         'email': 'isaactimi16@gmail.com',
         'phone': '07068523730',
@@ -32,7 +32,7 @@ OFFICIAL_TEACHERS = [
         'form_teacher_of': 'SS 2'
     },
     {
-        'teacher_id': 'TMS/TCH/4821',
+        'teacher_id': 'TMS/TCH/0070',
         'name': 'Samuel Hannah',
         'email': 'hannah.samuel@tarepet.com',
         'phone': '08062429432',
@@ -43,7 +43,7 @@ OFFICIAL_TEACHERS = [
         'form_teacher_of': 'Creche'
     },
     {
-        'teacher_id': 'TMS/TCH/3194',
+        'teacher_id': 'TMS/TCH/0061',
         'name': 'Nwachukwu (O) Edirin',
         'email': 'edirin.nwachukwu@tarepet.com',
         'phone': '07032356176',
@@ -54,7 +54,7 @@ OFFICIAL_TEACHERS = [
         'form_teacher_of': 'Primary 2'
     },
     {
-        'teacher_id': 'TMS/TCH/7420',
+        'teacher_id': 'TMS/TCH/0062',
         'name': 'Mrs. Ozichi Nwaudo Arinze',
         'email': 'ozichi.arinze@tarepet.com',
         'phone': '08067102216',
@@ -65,7 +65,7 @@ OFFICIAL_TEACHERS = [
         'form_teacher_of': 'JSS 1'
     },
     {
-        'teacher_id': 'TMS/TCH/5183',
+        'teacher_id': 'TMS/TCH/0063',
         'name': 'Ogbe Andrew',
         'email': 'ogbe.andrew@tarepet.com',
         'phone': '08020697680',
@@ -76,7 +76,7 @@ OFFICIAL_TEACHERS = [
         'form_teacher_of': 'Basic 4'
     },
     {
-        'teacher_id': 'TMS/TCH/9267',
+        'teacher_id': 'TMS/TCH/0017',
         'name': 'Abiola Adeniyi Adegemo',
         'email': 'adeniyiabiola2@gmail.com',
         'phone': '08131251726',
@@ -87,7 +87,7 @@ OFFICIAL_TEACHERS = [
         'form_teacher_of': 'Senior Science'
     },
     {
-        'teacher_id': 'TMS/TCH/4038',
+        'teacher_id': 'TMS/TCH/0019',
         'name': 'Simeon Blessed Chigozie',
         'email': 'blessedsimeon6@gmail.com',
         'phone': '08146183309',
@@ -98,7 +98,7 @@ OFFICIAL_TEACHERS = [
         'form_teacher_of': 'JSS 1'
     },
     {
-        'teacher_id': 'TMS/TCH/8315',
+        'teacher_id': 'TMS/TCH/0071',
         'name': 'Egufe B. Austin',
         'email': 'austin.egufe@tarepet.com',
         'phone': '08066154094',
@@ -109,7 +109,7 @@ OFFICIAL_TEACHERS = [
         'form_teacher_of': 'JSS Vocational'
     },
     {
-        'teacher_id': 'TMS/TCH/2941',
+        'teacher_id': 'TMS/TCH/0026',
         'name': 'Oyiniki Anita Ojinbrakemi',
         'email': 'oyinkianita6@gmail.com',
         'phone': '08146183309',
@@ -120,7 +120,7 @@ OFFICIAL_TEACHERS = [
         'form_teacher_of': 'JSS 3 Love'
     },
     {
-        'teacher_id': 'TMS/TCH/6159',
+        'teacher_id': 'TMS/TCH/0044',
         'name': 'Mrs. Eze Chidubem Janneth',
         'email': 'ukachukwuchidubem223@gmail.com',
         'phone': '08142417833',
@@ -131,7 +131,7 @@ OFFICIAL_TEACHERS = [
         'form_teacher_of': 'JSS 2 Faith'
     },
     {
-        'teacher_id': 'TMS/TCH/7208',
+        'teacher_id': 'TMS/TCH/0072',
         'name': 'Agadaga Tari',
         'email': 'tari.agadaga@tarepet.com',
         'phone': '08065008494',
@@ -142,7 +142,7 @@ OFFICIAL_TEACHERS = [
         'form_teacher_of': 'None'
     },
     {
-        'teacher_id': 'TMS/TCH/5482',
+        'teacher_id': 'TMS/TCH/0054',
         'name': 'Amos Godspower',
         'email': 'amosgodspower360@mail.com',
         'phone': '07035339196',
@@ -153,7 +153,7 @@ OFFICIAL_TEACHERS = [
         'form_teacher_of': 'JSS 3 Faith'
     },
     {
-        'teacher_id': 'TMS/TCH/6435',
+        'teacher_id': 'TMS/TCH/0064',
         'name': 'Iwu Adanma',
         'email': 'iwu.adanma@tarepet.com',
         'phone': '08039341848',
@@ -164,7 +164,7 @@ OFFICIAL_TEACHERS = [
         'form_teacher_of': 'JSS 1 Faith'
     },
     {
-        'teacher_id': 'TMS/TCH/4312',
+        'teacher_id': 'TMS/TCH/0043',
         'name': 'Mr. Joseph Ekenebe',
         'email': 'joebleszekenebe@gmail.com',
         'phone': '08137183618',
@@ -175,7 +175,7 @@ OFFICIAL_TEACHERS = [
         'form_teacher_of': 'SS 2 Grace'
     },
     {
-        'teacher_id': 'TMS/TCH/7829',
+        'teacher_id': 'TMS/TCH/0027',
         'name': 'Goodluck Ufomba',
         'email': 'goodluckufomba2020@gmail.com',
         'phone': '08032288883',
@@ -186,7 +186,7 @@ OFFICIAL_TEACHERS = [
         'form_teacher_of': 'None'
     },
     {
-        'teacher_id': 'TMS/TCH/8560',
+        'teacher_id': 'TMS/TCH/0025',
         'name': 'Eli Idua',
         'email': 'eliidua@gmail.com',
         'phone': '08068583070',
@@ -197,7 +197,7 @@ OFFICIAL_TEACHERS = [
         'form_teacher_of': 'SS 1 Art'
     },
     {
-        'teacher_id': 'TMS/TCH/9384',
+        'teacher_id': 'TMS/TCH/0013',
         'name': 'Alex I. Akpokulokenei Maria',
         'email': 'alexakpobulokemi@gmail.com',
         'phone': '09066984417',
@@ -208,7 +208,7 @@ OFFICIAL_TEACHERS = [
         'form_teacher_of': 'None'
     },
     {
-        'teacher_id': 'TMS/TCH/3721',
+        'teacher_id': 'TMS/TCH/0022',
         'name': 'Emmanuel U. Joseph',
         'email': 'joeugbede2024@gmail.com',
         'phone': '08021472342',
@@ -216,6 +216,17 @@ OFFICIAL_TEACHERS = [
         'department': 'Biological & Life Sciences',
         'specialization': 'Biology (SS 1 - 3)',
         'subjects': [{'name': 'Biology', 'grade': 'SS 1'}, {'name': 'Biology', 'grade': 'SS 2'}, {'name': 'Biology', 'grade': 'SS 3'}],
+        'form_teacher_of': 'None'
+    },
+    {
+        'teacher_id': 'TMS/TCH/0024',
+        'name': 'Covenantzanadu Uzor',
+        'email': 'covenant.uzor@tarepet.com',
+        'phone': '08035567890',
+        'gender': 'Male',
+        'department': 'Academic Staff',
+        'specialization': 'General Studies & Science',
+        'subjects': [{'name': 'Basic Science', 'grade': 'JSS 1'}],
         'form_teacher_of': 'None'
     }
 ]

@@ -331,7 +331,7 @@ export interface TeacherRecord {
 export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [
   {
     id: 1,
-    staffId: 'TMS/TCH/6754',
+    staffId: 'TMS/TCH/0060',
     name: 'Ms. Allison Victoria',
     email: 'allison.victoria@tarepet.com',
     phone: '08062571566',
@@ -346,7 +346,7 @@ export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [
   },
   {
     id: 2,
-    staffId: 'TMS/TCH/8965',
+    staffId: 'TMS/TCH/0016',
     name: 'Mrs. Timi Porbeni',
     email: 'isaactimi16@gmail.com',
     phone: '07068523730',
@@ -361,7 +361,7 @@ export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [
   },
   {
     id: 3,
-    staffId: 'TMS/TCH/4821',
+    staffId: 'TMS/TCH/0070',
     name: 'Samuel Hannah',
     email: 'hannah.samuel@tarepet.com',
     phone: '08062429432',
@@ -376,7 +376,7 @@ export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [
   },
   {
     id: 4,
-    staffId: 'TMS/TCH/3194',
+    staffId: 'TMS/TCH/0061',
     name: 'Nwachukwu (O) Edirin',
     email: 'edirin.nwachukwu@tarepet.com',
     phone: '07032356176',
@@ -391,7 +391,7 @@ export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [
   },
   {
     id: 5,
-    staffId: 'TMS/TCH/7420',
+    staffId: 'TMS/TCH/0062',
     name: 'Mrs. Ozichi Nwaudo Arinze',
     email: 'ozichi.arinze@tarepet.com',
     phone: '08067102216',
@@ -406,7 +406,7 @@ export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [
   },
   {
     id: 6,
-    staffId: 'TMS/TCH/5183',
+    staffId: 'TMS/TCH/0063',
     name: 'Ogbe Andrew',
     email: 'ogbe.andrew@tarepet.com',
     phone: '08020697680',
@@ -421,7 +421,7 @@ export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [
   },
   {
     id: 7,
-    staffId: 'TMS/TCH/9267',
+    staffId: 'TMS/TCH/0017',
     name: 'Abiola Adeniyi Adegemo',
     email: 'adeniyiabiola2@gmail.com',
     phone: '08131251726',
@@ -436,7 +436,7 @@ export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [
   },
   {
     id: 8,
-    staffId: 'TMS/TCH/4038',
+    staffId: 'TMS/TCH/0019',
     name: 'Simeon Blessed Chigozie',
     email: 'blessedsimeon6@gmail.com',
     phone: '08146183309',
@@ -451,7 +451,7 @@ export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [
   },
   {
     id: 9,
-    staffId: 'TMS/TCH/8315',
+    staffId: 'TMS/TCH/0071',
     name: 'Egufe B. Austin',
     email: 'austin.egufe@tarepet.com',
     phone: '08066154094',
@@ -466,7 +466,7 @@ export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [
   },
   {
     id: 10,
-    staffId: 'TMS/TCH/2941',
+    staffId: 'TMS/TCH/0026',
     name: 'Oyiniki Anita Ojinbrakemi',
     email: 'oyinkianita6@gmail.com',
     phone: '08146183309',
@@ -481,7 +481,7 @@ export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [
   },
   {
     id: 11,
-    staffId: 'TMS/TCH/6159',
+    staffId: 'TMS/TCH/0044',
     name: 'Mrs. Eze Chidubem Janneth',
     email: 'ukachukwuchidubem223@gmail.com',
     phone: '08142417833',
@@ -496,7 +496,7 @@ export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [
   },
   {
     id: 12,
-    staffId: 'TMS/TCH/7208',
+    staffId: 'TMS/TCH/0072',
     name: 'Agadaga Tari',
     email: 'tari.agadaga@tarepet.com',
     phone: '08065008494',
@@ -511,7 +511,7 @@ export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [
   },
   {
     id: 13,
-    staffId: 'TMS/TCH/5482',
+    staffId: 'TMS/TCH/0054',
     name: 'Amos Godspower',
     email: 'amosgodspower360@mail.com',
     phone: '07035339196',
@@ -526,7 +526,7 @@ export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [
   },
   {
     id: 14,
-    staffId: 'TMS/TCH/6435',
+    staffId: 'TMS/TCH/0064',
     name: 'Iwu Adanma',
     email: 'iwu.adanma@tarepet.com',
     phone: '08039341848',
@@ -541,7 +541,7 @@ export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [
   },
   {
     id: 15,
-    staffId: 'TMS/TCH/4312',
+    staffId: 'TMS/TCH/0043',
     name: 'Mr. Joseph Ekenebe',
     email: 'joebleszekenebe@gmail.com',
     phone: '08137183618',
@@ -556,7 +556,7 @@ export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [
   },
   {
     id: 16,
-    staffId: 'TMS/TCH/7829',
+    staffId: 'TMS/TCH/0027',
     name: 'Goodluck Ufomba',
     email: 'goodluckufomba2020@gmail.com',
     phone: '08032288883',
@@ -571,7 +571,7 @@ export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [
   },
   {
     id: 17,
-    staffId: 'TMS/TCH/8560',
+    staffId: 'TMS/TCH/0025',
     name: 'Eli Idua',
     email: 'eliidua@gmail.com',
     phone: '08068583070',
@@ -586,7 +586,7 @@ export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [
   },
   {
     id: 18,
-    staffId: 'TMS/TCH/9384',
+    staffId: 'TMS/TCH/0013',
     name: 'Alex I. Akpokulokenei Maria',
     email: 'alexakpobulokemi@gmail.com',
     phone: '09066984417',
@@ -601,7 +601,7 @@ export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [
   },
   {
     id: 19,
-    staffId: 'TMS/TCH/3721',
+    staffId: 'TMS/TCH/0022',
     name: 'Emmanuel U. Joseph',
     email: 'joeugbede2024@gmail.com',
     phone: '08021472342',
@@ -616,7 +616,22 @@ export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [
   },
   {
     id: 20,
-    staffId: 'TMS/TCH/5823',
+    staffId: 'TMS/TCH/0024',
+    name: 'Covenantzanadu Uzor',
+    email: 'covenant.uzor@tarepet.com',
+    phone: '08035567890',
+    gender: 'Male',
+    formTeacherOf: 'None',
+    department: 'Academic Staff',
+    specialization: 'General Studies & Science',
+    qualification: 'B.Sc. Education',
+    status: 'Active',
+    joined: '2023-01-15',
+    bio: 'Educator in General Studies & Science.'
+  },
+  {
+    id: 21,
+    staffId: 'TMS/TCH/0058',
     name: 'Godsgift Dimaro',
     email: 'dimarogodsgift@gmail.com',
     phone: '08031234567',
