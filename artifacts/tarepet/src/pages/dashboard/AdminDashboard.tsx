@@ -7110,7 +7110,7 @@ export default function AdminDashboard() {
             <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Senior Teachers</p>
-                <h3 className="text-2xl font-serif font-bold text-primary mt-1">{teachersList.filter(t => t.subjectsAssigned?.some((s: any) => s.grade?.startsWith('SS'))).length}</h3>
+                <h3 className="text-2xl font-serif font-bold text-primary mt-1">{teachersList.filter(t => TEACHER_DIVISIONS.find(d => d.key === 'SS')?.filterFn(t)).length}</h3>
                 <p className="text-[11px] text-muted-foreground mt-0.5">Teaching SS classes</p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><GraduationCap className="w-5 h-5" /></div>
