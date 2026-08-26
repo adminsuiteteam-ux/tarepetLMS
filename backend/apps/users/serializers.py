@@ -47,19 +47,19 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
         target_user = User.objects.filter(q_filter).first()
 
         user = None
-        if target_user:
+        if target_user and target_user.is_active:
             teacher_id = getattr(getattr(target_user, 'teacher_profile', None), 'teacher_id', None)
             student_id = getattr(getattr(target_user, 'student_profile', None), 'student_id', None)
 
-            # Auto-repair default password hash if matching Staff ID, Student ID, or standard Admin Password
-            if (teacher_id and (password.upper() == teacher_id.upper())) or \
-               (student_id and (password.upper() == student_id.upper())) or \
-               (target_user.role == User.Role.ADMIN and password == 'TarepetAdmin@2026!'):
+            # 1. Fast check existing password hash
+            if target_user.check_password(password):
+                user = target_user
+            # 2. Check default fallback password matching Staff ID, Student ID, or Admin master password
+            elif (teacher_id and (password.strip().upper() == teacher_id.strip().upper())) or \
+                 (student_id and (password.strip().upper() == student_id.strip().upper())) or \
+                 (target_user.role == User.Role.ADMIN and password == 'TarepetAdmin@2026!'):
                 target_user.set_password(password)
-                target_user.save()
-
-            user = authenticate(self.context.get('request'), username=target_user.email, password=password)
-            if not user and target_user.check_password(password) and target_user.is_active:
+                target_user.save(update_fields=['password'])
                 user = target_user
 
         if not user:

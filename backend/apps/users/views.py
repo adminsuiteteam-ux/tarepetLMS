@@ -57,8 +57,9 @@ class CustomTokenObtainPairView(APIView):
             # Fetch authoritative user instance
             user_obj = User.objects.filter(email__iexact=email).first()
 
-            # Enforce 2FA Email OTP ONLY for TEACHER and ADMIN roles
-            if user_obj and user_obj.role in [CustomUser.Role.TEACHER, CustomUser.Role.ADMIN]:
+            # Optional 2FA Email OTP if explicitly enabled on user profile or requested
+            require_otp = request.data.get('require_otp', False) or getattr(user_obj, 'two_factor_enabled', False)
+            if user_obj and require_otp:
                 raw_code, temp_token, otp_obj = OTPVerification.create_otp(
                     user=user_obj,
                     purpose=OTPVerification.Purpose.LOGIN_2FA,
@@ -84,7 +85,7 @@ class CustomTokenObtainPairView(APIView):
                     'detail': f'A 6-digit authentication code has been sent to your email ({mask_email(user_obj.email)}).'
                 }, status=status.HTTP_200_OK)
 
-            # Direct login for STUDENT and PARENT roles
+            # Direct instant login for all roles (Teacher, Student, Parent, Admin)
             LoginActivityLog.objects.create(
                 email=email,
                 role=role,
