@@ -1645,10 +1645,9 @@ export function mapCBTExamToAdminExam(c: CBTExam): any {
     'ACTIVE': 'Ongoing',
     'COMPLETED': 'Completed',
     'PENDING': 'Pending Approval',
-    'REJECTED': 'Rejected',
-    'DRAFT': 'Draft',
     'ARCHIVED': 'Archived',
   };
+  const mappedStatus = Object.prototype.hasOwnProperty.call(statusMap, c.status) ? statusMap[c.status] : (c.status === 'ACTIVE' ? 'Ongoing' : c.status === 'APPROVED' ? 'Approved' : 'Pending Approval');
   return {
     id: c.id,
     title: c.title,
@@ -1663,7 +1662,7 @@ export function mapCBTExamToAdminExam(c: CBTExam): any {
     totalCandidates: 30,
     questionsCount: c.questions_count || (c.questions ? c.questions.length : 0),
     invigilator: c.teacher_name || 'Assigned Educator',
-    status: statusMap[c.status] || (c.status === 'ACTIVE' ? 'Ongoing' : c.status === 'APPROVED' ? 'Approved' : 'Pending Approval'),
+    status: mappedStatus,
     rawCbtExam: c
   };
 }
@@ -1880,11 +1879,14 @@ export async function submitStudentCBTAttempt(
   // Auto-sync CBT score directly to student's live broadsheet mark in Django backend
   const calculatedCbtScore = Math.round((percentage / 100) * 30);
   try {
-    const existingScores = getStudentBroadsheet(autoId);
+    const existingScores = getStudentBroadsheet(autoId) || {};
+    const currentCourseScore = Object.prototype.hasOwnProperty.call(existingScores, exam.course_code)
+      ? existingScores[exam.course_code]
+      : { ca1: 0, ca2: 0, exam: 0 };
     const updatedScores = {
       ...existingScores,
       [exam.course_code]: {
-        ...(existingScores[exam.course_code] || { ca1: 0, ca2: 0, exam: 0 }),
+        ...currentCourseScore,
         cbtScore: calculatedCbtScore,
         cbtExam: calculatedCbtScore,
         courseCode: exam.course_code,
@@ -2410,9 +2412,10 @@ export async function executeStudentPromotions(payload: ExecutePromotionsPayload
   const timestamp = new Date().toISOString();
   const newRecords: PromotionRecord[] = [];
 
-  for (let idx = 0; idx < payload.studentPromotions.length; idx++) {
-    const sp = payload.studentPromotions[idx];
-    const recordId = `PROM-${payload.academicSession.replace('/', '-')}-${Date.now().toString(36)}-${idx + 1}`;
+  let counter = 0;
+  for (const sp of (payload.studentPromotions || [])) {
+    counter++;
+    const recordId = `PROM-${payload.academicSession.replace('/', '-')}-${Date.now().toString(36)}-${counter}`;
     newRecords.push({
       id: recordId,
       studentId: sp.studentId,
