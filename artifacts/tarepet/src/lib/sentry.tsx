@@ -87,25 +87,47 @@ export class SentryErrorBoundary extends React.Component<
       if (this.props.fallback) {
         return this.props.fallback;
       }
+      const errMessage = this.state.error?.message || String(this.state.error || '');
       return (
-        <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50 text-slate-800">
-          <div className="max-w-md w-full p-6 bg-white rounded-2xl shadow-xl border border-slate-200 text-center space-y-4">
-            <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto text-xl font-bold">
-              !
+        <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50 text-slate-800 font-sans">
+          <div className="max-w-md w-full p-6 bg-white rounded-3xl shadow-xl border border-slate-200 text-center space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto text-2xl font-bold shadow-xs">
+              ⚠️
             </div>
-            <h2 className="text-xl font-bold text-slate-900">{t('common.somethingWentWrong', 'Something went wrong')}</h2>
+            <h2 className="text-xl font-bold font-serif text-slate-900">{t('common.somethingWentWrong', 'Something went wrong')}</h2>
             <p className="text-xs text-slate-500">
               {t('common.unexpectedErrorDesc', 'An unexpected error occurred. The incident has been recorded for review.')}
             </p>
-            <button
-              onClick={() => {
-                this.setState({ hasError: false, error: null });
-                window.location.reload();
-              }}
-              className="px-5 py-2.5 bg-primary text-white rounded-xl font-semibold text-xs hover:bg-primary/90 transition shadow-md"
-            >
-              {t('common.reloadApp', 'Reload Application')}
-            </button>
+            {errMessage && (
+              <div className="p-3 bg-slate-100 rounded-xl text-[11px] font-mono text-slate-700 text-left overflow-x-auto max-h-32 border border-slate-200">
+                {errMessage}
+              </div>
+            )}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-2">
+              <button
+                onClick={() => {
+                  this.setState({ hasError: false, error: null });
+                  window.location.reload();
+                }}
+                className="w-full sm:w-auto px-5 py-2.5 bg-primary text-white rounded-xl font-bold text-xs hover:bg-primary/90 transition shadow-sm"
+              >
+                {t('common.reloadApp', 'Reload Application')}
+              </button>
+              <button
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    try {
+                      localStorage.clear();
+                      sessionStorage.clear();
+                    } catch (e) {}
+                    window.location.href = '/';
+                  }
+                }}
+                className="w-full sm:w-auto px-4 py-2.5 bg-slate-200 text-slate-700 rounded-xl font-bold text-xs hover:bg-slate-300 transition"
+              >
+                Clear Cache & Restart
+              </button>
+            </div>
           </div>
         </div>
       );
