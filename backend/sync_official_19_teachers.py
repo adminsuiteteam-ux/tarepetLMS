@@ -234,21 +234,25 @@ for t in existing_teachers:
 print(f"Deleted {deleted_count} unlisted teacher records.\n")
 
 print("=== STEP 2: Creating / Updating the Official 19 Teachers ===")
-for r in OFFICIAL_19_TEACHERS:
+for r in OFFICIAL_TEACHERS:
+    name_parts = r['name'].strip().split(' ')
+    first_name = name_parts[0]
+    last_name = ' '.join(name_parts[1:]) if len(name_parts) > 1 else 'Staff'
+    
     u = CustomUser.objects.filter(email__iexact=r['email']).first()
     if not u:
         u = CustomUser.objects.create_user(
             email=r['email'],
             password=r['teacher_id'],
-            first_name=r['first_name'],
-            last_name=r['last_name'],
+            first_name=first_name,
+            last_name=last_name,
             phone=r['phone'],
             role='TEACHER',
             is_staff=True,
         )
     else:
-        u.first_name = r['first_name']
-        u.last_name = r['last_name']
+        u.first_name = first_name
+        u.last_name = last_name
         u.phone = r['phone']
         u.role = 'TEACHER'
         u.is_staff = True
@@ -256,13 +260,14 @@ for r in OFFICIAL_19_TEACHERS:
 
     p, _ = TeacherProfile.objects.get_or_create(user=u)
     p.teacher_id = r['teacher_id']
-    p.department = r['dept']
-    p.specialization = r['spec']
-    p.bio = r['bio']
-    p.gender = r['gender']
-    p.form_teacher_of = r['form_class']
+    p.department = r.get('department', '')
+    p.specialization = r.get('specialization', '')
+    p.gender = r.get('gender', '')
+    p.form_teacher_of = r.get('form_teacher_of', 'None')
+    p.subjects_taught = r.get('subjects', [])
+    p.bio = f"Form Teacher for {p.form_teacher_of} and {p.specialization}" if p.form_teacher_of != 'None' else f"Educator in {p.specialization}"
     p.save()
-    print(f"VERIFIED: {u.first_name} {u.last_name} | Staff ID: {p.teacher_id} | Phone: {u.phone} | Form Teacher: {p.form_teacher_of} | Spec: {p.specialization}")
+    print(f"VERIFIED: {u.first_name} {u.last_name} | Staff ID: {p.teacher_id} | Phone: {u.phone} | Form Class: {p.form_teacher_of} | Spec: {p.specialization}")
 
 total_now = CustomUser.objects.filter(role='TEACHER').count()
 print(f"\nSUCCESS: Exactly {total_now} official teachers exist in the database!")

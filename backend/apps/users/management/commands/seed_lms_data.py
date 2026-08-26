@@ -78,6 +78,8 @@ class Command(BaseCommand):
                 'last_name': 'Samuel',
                 'email': 'hannah.samuel@tarepet.com',
                 'phone': '08062429432',
+                'gender': 'Female',
+                'department': 'Early Years & Vocational Studies',
                 'specialization': 'Prevocational Studies (NUR - SS3) & Creche',
                 'class_assigned': 'Creche',
                 'bio': 'Form Educator for Creche and Prevocational Studies instructor from Nursery to SS 3.',
@@ -333,12 +335,12 @@ class Command(BaseCommand):
                 conflicting_prof.save(update_fields=['teacher_id'])
 
             t_prof.teacher_id = tr['teacher_id']
-            t_prof.department = tr['department']
-            t_prof.specialization = tr['specialization']
-            t_prof.subjects_taught = tr['subjects_taught']
-            t_prof.bio = tr['bio']
-            t_prof.gender = tr['gender']
-            t_prof.form_teacher_of = tr.get('class_assigned', 'None')
+            t_prof.department = tr.get('department', 'Academic Staff')
+            t_prof.specialization = tr.get('specialization', '')
+            t_prof.subjects_taught = tr.get('subjects_taught', [])
+            t_prof.bio = tr.get('bio', '')
+            t_prof.gender = tr.get('gender', 'Female')
+            t_prof.form_teacher_of = tr.get('form_teacher_of') or tr.get('class_assigned', 'None')
             t_prof.save()
 
             # Capture the first teacher's profile for Course FK and summary output
@@ -353,7 +355,6 @@ class Command(BaseCommand):
         StudentProfile.objects.all().delete()
         User.objects.filter(role=User.Role.STUDENT).delete()
         User.objects.filter(email__in=[
-            'allison.victoria@tarepet.com',
             'ebi.amadi@tarepet.com',
             'civa.media@tarepet.com',
             'student@tarepet.com',
@@ -413,7 +414,7 @@ class Command(BaseCommand):
             }
         )
 
-        self.stdout.write(self.style.SUCCESS('Successfully seeded Tarepet LMS demo accounts:'))
-        self.stdout.write(f'  - Students: 5 registered students seeded (e.g. emeka.amadi@tarepet.com, chidinma.okoro@tarepet.com)')
-        self.stdout.write(f'  - Parent: {parent_email} (Pass: ParentPassword123!)')
+        self.stdout.write(self.style.SUCCESS('Successfully seeded Tarepet LMS database:'))
+        self.stdout.write(f'  - Admin: admin@tarepet.com')
+        self.stdout.write(f'  - Teachers: {TeacherProfile.objects.count()} active teachers synced.')
 
