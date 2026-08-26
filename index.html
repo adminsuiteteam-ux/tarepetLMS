@@ -6,19 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
-    <!-- Content Security Policy: restricts resource loading to known safe origins -->
-    <meta http-equiv="Content-Security-Policy" content="
-      default-src 'self';
-      script-src 'self';
-      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-      font-src 'self' https://fonts.gstatic.com;
-      img-src 'self' data: blob: https:;
-      media-src 'self' blob:;
-      connect-src 'self' https://tarepetlms.onrender.com https://*.onrender.com http://localhost:8000 http://127.0.0.1:8000 wss: ws:;
-      object-src 'none';
-      base-uri 'self';
-      form-action 'self';
-    " />
+    <!-- Content Security Policy: restricts resource loading while allowing single-page app and fonts -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https: wss: ws: http://localhost:8000 http://127.0.0.1:8000; object-src 'none'; base-uri 'self'; form-action 'self';" />
     <title>Tare Pet Montessori School</title>
     <!-- Single Page App redirect decoder for GitHub Pages -->
     <script type="text/javascript">
@@ -48,8 +37,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;1,14..32,300;1,14..32,400&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script type="module" crossorigin src="/assets/index-CnfQZgSs.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-Dmp5xdC3.css">
+    <script type="module" crossorigin src="/assets/index-CRZ3R6cU.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BXUU8nSE.css">
   </head>
   <body>
     <div id="root"></div>
