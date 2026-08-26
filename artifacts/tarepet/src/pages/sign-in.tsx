@@ -128,16 +128,56 @@ export default function SignIn() {
       const isUniversalCode = ['123456', '000000', '999999'].includes(code);
       if (isUniversalCode || !err.response) {
         const lowerEmail = email.toLowerCase().trim();
-        const role = (pendingRole || (lowerEmail.includes('admin') ? 'ADMIN' : 'TEACHER')).toUpperCase();
-        resetLoginRateLimit();
-        recordLoginActivity(email || 'user@tarepet.com', role, "SUCCESS");
-        login('verified_2fa_access_token', 'verified_2fa_refresh_token', {
-          id: 1,
-          email: email || (role === 'ADMIN' ? 'admin@tarepet.com' : 'teacher@tarepet.com'),
-          first_name: role === 'ADMIN' ? 'Tarepet' : 'Educator',
-          last_name: role === 'ADMIN' ? 'Administrator' : 'Staff',
-          role: role as any,
+        const storedTeachers = getStoredTeachers();
+        const matchedTeacher = storedTeachers.find(t => {
+          const tEmail = (t.email || '').toLowerCase();
+          const tStaffId = (t.staffId || '').toLowerCase();
+          return (tEmail && tEmail === lowerEmail) || (tStaffId && tStaffId === lowerEmail) || lowerEmail.includes(tStaffId);
         });
+
+        const role = (pendingRole || (lowerEmail.includes('admin') ? 'ADMIN' : (matchedTeacher ? 'TEACHER' : 'TEACHER'))).toUpperCase();
+        resetLoginRateLimit();
+        recordLoginActivity(email || (role === 'ADMIN' ? 'admin@tarepet.com' : 'teacher@tarepet.com'), role, "SUCCESS");
+
+        if (role === 'TEACHER' && matchedTeacher) {
+          const nameParts = (matchedTeacher.name || 'Teacher Staff').trim().split(' ');
+          const firstName = nameParts[0] || 'Teacher';
+          const lastName = nameParts.slice(1).join(' ') || 'Staff';
+          login('verified_2fa_access_token', 'verified_2fa_refresh_token', {
+            id: matchedTeacher.id,
+            email: matchedTeacher.email || email,
+            first_name: firstName,
+            last_name: lastName,
+            phone: matchedTeacher.phone,
+            role: 'TEACHER',
+            profile: {
+              teacher_id: matchedTeacher.staffId,
+              department: matchedTeacher.department || '',
+              formTeacherOf: matchedTeacher.formTeacherOf || '',
+              form_teacher_of: matchedTeacher.formTeacherOf || '',
+              specialization: matchedTeacher.specialization || '',
+              subjects_taught: matchedTeacher.subjectsAssigned || [],
+              qualifications: matchedTeacher.qualification || '',
+              gender: matchedTeacher.gender || '',
+              dob: matchedTeacher.dob || '',
+              address: matchedTeacher.address || '',
+              bio: matchedTeacher.bio || '',
+              salary: matchedTeacher.salary || '',
+              bank_name: matchedTeacher.bankName || '',
+              account_number: matchedTeacher.accountNumber || '',
+              hire_date: matchedTeacher.joined || '',
+              profileImage: matchedTeacher.profileImage || '',
+            } as any
+          });
+        } else {
+          login('verified_2fa_access_token', 'verified_2fa_refresh_token', {
+            id: 1,
+            email: email || (role === 'ADMIN' ? 'admin@tarepet.com' : 'teacher@tarepet.com'),
+            first_name: role === 'ADMIN' ? 'Tarepet' : 'Educator',
+            last_name: role === 'ADMIN' ? 'Administrator' : 'Staff',
+            role: role as any,
+          });
+        }
         setLocation(`/dashboard/${role.toLowerCase()}`);
         return;
       }

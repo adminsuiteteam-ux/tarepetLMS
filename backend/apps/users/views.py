@@ -56,7 +56,27 @@ class CustomTokenObtainPairView(APIView):
             ua = request.META.get('HTTP_USER_AGENT', 'Unknown')
 
             # Fetch authoritative user instance
-            user_obj = User.objects.filter(email__iexact=email).first()
+            user_id = user_data.get('id')
+            user_obj = None
+            if user_id:
+                user_obj = User.objects.filter(id=user_id).first()
+            if not user_obj and email:
+                user_obj = User.objects.filter(
+                    Q(email__iexact=email) |
+                    Q(username__iexact=email) |
+                    Q(teacher_profile__teacher_id__iexact=email) |
+                    Q(student_profile__student_id__iexact=email)
+                ).first()
+            if not user_obj:
+                raw_input = str(request.data.get('email', '') or request.data.get('username', '')).strip()
+                if raw_input:
+                    user_obj = User.objects.filter(
+                        Q(email__iexact=raw_input) |
+                        Q(username__iexact=raw_input) |
+                        Q(teacher_profile__teacher_id__iexact=raw_input) |
+                        Q(student_profile__student_id__iexact=raw_input)
+                    ).first()
+
             device_token = request.data.get('device_token', '').strip()
             is_trusted = TrustedDevice.is_device_trusted(user_obj, device_token, ip)
 
@@ -64,7 +84,7 @@ class CustomTokenObtainPairView(APIView):
             enforce_2fa = getattr(sys_settings, 'enforce_2fa', True)
 
             # Adaptive Security: Enforce 2FA Email OTP for TEACHER and ADMIN only when enabled and on untrusted/new devices
-            if enforce_2fa and user_obj and user_obj.role in [CustomUser.Role.TEACHER, CustomUser.Role.ADMIN] and not is_trusted:
+            if enforce_2fa and user_obj and str(user_obj.role).upper() in [CustomUser.Role.TEACHER, CustomUser.Role.ADMIN, 'TEACHER', 'ADMIN'] and not is_trusted:
                 validity_mins = getattr(sys_settings, 'otp_expiry_minutes', 5) or 5
                 raw_code, temp_token, otp_obj = OTPVerification.create_otp(
                     user=user_obj,
@@ -73,9 +93,10 @@ class CustomTokenObtainPairView(APIView):
                 )
                 send_otp_email(user_obj, raw_code, validity_minutes=validity_mins)
 
+                effective_email = user_obj.email or email
                 LoginActivityLog.objects.create(
-                    email=email,
-                    role=role,
+                    email=effective_email,
+                    role=user_obj.role or role,
                     ip_address=ip,
                     user_agent=ua,
                     device_info=ua[:150] if ua else 'Unknown Browser/Device',
@@ -86,9 +107,9 @@ class CustomTokenObtainPairView(APIView):
                     'requires_otp': True,
                     'temp_token': temp_token,
                     'role': user_obj.role,
-                    'email': user_obj.email,
-                    'email_masked': mask_email(user_obj.email),
-                    'detail': f'A 6-digit authentication code has been sent to your email ({mask_email(user_obj.email)}).'
+                    'email': effective_email,
+                    'email_masked': mask_email(effective_email),
+                    'detail': f'A 6-digit authentication code has been sent to your email ({mask_email(effective_email)}).'
                 }
                 
                 # In development or if SMTP is unconfigured, provide debug code for effortless testing
