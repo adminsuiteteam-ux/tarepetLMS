@@ -353,10 +353,10 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
       </nav>
 
       {/* User card & logout */}
-      <div className="p-3 border-t border-border shrink-0">
+      <div className="p-3 pb-6 border-t border-border shrink-0 bg-card">
         <div className="flex items-center justify-between p-3 rounded-xl bg-muted/50 border border-border/50">
           <div
-            onClick={() => onNavigate('profile')}
+            onClick={() => { onNavigate('profile'); setMobileSidebarOpen(false); }}
             className="flex items-center gap-2.5 min-w-0 cursor-pointer group"
             title="View Profile"
           >
@@ -375,9 +375,9 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
             </div>
           </div>
           <button
-            onClick={logout}
+            onClick={() => { logout(); setMobileSidebarOpen(false); }}
             title="Sign Out"
-            className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0"
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors shrink-0 cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
           </button>
@@ -395,12 +395,12 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
 
       {/* Mobile Overlay Sidebar */}
       {mobileSidebarOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileSidebarOpen(false)} />
-          <aside className="relative w-72 bg-card border-r border-border h-full flex flex-col shadow-2xl">
+        <div className="lg:hidden fixed inset-0 z-[100] flex">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200" onClick={() => setMobileSidebarOpen(false)} />
+          <aside className="relative w-72 bg-card border-r border-border h-full flex flex-col shadow-2xl z-10 animate-in slide-in-from-left duration-300">
             <button
               onClick={() => setMobileSidebarOpen(false)}
-              className="absolute top-4 right-4 p-2 rounded-lg text-muted-foreground hover:bg-accent z-10"
+              className="absolute top-4 right-4 p-2 rounded-lg text-muted-foreground hover:bg-accent z-10 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -505,45 +505,47 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
         </header>
 
         {/* Page body */}
-        <main className="flex-1 p-4 sm:p-5 md:p-7 pb-24 lg:pb-7 overflow-y-auto">
+        <main className="flex-1 p-4 sm:p-5 md:p-7 pb-28 sm:pb-32 lg:pb-7 overflow-y-auto">
           {children}
         </main>
 
         {/* Floating Minimalist Homebar with Completely Rounded Border Radius */}
-        <div className="lg:hidden fixed bottom-5 left-0 right-0 z-50 flex justify-center pointer-events-none px-4">
-          <nav className="pointer-events-auto bg-zinc-950/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-white/10 shadow-2xl rounded-full p-1.5 flex items-center gap-2 sm:gap-4 transition-all duration-300">
-            {mobileNavItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeSection === item.id;
-              const isProfileTab = item.id === 'profile' || (item.id === 'settings' && user?.role === 'STUDENT');
+        {!mobileSidebarOpen && (
+          <div className="lg:hidden fixed bottom-5 left-0 right-0 z-40 flex justify-center pointer-events-none px-4 transition-all duration-300">
+            <nav className="pointer-events-auto bg-zinc-950/95 dark:bg-zinc-900/95 backdrop-blur-xl border border-white/10 shadow-2xl rounded-full p-1.5 flex items-center gap-2 sm:gap-4 transition-all duration-300">
+              {mobileNavItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activeSection === item.id;
+                const isProfileTab = item.id === 'profile' || (item.id === 'settings' && user?.role === 'STUDENT');
 
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => onNavigate(item.id)}
-                  title={item.label}
-                  className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 relative ${
-                    isActive
-                      ? 'bg-white text-zinc-950 shadow-md scale-105 font-bold'
-                      : 'text-zinc-400 hover:text-white hover:bg-white/10 active:scale-95'
-                  }`}
-                >
-                  {isProfileTab ? (
-                    <div className={`w-7 h-7 rounded-full overflow-hidden flex items-center justify-center ${isActive ? 'ring-2 ring-zinc-950 dark:ring-white bg-zinc-100 text-zinc-950' : 'bg-white/10 text-white'}`}>
-                      {userAvatar ? (
-                        <img src={userAvatar} alt="Profile" className="w-full h-full object-cover rounded-full" />
-                      ) : (
-                        <span className="text-[11px] font-bold font-serif">{user?.first_name?.[0] || 'U'}</span>
-                      )}
-                    </div>
-                  ) : (
-                    <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5]' : 'stroke-[2]'}`} />
-                  )}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => onNavigate(item.id)}
+                    title={item.label}
+                    className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 relative cursor-pointer ${
+                      isActive
+                        ? 'bg-white text-zinc-950 shadow-md scale-105 font-bold'
+                        : 'text-zinc-400 hover:text-white hover:bg-white/10 active:scale-95'
+                    }`}
+                  >
+                    {isProfileTab ? (
+                      <div className={`w-7 h-7 rounded-full overflow-hidden flex items-center justify-center ${isActive ? 'ring-2 ring-zinc-950 dark:ring-white bg-zinc-100 text-zinc-950' : 'bg-white/10 text-white'}`}>
+                        {userAvatar ? (
+                          <img src={userAvatar} alt="Profile" className="w-full h-full object-cover rounded-full" />
+                        ) : (
+                          <span className="text-[11px] font-bold font-serif">{user?.first_name?.[0] || 'U'}</span>
+                        )}
+                      </div>
+                    ) : (
+                      <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5]' : 'stroke-[2]'}`} />
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+        )}
       </div>
     </div>
   );

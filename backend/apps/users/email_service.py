@@ -190,6 +190,7 @@ def send_otp_email(user, raw_code: str, validity_minutes: int = 5) -> bool:
     """
 
     from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'Tarepet Security <security@tarepet.com>')
+    print(f"[OTP SERVICE] >>> 6-Digit 2FA Code for {recipient}: {raw_code} (Expires in {validity_minutes}m) <<<")
 
     try:
         msg = EmailMultiAlternatives(subject, plain_text, from_email, [recipient])

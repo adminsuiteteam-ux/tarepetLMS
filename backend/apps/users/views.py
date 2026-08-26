@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.contrib.auth import get_user_model
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.utils import timezone
 import csv, io, platform, os, secrets
 
@@ -26,6 +26,7 @@ from apps.assessments.models import Attendance, BehaviorLog, House, Submission, 
 
 from .models import CustomUser, StudentProfile, TeacherProfile, ParentProfile, AdminProfile, LoginActivityLog, OTPVerification, TrustedDevice, SystemSettings
 from .email_service import send_otp_email, mask_email
+from django.conf import settings
 from rest_framework_simplejwt.tokens import RefreshToken
 
 User = get_user_model()
@@ -59,14 +60,18 @@ class CustomTokenObtainPairView(APIView):
             device_token = request.data.get('device_token', '').strip()
             is_trusted = TrustedDevice.is_device_trusted(user_obj, device_token, ip)
 
-            # Adaptive Security: Enforce 2FA Email OTP for TEACHER and ADMIN only on untrusted/new devices
-            if user_obj and user_obj.role in [CustomUser.Role.TEACHER, CustomUser.Role.ADMIN] and not is_trusted:
+            sys_settings = SystemSettings.get_settings()
+            enforce_2fa = getattr(sys_settings, 'enforce_2fa', True)
+
+            # Adaptive Security: Enforce 2FA Email OTP for TEACHER and ADMIN only when enabled and on untrusted/new devices
+            if enforce_2fa and user_obj and user_obj.role in [CustomUser.Role.TEACHER, CustomUser.Role.ADMIN] and not is_trusted:
+                validity_mins = getattr(sys_settings, 'otp_expiry_minutes', 5) or 5
                 raw_code, temp_token, otp_obj = OTPVerification.create_otp(
                     user=user_obj,
                     purpose=OTPVerification.Purpose.LOGIN_2FA,
-                    validity_minutes=5
+                    validity_minutes=validity_mins
                 )
-                send_otp_email(user_obj, raw_code, validity_minutes=5)
+                send_otp_email(user_obj, raw_code, validity_minutes=validity_mins)
 
                 LoginActivityLog.objects.create(
                     email=email,
@@ -77,14 +82,20 @@ class CustomTokenObtainPairView(APIView):
                     status='PENDING_OTP'
                 )
 
-                return Response({
+                response_data = {
                     'requires_otp': True,
                     'temp_token': temp_token,
                     'role': user_obj.role,
                     'email': user_obj.email,
                     'email_masked': mask_email(user_obj.email),
                     'detail': f'A 6-digit authentication code has been sent to your email ({mask_email(user_obj.email)}).'
-                }, status=status.HTTP_200_OK)
+                }
+                
+                # In development or if SMTP is unconfigured, provide debug code for effortless testing
+                if getattr(settings, 'DEBUG', False) or not getattr(settings, 'EMAIL_HOST_USER', None):
+                    response_data['debug_code'] = raw_code
+
+                return Response(response_data, status=status.HTTP_200_OK)
 
             # Direct instant login for trusted devices and Student/Parent roles
             if is_trusted and device_token:
@@ -198,12 +209,16 @@ class OTPResendView(APIView):
         )
         send_otp_email(user, raw_code, validity_minutes=5)
 
-        return Response({
+        resend_payload = {
             'success': True,
             'temp_token': new_temp_token,
             'email_masked': mask_email(user.email),
             'detail': f'A new 6-digit authentication code was sent to {mask_email(user.email)}.'
-        }, status=status.HTTP_200_OK)
+        }
+        if getattr(settings, 'DEBUG', False) or not getattr(settings, 'EMAIL_HOST_USER', None):
+            resend_payload['debug_code'] = raw_code
+
+        return Response(resend_payload, status=status.HTTP_200_OK)
 
 
 class LoginActivityLogView(APIView):

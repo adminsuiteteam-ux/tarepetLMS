@@ -156,6 +156,7 @@ const SystemHealthBar = ({ label, value, unit, max = 100, color }: {
 );
 
 const RoleBadge = ({ role }: { role: string }) => {
+  const { t } = useTranslation();
   let safeClass = 'bg-muted text-muted-foreground border-border';
   switch (role) {
     case 'ADMIN':
@@ -173,7 +174,7 @@ const RoleBadge = ({ role }: { role: string }) => {
   }
   return (
     <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full border ${safeClass}`}>
-      {role}
+      {t(`role.${role.toLowerCase()}`, role)}
     </span>
   );
 };
@@ -239,12 +240,13 @@ const StudentIDModal = ({ student, onClose }: { student: any; onClose: () => voi
 };
 
 const TeacherIDCardModal = ({ teacher, onClose }: { teacher: any; onClose: () => void }) => {
+  const { t } = useTranslation();
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in zoom-in duration-200">
       <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-lg">
         <div className="p-6 border-b border-border flex items-center justify-between">
           <h3 className="font-serif font-bold text-xl text-foreground flex items-center gap-2">
-            <FaIdCard className="w-5 h-5 text-emerald-600" /> Faculty & Staff ID Card
+            <FaIdCard className="w-5 h-5 text-emerald-600" /> {t('teacher.staff_id_title', 'Faculty & Staff ID Card')}
           </h3>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground p-1">✕</button>
         </div>
@@ -252,8 +254,8 @@ const TeacherIDCardModal = ({ teacher, onClose }: { teacher: any; onClose: () =>
           <div className="border-4 border-emerald-600 rounded-2xl overflow-hidden shadow-xl bg-gradient-to-br from-emerald-500/10 via-background to-teal-500/10 mb-5">
             <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-4 flex items-center justify-between text-white">
               <div>
-                <p className="text-xs font-bold uppercase tracking-widest opacity-90">Tarepet Montessori School</p>
-                <p className="text-[10px] opacity-80">Faculty & Academic Staff Identification</p>
+                <p className="text-xs font-bold uppercase tracking-widest opacity-90">{t('school.name', 'Tarepet Montessori School')}</p>
+                <p className="text-[10px] opacity-80">{t('teacher.faculty_staff_identity', 'Faculty & Academic Staff Identification')}</p>
               </div>
               <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30">
                 <GraduationCap className="w-6 h-6 text-white" />
@@ -273,33 +275,33 @@ const TeacherIDCardModal = ({ teacher, onClose }: { teacher: any; onClose: () =>
               </div>
               <div className="flex-1 min-w-0">
                 <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                  {teacher.department || 'Academic Staff'}
+                  {teacher.department || t('teacher.academic_staff', 'Academic Staff')}
                 </span>
                 <h4 className="font-serif font-bold text-foreground text-lg leading-tight mt-1 truncate">{teacher.name}</h4>
-                <p className="text-xs text-muted-foreground font-medium mt-0.5 truncate">{teacher.specialization || 'Educator'}</p>
+                <p className="text-xs text-muted-foreground font-medium mt-0.5 truncate">{teacher.specialization || t('teacher.educator', 'Educator')}</p>
                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                   <div>
-                    <span className="text-muted-foreground text-[10px]">Staff ID:</span>
+                    <span className="text-muted-foreground text-[10px]">{t('teacher.staff_id_label', 'Staff ID:')}</span>
                     <p className="font-bold font-mono text-emerald-700">{teacher.staffId || 'TMS/TCH/001'}</p>
                   </div>
                   <div>
-                    <span className="text-muted-foreground text-[10px]">Status:</span>
+                    <span className="text-muted-foreground text-[10px]">{t('teacher.status', 'Status:')}</span>
                     <p className="font-bold text-foreground">{teacher.status || 'Active'}</p>
                   </div>
                 </div>
               </div>
             </div>
             <div className="bg-muted/30 px-5 py-2 border-t border-border/50 flex justify-between items-center text-[10px] text-muted-foreground font-mono">
-              <span>ISSUED: 2026-01-10</span>
-              <span>EXPIRES: 2028-12-31</span>
+              <span>{t('teacher.issued_date', 'ISSUED: 2026-01-10')}</span>
+              <span>{t('teacher.expires_date', 'EXPIRES: 2028-12-31')}</span>
             </div>
           </div>
           <div className="flex gap-3">
             <button onClick={() => window.print()} className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-emerald-700 transition-colors shadow-sm">
-              <Printer className="w-4 h-4" /> Print Staff Card
+              <Printer className="w-4 h-4" /> {t('teacher.btn_print_staff', 'Print Staff Card')}
             </button>
             <button onClick={() => { (window as any).showTarepetAlert?.('Generating and downloading official Faculty ID card in PDF format...', 'Staff ID Card', 'info'); }} className="flex-1 flex items-center justify-center gap-2 border border-border py-2.5 rounded-xl text-sm font-medium hover:bg-accent transition-colors cursor-pointer">
-              <Download className="w-4 h-4" /> Download PDF
+              <Download className="w-4 h-4" /> {t('teacher.btn_download_pdf', 'Download PDF')}
             </button>
           </div>
         </div>
@@ -2555,9 +2557,11 @@ export default function AdminDashboard() {
   const [resultsViewTab, setResultsViewTab] = useState<'roster' | 'marksheet' | 'fees'>('roster');
   const [marksheetSubject, setMarksheetSubject] = useState('Mathematics');
   const [classScoresMap, setClassScoresMap] = useState<Record<string, { ca1: number; ca2: number; exam: number }>>(() => {
-    const saved = null;
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) {}
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('tarepet_class_scores_map');
+        if (saved) { return JSON.parse(saved); }
+      } catch (e) {}
     }
     return {};
   });
@@ -2606,9 +2610,11 @@ export default function AdminDashboard() {
 
   // Announcement & Communication Center
   const [announcementsListState, setAnnouncementsListState] = useState<any[]>(() => {
-    const saved = null;
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) {}
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('tarepet_admin_announcements');
+        if (saved) { return JSON.parse(saved); }
+      } catch (e) {}
     }
     return [];
   });
@@ -2924,7 +2930,7 @@ export default function AdminDashboard() {
   const [timetablesState, setTimetablesState] = useState<Record<string, any>>(() => {
     if (typeof window !== 'undefined') {
       try {
-        const saved = null;
+        const saved = localStorage.getItem('tarepet_class_timetables');
         if (saved) return JSON.parse(saved);
       } catch (e) {}
     }
@@ -2945,13 +2951,13 @@ export default function AdminDashboard() {
     room: '',
   });
 
-
-
-  // Real-Time Calendar Events State (Cleared)
+  // Real-Time Calendar Events State
   const [calendarEventsState, setCalendarEventsState] = useState<any[]>(() => {
     if (typeof window !== 'undefined') {
-      const saved = null;
-      if (saved) { try { return JSON.parse(saved); } catch (e) {} }
+      try {
+        const saved = localStorage.getItem('tarepet_calendar_events');
+        if (saved) { return JSON.parse(saved); }
+      } catch (e) {}
     }
     return [];
   });
@@ -2963,7 +2969,7 @@ export default function AdminDashboard() {
     setTimetablesState(newTimetables);
     if (typeof window !== 'undefined') {
       try {
-        
+        localStorage.setItem('tarepet_class_timetables', JSON.stringify(newTimetables));
       } catch (e) {}
     }
   };
@@ -2976,14 +2982,15 @@ export default function AdminDashboard() {
   const [resultsSectionStream, setResultsSectionStream] = useState('General');
   const [isResultGenerated, setIsResultGenerated] = useState(false);
 
-
   // Attendance management state
   const [attendanceClassFilter, setAttendanceClassFilter] = useState('JSS1');
   const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split('T')[0]);
   const [attendanceMap, setAttendanceMap] = useState<Record<number, 'PRESENT' | 'ABSENT' | 'LATE' | 'EXCUSED'>>(() => {
-    const saved = null;
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) {}
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('tarepet_attendance_map');
+        if (saved) { return JSON.parse(saved); }
+      } catch (e) {}
     }
     return {};
   });
@@ -8437,7 +8444,11 @@ export default function AdminDashboard() {
                 <div className="flex justify-end pt-3">
                   <button
                     onClick={() => {
-                      
+                      if (typeof window !== 'undefined') {
+                        try {
+                          localStorage.setItem('tarepet_class_scores_map', JSON.stringify(classScoresMap));
+                        } catch (e) {}
+                      }
                       setMarksheetSaveAlert(true);
                       setTimeout(() => setMarksheetSaveAlert(false), 2500);
                     }}
@@ -9213,6 +9224,11 @@ export default function AdminDashboard() {
                     const allP: Record<number, 'PRESENT'> = {};
                     MOCK_STUDENTS.forEach(s => { allP[s.id] = 'PRESENT'; });
                     setAttendanceMap(allP);
+                    if (typeof window !== 'undefined') {
+                      try {
+                        localStorage.setItem('tarepet_attendance_map', JSON.stringify(allP));
+                      } catch (e) {}
+                    }
                   }}
                   className="px-3.5 py-2 border border-emerald-300 bg-emerald-500/10 text-emerald-600 rounded-xl text-xs font-bold hover:bg-emerald-500/20 transition-colors flex items-center gap-1.5"
                 >
@@ -9263,7 +9279,17 @@ export default function AdminDashboard() {
                             {(['PRESENT', 'ABSENT', 'LATE', 'EXCUSED'] as const).map(st => (
                               <button
                                 key={st}
-                                onClick={() => setAttendanceMap(prev => ({ ...prev, [std.id]: st }))}
+                                onClick={() => {
+                                  setAttendanceMap(prev => {
+                                    const next = { ...prev, [std.id]: st };
+                                    if (typeof window !== 'undefined') {
+                                      try {
+                                        localStorage.setItem('tarepet_attendance_map', JSON.stringify(next));
+                                      } catch (e) {}
+                                    }
+                                    return next;
+                                  });
+                                }}
                                 className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-colors ${
                                   status === st
                                     ? st === 'PRESENT' ? 'bg-emerald-600 text-white border-emerald-600' :
@@ -10826,7 +10852,11 @@ export default function AdminDashboard() {
         };
         const updated = [newEv, ...calendarEventsState];
         setCalendarEventsState(updated);
-        
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('tarepet_calendar_events', JSON.stringify(updated));
+          } catch (e) {}
+        }
         setShowAddCalendarModal(false);
         setCalendarForm({ title: '', category: 'Academic', date: '', endDate: '', scope: 'All Classes', detail: '', status: 'Upcoming' });
       };
@@ -10834,7 +10864,11 @@ export default function AdminDashboard() {
       const handleDeleteCalendarEvent = (id: string) => {
         const updated = calendarEventsState.filter(ev => ev.id !== id);
         setCalendarEventsState(updated);
-        
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('tarepet_calendar_events', JSON.stringify(updated));
+          } catch (e) {}
+        }
       };
 
       return (
@@ -11828,7 +11862,7 @@ export default function AdminDashboard() {
 
         {/* Realtime Toast Banner */}
         {adminToastMsg && (
-          <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 text-xs font-semibold animate-in fade-in slide-in-from-bottom duration-200 border border-slate-800">
+          <div className="fixed bottom-24 sm:bottom-6 right-4 sm:right-6 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 text-xs font-semibold animate-in fade-in slide-in-from-bottom duration-200 border border-slate-800">
             <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>{adminToastMsg}</span>
           </div>

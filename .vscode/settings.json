@@ -9,7 +9,8 @@
     "backend"
   ],
   "python.defaultInterpreterPath": "C:/Users/Dimacode.x/AppData/Local/Programs/Python/Python314/python.exe",
-  "securecoder.enable": true,
+  "securecoder.enable": false,
+  "securecoder.scannerBackend": null,
   "securecoder.rules.i18n": "off",
   "securecoder.i18n.enabled": false,
   "securecoder.rules": {

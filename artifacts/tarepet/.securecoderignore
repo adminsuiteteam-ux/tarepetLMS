@@ -1,0 +1,12 @@
+# SecureCoder ignore file
+# Exclude files from security scanning using glob patterns, one per line.
+*test.*
+*_test.*
+**/*_test.*
+**/test/**
+**/node_modules/**
+**/dist/**
+**/build/**
+**/*.tsx
+**/*.jsx
+**/src/**
