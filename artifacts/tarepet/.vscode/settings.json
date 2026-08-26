@@ -5,10 +5,20 @@
   "css.customData": [
     "${workspaceFolder}/artifacts/tarepet/.vscode/tailwind-custom-data.json"
   ],
+  "securecoder.enable": true,
   "securecoder.rules.i18n": "off",
   "securecoder.i18n.enabled": false,
   "securecoder.rules": {
     "internationalization": "off",
-    "jsx-not-internationalized": "off"
-  }
+    "jsx-not-internationalized": "off",
+    "i18n": "off",
+    "jsx-element-not-internationalized": "off"
+  },
+  "securecoder.disabledRules": [
+    "internationalization",
+    "jsx-not-internationalized",
+    "jsx-element-not-internationalized",
+    "i18n",
+    "JSX element not internationalized"
+  ]
 }
