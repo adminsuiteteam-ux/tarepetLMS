@@ -61,21 +61,19 @@ class CustomTokenObtainPairView(APIView):
             if user_id:
                 user_obj = User.objects.filter(id=user_id).first()
             if not user_obj and email:
-                user_obj = User.objects.filter(
-                    Q(email__iexact=email) |
-                    Q(username__iexact=email) |
-                    Q(teacher_profile__teacher_id__iexact=email) |
-                    Q(student_profile__student_id__iexact=email)
-                ).first()
+                q_email = Q(email__iexact=email)
+                q_email.add(Q(username__iexact=email), Q.OR)
+                q_email.add(Q(teacher_profile__teacher_id__iexact=email), Q.OR)
+                q_email.add(Q(student_profile__student_id__iexact=email), Q.OR)
+                user_obj = User.objects.filter(q_email).first()
             if not user_obj:
                 raw_input = str(request.data.get('email', '') or request.data.get('username', '')).strip()
                 if raw_input:
-                    user_obj = User.objects.filter(
-                        Q(email__iexact=raw_input) |
-                        Q(username__iexact=raw_input) |
-                        Q(teacher_profile__teacher_id__iexact=raw_input) |
-                        Q(student_profile__student_id__iexact=raw_input)
-                    ).first()
+                    q_raw = Q(email__iexact=raw_input)
+                    q_raw.add(Q(username__iexact=raw_input), Q.OR)
+                    q_raw.add(Q(teacher_profile__teacher_id__iexact=raw_input), Q.OR)
+                    q_raw.add(Q(student_profile__student_id__iexact=raw_input), Q.OR)
+                    user_obj = User.objects.filter(q_raw).first()
 
             device_token = request.data.get('device_token', '').strip()
             is_trusted = TrustedDevice.is_device_trusted(user_obj, device_token, ip)
@@ -351,7 +349,10 @@ class UserViewSet(viewsets.ModelViewSet):
                     self.check_object_permissions(self.request, user)
                     return user
             
-            q_filter = Q(email__iexact=lookup_value) | Q(username__iexact=lookup_value) | Q(student_profile__student_id__iexact=lookup_value) | Q(teacher_profile__teacher_id__iexact=lookup_value)
+            q_filter = Q(email__iexact=lookup_value)
+            q_filter.add(Q(username__iexact=lookup_value), Q.OR)
+            q_filter.add(Q(student_profile__student_id__iexact=lookup_value), Q.OR)
+            q_filter.add(Q(teacher_profile__teacher_id__iexact=lookup_value), Q.OR)
             user = User.objects.filter(q_filter).first()
             if user:
                 self.check_object_permissions(self.request, user)
