@@ -4813,8 +4813,7 @@ export default function AdminDashboard() {
             <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-lg font-mono">{sub.code}</span>
-                  <h2 className="text-xl font-serif font-bold text-foreground mt-2">{sub.title}</h2>
+                  <h2 className="text-xl font-serif font-bold text-foreground">{sub.title}</h2>
                   <p className="text-xs text-muted-foreground mt-1">{t('subjects.instructor')}<span className="text-foreground font-semibold">{sub.teacher}</span> · Enrolled: <span className="text-foreground font-semibold">{sub.enrolled} Students</span></p>
                 </div>
                 <button
@@ -4930,7 +4929,7 @@ export default function AdminDashboard() {
                 className="group text-left bg-card rounded-2xl border border-border p-5 shadow-sm space-y-3 hover:border-primary/40 hover:shadow-md hover:scale-[1.01] transition-all duration-200"
               >
                 <div className="flex justify-between items-center w-full">
-                  <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-lg">{sub.code}</span>
+                  <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-lg">{sub.grade || 'General'}</span>
                   <span className="text-xs text-muted-foreground font-medium">{sub.category}</span>
                 </div>
                 <h3 className="font-serif font-bold text-foreground text-base group-hover:text-primary transition-colors">{sub.title}</h3>
@@ -6915,11 +6914,9 @@ export default function AdminDashboard() {
                       {tchr.subjectsAssigned && tchr.subjectsAssigned.length > 0 ? (
                         tchr.subjectsAssigned.map((sub: any, idx: number) => (
                           <div key={idx} className="p-3 rounded-xl border border-border bg-muted/20 flex items-center justify-between">
-                            <div>
-                              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded font-mono mr-2">
-                                {sub.code}
-                              </span>
-                              <span className="font-bold text-foreground">{sub.name}</span>
+                            <div className="flex items-center gap-2">
+                              <BookOpen className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                              <span className="font-bold text-foreground">{sub.name || sub.title || sub}</span>
                             </div>
                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
                               {sub.grade}
@@ -7970,7 +7967,7 @@ export default function AdminDashboard() {
               <p className="text-xs text-muted-foreground mt-1">
                 {selectedSubjectDivision
                   ? activeSubjectDivision?.description
-                  : 'Select a curriculum category to browse all subjects, course codes, and assigned educators.'}
+                  : 'Select a curriculum category to browse all subjects and assigned educators.'}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -8074,7 +8071,7 @@ export default function AdminDashboard() {
                   type="text"
                   value={subjectSearch}
                   onChange={e => setSubjectSearch(e.target.value)}
-                  placeholder={`Search ${activeSubjectDivision?.title} by title, code, grade, teacher...`}
+                  placeholder={`Search ${activeSubjectDivision?.title} by subject name, grade, teacher...`}
                   className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-muted/20 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
@@ -8084,7 +8081,7 @@ export default function AdminDashboard() {
                 <table className="w-full text-xs text-left">
                   <thead className="bg-muted/30 text-muted-foreground uppercase text-[10px] tracking-wider">
                     <tr>
-                      <th className="py-3.5 px-4">Subject Code & Title</th>
+                      <th className="py-3.5 px-4">Subject Title</th>
                       <th className="py-3.5 px-4">Grade Level</th>
                       <th className="py-3.5 px-4">Stream / Category</th>
                       <th className="py-3.5 px-4">Assigned Educator</th>
@@ -8109,9 +8106,9 @@ export default function AdminDashboard() {
                           >
                             <td className="py-3.5 px-4">
                               <div className="flex items-center gap-3">
-                                <span className="text-xs font-mono font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-lg border border-primary/20">
-                                  {sub.code}
-                                </span>
+                                <div className="w-8 h-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                                  <BookOpen className="w-4 h-4" />
+                                </div>
                                 <div>
                                   <p className="font-bold text-foreground text-sm group-hover:text-primary transition-colors">{sub.title}</p>
                                 </div>
@@ -9030,7 +9027,7 @@ export default function AdminDashboard() {
                 <table className="w-full text-xs text-left">
                   <thead className="bg-muted/40 text-muted-foreground uppercase text-[10px]">
                     <tr>
-                      <th className="py-3 px-3">Subject Code & Name</th>
+                      <th className="py-3 px-3">Subject Name</th>
                       <th className="py-3 px-2 text-center">CA1 (15%)</th>
                       <th className="py-3 px-2 text-center">CA2 (15%)</th>
                       <th className="py-3 px-2 text-center">Exam (70%)</th>
@@ -9043,7 +9040,6 @@ export default function AdminDashboard() {
                     {mockResultSubjects.map((sub, idx) => (
                       <tr key={idx} className="hover:bg-muted/20">
                         <td className="py-2.5 px-3 font-bold text-foreground">
-                          <span className="font-mono text-primary mr-1.5 text-[11px]">{sub.code}</span>
                           {sub.subject}
                         </td>
                         <td className="py-2.5 px-2 text-center">{sub.ca1}</td>
@@ -11637,27 +11633,15 @@ export default function AdminDashboard() {
               </div>
 
               <div className="space-y-4 text-xs">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-bold text-muted-foreground uppercase mb-1">Subject Title *</label>
-                    <input
-                      type="text"
-                      value={newSubjectForm.title}
-                      onChange={e => setNewSubjectForm({ ...newSubjectForm, title: e.target.value })}
-                      placeholder="e.g. Physics"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-foreground font-medium focus:ring-2 focus:ring-primary focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold text-muted-foreground uppercase mb-1">Course Code *</label>
-                    <input
-                      type="text"
-                      value={newSubjectForm.code}
-                      onChange={e => setNewSubjectForm({ ...newSubjectForm, code: e.target.value.toUpperCase() })}
-                      placeholder="e.g. PHY-101"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-foreground font-mono font-bold focus:ring-2 focus:ring-primary focus:outline-none"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-[11px] font-bold text-muted-foreground uppercase mb-1">Subject Title *</label>
+                  <input
+                    type="text"
+                    value={newSubjectForm.title}
+                    onChange={e => setNewSubjectForm({ ...newSubjectForm, title: e.target.value })}
+                    placeholder="e.g. Physics, Literature in English, Mathematics"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-muted/20 text-foreground font-medium focus:ring-2 focus:ring-primary focus:outline-none"
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -11754,13 +11738,14 @@ export default function AdminDashboard() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (!newSubjectForm.title.trim() || !newSubjectForm.code.trim()) {
-                      showAlert?.({ title: 'Validation Error', message: 'Please enter subject title and course code.', type: 'warning' });
+                    if (!newSubjectForm.title.trim()) {
+                      showAlert?.({ title: 'Validation Error', message: 'Please enter subject title.', type: 'warning' });
                       return;
                     }
+                    const generatedCode = newSubjectForm.title.trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8) || 'SUBJ';
                     const saved = saveSubject({
                       title: newSubjectForm.title.trim(),
-                      code: newSubjectForm.code.trim(),
+                      code: generatedCode,
                       grade: newSubjectForm.grade,
                       stream: newSubjectForm.stream,
                       category: newSubjectForm.category,
@@ -11773,11 +11758,11 @@ export default function AdminDashboard() {
                     setShowCreateSubjectModal(false);
                     showAlert?.({
                       title: 'Subject Added',
-                      message: `"${saved.title}" (${saved.code}) was successfully added to the school curriculum for ${saved.grade}.`,
+                      message: `"${saved.title}" was successfully added to the school curriculum for ${saved.grade}.`,
                       type: 'success'
                     });
                   }}
-                  className="px-5 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-colors shadow-sm"
+                  className="px-5 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition-colors shadow-sm cursor-pointer"
                 >
                   Save Subject
                 </button>

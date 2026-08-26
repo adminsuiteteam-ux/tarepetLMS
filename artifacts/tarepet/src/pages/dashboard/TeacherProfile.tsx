@@ -629,26 +629,23 @@ export default function TeacherProfile() {
                     <BookOpen className="w-4 h-4 text-emerald-600" />
                     Assigned Subjects & Classes ({profileForm.subjectsAssigned?.length || 0})
                   </h4>
-                  <div className="space-y-2">
-                    {profileForm.subjectsAssigned && profileForm.subjectsAssigned.length > 0 ? (
-                      profileForm.subjectsAssigned.map((sub: any, idx: number) => {
-                        const subName = typeof sub === 'string' ? sub : sub.name;
-                        const subGrade = typeof sub === 'string' ? (profileForm.formClass || 'JSS 3') : (sub.grade || profileForm.formClass || 'JSS 3');
-                        const subCode = typeof sub === 'object' && sub.code ? sub.code : `SUB-${idx + 1}`;
-                        return (
-                          <div key={idx} className="p-3 rounded-xl border border-border bg-muted/20 flex items-center justify-between shadow-xs">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded font-mono">
-                                {subCode}
+                    <div className="space-y-2">
+                      {profileForm.subjectsAssigned && profileForm.subjectsAssigned.length > 0 ? (
+                        profileForm.subjectsAssigned.map((sub: any, idx: number) => {
+                          const subName = typeof sub === 'string' ? sub : sub.name;
+                          const subGrade = typeof sub === 'string' ? (profileForm.formClass || 'JSS 3') : (sub.grade || profileForm.formClass || 'JSS 3');
+                          return (
+                            <div key={idx} className="p-3 rounded-xl border border-border bg-muted/20 flex items-center justify-between shadow-xs">
+                              <div className="flex items-center gap-2">
+                                <BookOpen className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                <span className="font-bold text-foreground">{subName}</span>
+                              </div>
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 font-serif">
+                                {subGrade}
                               </span>
-                              <span className="font-bold text-foreground">{subName}</span>
                             </div>
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 font-serif">
-                              {subGrade}
-                            </span>
-                          </div>
-                        );
-                      })
+                          );
+                        })
                     ) : (
                       <p className="text-muted-foreground italic text-xs">No subjects currently assigned by Admin.</p>
                     )}

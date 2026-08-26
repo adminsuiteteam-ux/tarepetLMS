@@ -2057,7 +2057,6 @@ export default function TeacherDashboard() {
                   <div key={ex.id} className="bg-white p-4 rounded-xl border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">{ex.course_code}</span>
                         <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">{ex.class || 'SS1'} {ex.stream || 'Science'}</span>
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
                           🕒 Sent for Approval
@@ -2102,7 +2101,6 @@ export default function TeacherDashboard() {
                   >
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">{ex.course_code}</span>
                         <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">{ex.class || 'SS1'} {ex.stream || 'Science'}</span>
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
                           ✓ Approved by Admin
@@ -2151,7 +2149,7 @@ export default function TeacherDashboard() {
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" /> Live in Student Portal
                       </span>
                       <h4 className="font-bold text-foreground text-sm mt-1">{ex.title}</h4>
-                      <p className="text-xs text-muted-foreground">{ex.course_code} · {ex.duration_minutes} mins · {ex.class || 'SS1'} {ex.stream || 'Science'} Students</p>
+                      <p className="text-xs text-muted-foreground">{ex.duration_minutes} mins · {ex.class || 'SS1'} {ex.stream || 'Science'} Students</p>
                     </div>
                     <button
                       onClick={(e) => {
@@ -2187,7 +2185,7 @@ export default function TeacherDashboard() {
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">{sub.class} {sub.stream}</span>
                         <span className="text-xs text-muted-foreground">({sub.student_id})</span>
                       </div>
-                      <h4 className="font-semibold text-foreground text-xs">{sub.exam_title} ({sub.course_code})</h4>
+                      <h4 className="font-semibold text-foreground text-xs">{sub.exam_title}</h4>
                       <p className="text-[10px] text-muted-foreground mt-0.5">{t('teacher.submitted_at', 'Submitted:')} {new Date(sub.submitted_at).toLocaleTimeString()} · {t('teacher.score_label', 'Score:')} <strong>{sub.score} / {sub.total_possible}</strong></p>
                     </div>
                     <div className="flex items-center gap-2.5 self-start sm:self-auto">
@@ -3426,13 +3424,10 @@ export default function TeacherDashboard() {
                     profileForm.subjectsAssigned.map((sub: any, idx: number) => {
                       const subName = typeof sub === 'string' ? sub : sub.name;
                       const subGrade = typeof sub === 'string' ? (profileForm.formClass || 'JSS 3') : (sub.grade || profileForm.formClass || 'JSS 3');
-                      const subCode = typeof sub === 'object' && sub.code ? sub.code : `SUB-${idx + 1}`;
                       return (
                         <div key={idx} className="p-3 rounded-xl border border-border bg-muted/20 flex items-center justify-between shadow-xs">
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded font-mono">
-                              {subCode}
-                            </span>
+                            <BookOpen className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                             <span className="font-bold text-foreground">{subName}</span>
                           </div>
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 font-serif">
@@ -4531,7 +4526,7 @@ export default function TeacherDashboard() {
                     <UserCheck className="w-5 h-5 text-emerald-600" /> Student Attendance & Exam Invigilation
                   </h3>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {t('teacher.exam_label', 'Exam:')} <span className="font-bold text-foreground">{selectedAttendanceExam.title}</span> ({selectedAttendanceExam.course_name || selectedAttendanceExam.course_code} — {selectedAttendanceExam.class || 'SS1'} {selectedAttendanceExam.stream || 'Science'})
+                    {t('teacher.exam_label', 'Exam:')} <span className="font-bold text-foreground">{selectedAttendanceExam.title}</span> ({selectedAttendanceExam.course_name || selectedAttendanceExam.title} — {selectedAttendanceExam.class || 'SS1'} {selectedAttendanceExam.stream || 'Science'})
                   </p>
                 </div>
                 <button onClick={() => setSelectedAttendanceExam(null)} className="p-2 rounded-xl text-muted-foreground hover:bg-muted/50 transition-colors"><X className="w-5 h-5" /></button>
@@ -4802,7 +4797,7 @@ export default function TeacherDashboard() {
                       {previewSubmissionModal.submission.student_name}'s Answer Sheet Preview
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      {t('teacher.exam_label', 'Exam:')} <span className="font-bold text-foreground">{previewSubmissionModal.submission.exam_title}</span> ({previewSubmissionModal.submission.course_code})
+                      {t('teacher.exam_label', 'Exam:')} <span className="font-bold text-foreground">{previewSubmissionModal.submission.exam_title}</span>
                     </p>
                   </div>
                 </div>

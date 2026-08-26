@@ -530,8 +530,8 @@ export default function StudentDashboard() {
                 <div key={ex.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-border bg-muted/10 gap-3">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-[10px] font-bold uppercase text-primary bg-primary/10 px-2 py-0.5 rounded-full">{ex.course_code}</span>
-                      <span className="text-xs text-muted-foreground">{ex.assessment_type === 'TEST' ? 'C.A. Test' : 'Final Exam'} • {ex.duration_minutes} mins • {ex.questions_count || ex.questions?.length || 4} Qs</span>
+                      <span className="text-[10px] font-bold uppercase text-primary bg-primary/10 px-2 py-0.5 rounded-full">{ex.assessment_type === 'TEST' ? 'C.A. Test' : 'Final Exam'}</span>
+                      <span className="text-xs text-muted-foreground">{ex.duration_minutes} mins • {ex.questions_count || ex.questions?.length || 4} Qs</span>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center gap-1">
                         {ex.status === 'ACTIVE' ? (
                           <>
@@ -566,9 +566,8 @@ export default function StudentDashboard() {
                 {studentSubs.map(sub => (
                   <div key={sub.id} className="p-4 rounded-xl border border-border bg-emerald-500/5 flex items-center justify-between">
                     <div>
-                      <span className="text-[10px] font-bold uppercase text-primary bg-primary/10 px-2 py-0.5 rounded-full">{sub.course_code}</span>
-                      <h4 className="font-bold text-foreground text-sm mt-1">{sub.exam_title}</h4>
-                      <p className="text-xs text-muted-foreground">{t('student.submitted_time_label', 'Submitted:')} {new Date(sub.submitted_at).toLocaleTimeString()} · {t('student.score_label', 'Score:')} {sub.score} / {sub.total_possible}</p>
+                      <h4 className="font-bold text-foreground text-sm">{sub.exam_title}</h4>
+                      <p className="text-xs text-muted-foreground mt-0.5">{t('student.submitted_time_label', 'Submitted:')} {new Date(sub.submitted_at).toLocaleTimeString()} · {t('student.score_label', 'Score:')} {sub.score} / {sub.total_possible}</p>
                     </div>
                     <div className="text-right">
                       <span className="text-lg font-serif font-bold text-emerald-600">{sub.percentage}%</span>

@@ -210,7 +210,7 @@ export const TerminalReportCard: React.FC<TerminalReportCardProps> = ({ data, on
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="bg-slate-100 text-slate-700 font-bold uppercase text-[10px] border-b border-slate-200">
-                    <th className="p-3">Course Code & Title</th>
+                    <th className="p-3">Subject</th>
                     <th className="p-3 text-center">CA (30%)</th>
                     <th className="p-3 text-center">CBT Exam (70%)</th>
                     <th className="p-3 text-center">Total (100%)</th>
@@ -221,9 +221,8 @@ export const TerminalReportCard: React.FC<TerminalReportCardProps> = ({ data, on
                 <tbody className="divide-y divide-slate-200 text-slate-800">
                   {report.subjects.map((sub, idx) => (
                     <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
-                      <td className="p-3 font-medium">
-                        <span className="font-mono font-bold text-primary text-[11px] block">{sub.code}</span>
-                        <span>{sub.title}</span>
+                      <td className="p-3 font-semibold text-slate-900">
+                        {sub.title}
                       </td>
                       <td className="p-3 text-center font-mono font-semibold">{sub.ca_score}</td>
                       <td className="p-3 text-center font-mono font-semibold">{sub.cbt_exam_score}</td>
