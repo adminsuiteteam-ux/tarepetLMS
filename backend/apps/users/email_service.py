@@ -1,9 +1,22 @@
-import logging
+import logging, threading
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.conf import settings
 from django.utils.html import strip_tags
 
 logger = logging.getLogger(__name__)
+
+
+def _dispatch_email_async(msg: EmailMultiAlternatives, recipient: str, log_desc: str = "Email"):
+    """Dispatches email in a background daemon thread to eliminate API latency."""
+    def _worker():
+        try:
+            msg.send(fail_silently=False)
+            logger.info(f"{log_desc} successfully dispatched to {recipient}")
+        except Exception as e:
+            logger.warning(f"Could not send {log_desc} to {recipient} via SMTP ({e})")
+    
+    t = threading.Thread(target=_worker, daemon=True)
+    t.start()
 
 
 def mask_email(email: str) -> str:
@@ -181,16 +194,11 @@ def send_otp_email(user, raw_code: str, validity_minutes: int = 5) -> bool:
     try:
         msg = EmailMultiAlternatives(subject, plain_text, from_email, [recipient])
         msg.attach_alternative(html_content, "text/html")
-        msg.send(fail_silently=False)
-        logger.info(f"OTP Email dispatched to {recipient}")
+        _dispatch_email_async(msg, recipient, f"OTP Code ({raw_code})")
+        logger.info(f"OTP Email dispatched asynchronously to {recipient}")
         return True
     except Exception as e:
-        logger.warning(f"Could not send email via SMTP backend ({e}). OTP Code for {recipient}: [{raw_code}]")
-        print("\n=======================================================")
-        print(f"[DEV EMAIL OTP DISPATCH] To: {recipient}")
-        print(f"CODE: {raw_code}")
-        print(f"EXPIRES IN: {validity_minutes} MINUTES")
-        print("=======================================================\n")
+        logger.warning(f"Could not queue OTP email ({e}). OTP Code for {recipient}: [{raw_code}]")
         return True
 
 
@@ -405,16 +413,9 @@ def send_teacher_welcome_email(
     try:
         msg = EmailMultiAlternatives(subject, plain_text, from_email, [recipient])
         msg.attach_alternative(html_content, "text/html")
-        msg.send(fail_silently=False)
-        logger.info(f"Teacher welcome email dispatched to {recipient}")
+        _dispatch_email_async(msg, recipient, f"Welcome Email ({staff_id})")
+        logger.info(f"Teacher welcome email queued asynchronously for {recipient}")
         return True
     except Exception as e:
-        logger.warning(f"Could not send teacher welcome email via SMTP backend ({e}).")
-        print("\n=======================================================")
-        print(f"[DEV TEACHER ONBOARDING EMAIL] To: {recipient}")
-        print(f"Teacher Name: {teacher_name}")
-        print(f"Staff ID: {staff_id}")
-        print(f"Password: {initial_password}")
-        print(f"URL: {portal_url}")
-        print("=======================================================\n")
+        logger.warning(f"Could not queue teacher welcome email ({e}).")
         return True
