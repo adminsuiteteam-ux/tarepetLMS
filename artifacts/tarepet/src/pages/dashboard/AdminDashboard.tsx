@@ -424,36 +424,10 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
       accountNumber: form.accountNumber || '',
     };
 
-    // 1. Post to backend Django REST API
-    authClient.post('/auth/register/', {
-      email: email,
-      password: staffId,
-      first_name: firstName,
-      last_name: lastName,
-      phone: form.phone,
-      role: 'TEACHER',
-      teacher_id: staffId,
-      department: form.isFormTeacher === 'Yes' ? 'Form Teacher' : 'Subject Teacher',
-      specialization: form.specialization,
-      qualifications: form.qualification,
-      subjects_taught: form.subjectsAssigned.filter((s: any) => s.name),
-      hire_date: form.joined || null,
-      gender: form.gender,
-      dob: form.dob || null,
-      address: form.address,
-      salary: form.salary,
-      bank_name: form.bankName,
-      account_number: form.accountNumber,
-      form_teacher_of: formTeacherDisplay,
-    }).then((res) => {
-      if (res.data?.id) {
-        saveTeacher({ ...created, id: res.data.id });
-      }
-      syncTeachersWithBackend();
-    }).catch(() => {});
-
-    saveTeacher(created);
-    onSave(created);
+    setIsSaving(true);
+    const savedTeacher = saveTeacher(created);
+    onSave(savedTeacher);
+    setIsSaving(false);
   };
 
   const inputCls = 'w-full border-2 border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-400 placeholder:font-normal';
@@ -7272,7 +7246,6 @@ export default function AdminDashboard() {
             <AddTeacherWizardModal
               onClose={() => setShowAddTeacherModal(false)}
               onSave={(created) => {
-                saveTeacher(created);
                 const updatedList = getStoredTeachers();
                 setTeachersList(updatedList);
                 setSelectedTeacher(created);
