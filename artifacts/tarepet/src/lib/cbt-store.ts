@@ -1270,7 +1270,7 @@ export async function syncTeachersWithBackend(): Promise<TeacherRecord[]> {
         .filter((u: any) => {
           const uCode = u.profile?.teacher_id || u.teacher_id || '';
           const uName = `${u.first_name || ''} ${u.last_name || ''}`.trim();
-          const isMock = u.email === 'teacher@tarepet.com' || uCode === 'TCH001' || uName.toLowerCase().includes('simeon chigozie');
+          const isMock = u.email === 'teacher@tarepet.com' && (uCode === 'TCH001' || !u.id);
           return !isMock && !isAccountDeleted(u.email) && !isAccountDeleted(u.id) && !isAccountDeleted(uCode) && !isAccountDeleted(uName);
         })
         .map((u: any) => {
