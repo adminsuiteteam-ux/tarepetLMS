@@ -84,7 +84,7 @@ services:
         destination: "/index.html"
     envVars:
       - key: VITE_API_URL
-        value: "https://tarepet-api.onrender.com/api/v1"
+        value: "https://tarepetlms.onrender.com/api/v1"
       - key: CORS_ALLOWED_ORIGINS
         value: "https://tarepetmontessorischool.com,https://www.tarepetmontessorischool.com,https://tarepet-frontend.onrender.com,http://localhost:5173,http://localhost:3000"
       - key: NODE_VERSION

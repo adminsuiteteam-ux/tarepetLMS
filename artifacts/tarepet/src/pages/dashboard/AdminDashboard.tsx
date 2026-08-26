@@ -359,7 +359,7 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
     subjectsAssigned: prev.subjectsAssigned.map((s: any, idx: number) => idx === i ? { ...s, [key]: val } : s),
   }));
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
     try {
       const serial = String(Math.floor(1 + Math.random() * 9999)).padStart(4, '0');
@@ -427,7 +427,8 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
         accountNumber: form.accountNumber || '',
       };
 
-      const savedTeacher = saveTeacher(created);
+      const savedTeacher = await saveTeacher(created);
+      await syncTeachersWithBackend();
       onSave(savedTeacher);
     } catch (err) {
       console.error('Error saving teacher:', err);
@@ -1944,8 +1945,53 @@ const CreateUserForTypeModal = ({
   });
   const [created, setCreated] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!form.name || !form.email) return;
+
+    try {
+      if (defaultRole === 'TEACHER') {
+        const serial = String(Math.floor(1000 + Math.random() * 9000));
+        const staffId = form.staffId || `TMS/TCH/${serial}`;
+        const subs = form.subject ? form.subject.split(',').map((s: string) => ({ name: s.trim(), grade: 'JSS 1' })) : [];
+        await saveTeacher({
+          name: form.name.trim(),
+          email: form.email.trim(),
+          phone: form.phone || '',
+          dob: form.dob || '',
+          staffId: staffId,
+          formTeacherOf: form.department || 'None',
+          department: form.department?.startsWith('SS') ? 'Senior Secondary' : form.department?.startsWith('JSS') ? 'Junior Secondary' : 'Academic Department',
+          subjectsAssigned: subs,
+          status: 'Active',
+        });
+        await syncTeachersWithBackend();
+      } else if (defaultRole === 'STUDENT') {
+        const schoolId = generateAdmissionNumber(form.grade || 'SS1', 'Science');
+        await saveStudent({
+          name: form.name.trim(),
+          email: form.email.trim(),
+          code: schoolId,
+          admissionNo: schoolId,
+          password: schoolId,
+          grade: form.grade || 'SS1',
+          stream: 'Science',
+          status: 'ACTIVE'
+        });
+        await syncStudentsWithBackend();
+      } else {
+        await authClient.post('/auth/register/', {
+          email: form.email.trim(),
+          password: 'Tarepet2026Password!',
+          first_name: form.name.trim().split(' ')[0],
+          last_name: form.name.trim().split(' ').slice(1).join(' ') || 'Staff',
+          role: defaultRole === 'STAFF' ? 'PARENT' : defaultRole,
+          phone: form.phone || '',
+        }).catch(() => {});
+      }
+    } catch (e) {
+      console.warn('Could not register user:', e);
+    }
+
     setCreated(true);
     onCreated({ name: form.name, email: form.email, role: defaultRole === 'STAFF' ? 'PARENT' : defaultRole });
   };
@@ -2645,8 +2691,8 @@ export default function AdminDashboard() {
         });
 
         if (liveTeachers.length > 0) {
-          saveStoredTeachers(liveTeachers);
-          setTeachersList(liveTeachers);
+          const mergedTeachers = saveStoredTeachers(liveTeachers);
+          setTeachersList(mergedTeachers || getStoredTeachers());
         }
       }
 
@@ -2785,11 +2831,11 @@ export default function AdminDashboard() {
     setCropModalOpen(true);
   };
 
-  const handleSaveTeacherRealtime = (updated: any) => {
-    saveTeacher(updated);
+  const handleSaveTeacherRealtime = async (updated: any) => {
+    const saved = await saveTeacher(updated);
     setTeachersList(getStoredTeachers());
     if (selectedTeacher?.id === updated.id || (selectedTeacher?.staffId && selectedTeacher?.staffId === updated.staffId)) {
-      setSelectedTeacher(updated);
+      setSelectedTeacher(saved || updated);
     }
     if (updated.email) {
       authClient.put('/auth/users/update_profile/', {
@@ -2803,11 +2849,11 @@ export default function AdminDashboard() {
     showToast(`Teacher profile for ${updated.name} updated in real time!`);
   };
 
-  const handleSaveStudentRealtime = (updated: any) => {
-    saveStudent(updated);
+  const handleSaveStudentRealtime = async (updated: any) => {
+    const saved = await saveStudent(updated);
     setStudentsList(getStoredStudents());
     if (selectedUser?.id === updated.id || (selectedUser?.admissionNo && selectedUser?.admissionNo === updated.admissionNo) || (selectedUser?.studentId && selectedUser?.studentId === updated.studentId)) {
-      setSelectedUser(updated);
+      setSelectedUser(saved || updated);
     }
     if (updated.email) {
       authClient.put('/auth/users/update_profile/', {
@@ -2821,17 +2867,17 @@ export default function AdminDashboard() {
     showToast(`Student profile for ${updated.name} updated in real time!`);
   };
 
-  const handleDeleteTeacherAvatarRealtime = (teacherIdOrObj: any) => {
+  const handleDeleteTeacherAvatarRealtime = async (teacherIdOrObj: any) => {
     const tchr = typeof teacherIdOrObj === 'object' ? teacherIdOrObj : teachersList.find(t => t.id === teacherIdOrObj || t.staffId === teacherIdOrObj);
     if (!tchr) return;
     const updated = { ...tchr, profileImage: '' };
-    saveTeacher(updated);
+    const saved = await saveTeacher(updated);
     setTeachersList(getStoredTeachers());
     if (selectedTeacher?.id === updated.id || selectedTeacher?.staffId === updated.staffId) {
-      setSelectedTeacher(updated);
+      setSelectedTeacher(saved || updated);
     }
     if (editTeacherForm && (editTeacherForm.id === updated.id || editTeacherForm.staffId === updated.staffId)) {
-      setEditTeacherForm(updated);
+      setEditTeacherForm(saved || updated);
     }
     if (updated.email) {
       authClient.put('/auth/users/update_profile/', {

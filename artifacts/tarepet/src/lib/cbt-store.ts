@@ -614,6 +614,21 @@ export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [
     joined: '2020-09-01',
     bio: 'Senior Biology educator for Senior Secondary classes (SS 1 to SS 3).'
   },
+  {
+    id: 20,
+    staffId: 'TMS/TCH/0020',
+    name: 'Godsgift Dimaro',
+    email: 'dimarogodsgift@gmail.com',
+    phone: '08031234567',
+    gender: 'Male',
+    formTeacherOf: 'SS 3 Science',
+    department: 'Physical & Quantitative Sciences',
+    specialization: 'Chemistry & Physics (SS 1 - 3)',
+    qualification: 'B.Sc. Chemistry Education, M.Sc.',
+    status: 'Active',
+    joined: '2021-09-01',
+    bio: 'Senior Chemistry & Physics educator for Senior Secondary classes.'
+  },
 ];
 
 function deduplicateTeachers(list: TeacherRecord[]): TeacherRecord[] {
@@ -667,17 +682,24 @@ function loadSavedTeachers(): TeacherRecord[] {
     } catch (e) {}
   }
 
-  // Base list starts with the 19 official institutional teachers
-  const merged: TeacherRecord[] = [...DEFAULT_FORM_TEACHERS];
+  // Base list starts with official institutional teachers merged with any stored updates
+  const merged: TeacherRecord[] = DEFAULT_FORM_TEACHERS.map(def => {
+    const savedMatch = list.find(item => 
+      item.id === def.id ||
+      (item.staffId && def.staffId && item.staffId.toLowerCase().replace(/[^a-z0-9]/g, '') === def.staffId.toLowerCase().replace(/[^a-z0-9]/g, '')) ||
+      (item.email && def.email && item.email.toLowerCase().trim() === def.email.toLowerCase().trim())
+    );
+    return savedMatch ? { ...def, ...savedMatch } : { ...def };
+  });
 
-  // Append verified new custom registrations (such as Godsgift Dimaro)
+  // Append verified new custom registrations
   for (const item of list) {
     const isOfficial = DEFAULT_FORM_TEACHERS.some(def => 
       def.id === item.id || 
       (def.staffId && item.staffId && def.staffId.toLowerCase().replace(/[^a-z0-9]/g, '') === item.staffId.toLowerCase().replace(/[^a-z0-9]/g, '')) ||
       (def.email && item.email && def.email.toLowerCase().trim() === item.email.toLowerCase().trim())
     );
-    if (!isOfficial && item.email && item.email.includes('@') && item.name) {
+    if (!isOfficial && item.name) {
       merged.push(item);
     }
   }
@@ -700,7 +722,7 @@ export function getStoredTeachers(): TeacherRecord[] {
   return _teachers;
 }
 
-export function saveTeacher(teacherData: Partial<TeacherRecord> & { name: string }): TeacherRecord {
+export async function saveTeacher(teacherData: Partial<TeacherRecord> & { name: string }): Promise<TeacherRecord> {
   _teachers = loadSavedTeachers();
   const serial = String(Math.floor(1 + Math.random() * 9999)).padStart(4, '0');
   const existing = _teachers.find(t => 
@@ -741,6 +763,77 @@ export function saveTeacher(teacherData: Partial<TeacherRecord> & { name: string
     password: teacherData.password !== undefined ? teacherData.password : (existing?.password || staffId),
   };
 
+  // Real-time async sync to Django backend database
+  const tNames = (updatedTeacher.name || '').trim().split(' ');
+  const tPayload = {
+    email: updatedTeacher.email,
+    password: updatedTeacher.password || updatedTeacher.staffId,
+    first_name: tNames[0] || updatedTeacher.name,
+    last_name: tNames.slice(1).join(' ') || 'Staff',
+    phone: updatedTeacher.phone,
+    role: 'TEACHER',
+    teacher_id: updatedTeacher.staffId,
+    staffId: updatedTeacher.staffId,
+    department: updatedTeacher.department,
+    specialization: updatedTeacher.specialization,
+    qualifications: updatedTeacher.qualification,
+    qualification: updatedTeacher.qualification,
+    subjects_taught: updatedTeacher.subjectsAssigned || [],
+    subjectsAssigned: updatedTeacher.subjectsAssigned || [],
+    gender: updatedTeacher.gender,
+    dob: updatedTeacher.dob || null,
+    date_of_birth: updatedTeacher.dob || null,
+    hire_date: updatedTeacher.joined || null,
+    joined: updatedTeacher.joined || null,
+    address: updatedTeacher.address,
+    salary: updatedTeacher.salary,
+    bank_name: updatedTeacher.bankName,
+    bankName: updatedTeacher.bankName,
+    account_number: updatedTeacher.accountNumber,
+    accountNumber: updatedTeacher.accountNumber,
+    form_teacher_of: updatedTeacher.formTeacherOf,
+    formTeacherOf: updatedTeacher.formTeacherOf,
+    bio: updatedTeacher.bio || '',
+    profile_image: updatedTeacher.profileImage || '',
+    profileImage: updatedTeacher.profileImage || '',
+    profile: {
+      profile_image: updatedTeacher.profileImage || '',
+      profileImage: updatedTeacher.profileImage || '',
+    }
+  };
+
+  try {
+    let res: any = null;
+    if (typeof updatedTeacher.id === 'number' && updatedTeacher.id < 1000000000) {
+      res = await authClient.patch(`/auth/users/${updatedTeacher.id}/`, tPayload);
+    } else {
+      try {
+        res = await authClient.post('/auth/register/', tPayload);
+      } catch (errReg: any) {
+        // Fallback to /auth/users/ if register returned an auth/route conflict
+        res = await authClient.post('/auth/users/', tPayload);
+      }
+    }
+    if (res && res.data) {
+      const respId = res.data.id || res.data.user?.id;
+      if (respId) {
+        updatedTeacher.id = respId;
+      }
+      if (res.data.email) {
+        updatedTeacher.email = res.data.email;
+      }
+      const backendStaffId = res.data.profile?.teacher_id || res.data.teacher_id;
+      if (backendStaffId) {
+        updatedTeacher.staffId = backendStaffId;
+      }
+    }
+  } catch (err: any) {
+    console.warn('Backend teacher sync response:', err?.response?.data || err?.message);
+    if (typeof updatedTeacher.id === 'number' && updatedTeacher.id < 1000000000) {
+      await authClient.patch(`/auth/users/${updatedTeacher.id}/`, tPayload).catch(() => {});
+    }
+  }
+
   const existingIdx = _teachers.findIndex(t => 
     (updatedTeacher.id && t.id === updatedTeacher.id) ||
     (t.staffId && t.staffId.toLowerCase() === updatedTeacher.staffId.toLowerCase()) ||
@@ -750,7 +843,7 @@ export function saveTeacher(teacherData: Partial<TeacherRecord> & { name: string
   if (existingIdx >= 0) {
     _teachers[existingIdx] = updatedTeacher;
   } else {
-    _teachers.unshift(updatedTeacher);
+    _teachers = [updatedTeacher, ..._teachers];
   }
 
   _teachers = deduplicateTeachers(_teachers);
@@ -761,78 +854,28 @@ export function saveTeacher(teacherData: Partial<TeacherRecord> & { name: string
     } catch (e) {}
   }
 
-  // Real-time async sync to Django backend database
-  const tNames = (updatedTeacher.name || '').trim().split(' ');
-  const tPayload = {
-    email: updatedTeacher.email,
-    first_name: tNames[0] || updatedTeacher.name,
-    last_name: tNames.slice(1).join(' ') || 'Teacher',
-    phone: updatedTeacher.phone,
-    role: 'TEACHER',
-    teacher_id: updatedTeacher.staffId,
-    department: updatedTeacher.department,
-    specialization: updatedTeacher.specialization,
-    qualifications: updatedTeacher.qualification,
-    qualification: updatedTeacher.qualification,
-    subjects_taught: updatedTeacher.subjectsAssigned || [],
-    subjectsAssigned: updatedTeacher.subjectsAssigned || [],
-    gender: updatedTeacher.gender,
-    dob: updatedTeacher.dob || null,
-    address: updatedTeacher.address,
-    salary: updatedTeacher.salary,
-    bank_name: updatedTeacher.bankName,
-    account_number: updatedTeacher.accountNumber,
-    form_teacher_of: updatedTeacher.formTeacherOf,
-    bio: updatedTeacher.bio || '',
-    profile_image: updatedTeacher.profileImage || '',
-    profile: {
-      profile_image: updatedTeacher.profileImage || '',
-      profileImage: updatedTeacher.profileImage || '',
-    }
-  };
-
-  if (typeof updatedTeacher.id === 'number' && updatedTeacher.id < 1000000000) {
-    authClient.patch(`/auth/users/${updatedTeacher.id}/`, tPayload).catch(() => {});
-  } else {
-    authClient.post('/auth/register/', tPayload).then((res) => {
-      if (res.data?.id) {
-        const list = loadSavedTeachers();
-        const foundIdx = list.findIndex(t => 
-          t.staffId === updatedTeacher.staffId || 
-          t.email.toLowerCase() === updatedTeacher.email.toLowerCase()
-        );
-        if (foundIdx >= 0) {
-          list[foundIdx].id = res.data.id;
-          _teachers = list;
-          if (typeof window !== 'undefined') {
-            try { localStorage.setItem('tarepet_teachers_list', JSON.stringify(_teachers)); } catch (e) {}
-          }
-          broadcastRealtimeEvent();
-        }
-      }
-    }).catch(() => {});
-  }
-
+  sendWebSocketEvent(JSON.stringify({
+    type: 'ROSTER_UPDATED',
+    payload: { teacher: updatedTeacher, action: 'SAVE' }
+  }));
   broadcastRealtimeEvent();
-  const targetIdx = Math.max(0, existingIdx);
-  return _teachers[targetIdx] || _teachers[0];
+
+  return updatedTeacher;
 }
 
 export function saveStoredTeachers(backendTeachers: TeacherRecord[]) {
   const existingLocal = loadSavedTeachers();
   const merged: TeacherRecord[] = [...backendTeachers];
 
-  // Preserve only newly created local teachers (timestamp ID > 1000000000) that are still syncing
+  // Preserve any locally created / modified teachers not yet returned by backend
   for (const local of existingLocal) {
-    const isNewUnsyncedLocal = typeof local.id === 'number' && local.id > 1000000000;
-    if (isNewUnsyncedLocal) {
-      const isAlreadyInBackend = backendTeachers.some(b => 
-        (local.staffId && b.staffId && b.staffId.toLowerCase().replace(/[^a-z0-9]/g, '') === (local.staffId || '').toLowerCase().replace(/[^a-z0-9]/g, '')) ||
-        (local.email && b.email && b.email.toLowerCase().trim() === (local.email || '').toLowerCase().trim())
-      );
-      if (!isAlreadyInBackend) {
-        merged.push(local);
-      }
+    const isAlreadyInBackend = backendTeachers.some(b => 
+      b.id === local.id ||
+      (local.staffId && b.staffId && b.staffId.toLowerCase().replace(/[^a-z0-9]/g, '') === (local.staffId || '').toLowerCase().replace(/[^a-z0-9]/g, '')) ||
+      (local.email && b.email && b.email.toLowerCase().trim() === (local.email || '').toLowerCase().trim())
+    );
+    if (!isAlreadyInBackend) {
+      merged.push(local);
     }
   }
 
@@ -843,6 +886,7 @@ export function saveStoredTeachers(backendTeachers: TeacherRecord[]) {
     } catch (e) {}
   }
   broadcastRealtimeEvent();
+  return _teachers;
 }
 
 

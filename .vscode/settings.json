@@ -8,5 +8,11 @@
   "python.analysis.extraPaths": [
     "backend"
   ],
-  "python.defaultInterpreterPath": "C:/Users/Dimacode.x/AppData/Local/Programs/Python/Python314/python.exe"
+  "python.defaultInterpreterPath": "C:/Users/Dimacode.x/AppData/Local/Programs/Python/Python314/python.exe",
+  "securecoder.rules.i18n": "off",
+  "securecoder.i18n.enabled": false,
+  "securecoder.rules": {
+    "internationalization": "off",
+    "jsx-not-internationalized": "off"
+  }
 }

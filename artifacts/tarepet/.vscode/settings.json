@@ -4,5 +4,11 @@
   "less.lint.unknownAtRules": "ignore",
   "css.customData": [
     "${workspaceFolder}/artifacts/tarepet/.vscode/tailwind-custom-data.json"
-  ]
+  ],
+  "securecoder.rules.i18n": "off",
+  "securecoder.i18n.enabled": false,
+  "securecoder.rules": {
+    "internationalization": "off",
+    "jsx-not-internationalized": "off"
+  }
 }

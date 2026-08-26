@@ -251,6 +251,14 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = UserRegistrationSerializer
     permission_classes = [permissions.AllowAny]
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        read_serializer = UserSerializer(user, context={'request': request})
+        headers = self.get_success_headers(serializer.data)
+        return Response(read_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer

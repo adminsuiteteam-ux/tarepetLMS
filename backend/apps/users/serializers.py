@@ -181,12 +181,16 @@ class UserSerializer(serializers.ModelSerializer):
         if instance.role == User.Role.TEACHER:
             t_prof, _ = TeacherProfile.objects.get_or_create(user=instance)
             field_map = {
+                'teacher_id': 'teacher_id',
+                'staffId': 'teacher_id',
+                'staff_id': 'teacher_id',
                 'department': 'department',
                 'specialization': 'specialization',
                 'qualifications': 'qualifications',
                 'qualification': 'qualifications',
                 'gender': 'gender',
                 'dob': 'dob',
+                'date_of_birth': 'dob',
                 'address': 'address',
                 'salary': 'salary',
                 'bank_name': 'bank_name',
@@ -206,8 +210,13 @@ class UserSerializer(serializers.ModelSerializer):
             for key, attr in field_map.items():
                 if key in merged_profile:
                     val = merged_profile[key]
-                    if val is not None:
-                        setattr(t_prof, attr, val)
+                    if val is not None and val != '':
+                        if attr in ['dob', 'hire_date']:
+                            parsed_d = parse_date_safe(val)
+                            if parsed_d:
+                                setattr(t_prof, attr, parsed_d)
+                        else:
+                            setattr(t_prof, attr, val)
             t_prof.save()
 
         elif instance.role == User.Role.STUDENT:
@@ -322,6 +331,7 @@ def parse_date_safe(val):
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
     email = serializers.EmailField(required=False, allow_blank=True)
     password = serializers.CharField(write_only=True, required=False, allow_blank=True)
     role = serializers.ChoiceField(choices=User.Role.choices, default=User.Role.STUDENT)
@@ -342,30 +352,49 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     study_mode = serializers.CharField(write_only=True, required=False, allow_blank=True)
     studyMode = serializers.CharField(write_only=True, required=False, allow_blank=True)
     teacher_id = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    staffId = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    staff_id = serializers.CharField(write_only=True, required=False, allow_blank=True)
     department = serializers.CharField(write_only=True, required=False, allow_blank=True)
     specialization = serializers.CharField(write_only=True, required=False, allow_blank=True)
     qualifications = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    qualification = serializers.CharField(write_only=True, required=False, allow_blank=True)
     subjects_taught = serializers.JSONField(write_only=True, required=False, default=list)
+    subjectsAssigned = serializers.JSONField(write_only=True, required=False, default=list)
     hire_date = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
+    joined = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
     gender = serializers.CharField(write_only=True, required=False, allow_blank=True)
     dob = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
     date_of_birth = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
     address = serializers.CharField(write_only=True, required=False, allow_blank=True)
     salary = serializers.CharField(write_only=True, required=False, allow_blank=True)
     bank_name = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    bankName = serializers.CharField(write_only=True, required=False, allow_blank=True)
     account_number = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    accountNumber = serializers.CharField(write_only=True, required=False, allow_blank=True)
     form_teacher_of = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    formTeacherOf = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    profile_image = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
+    profileImage = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
+    bio = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    teachingDivision = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model = User
         fields = [
-            'email', 'password', 'first_name', 'last_name', 'phone', 'role', 'student_id', 'teacher_id',
+            'id', 'email', 'password', 'first_name', 'last_name', 'phone', 'role',
+            'student_id', 'teacher_id', 'staffId', 'staff_id',
             'grade', 'grade_level', 'stream', 'house', 'emergency_contact',
             'state_of_origin', 'stateOfOrigin', 'lga', 'parent_name', 'parentName', 'parent_phone', 'parentPhone',
             'programme', 'study_mode', 'studyMode',
-            'department', 'specialization', 'qualifications', 'subjects_taught', 'hire_date', 'gender',
-            'dob', 'date_of_birth', 'address', 'salary', 'bank_name', 'account_number', 'form_teacher_of'
+            'department', 'specialization', 'qualifications', 'qualification',
+            'subjects_taught', 'subjectsAssigned', 'hire_date', 'joined', 'gender',
+            'dob', 'date_of_birth', 'address', 'salary', 'bank_name', 'bankName',
+            'account_number', 'accountNumber', 'form_teacher_of', 'formTeacherOf',
+            'profile_image', 'profileImage', 'bio', 'teachingDivision'
         ]
+        extra_kwargs = {
+            'email': {'validators': []}
+        }
 
     def create(self, validated_data):
         role = validated_data.get('role', User.Role.STUDENT)
@@ -386,18 +415,20 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         study_val = validated_data.pop('study_mode', None) or validated_data.pop('studyMode', 'Full Time')
 
         # Extract teacher profile extra fields
-        dept = validated_data.pop('department', 'Academic Department')
+        dept = validated_data.pop('department', None) or validated_data.pop('teachingDivision', 'Academic Department')
         spec = validated_data.pop('specialization', '')
-        qual = validated_data.pop('qualifications', '')
-        subs = validated_data.pop('subjects_taught', [])
-        hire = parse_date_safe(validated_data.pop('hire_date', None))
+        qual = validated_data.pop('qualifications', None) or validated_data.pop('qualification', '')
+        subs = validated_data.pop('subjects_taught', None) or validated_data.pop('subjectsAssigned', [])
+        hire = parse_date_safe(validated_data.pop('hire_date', None) or validated_data.pop('joined', None))
         gen = validated_data.pop('gender', '')
         dob_val = parse_date_safe(validated_data.pop('date_of_birth', None) or validated_data.pop('dob', None))
         addr = validated_data.pop('address', '')
         sal = validated_data.pop('salary', '')
-        bank = validated_data.pop('bank_name', '')
-        acct = validated_data.pop('account_number', '')
-        form_tch = validated_data.pop('form_teacher_of', '')
+        bank = validated_data.pop('bank_name', None) or validated_data.pop('bankName', '')
+        acct = validated_data.pop('account_number', None) or validated_data.pop('accountNumber', '')
+        form_tch = validated_data.pop('form_teacher_of', None) or validated_data.pop('formTeacherOf', '')
+        prof_img = validated_data.pop('profile_image', None) or validated_data.pop('profileImage', '')
+        bio_val = validated_data.pop('bio', '')
 
         # Enforce email format: firstname.surname@tarepet.com for Student & Teacher
         if not email or '@' not in email:
@@ -411,7 +442,11 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         # Determine Student ID / Teacher ID and Password
         password = validated_data.get('password')
         custom_stu_id = validated_data.pop('student_id', None)
-        custom_tch_id = validated_data.pop('teacher_id', None)
+        custom_tch_id = (
+            validated_data.pop('teacher_id', None) or
+            validated_data.pop('staffId', None) or
+            validated_data.pop('staff_id', None)
+        )
 
         if role == User.Role.STUDENT:
             if not custom_stu_id:
@@ -428,7 +463,9 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
                 password = custom_tch_id
 
         if not password:
-            password = "DefaultPassword123!"
+            password = "Tarepet2026Password!"
+        elif len(password) < 12:
+            password = f"{password}2026!"
 
         # Handle existing user with same email gracefully
         user = User.objects.filter(email__iexact=email).first()
@@ -437,6 +474,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             user.last_name = last_name or user.last_name
             if validated_data.get('phone'):
                 user.phone = validated_data.get('phone')
+            if prof_img:
+                user.profile_image = prof_img
             if password:
                 user.set_password(password)
             user.role = role
@@ -449,6 +488,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
                 last_name=last_name,
                 phone=validated_data.get('phone', ''),
                 role=role,
+                profile_image=prof_img or None,
             )
 
         # Create or update role profile with strictly assigned ID and individual fields
@@ -475,6 +515,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
                     'parent_phone': p_phone_val,
                     'programme': prog_val,
                     'study_mode': study_val,
+                    'profile_image': prof_img or '',
                 }
             )
         elif role == User.Role.TEACHER:
@@ -499,6 +540,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
                     'bank_name': bank or '',
                     'account_number': acct or '',
                     'form_teacher_of': form_tch or '',
+                    'bio': bio_val or '',
+                    'profile_image': prof_img or '',
                 }
             )
             # Automated welcome & credentials email dispatch based on System Settings
