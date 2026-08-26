@@ -1310,7 +1310,7 @@ export async function syncTeachersWithBackend(): Promise<TeacherRecord[]> {
 
 export async function saveStudent(studentData: Partial<StudentRecord> & { name: string }): Promise<StudentRecord> {
   const assignedGrade = studentData.grade || 'SS1';
-  const autoCode = studentData.code || studentData.admissionNo || studentData.student_id || generateAdmissionNumber(assignedGrade, studentData.stream);
+  const autoCode = studentData.code || studentData.admissionNo || (studentData as any).student_id || generateAdmissionNumber(assignedGrade, studentData.stream);
   const autoEmail = studentData.email || formatStudentEmail(studentData.name);
 
   const existingIdx = _students.findIndex(s => 
@@ -1327,7 +1327,6 @@ export async function saveStudent(studentData: Partial<StudentRecord> & { name: 
     id: studentData.id || (existingIdx >= 0 ? _students[existingIdx].id : Date.now()),
     code: autoCode,
     admissionNo: autoCode,
-    admission_number: autoCode,
     name: studentData.name.trim(),
     email: autoEmail,
     password: studentData.password || autoCode,
@@ -1414,10 +1413,10 @@ export async function saveStudent(studentData: Partial<StudentRecord> & { name: 
     } catch (e) {}
   }
 
-  sendWebSocketEvent({
+  sendWebSocketEvent(JSON.stringify({
     type: 'ROSTER_UPDATED',
     payload: { student: newStudent, action: 'SAVE' }
-  });
+  }));
   broadcastRealtimeEvent();
 
   return newStudent;

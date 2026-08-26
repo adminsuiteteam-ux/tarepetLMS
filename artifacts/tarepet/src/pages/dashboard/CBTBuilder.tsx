@@ -222,7 +222,7 @@ export default function CBTBuilder() {
     setLoading(true);
     try {
       const selectedCourse = SENIOR_COURSES.find(c => c.code === form.course) || availableCourses[0] || SENIOR_COURSES[0];
-      const created = saveCBTExam({
+      const created = await saveCBTExam({
         title: form.title,
         description: form.description,
         instructions: form.instructions,

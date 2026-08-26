@@ -47,7 +47,7 @@ import {
   Briefcase, UserCog, BookMarked, MessageSquare, KeyRound,
   BadgeCheck, Ban, RotateCcw, FileDown, Send, FlaskConical, Palette,
   School, CalendarCheck, Megaphone, UserPlus, FileSpreadsheet, TrendingUp, Sparkles, ChevronRight, Eye, Layers, ShieldCheck, Bell, AlertTriangle, Key, Trophy, BarChart3, TrendingDown, XCircle, UploadCloud, Camera,
-  Scissors
+  Scissors, Loader2, Tag
 } from 'lucide-react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, LineChart, Line, CartesianGrid,
