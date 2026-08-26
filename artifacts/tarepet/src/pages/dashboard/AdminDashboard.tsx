@@ -334,6 +334,7 @@ const EMPTY_TEACHER_FORM = {
 
 const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSave: (t: any) => void }) => {
   const [step, setStep] = useState(1);
+  const [isSaving, setIsSaving] = useState(false);
   const [form, setForm] = useState({ ...EMPTY_TEACHER_FORM });
   const [cropModalOpen, setCropModalOpen] = useState(false);
   const [pendingCropImage, setPendingCropImage] = useState('');
@@ -359,75 +360,80 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
   }));
 
   const handleSave = () => {
-    const serial = String(Math.floor(1 + Math.random() * 9999)).padStart(4, '0');
-    const staffId = form.staffId || `TMS/TCH/${serial}`;
-    const nameParts = (form.name || '').trim().split(' ');
-    const firstName = nameParts[0] || '';
-    const lastName = nameParts.slice(1).join(' ') || '';
-    const email = form.email || (firstName ? `${firstName.toLowerCase()}.${lastName ? lastName.toLowerCase() : 'staff'}@tarepet.com` : '');
-
-    const formCls = form.isFormTeacher === 'Yes' ? (form.formTeacherClass || '') : '';
-    let targetDivision = '';
-
-    if (form.isFormTeacher === 'Yes' && formCls) {
-      const formUpper = formCls.toUpperCase();
-      if (formUpper.startsWith('SS')) targetDivision = 'Senior Secondary';
-      else if (formUpper.startsWith('JSS')) targetDivision = 'Junior Secondary';
-      else if (formUpper.startsWith('NUR') || formUpper.startsWith('PRI') || formUpper.startsWith('BASIC')) targetDivision = 'Nursery & Primary';
-    } else if (form.teachingDivision) {
-      const divUpper = form.teachingDivision.toUpperCase();
-      if (divUpper.includes('SENIOR') || divUpper.includes('SS')) targetDivision = 'Senior Secondary';
-      else if (divUpper.includes('JUNIOR') || divUpper.includes('JSS')) targetDivision = 'Junior Secondary';
-      else if (divUpper.includes('NURSERY') || divUpper.includes('PRIMARY') || divUpper.includes('EARLY')) targetDivision = 'Nursery & Primary';
-    }
-
-    if (!targetDivision && form.subjectsAssigned.length > 0) {
-      const subGrades = form.subjectsAssigned.map((s: any) => (s.grade || '').toUpperCase());
-      if (subGrades.some((g: any) => g.startsWith('SS'))) targetDivision = 'Senior Secondary';
-      else if (subGrades.some((g: any) => g.startsWith('JSS'))) targetDivision = 'Junior Secondary';
-      else if (subGrades.some((g: any) => g.startsWith('NUR') || g.startsWith('PRI') || g.startsWith('BASIC'))) targetDivision = 'Nursery & Primary';
-    }
-
-    if (!targetDivision) {
-      targetDivision = form.isFormTeacher === 'Yes' ? 'Form Class' : 'General Faculty';
-    }
-
-    const formTeacherDisplay = form.isFormTeacher === 'Yes'
-      ? (form.formTeacherClass || 'Unassigned Form Class')
-      : 'None';
-
-    const created = {
-      id: Date.now(),
-      staffId: staffId,
-      name: form.name || `${firstName} ${lastName}`.trim(),
-      email: email,
-      phone: form.phone || '',
-      gender: form.gender || '',
-      department: targetDivision,
-      teachingDivision: targetDivision,
-      specialization: form.specialization || '',
-      qualification: form.qualification || '',
-      status: form.status || 'Active',
-      joined: form.joined || new Date().toISOString().split('T')[0],
-      formTeacherOf: formTeacherDisplay,
-      subjectsAssigned: form.subjectsAssigned.filter((s: any) => s.name),
-      classesCount: form.subjectsAssigned.filter((s: any) => s.name).length,
-      studentsCount: 0,
-      address: form.address || '',
-      dob: form.dob || '',
-      cbtExamsCount: 0,
-      attendanceRate: '0%',
-      profileImage: form.profileImage || '',
-      salary: form.salary || '',
-      salaryGrade: 'Standard',
-      bankName: form.bankName || '',
-      accountNumber: form.accountNumber || '',
-    };
-
     setIsSaving(true);
-    const savedTeacher = saveTeacher(created);
-    onSave(savedTeacher);
-    setIsSaving(false);
+    try {
+      const serial = String(Math.floor(1 + Math.random() * 9999)).padStart(4, '0');
+      const staffId = form.staffId || `TMS/TCH/${serial}`;
+      const nameParts = (form.name || '').trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      const email = form.email || (firstName ? `${firstName.toLowerCase()}.${lastName ? lastName.toLowerCase() : 'staff'}@tarepet.com` : '');
+
+      const formCls = form.isFormTeacher === 'Yes' ? (form.formTeacherClass || '') : '';
+      let targetDivision = '';
+
+      if (form.isFormTeacher === 'Yes' && formCls) {
+        const formUpper = formCls.toUpperCase();
+        if (formUpper.startsWith('SS')) targetDivision = 'Senior Secondary';
+        else if (formUpper.startsWith('JSS')) targetDivision = 'Junior Secondary';
+        else if (formUpper.startsWith('NUR') || formUpper.startsWith('PRI') || formUpper.startsWith('BASIC')) targetDivision = 'Nursery & Primary';
+      } else if (form.teachingDivision) {
+        const divUpper = form.teachingDivision.toUpperCase();
+        if (divUpper.includes('SENIOR') || divUpper.includes('SS')) targetDivision = 'Senior Secondary';
+        else if (divUpper.includes('JUNIOR') || divUpper.includes('JSS')) targetDivision = 'Junior Secondary';
+        else if (divUpper.includes('NURSERY') || divUpper.includes('PRIMARY') || divUpper.includes('EARLY')) targetDivision = 'Nursery & Primary';
+      }
+
+      if (!targetDivision && form.subjectsAssigned.length > 0) {
+        const subGrades = form.subjectsAssigned.map((s: any) => (s.grade || '').toUpperCase());
+        if (subGrades.some((g: any) => g.startsWith('SS'))) targetDivision = 'Senior Secondary';
+        else if (subGrades.some((g: any) => g.startsWith('JSS'))) targetDivision = 'Junior Secondary';
+        else if (subGrades.some((g: any) => g.startsWith('NUR') || g.startsWith('PRI') || g.startsWith('BASIC'))) targetDivision = 'Nursery & Primary';
+      }
+
+      if (!targetDivision) {
+        targetDivision = form.isFormTeacher === 'Yes' ? 'Form Class' : 'General Faculty';
+      }
+
+      const formTeacherDisplay = form.isFormTeacher === 'Yes'
+        ? (form.formTeacherClass || 'Unassigned Form Class')
+        : 'None';
+
+      const created = {
+        id: Date.now(),
+        staffId: staffId,
+        name: form.name || `${firstName} ${lastName}`.trim(),
+        email: email,
+        phone: form.phone || '',
+        gender: form.gender || '',
+        department: targetDivision,
+        teachingDivision: targetDivision,
+        specialization: form.specialization || '',
+        qualification: form.qualification || '',
+        status: form.status || 'Active',
+        joined: form.joined || new Date().toISOString().split('T')[0],
+        formTeacherOf: formTeacherDisplay,
+        subjectsAssigned: form.subjectsAssigned.filter((s: any) => s.name),
+        classesCount: form.subjectsAssigned.filter((s: any) => s.name).length,
+        studentsCount: 0,
+        address: form.address || '',
+        dob: form.dob || '',
+        cbtExamsCount: 0,
+        attendanceRate: '0%',
+        profileImage: form.profileImage || '',
+        salary: form.salary || '',
+        salaryGrade: 'Standard',
+        bankName: form.bankName || '',
+        accountNumber: form.accountNumber || '',
+      };
+
+      const savedTeacher = saveTeacher(created);
+      onSave(savedTeacher);
+    } catch (err) {
+      console.error('Error saving teacher:', err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const inputCls = 'w-full border-2 border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-400 placeholder:font-normal';
@@ -938,11 +944,13 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                 </button>
               ) : (
                 <button
+                  type="button"
                   onClick={handleSave}
-                  disabled={!form.name || !form.email}
+                  disabled={!form.name || !form.email || isSaving}
                   className="px-7 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl text-xs font-bold shadow-md transition flex items-center gap-2 disabled:opacity-50 cursor-pointer"
                 >
-                  <CheckCircle2 className="w-4 h-4" /> Complete Registration
+                  {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                  {isSaving ? 'Registering Teacher...' : 'Complete Registration'}
                 </button>
               )}
             </div>
