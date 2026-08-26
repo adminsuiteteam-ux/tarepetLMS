@@ -437,84 +437,62 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-2 sm:p-4 animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 shadow-2xl w-full max-w-4xl flex flex-col overflow-hidden max-h-[92vh] sm:max-h-[88vh]">
 
-        {/* 21st.dev Inspired Compact Responsive Header & Progress Stepper */}
-        <div className="bg-slate-950 text-white p-4 sm:p-5 border-b border-slate-800 shrink-0">
-          <div className="flex items-center justify-between gap-3 mb-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-primary to-amber-500 text-white flex items-center justify-center font-bold shadow-md shadow-primary/30 shrink-0">
-                <GraduationCap className="w-5 h-5 text-white" />
+        {/* Simple & Clean Modern Header */}
+        <div className="bg-card border-b border-border p-5 sm:p-6 shrink-0">
+          <div className="flex items-center justify-between gap-4 mb-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="font-serif font-bold text-base sm:text-lg text-foreground">Add New Teacher</h2>
+                <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-[11px] font-bold">
+                  Step {step} of 5
+                </span>
               </div>
-              <div className="min-w-0">
-                {(() => {
-                  const currentStepInfo = WIZARD_STEPS.find(s => s.step === step) || WIZARD_STEPS[0];
-                  return (
-                    <>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h2 className="font-serif font-bold text-sm sm:text-base text-white truncate">Teacher Registration</h2>
-                        <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full bg-primary/20 text-primary-foreground border border-primary/30 text-[10px] font-bold">
-                          Step {step} of 5
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-slate-400 font-medium truncate">
-                        <span className="text-white font-bold">{currentStepInfo.label}</span> — {currentStepInfo.sub}
-                      </p>
-                    </>
-                  );
-                })()}
-              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {WIZARD_STEPS.find(s => s.step === step)?.label} — {WIZARD_STEPS.find(s => s.step === step)?.sub}
+              </p>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="sm:hidden text-[10px] font-mono font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-md border border-amber-400/20">
-                {step}/5 ({step * 20}%)
-              </span>
-              <button
-                onClick={onClose}
-                className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-xl border border-border bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
 
-          {/* Progress Track & Step Indicators */}
-          <div className="space-y-2">
-            {/* Animated Gradient Progress Track */}
-            <div className="h-1.5 w-full bg-slate-800/90 rounded-full overflow-hidden relative">
-              <div
-                className="h-full bg-gradient-to-r from-primary via-rose-500 to-amber-400 transition-all duration-300 ease-out rounded-full"
-                style={{ width: `${(step / 5) * 100}%` }}
-              />
-            </div>
-
-            {/* Horizontal Step Chips (Scrollable / Responsive) */}
-            <div className="flex items-center justify-between gap-1 overflow-x-auto no-scrollbar py-0.5 text-[11px]">
-              {WIZARD_STEPS.map((s) => {
-                const isActive = step === s.step;
-                const isDone = step > s.step;
-                return (
-                  <button
-                    key={s.step}
-                    type="button"
-                    onClick={() => setStep(s.step)}
-                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl transition-all whitespace-nowrap cursor-pointer ${
-                      isActive
-                        ? 'bg-primary text-white font-bold shadow-sm shadow-primary/30'
-                        : isDone
-                        ? 'text-emerald-400 hover:bg-slate-800/80 font-semibold'
-                        : 'text-slate-400 hover:bg-slate-800/50 font-medium'
+          {/* Simple Clean 5-Segment Progress Bar */}
+          <div className="grid grid-cols-5 gap-2">
+            {WIZARD_STEPS.map((s) => {
+              const isPast = step > s.step;
+              const isCurrent = step === s.step;
+              return (
+                <button
+                  key={s.step}
+                  type="button"
+                  onClick={() => setStep(s.step)}
+                  className="group flex flex-col gap-1.5 text-left cursor-pointer focus:outline-none"
+                >
+                  <div
+                    className={`h-1.5 w-full rounded-full transition-all duration-200 ${
+                      isPast
+                        ? 'bg-primary'
+                        : isCurrent
+                        ? 'bg-primary ring-2 ring-primary/20'
+                        : 'bg-muted group-hover:bg-muted-foreground/30'
                     }`}
-                  >
-                    <span className={`w-4 h-4 rounded-full text-[9px] flex items-center justify-center font-bold ${
-                      isActive ? 'bg-white text-primary' : isDone ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'
-                    }`}>
-                      {isDone ? '✓' : s.step}
-                    </span>
-                    <span className="hidden md:inline">{s.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+                  />
+                  <span className={`text-[10px] font-semibold truncate transition-colors hidden sm:block ${
+                    isCurrent
+                      ? 'text-primary font-bold'
+                      : isPast
+                      ? 'text-foreground'
+                      : 'text-muted-foreground'
+                  }`}>
+                    {s.step}. {s.label}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
