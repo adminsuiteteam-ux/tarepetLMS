@@ -655,31 +655,34 @@ function loadSavedTeachers(): TeacherRecord[] {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          list = parsed.filter((t: any) => t && t.name && !isAccountDeleted(t.email) && !isAccountDeleted(t.staffId) && !isAccountDeleted(t.id));
+          list = parsed.filter((t: any) => 
+            t && t.name && 
+            !isAccountDeleted(t.email) && 
+            !isAccountDeleted(t.staffId) && 
+            !isAccountDeleted(t.id) &&
+            !['Dr. John Doe', 'Prof. Smith', 'Test Teacher', 'Sample Faculty', 'Dr. Test Teacher'].some(fake => (t.name || '').includes(fake))
+          );
         }
       }
     } catch (e) {}
   }
 
-  if (list.length === 0) {
-    list = [...DEFAULT_FORM_TEACHERS];
-  } else {
-    // Append any missing official default teachers if not yet in the list
-    for (const def of DEFAULT_FORM_TEACHERS) {
-      const defStaffId = (def.staffId || '').toLowerCase();
-      const defEmail = (def.email || '').toLowerCase();
-      const hasMatch = list.some(l => 
-        (l.id && l.id === def.id) || 
-        (l.staffId && l.staffId.toLowerCase() === defStaffId) || 
-        (l.email && l.email.toLowerCase() === defEmail)
-      );
-      if (!hasMatch) {
-        list.push(def);
-      }
+  // Base list starts with the 19 official institutional teachers
+  const merged: TeacherRecord[] = [...DEFAULT_FORM_TEACHERS];
+
+  // Append verified new custom registrations (such as Godsgift Dimaro)
+  for (const item of list) {
+    const isOfficial = DEFAULT_FORM_TEACHERS.some(def => 
+      def.id === item.id || 
+      (def.staffId && item.staffId && def.staffId.toLowerCase().replace(/[^a-z0-9]/g, '') === item.staffId.toLowerCase().replace(/[^a-z0-9]/g, '')) ||
+      (def.email && item.email && def.email.toLowerCase().trim() === item.email.toLowerCase().trim())
+    );
+    if (!isOfficial && item.email && item.email.includes('@') && item.name) {
+      merged.push(item);
     }
   }
 
-  const deduped = deduplicateTeachers(list);
+  const deduped = deduplicateTeachers(merged);
 
   if (typeof window !== 'undefined') {
     try {
