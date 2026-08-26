@@ -293,19 +293,6 @@ class Command(BaseCommand):
                 'bio': 'Senior Biology educator for Senior Secondary classes (SS 1 to SS 3).',
                 'subjects_taught': [{'name': 'Biology', 'grade': 'SS 1'}, {'name': 'Biology', 'grade': 'SS 2'}, {'name': 'Biology', 'grade': 'SS 3'}]
             },
-            {
-                'first_name': 'Covenantzanadu',
-                'last_name': 'Uzor',
-                'email': 'covenant.uzor@tarepet.com',
-                'phone': '08035567890',
-                'teacher_id': 'TMS/TCH/0024',
-                'gender': 'Male',
-                'department': 'Academic Staff',
-                'specialization': 'General Studies & Science',
-                'class_assigned': 'None',
-                'bio': 'Educator in General Studies & Science.',
-                'subjects_taught': [{'name': 'Basic Science', 'grade': 'JSS 1'}]
-            },
         ]
 
         # Prune any unlisted teacher profiles from the database

@@ -614,36 +614,6 @@ export const DEFAULT_FORM_TEACHERS: TeacherRecord[] = [
     joined: '2020-09-01',
     bio: 'Senior Biology educator for Senior Secondary classes (SS 1 to SS 3).'
   },
-  {
-    id: 20,
-    staffId: 'TMS/TCH/0024',
-    name: 'Covenantzanadu Uzor',
-    email: 'covenant.uzor@tarepet.com',
-    phone: '08035567890',
-    gender: 'Male',
-    formTeacherOf: 'None',
-    department: 'Academic Staff',
-    specialization: 'General Studies & Science',
-    qualification: 'B.Sc. Education',
-    status: 'Active',
-    joined: '2023-01-15',
-    bio: 'Educator in General Studies & Science.'
-  },
-  {
-    id: 21,
-    staffId: 'TMS/TCH/0058',
-    name: 'Godsgift Dimaro',
-    email: 'dimarogodsgift@gmail.com',
-    phone: '08031234567',
-    gender: 'Male',
-    formTeacherOf: 'SS 3 Science',
-    department: 'Physical & Quantitative Sciences',
-    specialization: 'Chemistry & Physics (SS 1 - 3)',
-    qualification: 'B.Sc. Chemistry Education, M.Sc.',
-    status: 'Active',
-    joined: '2021-09-01',
-    bio: 'Senior Chemistry & Physics educator for Senior Secondary classes.'
-  },
 ];
 
 function deduplicateTeachers(list: TeacherRecord[]): TeacherRecord[] {

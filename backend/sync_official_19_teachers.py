@@ -217,17 +217,6 @@ OFFICIAL_TEACHERS = [
         'specialization': 'Biology (SS 1 - 3)',
         'subjects': [{'name': 'Biology', 'grade': 'SS 1'}, {'name': 'Biology', 'grade': 'SS 2'}, {'name': 'Biology', 'grade': 'SS 3'}],
         'form_teacher_of': 'None'
-    },
-    {
-        'teacher_id': 'TMS/TCH/0024',
-        'name': 'Covenantzanadu Uzor',
-        'email': 'covenant.uzor@tarepet.com',
-        'phone': '08035567890',
-        'gender': 'Male',
-        'department': 'Academic Staff',
-        'specialization': 'General Studies & Science',
-        'subjects': [{'name': 'Basic Science', 'grade': 'JSS 1'}],
-        'form_teacher_of': 'None'
     }
 ]
 

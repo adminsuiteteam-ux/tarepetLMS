@@ -237,18 +237,6 @@ OFFICIAL_19_TEACHERS = [
         'spec': 'Biology (SS 1 - 3)',
         'bio': 'Senior Biology educator for Senior Secondary classes (SS 1 to SS 3).'
     },
-    {
-        'first_name': 'Covenantzanadu',
-        'last_name': 'Uzor',
-        'email': 'covenant.uzor@tarepet.com',
-        'phone': '08035567890',
-        'teacher_id': 'TMS/TCH/0024',
-        'gender': 'Male',
-        'form_class': 'None',
-        'dept': 'Academic Staff',
-        'spec': 'General Studies & Science',
-        'bio': 'Educator in General Studies & Science.'
-    },
 ]
 
 allowed_emails = {t['email'].lower() for t in OFFICIAL_19_TEACHERS}
