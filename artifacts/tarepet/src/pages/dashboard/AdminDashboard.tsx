@@ -2699,14 +2699,14 @@ export default function AdminDashboard() {
       if (studentRes.status === 'fulfilled' && studentRes.value.data) {
         const res = studentRes.value;
         const users = Array.isArray(res.data?.results) ? res.data.results : Array.isArray(res.data) ? res.data : [];
-        const mockEmails = ['civa.media@tarepet.com', 'student@tarepet.com', 'emeka.amadi@tarepet.com', 'hacker@evil.com', 'wronguser@fake.com', 'chidinma.okoro@tarepet.com', 'kelechi.eze@tarepet.com', 'somto.nnamdi@tarepet.com', 'tari.powei@tarepet.com'];
+        const mockEmails = ['civa.media@tarepet.com', 'hacker@evil.com', 'wronguser@fake.com'];
         const liveStudents = users
           .filter((u: any) => {
             const email = (u.email || '').toLowerCase();
             const sId = (u.student_id || u.profile?.student_id || '').toLowerCase();
             const uName = `${u.first_name || ''} ${u.last_name || ''}`.trim().toLowerCase();
             const isDeleted = isAccountDeleted(email) || isAccountDeleted(u.id) || isAccountDeleted(sId) || isAccountDeleted(uName);
-            return !mockEmails.includes(email) && !sId.includes('tp-stu-088') && !sId.includes('tp-stu-089') && !sId.includes('tp-stu-090') && !sId.includes('tp-stu-101') && !sId.includes('tp-stu-112') && !isDeleted;
+            return !mockEmails.includes(email) && !uName.includes('civa.media') && !uName.includes('hacker') && !uName.includes('wronguser') && !isDeleted;
           })
           .map((u: any) => ({
             id: u.id,

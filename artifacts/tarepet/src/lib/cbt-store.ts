@@ -1151,7 +1151,7 @@ function loadSavedStudents(): StudentRecord[] {
           const sCode = String(s.code || s.admissionNo || s.studentId || '').toLowerCase();
           const sName = String(s.name || '').toLowerCase();
           const sEmail = String(s.email || '').toLowerCase();
-          const isMock = sCode.includes('9927') || sCode.includes('tp-stu') || sName.includes('civa') || sName.includes('hacker') || sName.includes('wronguser') || sName.includes('david okon') || sEmail.includes('hacker@') || sEmail.includes('wronguser@') || sEmail.includes('civa.media') || sEmail.includes('student@tarepet.com') || sEmail.includes('emeka.amadi') || sEmail.includes('chidinma.okoro') || sEmail.includes('kelechi.eze') || sEmail.includes('somto.nnamdi') || sEmail.includes('tari.powei') || s.id === 1;
+          const isMock = sName.includes('civa.media') || sName.includes('hacker') || sName.includes('wronguser') || sEmail.includes('hacker@') || sEmail.includes('wronguser@') || sEmail.includes('civa.media');
           const isDeleted = isAccountDeleted(sCode) || isAccountDeleted(sEmail) || isAccountDeleted(sName) || isAccountDeleted(s.id);
           return !isMock && !isDeleted;
         });
@@ -1202,13 +1202,13 @@ export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
     const res = await authClient.get('/auth/users/?role=STUDENT&page_size=1000');
     if (res.data) {
       const dataArr = Array.isArray(res.data?.results) ? res.data.results : Array.isArray(res.data) ? res.data : [];
-      const mockEmails = ['civa.media@tarepet.com', 'student@tarepet.com', 'emeka.amadi@tarepet.com', 'hacker@evil.com', 'wronguser@fake.com', 'chidinma.okoro@tarepet.com', 'kelechi.eze@tarepet.com', 'somto.nnamdi@tarepet.com', 'tari.powei@tarepet.com'];
+      const mockEmails = ['civa.media@tarepet.com', 'hacker@evil.com', 'wronguser@fake.com'];
       const fetched: StudentRecord[] = dataArr
         .filter((u: any) => {
           const uCode = (u.student_id || u.profile?.student_id || '').toLowerCase();
           const uEmail = (u.email || '').toLowerCase();
           const uName = `${u.first_name || ''} ${u.last_name || ''}`.trim().toLowerCase();
-          const isMock = mockEmails.includes(uEmail) || uCode.includes('tp-stu-088') || uCode.includes('tp-stu-089') || uCode.includes('tp-stu-090') || uCode.includes('tp-stu-101') || uCode.includes('tp-stu-112') || uName.includes('civa') || uName.includes('hacker') || uName.includes('wronguser') || uName.includes('david okon');
+          const isMock = mockEmails.includes(uEmail) || uName.includes('civa.media') || uName.includes('hacker') || uName.includes('wronguser');
           return !isMock && !isAccountDeleted(u.email) && !isAccountDeleted(u.id) && !isAccountDeleted(uCode) && !isAccountDeleted(uName);
         })
         .map((u: any) => {
