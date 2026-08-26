@@ -13,6 +13,18 @@ services:
         value: "False"
       - key: ALLOWED_HOSTS
         value: ".onrender.com,localhost,127.0.0.1,tarepetmontessorischool.com,www.tarepetmontessorischool.com"
+      - key: DATABASE_URL
+        value: "postgresql://neondb_owner:npg_gT4JuHd3NIzB@ep-snowy-cell-ay49xhsa-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require"
+      - key: EMAIL_HOST
+        value: "smtp-relay.brevo.com"
+      - key: EMAIL_PORT
+        value: "2525"
+      - key: EMAIL_HOST_USER
+        value: "b0c39d001@smtp-brevo.com"
+      - key: EMAIL_USE_TLS
+        value: "True"
+      - key: DEFAULT_FROM_EMAIL
+        value: "noreply@tarepetmontessorischool.com"
       - key: ACCESS_TOKEN_LIFETIME_MINUTES
         value: "60"
       - key: REFRESH_TOKEN_LIFETIME_DAYS
@@ -38,6 +50,18 @@ services:
         value: "False"
       - key: ALLOWED_HOSTS
         value: ".onrender.com,localhost,127.0.0.1,tarepetmontessorischool.com,www.tarepetmontessorischool.com"
+      - key: DATABASE_URL
+        value: "postgresql://neondb_owner:npg_gT4JuHd3NIzB@ep-snowy-cell-ay49xhsa-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require"
+      - key: EMAIL_HOST
+        value: "smtp-relay.brevo.com"
+      - key: EMAIL_PORT
+        value: "2525"
+      - key: EMAIL_HOST_USER
+        value: "b0c39d001@smtp-brevo.com"
+      - key: EMAIL_USE_TLS
+        value: "True"
+      - key: DEFAULT_FROM_EMAIL
+        value: "noreply@tarepetmontessorischool.com"
       - key: ACCESS_TOKEN_LIFETIME_MINUTES
         value: "60"
       - key: REFRESH_TOKEN_LIFETIME_DAYS
