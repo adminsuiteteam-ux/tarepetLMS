@@ -8,238 +8,219 @@ django.setup()
 
 from apps.users.models import CustomUser, TeacherProfile
 
-OFFICIAL_19_TEACHERS = [
+OFFICIAL_TEACHERS = [
     {
-        'first_name': 'Ms. Allison',
-        'last_name': 'Victoria',
+        'teacher_id': 'TMS/TCH/0060',
+        'name': 'Ms. Allison Victoria',
         'email': 'allison.victoria@tarepet.com',
         'phone': '08062571566',
-        'teacher_id': 'TMS/TCH/0001',
         'gender': 'Female',
-        'form_class': 'SS 1',
-        'dept': 'Senior Secondary Section',
-        'spec': 'Senior Secondary Language Arts & English',
-        'bio': 'Form Teacher for SS 1 guiding students in English Language and Senior Secondary curriculum.'
+        'department': 'Senior Secondary Section',
+        'specialization': 'Senior Secondary Language Arts & English',
+        'subjects': [{'name': 'English Language', 'grade': 'SS 1'}],
+        'form_teacher_of': 'SS 1'
     },
     {
-        'first_name': 'Mrs. Timi',
-        'last_name': 'Porbeni',
+        'teacher_id': 'TMS/TCH/0016',
+        'name': 'Mrs. Timi Porbeni',
         'email': 'isaactimi16@gmail.com',
         'phone': '07068523730',
-        'teacher_id': 'TMS/TCH/0002',
         'gender': 'Female',
-        'form_class': 'SS 2',
-        'dept': 'Senior Secondary Humanities Department',
-        'spec': 'English Language & Literature in English (SS1, SS2, SS3)',
-        'bio': 'Senior Instructor in English Language & Literature in English across SS 1, SS 2, and SS 3.'
+        'department': 'Senior Secondary Humanities Department',
+        'specialization': 'English Language & Literature in English (SS1, SS2, SS3)',
+        'subjects': [{'name': 'English Language', 'grade': 'SS 2'}, {'name': 'Literature in English', 'grade': 'SS 2'}, {'name': 'English Language', 'grade': 'SS 3'}, {'name': 'Literature in English', 'grade': 'SS 3'}],
+        'form_teacher_of': 'SS 2'
     },
     {
-        'first_name': 'Samuel',
-        'last_name': 'Hannah',
+        'teacher_id': 'TMS/TCH/0070',
+        'name': 'Samuel Hannah',
         'email': 'hannah.samuel@tarepet.com',
         'phone': '08062429432',
-        'teacher_id': 'TMS/TCH/0003',
         'gender': 'Female',
-        'form_class': 'Creche',
-        'dept': 'Early Years & Vocational Studies',
-        'spec': 'Prevocational Studies (NUR - SS3) & Creche',
-        'bio': 'Form Educator for Creche and Prevocational Studies instructor from Nursery to SS 3.'
+        'department': 'Early Years & Vocational Studies',
+        'specialization': 'Prevocational Studies (NUR - SS3) & Creche',
+        'subjects': [{'name': 'Prevocational Studies', 'grade': 'Primary 1'}],
+        'form_teacher_of': 'Creche'
     },
     {
-        'first_name': 'Nwachukwu (O)',
-        'last_name': 'Edirin',
+        'teacher_id': 'TMS/TCH/0061',
+        'name': 'Nwachukwu (O) Edirin',
         'email': 'edirin.nwachukwu@tarepet.com',
         'phone': '07032356176',
-        'teacher_id': 'TMS/TCH/0004',
         'gender': 'Female',
-        'form_class': 'Primary 2',
-        'dept': 'Primary Section',
-        'spec': 'Primary 2 Curriculum & Basic Sciences',
-        'bio': 'Form Teacher for Primary 2 nurturing foundational literacy, numeracy, and science inquiry.'
+        'department': 'Primary Section',
+        'specialization': 'Primary 2 Curriculum & Basic Sciences',
+        'subjects': [{'name': 'Basic Science', 'grade': 'Primary 2'}],
+        'form_teacher_of': 'Primary 2'
     },
     {
-        'first_name': 'Mrs. Ozichi Nwaudo',
-        'last_name': 'Arinze',
+        'teacher_id': 'TMS/TCH/0062',
+        'name': 'Mrs. Ozichi Nwaudo Arinze',
         'email': 'ozichi.arinze@tarepet.com',
         'phone': '08067102216',
-        'teacher_id': 'TMS/TCH/0005',
         'gender': 'Female',
-        'form_class': 'JSS 1',
-        'dept': 'Junior Secondary Section',
-        'spec': 'Mathematics (JSS 1)',
-        'bio': 'Form Teacher for JSS 1 and Junior Secondary Mathematics educator.'
+        'department': 'Junior Secondary Section',
+        'specialization': 'Mathematics (JSS 1)',
+        'subjects': [{'name': 'Mathematics', 'grade': 'JSS 1'}],
+        'form_teacher_of': 'JSS 1'
     },
     {
-        'first_name': 'Ogbe',
-        'last_name': 'Andrew',
+        'teacher_id': 'TMS/TCH/0063',
+        'name': 'Ogbe Andrew',
         'email': 'ogbe.andrew@tarepet.com',
         'phone': '08020697680',
-        'teacher_id': 'TMS/TCH/0006',
         'gender': 'Male',
-        'form_class': 'Basic 4',
-        'dept': 'Mathematics & Sciences Department',
-        'spec': 'Mathematics (Basic 4, SS 2)',
-        'bio': 'Form Teacher and Mathematics instructor for Basic 4 and Senior Secondary 2.'
+        'department': 'Mathematics & Sciences Department',
+        'specialization': 'Mathematics (Basic 4, SS 2)',
+        'subjects': [{'name': 'Mathematics', 'grade': 'Basic 4'}],
+        'form_teacher_of': 'Basic 4'
     },
     {
-        'first_name': 'Abiola Adeniyi',
-        'last_name': 'Adegemo',
+        'teacher_id': 'TMS/TCH/0017',
+        'name': 'Abiola Adeniyi Adegemo',
         'email': 'adeniyiabiola2@gmail.com',
         'phone': '08131251726',
-        'teacher_id': 'TMS/TCH/0007',
         'gender': 'Male',
-        'form_class': 'Senior Science',
-        'dept': 'Physical & Commercial Sciences',
-        'spec': 'Physics (PRI - SS3) & Financial Accounting (JSS 1)',
-        'bio': 'Senior Physics instructor for Primary to SS 3 and Financial Accounting instructor for JSS 1.'
+        'department': 'Physical & Commercial Sciences',
+        'specialization': 'Physics (PRI - SS3) & Financial Accounting (JSS 1)',
+        'subjects': [{'name': 'Physics', 'grade': 'SS 1'}],
+        'form_teacher_of': 'Senior Science'
     },
     {
-        'first_name': 'Simeon Blessed',
-        'last_name': 'Chigozie',
+        'teacher_id': 'TMS/TCH/0019',
+        'name': 'Simeon Blessed Chigozie',
         'email': 'blessedsimeon6@gmail.com',
         'phone': '08146183309',
-        'teacher_id': 'TMS/TCH/0008',
         'gender': 'Male',
-        'form_class': 'JSS 1',
-        'dept': 'Creative Arts & Music Department',
-        'spec': 'Music (JSS 1) & Basic 4 Curriculum',
-        'bio': 'Form Teacher and instructor for Music (JSS 1) and Basic 4 creative arts.'
+        'department': 'Creative Arts & Music Department',
+        'specialization': 'Music (JSS 1) & Basic 4 Curriculum',
+        'subjects': [{'name': 'Music', 'grade': 'JSS 1'}],
+        'form_teacher_of': 'JSS 1'
     },
     {
-        'first_name': 'Egufe B.',
-        'last_name': 'Austin',
+        'teacher_id': 'TMS/TCH/0071',
+        'name': 'Egufe B. Austin',
         'email': 'austin.egufe@tarepet.com',
         'phone': '08066154094',
-        'teacher_id': 'TMS/TCH/0009',
         'gender': 'Male',
-        'form_class': 'JSS Vocational',
-        'dept': 'Vocational & Technical Studies',
-        'spec': 'Home Economics (JSS 1 - 3)',
-        'bio': 'Instructor for Home Economics across Junior Secondary classes (JSS 1 to JSS 3).'
+        'department': 'Vocational & Technical Studies',
+        'specialization': 'Home Economics (JSS 1 - 3)',
+        'subjects': [{'name': 'Home Economics', 'grade': 'JSS 1'}],
+        'form_teacher_of': 'JSS Vocational'
     },
     {
-        'first_name': 'Oyiniki Anita',
-        'last_name': 'Ojinbrakemi',
+        'teacher_id': 'TMS/TCH/0026',
+        'name': 'Oyiniki Anita Ojinbrakemi',
         'email': 'oyinkianita6@gmail.com',
         'phone': '08146183309',
-        'teacher_id': 'TMS/TCH/0010',
         'gender': 'Female',
-        'form_class': 'JSS 3 Love',
-        'dept': 'Junior Secondary Section',
-        'spec': 'English Language & Verbal Reasoning (JSS 3)',
-        'bio': 'Form Teacher for JSS 3 Love and instructor in English Language & Verbal Reasoning.'
+        'department': 'Junior Secondary Section',
+        'specialization': 'English Language & Verbal Reasoning (JSS 3)',
+        'subjects': [{'name': 'English Language', 'grade': 'JSS 3'}],
+        'form_teacher_of': 'JSS 3 Love'
     },
     {
-        'first_name': 'Mrs. Eze Chidubem',
-        'last_name': 'Janneth',
+        'teacher_id': 'TMS/TCH/0044',
+        'name': 'Mrs. Eze Chidubem Janneth',
         'email': 'ukachukwuchidubem223@gmail.com',
         'phone': '08142417833',
-        'teacher_id': 'TMS/TCH/0011',
         'gender': 'Female',
-        'form_class': 'JSS 2 Faith',
-        'dept': 'Creative & Cultural Arts Department',
-        'spec': 'Fine Art & Creative Arts (JSS 1 - 3)',
-        'bio': 'Form Teacher for JSS 2 Faith and Fine Art instructor for JSS 1, JSS 2, and JSS 3.'
+        'department': 'Creative & Cultural Arts Department',
+        'specialization': 'Fine Art & Creative Arts (JSS 1 - 3)',
+        'subjects': [{'name': 'Fine Art', 'grade': 'JSS 2'}],
+        'form_teacher_of': 'JSS 2 Faith'
     },
     {
-        'first_name': 'Agadaga',
-        'last_name': 'Tari',
+        'teacher_id': 'TMS/TCH/0072',
+        'name': 'Agadaga Tari',
         'email': 'tari.agadaga@tarepet.com',
         'phone': '08065008494',
-        'teacher_id': 'TMS/TCH/0012',
         'gender': 'Male',
-        'form_class': 'None',
-        'dept': 'Social Sciences Department',
-        'spec': 'Social Studies (SOS) & Civic Education (JSS 1 - 3)',
-        'bio': 'Instructor in Social Studies and Civic Education for Junior Secondary classes.'
+        'department': 'Social Sciences Department',
+        'specialization': 'Social Studies (SOS) & Civic Education (JSS 1 - 3)',
+        'subjects': [{'name': 'Social Studies', 'grade': 'JSS 1'}],
+        'form_teacher_of': 'None'
     },
     {
-        'first_name': 'Amos',
-        'last_name': 'Godspower',
+        'teacher_id': 'TMS/TCH/0054',
+        'name': 'Amos Godspower',
         'email': 'amosgodspower360@mail.com',
         'phone': '07035339196',
-        'teacher_id': 'TMS/TCH/0013',
         'gender': 'Male',
-        'form_class': 'JSS 3 Faith',
-        'dept': 'Business & Commercial Studies',
-        'spec': 'Business Studies (JSS 1 - 2) & Civic Education',
-        'bio': 'Form Teacher for JSS 3 Faith and Business Studies educator.'
+        'department': 'Business & Commercial Studies',
+        'specialization': 'Business Studies (JSS 1 - 2) & Civic Education',
+        'subjects': [{'name': 'Business Studies', 'grade': 'JSS 3'}],
+        'form_teacher_of': 'JSS 3 Faith'
     },
     {
-        'first_name': 'Iwu',
-        'last_name': 'Adanma',
+        'teacher_id': 'TMS/TCH/0064',
+        'name': 'Iwu Adanma',
         'email': 'iwu.adanma@tarepet.com',
         'phone': '08039341848',
-        'teacher_id': 'TMS/TCH/0014',
         'gender': 'Female',
-        'form_class': 'JSS 1 Faith',
-        'dept': 'Senior Secondary Commercial Department',
-        'spec': 'Marketing & Commerce (SS 1 - 3)',
-        'bio': 'Form Teacher for JSS 1 Faith and Commerce & Marketing instructor for SS 1 to SS 3.'
+        'department': 'Senior Secondary Commercial Department',
+        'specialization': 'Marketing & Commerce (SS 1 - 3)',
+        'subjects': [{'name': 'Commerce', 'grade': 'SS 1'}],
+        'form_teacher_of': 'JSS 1 Faith'
     },
     {
-        'first_name': 'Mr. Joseph',
-        'last_name': 'Ekenebe',
+        'teacher_id': 'TMS/TCH/0043',
+        'name': 'Mr. Joseph Ekenebe',
         'email': 'joebleszekenebe@gmail.com',
         'phone': '08137183618',
-        'teacher_id': 'TMS/TCH/0015',
         'gender': 'Male',
-        'form_class': 'SS 2 Grace',
-        'dept': 'Senior Secondary Section',
-        'spec': 'Senior Secondary Studies (SS 1 - 3)',
-        'bio': 'Form Teacher for SS 2 Grace and Senior Secondary educator.'
+        'department': 'Senior Secondary Section',
+        'specialization': 'Senior Secondary Studies (SS 1 - 3)',
+        'subjects': [{'name': 'Senior Secondary Studies', 'grade': 'SS 2'}],
+        'form_teacher_of': 'SS 2 Grace'
     },
     {
-        'first_name': 'Goodluck',
-        'last_name': 'Ufomba',
+        'teacher_id': 'TMS/TCH/0027',
+        'name': 'Goodluck Ufomba',
         'email': 'goodluckufomba2020@gmail.com',
         'phone': '08032288883',
-        'teacher_id': 'TMS/TCH/0016',
         'gender': 'Male',
-        'form_class': 'None',
-        'dept': 'Mathematics & Sciences Department',
-        'spec': 'Mathematics (JSS 2 & SS 2)',
-        'bio': 'Mathematics instructor for Junior Secondary 2 and Senior Secondary 2.'
+        'department': 'Mathematics & Sciences Department',
+        'specialization': 'Mathematics (JSS 2 & SS 2)',
+        'subjects': [{'name': 'Mathematics', 'grade': 'SS 2'}],
+        'form_teacher_of': 'None'
     },
     {
-        'first_name': 'Eli',
-        'last_name': 'Idua',
+        'teacher_id': 'TMS/TCH/0025',
+        'name': 'Eli Idua',
         'email': 'eliidua@gmail.com',
         'phone': '08068583070',
-        'teacher_id': 'TMS/TCH/0017',
         'gender': 'Male',
-        'form_class': 'SS 1 Art',
-        'dept': 'Mathematics & Quantitative Sciences',
-        'spec': 'Mathematics & Further Mathematics (JSS 3, SS 1, SS 2, SS 3)',
-        'bio': 'Form Teacher for SS 1 Art and Mathematics & Further Mathematics specialist.'
+        'department': 'Mathematics & Quantitative Sciences',
+        'specialization': 'Mathematics & Further Mathematics (JSS 3, SS 1, SS 2, SS 3)',
+        'subjects': [{'name': 'Mathematics', 'grade': 'SS 1'}, {'name': 'Further Mathematics', 'grade': 'SS 2'}],
+        'form_teacher_of': 'SS 1 Art'
     },
     {
-        'first_name': 'Alex I.',
-        'last_name': 'Akpokulokenei Maria',
+        'teacher_id': 'TMS/TCH/0013',
+        'name': 'Alex I. Akpokulokenei Maria',
         'email': 'alexakpobulokemi@gmail.com',
         'phone': '09066984417',
-        'teacher_id': 'TMS/TCH/0018',
         'gender': 'Female',
-        'form_class': 'None',
-        'dept': 'Earth & Environmental Sciences',
-        'spec': 'Geography (SS 1 - 3)',
-        'bio': 'Senior Geography educator across Senior Secondary classes (SS 1 to SS 3).'
+        'department': 'Earth & Environmental Sciences',
+        'specialization': 'Geography (SS 1 - 3)',
+        'subjects': [{'name': 'Geography', 'grade': 'SS 1'}],
+        'form_teacher_of': 'None'
     },
     {
-        'first_name': 'Emmanuel U.',
-        'last_name': 'Joseph',
+        'teacher_id': 'TMS/TCH/0022',
+        'name': 'Emmanuel U. Joseph',
         'email': 'joeugbede2024@gmail.com',
         'phone': '08021472342',
-        'teacher_id': 'TMS/TCH/0019',
         'gender': 'Male',
-        'form_class': 'None',
-        'dept': 'Biological & Life Sciences',
-        'spec': 'Biology (SS 1 - 3)',
-        'bio': 'Senior Biology educator for Senior Secondary classes (SS 1 to SS 3).'
-    },
+        'department': 'Biological & Life Sciences',
+        'specialization': 'Biology (SS 1 - 3)',
+        'subjects': [{'name': 'Biology', 'grade': 'SS 1'}, {'name': 'Biology', 'grade': 'SS 2'}, {'name': 'Biology', 'grade': 'SS 3'}],
+        'form_teacher_of': 'None'
+    }
 ]
 
-allowed_emails = {t['email'].lower() for t in OFFICIAL_19_TEACHERS}
+allowed_emails = {t['email'].lower() for t in OFFICIAL_TEACHERS}
 
 print("=== STEP 1: Deleting unlisted teachers from database ===")
 existing_teachers = CustomUser.objects.filter(role='TEACHER')
