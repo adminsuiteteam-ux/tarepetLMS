@@ -819,15 +819,17 @@ export function saveStoredTeachers(backendTeachers: TeacherRecord[]) {
   const existingLocal = loadSavedTeachers();
   const merged: TeacherRecord[] = [...backendTeachers];
 
-  // Preserve any local teacher that has not been received from backend yet
+  // Preserve only newly created local teachers (timestamp ID > 1000000000) that are still syncing
   for (const local of existingLocal) {
-    const isAlreadyInBackend = backendTeachers.some(b => 
-      (local.id && b.id === local.id) ||
-      (local.staffId && b.staffId && b.staffId.toLowerCase().replace(/[^a-z0-9]/g, '') === (local.staffId || '').toLowerCase().replace(/[^a-z0-9]/g, '')) ||
-      (local.email && b.email && b.email.toLowerCase().trim() === (local.email || '').toLowerCase().trim())
-    );
-    if (!isAlreadyInBackend) {
-      merged.push(local);
+    const isNewUnsyncedLocal = typeof local.id === 'number' && local.id > 1000000000;
+    if (isNewUnsyncedLocal) {
+      const isAlreadyInBackend = backendTeachers.some(b => 
+        (local.staffId && b.staffId && b.staffId.toLowerCase().replace(/[^a-z0-9]/g, '') === (local.staffId || '').toLowerCase().replace(/[^a-z0-9]/g, '')) ||
+        (local.email && b.email && b.email.toLowerCase().trim() === (local.email || '').toLowerCase().trim())
+      );
+      if (!isAlreadyInBackend) {
+        merged.push(local);
+      }
     }
   }
 
