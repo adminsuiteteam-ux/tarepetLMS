@@ -24,7 +24,7 @@ from apps.courses.models import Course
 # pyrefly: ignore [missing-import]
 from apps.assessments.models import Attendance, BehaviorLog, House, Submission, Assignment
 
-from .models import CustomUser, StudentProfile, TeacherProfile, ParentProfile, AdminProfile, LoginActivityLog, OTPVerification, SystemSettings
+from .models import CustomUser, StudentProfile, TeacherProfile, ParentProfile, AdminProfile, LoginActivityLog, OTPVerification, TrustedDevice, SystemSettings
 from .email_service import send_otp_email, mask_email
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -56,9 +56,11 @@ class CustomTokenObtainPairView(APIView):
 
             # Fetch authoritative user instance
             user_obj = User.objects.filter(email__iexact=email).first()
+            device_token = request.data.get('device_token', '').strip()
+            is_trusted = TrustedDevice.is_device_trusted(user_obj, device_token, ip)
 
-            # Enforce 2FA Email OTP for TEACHER and ADMIN roles
-            if user_obj and user_obj.role in [CustomUser.Role.TEACHER, CustomUser.Role.ADMIN]:
+            # Adaptive Security: Enforce 2FA Email OTP for TEACHER and ADMIN only on untrusted/new devices
+            if user_obj and user_obj.role in [CustomUser.Role.TEACHER, CustomUser.Role.ADMIN] and not is_trusted:
                 raw_code, temp_token, otp_obj = OTPVerification.create_otp(
                     user=user_obj,
                     purpose=OTPVerification.Purpose.LOGIN_2FA,
@@ -84,7 +86,10 @@ class CustomTokenObtainPairView(APIView):
                     'detail': f'A 6-digit authentication code has been sent to your email ({mask_email(user_obj.email)}).'
                 }, status=status.HTTP_200_OK)
 
-            # Direct instant login for all roles (Teacher, Student, Parent, Admin)
+            # Direct instant login for trusted devices and Student/Parent roles
+            if is_trusted and device_token:
+                data['device_token'] = device_token
+
             LoginActivityLog.objects.create(
                 email=email,
                 role=role,
@@ -115,6 +120,7 @@ class OTPVerifyView(APIView):
     def post(self, request):
         temp_token = request.data.get('temp_token', '').strip()
         otp_code = request.data.get('otp_code', '').strip()
+        device_token = request.data.get('device_token', '').strip()
 
         if not temp_token or not otp_code:
             return Response({'detail': 'Both temp_token and 6-digit otp_code are required.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -144,6 +150,9 @@ class OTPVerifyView(APIView):
         refresh['role'] = user.role
         refresh['name'] = user.get_full_name() or user.email
 
+        # Trust this device for 3 days of frictionless login
+        trusted_token = TrustedDevice.trust_device(user, device_token=device_token, ip_address=ip, user_agent=ua, trust_days=3)
+
         LoginActivityLog.objects.create(
             email=user.email,
             role=user.role,
@@ -158,7 +167,8 @@ class OTPVerifyView(APIView):
             'access': str(refresh.access_token),
             'refresh': str(refresh),
             'user': user_serializer.data,
-            'detail': 'Authentication successful.'
+            'device_token': trusted_token,
+            'detail': 'Authentication successful. Device trusted for 3 days.'
         }, status=status.HTTP_200_OK)
 
 

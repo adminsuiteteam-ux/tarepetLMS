@@ -436,4 +436,63 @@ class OTPVerification(models.Model):
             return False, f"Incorrect code. {remaining} attempt(s) remaining."
 
 
+class TrustedDevice(models.Model):
+    """
+    Adaptive Security: Tracks trusted browsers and devices for Teachers and Admins.
+    If a teacher logs in from a known device within the trust window (3 days),
+    they log in directly without requiring OTP.
+    If a new device, different IP, or >3 days of inactivity is detected, OTP is required.
+    """
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='trusted_devices')
+    device_token = models.CharField(max_length=64, unique=True, db_index=True)
+    device_fingerprint = models.CharField(max_length=128, blank=True, null=True)
+    ip_address = models.GenericIPAddressField(blank=True, null=True)
+    user_agent = models.TextField(blank=True, null=True)
+    last_login_at = models.DateTimeField(auto_now=True)
+    expires_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-last_login_at']
+        verbose_name = "Trusted Device"
+        verbose_name_plural = "Trusted Devices"
+
+    def __str__(self):
+        return f"Trusted Device for {self.user.email} (Expires: {self.expires_at.strftime('%Y-%m-%d')})"
+
+    @classmethod
+    def is_device_trusted(cls, user, device_token: str, ip_address: str = None) -> bool:
+        if not device_token or not user:
+            return False
+        record = cls.objects.filter(
+            user=user,
+            device_token=device_token,
+            expires_at__gt=timezone.now()
+        ).first()
+        if record:
+            # Extend trust window by 3 days upon active daily use
+            record.last_login_at = timezone.now()
+            record.expires_at = timezone.now() + timedelta(days=3)
+            if ip_address:
+                record.ip_address = ip_address
+            record.save(update_fields=['last_login_at', 'expires_at', 'ip_address'])
+            return True
+        return False
+
+    @classmethod
+    def trust_device(cls, user, device_token: str = None, ip_address: str = None, user_agent: str = None, trust_days: int = 3) -> str:
+        token = device_token or uuid.uuid4().hex
+        expires = timezone.now() + timedelta(days=trust_days)
+        cls.objects.update_or_create(
+            user=user,
+            device_token=token,
+            defaults={
+                'ip_address': ip_address,
+                'user_agent': user_agent,
+                'expires_at': expires,
+            }
+        )
+        return token
+
+
 

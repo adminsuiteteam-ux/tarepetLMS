@@ -105,12 +105,17 @@ export default function SignIn() {
 
     setIsVerifyingOtp(true);
     try {
+      const storedDeviceToken = typeof window !== 'undefined' ? (localStorage.getItem('tarepet_device_token') || '') : '';
       const res = await authClient.post("/auth/otp/verify/", {
         temp_token: tempToken,
         otp_code: code,
+        device_token: storedDeviceToken,
       });
 
       if (res.data && res.data.access && res.data.user) {
+        if (res.data.device_token && typeof window !== 'undefined') {
+          localStorage.setItem('tarepet_device_token', res.data.device_token);
+        }
         resetLoginRateLimit();
         recordLoginActivity(res.data.user.email || email, res.data.user.role, "SUCCESS");
         login(res.data.access, res.data.refresh || "", res.data.user);
@@ -169,15 +174,20 @@ export default function SignIn() {
     const lowerInput = rawInput.toLowerCase();
     const cleanInput = lowerInput.replace(/[^a-z0-9]/g, '');
     const rawPassword = password.trim();
+    const storedDeviceToken = typeof window !== 'undefined' ? (localStorage.getItem('tarepet_device_token') || '') : '';
 
     const isTargetAdmin = lowerInput === 'admin@tarepet.com' || cleanInput === 'admin' || lowerInput === 'admin';
     const isAdminPassword = rawPassword === 'TarepetAdmin@2026!' || rawPassword === 'admin' || rawPassword === 'Admin@2026!';
 
-    // 0a. Live Django REST API Backend Call (handles all roles)
+    // 0a. Live Django REST API Backend Call (handles adaptive 3-day device trust)
     try {
-      const res = await authClient.post("/auth/login/", { email: rawInput, password: rawPassword }, { timeout: 5000 });
+      const res = await authClient.post("/auth/login/", { 
+        email: rawInput, 
+        password: rawPassword,
+        device_token: storedDeviceToken
+      }, { timeout: 5000 });
       
-      // If 2FA OTP is required
+      // If 2FA OTP is required (new device, unrecognized IP, or >3 days since last login)
       if (res.data && res.data.requires_otp) {
         setOtpPending(true);
         setTempToken(res.data.temp_token);
@@ -192,9 +202,12 @@ export default function SignIn() {
         return;
       }
 
-      // Direct login for Teacher, Student, Parent, Admin roles
-      const { access, refresh, user: apiUser } = res.data;
+      // Direct login for recognized trusted devices and Student/Parent roles
+      const { access, refresh, user: apiUser, device_token: newDevToken } = res.data;
       if (apiUser && apiUser.role) {
+        if (newDevToken && typeof window !== 'undefined') {
+          localStorage.setItem('tarepet_device_token', newDevToken);
+        }
         recordLoginActivity(apiUser.email || rawInput, apiUser.role, 'SUCCESS');
         login(access, refresh, apiUser);
         const userRole = apiUser.role.toLowerCase();
