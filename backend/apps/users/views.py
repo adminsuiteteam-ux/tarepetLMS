@@ -57,9 +57,8 @@ class CustomTokenObtainPairView(APIView):
             # Fetch authoritative user instance
             user_obj = User.objects.filter(email__iexact=email).first()
 
-            # Optional 2FA Email OTP if explicitly enabled on user profile or requested
-            require_otp = request.data.get('require_otp', False) or getattr(user_obj, 'two_factor_enabled', False)
-            if user_obj and require_otp:
+            # Enforce 2FA Email OTP for TEACHER and ADMIN roles
+            if user_obj and user_obj.role in [CustomUser.Role.TEACHER, CustomUser.Role.ADMIN]:
                 raw_code, temp_token, otp_obj = OTPVerification.create_otp(
                     user=user_obj,
                     purpose=OTPVerification.Purpose.LOGIN_2FA,
