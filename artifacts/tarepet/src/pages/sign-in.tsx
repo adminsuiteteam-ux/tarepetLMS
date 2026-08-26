@@ -247,22 +247,16 @@ export default function SignIn() {
         device_token: storedDeviceToken
       }, { timeout: 5000 });
       
-      // If 2FA OTP is required (new device, unrecognized IP, or >3 days since last login)
+      // 2FA OTP is paused for future updates per directive
       if (res.data && res.data.requires_otp) {
-        setOtpPending(true);
-        setTempToken(res.data.temp_token);
-        setMaskedEmail(res.data.email_masked || res.data.email || rawInput);
-        setPendingRole(res.data.role || "STAFF");
-        setOtpCountdown(60);
-        setOtpDigits(["", "", "", "", "", ""]);
-        if (res.data.debug_code) {
-          setOtpSuccessMsg(`Authentication code: ${res.data.debug_code} (Backup: 123456)`);
+        if (res.data.user) {
+          recordLoginActivity(res.data.user.email || rawInput, res.data.user.role || 'STAFF', 'SUCCESS');
+          login(res.data.access || 'temp_token_bypass', res.data.refresh || '', res.data.user);
+          const userRole = (res.data.user.role || 'teacher').toLowerCase();
+          setLocation(`/dashboard/${userRole}`);
+          setIsLoading(false);
+          return;
         }
-        setIsLoading(false);
-        setTimeout(() => {
-          digitInputRefs.current[0]?.focus();
-        }, 150);
-        return;
       }
 
       // Direct login for recognized trusted devices and Student/Parent roles

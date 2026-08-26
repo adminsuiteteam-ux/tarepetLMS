@@ -78,8 +78,9 @@ class CustomTokenObtainPairView(APIView):
             device_token = request.data.get('device_token', '').strip()
             is_trusted = TrustedDevice.is_device_trusted(user_obj, device_token, ip)
 
-            sys_settings = SystemSettings.get_settings()
-            enforce_2fa = getattr(sys_settings, 'enforce_2fa', True)
+            sys_settings = SystemSettings.get_settings() if hasattr(SystemSettings, 'get_settings') else None
+            # 2FA OTP is paused for future update per directive
+            enforce_2fa = False
 
             # Adaptive Security: Enforce 2FA Email OTP for TEACHER and ADMIN only when enabled and on untrusted/new devices
             if enforce_2fa and user_obj and str(user_obj.role).upper() in [CustomUser.Role.TEACHER, CustomUser.Role.ADMIN, 'TEACHER', 'ADMIN'] and not is_trusted:
