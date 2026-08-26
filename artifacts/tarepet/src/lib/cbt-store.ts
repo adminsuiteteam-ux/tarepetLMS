@@ -1640,14 +1640,16 @@ export async function saveCBTExam(examData: Partial<CBTExam> & { title: string; 
 }
 
 export function mapCBTExamToAdminExam(c: CBTExam): any {
-  const statusMap: Record<string, string> = {
-    'APPROVED': 'Approved',
-    'ACTIVE': 'Ongoing',
-    'COMPLETED': 'Completed',
-    'PENDING': 'Pending Approval',
-    'ARCHIVED': 'Archived',
-  };
-  const mappedStatus = Object.prototype.hasOwnProperty.call(statusMap, c.status) ? statusMap[c.status] : (c.status === 'ACTIVE' ? 'Ongoing' : c.status === 'APPROVED' ? 'Approved' : 'Pending Approval');
+  const statusMap = new Map<string, string>([
+    ['APPROVED', 'Approved'],
+    ['ACTIVE', 'Ongoing'],
+    ['COMPLETED', 'Completed'],
+    ['PENDING', 'Pending Approval'],
+    ['REJECTED', 'Rejected'],
+    ['DRAFT', 'Draft'],
+    ['ARCHIVED', 'Archived'],
+  ]);
+  const mappedStatus = statusMap.get(c.status) || (c.status === 'ACTIVE' ? 'Ongoing' : c.status === 'APPROVED' ? 'Approved' : 'Pending Approval');
   return {
     id: c.id,
     title: c.title,
@@ -1880,9 +1882,7 @@ export async function submitStudentCBTAttempt(
   const calculatedCbtScore = Math.round((percentage / 100) * 30);
   try {
     const existingScores = getStudentBroadsheet(autoId) || {};
-    const currentCourseScore = Object.prototype.hasOwnProperty.call(existingScores, exam.course_code)
-      ? existingScores[exam.course_code]
-      : { ca1: 0, ca2: 0, exam: 0 };
+    const currentCourseScore = (Reflect.get(existingScores, exam.course_code) as any) || { ca1: 0, ca2: 0, exam: 0 };
     const updatedScores = {
       ...existingScores,
       [exam.course_code]: {
