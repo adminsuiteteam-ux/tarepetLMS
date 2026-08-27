@@ -6,7 +6,7 @@ import { PortalLayout } from '@/components/layout/PortalLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
 import { subscribeToWebSocketEvents, getWebSocketStatus, subscribeToWebSocketStatus, sendWebSocketEvent } from '@/lib/websocket-client';
-import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, syncExamsWithBackend, mapCBTExamToAdminExam, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, clearAllStoredStudents, deleteStudent, syncStudentsWithBackend, getStoredTeachers, saveTeacher, saveStoredTeachers, clearAllStoredTeachers, deleteTeacher, syncTeachersWithBackend, listenToRealtimeEvents, clearCBTStoreCache, clearAllSiteDefaultData, isAccountDeleted, getAdminPassword, setAdminPassword, matchStudentClass, broadcastRealtimeEvent, getStoredSubjects, saveSubject, deleteSubject, DEFAULT_SUBJECTS, SubjectRecord } from '@/lib/cbt-store';
+import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, syncExamsWithBackend, mapCBTExamToAdminExam, deleteCBTExam, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, clearAllStoredStudents, deleteStudent, syncStudentsWithBackend, getStoredTeachers, saveTeacher, saveStoredTeachers, clearAllStoredTeachers, deleteTeacher, syncTeachersWithBackend, listenToRealtimeEvents, clearCBTStoreCache, clearAllSiteDefaultData, isAccountDeleted, getAdminPassword, setAdminPassword, matchStudentClass, broadcastRealtimeEvent, getStoredSubjects, saveSubject, deleteSubject, DEFAULT_SUBJECTS, SubjectRecord } from '@/lib/cbt-store';
 import { AdminManagementPanel } from '@/components/dashboard/AdminManagementPanel';
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
 import { ImageCropModal } from '@/components/ui/ImageCropModal';
@@ -4199,18 +4199,43 @@ export default function AdminDashboard() {
                 )}
 
                 {exam.status === 'Approved' && (
-                  <span className="text-xs font-bold text-emerald-600 flex items-center gap-1 ml-auto">
+                  <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
                     <CheckCircle2 className="w-4 h-4" /> Approved for CBT
                   </span>
                 )}
                 {exam.status === 'Rejected' && (
                   <button
                     onClick={() => handleApprove(exam.id)}
-                    className="text-xs font-bold text-rose-600 hover:underline ml-auto"
+                    className="text-xs font-bold text-rose-600 hover:underline"
                   >
                     {t('exams.reApprove')}
                   </button>
                 )}
+
+                <button
+                  onClick={async () => {
+                    const confirmed = await showConfirm({
+                      title: 'Delete CBT Examination?',
+                      message: `Are you sure you want to delete "${exam.title}" (${exam.subject})?\n\nThis will permanently remove the exam and its questions from the system.`,
+                      type: 'confirm',
+                      badge: 'Delete Exam',
+                      confirmText: 'Yes, Delete Exam',
+                      cancelText: 'Cancel',
+                    });
+                    if (!confirmed) return;
+                    deleteCBTExam(exam.id);
+                    syncAdminExams();
+                    showAlert({
+                      title: 'Exam Deleted',
+                      message: `"${exam.title}" has been deleted.`,
+                      type: 'success',
+                    });
+                  }}
+                  className="p-2 rounded-xl text-xs font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 transition border border-rose-200 flex items-center gap-1 shadow-2xs ml-auto cursor-pointer"
+                  title="Delete Exam"
+                >
+                  <Trash2 className="w-3.5 h-3.5" /> {t('common.delete', 'Delete')}
+                </button>
               </div>
             </div>
           )) : (

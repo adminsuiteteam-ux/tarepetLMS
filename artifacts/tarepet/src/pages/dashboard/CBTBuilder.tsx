@@ -89,7 +89,7 @@ const getStatusBadgeStyle = (status: string) => {
   }
 };
 
-import { getStoredExams, saveCBTExam, updateExamStatus, getStoredSubmissions, subscribeToCBTStore, SENIOR_COURSES, JUNIOR_COURSES, getCoursesForClass, setExamResultsReleased, SCHOOL_CLASSES, isSeniorSecondaryClass, getStoredTeachers } from '@/lib/cbt-store';
+import { getStoredExams, saveCBTExam, updateExamStatus, getStoredSubmissions, subscribeToCBTStore, SENIOR_COURSES, JUNIOR_COURSES, getCoursesForClass, setExamResultsReleased, deleteCBTExam, SCHOOL_CLASSES, isSeniorSecondaryClass, getStoredTeachers } from '@/lib/cbt-store';
 import { addRealtimeNotification } from '@/lib/notifications-store';
 
 const ALL_CLASS_CARDS = [
@@ -125,7 +125,7 @@ const ALL_CLASS_CARDS = [
 export default function CBTBuilder() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { showAlert } = useCustomDialog();
+  const { showAlert, showConfirm } = useCustomDialog();
 
   const isAuthorizedToUseCBT = useMemo(() => {
     if (!user) return false;
@@ -380,6 +380,27 @@ export default function CBTBuilder() {
 
   const handlePublishExam = async (examId: number) => {
     handleActivateProceed(examId);
+  };
+
+  const handleDeleteExam = async (examId: number, examTitle: string) => {
+    const confirmed = await showConfirm({
+      title: 'Delete CBT Examination?',
+      message: `Are you sure you want to delete "${examTitle}"?\n\nThis will permanently remove this exam, its questions, and student submission records.`,
+      type: 'confirm',
+      badge: 'Delete Exam',
+      confirmText: 'Yes, Delete Exam',
+      cancelText: 'Cancel',
+    });
+    if (!confirmed) return;
+
+    deleteCBTExam(examId);
+    fetchExams();
+    showAlert({
+      title: 'Exam Deleted',
+      message: `"${examTitle}" has been successfully deleted.`,
+      type: 'success',
+      badge: 'CBT Exam Deleted',
+    });
   };
 
   const inputClass = "w-full px-3.5 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition shadow-2xs";
@@ -671,6 +692,13 @@ export default function CBTBuilder() {
                             </button>
                           </>
                         )}
+                        <button
+                          onClick={() => handleDeleteExam(exam.id, exam.title)}
+                          className="p-2 rounded-xl text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 transition border border-red-200 flex items-center gap-1 shadow-2xs cursor-pointer"
+                          title={t("Delete Exam")}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> {t("Delete")}
+                        </button>
                       </div>
                     </div>
                   </div>

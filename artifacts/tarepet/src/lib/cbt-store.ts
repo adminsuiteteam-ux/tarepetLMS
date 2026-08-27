@@ -295,20 +295,30 @@ export interface StudentRecord {
 }
 
 // ── Persistent CBT Exams Storage ──────────────────────────────────────────────
-const DEFAULT_CBT_EXAMS: CBTExam[] = [];
+function loadDeletedExamIds(): number[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem('tarepet_deleted_exams');
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
 
 function loadSavedExams(): CBTExam[] {
   if (typeof window === 'undefined') return [];
   try {
+    const deletedIds = loadDeletedExamIds();
     const saved = localStorage.getItem('tarepet_cbt_exams');
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed)) {
-        // Filter out legacy default seed exams (1001, 1002, or SS1 Science Assessment demo title)
+        // Filter out legacy default seed exams and explicitly deleted exams
         const liveOnly = parsed.filter((e: any) => {
           const t = String(e.title || '').toLowerCase();
           const isLegacyDemo = e.id === 1001 || e.id === 1002 || t.includes('ss1 science assessment');
-          return !isLegacyDemo;
+          const isDeleted = deletedIds.includes(Number(e.id));
+          return !isLegacyDemo && !isDeleted;
         });
         return liveOnly;
       }
@@ -1815,6 +1825,40 @@ export function setExamResultsReleased(examId: number, released: boolean): CBTEx
     'School Admin / Teacher'
   );
   return exam;
+}
+
+export function deleteCBTExam(examId: number): boolean {
+  const current = loadSavedExams();
+  const target = current.find(e => e.id === examId);
+  const filtered = current.filter(e => e.id !== examId);
+  _exams = filtered;
+  persistExams(_exams);
+
+  // Record deleted exam id in tarepet_deleted_exams so sync does not resurrect it
+  try {
+    const raw = localStorage.getItem('tarepet_deleted_exams');
+    const delList: number[] = raw ? JSON.parse(raw) : [];
+    if (!delList.includes(examId)) {
+      delList.push(examId);
+      localStorage.setItem('tarepet_deleted_exams', JSON.stringify(delList));
+    }
+  } catch (e) {}
+
+  // Attempt backend API deletion
+  authClient.delete(`/assessments/cbt-exams/${examId}/`).catch(() => {});
+
+  broadcastRealtimeEvent();
+  if (target) {
+    addRealtimeActivity(
+      'EXAM_REJECTED',
+      `Exam Deleted: ${target.title}`,
+      `Deleted from CBT assessment roster (${target.course_name} - ${target.class})`,
+      target.teacher_name || 'Teacher / Admin'
+    );
+  }
+  window.dispatchEvent(new CustomEvent('tarepet_store_updated', { detail: { type: 'exam_deleted', id: examId } }));
+  window.dispatchEvent(new CustomEvent('tarepet_exam_deleted', { detail: { id: examId } }));
+  return true;
 }
 
 // ── Activities ────────────────────────────────────────────────────────────────
