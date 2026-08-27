@@ -486,6 +486,9 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
                 <input
                   type="text"
+                  id="portal-global-search-input"
+                  name="portal_global_search"
+                  aria-label="Search students, teachers, exams, and pages"
                   readOnly
                   placeholder="Click to search students, teachers, exams, pages..."
                   className="w-full pl-9 pr-4 py-2 text-xs bg-muted/50 border border-border rounded-full focus:outline-none text-foreground placeholder:text-muted-foreground cursor-pointer hover:bg-muted/80 transition-all"

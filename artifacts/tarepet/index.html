@@ -6,19 +6,8 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
-    <!-- Content Security Policy: restricts resource loading to known safe origins -->
-    <meta http-equiv="Content-Security-Policy" content="
-      default-src 'self';
-      script-src 'self';
-      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-      font-src 'self' https://fonts.gstatic.com;
-      img-src 'self' data: blob: https:;
-      media-src 'self' blob:;
-      connect-src 'self' https://tarepetlms.onrender.com https://*.onrender.com http://localhost:8000 http://127.0.0.1:8000 wss: ws:;
-      object-src 'none';
-      base-uri 'self';
-      form-action 'self';
-    " />
+    <!-- Content Security Policy: restricts resource loading while allowing single-page app and fonts -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; connect-src 'self' https: wss: ws: http://localhost:8000 http://127.0.0.1:8000; object-src 'none'; base-uri 'self'; form-action 'self';" />
     <title>Tare Pet Montessori School</title>
     <!-- Single Page App redirect decoder for GitHub Pages -->
     <script type="text/javascript">

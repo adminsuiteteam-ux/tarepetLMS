@@ -599,9 +599,12 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                       />
 
                       <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-black uppercase tracking-wider text-slate-800 shrink-0">Or Image URL:</span>
+                        <label htmlFor="wizard-photo-url-input" className="text-[11px] font-black uppercase tracking-wider text-slate-800 shrink-0">Or Image URL:</label>
                         <input
                           type="url"
+                          id="wizard-photo-url-input"
+                          name="wizard_photo_url"
+                          aria-label="Teacher Photo Image URL"
                           className="flex-1 border-2 border-slate-300 rounded-xl px-3 py-1.5 text-xs text-slate-900 font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                           value={form.profileImage.startsWith('data:') ? '' : form.profileImage}
                           onChange={e => setF('profileImage', e.target.value)}
@@ -613,39 +616,39 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                 </div>
 
                 <div>
-                  <label className={labelCls}>Full Name & Title <span className="text-rose-500">*</span></label>
-                  <input className={inputCls} value={form.name} onChange={e => setF('name', e.target.value)} placeholder="e.g. Mr. Okonkwo Paul" />
+                  <label htmlFor="wizard-teacher-name" className={labelCls}>Full Name & Title <span className="text-rose-500">*</span></label>
+                  <input id="wizard-teacher-name" name="teacher_name" aria-label="Full Name and Title" className={inputCls} value={form.name} onChange={e => setF('name', e.target.value)} placeholder="e.g. Mr. Okonkwo Paul" />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className={labelCls}>Gender</label>
-                    <select className={inputCls} value={form.gender} onChange={e => setF('gender', e.target.value)}>
+                    <label htmlFor="wizard-teacher-gender" className={labelCls}>Gender</label>
+                    <select id="wizard-teacher-gender" name="teacher_gender" aria-label="Gender" className={inputCls} value={form.gender} onChange={e => setF('gender', e.target.value)}>
                       <option value="">Select Gender</option>
                       <option>Male</option>
                       <option>Female</option>
                     </select>
                   </div>
                   <div>
-                    <label className={labelCls}>Date of Birth</label>
-                    <input type="date" className={inputCls} value={form.dob} onChange={e => setF('dob', e.target.value)} />
+                    <label htmlFor="wizard-teacher-dob" className={labelCls}>Date of Birth</label>
+                    <input type="date" id="wizard-teacher-dob" name="teacher_dob" aria-label="Date of Birth" className={inputCls} value={form.dob} onChange={e => setF('dob', e.target.value)} />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className={labelCls}>Phone Number</label>
-                    <input className={inputCls} value={form.phone} onChange={e => setF('phone', e.target.value)} placeholder="+234 800 000 0000" />
+                    <label htmlFor="wizard-teacher-phone" className={labelCls}>Phone Number</label>
+                    <input id="wizard-teacher-phone" name="teacher_phone" aria-label="Phone Number" className={inputCls} value={form.phone} onChange={e => setF('phone', e.target.value)} placeholder="+234 800 000 0000" />
                   </div>
                   <div>
-                    <label className={labelCls}>Email Address <span className="text-rose-500">*</span></label>
-                    <input type="email" className={inputCls} value={form.email} onChange={e => setF('email', e.target.value)} placeholder="name@tarepet.edu.ng" />
+                    <label htmlFor="wizard-teacher-email" className={labelCls}>Email Address <span className="text-rose-500">*</span></label>
+                    <input type="email" id="wizard-teacher-email" name="teacher_email" aria-label="Email Address" className={inputCls} value={form.email} onChange={e => setF('email', e.target.value)} placeholder="name@tarepet.edu.ng" />
                   </div>
                 </div>
 
                 <div>
-                  <label className={labelCls}>Residential Address</label>
-                  <input className={inputCls} value={form.address} onChange={e => setF('address', e.target.value)} placeholder="e.g. 15 Swali Road, Yenagoa, Bayelsa State" />
+                  <label htmlFor="wizard-teacher-address" className={labelCls}>Residential Address</label>
+                  <input id="wizard-teacher-address" name="teacher_address" aria-label="Residential Address" className={inputCls} value={form.address} onChange={e => setF('address', e.target.value)} placeholder="e.g. 15 Swali Road, Yenagoa, Bayelsa State" />
                 </div>
               </div>
             )}
@@ -654,12 +657,12 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
             {step === 2 && (
               <div className="space-y-4">
                 <div>
-                  <label className={labelCls}>Specialization / Core Subject Area</label>
-                  <input className={inputCls} value={form.specialization} onChange={e => setF('specialization', e.target.value)} placeholder="e.g. Pure & Applied Mathematics, Physics & STEM" />
+                  <label htmlFor="wizard-teacher-spec" className={labelCls}>Specialization / Core Subject Area</label>
+                  <input id="wizard-teacher-spec" name="teacher_specialization" aria-label="Specialization or Core Subject Area" className={inputCls} value={form.specialization} onChange={e => setF('specialization', e.target.value)} placeholder="e.g. Pure & Applied Mathematics, Physics & STEM" />
                 </div>
                 <div>
-                  <label className={labelCls}>Academic Qualifications & Degrees</label>
-                  <input className={inputCls} value={form.qualification} onChange={e => setF('qualification', e.target.value)} placeholder="e.g. B.Sc. Ed (Mathematics), M.Sc. Statistics, TRCN Certified" />
+                  <label htmlFor="wizard-teacher-qual" className={labelCls}>Academic Qualifications & Degrees</label>
+                  <input id="wizard-teacher-qual" name="teacher_qualification" aria-label="Academic Qualifications and Degrees" className={inputCls} value={form.qualification} onChange={e => setF('qualification', e.target.value)} placeholder="e.g. B.Sc. Ed (Mathematics), M.Sc. Statistics, TRCN Certified" />
                 </div>
               </div>
             )}
@@ -817,38 +820,38 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className={labelCls}>Staff ID (Auto-generated if blank)</label>
-                    <input className={inputCls + ' font-mono'} value={form.staffId} onChange={e => setF('staffId', e.target.value)} placeholder="TMS/TCH/0001" />
+                    <label htmlFor="wizard-teacher-staffid" className={labelCls}>Staff ID (Auto-generated if blank)</label>
+                    <input id="wizard-teacher-staffid" name="teacher_staff_id" aria-label="Staff ID" className={inputCls + ' font-mono'} value={form.staffId} onChange={e => setF('staffId', e.target.value)} placeholder="TMS/TCH/0001" />
                   </div>
                   <div>
-                    <label className={labelCls}>Date of Employment</label>
-                    <input type="date" className={inputCls} value={form.joined} onChange={e => setF('joined', e.target.value)} />
+                    <label htmlFor="wizard-teacher-hiredate" className={labelCls}>Date of Employment</label>
+                    <input type="date" id="wizard-teacher-hiredate" name="teacher_hire_date" aria-label="Date of Employment" className={inputCls} value={form.joined} onChange={e => setF('joined', e.target.value)} />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className={labelCls}>Employment Status</label>
-                    <select className={inputCls} value={form.status} onChange={e => setF('status', e.target.value)}>
+                    <label htmlFor="wizard-teacher-status" className={labelCls}>Employment Status</label>
+                    <select id="wizard-teacher-status" name="teacher_status" aria-label="Employment Status" className={inputCls} value={form.status} onChange={e => setF('status', e.target.value)}>
                       <option>Active</option>
                       <option>On Leave</option>
                       <option>Inactive</option>
                     </select>
                   </div>
                   <div>
-                    <label className={labelCls}>Monthly Gross Salary (₦)</label>
-                    <input type="number" className={inputCls} value={form.salary} onChange={e => setF('salary', e.target.value)} placeholder="e.g. 180000" />
+                    <label htmlFor="wizard-teacher-salary" className={labelCls}>Monthly Gross Salary (₦)</label>
+                    <input type="number" id="wizard-teacher-salary" name="teacher_salary" aria-label="Monthly Gross Salary in Naira" className={inputCls} value={form.salary} onChange={e => setF('salary', e.target.value)} placeholder="e.g. 180000" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className={labelCls}>Bank Name</label>
-                    <input className={inputCls} value={form.bankName} onChange={e => setF('bankName', e.target.value)} placeholder="e.g. First Bank, GTBank" />
+                    <label htmlFor="wizard-teacher-bankname" className={labelCls}>Bank Name</label>
+                    <input id="wizard-teacher-bankname" name="teacher_bank_name" aria-label="Bank Name" className={inputCls} value={form.bankName} onChange={e => setF('bankName', e.target.value)} placeholder="e.g. First Bank, GTBank" />
                   </div>
                   <div>
-                    <label className={labelCls}>Bank Account Number</label>
-                    <input className={inputCls} value={form.accountNumber} onChange={e => setF('accountNumber', e.target.value)} placeholder="10-digit NUBAN account number" maxLength={10} />
+                    <label htmlFor="wizard-teacher-accountnum" className={labelCls}>Bank Account Number</label>
+                    <input id="wizard-teacher-accountnum" name="teacher_account_number" aria-label="Bank Account Number" className={inputCls} value={form.accountNumber} onChange={e => setF('accountNumber', e.target.value)} placeholder="10-digit NUBAN account number" maxLength={10} />
                   </div>
                 </div>
               </div>
@@ -1079,19 +1082,19 @@ const EditTeacherModal = ({
           </div>
 
           <div>
-            <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Full Name & Title</label>
-            <input type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required
+            <label htmlFor="edit-teacher-name" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Full Name & Title</label>
+            <input id="edit-teacher-name" name="edit_teacher_name" aria-label="Full Name and Title" type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required
               className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Staff ID</label>
-              <input type="text" value={form.staffId} onChange={e => setForm({ ...form, staffId: e.target.value })} required
+              <label htmlFor="edit-teacher-staffid" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Staff ID</label>
+              <input id="edit-teacher-staffid" name="edit_teacher_staffid" aria-label="Staff ID" type="text" value={form.staffId} onChange={e => setForm({ ...form, staffId: e.target.value })} required
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-mono" />
             </div>
             <div>
-              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Status</label>
-              <select value={form.status || 'Active'} onChange={e => setForm({ ...form, status: e.target.value })}
+              <label htmlFor="edit-teacher-status" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Status</label>
+              <select id="edit-teacher-status" name="edit_teacher_status" aria-label="Employment Status" value={form.status || 'Active'} onChange={e => setForm({ ...form, status: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
                 <option value="Active">Active</option>
                 <option value="On Leave">On Leave</option>
@@ -1101,20 +1104,20 @@ const EditTeacherModal = ({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Email Address</label>
-              <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required
+              <label htmlFor="edit-teacher-email" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Email Address</label>
+              <input id="edit-teacher-email" name="edit_teacher_email" aria-label="Email Address" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
             </div>
             <div>
-              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Phone Number</label>
-              <input type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })}
+              <label htmlFor="edit-teacher-phone" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Phone Number</label>
+              <input id="edit-teacher-phone" name="edit_teacher_phone" aria-label="Phone Number" type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Gender</label>
-              <select value={form.gender || 'Male'} onChange={e => setForm({ ...form, gender: e.target.value })}
+              <label htmlFor="edit-teacher-gender" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Gender</label>
+              <select id="edit-teacher-gender" name="edit_teacher_gender" aria-label="Gender" value={form.gender || 'Male'} onChange={e => setForm({ ...form, gender: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
@@ -1122,30 +1125,30 @@ const EditTeacherModal = ({
               </select>
             </div>
             <div>
-              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Date of Birth</label>
-              <input type="date" value={form.dob || '1990-01-01'} onChange={e => setForm({ ...form, dob: e.target.value })}
+              <label htmlFor="edit-teacher-dob" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Date of Birth</label>
+              <input id="edit-teacher-dob" name="edit_teacher_dob" aria-label="Date of Birth" type="date" value={form.dob || '1990-01-01'} onChange={e => setForm({ ...form, dob: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
             </div>
           </div>
           <div>
-            <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Residential Address</label>
-            <input type="text" value={form.address || ''} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="e.g. Tarepet School Campus, Yenagoa, Bayelsa State"
+            <label htmlFor="edit-teacher-address" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Residential Address</label>
+            <input id="edit-teacher-address" name="edit_teacher_address" aria-label="Residential Address" type="text" value={form.address || ''} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="e.g. Tarepet School Campus, Yenagoa, Bayelsa State"
               className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
           <div>
-            <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Specialization</label>
-            <input type="text" value={form.specialization} onChange={e => setForm({ ...form, specialization: e.target.value })}
+            <label htmlFor="edit-teacher-specialization" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Specialization</label>
+            <input id="edit-teacher-specialization" name="edit_teacher_specialization" aria-label="Specialization" type="text" value={form.specialization} onChange={e => setForm({ ...form, specialization: e.target.value })}
               className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
           <div>
-            <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Qualifications</label>
-            <input type="text" value={form.qualification} onChange={e => setForm({ ...form, qualification: e.target.value })}
+            <label htmlFor="edit-teacher-qual" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Qualifications</label>
+            <input id="edit-teacher-qual" name="edit_teacher_qualification" aria-label="Qualifications" type="text" value={form.qualification} onChange={e => setForm({ ...form, qualification: e.target.value })}
               className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Teaching Division</label>
-              <select value={form.department || 'Senior Secondary (SS 1 - SS 3)'} onChange={e => setForm({ ...form, department: e.target.value })}
+              <label htmlFor="edit-teacher-dept" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Teaching Division</label>
+              <select id="edit-teacher-dept" name="edit_teacher_department" aria-label="Teaching Division" value={form.department || 'Senior Secondary (SS 1 - SS 3)'} onChange={e => setForm({ ...form, department: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
                 <option value="Senior Secondary (SS 1 - SS 3)">Senior Secondary (SS 1 - SS 3)</option>
                 <option value="Junior Secondary (JSS 1 - JSS 3)">Junior Secondary (JSS 1 - JSS 3)</option>
@@ -1154,8 +1157,8 @@ const EditTeacherModal = ({
               </select>
             </div>
             <div>
-              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Form Teacher Duty</label>
-              <select value={form.formTeacherOf || 'None'} onChange={e => setForm({ ...form, formTeacherOf: e.target.value })}
+              <label htmlFor="edit-teacher-formduty" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Form Teacher Duty</label>
+              <select id="edit-teacher-formduty" name="edit_teacher_form_duty" aria-label="Form Teacher Duty" value={form.formTeacherOf || 'None'} onChange={e => setForm({ ...form, formTeacherOf: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
                 <option value="None">None (Subject Specialist Only)</option>
                 <option value="Nursery 1">Nursery 1</option>
@@ -1379,20 +1382,20 @@ const EditStudentModal = ({
           </div>
 
           <div>
-            <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Full Student Name</label>
-            <input type="text" value={form.name || ''} onChange={e => setForm({ ...form, name: e.target.value })} required
+            <label htmlFor="edit-student-name" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Full Student Name</label>
+            <input id="edit-student-name" name="edit_student_name" aria-label="Full Student Name" type="text" value={form.name || ''} onChange={e => setForm({ ...form, name: e.target.value })} required
               className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Admission Number</label>
-              <input type="text" value={form.admissionNo || form.studentId || form.code || ''} onChange={e => setForm({ ...form, admissionNo: e.target.value, studentId: e.target.value })} required
+              <label htmlFor="edit-student-admno" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Admission Number</label>
+              <input id="edit-student-admno" name="edit_student_admission_no" aria-label="Admission Number" type="text" value={form.admissionNo || form.studentId || form.code || ''} onChange={e => setForm({ ...form, admissionNo: e.target.value, studentId: e.target.value })} required
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-mono" />
             </div>
             <div>
-              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Status</label>
-              <select value={form.status || 'Active'} onChange={e => setForm({ ...form, status: e.target.value })}
+              <label htmlFor="edit-student-status" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Status</label>
+              <select id="edit-student-status" name="edit_student_status" aria-label="Student Status" value={form.status || 'Active'} onChange={e => setForm({ ...form, status: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
                 <option value="Active">Active</option>
                 <option value="Inactive">Inactive</option>
@@ -1404,8 +1407,8 @@ const EditStudentModal = ({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Class Level</label>
-              <select value={form.grade || 'SS1'} onChange={e => setForm({ ...form, grade: e.target.value })}
+              <label htmlFor="edit-student-grade" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Class Level</label>
+              <select id="edit-student-grade" name="edit_student_grade" aria-label="Class Level" value={form.grade || 'SS1'} onChange={e => setForm({ ...form, grade: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
                 {['Creche', 'Reception', 'Nursery 1', 'Nursery 2', 'Primary 1', 'Primary 2', 'Primary 3', 'Primary 4', 'Primary 5', 'Primary 6', 'JSS1', 'JSS2', 'JSS3', 'SS1', 'SS2', 'SS3'].map(c => (
                   <option key={c} value={c}>{c}</option>
@@ -1413,21 +1416,21 @@ const EditStudentModal = ({
               </select>
             </div>
             <div>
-              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Stream / Arm</label>
-              <input type="text" value={form.stream || 'Science'} onChange={e => setForm({ ...form, stream: e.target.value })}
+              <label htmlFor="edit-student-stream" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Stream / Arm</label>
+              <input id="edit-student-stream" name="edit_student_stream" aria-label="Stream or Arm" type="text" value={form.stream || 'Science'} onChange={e => setForm({ ...form, stream: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" placeholder="e.g. Science, Art, Gold" />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">School House</label>
-              <input type="text" value={form.house || ''} onChange={e => setForm({ ...form, house: e.target.value })}
+              <label htmlFor="edit-student-house" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">School House</label>
+              <input id="edit-student-house" name="edit_student_house" aria-label="School House" type="text" value={form.house || ''} onChange={e => setForm({ ...form, house: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" placeholder="e.g. Sapphire House" />
             </div>
             <div>
-              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Gender</label>
-              <select value={form.gender || 'Male'} onChange={e => setForm({ ...form, gender: e.target.value })}
+              <label htmlFor="edit-student-gender" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Gender</label>
+              <select id="edit-student-gender" name="edit_student_gender" aria-label="Gender" value={form.gender || 'Male'} onChange={e => setForm({ ...form, gender: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
@@ -1437,13 +1440,13 @@ const EditStudentModal = ({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Parent / Guardian Name</label>
-              <input type="text" value={form.parentName || ''} onChange={e => setForm({ ...form, parentName: e.target.value })}
+              <label htmlFor="edit-student-parentname" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Parent / Guardian Name</label>
+              <input id="edit-student-parentname" name="edit_student_parent_name" aria-label="Parent or Guardian Name" type="text" value={form.parentName || ''} onChange={e => setForm({ ...form, parentName: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
             </div>
             <div>
-              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Parent Contact Phone</label>
-              <input type="tel" value={form.parentPhone || form.phone || ''} onChange={e => setForm({ ...form, parentPhone: e.target.value, phone: e.target.value })}
+              <label htmlFor="edit-student-parentphone" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Parent Contact Phone</label>
+              <input id="edit-student-parentphone" name="edit_student_parent_phone" aria-label="Parent Contact Phone Number" type="tel" value={form.parentPhone || form.phone || ''} onChange={e => setForm({ ...form, parentPhone: e.target.value, phone: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
             </div>
           </div>
