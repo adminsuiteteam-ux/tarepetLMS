@@ -11230,9 +11230,9 @@ export default function AdminDashboard() {
               <div className="p-5 border-b border-border flex items-center justify-between bg-muted/20">
                 <div>
                   <h3 className="font-serif font-bold text-lg text-foreground flex items-center gap-2">
-                    <UserPlus className="w-5 h-5 text-primary" /> {t('wizard.registerTitle')}
+                    <UserPlus className="w-5 h-5 text-primary" /> {t('wizard.registerTitle', 'Register New Student (5-Step Progressive Setup)')}
                   </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">{t('addStudentWizard.step')} {wizardStep} {t('addStudentWizard.of')} 5 — Progressive Enrollment Wizard</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{t('addStudentWizard.step', 'Step')} {wizardStep} {t('addStudentWizard.of', 'of')} 5 — Progressive Enrollment Wizard</p>
                 </div>
                 <button onClick={() => setShowAddStudentModal(false)} className="p-2 rounded-xl text-muted-foreground hover:bg-muted/50 transition-colors">
                   <X className="w-5 h-5" />
@@ -11258,27 +11258,27 @@ export default function AdminDashboard() {
                 {/* Slide 1: Basic Information */}
                 {wizardStep === 1 && (
                   <div className="space-y-4">
-                    <h4 className="text-sm font-bold text-foreground">{t('wizard.personalId')}</h4>
+                    <h4 className="text-sm font-bold text-foreground">{t('wizard.personalId', '1. Personal Identification & Identity')}</h4>
                     <div>
-                      <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.fullName')}</label>
+                      <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.fullName', 'Full Student Name *')}</label>
                       <input type="text" placeholder="e.g. Kelechi Amadi" value={newStudentForm.name}
                         onChange={e => setNewStudentForm({ ...newStudentForm, name: e.target.value })}
                         className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none" />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.dob')}</label>
+                        <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.dob', 'Date of Birth')}</label>
                         <input type="date" value={newStudentForm.dob}
                           onChange={e => setNewStudentForm({ ...newStudentForm, dob: e.target.value })}
                           className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none" />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.gender')}</label>
+                        <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.gender', 'Gender')}</label>
                         <select value={newStudentForm.gender}
                           onChange={e => setNewStudentForm({ ...newStudentForm, gender: e.target.value })}
                           className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none">
-                          <option value="Male">{t('wizard.male')}</option>
-                          <option value="Female">{t('wizard.female')}</option>
+                          <option value="Male">{t('wizard.male', 'Male')}</option>
+                          <option value="Female">{t('wizard.female', 'Female')}</option>
                         </select>
                       </div>
                     </div>
@@ -11298,7 +11298,7 @@ export default function AdminDashboard() {
                           setNewStudentForm({
                             ...newStudentForm,
                             grade: val,
-                            stream: isSS ? 'Science' : 'General',
+                            stream: isSS ? (newStudentForm.stream || 'Science') : '',
                           });
                         }}
                         className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary focus:outline-none">
@@ -11356,16 +11356,16 @@ export default function AdminDashboard() {
                 {/* Slide 3: Origin, Location & Guardian Contacts */}
                 {wizardStep === 3 && (
                   <div className="space-y-3.5">
-                    <h4 className="text-sm font-bold text-foreground">{t('wizard.originTitle')}</h4>
+                    <h4 className="text-sm font-bold text-foreground">{t('wizard.originTitle', '3. Origin, Location & Guardian Contacts')}</h4>
                     <div className="grid grid-cols-3 gap-3">
                       <div>
-                        <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.country')}</label>
+                        <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.country', 'Country / Nationality')}</label>
                         <input type="text" value={newStudentForm.country}
                           onChange={e => setNewStudentForm({ ...newStudentForm, country: e.target.value })}
                           className="w-full px-3 py-2 rounded-xl border border-border bg-background text-xs focus:ring-2 focus:ring-primary focus:outline-none" />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.stateOfOrigin')}</label>
+                        <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.stateOfOrigin', 'State of Origin')}</label>
                         <input type="text" placeholder="e.g. Bayelsa" value={newStudentForm.stateOfOrigin}
                           onChange={e => setNewStudentForm({ ...newStudentForm, stateOfOrigin: e.target.value })}
                           className="w-full px-3 py-2 rounded-xl border border-border bg-background text-xs focus:ring-2 focus:ring-primary focus:outline-none" />
@@ -11378,20 +11378,20 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.address')}</label>
+                      <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.address', 'Residential Address / Location')}</label>
                       <input type="text" placeholder="e.g. Azikoro village, Yenagoa" value={newStudentForm.address}
                         onChange={e => setNewStudentForm({ ...newStudentForm, address: e.target.value })}
                         className="w-full px-3 py-2 rounded-xl border border-border bg-background text-xs focus:ring-2 focus:ring-primary focus:outline-none" />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.parentName')}</label>
+                        <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.parentName', 'Parent / Guardian Full Name')}</label>
                         <input type="text" placeholder="e.g. Parent / Guardian Full Name" value={newStudentForm.parentName}
                           onChange={e => setNewStudentForm({ ...newStudentForm, parentName: e.target.value })}
                           className="w-full px-3 py-2 rounded-xl border border-border bg-background text-xs focus:ring-2 focus:ring-primary focus:outline-none" />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.parentPhone')}</label>
+                        <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.parentPhone', 'Parent Emergency Contact Phone')}</label>
                         <input type="tel" placeholder="e.g. 08031234567" value={newStudentForm.parentPhone}
                           onChange={e => setNewStudentForm({ ...newStudentForm, parentPhone: e.target.value })}
                           className="w-full px-3 py-2 rounded-xl border border-border bg-background text-xs focus:ring-2 focus:ring-primary focus:outline-none" />
@@ -11403,7 +11403,7 @@ export default function AdminDashboard() {
                 {/* Slide 4: Student Profile Picture Local Upload */}
                 {wizardStep === 4 && (
                   <div className="space-y-4">
-                    <h4 className="text-sm font-bold text-foreground">{t('wizard.photoTitle')}</h4>
+                    <h4 className="text-sm font-bold text-foreground">{t('wizard.photoTitle', '4. Student Profile Photograph')}</h4>
                     <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-border rounded-2xl bg-muted/20 text-center">
                       <div className="w-24 h-24 rounded-2xl border-2 border-primary bg-primary/10 flex items-center justify-center overflow-hidden mb-3 shadow-inner">
                         {newStudentForm.profileImage ? (
@@ -11412,8 +11412,8 @@ export default function AdminDashboard() {
                           <GraduationCap className="w-10 h-10 text-primary" />
                         )}
                       </div>
-                      <p className="text-xs font-bold text-foreground mb-1">{t('wizard.uploadPhoto')}</p>
-                      <p className="text-[11px] text-muted-foreground mb-4">{t('wizard.selectPhotoHint')}</p>
+                      <p className="text-xs font-bold text-foreground mb-1">{t('wizard.uploadPhoto', 'Upload Official Student Photo')}</p>
+                      <p className="text-[11px] text-muted-foreground mb-4">{t('wizard.selectPhotoHint', 'JPG, PNG or WEBP up to 10MB. Automatically cropped to portrait.')}</p>
 
                       <input
                         type="file"
@@ -11481,17 +11481,17 @@ export default function AdminDashboard() {
                     <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-500/20">
                       <CheckCircle2 className="w-6 h-6" />
                     </div>
-                    <h4 className="text-base font-serif font-bold text-foreground">{t('wizard.readyTitle')}</h4>
+                    <h4 className="text-base font-serif font-bold text-foreground">{t('wizard.readyTitle', '5. Generated Admission Number & Credentials Ready!')}</h4>
                     <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20 text-left space-y-2">
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">{t('wizard.genCredentials')}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">{t('wizard.genCredentials', 'Generated Student Credentials')}</p>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-foreground">{t('wizard.admissionNo')}</span>
+                        <span className="text-xs font-semibold text-foreground">{t('wizard.admissionNo', 'Generated Admission Number')}</span>
                         <span className="text-sm font-mono font-bold text-primary bg-primary/10 px-3 py-1 rounded-lg border border-primary/30">
                           {currentWizardAdmissionNo}
                         </span>
                       </div>
                       <div className="flex items-center justify-between pt-1">
-                        <span className="text-xs font-semibold text-foreground">{t('wizard.genEmail')}</span>
+                        <span className="text-xs font-semibold text-foreground">{t('wizard.genEmail', 'Generated Portal Email')}</span>
                         <span className="text-xs font-bold text-foreground underline font-mono">
                           {formatStudentEmail(newStudentForm.name)}
                         </span>
@@ -11503,14 +11503,14 @@ export default function AdminDashboard() {
                         </span>
                       </div>
                       <div className="flex items-center justify-between pt-1">
-                        <span className="text-xs font-semibold text-foreground">{t('wizard.assignedClass')}</span>
+                        <span className="text-xs font-semibold text-foreground">{t('wizard.assignedClass', 'Assigned Class')}</span>
                         <span className="text-xs font-bold text-foreground">
                           {newStudentForm.grade} {newStudentForm.grade.startsWith('SS') ? `(${newStudentForm.stream})` : ''}
                         </span>
                       </div>
                     </div>
                     <p className="text-xs text-muted-foreground leading-relaxed">
-                      {t('wizard.admissionNote')}
+                      {t('wizard.admissionNote', 'Upon confirmation, this student profile and portal login credentials will be securely created and synchronized in the central database.')}
                     </p>
                   </div>
                 )}
@@ -11521,7 +11521,7 @@ export default function AdminDashboard() {
                 {wizardStep > 1 ? (
                   <button onClick={() => setWizardStep(prev => prev - 1)}
                     className="px-4 py-2 rounded-xl border border-border text-xs font-semibold hover:bg-muted transition-colors">
-                    {t('wizard.back')}
+                    {t('wizard.back', 'Back')}
                   </button>
                 ) : <div />}
 
@@ -11530,7 +11530,7 @@ export default function AdminDashboard() {
                     disabled={wizardStep === 1 && !newStudentForm.name}
                     onClick={() => setWizardStep(prev => prev + 1)}
                     className="px-5 py-2 bg-primary text-primary-foreground text-xs font-bold rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity">
-                    {t('wizard.nextStep')}
+                    {t('wizard.nextStep', 'Next Step →')}
                   </button>
                 ) : (
                   <button
