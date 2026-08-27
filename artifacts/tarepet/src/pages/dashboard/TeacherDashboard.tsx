@@ -3185,15 +3185,15 @@ export default function TeacherDashboard() {
         {/* Mobile View Profile */}
         <div className="md:hidden">
           <MobileProfileView
-            staffId={profileForm.staffId || 'TMS/TCH/0007'}
-            name={profileForm.fullName || `${profileForm.firstName || ''} ${profileForm.lastName || ''}`.trim() || (user?.first_name ? `${user.first_name} ${user.last_name || ''}` : 'Abiola Adeniyi Adegemo')}
-            roleTitle={profileForm.formClass && profileForm.formClass !== 'None' ? `Form Teacher (${profileForm.formClass})` : (profileForm.roleTitle || 'Form Teacher (Senior Science)')}
-            specialization={profileForm.specialization || 'Physics (PRI - SS3) & Financial Accounting (JSS 1)'}
+            staffId={profileForm.staffId || ''}
+            name={profileForm.fullName || `${profileForm.firstName || ''} ${profileForm.lastName || ''}`.trim() || user?.email || ''}
+            roleTitle={profileForm.formClass && profileForm.formClass !== 'None' ? `Form Teacher (${profileForm.formClass})` : (profileForm.roleTitle || profileForm.department || 'Academic Staff')}
+            specialization={profileForm.specialization || 'Not Specified'}
             qualification={profileForm.qualification || 'Not Specified'}
-            formClass={profileForm.formClass || 'Senior Science'}
-            phone={profileForm.phone || '+234 800 000 0000'}
-            email={profileForm.email || user?.email || 'adeniyiabiola2@gmail.com'}
-            subjectsAssigned={profileForm.subjectsAssigned && profileForm.subjectsAssigned.length > 0 ? profileForm.subjectsAssigned : [{ name: 'Physics', grade: 'Senior Science' }]}
+            formClass={profileForm.formClass && profileForm.formClass !== 'None' ? profileForm.formClass : 'None'}
+            phone={profileForm.phone || 'Not Specified'}
+            email={profileForm.email || user?.email || ''}
+            subjectsAssigned={profileForm.subjectsAssigned && profileForm.subjectsAssigned.length > 0 ? profileForm.subjectsAssigned : []}
             avatarUrl={profileForm.profileImage}
             location="Tarepet Montessori Academy, Yenagoa"
             onBack={() => setActiveSection('overview')}

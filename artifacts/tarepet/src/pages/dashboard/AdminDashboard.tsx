@@ -6747,7 +6747,8 @@ export default function AdminDashboard() {
           name: (liveTeacher?.name || selectedTeacher?.name || (selectedTeacher?.first_name ? `${selectedTeacher.first_name} ${selectedTeacher.last_name || ''}`.trim() : '') || selectedTeacher?.email || 'Teacher'),
           staffId: (liveTeacher?.staffId || selectedTeacher?.staffId || selectedTeacher?.teacher_id || (selectedTeacher?.id ? `TMS/TCH/${selectedTeacher.id}` : 'TMS/TCH/001')),
           department: (liveTeacher?.department || selectedTeacher?.department || 'Academic Staff'),
-          specialization: (liveTeacher?.specialization || selectedTeacher?.specialization || 'Educator'),
+          specialization: (liveTeacher?.specialization || selectedTeacher?.specialization || ''),
+          qualification: (liveTeacher?.qualification || selectedTeacher?.qualification || selectedTeacher?.qualifications || selectedTeacher?.profile?.qualifications || ''),
           status: (liveTeacher?.status || selectedTeacher?.status || 'Active'),
           profileImage: liveTeacher?.profileImage || selectedTeacher?.profileImage || selectedTeacher?.profile_image || selectedTeacher?.profile?.profile_image || '',
         };
@@ -6974,7 +6975,7 @@ export default function AdminDashboard() {
                     <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider">Staff Role / Duty</span>
                     <strong className="text-emerald-700 font-bold flex items-center gap-1.5 mt-0.5">
                       <School className="w-3.5 h-3.5 text-emerald-600" />
-                      {tchr.formTeacherOf && tchr.formTeacherOf !== 'None' ? `Form Teacher (${tchr.formTeacherOf})` : 'Form Teacher & Subject Specialist'}
+                      {tchr.formTeacherOf && tchr.formTeacherOf !== 'None' ? `Form Teacher (${tchr.formTeacherOf})` : (tchr.department || 'Academic Staff')}
                     </strong>
                   </div>
                   <div>
@@ -6988,12 +6989,12 @@ export default function AdminDashboard() {
                   <div>
                     <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider">Form Teacher Class Assignment</span>
                     <span className="inline-block mt-0.5 px-2.5 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-700 font-bold text-xs border border-emerald-500/20">
-                      {tchr.formTeacherOf && tchr.formTeacherOf !== 'None' ? tchr.formTeacherOf : (tchr.subjectsAssigned?.[0]?.grade || 'Form Teacher Assigned')}
+                      {tchr.formTeacherOf && tchr.formTeacherOf !== 'None' ? tchr.formTeacherOf : 'None'}
                     </span>
                   </div>
                   <div>
                     <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider">Contact Phone</span>
-                    <strong className="text-foreground font-bold">{tchr.phone || '+234 800 000 0000'}</strong>
+                    <strong className="text-foreground font-bold">{tchr.phone || 'Not Specified'}</strong>
                   </div>
                   <div>
                     <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider">Official Email</span>
