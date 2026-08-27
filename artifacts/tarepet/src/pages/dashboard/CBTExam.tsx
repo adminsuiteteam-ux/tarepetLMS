@@ -540,9 +540,9 @@ export default function StudentCBTExam() {
     const currentQ = examData.questions[currentPage] || examData.questions[0];
 
     return (
-      <div className="min-h-screen bg-[#F0FDF4] flex flex-col font-sans">
+      <div className="min-h-screen bg-background flex flex-col font-sans">
         {/* Top Sticky Header with Timer */}
-        <div className={`sticky top-0 z-50 px-4 md:px-6 py-3 flex items-center justify-between border-b shadow-sm ${timerWarning ? 'bg-red-600 text-white' : 'bg-emerald-800 text-white'}`}>
+        <div className={`sticky top-0 z-50 px-4 md:px-6 py-3.5 flex items-center justify-between border-b shadow-sm ${timerWarning ? 'bg-red-600 text-white' : 'bg-primary text-primary-foreground'}`}>
           <div className="flex items-center gap-3">
             <Link href="/dashboard/student">
               <button className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition cursor-pointer">
@@ -550,7 +550,7 @@ export default function StudentCBTExam() {
               </button>
             </Link>
             <div className="flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-emerald-200" />
+              <BookOpen className="w-5 h-5 text-white/80" />
               <h1 className="font-serif font-bold text-sm md:text-base text-white truncate max-w-xs md:max-w-md">
                 {selectedExam?.title || 'CBT Assessment'}
               </h1>
@@ -559,17 +559,17 @@ export default function StudentCBTExam() {
 
           <div className="flex items-center gap-4 md:gap-6">
             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/15 font-mono text-sm md:text-base font-bold text-white ${timerWarning ? 'animate-pulse bg-red-700' : ''}`}>
-              <Clock className="w-4 h-4 text-emerald-200" />
+              <Clock className="w-4 h-4 text-white/80" />
               <span>{formatTime(timeLeft)}</span>
             </div>
 
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setShowCalculator(!showCalculator)}
-                className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-teal-300 font-bold text-xs transition border border-teal-500/30 flex items-center gap-1.5"
+                className="px-3 py-1.5 rounded-xl bg-card text-foreground font-bold text-xs transition border border-border flex items-center gap-1.5 shadow-xs hover:bg-muted"
                 title="Toggle Calculator"
               >
-                <Calculator className="w-3.5 h-3.5 text-teal-400" /> Calculator
+                <Calculator className="w-3.5 h-3.5 text-primary" /> Calculator
               </button>
               {warningCount > 0 && (
                 <span className="bg-amber-500/20 text-amber-300 text-[11px] font-bold px-2.5 py-1 rounded-lg border border-amber-400/30 flex items-center gap-1">
@@ -589,7 +589,7 @@ export default function StudentCBTExam() {
                   if (confirmed) handleSubmit(false);
                 }}
                 disabled={isSubmitting}
-                className="bg-emerald-400 hover:bg-emerald-300 text-emerald-950 font-bold px-3.5 py-2 rounded-xl text-xs transition shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                className="bg-white text-primary hover:bg-slate-100 font-bold px-4 py-2 rounded-xl text-xs transition shadow-md flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 <Send className="w-3.5 h-3.5" /> Submit Exam
               </button>
@@ -656,86 +656,85 @@ export default function StudentCBTExam() {
             </div>
           )}
 
-          {/* Left Emerald Sidebar */}
-          <div className="w-64 bg-[#0D9488] text-white p-5 flex flex-col justify-between hidden lg:flex shrink-0">
+          {/* Left Primary Sidebar */}
+          <div className="w-64 bg-card border-r border-border p-5 flex flex-col justify-between hidden lg:flex shrink-0">
             <div>
               <div className="flex items-center gap-3 mb-8 px-2">
-                <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center font-bold text-lg text-white shadow-inner">
-                  <GraduationCap className="w-5 h-5 text-white" />
+                <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center font-bold text-lg text-primary shadow-2xs border border-primary/20">
+                  <GraduationCap className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <h2 className="font-serif font-bold text-base leading-tight text-white">Tarepet Montessori</h2>
-                  <p className="text-[10px] text-teal-100/80 uppercase font-semibold tracking-wider">CBT Exam Center</p>
+                  <h2 className="font-serif font-bold text-base leading-tight text-foreground">Tarepet Montessori</h2>
+                  <p className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider">CBT Exam Center</p>
                 </div>
               </div>
 
               <nav className="space-y-1 text-sm font-semibold">
-                <div className="px-4 py-3 rounded-xl bg-white/10 text-teal-100 flex items-center gap-3">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                  <span>Dashboard</span>
+                <div className="px-4 py-3 rounded-xl bg-primary/10 text-primary font-bold flex items-center gap-3 border border-primary/20 shadow-2xs">
+                  <span className="w-2 h-2 rounded-full bg-primary"></span>
+                  <span>CBT Assessment</span>
                 </div>
-                <div className="px-4 py-3 rounded-xl bg-white/20 text-white font-bold flex items-center gap-3 shadow-sm border border-white/20">
-                  <span className="w-2 h-2 rounded-full bg-white"></span>
-                  <span>Test Seleksi</span>
+                <div className="px-4 py-3 rounded-xl text-muted-foreground hover:bg-muted transition flex items-center gap-3 cursor-pointer">
+                  <span>Questions Palette</span>
                 </div>
-                <div className="px-4 py-3 rounded-xl text-teal-100/80 hover:bg-white/10 transition flex items-center gap-3 cursor-pointer">
+                <div className="px-4 py-3 rounded-xl text-muted-foreground hover:bg-muted transition flex items-center gap-3 cursor-pointer">
                   <span>Student Profile</span>
                 </div>
               </nav>
             </div>
 
-            <div className="pt-6 border-t border-white/20">
+            <div className="pt-6 border-t border-border">
               <div className="flex items-center gap-3 px-2">
-                <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center font-bold text-sm text-white">
+                <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center font-bold text-sm text-primary">
                   {user?.first_name?.[0] || 'S'}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-white truncate">{user ? `${user.first_name} ${user.last_name}` : 'Emeka Amadi'}</p>
-                  <p className="text-[10px] text-teal-100/70 truncate">Student (SS1 Science)</p>
+                  <p className="text-xs font-bold text-foreground truncate">{user ? `${user.first_name} ${user.last_name}` : 'Emeka Amadi'}</p>
+                  <p className="text-[10px] text-muted-foreground truncate">Senior Secondary Student</p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Main Work Area: Left Info Cards Column + Right Question Card Column */}
-          <div className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
+          <div className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto bg-background">
             <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
-              {/* Left Column (Cards: Test, Sisa Waktu, Soal Palette, Test Selanjutnya) */}
+              {/* Left Column (Cards: Test, Timer, Question Palette) */}
               <div className="lg:col-span-4 space-y-4">
 
                 {/* Card 1: Test Info */}
-                <div className="bg-white rounded-2xl p-5 border border-emerald-100 shadow-sm space-y-1">
-                  <p className="text-xs font-bold uppercase tracking-wider text-emerald-600">Test</p>
-                  <h3 className="font-serif font-bold text-base text-slate-800">{selectedExam?.title || 'Test Potensi Skolastik'}</h3>
-                  <p className="text-xs text-slate-500 mt-1">{selectedExam?.assessment_type === 'TEST' ? 'Continuous Assessment Test' : 'Terminal Examination'} • {selectedExam?.course_detail?.name || 'Mathematics'}</p>
+                <div className="bg-card rounded-2xl p-5 border border-border shadow-xs space-y-1">
+                  <p className="text-xs font-bold uppercase tracking-wider text-primary">Examination</p>
+                  <h3 className="font-serif font-bold text-base text-foreground">{selectedExam?.title || 'CBT Assessment'}</h3>
+                  <p className="text-xs text-muted-foreground mt-1">{selectedExam?.assessment_type === 'TEST' ? 'Continuous Assessment Test' : 'Terminal Examination'} • {selectedExam?.course_detail?.name || 'Subject Exam'}</p>
                 </div>
 
-                {/* Card 2: Sisa Waktu (Timer Display) */}
-                <div className="bg-white rounded-2xl p-5 border border-emerald-100 shadow-sm space-y-2">
-                  <p className="text-xs font-bold uppercase tracking-wider text-emerald-600 flex items-center justify-between">
-                    <span>Sisa Waktu</span>
+                {/* Card 2: Timer Display */}
+                <div className="bg-card rounded-2xl p-5 border border-border shadow-xs space-y-2">
+                  <p className="text-xs font-bold uppercase tracking-wider text-primary flex items-center justify-between">
+                    <span>Time Remaining</span>
                     {timerWarning && <span className="text-red-500 font-extrabold animate-pulse">⏰ Time Ending Soon!</span>}
                   </p>
                   <div className="flex items-center gap-3">
-                    <Clock className={`w-6 h-6 ${timerWarning ? 'text-red-500 animate-bounce' : 'text-emerald-600'}`} />
-                    <span className={`font-mono font-extrabold text-2xl tracking-wider ${timerWarning ? 'text-red-600' : 'text-emerald-600'}`}>
+                    <Clock className={`w-6 h-6 ${timerWarning ? 'text-red-500 animate-bounce' : 'text-primary'}`} />
+                    <span className={`font-mono font-extrabold text-2xl tracking-wider ${timerWarning ? 'text-red-600' : 'text-foreground'}`}>
                       {formatTime(timeLeft)}
                     </span>
                   </div>
-                  <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mt-1">
+                  <div className="w-full bg-muted h-2 rounded-full overflow-hidden mt-1">
                     <div
-                      className={`h-full transition-all duration-1000 ${timerWarning ? 'bg-red-500' : 'bg-emerald-500'}`}
+                      className={`h-full transition-all duration-1000 ${timerWarning ? 'bg-red-500' : 'bg-primary'}`}
                       style={{ width: `${(timeLeft / ((examData?.duration_minutes || 1) * 60)) * 100}%` }}
                     />
                   </div>
                 </div>
 
-                {/* Card 3: Soal (Question Palette Grid) */}
-                <div className="bg-white rounded-2xl p-5 border border-emerald-100 shadow-sm space-y-3">
+                {/* Card 3: Question Palette Grid */}
+                <div className="bg-card rounded-2xl p-5 border border-border shadow-xs space-y-3">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-bold uppercase tracking-wider text-emerald-600">Questions Palette</p>
-                    <span className="text-xs font-semibold text-slate-500">{answeredCount}/{examData.questions.length} Answered</span>
+                    <p className="text-xs font-bold uppercase tracking-wider text-primary">Questions Palette</p>
+                    <span className="text-xs font-semibold text-muted-foreground">{answeredCount}/{examData.questions.length} Answered</span>
                   </div>
                   <div className="grid grid-cols-6 gap-2">
                     {examData.questions.map((q, i) => {
@@ -749,12 +748,12 @@ export default function StudentCBTExam() {
                           onClick={() => setCurrentPage(i)}
                           className={`h-9 rounded-xl text-xs font-bold flex items-center justify-center transition-all cursor-pointer relative ${
                             isFlagged
-                              ? 'bg-amber-500 text-white shadow-xs'
+                              ? 'bg-amber-500 text-white shadow-2xs'
                               : isAnswered
-                                ? 'bg-emerald-600 text-white shadow-xs'
+                                ? 'bg-primary text-primary-foreground shadow-2xs'
                                 : isCurrent
-                                  ? 'bg-emerald-100 text-emerald-800 ring-2 ring-emerald-500 font-extrabold'
-                                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                  ? 'bg-primary/15 text-primary ring-2 ring-primary font-extrabold'
+                                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
                           }`}
                         >
                           {i + 1}
@@ -763,10 +762,10 @@ export default function StudentCBTExam() {
                       );
                     })}
                   </div>
-                  <div className="flex items-center justify-between text-[10px] font-semibold text-slate-500 pt-1 border-t border-slate-100">
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-600"></span> Answered</span>
+                  <div className="flex items-center justify-between text-[10px] font-semibold text-muted-foreground pt-2 border-t border-border">
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-primary"></span> Answered</span>
                     <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500"></span> Flagged</span>
-                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-slate-200"></span> Pending</span>
+                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-muted-foreground/30"></span> Pending</span>
                   </div>
                 </div>
 
@@ -774,28 +773,28 @@ export default function StudentCBTExam() {
 
               {/* Right Column (Question Card) */}
               <div className="lg:col-span-8">
-                <div className="bg-white rounded-2xl p-6 md:p-8 border border-emerald-100 shadow-md space-y-6">
+                <div className="bg-card rounded-2xl p-6 md:p-8 border border-border shadow-xs space-y-6">
 
-                  {/* Top Bar: Previous | Pertanyaan X | Flag | Next */}
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                  {/* Top Bar: Previous | Question X | Flag | Next */}
+                  <div className="flex items-center justify-between border-b border-border pb-4">
                     <button
                       onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
                       disabled={currentPage === 0}
-                      className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-emerald-700 disabled:opacity-30 disabled:hover:text-slate-600 cursor-pointer"
+                      className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground disabled:opacity-30 cursor-pointer"
                     >
-                      <ArrowLeft className="w-4 h-4" /> Previously
+                      <ArrowLeft className="w-4 h-4" /> Previous
                     </button>
 
                     <div className="flex items-center gap-3">
-                      <h3 className="font-serif font-bold text-lg text-emerald-600">
-                        Question {currentPage + 1} <span className="text-slate-400 font-normal text-sm">/ {examData.questions.length}</span>
+                      <h3 className="font-serif font-bold text-lg text-foreground">
+                        Question {currentPage + 1} <span className="text-muted-foreground font-normal text-sm">/ {examData.questions.length}</span>
                       </h3>
                       <button
                         onClick={() => toggleFlag(currentQ.id)}
                         className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition ${
                           flaggedQuestions[currentQ.id]
-                            ? 'bg-amber-100 text-amber-800 border border-amber-300'
-                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                            ? 'bg-amber-100 text-amber-800 border border-amber-300 dark:bg-amber-950 dark:text-amber-300'
+                            : 'bg-muted text-muted-foreground hover:bg-muted/80'
                         }`}
                         title="Flag for Review"
                       >
@@ -806,7 +805,7 @@ export default function StudentCBTExam() {
                     <button
                       onClick={() => setCurrentPage(p => Math.min(examData.questions.length - 1, p + 1))}
                       disabled={currentPage >= examData.questions.length - 1}
-                      className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-emerald-700 disabled:opacity-30 disabled:hover:text-slate-600 cursor-pointer"
+                      className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground disabled:opacity-30 cursor-pointer"
                     >
                       Next <ArrowRight className="w-4 h-4" />
                     </button>
@@ -814,7 +813,7 @@ export default function StudentCBTExam() {
 
                   {/* Question Text */}
                   <div className="py-2">
-                    <p className="text-slate-800 font-medium text-sm md:text-base leading-relaxed">
+                    <p className="text-foreground font-medium text-sm md:text-base leading-relaxed">
                       {currentQ.question_text}
                     </p>
                   </div>
@@ -831,15 +830,15 @@ export default function StudentCBTExam() {
                           onClick={() => handleSelectOption(currentQ.id, opt)}
                           className={`w-full text-left p-4 rounded-xl border-2 transition-all flex items-start gap-3.5 cursor-pointer ${
                             isSelected
-                              ? 'border-emerald-500 bg-emerald-50/60 text-slate-900 shadow-xs'
-                              : 'border-slate-200 hover:border-emerald-300 hover:bg-slate-50 text-slate-700'
+                              ? 'border-primary bg-primary/5 text-foreground shadow-2xs ring-1 ring-primary/20'
+                              : 'border-border hover:border-primary/40 hover:bg-muted/30 text-foreground'
                           }`}
                         >
                           {/* Custom Radio Button Circle */}
                           <div className={`w-5 h-5 rounded-full border-2 mt-0.5 flex items-center justify-center shrink-0 transition-colors ${
-                            isSelected ? 'border-emerald-600 bg-white' : 'border-slate-300 bg-white'
+                            isSelected ? 'border-primary bg-card' : 'border-muted-foreground/40 bg-card'
                           }`}>
-                            {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-emerald-600" />}
+                            {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-primary" />}
                           </div>
 
                           <span className="text-sm font-medium leading-normal flex-1">
@@ -851,10 +850,10 @@ export default function StudentCBTExam() {
                   </div>
 
                   {/* Bottom Action Footer */}
-                  <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-                    <div className="text-xs text-slate-400">
+                  <div className="pt-4 border-t border-border flex items-center justify-between">
+                    <div className="text-xs text-muted-foreground">
                       {answers[currentQ.id] ? (
-                        <span className="text-emerald-600 font-bold flex items-center gap-1">
+                        <span className="text-primary font-bold flex items-center gap-1">
                           <CheckCircle2 className="w-4 h-4" /> Option {answers[currentQ.id]} selected
                         </span>
                       ) : (
@@ -880,7 +879,7 @@ export default function StudentCBTExam() {
                           }
                         }
                       }}
-                      className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md transition-colors flex items-center gap-2 cursor-pointer"
+                      className="px-6 py-3 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm shadow-md transition-colors flex items-center gap-2 cursor-pointer"
                     >
                       {currentPage === examData.questions.length - 1 ? 'Submit Exam' : 'Next'}
                     </button>

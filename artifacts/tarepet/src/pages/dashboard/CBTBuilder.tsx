@@ -382,27 +382,27 @@ export default function CBTBuilder() {
     handleActivateProceed(examId);
   };
 
-  const inputClass = "w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition";
-  const labelClass = "block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5";
+  const inputClass = "w-full px-3.5 py-2.5 rounded-xl border border-input bg-card text-foreground text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition shadow-2xs";
+  const labelClass = "block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5";
 
   // ============ EXAM LIST ============
   if (view === 'list') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-emerald-50 p-4 md:p-8">
+      <div className="min-h-screen bg-background p-4 md:p-8">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <Link href="/dashboard/teacher">
-                <button className="p-2 rounded-lg bg-white shadow hover:bg-slate-50 transition"><ChevronLeft className="w-5 h-5" /></button>
+                <button className="p-2 rounded-xl bg-card border border-border shadow-xs hover:bg-muted transition text-foreground"><ChevronLeft className="w-5 h-5" /></button>
               </Link>
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-slate-900">{t("CBT Exam Builder")}</h1>
-                <p className="text-slate-500 text-sm">{t("Select target class & department to set exams or tests for students")}</p>
+                <h1 className="text-2xl md:text-3xl font-bold text-foreground">{t("CBT Exam Builder")}</h1>
+                <p className="text-muted-foreground text-sm">{t("Select target class & department to set exams or tests for students")}</p>
               </div>
             </div>
             <button
               onClick={() => setView('create')}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition shadow-lg"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition shadow-md"
             >
               <Plus className="w-4 h-4" /> {t("New Exam")}
             </button>
@@ -411,11 +411,11 @@ export default function CBTBuilder() {
           {/* Class Selection Cards with Dropdowns */}
           <div className="mb-8 space-y-4">
             <div>
-              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <BookOpen className="w-5 h-5 text-emerald-600" />
+              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-primary" />
                 {t("Select Target Class & Department Stream")}
               </h2>
-              <p className="text-slate-500 text-xs mt-0.5">
+              <p className="text-muted-foreground text-xs mt-0.5">
                 {t("Click a class card below to drop down Science or Art stream options to configure tests or exams.")}
               </p>
             </div>
@@ -808,27 +808,27 @@ export default function CBTBuilder() {
   // ============ ADD QUESTIONS ============
   if (view === 'questions' && selectedExamId) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-emerald-50 p-4 md:p-8">
+      <div className="min-h-screen bg-background p-4 md:p-8">
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <button onClick={() => setView('list')} className="p-2 rounded-lg bg-white shadow hover:bg-slate-50 transition"><ChevronLeft className="w-5 h-5" /></button>
+              <button onClick={() => setView('list')} className="p-2 rounded-xl bg-card border border-border shadow-xs hover:bg-muted transition text-foreground"><ChevronLeft className="w-5 h-5" /></button>
               <div>
-                <h1 className="text-xl font-bold text-slate-900">{t("Add Questions")}</h1>
-                <p className="text-sm text-slate-500">{questions.length} question(s) added so far</p>
+                <h1 className="text-xl font-bold text-foreground">{t("Add Questions")}</h1>
+                <p className="text-sm text-muted-foreground">{questions.length} question(s) added so far</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowBulkModal(true)}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200 hover:bg-emerald-100 transition text-xs"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary/10 text-primary font-bold border border-primary/20 hover:bg-primary/15 transition text-xs"
               >
                 📥 Bulk CSV Import
               </button>
               {questions.length > 0 && (
                 <button
                   onClick={handleSubmitForApproval}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition shadow-lg text-xs"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition shadow-md text-xs"
                 >
                   <Send className="w-4 h-4" /> Submit for Approval
                 </button>
@@ -839,29 +839,29 @@ export default function CBTBuilder() {
           {/* Bulk CSV Modal */}
           {showBulkModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in">
-              <div className="bg-white rounded-2xl p-6 max-w-xl w-full border border-slate-200 shadow-2xl space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
+              <div className="bg-card rounded-2xl p-6 max-w-xl w-full border border-border shadow-2xl space-y-4">
+                <div className="flex items-center justify-between border-b border-border pb-3">
+                  <h3 className="font-bold text-base text-foreground flex items-center gap-2">
                     📥 {t("Bulk Import Questions via CSV")}
                   </h3>
-                  <button onClick={() => setShowBulkModal(false)} className="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+                  <button onClick={() => setShowBulkModal(false)} className="text-muted-foreground hover:text-foreground font-bold">✕</button>
                 </div>
-                <div className="space-y-2 text-xs text-slate-600">
+                <div className="space-y-2 text-xs text-muted-foreground">
                   <p className="font-medium">{t("Paste CSV content below (one line per question):")}</p>
-                  <p className="bg-slate-50 p-2.5 rounded-lg border border-slate-200 font-mono text-[10px] text-slate-500">
+                  <p className="bg-muted/50 p-2.5 rounded-lg border border-border font-mono text-[10px] text-muted-foreground">
                     {t("question_text, option_a, option_b, option_c, option_d, correct_option, points, explanation, image_url")}
                   </p>
                   <textarea
                     rows={8}
-                    className="w-full border border-slate-200 rounded-xl p-3 text-xs font-mono bg-slate-50 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    className="w-full border border-input rounded-xl p-3 text-xs font-mono bg-card text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none"
                     value={bulkCsvText}
                     onChange={e => setBulkCsvText(e.target.value)}
                     placeholder={t("What is 2 + 2?, 3, 4, 5, 6, B, 1, Basic addition, https://...\nWhat is H2O?, Hydrogen, Oxygen, Water, Carbon, C, 1, Water molecule, ")}
                   />
                 </div>
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-                  <button onClick={() => setShowBulkModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">{t("Cancel")}</button>
-                  <button onClick={handleBulkCSVImport} disabled={!bulkCsvText.trim()} className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition disabled:opacity-50">
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+                  <button onClick={() => setShowBulkModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:bg-muted">{t("Cancel")}</button>
+                  <button onClick={handleBulkCSVImport} disabled={!bulkCsvText.trim()} className="px-5 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs shadow-md transition disabled:opacity-50">
                     {t("Parse & Import Questions")}
                   </button>
                 </div>
@@ -873,20 +873,20 @@ export default function CBTBuilder() {
           {questions.length > 0 && (
             <div className="space-y-3 mb-6">
               {questions.map((q: any, i: number) => (
-                <div key={q.id} className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm">
+                <div key={q.id} className="bg-card rounded-xl border border-border p-4 shadow-sm">
                   <div className="flex items-start gap-3">
-                    <span className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold shrink-0">{i + 1}</span>
+                    <span className="w-7 h-7 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center text-xs font-bold shrink-0">{i + 1}</span>
                     <div className="flex-1 space-y-2">
-                      <p className="font-medium text-slate-800 text-sm">{q.question_text}</p>
+                      <p className="font-medium text-foreground text-sm">{q.question_text}</p>
                       <div className="grid grid-cols-2 gap-1.5 text-xs">
                         {['A', 'B', 'C', 'D'].map(opt => (
-                          <span key={opt} className={`px-2 py-1 rounded-lg ${q.correct_option === opt ? 'bg-green-100 text-green-700 font-semibold' : 'bg-slate-50 text-slate-500'}`}>
+                          <span key={opt} className={`px-2 py-1 rounded-lg ${q.correct_option === opt ? 'bg-primary/15 text-primary font-bold border border-primary/20' : 'bg-muted/50 text-muted-foreground'}`}>
                             {opt}. {opt === 'A' ? q.option_a : opt === 'B' ? q.option_b : opt === 'C' ? q.option_c : q.option_d}
                           </span>
                         ))}
                       </div>
                       {q.explanation && (
-                        <p className="text-[11px] text-emerald-700 bg-emerald-50 p-2 rounded-lg border border-emerald-100 flex items-center gap-1.5">
+                        <p className="text-[11px] text-primary bg-primary/5 p-2 rounded-lg border border-primary/15 flex items-center gap-1.5">
                           <Lightbulb className="w-3.5 h-3.5 text-amber-500 shrink-0" /> <strong>{t("Explanation:")}</strong> {q.explanation}
                         </p>
                       )}
@@ -898,8 +898,8 @@ export default function CBTBuilder() {
           )}
 
             {/* New Question Form */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-dashed border-emerald-200">
-            <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2"><Plus className="w-5 h-5 text-emerald-600" /> {t("Add Question")} #{questions.length + 1}</h3>
+          <div className="bg-card rounded-2xl shadow-sm p-6 border-2 border-dashed border-primary/30">
+            <h3 className="font-bold text-foreground mb-4 flex items-center gap-2"><Plus className="w-5 h-5 text-primary" /> {t("Add Question")} #{questions.length + 1}</h3>
             <div className="space-y-3">
               <div><label className={labelClass}>{t("Question Text")}</label><textarea className={inputClass} rows={2} value={newQuestion.question_text} onChange={e => setNewQuestion({...newQuestion, question_text: e.target.value})} placeholder={t("Enter the question...")} /></div>
               <div className="grid grid-cols-2 gap-3">
@@ -927,7 +927,7 @@ export default function CBTBuilder() {
               <button
                 onClick={handleAddQuestion}
                 disabled={!newQuestion.question_text || !newQuestion.option_a || !newQuestion.option_b}
-                className="w-full h-11 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full h-11 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-md cursor-pointer"
               >
                 <Plus className="w-4 h-4" /> {t("Add Question")}
               </button>
@@ -941,47 +941,47 @@ export default function CBTBuilder() {
   // ============ VIEW STUDENT ATTEMPTS ============
   if (view === 'attempts' && selectedExamId) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-emerald-50 p-4 md:p-8">
+      <div className="min-h-screen bg-background p-4 md:p-8">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-3 mb-8">
-            <button onClick={() => setView('list')} className="p-2 rounded-lg bg-white shadow hover:bg-slate-50 transition"><ChevronLeft className="w-5 h-5" /></button>
+            <button onClick={() => setView('list')} className="p-2 rounded-xl bg-card border border-border shadow-xs hover:bg-muted transition text-foreground"><ChevronLeft className="w-5 h-5" /></button>
             <div>
-              <h1 className="text-2xl font-bold text-slate-900">{t("Student Results")}</h1>
-              <p className="text-slate-500 text-sm">{attempts.length} submission(s)</p>
+              <h1 className="text-2xl font-bold text-foreground">{t("Student Results")}</h1>
+              <p className="text-muted-foreground text-sm">{attempts.length} submission(s)</p>
             </div>
           </div>
 
           {attempts.length === 0 ? (
-            <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
-              <Users className="w-16 h-16 mx-auto text-slate-300 mb-4" />
-              <h3 className="text-xl font-semibold text-slate-700">{t("No Submissions Yet")}</h3>
-              <p className="text-slate-400">{t("Students haven't taken this exam yet.")}</p>
+            <div className="bg-card rounded-2xl shadow-sm border border-border p-12 text-center">
+              <Users className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-xl font-semibold text-foreground">{t("No Submissions Yet")}</h3>
+              <p className="text-muted-foreground">{t("Students haven't taken this exam yet.")}</p>
             </div>
           ) : (
             <div className="space-y-3">
               {attempts.map(a => (
-                <div key={a.id} className="bg-white rounded-2xl shadow-lg border border-slate-100 p-5 flex items-center justify-between">
+                <div key={a.id} className="bg-card rounded-2xl shadow-sm border border-border p-5 flex items-center justify-between">
                   <div>
-                    <h4 className="font-bold text-slate-900">{a.student_name}</h4>
-                    <p className="text-sm text-slate-500">{t("Score:")} {a.score}/{a.total_possible} ({a.percentage}%) {a.auto_submitted && '⏱ Auto-submitted'}</p>
+                    <h4 className="font-bold text-foreground">{a.student_name}</h4>
+                    <p className="text-sm text-muted-foreground">{t("Score:")} {a.score}/{a.total_possible} ({a.percentage}%) {a.auto_submitted && '⏱ Auto-submitted'}</p>
                   </div>
                   <div className="flex gap-2">
                     <button
                       onClick={() => { fetchAttemptDetail(selectedExamId, a.id); setView('attempt-detail'); }}
-                      className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-600 hover:bg-blue-100 transition flex items-center gap-1"
+                      className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-primary/10 text-primary hover:bg-primary/20 transition flex items-center gap-1"
                     >
                       <Eye className="w-3.5 h-3.5" /> Review
                     </button>
                     {!a.gradebook_synced && (
                       <button
                         onClick={() => handleSyncGradebook(a.id)}
-                        className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-50 text-green-600 hover:bg-green-100 transition flex items-center gap-1"
+                        className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition flex items-center gap-1"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" /> Sync to Gradebook
                       </button>
                     )}
                     {a.gradebook_synced && (
-                      <span className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-400">✓ Synced</span>
+                      <span className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-muted text-muted-foreground">✓ Synced</span>
                     )}
                   </div>
                 </div>
@@ -997,25 +997,25 @@ export default function CBTBuilder() {
   if (view === 'attempt-detail' && attemptDetail) {
     const { attempt, answers: answersList } = attemptDetail;
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-emerald-50 p-4 md:p-8">
+      <div className="min-h-screen bg-background p-4 md:p-8">
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center gap-3 mb-6">
-            <button onClick={() => setView('attempts')} className="p-2 rounded-lg bg-white shadow hover:bg-slate-50 transition"><ChevronLeft className="w-5 h-5" /></button>
+            <button onClick={() => setView('attempts')} className="p-2 rounded-xl bg-card border border-border shadow-xs hover:bg-muted transition text-foreground"><ChevronLeft className="w-5 h-5" /></button>
             <div>
-              <h1 className="text-xl font-bold text-slate-900">{attempt.student_name}'s Submission</h1>
-              <p className="text-slate-500 text-sm">{t("Score:")} {attempt.score}/{attempt.total_possible} ({attempt.percentage}%)</p>
+              <h1 className="text-xl font-bold text-foreground">{attempt.student_name}'s Submission</h1>
+              <p className="text-muted-foreground text-sm">{t("Score:")} {attempt.score}/{attempt.total_possible} ({attempt.percentage}%)</p>
             </div>
           </div>
           <div className="space-y-3">
             {answersList.map((a: any) => (
-              <div key={a.question_order} className={`bg-white rounded-xl p-4 border-l-4 shadow-sm ${a.is_correct ? 'border-green-500' : 'border-red-400'}`}>
-                <p className="font-medium text-slate-800 text-sm mb-2"><span className="text-slate-400 mr-1">Q{a.question_order}.</span> {a.question_text}</p>
+              <div key={a.question_order} className={`bg-card rounded-xl p-4 border-l-4 shadow-sm border border-border ${a.is_correct ? 'border-l-emerald-500' : 'border-l-red-500'}`}>
+                <p className="font-medium text-foreground text-sm mb-2"><span className="text-muted-foreground mr-1">Q{a.question_order}.</span> {a.question_text}</p>
                 <div className="grid grid-cols-2 gap-1.5 text-xs">
                   {['A', 'B', 'C', 'D'].map((opt: string) => {
                     const isCorrect = a.correct_option === opt;
                     const isSelected = a.selected_option === opt;
                     return (
-                      <span key={opt} className={`px-2 py-1 rounded-lg ${isCorrect ? 'bg-green-100 text-green-700 font-bold' : isSelected && !isCorrect ? 'bg-red-100 text-red-600 line-through' : 'bg-slate-50 text-slate-500'}`}>
+                      <span key={opt} className={`px-2 py-1 rounded-lg ${isCorrect ? 'bg-emerald-100 text-emerald-800 font-bold' : isSelected && !isCorrect ? 'bg-red-100 text-red-600 line-through' : 'bg-muted text-muted-foreground'}`}>
                         {opt}. {opt === 'A' ? a.option_a : opt === 'B' ? a.option_b : opt === 'C' ? a.option_c : a.option_d} {isCorrect && '✓'} {isSelected && !isCorrect && '✗'}
                       </span>
                     );
