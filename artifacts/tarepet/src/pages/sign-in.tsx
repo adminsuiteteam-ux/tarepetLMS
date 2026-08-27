@@ -129,10 +129,11 @@ export default function SignIn() {
       if (isUniversalCode || !err.response) {
         const lowerEmail = email.toLowerCase().trim();
         const storedTeachers = getStoredTeachers();
+        const rawEntered = email.trim();
         const matchedTeacher = storedTeachers.find(t => {
-          const tEmail = (t.email || '').toLowerCase();
-          const tStaffId = (t.staffId || '').toLowerCase();
-          return (tEmail && tEmail === lowerEmail) || (tStaffId && tStaffId === lowerEmail) || lowerEmail.includes(tStaffId);
+          const tEmail = (t.email || '').toLowerCase().trim();
+          const tStaffId = (t.staffId || '').trim();
+          return (tEmail && lowerEmail === tEmail) || (tStaffId && rawEntered === tStaffId);
         });
 
         const role = (pendingRole || (lowerEmail.includes('admin') ? 'ADMIN' : (matchedTeacher ? 'TEACHER' : 'TEACHER'))).toUpperCase();
@@ -302,27 +303,13 @@ export default function SignIn() {
     let storedTeachers = getStoredTeachers();
     const findTeacher = (list: typeof storedTeachers) => {
       return list.find(t => {
-        const tEmail = (t.email || '').toLowerCase();
-        const tStaffId = (t.staffId || '').toLowerCase();
-        const tName = (t.name || '').toLowerCase();
-        const tPhone = (t.phone || '').replace(/[^0-9]/g, '');
-        const cleanPhoneInput = rawInput.replace(/[^0-9]/g, '');
-        const cleanStaffId = tStaffId.replace(/[^a-z0-9]/g, '');
-        const cleanTEmail = tEmail.replace(/[^a-z0-9]/g, '');
+        const tEmail = (t.email || '').toLowerCase().trim();
+        const tStaffId = (t.staffId || '').trim();
 
-        // Email domain interchangeable (@tarepet.com / @tarepet.edu.ng)
-        const baseEmail = tEmail.split('@')[0];
-        const inputBaseEmail = lowerInput.split('@')[0];
+        const matchesEmail = Boolean(tEmail && lowerInput === tEmail);
+        const matchesStaffId = Boolean(tStaffId && rawInput === tStaffId);
 
-        return (
-          (tEmail && tEmail === lowerInput) ||
-          (tStaffId && tStaffId === lowerInput) ||
-          (baseEmail && inputBaseEmail && baseEmail === inputBaseEmail) ||
-          (cleanInput.length > 2 && (cleanInput === cleanStaffId || cleanInput === cleanTEmail)) ||
-          (cleanPhoneInput.length >= 10 && tPhone && (tPhone === cleanPhoneInput || tPhone.endsWith(cleanPhoneInput))) ||
-          (lowerInput.length > 3 && tName.includes(lowerInput)) ||
-          String(t.id).toLowerCase() === lowerInput
-        );
+        return matchesEmail || matchesStaffId;
       });
     };
 
@@ -337,21 +324,13 @@ export default function SignIn() {
       const expectedPassword = matchedTeacher.password || matchedTeacher.staffId;
       const isDefaultPassword = rawPassword === matchedTeacher.staffId;
 
-      const cleanPass = rawPassword.replace(/[^a-z0-9]/gi, '').toLowerCase();
-      const cleanStaffId = (matchedTeacher.staffId || '').replace(/[^a-z0-9]/gi, '').toLowerCase();
-      const cleanExpected = (expectedPassword || '').replace(/[^a-z0-9]/gi, '').toLowerCase();
-      const isUniversalTeacherPass = ['teacher', 'teacher123', 'teacher@123', 'tarepet', 'tarepet2026', 'tarepet@2026', 'admin2026', 'password', 'password123', '123456', '000000'].includes(cleanPass);
-
       const isTeacherPasswordValid =
         rawPassword === expectedPassword ||
-        rawPassword === matchedTeacher.staffId ||
-        cleanPass === cleanStaffId ||
-        cleanPass === cleanExpected ||
-        isUniversalTeacherPass;
+        rawPassword === matchedTeacher.staffId;
 
       if (!isTeacherPasswordValid) {
         recordLoginActivity(matchedTeacher.email || rawInput, 'TEACHER', 'FAILED_ATTEMPT');
-        setError(`Incorrect password for ${matchedTeacher.name}. (Default password is your Staff ID: ${matchedTeacher.staffId})`);
+        setError('Incorrect password. Please enter your valid account password or assigned Staff ID.');
         setIsLoading(false);
         return;
       }
