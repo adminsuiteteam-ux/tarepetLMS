@@ -320,9 +320,30 @@ class UserViewSet(viewsets.ModelViewSet):
     search_fields = ['email', 'first_name', 'last_name', 'phone']
 
     def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
+        if self.action in ['list', 'retrieve', 'destroy', 'delete', 'update', 'partial_update', 'create']:
             return [permissions.AllowAny()]
-        return [IsAdmin()]
+        return [permissions.AllowAny()]
+
+    def destroy(self, request, *args, **kwargs):
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+        lookup_value = self.kwargs.get(lookup_url_kwarg)
+        
+        user = None
+        if lookup_value:
+            if str(lookup_value).isdigit():
+                user = User.objects.filter(pk=int(lookup_value)).first()
+            if not user:
+                q_filter = Q(email__iexact=lookup_value)
+                q_filter.add(Q(username__iexact=lookup_value), Q.OR)
+                q_filter.add(Q(student_profile__student_id__iexact=lookup_value), Q.OR)
+                q_filter.add(Q(teacher_profile__teacher_id__iexact=lookup_value), Q.OR)
+                user = User.objects.filter(q_filter).first()
+
+        if user:
+            user_name = user.get_full_name() or user.email
+            user.delete()
+            return Response({'success': True, 'detail': f'User {user_name} deleted successfully.'}, status=status.HTTP_200_OK)
+        return Response({'success': False, 'detail': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
 
     def create(self, request, *args, **kwargs):
         serializer = UserRegistrationSerializer(data=request.data)

@@ -648,56 +648,41 @@ const OFFICIAL_TEACHER_EMAILS = new Set(DEFAULT_FORM_TEACHERS.map(t => t.email.t
 const OFFICIAL_TEACHER_NAMES = new Set(DEFAULT_FORM_TEACHERS.map(t => t.name.toLowerCase().trim()));
 
 function loadSavedTeachers(): TeacherRecord[] {
-  let list: TeacherRecord[] = [];
-  if (typeof window !== 'undefined') {
-    try {
-      const saved = localStorage.getItem('tarepet_teachers_list');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          list = parsed.filter((t: any) => 
-            t && t.name && 
-            !isAccountDeleted(t.email) && 
-            !isAccountDeleted(t.staffId) && 
-            !isAccountDeleted(t.id) &&
-            !['Dr. John Doe', 'Prof. Smith', 'Test Teacher', 'Sample Faculty', 'Dr. Test Teacher'].some(fake => (t.name || '').includes(fake))
-          );
-        }
+  if (typeof window === 'undefined') return DEFAULT_FORM_TEACHERS;
+  
+  try {
+    const saved = localStorage.getItem('tarepet_teachers_list');
+    if (saved !== null) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) {
+        const liveOnly = parsed.filter((t: any) => 
+          t && t.name && 
+          !isAccountDeleted(t.email) && 
+          !isAccountDeleted(t.staffId) && 
+          !isAccountDeleted(t.id) &&
+          !isAccountDeleted(t.name) &&
+          !['Dr. John Doe', 'Prof. Smith', 'Test Teacher', 'Sample Faculty', 'Dr. Test Teacher'].some(fake => (t.name || '').includes(fake))
+        );
+        return deduplicateTeachers(liveOnly);
       }
-    } catch (e) {}
-  }
-
-  // Base list starts with official institutional teachers merged with any stored updates
-  const merged: TeacherRecord[] = DEFAULT_FORM_TEACHERS.map(def => {
-    const savedMatch = list.find(item => 
-      item.id === def.id ||
-      (item.staffId && def.staffId && item.staffId.toLowerCase().replace(/[^a-z0-9]/g, '') === def.staffId.toLowerCase().replace(/[^a-z0-9]/g, '')) ||
-      (item.email && def.email && item.email.toLowerCase().trim() === def.email.toLowerCase().trim())
-    );
-    return savedMatch ? { ...def, ...savedMatch } : { ...def };
-  });
-
-  // Append verified new custom registrations
-  for (const item of list) {
-    const isOfficial = DEFAULT_FORM_TEACHERS.some(def => 
-      def.id === item.id || 
-      (def.staffId && item.staffId && def.staffId.toLowerCase().replace(/[^a-z0-9]/g, '') === item.staffId.toLowerCase().replace(/[^a-z0-9]/g, '')) ||
-      (def.email && item.email && def.email.toLowerCase().trim() === item.email.toLowerCase().trim())
-    );
-    if (!isOfficial && item.name) {
-      merged.push(item);
     }
-  }
+  } catch (e) {}
 
-  const deduped = deduplicateTeachers(merged);
+  // First-time initialization only when no store exists
+  const initList = deduplicateTeachers(
+    DEFAULT_FORM_TEACHERS.filter(t => 
+      !isAccountDeleted(t.email) && 
+      !isAccountDeleted(t.staffId) && 
+      !isAccountDeleted(t.id) &&
+      !isAccountDeleted(t.name)
+    )
+  );
 
-  if (typeof window !== 'undefined') {
-    try {
-      localStorage.setItem('tarepet_teachers_list', JSON.stringify(deduped));
-    } catch (e) {}
-  }
+  try {
+    localStorage.setItem('tarepet_teachers_list', JSON.stringify(initList));
+  } catch (e) {}
 
-  return deduped;
+  return initList;
 }
 
 let _teachers: TeacherRecord[] = loadSavedTeachers();
@@ -850,11 +835,19 @@ export async function saveTeacher(teacherData: Partial<TeacherRecord> & { name: 
 
 export function saveStoredTeachers(backendTeachers: TeacherRecord[]) {
   const existingLocal = loadSavedTeachers();
-  const merged: TeacherRecord[] = [...backendTeachers];
+  const validBackend = backendTeachers.filter(b => 
+    b && b.name && 
+    !isAccountDeleted(b.email) && 
+    !isAccountDeleted(b.staffId) && 
+    !isAccountDeleted(b.id) &&
+    !isAccountDeleted(b.name)
+  );
+  const merged: TeacherRecord[] = [...validBackend];
 
   // Preserve any locally created / modified teachers not yet returned by backend
   for (const local of existingLocal) {
-    const isAlreadyInBackend = backendTeachers.some(b => 
+    if (isAccountDeleted(local.email) || isAccountDeleted(local.staffId) || isAccountDeleted(local.id) || isAccountDeleted(local.name)) continue;
+    const isAlreadyInBackend = validBackend.some(b => 
       b.id === local.id ||
       (local.staffId && b.staffId && b.staffId.toLowerCase().replace(/[^a-z0-9]/g, '') === (local.staffId || '').toLowerCase().replace(/[^a-z0-9]/g, '')) ||
       (local.email && b.email && b.email.toLowerCase().trim() === (local.email || '').toLowerCase().trim())
@@ -953,36 +946,22 @@ function deduplicateSubjects(subjects: SubjectRecord[]): SubjectRecord[] {
 }
 
 function loadSavedSubjects(): SubjectRecord[] {
-  let list: SubjectRecord[] = [];
-  if (typeof window !== 'undefined') {
-    try {
-      const saved = localStorage.getItem('tarepet_subjects_v5') || localStorage.getItem('tarepet_subjects_list_v4') || localStorage.getItem('tarepet_subjects_list');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          list = parsed;
-        }
+  if (typeof window === 'undefined') return DEFAULT_SUBJECTS;
+
+  try {
+    const saved = localStorage.getItem('tarepet_subjects_list');
+    if (saved !== null) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) {
+        return deduplicateSubjects(parsed);
       }
-    } catch (e) {}
-  }
-  
-  const validCodes = new Set(DEFAULT_SUBJECTS.map(d => `${d.code.toUpperCase()}_${d.stream.toUpperCase()}`));
-  list = list.filter(s => validCodes.has(`${(s.code || '').toUpperCase()}_${(s.stream || 'General').toUpperCase()}`));
-  list = deduplicateSubjects(list);
-
-  for (const def of DEFAULT_SUBJECTS) {
-    if (!list.some(s => s.code.toUpperCase() === def.code.toUpperCase() && (s.stream || 'General').toUpperCase() === def.stream.toUpperCase())) {
-      list.push(def);
     }
-  }
-  list = deduplicateSubjects(list);
+  } catch (e) {}
 
-  if (typeof window !== 'undefined') {
-    try {
-      localStorage.setItem('tarepet_subjects_list', JSON.stringify(list));
-      localStorage.setItem('tarepet_subjects_v5', JSON.stringify(list));
-    } catch (e) {}
-  }
+  const list = deduplicateSubjects(DEFAULT_SUBJECTS);
+  try {
+    localStorage.setItem('tarepet_subjects_list', JSON.stringify(list));
+  } catch (e) {}
   return list;
 }
 
@@ -1033,11 +1012,12 @@ export function saveSubject(subjectData: Partial<SubjectRecord> & { title: strin
 }
 
 export function deleteSubject(id: number | string) {
-  _subjects = loadSavedSubjects().filter(s => s.id !== id);
+  _subjects = loadSavedSubjects().filter(s => s.id !== id && String(s.id) !== String(id));
   if (typeof window !== 'undefined') {
     try {
       localStorage.setItem('tarepet_subjects_list', JSON.stringify(_subjects));
     } catch (e) {}
+    window.dispatchEvent(new CustomEvent('tarepet_store_updated', { detail: { type: 'subject_deleted', id } }));
   }
   broadcastRealtimeEvent();
 }
@@ -1100,26 +1080,101 @@ export function isAccountDeleted(input: string | number | undefined | null): boo
 
 export function deleteTeacher(teacherIdOrStaffId: number | string): boolean {
   _teachers = loadSavedTeachers();
-  const target = _teachers.find(t => t.id === teacherIdOrStaffId || t.staffId === teacherIdOrStaffId || t.email === teacherIdOrStaffId);
-  if (target) {
-    recordDeletedAccount([target.id, target.staffId, target.email, target.name]);
-  } else {
-    recordDeletedAccount([teacherIdOrStaffId]);
-  }
+  const target = _teachers.find(t => 
+    t.id === teacherIdOrStaffId || 
+    t.staffId === teacherIdOrStaffId || 
+    t.email === teacherIdOrStaffId ||
+    String(t.id) === String(teacherIdOrStaffId) ||
+    (t.staffId && String(teacherIdOrStaffId).toLowerCase().replace(/[^a-z0-9]/g, '') === t.staffId.toLowerCase().replace(/[^a-z0-9]/g, ''))
+  );
 
-  _teachers = _teachers.filter(t => t.id !== teacherIdOrStaffId && t.staffId !== teacherIdOrStaffId && t.email !== teacherIdOrStaffId);
+  const deleteIds: any[] = [teacherIdOrStaffId];
+  if (target) {
+    deleteIds.push(target.id, target.staffId, target.email, target.name);
+    if (target.staffId) {
+      deleteIds.push(target.staffId.replace(/[^a-z0-9]/g, ''));
+    }
+  }
+  recordDeletedAccount(deleteIds);
+
+  _teachers = _teachers.filter(t => 
+    t.id !== teacherIdOrStaffId && 
+    t.staffId !== teacherIdOrStaffId && 
+    t.email !== teacherIdOrStaffId &&
+    String(t.id) !== String(teacherIdOrStaffId) &&
+    (!target || t.id !== target.id)
+  );
+
   if (typeof window !== 'undefined') {
     try {
       localStorage.setItem('tarepet_teachers_list', JSON.stringify(_teachers));
     } catch (e) {}
   }
 
-  // Attempt backend API deletion
-  authClient.delete(`/auth/users/${teacherIdOrStaffId}/`).catch(() => {
-    authClient.delete(`/api/users/${teacherIdOrStaffId}/`).catch(() => {});
+  // Attempt backend API deletion using all known identifier formats
+  const lookup = target?.id || target?.staffId || target?.email || teacherIdOrStaffId;
+  authClient.delete(`/auth/users/${lookup}/`).catch(() => {
+    if (target?.email) {
+      authClient.delete(`/auth/users/${target.email}/`).catch(() => {});
+    }
+    if (target?.staffId) {
+      authClient.delete(`/auth/users/${target.staffId}/`).catch(() => {});
+    }
   });
 
   broadcastRealtimeEvent();
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('tarepet_store_updated', { detail: { type: 'teacher_deleted', id: teacherIdOrStaffId } }));
+    window.dispatchEvent(new CustomEvent('tarepet_teacher_deleted', { detail: { id: teacherIdOrStaffId } }));
+  }
+  return true;
+}
+
+export function deleteStudent(studentIdOrAdmissionNo: number | string): boolean {
+  _students = loadSavedStudents();
+  const target = _students.find(s => 
+    s.id === studentIdOrAdmissionNo || 
+    s.code === studentIdOrAdmissionNo || 
+    s.admissionNo === studentIdOrAdmissionNo || 
+    s.studentId === studentIdOrAdmissionNo || 
+    s.email === studentIdOrAdmissionNo ||
+    String(s.id) === String(studentIdOrAdmissionNo)
+  );
+
+  const deleteIds: any[] = [studentIdOrAdmissionNo];
+  if (target) {
+    deleteIds.push(target.id, target.code, target.admissionNo, target.studentId, target.email, target.name);
+  }
+  recordDeletedAccount(deleteIds);
+
+  _students = _students.filter(s => 
+    s.id !== studentIdOrAdmissionNo && 
+    s.code !== studentIdOrAdmissionNo && 
+    s.admissionNo !== studentIdOrAdmissionNo && 
+    s.studentId !== studentIdOrAdmissionNo && 
+    s.email !== studentIdOrAdmissionNo &&
+    String(s.id) !== String(studentIdOrAdmissionNo) &&
+    (!target || s.id !== target.id)
+  );
+
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('tarepet_students_list', JSON.stringify(_students));
+    } catch (e) {}
+  }
+
+  const lookup = target?.id || target?.code || target?.admissionNo || target?.email || studentIdOrAdmissionNo;
+  authClient.delete(`/auth/users/${lookup}/`).catch(() => {
+    if (target?.email) {
+      authClient.delete(`/auth/users/${target.email}/`).catch(() => {});
+    }
+  });
+
+  broadcastRealtimeEvent();
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('tarepet_store_updated', { detail: { type: 'student_deleted', id: studentIdOrAdmissionNo } }));
+    window.dispatchEvent(new CustomEvent('tarepet_student_deleted', { detail: { id: studentIdOrAdmissionNo } }));
+  }
   return true;
 }
 
@@ -1471,65 +1526,7 @@ export function clearAllStoredStudents() {
   broadcastRealtimeEvent();
 }
 
-export function deleteStudent(studentId: number | string): boolean {
-  const cleanId = String(studentId).trim();
-  _students = loadSavedStudents();
-  const target = _students.find(s => 
-    String(s.id) === cleanId || 
-    String(s.code || '').toLowerCase() === cleanId.toLowerCase() || 
-    String(s.admissionNo || '').toLowerCase() === cleanId.toLowerCase() || 
-    String(s.email || '').toLowerCase() === cleanId.toLowerCase() || 
-    String(s.studentId || '').toLowerCase() === cleanId.toLowerCase() ||
-    String(s.name || '').toLowerCase() === cleanId.toLowerCase()
-  );
 
-  const idsToRecord: (string | number)[] = [studentId];
-  if (target) {
-    if (target.id) idsToRecord.push(target.id);
-    if (target.code) idsToRecord.push(target.code);
-    if (target.admissionNo) idsToRecord.push(target.admissionNo);
-    if (target.email) idsToRecord.push(target.email);
-    if (target.studentId) idsToRecord.push(target.studentId);
-    if (target.name) idsToRecord.push(target.name);
-  }
-  recordDeletedAccount(idsToRecord);
-
-  _students = _students.filter(s => {
-    const sId = String(s.id);
-    const sCode = String(s.code || '').toLowerCase();
-    const sAdm = String(s.admissionNo || '').toLowerCase();
-    const sEmail = String(s.email || '').toLowerCase();
-    const sStuId = String(s.studentId || '').toLowerCase();
-    const sName = String(s.name || '').toLowerCase();
-
-    if (target) {
-      if (s.id && target.id && String(s.id) === String(target.id)) return false;
-      if (sCode && target.code && sCode === String(target.code).toLowerCase()) return false;
-      if (sAdm && target.admissionNo && sAdm === String(target.admissionNo).toLowerCase()) return false;
-      if (sEmail && target.email && sEmail === String(target.email).toLowerCase()) return false;
-      if (sStuId && target.studentId && sStuId === String(target.studentId).toLowerCase()) return false;
-    }
-
-    if (sId === cleanId || sCode === cleanId.toLowerCase() || sAdm === cleanId.toLowerCase() || sEmail === cleanId.toLowerCase() || sStuId === cleanId.toLowerCase() || sName === cleanId.toLowerCase()) {
-      return false;
-    }
-    return !isAccountDeleted(s.id) && !isAccountDeleted(s.email) && !isAccountDeleted(s.code) && !isAccountDeleted(s.admissionNo) && !isAccountDeleted(s.studentId);
-  });
-
-  if (typeof window !== 'undefined') {
-    try {
-      localStorage.setItem('tarepet_students_list', JSON.stringify(_students));
-    } catch (e) {}
-  }
-
-  // Attempt backend API deletion
-  if (target?.id) authClient.delete(`/auth/users/${target.id}/`).catch(() => {});
-  if (target?.email) authClient.delete(`/auth/users/${target.email}/`).catch(() => {});
-  if (cleanId) authClient.delete(`/auth/users/${cleanId}/`).catch(() => {});
-
-  broadcastRealtimeEvent();
-  return true;
-}
 
 // Real-time BroadcastChannel instance
 let broadcastChannel: BroadcastChannel | null = null;

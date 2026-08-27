@@ -2662,39 +2662,47 @@ export default function AdminDashboard() {
       if (teacherRes.status === 'fulfilled' && teacherRes.value.data) {
         const res = teacherRes.value;
         const users = Array.isArray(res.data?.results) ? res.data.results : Array.isArray(res.data) ? res.data : [];
-        const liveTeachers = users.map((u: any) => {
-          const prof = u.profile || {};
-          const subs = Array.isArray(prof.subjects_taught) ? prof.subjects_taught : [];
-          const spec = typeof prof.specialization === 'string' && prof.specialization
-            ? prof.specialization
-            : (subs.length > 0 ? (typeof subs[0] === 'string' ? subs[0] : subs[0].name) : '');
+        const liveTeachers = users
+          .filter((u: any) => {
+            const email = (u.email || '').toLowerCase();
+            const sId = (u.teacher_id || u.profile?.teacher_id || '').toLowerCase();
+            const uName = `${u.first_name || ''} ${u.last_name || ''}`.trim().toLowerCase();
+            const isDeleted = isAccountDeleted(email) || isAccountDeleted(u.id) || isAccountDeleted(sId) || isAccountDeleted(uName);
+            return !isDeleted;
+          })
+          .map((u: any) => {
+            const prof = u.profile || {};
+            const subs = Array.isArray(prof.subjects_taught) ? prof.subjects_taught : [];
+            const spec = typeof prof.specialization === 'string' && prof.specialization
+              ? prof.specialization
+              : (subs.length > 0 ? (typeof subs[0] === 'string' ? subs[0] : subs[0].name) : '');
 
-          return {
-            id: u.id,
-            staffId: prof.teacher_id || u.teacher_id || `TMS/TCH/${String(u.id).padStart(4, '0')}`,
-            name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
-            email: u.email,
-            phone: u.phone || prof.phone || '',
-            gender: prof.gender || '',
-            department: prof.department || '',
-            specialization: spec,
-            qualification: prof.qualifications || '',
-            status: u.is_active ? 'Active' : 'Inactive',
-            joined: prof.hire_date || (u.date_joined ? u.date_joined.split('T')[0] : ''),
-            formTeacherOf: prof.form_teacher_of || 'None',
-            subjectsAssigned: subs,
-            classesCount: subs.length || 0,
-            studentsCount: prof.students_count ?? (prof.studentsCount ?? 0),
-            address: prof.address || '',
-            dob: prof.dob || '',
-            salary: prof.salary || '',
-            bankName: prof.bank_name || '',
-            accountNumber: prof.account_number || '',
-            cbtExamsCount: 0,
-            attendanceRate: prof.attendance_rate || prof.attendanceRate || '0%',
-            profileImage: prof.profile_image || u.profile_image || (u as any).profileImage || '',
-          };
-        });
+            return {
+              id: u.id,
+              staffId: prof.teacher_id || u.teacher_id || `TMS/TCH/${String(u.id).padStart(4, '0')}`,
+              name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
+              email: u.email,
+              phone: u.phone || prof.phone || '',
+              gender: prof.gender || '',
+              department: prof.department || '',
+              specialization: spec,
+              qualification: prof.qualifications || '',
+              status: u.is_active ? 'Active' : 'Inactive',
+              joined: prof.hire_date || (u.date_joined ? u.date_joined.split('T')[0] : ''),
+              formTeacherOf: prof.form_teacher_of || 'None',
+              subjectsAssigned: subs,
+              classesCount: subs.length || 0,
+              studentsCount: prof.students_count ?? (prof.studentsCount ?? 0),
+              address: prof.address || '',
+              dob: prof.dob || '',
+              salary: prof.salary || '',
+              bankName: prof.bank_name || '',
+              accountNumber: prof.account_number || '',
+              cbtExamsCount: 0,
+              attendanceRate: prof.attendance_rate || prof.attendanceRate || '0%',
+              profileImage: prof.profile_image || u.profile_image || (u as any).profileImage || '',
+            };
+          });
 
         if (liveTeachers.length > 0) {
           const mergedTeachers = saveStoredTeachers(liveTeachers);
