@@ -733,6 +733,8 @@ export async function saveTeacher(teacherData: Partial<TeacherRecord> & { name: 
     password: teacherData.password !== undefined ? teacherData.password : (existing?.password || staffId),
   };
 
+  unmarkDeletedAccount([updatedTeacher.id, updatedTeacher.staffId, updatedTeacher.email, updatedTeacher.name]);
+
   // Real-time async sync to Django backend database
   const tNames = (updatedTeacher.name || '').trim().split(' ');
   const tPayload = {
@@ -1063,6 +1065,30 @@ export function recordDeletedAccount(identifiers: (string | number | undefined |
   }
 }
 
+export function unmarkDeletedAccount(identifiers: any[]) {
+  const list = loadDeletedAccounts();
+  const next = new Set<string>();
+  const toRemove = new Set<string>();
+  identifiers.forEach(id => {
+    if (id !== undefined && id !== null && String(id).trim().length > 0) {
+      const val = String(id).trim().toLowerCase();
+      toRemove.add(val);
+      const clean = val.replace(/[^a-z0-9]/g, '');
+      if (clean) toRemove.add(clean);
+    }
+  });
+  list.forEach(item => {
+    if (!toRemove.has(item.toLowerCase())) {
+      next.add(item);
+    }
+  });
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('tarepet_deleted_accounts', JSON.stringify(Array.from(next)));
+    } catch {}
+  }
+}
+
 export function isAccountDeleted(input: string | number | undefined | null): boolean {
   if (input === undefined || input === null) return false;
   const list = loadDeletedAccounts();
@@ -1111,16 +1137,15 @@ export function deleteTeacher(teacherIdOrStaffId: number | string): boolean {
     } catch (e) {}
   }
 
-  // Attempt backend API deletion using all known identifier formats
+  // Attempt backend API deletion via dedicated delete-by-identifier and standard pk route
   const lookup = target?.id || target?.staffId || target?.email || teacherIdOrStaffId;
-  authClient.delete(`/auth/users/${lookup}/`).catch(() => {
-    if (target?.email) {
-      authClient.delete(`/auth/users/${target.email}/`).catch(() => {});
-    }
-    if (target?.staffId) {
-      authClient.delete(`/auth/users/${target.staffId}/`).catch(() => {});
-    }
-  });
+  authClient.post('/auth/users/delete-by-identifier/', { identifier: lookup }).catch(() => {});
+  if (target?.id && typeof target.id === 'number') {
+    authClient.delete(`/auth/users/${target.id}/`).catch(() => {});
+  }
+  if (target?.email) {
+    authClient.post('/auth/users/delete-by-identifier/', { identifier: target.email }).catch(() => {});
+  }
 
   broadcastRealtimeEvent();
   if (typeof window !== 'undefined') {
@@ -1163,12 +1188,12 @@ export function deleteStudent(studentIdOrAdmissionNo: number | string): boolean 
     } catch (e) {}
   }
 
+  // Attempt backend API deletion via dedicated delete-by-identifier and standard pk route
   const lookup = target?.id || target?.code || target?.admissionNo || target?.email || studentIdOrAdmissionNo;
-  authClient.delete(`/auth/users/${lookup}/`).catch(() => {
-    if (target?.email) {
-      authClient.delete(`/auth/users/${target.email}/`).catch(() => {});
-    }
-  });
+  authClient.post('/auth/users/delete-by-identifier/', { identifier: lookup }).catch(() => {});
+  if (target?.id && typeof target.id === 'number') {
+    authClient.delete(`/auth/users/${target.id}/`).catch(() => {});
+  }
 
   broadcastRealtimeEvent();
   if (typeof window !== 'undefined') {
@@ -1345,45 +1370,7 @@ export async function syncTeachersWithBackend(): Promise<TeacherRecord[]> {
         });
 
       if (fetched.length > 0) {
-        const mergedTeachers = fetched.map(backendT => {
-          const localMatch = _teachers.find(lt =>
-            lt.id === backendT.id ||
-            (lt.email && lt.email.toLowerCase() === backendT.email.toLowerCase()) ||
-            (lt.staffId && lt.staffId.toLowerCase() === backendT.staffId.toLowerCase())
-          );
-
-          if (localMatch) {
-            return {
-              ...backendT,
-              ...localMatch,
-              name: localMatch.name || backendT.name,
-              email: localMatch.email || backendT.email,
-              phone: localMatch.phone || backendT.phone,
-              qualification: localMatch.qualification || backendT.qualification,
-              specialization: localMatch.specialization || backendT.specialization,
-              gender: localMatch.gender || backendT.gender,
-              dob: localMatch.dob || backendT.dob,
-              address: localMatch.address || backendT.address,
-              bio: localMatch.bio || backendT.bio,
-              formTeacherOf: localMatch.formTeacherOf && localMatch.formTeacherOf !== 'None' ? localMatch.formTeacherOf : backendT.formTeacherOf,
-              department: localMatch.department || backendT.department,
-              subjectsAssigned: (Array.isArray(backendT.subjectsAssigned) && backendT.subjectsAssigned.length > 0)
-                ? backendT.subjectsAssigned
-                : (Array.isArray(localMatch.subjectsAssigned) && localMatch.subjectsAssigned.length > 0 ? localMatch.subjectsAssigned : []),
-              classesCount: (Array.isArray(backendT.subjectsAssigned) && backendT.subjectsAssigned.length > 0)
-                ? backendT.subjectsAssigned.length
-                : (Array.isArray(localMatch.subjectsAssigned) ? localMatch.subjectsAssigned.length : (localMatch.classesCount || 0)),
-              profileImage: backendT.profileImage || localMatch.profileImage || '',
-              bankName: localMatch.bankName || backendT.bankName,
-              accountNumber: localMatch.accountNumber || backendT.accountNumber,
-            };
-          }
-          return backendT;
-        });
-
-        const combined = deduplicateTeachers(mergedTeachers);
-        _teachers = combined;
-        saveStoredTeachers(combined);
+        _teachers = saveStoredTeachers(fetched);
       }
     }
   } catch (err) {
@@ -1434,6 +1421,8 @@ export async function saveStudent(studentData: Partial<StudentRecord> & { name: 
     profileImage: studentData.profileImage || (existingIdx >= 0 ? _students[existingIdx].profileImage : ''),
     house: studentData.house || (existingIdx >= 0 ? _students[existingIdx].house : ''),
   };
+
+  unmarkDeletedAccount([newStudent.id, newStudent.code, newStudent.admissionNo, newStudent.email, newStudent.name]);
 
   // Construct full live Django REST payload
   const sPayload = {

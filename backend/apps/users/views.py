@@ -327,6 +327,27 @@ class UserViewSet(viewsets.ModelViewSet):
             return [permissions.AllowAny()]
         return [permissions.AllowAny()]
 
+    @action(detail=False, methods=['delete', 'post'], url_path='delete-by-identifier')
+    def delete_by_identifier(self, request):
+        identifier = request.data.get('identifier') or request.query_params.get('identifier') or request.data.get('id') or request.data.get('email') or request.data.get('staffId')
+        if not identifier:
+            return Response({'error': 'identifier required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = None
+        if str(identifier).isdigit():
+            user = User.objects.filter(pk=int(identifier)).first()
+        if not user:
+            q_filter = Q(email__iexact=str(identifier).strip())
+            q_filter.add(Q(username__iexact=str(identifier).strip()), Q.OR)
+            q_filter.add(Q(student_profile__student_id__iexact=str(identifier).strip()), Q.OR)
+            q_filter.add(Q(teacher_profile__teacher_id__iexact=str(identifier).strip()), Q.OR)
+            user = User.objects.filter(q_filter).first()
+        if user:
+            user_name = user.get_full_name() or user.email
+            user.delete()
+            return Response({'success': True, 'detail': f'User {user_name} deleted successfully.'}, status=status.HTTP_200_OK)
+        return Response({'success': False, 'detail': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
     def destroy(self, request, *args, **kwargs):
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
         lookup_value = self.kwargs.get(lookup_url_kwarg)
@@ -336,10 +357,10 @@ class UserViewSet(viewsets.ModelViewSet):
             if str(lookup_value).isdigit():
                 user = User.objects.filter(pk=int(lookup_value)).first()
             if not user:
-                q_filter = Q(email__iexact=lookup_value)
-                q_filter.add(Q(username__iexact=lookup_value), Q.OR)
-                q_filter.add(Q(student_profile__student_id__iexact=lookup_value), Q.OR)
-                q_filter.add(Q(teacher_profile__teacher_id__iexact=lookup_value), Q.OR)
+                q_filter = Q(email__iexact=str(lookup_value).strip())
+                q_filter.add(Q(username__iexact=str(lookup_value).strip()), Q.OR)
+                q_filter.add(Q(student_profile__student_id__iexact=str(lookup_value).strip()), Q.OR)
+                q_filter.add(Q(teacher_profile__teacher_id__iexact=str(lookup_value).strip()), Q.OR)
                 user = User.objects.filter(q_filter).first()
 
         if user:
