@@ -18,7 +18,7 @@ import { authClient } from '@/lib/api-auth';
 import { addRealtimeNotification } from '@/lib/notifications-store';
 import { ImageCropModal } from '@/components/ui/ImageCropModal';
 import { MobileProfileView } from '@/components/profile/MobileProfileView';
-import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, getStoredTeachers, saveTeacher, saveStudent, deleteStudent, subscribeToCBTStore, broadcastRealtimeEvent, syncStudentsWithBackend, syncTeachersWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, calculateBECEGrade, isSeniorSecondaryClass, CourseBroadsheetScore, PromotionRecord, getPromotionHistory, executeStudentPromotions, getNextProgressiveClass, getArchivedCohortsForTeacher, matchStudentClass } from '@/lib/cbt-store';
+import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, getStoredTeachers, saveTeacher, saveStudent, deleteStudent, subscribeToCBTStore, broadcastRealtimeEvent, syncStudentsWithBackend, syncTeachersWithBackend, syncExamsWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, calculateBECEGrade, isSeniorSecondaryClass, CourseBroadsheetScore, PromotionRecord, getPromotionHistory, executeStudentPromotions, getNextProgressiveClass, getArchivedCohortsForTeacher, matchStudentClass } from '@/lib/cbt-store';
 import { useTranslation } from '@/lib/i18n';
 import { TerminalReportCard, ReportCardData, SubjectScore } from '@/components/reports/TerminalReportCard';
 import { getTimeGreeting } from '@/lib/utils';
@@ -177,13 +177,17 @@ export default function TeacherDashboard() {
   const [gradeInput, setGradeInput] = useState('');
   const [feedbackInput, setFeedbackInput] = useState('');
   const [roster, setRoster] = useState<any[]>(() => getStoredStudents());
+  const [teacherExams, setTeacherExams] = useState<any[]>(() => getStoredExams());
 
   React.useEffect(() => {
     setRoster(getStoredStudents());
+    setTeacherExams(getStoredExams());
     syncStudentsWithBackend().then(res => setRoster(res));
     syncTeachersWithBackend();
+    syncExamsWithBackend().then(res => setTeacherExams(res));
     const unsub = subscribeToCBTStore(() => {
       setRoster(getStoredStudents());
+      setTeacherExams(getStoredExams());
     });
     return () => unsub();
   }, []);
@@ -1948,22 +1952,23 @@ export default function TeacherDashboard() {
     // 3. MANAGE EXAMS & CBT LIFECYCLE
     // =========================================================
     if (activeSection === 'exams') {
-      const allExams = getStoredExams();
+      const allExams = teacherExams;
       const allSubmissions = getStoredSubmissions();
 
       const filteredExams = allExams.filter(e => {
-        const matchClass = selectedExamClass === 'ALL' || !e.class || e.class === selectedExamClass;
-        const matchStream = selectedExamStream === 'ALL' || !e.stream || e.stream === selectedExamStream;
+        const matchClass = selectedExamClass === 'ALL' || matchStudentClass(e.class, selectedExamClass);
+        const matchStream = selectedExamStream === 'ALL' || e.stream === selectedExamStream || (selectedExamStream === 'Arts' && (e.stream === 'Art' || e.stream === 'Arts' || e.stream === 'Commercial')) || (selectedExamStream === 'Science' && (e.stream === 'Science' || e.stream === 'STEM'));
         return matchClass && matchStream;
       });
 
+      const draftExams = filteredExams.filter(e => e.status === 'DRAFT');
+      const pendingExams = filteredExams.filter(e => e.status === 'PENDING');
       const approvedExams = filteredExams.filter(e => e.status === 'APPROVED');
       const activeExams = filteredExams.filter(e => e.status === 'ACTIVE');
-      const pendingExams = filteredExams.filter(e => e.status === 'PENDING');
 
       const filteredSubmissions = allSubmissions.filter(s => {
-        const matchClass = selectedExamClass === 'ALL' || !s.class || s.class === selectedExamClass;
-        const matchStream = selectedExamStream === 'ALL' || !s.stream || s.stream === selectedExamStream;
+        const matchClass = selectedExamClass === 'ALL' || matchStudentClass(s.class, selectedExamClass);
+        const matchStream = selectedExamStream === 'ALL' || s.stream === selectedExamStream || (selectedExamStream === 'Arts' && (s.stream === 'Art' || s.stream === 'Arts')) || (selectedExamStream === 'Science' && s.stream === 'Science');
         return matchClass && matchStream;
       });
 
@@ -1979,7 +1984,7 @@ export default function TeacherDashboard() {
             </div>
             {isSeniorSecondaryTeacher ? (
               <Link href="/dashboard/cbt-builder">
-                <button className="bg-white text-blue-700 hover:bg-blue-50 font-bold px-6 py-3 rounded-xl text-sm transition-all shadow-lg whitespace-nowrap">
+                <button className="bg-white text-blue-700 hover:bg-blue-50 font-bold px-6 py-3 rounded-xl text-sm transition-all shadow-lg whitespace-nowrap cursor-pointer">
                   {t('teacher.launch_cbt_builder', 'Launch CBT Exam Builder →')}
                 </button>
               </Link>
@@ -1998,7 +2003,7 @@ export default function TeacherDashboard() {
                   <button
                     key={cls}
                     onClick={() => setSelectedExamClass(cls)}
-                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       selectedExamClass === cls ? 'bg-primary text-white shadow-xs' : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
@@ -2011,7 +2016,7 @@ export default function TeacherDashboard() {
                   <button
                     key={st}
                     onClick={() => setSelectedExamStream(st)}
-                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       selectedExamStream === st ? 'bg-emerald-600 text-white shadow-xs' : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
@@ -2021,6 +2026,43 @@ export default function TeacherDashboard() {
               </div>
             </div>
           </div>
+
+          {/* Panel 0: Draft Exams (In Progress) */}
+          {draftExams.length > 0 && (
+            <div className="bg-slate-50 dark:bg-slate-900/40 border-2 border-slate-300 dark:border-slate-700 rounded-2xl p-5 shadow-sm space-y-3">
+              <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-bold text-sm">
+                <FileText className="w-5 h-5 text-slate-600" />
+                <span>Draft Exams In-Progress ({draftExams.length})</span>
+                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 ml-auto">
+                  ✏️ Draft Papers
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">These exams are being drafted. You can continue adding questions or previewing them before submitting to the Admin.</p>
+              <div className="space-y-3 pt-1">
+                {draftExams.map(ex => (
+                  <div key={ex.id} className="bg-white dark:bg-card p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">{ex.class || 'SS1'} {ex.stream || 'Science'}</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-800 border border-slate-300">
+                          Draft ({ex.questions_count || ex.questions?.length || 0} Questions)
+                        </span>
+                      </div>
+                      <h4 className="font-bold text-foreground text-sm">{ex.title}</h4>
+                      <p className="text-xs text-muted-foreground">{ex.duration_minutes} mins · Subject: {ex.course_name}</p>
+                    </div>
+                    <Link href="/dashboard/cbt-builder">
+                      <button
+                        className="bg-primary hover:bg-primary/90 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-colors shadow-md flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+                      >
+                        <Plus className="w-4 h-4" /> Resume in CBT Builder
+                      </button>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Panel 1: Pending Form Teacher Review & Sent for Approval */}
           {pendingExams.length > 0 && (
@@ -2051,7 +2093,7 @@ export default function TeacherDashboard() {
                         updateExamStatus(ex.id, 'PENDING');
                         showToast(`Re-sent "${ex.title}" to School Admin for approval!`);
                       }}
-                      className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-colors shadow-md flex items-center gap-1.5 self-start sm:self-auto"
+                      className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-colors shadow-md flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
                     >
                       <Send className="w-4 h-4" /> Re-send to Admin
                     </button>

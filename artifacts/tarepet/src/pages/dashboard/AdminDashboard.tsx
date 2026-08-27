@@ -4415,7 +4415,7 @@ export default function AdminDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 {EXAM_DIVISIONS.map(div => {
                   const Icon = div.icon;
-                  const count = examsList.filter(e => div.classes.some(c => c.key === e.class)).length;
+                  const count = examsList.filter(e => div.classes.some(c => matchStudentClass(c.key, e.class))).length;
                   return (
                     <div
                       key={div.key}
@@ -4453,9 +4453,9 @@ export default function AdminDashboard() {
             {examRepoFilter === 'all' && selectedExamDivision && (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                 {divisionClasses.map(cls => {
-                  const sciExams = examsList.filter(e => e.class === cls.key && (e.stream === 'Science' || e.stream === 'STEM'));
-                  const artExams = examsList.filter(e => e.class === cls.key && (e.stream === 'Arts' || e.stream === 'Art'));
-                  const genExams = examsList.filter(e => e.class === cls.key);
+                  const sciExams = examsList.filter(e => matchStudentClass(cls.key, e.class) && (e.stream === 'Science' || e.stream === 'STEM'));
+                  const artExams = examsList.filter(e => matchStudentClass(cls.key, e.class) && (e.stream === 'Arts' || e.stream === 'Art' || e.stream === 'Commercial'));
+                  const genExams = examsList.filter(e => matchStudentClass(cls.key, e.class));
                   const totalCount = cls.hasStreams ? (sciExams.length + artExams.length) : genExams.length;
 
                   return (
@@ -4534,10 +4534,13 @@ export default function AdminDashboard() {
 
       // STEP 2: ASSESSMENT TYPE SELECTION (Test vs Exam request)
       if (selectedExamClass && selectedExamStream && !selectedExamType) {
-        const clsLabel = SS_CLASSES.find(c => c.key === selectedExamClass)?.label || selectedExamClass;
-        const matchingExams = examsList.filter(e => e.class === selectedExamClass && e.stream === selectedExamStream);
-        const testCount = matchingExams.filter(e => e.type === 'Test').length;
-        const examCount = matchingExams.filter(e => e.type === 'Exam').length;
+        const clsLabel = SS_CLASSES.find(c => matchStudentClass(c.key, selectedExamClass))?.label || selectedExamClass;
+        const matchingExams = examsList.filter(e => 
+          matchStudentClass(e.class, selectedExamClass) && 
+          (e.stream === selectedExamStream || (selectedExamStream === 'Art' && e.stream === 'Arts') || (selectedExamStream === 'Arts' && e.stream === 'Art'))
+        );
+        const testCount = matchingExams.filter(e => e.type === 'Test' || e.rawAssessmentType === 'TEST').length;
+        const examCount = matchingExams.filter(e => e.type === 'Exam' || e.rawAssessmentType === 'EXAM').length;
 
         return (
           <div className="space-y-6">
@@ -4561,7 +4564,7 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
               <button
                 onClick={() => setSelectedExamType('Test')}
-                className="group text-left bg-card rounded-2xl border-2 border-border p-6 shadow-sm hover:border-primary hover:shadow-md hover:scale-[1.02] transition-all space-y-3"
+                className="group text-left bg-card rounded-2xl border-2 border-border p-6 shadow-sm hover:border-primary hover:shadow-md hover:scale-[1.02] transition-all space-y-3 cursor-pointer"
               >
                 <div className="p-3 rounded-2xl bg-primary/10 text-primary w-fit">
                   <FileText className="w-6 h-6" />
@@ -4576,7 +4579,7 @@ export default function AdminDashboard() {
 
               <button
                 onClick={() => setSelectedExamType('Exam')}
-                className="group text-left bg-card rounded-2xl border-2 border-border p-6 shadow-sm hover:border-emerald-500 hover:shadow-md hover:scale-[1.02] transition-all space-y-3"
+                className="group text-left bg-card rounded-2xl border-2 border-border p-6 shadow-sm hover:border-emerald-500 hover:shadow-md hover:scale-[1.02] transition-all space-y-3 cursor-pointer"
               >
                 <div className="p-3 rounded-2xl bg-emerald-500/10 text-emerald-600 w-fit">
                   <GraduationCap className="w-6 h-6" />
@@ -4591,7 +4594,7 @@ export default function AdminDashboard() {
 
               <button
                 onClick={() => setSelectedExamType('All')}
-                className="group text-left bg-card rounded-2xl border-2 border-border p-6 shadow-sm hover:border-purple-500 hover:shadow-md hover:scale-[1.02] transition-all space-y-3"
+                className="group text-left bg-card rounded-2xl border-2 border-border p-6 shadow-sm hover:border-purple-500 hover:shadow-md hover:scale-[1.02] transition-all space-y-3 cursor-pointer"
               >
                 <div className="p-3 rounded-2xl bg-purple-500/10 text-purple-600 w-fit">
                   <ClipboardList className="w-6 h-6" />
@@ -4609,11 +4612,11 @@ export default function AdminDashboard() {
       }
 
       // STEP 3: AVAILABLE EXAMS / TESTS LISTING & ACTIONS
-      const clsLabel = SS_CLASSES.find(c => c.key === selectedExamClass)?.label || selectedExamClass;
+      const clsLabel = SS_CLASSES.find(c => matchStudentClass(c.key, selectedExamClass))?.label || selectedExamClass;
       const filteredExamsList = examsList.filter(e => {
-        const matchClass = !selectedExamClass || e.class === selectedExamClass;
-        const matchStream = !selectedExamStream || e.stream === selectedExamStream;
-        const matchType = !selectedExamType || selectedExamType === 'All' || e.type === selectedExamType;
+        const matchClass = !selectedExamClass || matchStudentClass(e.class, selectedExamClass);
+        const matchStream = !selectedExamStream || e.stream === selectedExamStream || (selectedExamStream === 'Art' && e.stream === 'Arts') || (selectedExamStream === 'Arts' && e.stream === 'Art');
+        const matchType = !selectedExamType || selectedExamType === 'All' || e.type === selectedExamType || (selectedExamType === 'Test' && e.rawAssessmentType === 'TEST') || (selectedExamType === 'Exam' && e.rawAssessmentType === 'EXAM');
         const q = userSearch.toLowerCase();
         const matchSearch = !q || e.title.toLowerCase().includes(q) || e.subject.toLowerCase().includes(q);
         const matchStatus = examFilterStatus === 'All' || e.status === examFilterStatus;

@@ -1641,7 +1641,7 @@ export async function saveCBTExam(examData: Partial<CBTExam> & { title: string; 
     questions_count: examData.questions ? examData.questions.length : (examData.questions_count || 0),
     questions_per_page: examData.questions_per_page || 2,
     teacher_name: examData.teacher_name || 'Mr. Okonkwo Paul',
-    status: examData.status || 'PENDING',
+    status: examData.status || 'DRAFT',
     questions: examData.questions || [],
     created_at: examData.created_at || new Date().toISOString(),
   };
@@ -1673,17 +1673,20 @@ export async function saveCBTExam(examData: Partial<CBTExam> & { title: string; 
   persistExams(_exams);
   broadcastRealtimeEvent();
 
-  addRealtimeActivity('EXAM_CREATED', `CBT Exam Created: ${newExam.title}`, `Subject: ${newExam.course_name} (${newExam.class} ${newExam.stream})`, newExam.teacher_name);
+  // Only dispatch notifications and WebSocket broadcast if the exam was explicitly submitted for approval (PENDING)
+  if (newExam.status === 'PENDING') {
+    addRealtimeActivity('EXAM_CREATED', `CBT Exam Submitted for Approval: ${newExam.title}`, `Subject: ${newExam.course_name} (${newExam.class} ${newExam.stream})`, newExam.teacher_name);
 
-  addRealtimeNotification({
-    title: '📝 Exam Pending Approval',
-    message: `${newExam.teacher_name} submitted "${newExam.title}" (${newExam.course_name} - ${newExam.class}) for Admin approval.`,
-    category: 'ACADEMICS',
-    type: 'exam',
-    recipientRole: 'ADMIN'
-  });
+    addRealtimeNotification({
+      title: '📝 Exam Pending Approval',
+      message: `${newExam.teacher_name} submitted "${newExam.title}" (${newExam.course_name} - ${newExam.class}) for Admin approval.`,
+      category: 'ACADEMICS',
+      type: 'exam',
+      recipientRole: 'ADMIN'
+    });
 
-  sendWebSocketEvent('EXAM_CREATED', { exam: newExam });
+    sendWebSocketEvent('EXAM_CREATED', { exam: newExam });
+  }
 
   return newExam;
 }
@@ -1698,11 +1701,18 @@ export function mapCBTExamToAdminExam(c: CBTExam): any {
     ['DRAFT', 'Draft'],
     ['ARCHIVED', 'Archived'],
   ]);
-  const mappedStatus = statusMap.get(c.status) || (c.status === 'ACTIVE' ? 'Ongoing' : c.status === 'APPROVED' ? 'Approved' : 'Pending Approval');
+  const mappedStatus = statusMap.get(c.status) || (c.status === 'ACTIVE' ? 'Ongoing' : c.status === 'APPROVED' ? 'Approved' : c.status === 'DRAFT' ? 'Draft' : 'Pending Approval');
+  
+  // Standardize type to 'Test' | 'Exam' for filter compatibility while retaining full display labels
+  const standardType = c.assessment_type === 'EXAM' ? 'Exam' : 'Test';
+  const displayType = c.assessment_type === 'EXAM' ? 'Term Exam' : 'CA Test';
+
   return {
     id: c.id,
     title: c.title,
-    type: c.assessment_type === 'EXAM' ? 'Term Exam' : c.assessment_type === 'TEST' ? 'CA Test' : 'Quiz',
+    type: standardType,
+    displayType: displayType,
+    rawAssessmentType: c.assessment_type,
     subject: c.course_name,
     class: c.class,
     stream: c.stream || 'Science',
@@ -1781,9 +1791,20 @@ export async function updateExamStatus(examId: number, status: CBTExam['status']
     });
   } catch (e) {}
 
-  if (status === 'ACTIVE') {
+  if (status === 'PENDING') {
+    addRealtimeActivity('EXAM_CREATED', `Exam Submitted for Admin Approval: ${exam.title}`, `Subject: ${exam.course_name} (${exam.class} ${exam.stream})`, exam.teacher_name);
+    addRealtimeNotification({
+      title: '📝 Exam Pending Approval',
+      message: `${exam.teacher_name || 'Teacher'} submitted "${exam.title}" (${exam.course_name} - ${exam.class}) for Admin approval.`,
+      category: 'ACADEMICS',
+      type: 'exam',
+      recipientRole: 'ADMIN'
+    });
+    sendWebSocketEvent('EXAM_CREATED', { exam });
+  } else if (status === 'ACTIVE') {
     exam.activated_at = new Date().toISOString();
     addRealtimeActivity('EXAM_ACTIVATED', `Exam Activated for Students: ${exam.title}`, `Now live for ${exam.class} ${exam.stream} students.`, exam.teacher_name);
+    sendWebSocketEvent('EXAM_ACTIVATED', { exam });
   } else if (status === 'APPROVED') {
     addRealtimeActivity('EXAM_APPROVED', `Admin Approved CBT Exam: ${exam.title}`, `Approved for ${exam.course_name} by Admin Suite.`, 'School Principal / Admin');
     addRealtimeNotification({
@@ -1793,6 +1814,7 @@ export async function updateExamStatus(examId: number, status: CBTExam['status']
       type: 'exam',
       recipientRole: 'TEACHER'
     });
+    sendWebSocketEvent('EXAM_APPROVED', { exam });
   } else if (status === 'REJECTED') {
     exam.rejection_reason = reason;
     addRealtimeActivity('EXAM_REJECTED', `Exam Returned for Revision: ${exam.title}`, `Reason: ${reason || 'Revision needed'}`, 'School Principal / Admin');
@@ -1803,6 +1825,7 @@ export async function updateExamStatus(examId: number, status: CBTExam['status']
       type: 'exam',
       recipientRole: 'TEACHER'
     });
+    sendWebSocketEvent('EXAM_REJECTED', { exam });
   }
 
   persistExams(_exams);

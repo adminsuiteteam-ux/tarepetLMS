@@ -235,7 +235,7 @@ export default function CBTBuilder() {
         duration_minutes: form.duration_minutes,
         questions_per_page: form.questions_per_page,
         teacher_name: user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Mrs. Okafor Chioma' : 'Mrs. Okafor Chioma',
-        status: 'PENDING',
+        status: 'DRAFT',
         questions: [],
       });
       setSelectedExamId(created.id);
@@ -255,6 +255,7 @@ export default function CBTBuilder() {
   };
 
   const [showBulkModal, setShowBulkModal] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [bulkCsvText, setBulkCsvText] = useState('');
 
   const handleAddQuestion = async () => {
@@ -263,24 +264,47 @@ export default function CBTBuilder() {
     const ex = examsList.find(e => e.id === selectedExamId);
     if (!ex) return;
 
+    if (!newQuestion.question_text.trim()) {
+      showAlert({ title: 'Question Text Required', message: 'Please enter the question text before adding.', type: 'warning' });
+      return;
+    }
+
     const newQ = {
-      id: (ex.questions.length || 0) + 1,
-      question_text: newQuestion.question_text || 'New Objective Question',
-      option_a: newQuestion.option_a || 'Option A',
-      option_b: newQuestion.option_b || 'Option B',
-      option_c: newQuestion.option_c || 'Option C',
-      option_d: newQuestion.option_d || 'Option D',
+      id: Date.now() + Math.floor(Math.random() * 1000),
+      question_text: newQuestion.question_text.trim(),
+      option_a: newQuestion.option_a.trim() || 'Option A',
+      option_b: newQuestion.option_b.trim() || 'Option B',
+      option_c: newQuestion.option_c.trim() || 'Option C',
+      option_d: newQuestion.option_d.trim() || 'Option D',
       correct_option: newQuestion.correct_option || 'A',
       points: newQuestion.points || 1,
-      explanation: newQuestion.explanation || '',
-      image_url: newQuestion.image_url || '',
+      explanation: newQuestion.explanation?.trim() || '',
+      image_url: newQuestion.image_url?.trim() || '',
     };
 
-    ex.questions.push(newQ);
+    ex.questions = [...(ex.questions || []), newQ];
     ex.questions_count = ex.questions.length;
-    saveCBTExam(ex);
+    await saveCBTExam(ex);
     fetchQuestions(selectedExamId);
     setNewQuestion({ ...EMPTY_QUESTION });
+    showAlert({
+      title: 'Question Added',
+      message: `Question #${ex.questions.length} was added to the draft exam paper.`,
+      type: 'success',
+      badge: `Stacked (${ex.questions.length})`
+    });
+  };
+
+  const handleDeleteQuestion = async (qId: number) => {
+    if (!selectedExamId) return;
+    const examsList = getStoredExams();
+    const ex = examsList.find(e => e.id === selectedExamId);
+    if (!ex) return;
+
+    ex.questions = ex.questions.filter((q: any) => q.id !== qId);
+    ex.questions_count = ex.questions.length;
+    await saveCBTExam(ex);
+    fetchQuestions(selectedExamId);
   };
 
   const handleBulkCSVImport = () => {
@@ -296,7 +320,7 @@ export default function CBTBuilder() {
       const cols = line.split(',').map(c => c.trim().replace(/^"(.*)"$/, '$1'));
       if (cols.length >= 6) {
         const qObj = {
-          id: ex.questions.length + 1,
+          id: Date.now() + idx + Math.floor(Math.random() * 1000),
           question_text: cols[0],
           option_a: cols[1],
           option_b: cols[2],
@@ -329,14 +353,34 @@ export default function CBTBuilder() {
   const handleSubmitForApproval = async () => {
     if (!selectedExamId) return;
     const ex = getStoredExams().find(e => e.id === selectedExamId);
-    updateExamStatus(selectedExamId, 'PENDING');
-    addRealtimeNotification({
-      title: `CBT Exam Sent for Admin Approval`,
-      message: `Form Teacher ${user?.first_name || ''} ${user?.last_name || ''} submitted "${ex?.title || 'Exam'}" (${ex?.class || 'SS1'} ${ex?.stream || 'Science'}) for School Admin review & approval.`,
-      type: 'exam',
-      recipientRole: 'ADMIN'
+    if (!ex) return;
+
+    if (!ex.questions || ex.questions.length === 0) {
+      showAlert({
+        title: 'No Questions Added',
+        message: 'Please add at least 1 question before submitting this exam for Admin approval.',
+        type: 'warning',
+      });
+      return;
+    }
+
+    const confirmed = await showConfirm({
+      title: 'Submit Exam for Admin Approval?',
+      message: `Are you ready to submit "${ex.title}" with ${ex.questions.length} stacked question(s) to the School Admin?\n\nOnce submitted, the Admin will review and approve the assessment for student portal access.`,
+      type: 'confirm',
+      badge: 'Admin Review',
+      confirmText: 'Yes, Submit for Approval',
+      cancelText: 'Keep Editing',
     });
-    showAlert({ title: 'Success', message: `Exam "${ex?.title || 'Exam'}" has been sent to School Admin for approval!`, type: 'success' });
+    if (!confirmed) return;
+
+    await updateExamStatus(selectedExamId, 'PENDING');
+    showAlert({
+      title: 'Submitted for Admin Approval',
+      message: `Exam "${ex.title}" has been submitted to the School Admin. You will be notified once it is approved.`,
+      type: 'success',
+      badge: 'Pending Review',
+    });
     fetchExams();
     setView('list');
   };
@@ -835,6 +879,9 @@ export default function CBTBuilder() {
 
   // ============ ADD QUESTIONS ============
   if (view === 'questions' && selectedExamId) {
+    const currentExam = exams.find(e => e.id === selectedExamId) || getStoredExams().find(e => e.id === selectedExamId);
+    const totalExamPoints = questions.reduce((sum: number, q: any) => sum + (parseFloat(q.points) || 1), 0);
+
     return (
       <div className="min-h-screen bg-background p-4 md:p-8">
         <div className="max-w-3xl mx-auto">
@@ -842,27 +889,124 @@ export default function CBTBuilder() {
             <div className="flex items-center gap-3">
               <button onClick={() => setView('list')} className="p-2 rounded-xl bg-card border border-border shadow-xs hover:bg-muted transition text-foreground"><ChevronLeft className="w-5 h-5" /></button>
               <div>
-                <h1 className="text-xl font-bold text-foreground">{t("Add Questions")}</h1>
-                <p className="text-sm text-muted-foreground">{questions.length} question(s) added so far</p>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-xl font-bold text-foreground">{t("Add Questions")}</h1>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 border border-amber-500/20 uppercase font-mono">
+                    {currentExam?.status || 'DRAFT'}
+                  </span>
+                </div>
+                <p className="text-sm text-muted-foreground">{questions.length} question(s) stacked · {totalExamPoints} Total Point(s)</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <button
+                type="button"
                 onClick={() => setShowBulkModal(true)}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary/10 text-primary font-bold border border-primary/20 hover:bg-primary/15 transition text-xs"
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary/10 text-primary font-bold border border-primary/20 hover:bg-primary/15 transition text-xs cursor-pointer"
               >
-                📥 Bulk CSV Import
+                📥 Bulk CSV
               </button>
               {questions.length > 0 && (
-                <button
-                  onClick={handleSubmitForApproval}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition shadow-md text-xs"
-                >
-                  <Send className="w-4 h-4" /> Submit for Approval
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setShowPreviewModal(true)}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-muted border border-border text-foreground font-bold hover:bg-muted/80 transition text-xs cursor-pointer"
+                  >
+                    <Eye className="w-3.5 h-3.5 text-primary" /> Preview Paper
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSubmitForApproval}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition shadow-md text-xs cursor-pointer"
+                  >
+                    <Send className="w-3.5 h-3.5" /> Submit for Approval
+                  </button>
+                </>
               )}
             </div>
           </div>
+
+          {/* Preview Exam Paper Modal */}
+          {showPreviewModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in">
+              <div className="bg-card rounded-2xl max-w-2xl w-full border border-border shadow-2xl max-h-[90vh] flex flex-col overflow-hidden">
+                <div className="p-5 border-b border-border flex items-center justify-between bg-primary/5">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Student CBT Exam Paper Preview</span>
+                    <h3 className="font-serif font-bold text-lg text-foreground">{currentExam?.title || 'Exam Preview'}</h3>
+                    <p className="text-xs text-muted-foreground">
+                      {currentExam?.class} {currentExam?.stream} · {currentExam?.course_name} · {questions.length} Questions ({totalExamPoints} pts) · {currentExam?.duration_minutes} Mins
+                    </p>
+                  </div>
+                  <button onClick={() => setShowPreviewModal(false)} className="p-2 rounded-xl text-muted-foreground hover:bg-muted font-bold">✕</button>
+                </div>
+
+                <div className="p-6 overflow-y-auto space-y-4 flex-1">
+                  {currentExam?.instructions && (
+                    <div className="p-3 bg-muted/40 rounded-xl border border-border text-xs text-muted-foreground italic">
+                      <strong>Instructions:</strong> {currentExam.instructions}
+                    </div>
+                  )}
+
+                  {questions.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground text-xs">
+                      No questions stacked in this draft paper yet.
+                    </div>
+                  ) : (
+                    questions.map((q: any, idx: number) => (
+                      <div key={q.id || idx} className="bg-muted/20 rounded-xl border border-border p-4 space-y-2">
+                        <div className="flex items-start justify-between gap-3">
+                          <p className="font-bold text-foreground text-sm flex items-start gap-2">
+                            <span className="text-primary font-mono">Q{idx + 1}.</span> {q.question_text}
+                          </p>
+                          <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded border border-primary/20 shrink-0 font-mono">
+                            {q.points || 1} pt
+                          </span>
+                        </div>
+                        {q.image_url && (
+                          <img src={q.image_url} alt={`Question ${idx + 1}`} className="max-h-48 rounded-lg border border-border object-contain my-2" />
+                        )}
+                        <div className="grid grid-cols-2 gap-2 text-xs pt-1">
+                          {['A', 'B', 'C', 'D'].map(opt => (
+                            <div key={opt} className={`p-2 rounded-lg border ${q.correct_option === opt ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 font-bold' : 'border-border bg-card text-foreground'}`}>
+                              <span className="font-bold mr-1.5">{opt}.</span> {opt === 'A' ? q.option_a : opt === 'B' ? q.option_b : opt === 'C' ? q.option_c : q.option_d}
+                              {q.correct_option === opt && ' ✓ (Key)'}
+                            </div>
+                          ))}
+                        </div>
+                        {q.explanation && (
+                          <p className="text-[11px] text-muted-foreground pt-1 bg-muted/30 p-2 rounded-lg">
+                            <strong className="text-foreground">Explanation:</strong> {q.explanation}
+                          </p>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="p-4 border-t border-border bg-muted/20 flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => setShowPreviewModal(false)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
+                  >
+                    Back to Editing
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPreviewModal(false);
+                      handleSubmitForApproval();
+                    }}
+                    className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Send className="w-3.5 h-3.5" /> Submit for Admin Approval
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Bulk CSV Modal */}
           {showBulkModal && (
@@ -888,8 +1032,8 @@ export default function CBTBuilder() {
                   />
                 </div>
                 <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
-                  <button onClick={() => setShowBulkModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:bg-muted">{t("Cancel")}</button>
-                  <button onClick={handleBulkCSVImport} disabled={!bulkCsvText.trim()} className="px-5 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs shadow-md transition disabled:opacity-50">
+                  <button type="button" onClick={() => setShowBulkModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:bg-muted">{t("Cancel")}</button>
+                  <button type="button" onClick={handleBulkCSVImport} disabled={!bulkCsvText.trim()} className="px-5 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs shadow-md transition disabled:opacity-50 cursor-pointer">
                     {t("Parse & Import Questions")}
                   </button>
                 </div>
@@ -897,15 +1041,31 @@ export default function CBTBuilder() {
             </div>
           )}
 
-          {/* Existing Questions */}
+          {/* Existing Stacked Questions List */}
           {questions.length > 0 && (
             <div className="space-y-3 mb-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Stacked Questions ({questions.length})
+                </h3>
+                <span className="text-[11px] text-muted-foreground">Questions will be saved in order</span>
+              </div>
               {questions.map((q: any, i: number) => (
-                <div key={q.id} className="bg-card rounded-xl border border-border p-4 shadow-sm">
+                <div key={q.id || i} className="bg-card rounded-xl border border-border p-4 shadow-sm hover:border-primary/30 transition-colors">
                   <div className="flex items-start gap-3">
                     <span className="w-7 h-7 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center text-xs font-bold shrink-0">{i + 1}</span>
                     <div className="flex-1 space-y-2">
-                      <p className="font-medium text-foreground text-sm">{q.question_text}</p>
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="font-medium text-foreground text-sm">{q.question_text}</p>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteQuestion(q.id)}
+                          className="p-1.5 text-muted-foreground hover:text-rose-600 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer shrink-0"
+                          title="Delete Question"
+                        >
+                          <Trash2 className="w-4 h-4 text-rose-500" />
+                        </button>
+                      </div>
                       <div className="grid grid-cols-2 gap-1.5 text-xs">
                         {['A', 'B', 'C', 'D'].map(opt => (
                           <span key={opt} className={`px-2 py-1 rounded-lg ${q.correct_option === opt ? 'bg-primary/15 text-primary font-bold border border-primary/20' : 'bg-muted/50 text-muted-foreground'}`}>
@@ -925,16 +1085,16 @@ export default function CBTBuilder() {
             </div>
           )}
 
-            {/* New Question Form */}
+          {/* New Question Form */}
           <div className="bg-card rounded-2xl shadow-sm p-6 border-2 border-dashed border-primary/30">
             <h3 className="font-bold text-foreground mb-4 flex items-center gap-2"><Plus className="w-5 h-5 text-primary" /> {t("Add Question")} #{questions.length + 1}</h3>
             <div className="space-y-3">
-              <div><label className={labelClass}>{t("Question Text")}</label><textarea className={inputClass} rows={2} value={newQuestion.question_text} onChange={e => setNewQuestion({...newQuestion, question_text: e.target.value})} placeholder={t("Enter the question...")} /></div>
+              <div><label className={labelClass}>{t("Question Text")} *</label><textarea className={inputClass} rows={2} value={newQuestion.question_text} onChange={e => setNewQuestion({...newQuestion, question_text: e.target.value})} placeholder={t("Enter the question...")} /></div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className={labelClass}>{t("Option A")}</label><input className={inputClass} value={newQuestion.option_a} onChange={e => setNewQuestion({...newQuestion, option_a: e.target.value})} /></div>
-                <div><label className={labelClass}>{t("Option B")}</label><input className={inputClass} value={newQuestion.option_b} onChange={e => setNewQuestion({...newQuestion, option_b: e.target.value})} /></div>
-                <div><label className={labelClass}>{t("Option C")}</label><input className={inputClass} value={newQuestion.option_c} onChange={e => setNewQuestion({...newQuestion, option_c: e.target.value})} /></div>
-                <div><label className={labelClass}>{t("Option D")}</label><input className={inputClass} value={newQuestion.option_d} onChange={e => setNewQuestion({...newQuestion, option_d: e.target.value})} /></div>
+                <div><label className={labelClass}>{t("Option A")} *</label><input className={inputClass} value={newQuestion.option_a} onChange={e => setNewQuestion({...newQuestion, option_a: e.target.value})} placeholder="Option A text" /></div>
+                <div><label className={labelClass}>{t("Option B")} *</label><input className={inputClass} value={newQuestion.option_b} onChange={e => setNewQuestion({...newQuestion, option_b: e.target.value})} placeholder="Option B text" /></div>
+                <div><label className={labelClass}>{t("Option C")}</label><input className={inputClass} value={newQuestion.option_c} onChange={e => setNewQuestion({...newQuestion, option_c: e.target.value})} placeholder="Option C text" /></div>
+                <div><label className={labelClass}>{t("Option D")}</label><input className={inputClass} value={newQuestion.option_d} onChange={e => setNewQuestion({...newQuestion, option_d: e.target.value})} placeholder="Option D text" /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div><label className={labelClass}>{t("Correct Answer")}</label>
@@ -953,11 +1113,12 @@ export default function CBTBuilder() {
                 <input type="url" className={inputClass} value={newQuestion.image_url || ''} onChange={e => setNewQuestion({...newQuestion, image_url: e.target.value})} placeholder={t("https://example.com/diagram.png")} />
               </div>
               <button
+                type="button"
                 onClick={handleAddQuestion}
                 disabled={!newQuestion.question_text || !newQuestion.option_a || !newQuestion.option_b}
                 className="w-full h-11 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-md cursor-pointer"
               >
-                <Plus className="w-4 h-4" /> {t("Add Question")}
+                <Plus className="w-4 h-4" /> {t("Add Question")} #{questions.length + 1} to Draft
               </button>
             </div>
           </div>
