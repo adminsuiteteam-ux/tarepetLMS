@@ -335,6 +335,7 @@ const EMPTY_TEACHER_FORM = {
 };
 
 const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSave: (t: any) => void }) => {
+  const { t } = useTranslation();
   const [step, setStep] = useState(1);
   const [isSaving, setIsSaving] = useState(false);
   const [form, setForm] = useState({ ...EMPTY_TEACHER_FORM });
@@ -451,7 +452,7 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
           <div className="flex items-center justify-between gap-4 mb-4">
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="font-serif font-bold text-base sm:text-lg text-foreground">Add New Teacher</h2>
+                <h2 className="font-serif font-bold text-base sm:text-lg text-foreground">{t('staff.addNewTeacher', 'Add New Teacher')}</h2>
                 <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-[11px] font-bold">
                   Step {step} of 5
                 </span>
@@ -516,8 +517,8 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                 <div className="bg-slate-50/80 p-5 rounded-3xl border border-slate-200/80 space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Teacher Profile Photo</h4>
-                      <p className="text-[11px] text-slate-500">Upload a high-resolution headshot or paste an image URL.</p>
+                      <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">{t('staff.teacherPhoto', 'Teacher Profile Photo')}</h4>
+                      <p className="text-[11px] text-slate-500">{t('staff.photoDesc', 'Upload a high-resolution headshot or paste an image URL.')}</p>
                     </div>
                     {form.profileImage && (
                       <div className="flex items-center gap-2">
@@ -528,14 +529,14 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                           }}
                           className="px-3 py-1 text-xs font-bold text-foreground hover:bg-slate-100 rounded-xl transition border border-slate-300 cursor-pointer inline-flex items-center gap-1"
                         >
-                          <Scissors className="w-3 h-3 text-primary" /> Crop Photo
+                          <Scissors className="w-3 h-3 text-primary" /> {t('staff.cropPhoto', 'Crop Photo')}
                         </button>
                         <button
                           type="button"
                           onClick={() => setF('profileImage', '')}
                           className="px-3 py-1 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition border border-rose-200 cursor-pointer"
                         >
-                          Remove Photo
+                          {t('staff.removePhoto', 'Remove Photo')}
                         </button>
                       </div>
                     )}
@@ -562,7 +563,7 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                         </label>
                       </div>
                       <span className="text-[10px] font-black uppercase tracking-wider text-slate-600 mt-2.5">
-                        {form.profileImage ? 'Photo Attached' : 'No Photo Selected'}
+                        {form.profileImage ? t('staff.photoAttached', 'Photo Attached') : t('staff.noPhotoSelected', 'No Photo Selected')}
                       </span>
                     </div>
 
@@ -574,9 +575,9 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                       >
                         <UploadCloud className="w-8 h-8 text-primary mx-auto mb-1.5 group-hover:scale-110 transition-transform" />
                         <p className="text-xs font-bold text-slate-800">
-                          Click to browse <span className="text-primary">or drag & drop photo here</span>
+                          {t('staff.clickToBrowse', 'Click to browse')} <span className="text-primary">{t('staff.orDragDrop', 'or drag & drop photo here')}</span>
                         </p>
-                        <p className="text-[10px] text-slate-600 mt-0.5 font-bold">Supports PNG, JPG, WEBP or SVG (Max 10MB)</p>
+                        <p className="text-[10px] text-slate-600 mt-0.5 font-bold">{t('staff.supportsFormats', 'Supports PNG, JPG, WEBP or SVG (Max 10MB)')}</p>
                       </label>
                       <input
                         type="file"
@@ -599,7 +600,7 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                       />
 
                       <div className="flex items-center gap-2">
-                        <label htmlFor="wizard-photo-url-input" className="text-[11px] font-black uppercase tracking-wider text-slate-800 shrink-0">Or Image URL:</label>
+                        <label htmlFor="wizard-photo-url-input" className="text-[11px] font-black uppercase tracking-wider text-slate-800 shrink-0">{t('staff.orImageUrl', 'Or Image URL:')}</label>
                         <input
                           type="url"
                           id="wizard-photo-url-input"
@@ -616,38 +617,38 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                 </div>
 
                 <div>
-                  <label htmlFor="wizard-teacher-name" className={labelCls}>Full Name & Title <span className="text-rose-500">*</span></label>
+                  <label htmlFor="wizard-teacher-name" className={labelCls}>{t('staff.fullNameTitle', 'Full Name & Title')} <span className="text-rose-500">*</span></label>
                   <input id="wizard-teacher-name" name="teacher_name" aria-label="Full Name and Title" className={inputCls} value={form.name} onChange={e => setF('name', e.target.value)} placeholder="e.g. Mr. Okonkwo Paul" />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="wizard-teacher-gender" className={labelCls}>Gender</label>
+                    <label htmlFor="wizard-teacher-gender" className={labelCls}>{t('common.gender', 'Gender')}</label>
                     <select id="wizard-teacher-gender" name="teacher_gender" aria-label="Gender" className={inputCls} value={form.gender} onChange={e => setF('gender', e.target.value)}>
-                      <option value="">Select Gender</option>
-                      <option>Male</option>
-                      <option>Female</option>
+                      <option value="">{t('common.selectGender', 'Select Gender')}</option>
+                      <option>{t('common.male', 'Male')}</option>
+                      <option>{t('common.female', 'Female')}</option>
                     </select>
                   </div>
                   <div>
-                    <label htmlFor="wizard-teacher-dob" className={labelCls}>Date of Birth</label>
+                    <label htmlFor="wizard-teacher-dob" className={labelCls}>{t('common.dob', 'Date of Birth')}</label>
                     <input type="date" id="wizard-teacher-dob" name="teacher_dob" aria-label="Date of Birth" className={inputCls} value={form.dob} onChange={e => setF('dob', e.target.value)} />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="wizard-teacher-phone" className={labelCls}>Phone Number</label>
+                    <label htmlFor="wizard-teacher-phone" className={labelCls}>{t('common.phone', 'Phone Number')}</label>
                     <input id="wizard-teacher-phone" name="teacher_phone" aria-label="Phone Number" className={inputCls} value={form.phone} onChange={e => setF('phone', e.target.value)} placeholder="+234 800 000 0000" />
                   </div>
                   <div>
-                    <label htmlFor="wizard-teacher-email" className={labelCls}>Email Address <span className="text-rose-500">*</span></label>
+                    <label htmlFor="wizard-teacher-email" className={labelCls}>{t('common.email', 'Email Address')} <span className="text-rose-500">*</span></label>
                     <input type="email" id="wizard-teacher-email" name="teacher_email" aria-label="Email Address" className={inputCls} value={form.email} onChange={e => setF('email', e.target.value)} placeholder="name@tarepet.edu.ng" />
                   </div>
                 </div>
 
                 <div>
-                  <label htmlFor="wizard-teacher-address" className={labelCls}>Residential Address</label>
+                  <label htmlFor="wizard-teacher-address" className={labelCls}>{t('common.address', 'Residential Address')}</label>
                   <input id="wizard-teacher-address" name="teacher_address" aria-label="Residential Address" className={inputCls} value={form.address} onChange={e => setF('address', e.target.value)} placeholder="e.g. 15 Swali Road, Yenagoa, Bayelsa State" />
                 </div>
               </div>
@@ -657,11 +658,11 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
             {step === 2 && (
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="wizard-teacher-spec" className={labelCls}>Specialization / Core Subject Area</label>
+                  <label htmlFor="wizard-teacher-spec" className={labelCls}>{t('staff.specializationArea', 'Specialization / Core Subject Area')}</label>
                   <input id="wizard-teacher-spec" name="teacher_specialization" aria-label="Specialization or Core Subject Area" className={inputCls} value={form.specialization} onChange={e => setF('specialization', e.target.value)} placeholder="e.g. Pure & Applied Mathematics, Physics & STEM" />
                 </div>
                 <div>
-                  <label htmlFor="wizard-teacher-qual" className={labelCls}>Academic Qualifications & Degrees</label>
+                  <label htmlFor="wizard-teacher-qual" className={labelCls}>{t('staff.qualificationsDegrees', 'Academic Qualifications & Degrees')}</label>
                   <input id="wizard-teacher-qual" name="teacher_qualification" aria-label="Academic Qualifications and Degrees" className={inputCls} value={form.qualification} onChange={e => setF('qualification', e.target.value)} placeholder="e.g. B.Sc. Ed (Mathematics), M.Sc. Statistics, TRCN Certified" />
                 </div>
               </div>
@@ -672,7 +673,7 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
               <div className="space-y-5">
                 {/* Form Teacher Radio Toggle */}
                 <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-3">
-                  <label className={labelCls}>Form Teacher Assignment (Class Register Holder)</label>
+                  <label className={labelCls}>{t('staff.formTeacherAssignment', 'Form Teacher Assignment (Class Register Holder)')}</label>
                   <div className="flex items-center gap-6">
                     <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-800">
                       <input
@@ -683,7 +684,7 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                         onChange={e => setF('isFormTeacher', e.target.value)}
                         className="w-4 h-4 text-teal-600 focus:ring-teal-500"
                       />
-                      <span>Yes, Form Teacher</span>
+                      <span>{t('staff.yesFormTeacher', 'Yes, Form Teacher')}</span>
                     </label>
 
                     <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-800">
@@ -695,27 +696,27 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                         onChange={e => setF('isFormTeacher', e.target.value)}
                         className="w-4 h-4 text-teal-600 focus:ring-teal-500"
                       />
-                      <span>No, Subject Teacher Only</span>
+                      <span>{t('staff.noSubjectTeacher', 'No, Subject Teacher Only')}</span>
                     </label>
                   </div>
 
                   {/* Conditional selection */}
                   {form.isFormTeacher === 'Yes' ? (
                     <div className="pt-2 animate-in fade-in">
-                      <label className={labelCls}>Select Specific Form Class</label>
+                      <label className={labelCls}>{t('staff.selectFormClass', 'Select Specific Form Class')}</label>
                       <select className={inputCls} value={form.formTeacherClass} onChange={e => setF('formTeacherClass', e.target.value)}>
-                        <option value="">-- Select Form Class --</option>
+                        <option value="">{t('staff.selectFormClassOption', '-- Select Form Class --')}</option>
                         {GRADE_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
                       </select>
                     </div>
                   ) : (
                     <div className="pt-2 animate-in fade-in">
-                      <label className={labelCls}>Teaching Division Level</label>
+                      <label className={labelCls}>{t('staff.teachingDivisionLevel', 'Teaching Division Level')}</label>
                       <select className={inputCls} value={form.teachingDivision} onChange={e => setF('teachingDivision', e.target.value)}>
-                        <option value="">-- Select Teaching Division Level --</option>
-                        <option value="Nursery & Primary">Nursery & Primary (Nursery 1 - Primary 5)</option>
-                        <option value="Junior Secondary">Junior Secondary (JSS 1 - JSS 3)</option>
-                        <option value="Senior Secondary">Senior Secondary (SS 1 - SS 3)</option>
+                        <option value="">{t('staff.selectDivisionOption', '-- Select Teaching Division Level --')}</option>
+                        <option value="Nursery & Primary">{t('divisions.nurseryPrimary', 'Nursery & Primary (Nursery 1 - Primary 5)')}</option>
+                        <option value="Junior Secondary">{t('divisions.jss', 'Junior Secondary (JSS 1 - JSS 3)')}</option>
+                        <option value="Senior Secondary">{t('divisions.ss', 'Senior Secondary (SS 1 - SS 3)')}</option>
                       </select>
                     </div>
                   )}
@@ -725,21 +726,21 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                 <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <label className={labelCls + ' mb-0'}>Classes & Subjects Assigned (Subject ↔ Class Schedule)</label>
-                      <p className="text-[11px] text-slate-500 font-medium">Specify the exact subject and the class taking it (e.g. JSS 1 English, SS 1 Literature)</p>
+                      <label className={labelCls + ' mb-0'}>{t('staff.classesSubjectsAssigned', 'Classes & Subjects Assigned (Subject ↔ Class Schedule)')}</label>
+                      <p className="text-[11px] text-slate-500 font-medium">{t('staff.specifySubjectDesc', 'Specify the exact subject and the class taking it (e.g. JSS 1 English, SS 1 Literature)')}</p>
                     </div>
                     <button
                       type="button"
                       onClick={addSubject}
                       className="text-xs font-bold text-teal-800 flex items-center gap-1.5 hover:bg-teal-200/70 cursor-pointer bg-teal-100/80 px-3 py-1.5 rounded-xl border border-teal-300 transition-colors shadow-2xs"
                     >
-                      <Plus className="w-3.5 h-3.5" /> + Add Class & Subject
+                      <Plus className="w-3.5 h-3.5" /> {t('staff.addClassSubject', '+ Add Class & Subject')}
                     </button>
                   </div>
 
                   {/* Quick preset chips */}
                   <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1">Quick Subjects:</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1">{t('staff.quickSubjects', 'Quick Subjects:')}</span>
                     {['English Language', 'Mathematics', 'Literature in English', 'Physics', 'Chemistry', 'Biology', 'Basic Science', 'Civic Education', 'Economics', 'ICT'].map(sName => (
                       <button
                         key={sName}
@@ -763,7 +764,7 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                         <div key={i} className="p-3 bg-white rounded-xl border border-slate-200/90 shadow-2xs space-y-2">
                           <div className="flex items-center gap-3">
                             <div className="flex-1">
-                              <label className="text-[9px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Subject Name</label>
+                              <label className="text-[9px] font-bold uppercase tracking-wider text-slate-500 block mb-1">{t('staff.subjectName', 'Subject Name')}</label>
                               <input
                                 className={inputCls}
                                 value={sub.name}
@@ -772,7 +773,7 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                               />
                             </div>
                             <div className="w-48 sm:w-56">
-                              <label className="text-[9px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Assigned Class / Grade</label>
+                              <label className="text-[9px] font-bold uppercase tracking-wider text-slate-500 block mb-1">{t('staff.assignedClassGrade', 'Assigned Class / Grade')}</label>
                               <select
                                 className={inputCls}
                                 value={sub.grade}
@@ -797,16 +798,16 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                           {sub.name && (
                             <div className="flex items-center gap-1.5 text-[11px] text-teal-800 font-semibold bg-teal-50/80 px-2.5 py-1 rounded-lg border border-teal-200/60">
                               <span className="w-1.5 h-1.5 rounded-full bg-teal-600"></span>
-                              <span>Teaches <strong className="text-teal-900">{sub.name}</strong> to class <strong className="text-teal-900">{sub.grade || 'JSS 1'}</strong></span>
+                              <span>{t('staff.teachesPrefix', 'Teaches')} <strong className="text-teal-900">{sub.name}</strong> to class <strong className="text-teal-900">{sub.grade || 'JSS 1'}</strong></span>
                             </div>
                           )}
                         </div>
                       ))
                     ) : (
                       <div className="p-4 border border-dashed border-teal-200/80 rounded-xl text-center bg-teal-50/30">
-                        <p className="text-xs text-slate-600 mb-2 font-medium">No subjects or classes assigned to this teacher profile yet.</p>
+                        <p className="text-xs text-slate-600 mb-2 font-medium">{t('staff.noSubjectsAssignedYet', 'No subjects or classes assigned to this teacher profile yet.')}</p>
                         <button type="button" onClick={addSubject} className="text-xs font-bold text-teal-700 inline-flex items-center gap-1.5 hover:underline cursor-pointer bg-white px-3 py-1.5 rounded-lg border border-teal-200 shadow-2xs">
-                          <Plus className="w-3.5 h-3.5 text-teal-600" /> Add Subject to Assign Classes
+                          <Plus className="w-3.5 h-3.5 text-teal-600" /> {t('staff.addClassSubject', 'Add Subject to Assign Classes')}
                         </button>
                       </div>
                     )}
@@ -820,37 +821,37 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="wizard-teacher-staffid" className={labelCls}>Staff ID (Auto-generated if blank)</label>
+                    <label htmlFor="wizard-teacher-staffid" className={labelCls}>{t('staff.staffIdAuto', 'Staff ID (Auto-generated if blank)')}</label>
                     <input id="wizard-teacher-staffid" name="teacher_staff_id" aria-label="Staff ID" className={inputCls + ' font-mono'} value={form.staffId} onChange={e => setF('staffId', e.target.value)} placeholder="TMS/TCH/0001" />
                   </div>
                   <div>
-                    <label htmlFor="wizard-teacher-hiredate" className={labelCls}>Date of Employment</label>
+                    <label htmlFor="wizard-teacher-hiredate" className={labelCls}>{t('staff.dateOfEmployment', 'Date of Employment')}</label>
                     <input type="date" id="wizard-teacher-hiredate" name="teacher_hire_date" aria-label="Date of Employment" className={inputCls} value={form.joined} onChange={e => setF('joined', e.target.value)} />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="wizard-teacher-status" className={labelCls}>Employment Status</label>
+                    <label htmlFor="wizard-teacher-status" className={labelCls}>{t('staff.employmentStatus', 'Employment Status')}</label>
                     <select id="wizard-teacher-status" name="teacher_status" aria-label="Employment Status" className={inputCls} value={form.status} onChange={e => setF('status', e.target.value)}>
-                      <option>Active</option>
-                      <option>On Leave</option>
-                      <option>Inactive</option>
+                      <option>{t('common.active', 'Active')}</option>
+                      <option>{t('staff.onLeave', 'On Leave')}</option>
+                      <option>{t('common.inactive', 'Inactive')}</option>
                     </select>
                   </div>
                   <div>
-                    <label htmlFor="wizard-teacher-salary" className={labelCls}>Monthly Gross Salary (₦)</label>
+                    <label htmlFor="wizard-teacher-salary" className={labelCls}>{t('staff.monthlyGrossSalary', 'Monthly Gross Salary (₦)')}</label>
                     <input type="number" id="wizard-teacher-salary" name="teacher_salary" aria-label="Monthly Gross Salary in Naira" className={inputCls} value={form.salary} onChange={e => setF('salary', e.target.value)} placeholder="e.g. 180000" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="wizard-teacher-bankname" className={labelCls}>Bank Name</label>
+                    <label htmlFor="wizard-teacher-bankname" className={labelCls}>{t('staff.bankName', 'Bank Name')}</label>
                     <input id="wizard-teacher-bankname" name="teacher_bank_name" aria-label="Bank Name" className={inputCls} value={form.bankName} onChange={e => setF('bankName', e.target.value)} placeholder="e.g. First Bank, GTBank" />
                   </div>
                   <div>
-                    <label htmlFor="wizard-teacher-accountnum" className={labelCls}>Bank Account Number</label>
+                    <label htmlFor="wizard-teacher-accountnum" className={labelCls}>{t('staff.bankAccountNumber', 'Bank Account Number')}</label>
                     <input id="wizard-teacher-accountnum" name="teacher_account_number" aria-label="Bank Account Number" className={inputCls} value={form.accountNumber} onChange={e => setF('accountNumber', e.target.value)} placeholder="10-digit NUBAN account number" maxLength={10} />
                   </div>
                 </div>
@@ -987,6 +988,7 @@ const EditTeacherModal = ({
   onSave: (updated: any) => void;
   onOpenCrop?: (img: string, cb: (cropped: string) => void) => void;
 }) => {
+  const { t } = useTranslation();
   const [form, setForm] = useState({ ...teacher });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -998,7 +1000,7 @@ const EditTeacherModal = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in zoom-in duration-150">
       <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="font-serif font-bold text-xl text-foreground">Edit Teacher Profile</h3>
+          <h3 className="font-serif font-bold text-xl text-foreground">{t('staff.editTeacherProfile', 'Edit Teacher Profile')}</h3>
           <button onClick={onClose} className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground">
             <X className="w-5 h-5" />
           </button>
@@ -1048,7 +1050,7 @@ const EditTeacherModal = ({
                   className="px-3 py-1.5 bg-primary text-white rounded-xl text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 hover:bg-primary/90 transition-all shadow-xs"
                 >
                   <Upload className="w-3.5 h-3.5" />
-                  <span>{form.profileImage ? 'Change Photo' : 'Upload Photo'}</span>
+                  <span>{form.profileImage ? t('staff.changePhoto', 'Change Photo') : t('staff.uploadPhoto', 'Upload Photo')}</span>
                 </label>
                 {form.profileImage && (
                   <>
@@ -1064,7 +1066,7 @@ const EditTeacherModal = ({
                       className="px-2.5 py-1.5 text-foreground border border-border rounded-xl text-xs font-bold hover:bg-muted inline-flex items-center gap-1 cursor-pointer"
                     >
                       <Scissors className="w-3.5 h-3.5 text-primary" />
-                      <span>Crop / Resize</span>
+                      <span>{t('staff.cropResize', 'Crop / Resize')}</span>
                     </button>
                     <button
                       type="button"
@@ -1072,113 +1074,113 @@ const EditTeacherModal = ({
                       className="px-2.5 py-1.5 text-rose-600 border border-rose-200 dark:border-rose-800/40 rounded-xl text-xs font-bold hover:bg-rose-50 dark:hover:bg-rose-950/30 inline-flex items-center gap-1 cursor-pointer"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
-                      <span>Remove</span>
+                      <span>{t('common.remove', 'Remove')}</span>
                     </button>
                   </>
                 )}
               </div>
-              <p className="text-[10px] text-muted-foreground">JPG, PNG, or WEBP. Syncs to Teacher portal real-time.</p>
+              <p className="text-[10px] text-muted-foreground">{t('staff.photoFormatHint', 'JPG, PNG, or WEBP. Syncs to Teacher portal real-time.')}</p>
             </div>
           </div>
 
           <div>
-            <label htmlFor="edit-teacher-name" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Full Name & Title</label>
+            <label htmlFor="edit-teacher-name" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('staff.fullNameTitle', 'Full Name & Title')}</label>
             <input id="edit-teacher-name" name="edit_teacher_name" aria-label="Full Name and Title" type="text" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required
               className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="edit-teacher-staffid" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Staff ID</label>
+              <label htmlFor="edit-teacher-staffid" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('staff.staffId', 'Staff ID')}</label>
               <input id="edit-teacher-staffid" name="edit_teacher_staffid" aria-label="Staff ID" type="text" value={form.staffId} onChange={e => setForm({ ...form, staffId: e.target.value })} required
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-mono" />
             </div>
             <div>
-              <label htmlFor="edit-teacher-status" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Status</label>
+              <label htmlFor="edit-teacher-status" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('common.status', 'Status')}</label>
               <select id="edit-teacher-status" name="edit_teacher_status" aria-label="Employment Status" value={form.status || 'Active'} onChange={e => setForm({ ...form, status: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                <option value="Active">Active</option>
-                <option value="On Leave">On Leave</option>
-                <option value="Inactive">Inactive</option>
+                <option value="Active">{t('common.active', 'Active')}</option>
+                <option value="On Leave">{t('staff.onLeave', 'On Leave')}</option>
+                <option value="Inactive">{t('common.inactive', 'Inactive')}</option>
               </select>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="edit-teacher-email" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Email Address</label>
+              <label htmlFor="edit-teacher-email" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('common.email', 'Email Address')}</label>
               <input id="edit-teacher-email" name="edit_teacher_email" aria-label="Email Address" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
             </div>
             <div>
-              <label htmlFor="edit-teacher-phone" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Phone Number</label>
+              <label htmlFor="edit-teacher-phone" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('common.phone', 'Phone Number')}</label>
               <input id="edit-teacher-phone" name="edit_teacher_phone" aria-label="Phone Number" type="tel" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="edit-teacher-gender" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Gender</label>
+              <label htmlFor="edit-teacher-gender" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('common.gender', 'Gender')}</label>
               <select id="edit-teacher-gender" name="edit_teacher_gender" aria-label="Gender" value={form.gender || 'Male'} onChange={e => setForm({ ...form, gender: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
+                <option value="Male">{t('common.male', 'Male')}</option>
+                <option value="Female">{t('common.female', 'Female')}</option>
+                <option value="Other">{t('common.other', 'Other')}</option>
               </select>
             </div>
             <div>
-              <label htmlFor="edit-teacher-dob" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Date of Birth</label>
+              <label htmlFor="edit-teacher-dob" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('common.dob', 'Date of Birth')}</label>
               <input id="edit-teacher-dob" name="edit_teacher_dob" aria-label="Date of Birth" type="date" value={form.dob || '1990-01-01'} onChange={e => setForm({ ...form, dob: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
             </div>
           </div>
           <div>
-            <label htmlFor="edit-teacher-address" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Residential Address</label>
+            <label htmlFor="edit-teacher-address" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('common.address', 'Residential Address')}</label>
             <input id="edit-teacher-address" name="edit_teacher_address" aria-label="Residential Address" type="text" value={form.address || ''} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="e.g. Tarepet School Campus, Yenagoa, Bayelsa State"
               className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
           <div>
-            <label htmlFor="edit-teacher-specialization" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Specialization</label>
+            <label htmlFor="edit-teacher-specialization" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('staff.specialization', 'Specialization')}</label>
             <input id="edit-teacher-specialization" name="edit_teacher_specialization" aria-label="Specialization" type="text" value={form.specialization} onChange={e => setForm({ ...form, specialization: e.target.value })}
               className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
           <div>
-            <label htmlFor="edit-teacher-qual" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Qualifications</label>
+            <label htmlFor="edit-teacher-qual" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('staff.qualifications', 'Qualifications')}</label>
             <input id="edit-teacher-qual" name="edit_teacher_qualification" aria-label="Qualifications" type="text" value={form.qualification} onChange={e => setForm({ ...form, qualification: e.target.value })}
               className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="edit-teacher-dept" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Teaching Division</label>
+              <label htmlFor="edit-teacher-dept" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('staff.teachingDivision', 'Teaching Division')}</label>
               <select id="edit-teacher-dept" name="edit_teacher_department" aria-label="Teaching Division" value={form.department || 'Senior Secondary (SS 1 - SS 3)'} onChange={e => setForm({ ...form, department: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                <option value="Senior Secondary (SS 1 - SS 3)">Senior Secondary (SS 1 - SS 3)</option>
-                <option value="Junior Secondary (JSS 1 - JSS 3)">Junior Secondary (JSS 1 - JSS 3)</option>
-                <option value="Primary Department (Primary 1 - 6)">Primary Department (Primary 1 - 6)</option>
-                <option value="Nursery Department (Nursery 1 - 3)">Nursery Department (Nursery 1 - 3)</option>
+                <option value="Senior Secondary (SS 1 - SS 3)">{t('divisions.ss', 'Senior Secondary (SS 1 - SS 3)')}</option>
+                <option value="Junior Secondary (JSS 1 - JSS 3)">{t('divisions.jss', 'Junior Secondary (JSS 1 - JSS 3)')}</option>
+                <option value="Primary Department (Primary 1 - 6)">{t('divisions.primary', 'Primary Department (Primary 1 - 6)')}</option>
+                <option value="Nursery Department (Nursery 1 - 3)">{t('divisions.nursery', 'Nursery Department (Nursery 1 - 3)')}</option>
               </select>
             </div>
             <div>
-              <label htmlFor="edit-teacher-formduty" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Form Teacher Duty</label>
+              <label htmlFor="edit-teacher-formduty" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('staff.formTeacherDuty', 'Form Teacher Duty')}</label>
               <select id="edit-teacher-formduty" name="edit_teacher_form_duty" aria-label="Form Teacher Duty" value={form.formTeacherOf || 'None'} onChange={e => setForm({ ...form, formTeacherOf: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                <option value="None">None (Subject Specialist Only)</option>
-                <option value="Nursery 1">Nursery 1</option>
-                <option value="Nursery 2">Nursery 2</option>
-                <option value="Nursery 3">Nursery 3</option>
-                <option value="Primary 1">Primary 1</option>
-                <option value="Primary 2">Primary 2</option>
-                <option value="Primary 3">Primary 3</option>
-                <option value="Primary 4">Primary 4</option>
-                <option value="Primary 5">Primary 5</option>
-                <option value="Primary 6">Primary 6</option>
-                <option value="JSS 1">JSS 1</option>
-                <option value="JSS 2">JSS 2</option>
-                <option value="JSS 3">JSS 3</option>
-                <option value="SS 1 Science">SS 1 Science</option>
-                <option value="SS 1 Art">SS 1 Art</option>
-                <option value="SS 2 Science">SS 2 Science</option>
-                <option value="SS 2 Art">SS 2 Art</option>
-                <option value="SS 3 Science">SS 3 Science</option>
-                <option value="SS 3 Art">SS 3 Art</option>
+                <option value="None">{t('staff.noneSpecialist', 'None (Subject Specialist Only)')}</option>
+                <option value="Nursery 1">{t('classes.nur1', 'Nursery 1')}</option>
+                <option value="Nursery 2">{t('classes.nur2', 'Nursery 2')}</option>
+                <option value="Nursery 3">{t('classes.nur3', 'Nursery 3')}</option>
+                <option value="Primary 1">{t('classes.pri1', 'Primary 1')}</option>
+                <option value="Primary 2">{t('classes.pri2', 'Primary 2')}</option>
+                <option value="Primary 3">{t('classes.pri3', 'Primary 3')}</option>
+                <option value="Primary 4">{t('classes.pri4', 'Primary 4')}</option>
+                <option value="Primary 5">{t('classes.pri5', 'Primary 5')}</option>
+                <option value="Primary 6">{t('classes.pri6', 'Primary 6')}</option>
+                <option value="JSS 1">{t('classes.jss1', 'JSS 1')}</option>
+                <option value="JSS 2">{t('classes.jss2', 'JSS 2')}</option>
+                <option value="JSS 3">{t('classes.jss3', 'JSS 3')}</option>
+                <option value="SS 1 Science">{t('classes.ss1Science', 'SS 1 Science')}</option>
+                <option value="SS 1 Art">{t('classes.ss1Art', 'SS 1 Art')}</option>
+                <option value="SS 2 Science">{t('classes.ss2Science', 'SS 2 Science')}</option>
+                <option value="SS 2 Art">{t('classes.ss2Art', 'SS 2 Art')}</option>
+                <option value="SS 3 Science">{t('classes.ss3Science', 'SS 3 Science')}</option>
+                <option value="SS 3 Art">{t('classes.ss3Art', 'SS 3 Art')}</option>
               </select>
             </div>
           </div>
@@ -1187,8 +1189,8 @@ const EditTeacherModal = ({
           <div className="p-3.5 rounded-2xl bg-muted/20 border border-border space-y-2.5">
             <div className="flex items-center justify-between">
               <div>
-                <label className="text-[10px] font-bold uppercase text-foreground block">Assigned Classes & Subjects</label>
-                <p className="text-[10px] text-muted-foreground">Manage which subjects and classes this teacher handles</p>
+                <label className="text-[10px] font-bold uppercase text-foreground block">{t('staff.assignedClassesSubjects', 'Assigned Classes & Subjects')}</label>
+                <p className="text-[10px] text-muted-foreground">{t('staff.manageTeacherSubjects', 'Manage which subjects and classes this teacher handles')}</p>
               </div>
               <button
                 type="button"
@@ -1198,7 +1200,7 @@ const EditTeacherModal = ({
                 }}
                 className="text-[11px] font-bold text-primary hover:bg-primary/10 px-2.5 py-1 rounded-lg border border-primary/30 transition-colors inline-flex items-center gap-1 cursor-pointer"
               >
-                <Plus className="w-3.5 h-3.5" /> Add Class & Subject
+                <Plus className="w-3.5 h-3.5" /> {t('staff.addClassSubject', 'Add Class & Subject')}
               </button>
             </div>
 
@@ -1245,29 +1247,29 @@ const EditTeacherModal = ({
                   </div>
                 ))
               ) : (
-                <p className="text-[11px] text-muted-foreground italic py-1">No subjects assigned. Click "+ Add Class & Subject" above.</p>
+                <p className="text-[11px] text-muted-foreground italic py-1">{t('staff.noSubjectsAssignedYet', 'No subjects assigned. Click "+ Add Class & Subject" above.')}</p>
               )}
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Bank Name</label>
+              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('staff.bankName', 'Bank Name')}</label>
               <input type="text" value={form.bankName || ''} onChange={e => setForm({ ...form, bankName: e.target.value })} placeholder="e.g. First Bank"
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
             </div>
             <div>
-              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Account Number</label>
+              <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('staff.accountNumber', 'Account Number')}</label>
               <input type="text" value={form.accountNumber || ''} onChange={e => setForm({ ...form, accountNumber: e.target.value })} placeholder="e.g. 0123456789"
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-mono" />
             </div>
           </div>
           <div className="flex gap-3 pt-3 border-t border-border">
             <button type="submit" className="flex-1 bg-primary text-white py-2.5 rounded-xl font-bold hover:bg-primary/90 transition-colors shadow-sm">
-              Save Changes
+              {t('common.saveChanges', 'Save Changes')}
             </button>
             <button type="button" onClick={onClose} className="border border-border px-5 py-2.5 rounded-xl hover:bg-accent transition-colors">
-              Cancel
+              {t('common.cancel', 'Cancel')}
             </button>
           </div>
         </form>
@@ -1287,6 +1289,7 @@ const EditStudentModal = ({
   onSave: (updated: any) => void;
   onOpenCrop?: (img: string, cb: (cropped: string) => void) => void;
 }) => {
+  const { t } = useTranslation();
   const [form, setForm] = useState({ ...student });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -1298,7 +1301,7 @@ const EditStudentModal = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in zoom-in duration-150">
       <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="font-serif font-bold text-xl text-foreground">Edit Student Profile</h3>
+          <h3 className="font-serif font-bold text-xl text-foreground">{t('students.editStudentProfile', 'Edit Student Profile')}</h3>
           <button onClick={onClose} className="p-1 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground">
             <X className="w-5 h-5" />
           </button>
@@ -1348,7 +1351,7 @@ const EditStudentModal = ({
                   className="px-3 py-1.5 bg-primary text-white rounded-xl text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 hover:bg-primary/90 transition-all shadow-xs"
                 >
                   <Upload className="w-3.5 h-3.5" />
-                  <span>{form.profileImage ? 'Change Photo' : 'Upload Photo'}</span>
+                  <span>{form.profileImage ? t('staff.changePhoto', 'Change Photo') : t('staff.uploadPhoto', 'Upload Photo')}</span>
                 </label>
                 {form.profileImage && (
                   <>
@@ -1364,7 +1367,7 @@ const EditStudentModal = ({
                       className="px-2.5 py-1.5 text-foreground border border-border rounded-xl text-xs font-bold hover:bg-muted inline-flex items-center gap-1 cursor-pointer"
                     >
                       <Scissors className="w-3.5 h-3.5 text-primary" />
-                      <span>Crop / Resize</span>
+                      <span>{t('staff.cropResize', 'Crop / Resize')}</span>
                     </button>
                     <button
                       type="button"
@@ -1372,42 +1375,42 @@ const EditStudentModal = ({
                       className="px-2.5 py-1.5 text-rose-600 border border-rose-200 dark:border-rose-800/40 rounded-xl text-xs font-bold hover:bg-rose-50 dark:hover:bg-rose-950/30 inline-flex items-center gap-1 cursor-pointer"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
-                      <span>Remove</span>
+                      <span>{t('common.remove', 'Remove')}</span>
                     </button>
                   </>
                 )}
               </div>
-              <p className="text-[10px] text-muted-foreground">JPG, PNG, or WEBP. Syncs to Student portal in real time.</p>
+              <p className="text-[10px] text-muted-foreground">{t('students.photoHint', 'JPG, PNG, or WEBP. Syncs to Student portal in real time.')}</p>
             </div>
           </div>
 
           <div>
-            <label htmlFor="edit-student-name" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Full Student Name</label>
+            <label htmlFor="edit-student-name" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('students.fullStudentName', 'Full Student Name')}</label>
             <input id="edit-student-name" name="edit_student_name" aria-label="Full Student Name" type="text" value={form.name || ''} onChange={e => setForm({ ...form, name: e.target.value })} required
               className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="edit-student-admno" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Admission Number</label>
+              <label htmlFor="edit-student-admno" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('students.admissionNumber', 'Admission Number')}</label>
               <input id="edit-student-admno" name="edit_student_admission_no" aria-label="Admission Number" type="text" value={form.admissionNo || form.studentId || form.code || ''} onChange={e => setForm({ ...form, admissionNo: e.target.value, studentId: e.target.value })} required
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-mono" />
             </div>
             <div>
-              <label htmlFor="edit-student-status" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Status</label>
+              <label htmlFor="edit-student-status" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('common.status', 'Status')}</label>
               <select id="edit-student-status" name="edit_student_status" aria-label="Student Status" value={form.status || 'Active'} onChange={e => setForm({ ...form, status: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-                <option value="Suspended">Suspended</option>
-                <option value="Graduated">Graduated</option>
+                <option value="Active">{t('common.active', 'Active')}</option>
+                <option value="Inactive">{t('common.inactive', 'Inactive')}</option>
+                <option value="Suspended">{t('students.suspended', 'Suspended')}</option>
+                <option value="Graduated">{t('students.graduated', 'Graduated')}</option>
               </select>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="edit-student-grade" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Class Level</label>
+              <label htmlFor="edit-student-grade" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('students.classLevel', 'Class Level')}</label>
               <select id="edit-student-grade" name="edit_student_grade" aria-label="Class Level" value={form.grade || 'SS1'} onChange={e => setForm({ ...form, grade: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
                 {['Creche', 'Reception', 'Nursery 1', 'Nursery 2', 'Primary 1', 'Primary 2', 'Primary 3', 'Primary 4', 'Primary 5', 'Primary 6', 'JSS1', 'JSS2', 'JSS3', 'SS1', 'SS2', 'SS3'].map(c => (
@@ -1416,7 +1419,7 @@ const EditStudentModal = ({
               </select>
             </div>
             <div>
-              <label htmlFor="edit-student-stream" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Stream / Arm</label>
+              <label htmlFor="edit-student-stream" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('students.streamArm', 'Stream / Arm')}</label>
               <input id="edit-student-stream" name="edit_student_stream" aria-label="Stream or Arm" type="text" value={form.stream || 'Science'} onChange={e => setForm({ ...form, stream: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" placeholder="e.g. Science, Art, Gold" />
             </div>
@@ -1424,28 +1427,28 @@ const EditStudentModal = ({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="edit-student-house" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">School House</label>
+              <label htmlFor="edit-student-house" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('students.schoolHouse', 'School House')}</label>
               <input id="edit-student-house" name="edit_student_house" aria-label="School House" type="text" value={form.house || ''} onChange={e => setForm({ ...form, house: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" placeholder="e.g. Sapphire House" />
             </div>
             <div>
-              <label htmlFor="edit-student-gender" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Gender</label>
+              <label htmlFor="edit-student-gender" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('common.gender', 'Gender')}</label>
               <select id="edit-student-gender" name="edit_student_gender" aria-label="Gender" value={form.gender || 'Male'} onChange={e => setForm({ ...form, gender: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
+                <option value="Male">{t('common.male', 'Male')}</option>
+                <option value="Female">{t('common.female', 'Female')}</option>
               </select>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="edit-student-parentname" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Parent / Guardian Name</label>
+              <label htmlFor="edit-student-parentname" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('students.parentName', 'Parent / Guardian Name')}</label>
               <input id="edit-student-parentname" name="edit_student_parent_name" aria-label="Parent or Guardian Name" type="text" value={form.parentName || ''} onChange={e => setForm({ ...form, parentName: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
             </div>
             <div>
-              <label htmlFor="edit-student-parentphone" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">Parent Contact Phone</label>
+              <label htmlFor="edit-student-parentphone" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('students.parentPhone', 'Parent Contact Phone')}</label>
               <input id="edit-student-parentphone" name="edit_student_parent_phone" aria-label="Parent Contact Phone Number" type="tel" value={form.parentPhone || form.phone || ''} onChange={e => setForm({ ...form, parentPhone: e.target.value, phone: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
             </div>
@@ -1453,10 +1456,10 @@ const EditStudentModal = ({
 
           <div className="flex gap-3 pt-3 border-t border-border">
             <button type="submit" className="flex-1 bg-primary text-white py-2.5 rounded-xl font-bold hover:bg-primary/90 transition-colors shadow-sm">
-              Save Student Changes
+              {t('students.saveStudentChanges', 'Save Student Changes')}
             </button>
             <button type="button" onClick={onClose} className="border border-border px-5 py-2.5 rounded-xl hover:bg-accent transition-colors">
-              Cancel
+              {t('common.cancel', 'Cancel')}
             </button>
           </div>
         </form>
@@ -1769,30 +1772,30 @@ const CreateSubjectModal = ({ onClose, onCreated, defaultClass, defaultStream }:
               <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('addSubject.classLevel')}</label>
               <select value={form.grade} onChange={e => setForm({ ...form, grade: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                <option value="NUR1">Nursery 1</option>
-                <option value="NUR2">Nursery 2</option>
-                <option value="NUR3">Nursery 3</option>
-                <option value="PRI1">Primary 1</option>
-                <option value="PRI2">Primary 2</option>
-                <option value="PRI3">Primary 3</option>
-                <option value="PRI4">Primary 4</option>
-                <option value="PRI5">Primary 5</option>
-                <option value="PRI6">Primary 6</option>
-                <option value="JSS1">JSS 1</option>
-                <option value="JSS2">JSS 2</option>
-                <option value="JSS3">JSS 3</option>
-                <option value="SS1">SS 1</option>
-                <option value="SS2">SS 2</option>
-                <option value="SS3">SS 3</option>
+                <option value="NUR1">{t('classes.nur1', 'Nursery 1')}</option>
+                <option value="NUR2">{t('classes.nur2', 'Nursery 2')}</option>
+                <option value="NUR3">{t('classes.nur3', 'Nursery 3')}</option>
+                <option value="PRI1">{t('classes.pri1', 'Primary 1')}</option>
+                <option value="PRI2">{t('classes.pri2', 'Primary 2')}</option>
+                <option value="PRI3">{t('classes.pri3', 'Primary 3')}</option>
+                <option value="PRI4">{t('classes.pri4', 'Primary 4')}</option>
+                <option value="PRI5">{t('classes.pri5', 'Primary 5')}</option>
+                <option value="PRI6">{t('classes.pri6', 'Primary 6')}</option>
+                <option value="JSS1">{t('classes.jss1', 'JSS 1')}</option>
+                <option value="JSS2">{t('classes.jss2', 'JSS 2')}</option>
+                <option value="JSS3">{t('classes.jss3', 'JSS 3')}</option>
+                <option value="SS1">{t('classes.ss1', 'SS 1')}</option>
+                <option value="SS2">{t('classes.ss2', 'SS 2')}</option>
+                <option value="SS3">{t('classes.ss3', 'SS 3')}</option>
               </select>
             </div>
             <div>
               <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('addSubject.stream')}</label>
               <select value={form.stream} onChange={e => setForm({ ...form, stream: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary">
-                <option value="General">General (JSS / Core)</option>
-                <option value="Science">Science Stream</option>
-                <option value="Art">Art & Humanities Stream</option>
+                <option value="General">{t('streams.general', 'General (JSS / Core)')}</option>
+                <option value="Science">{t('streams.science', 'Science Stream')}</option>
+                <option value="Art">{t('streams.art', 'Art & Humanities Stream')}</option>
               </select>
             </div>
           </div>
@@ -2052,25 +2055,25 @@ const CreateUserForTypeModal = ({
                     <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createStaff.formTeacherClass', 'Form Teacher Duty (Class)')}</label>
                     <select value={form.department} onChange={e => setForm({ ...form, department: e.target.value })}
                       className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary">
-                      <option value="">None / Subject Teacher Only</option>
-                      <option value="NUR1 General">Nursery 1 Form Teacher</option>
-                      <option value="NUR2 General">Nursery 2 Form Teacher</option>
-                      <option value="NUR3 General">Nursery 3 Form Teacher</option>
-                      <option value="PRI1 General">Primary 1 Form Teacher</option>
-                      <option value="PRI2 General">Primary 2 Form Teacher</option>
-                      <option value="PRI3 General">Primary 3 Form Teacher</option>
-                      <option value="PRI4 General">Primary 4 Form Teacher</option>
-                      <option value="PRI5 General">Primary 5 Form Teacher</option>
-                      <option value="PRI6 General">Primary 6 Form Teacher</option>
-                      <option value="JSS1 General">JSS 1 Form Teacher</option>
-                      <option value="JSS2 General">JSS 2 Form Teacher</option>
-                      <option value="JSS3 General">JSS 3 Form Teacher</option>
-                      <option value="SS1 Science">SS 1 Science Form Teacher</option>
-                      <option value="SS1 Art">SS 1 Art Form Teacher</option>
-                      <option value="SS2 Science">SS 2 Science Form Teacher</option>
-                      <option value="SS2 Art">SS 2 Art Form Teacher</option>
-                      <option value="SS3 Science">SS 3 Science Form Teacher</option>
-                      <option value="SS3 Art">SS 3 Art Form Teacher</option>
+                      <option value="">{t('staff.noneSubjectOnly', 'None / Subject Teacher Only')}</option>
+                      <option value="NUR1 General">{t('staff.nur1Form', 'Nursery 1 Form Teacher')}</option>
+                      <option value="NUR2 General">{t('staff.nur2Form', 'Nursery 2 Form Teacher')}</option>
+                      <option value="NUR3 General">{t('staff.nur3Form', 'Nursery 3 Form Teacher')}</option>
+                      <option value="PRI1 General">{t('staff.pri1Form', 'Primary 1 Form Teacher')}</option>
+                      <option value="PRI2 General">{t('staff.pri2Form', 'Primary 2 Form Teacher')}</option>
+                      <option value="PRI3 General">{t('staff.pri3Form', 'Primary 3 Form Teacher')}</option>
+                      <option value="PRI4 General">{t('staff.pri4Form', 'Primary 4 Form Teacher')}</option>
+                      <option value="PRI5 General">{t('staff.pri5Form', 'Primary 5 Form Teacher')}</option>
+                      <option value="PRI6 General">{t('staff.pri6Form', 'Primary 6 Form Teacher')}</option>
+                      <option value="JSS1 General">{t('staff.jss1Form', 'JSS 1 Form Teacher')}</option>
+                      <option value="JSS2 General">{t('staff.jss2Form', 'JSS 2 Form Teacher')}</option>
+                      <option value="JSS3 General">{t('staff.jss3Form', 'JSS 3 Form Teacher')}</option>
+                      <option value="SS1 Science">{t('staff.ss1ScienceForm', 'SS 1 Science Form Teacher')}</option>
+                      <option value="SS1 Art">{t('staff.ss1ArtForm', 'SS 1 Art Form Teacher')}</option>
+                      <option value="SS2 Science">{t('staff.ss2ScienceForm', 'SS 2 Science Form Teacher')}</option>
+                      <option value="SS2 Art">{t('staff.ss2ArtForm', 'SS 2 Art Form Teacher')}</option>
+                      <option value="SS3 Science">{t('staff.ss3ScienceForm', 'SS 3 Science Form Teacher')}</option>
+                      <option value="SS3 Art">{t('staff.ss3ArtForm', 'SS 3 Art Form Teacher')}</option>
                     </select>
                   </div>
                 </div>
@@ -2119,21 +2122,21 @@ const CreateUserForTypeModal = ({
                       <select value={form.grade} onChange={e => setForm({ ...form, grade: e.target.value })}
                         className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary">
                         <option value="">{t('createStaff.selectGrade')}</option>
-                        <option value="NUR1">Nursery 1</option>
-                        <option value="NUR2">Nursery 2</option>
-                        <option value="NUR3">Nursery 3</option>
-                        <option value="PRI1">Primary 1</option>
-                        <option value="PRI2">Primary 2</option>
-                        <option value="PRI3">Primary 3</option>
-                        <option value="PRI4">Primary 4</option>
-                        <option value="PRI5">Primary 5</option>
-                        <option value="PRI6">Primary 6</option>
-                        <option value="JSS1">JSS 1</option>
-                        <option value="JSS2">JSS 2</option>
-                        <option value="JSS3">JSS 3</option>
-                        <option value="SS1">SS 1</option>
-                        <option value="SS2">SS 2</option>
-                        <option value="SS3">SS 3</option>
+                        <option value="NUR1">{t('classes.nur1', 'Nursery 1')}</option>
+                        <option value="NUR2">{t('classes.nur2', 'Nursery 2')}</option>
+                        <option value="NUR3">{t('classes.nur3', 'Nursery 3')}</option>
+                        <option value="PRI1">{t('classes.pri1', 'Primary 1')}</option>
+                        <option value="PRI2">{t('classes.pri2', 'Primary 2')}</option>
+                        <option value="PRI3">{t('classes.pri3', 'Primary 3')}</option>
+                        <option value="PRI4">{t('classes.pri4', 'Primary 4')}</option>
+                        <option value="PRI5">{t('classes.pri5', 'Primary 5')}</option>
+                        <option value="PRI6">{t('classes.pri6', 'Primary 6')}</option>
+                        <option value="JSS1">{t('classes.jss1', 'JSS 1')}</option>
+                        <option value="JSS2">{t('classes.jss2', 'JSS 2')}</option>
+                        <option value="JSS3">{t('classes.jss3', 'JSS 3')}</option>
+                        <option value="SS1">{t('classes.ss1', 'SS 1')}</option>
+                        <option value="SS2">{t('classes.ss2', 'SS 2')}</option>
+                        <option value="SS3">{t('classes.ss3', 'SS 3')}</option>
                       </select>
                     </div>
                     <div>
@@ -2149,14 +2152,14 @@ const CreateUserForTypeModal = ({
                   </div>
                   <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-800 flex items-start gap-2">
                     <Key className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                    <div><strong>Student Authentication:</strong> Student ID Number (Admission No) will be auto-generated. Students log into their portal using their <strong>Email Address</strong> and <strong>Student ID Number</strong>.</div>
+                    <div><strong>{t('auth.studentAuth', 'Student Authentication:')}</strong> {t('auth.studentAuthDesc', 'Student ID Number (Admission No) will be auto-generated. Students log into their portal using their Email Address and Student ID Number.')}</div>
                   </div>
                 </div>
               )}
 
               <div className="bg-muted/20 border border-border rounded-xl p-3 text-xs text-muted-foreground flex items-center gap-2">
                 <Lock className="w-4 h-4 text-muted-foreground shrink-0" />
-                <span>Account credentials and initial login access instructions will be sent to the email provided.</span>
+                <span>{t('auth.credentialsInstructions', 'Account credentials and initial login access instructions will be sent to the email provided.')}</span>
               </div>
 
               <div className="flex gap-3 pt-1">
