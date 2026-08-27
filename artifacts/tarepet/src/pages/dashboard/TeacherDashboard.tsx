@@ -1975,7 +1975,7 @@ export default function TeacherDashboard() {
               <h2 className="text-2xl sm:text-3xl font-serif font-bold">
                 {t('teacher.cbt_exam_control', 'CBT Exam Control')}
               </h2>
-              <p className="text-blue-100 text-xs mt-1 max-w-xl">{t('teacher.cbt_workflow_desc', 'Subject Teacher creates questions → Form Teacher reviews → Admin approves → Form Teacher uploads to Student Portal.')}</p>
+              <p className="text-blue-100 text-xs mt-1 max-w-xl">Create, schedule, and manage online CBT examination papers for Senior Secondary students (SS 1 - SS 3).</p>
             </div>
             {isSeniorSecondaryTeacher ? (
               <Link href="/dashboard/cbt-builder">
@@ -1988,25 +1988,6 @@ export default function TeacherDashboard() {
                 🔒 CBT Builder is restricted to Senior Secondary (SS1 - SS3)
               </div>
             )}
-          </div>
-
-          {/* Workflow Status Info Banner */}
-          <div className="bg-card rounded-2xl border border-border p-4 shadow-sm">
-            <h3 className="font-serif font-bold text-foreground text-sm mb-3">{t('teacher.approval_workflow', 'Question Approval Workflow')}</h3>
-            <div className="flex flex-col sm:flex-row gap-2">
-              {[
-                { step: '1', label: 'Subject Teacher Creates', color: 'bg-blue-100 text-blue-800' },
-                { step: '2', label: 'Form Teacher Reviews', color: 'bg-amber-100 text-amber-800' },
-                { step: '3', label: 'Admin Approves', color: 'bg-purple-100 text-purple-800' },
-                { step: '4', label: 'Form Teacher Uploads', color: 'bg-emerald-100 text-emerald-800' },
-              ].map(s => (
-                <div key={s.step} className="flex items-center gap-2 flex-1">
-                  <span className={`w-6 h-6 rounded-full ${s.color} text-[10px] font-bold flex items-center justify-center shrink-0`}>{s.step}</span>
-                  <span className={`text-[10px] font-bold px-2 py-1 rounded-lg ${s.color} flex-1 text-center`}>{s.label}</span>
-                  {s.step !== '4' && <span className="text-muted-foreground hidden sm:block">→</span>}
-                </div>
-              ))}
-            </div>
           </div>
 
           {/* Class & Department Filter Bar */}
