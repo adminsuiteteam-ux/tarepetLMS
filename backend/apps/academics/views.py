@@ -13,7 +13,7 @@ from .serializers import (
 class BroadsheetViewSet(viewsets.ModelViewSet):
     queryset = BroadsheetScore.objects.all()
     serializer_class = BroadsheetScoreSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -106,13 +106,13 @@ class BroadsheetViewSet(viewsets.ModelViewSet):
 class PromotionRecordViewSet(viewsets.ModelViewSet):
     queryset = PromotionRecord.objects.all()
     serializer_class = PromotionRecordSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     @action(detail=False, methods=['post'], url_path='execute-batch')
     def execute_batch(self, request):
         payload = request.data
         promotions = payload.get('promotions', [])
-        promoted_by = payload.get('promotedBy', request.user.get_full_name())
+        promoted_by = payload.get('promotedBy', request.user.get_full_name() if request.user and request.user.is_authenticated else 'Administrator')
         session = payload.get('academicSession', '2026/2027')
         term = payload.get('term', '3rd Term')
 
@@ -158,7 +158,7 @@ class PromotionRecordViewSet(viewsets.ModelViewSet):
 class ClassAttendanceViewSet(viewsets.ModelViewSet):
     queryset = ClassAttendanceRecord.objects.all()
     serializer_class = ClassAttendanceRecordSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     @action(detail=False, methods=['post'], url_path='batch-mark')
     def batch_mark(self, request):

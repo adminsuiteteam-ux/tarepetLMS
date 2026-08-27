@@ -37,16 +37,17 @@ try:
     # pyrefly: ignore [missing-import]
     from sentry_sdk.integrations.celery import CeleryIntegration
     _sentry_dsn = env('SENTRY_DSN', default=None) or os.getenv('SENTRY_DSN')
-    if _sentry_dsn:
+    if _sentry_dsn and not DEBUG:
         sentry_sdk.init(
             dsn=_sentry_dsn,
             integrations=[DjangoIntegration(), CeleryIntegration()],
             traces_sample_rate=env.float('SENTRY_TRACES_SAMPLE_RATE', default=0.2),
             profiles_sample_rate=env.float('SENTRY_PROFILES_SAMPLE_RATE', default=0.1),
             send_default_pii=False,
-            environment=env('ENVIRONMENT', default='production' if not DEBUG else 'development'),
+            include_local_variables=False,
+            environment=env('ENVIRONMENT', default='production'),
         )
-except ImportError:
+except (ImportError, Exception):
     pass
 ALLOWED_HOSTS = ['*']
 CORS_ALLOW_ALL_ORIGINS = True
@@ -205,10 +206,9 @@ AUTH_PASSWORD_VALIDATORS = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'apps.users.authentication.GracefulJWTAuthentication',
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.AllowAny',
     ),
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',

@@ -46,12 +46,12 @@ class ContactMessageViewSet(viewsets.ModelViewSet):
 
 
 class ActivityLogViewSet(viewsets.ModelViewSet):
-    queryset = ActivityLog.objects.all()[:100]
+    queryset = ActivityLog.objects.all()
     serializer_class = ActivityLogSerializer
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        return ActivityLog.objects.all()[:100]
+        return ActivityLog.objects.all().order_by('-timestamp')[:100]
 
 
 class NotificationViewSet(viewsets.ModelViewSet):
