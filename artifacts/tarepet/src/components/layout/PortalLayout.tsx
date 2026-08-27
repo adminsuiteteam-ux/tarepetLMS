@@ -154,24 +154,42 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
     return false;
   });
 
-  const toggleDarkMode = () => {
-    setIsDarkMode(prev => {
-      const next = !prev;
-      if (next) {
+  const toggleTheme = (dark?: boolean) => {
+    const nextVal = dark !== undefined ? dark : !isDarkMode;
+    setIsDarkMode(nextVal);
+    if (typeof window !== 'undefined') {
+      if (nextVal) {
         document.documentElement.classList.add('dark');
         localStorage.setItem('theme', 'dark');
       } else {
         document.documentElement.classList.remove('dark');
         localStorage.setItem('theme', 'light');
       }
-      return next;
-    });
+      window.dispatchEvent(new CustomEvent('tarepet_theme_changed', { detail: { isDark: nextVal } }));
+    }
   };
 
+  const toggleDarkMode = () => toggleTheme();
+
   React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+
     if (localStorage.getItem('theme') === 'dark') {
       document.documentElement.classList.add('dark');
+      setIsDarkMode(true);
     }
+    const handleThemeChange = (e: any) => {
+      if (e.detail && typeof e.detail.isDark === 'boolean') {
+        setIsDarkMode(e.detail.isDark);
+      }
+    };
+    window.addEventListener('tarepet_theme_changed', handleThemeChange);
+    return () => {
+      window.removeEventListener('tarepet_theme_changed', handleThemeChange);
+    };
+  }, []);
+
+  React.useEffect(() => {
     const unsubWs = initWebSocket();
     return () => {
       unsubWs();
@@ -352,6 +370,28 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
         })}
       </nav>
 
+      {/* Theme Quick Switcher in Sidebar */}
+      <div className="px-3 pb-2 shrink-0">
+        <button
+          type="button"
+          onClick={() => toggleTheme(!isDarkMode)}
+          title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold border border-border bg-muted/40 hover:bg-muted text-foreground transition-all cursor-pointer shadow-2xs"
+        >
+          <div className="flex items-center gap-2.5">
+            {isDarkMode ? (
+              <Moon className="w-4 h-4 text-amber-400 shrink-0" />
+            ) : (
+              <Sun className="w-4 h-4 text-amber-500 shrink-0" />
+            )}
+            <span className="truncate">{isDarkMode ? 'Dark Mode' : 'Light Mode'}</span>
+          </div>
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary shrink-0">
+            {isDarkMode ? '🌙 Dark' : '☀️ Light'}
+          </span>
+        </button>
+      </div>
+
       {/* User card & logout */}
       <div className="p-3 pb-6 border-t border-border shrink-0 bg-card">
         <div className="flex items-center justify-between p-3 rounded-xl bg-muted/50 border border-border/50">
@@ -411,7 +451,7 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
 
       {/* Main area */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Header: ONLY Logo, Search Navigation, and Settings Icon */}
+        {/* Top Header: Logo, Search Navigation, Light/Dark Mode Toggle, and Settings Icon */}
         <header className="sticky top-0 z-30 bg-card border-b border-border px-3 sm:px-5 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4">
           <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
             <button
@@ -454,7 +494,7 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
             </div>
           </div>
 
-          {/* Right actions: Search, Notifications, Settings, Profile Avatar */}
+          {/* Right actions: Search, Light/Dark Mode Toggle, Notifications, Settings, Profile Avatar */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* Mobile Search Icon Button */}
             <button
@@ -465,6 +505,23 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
               className="md:hidden p-2 rounded-full text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer"
             >
               <Search className="w-5 h-5" />
+            </button>
+
+            {/* Light / Dark Mode Toggle Button */}
+            <button
+              type="button"
+              onClick={() => toggleTheme(!isDarkMode)}
+              title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              className="p-2 sm:px-3 sm:py-1.5 rounded-full border border-border bg-muted/40 hover:bg-muted text-foreground transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs hover:scale-105 active:scale-95"
+            >
+              {isDarkMode ? (
+                <Sun className="w-4 h-4 text-amber-400 shrink-0 animate-in spin-in-180 duration-300" />
+              ) : (
+                <Moon className="w-4 h-4 text-slate-700 dark:text-slate-200 shrink-0 animate-in spin-in-180 duration-300" />
+              )}
+              <span className="text-[11px] font-bold hidden sm:inline text-muted-foreground hover:text-foreground">
+                {isDarkMode ? 'Light' : 'Dark'}
+              </span>
             </button>
 
             {/* Notification Panel Icon */}

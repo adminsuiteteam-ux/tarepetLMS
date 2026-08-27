@@ -47,7 +47,7 @@ import {
   Briefcase, UserCog, BookMarked, MessageSquare, KeyRound,
   BadgeCheck, Ban, RotateCcw, FileDown, Send, FlaskConical, Palette,
   School, CalendarCheck, Megaphone, UserPlus, FileSpreadsheet, TrendingUp, Sparkles, ChevronRight, Eye, Layers, ShieldCheck, Bell, AlertTriangle, Key, Trophy, BarChart3, TrendingDown, XCircle, UploadCloud, Camera,
-  Scissors, Loader2, Tag
+  Scissors, Loader2, Tag, Sun, Moon
 } from 'lucide-react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, LineChart, Line, CartesianGrid,
@@ -5909,10 +5909,87 @@ export default function AdminDashboard() {
           {/* ── TAB 7: Portal Appearance ── */}
           {settingsTab === 'portal' && (
             <div className="space-y-5">
+              {/* Active Theme Mode Quick Toggle Card */}
+              <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-border">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                      <Palette className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-serif font-bold text-base text-foreground">Portal Theme Mode</h3>
+                      <p className="text-xs text-muted-foreground">Select your preferred visual appearance across the entire administration dashboard.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Light Mode Option */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        document.documentElement.classList.remove('dark');
+                        localStorage.setItem('theme', 'light');
+                        setSystemSettings({ ...systemSettings, colorScheme: 'light' });
+                        window.dispatchEvent(new CustomEvent('tarepet_theme_changed', { detail: { isDark: false } }));
+                        showToast('Light Mode activated!');
+                      }
+                    }}
+                    className={`p-4 rounded-2xl border-2 text-left transition-all cursor-pointer flex items-center gap-4 ${
+                      typeof window !== 'undefined' && !document.documentElement.classList.contains('dark')
+                        ? 'border-primary bg-primary/5 shadow-xs'
+                        : 'border-border bg-card hover:bg-muted/30'
+                    }`}
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
+                      <Sun className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-sm text-foreground">☀️ Light Mode</p>
+                      <p className="text-xs text-muted-foreground">Clean, high-contrast light theme with rich crimson accents.</p>
+                    </div>
+                    {typeof window !== 'undefined' && !document.documentElement.classList.contains('dark') && (
+                      <span className="px-2.5 py-1 rounded-full bg-primary text-white text-[10px] font-bold">Active</span>
+                    )}
+                  </button>
+
+                  {/* Dark Mode Option */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        document.documentElement.classList.add('dark');
+                        localStorage.setItem('theme', 'dark');
+                        setSystemSettings({ ...systemSettings, colorScheme: 'dark' });
+                        window.dispatchEvent(new CustomEvent('tarepet_theme_changed', { detail: { isDark: true } }));
+                        showToast('Dark Mode activated!');
+                      }
+                    }}
+                    className={`p-4 rounded-2xl border-2 text-left transition-all cursor-pointer flex items-center gap-4 ${
+                      typeof window !== 'undefined' && document.documentElement.classList.contains('dark')
+                        ? 'border-primary bg-primary/5 shadow-xs'
+                        : 'border-border bg-card hover:bg-muted/30'
+                    }`}
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center shrink-0">
+                      <Moon className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-sm text-foreground">🌙 Dark Mode</p>
+                      <p className="text-xs text-muted-foreground">Sleek, low-light obsidian theme easy on the eyes.</p>
+                    </div>
+                    {typeof window !== 'undefined' && document.documentElement.classList.contains('dark') && (
+                      <span className="px-2.5 py-1 rounded-full bg-primary text-white text-[10px] font-bold">Active</span>
+                    )}
+                  </button>
+                </div>
+              </div>
+
               <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
                 <div className="flex items-center gap-3 pb-3 border-b border-border">
                   <Palette className="w-5 h-5 text-primary" />
-                  <h3 className="font-serif font-bold text-base text-foreground">Portal Theme &amp; Typography</h3>
+                  <h3 className="font-serif font-bold text-base text-foreground">Regional &amp; Localization Settings</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
                   <div>
@@ -5924,18 +6001,6 @@ export default function AdminDashboard() {
                     >
                       <option value="en-NG">English (Nigeria Standard)</option>
                       <option value="fr-FR">French (International Curriculum)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Default Color Scheme</label>
-                    <select
-                      value={systemSettings.colorScheme || 'system'}
-                      onChange={(e) => setSystemSettings({ ...systemSettings, colorScheme: e.target.value })}
-                      className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary font-semibold"
-                    >
-                      <option value="system">System Theme (Automatic Dark/Light)</option>
-                      <option value="light">Crimson Executive Light</option>
-                      <option value="dark">Obsidian Dark</option>
                     </select>
                   </div>
                   <div>
