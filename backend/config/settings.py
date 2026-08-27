@@ -115,7 +115,9 @@ INSTALLED_APPS = [
 ASGI_APPLICATION = 'config.asgi.application'
 
 _redis_url = env('REDIS_URL', default='')
-if _redis_url:
+is_render = 'RENDER' in os.environ or bool(os.environ.get('RENDER_SERVICE_ID'))
+
+if _redis_url and (is_render or not 'red-' in _redis_url):
     CHANNEL_LAYERS = {
         'default': {
             'BACKEND': 'channels_redis.core.RedisChannelLayer',
@@ -202,6 +204,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # REST Framework Settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        'apps.users.authentication.GracefulJWTAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (

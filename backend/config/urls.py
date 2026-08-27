@@ -6,10 +6,13 @@ from drf_spectacular.views import (
     SpectacularRedocView,
 )
 
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 
 def health_check(request):
     return JsonResponse({'status': 'healthy', 'service': 'tarepet-backend'})
+
+def favicon_view(request):
+    return HttpResponse(status=204)
 
 def trigger_sentry_test(request):
     """Test view to intentionally trigger an exception and verify Sentry reporting."""
@@ -18,6 +21,7 @@ def trigger_sentry_test(request):
 
 urlpatterns = [
     path('', health_check, name='root-health'),
+    path('favicon.ico', favicon_view, name='favicon'),
     path('health/', health_check, name='health-check'),
     path('api/sentry-debug/', trigger_sentry_test, name='sentry-debug'),
     path('admin/', admin.site.urls),

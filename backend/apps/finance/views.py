@@ -125,21 +125,23 @@ class FeeTransactionViewSet(viewsets.ModelViewSet):
 
 
 class IncomeRecordViewSet(viewsets.ModelViewSet):
-    queryset = IncomeRecord.objects.all()
+    queryset = IncomeRecord.objects.all().order_by('-date')
     serializer_class = IncomeRecordSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def perform_create(self, serializer):
-        serializer.save(recorded_by=self.request.user)
+        user = self.request.user if self.request.user and self.request.user.is_authenticated else None
+        serializer.save(recorded_by=user)
 
 
 class ExpenseRecordViewSet(viewsets.ModelViewSet):
-    queryset = ExpenseRecord.objects.all()
+    queryset = ExpenseRecord.objects.all().order_by('-date')
     serializer_class = ExpenseRecordSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def perform_create(self, serializer):
-        serializer.save(recorded_by=self.request.user)
+        user = self.request.user if self.request.user and self.request.user.is_authenticated else None
+        serializer.save(recorded_by=user)
 
 
 class ClassFeeScheduleViewSet(viewsets.ModelViewSet):
