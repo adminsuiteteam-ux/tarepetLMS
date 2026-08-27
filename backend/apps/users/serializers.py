@@ -518,6 +518,20 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
                     'profile_image': prof_img or '',
                 }
             )
+            try:
+                sys_settings = SystemSettings.get_settings()
+                if getattr(sys_settings, 'send_welcome_email_with_credentials', True):
+                    from .email_service import send_student_welcome_email
+                    send_student_welcome_email(
+                        student_email=user.email,
+                        student_name=user.get_full_name() or f"{first_name} {last_name}".strip() or user.email,
+                        student_id=custom_stu_id,
+                        initial_password=password,
+                        grade_level=grade_val or 'SS 1'
+                    )
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning(f"Could not dispatch student welcome email: {e}")
         elif role == User.Role.TEACHER:
             # Check teacher ID uniqueness
             conflicting_tch = TeacherProfile.objects.filter(teacher_id=custom_tch_id).exclude(user=user).first()

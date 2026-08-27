@@ -420,3 +420,199 @@ def send_teacher_welcome_email(
     except Exception as e:
         logger.warning(f"Could not queue teacher welcome email ({e}).")
         return True
+
+
+def send_student_welcome_email(
+    student_email: str,
+    student_name: str,
+    student_id: str,
+    initial_password: str,
+    grade_level: str = 'SS 1',
+    portal_url: str = 'https://tarepet.com/login'
+) -> bool:
+    """
+    Sends an automated welcome email with student admission credentials and CBT portal access link.
+    """
+    subject = f"🎓 Welcome to Tarepet Montessori School - Your Student Portal Credentials"
+    recipient = student_email
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body {{
+          font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+          background-color: #f4f6f9;
+          margin: 0;
+          padding: 24px;
+          color: #1e293b;
+        }}
+        .container {{
+          max-width: 560px;
+          margin: 0 auto;
+          background: #ffffff;
+          border-radius: 16px;
+          overflow: hidden;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+          border: 1px solid #e2e8f0;
+        }}
+        .header {{
+          background: linear-gradient(135deg, #047857 0%, #064e3b 100%);
+          padding: 32px 24px;
+          text-align: center;
+          color: #ffffff;
+        }}
+        .header h1 {{
+          margin: 0;
+          font-size: 20px;
+          font-weight: 700;
+          letter-spacing: 0.5px;
+        }}
+        .header p {{
+          margin: 6px 0 0;
+          font-size: 12px;
+          opacity: 0.85;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }}
+        .body-content {{
+          padding: 32px 28px;
+        }}
+        .salutation {{
+          font-size: 16px;
+          font-weight: 700;
+          margin-bottom: 12px;
+          color: #064e3b;
+        }}
+        .message {{
+          font-size: 13px;
+          line-height: 1.6;
+          color: #475569;
+          margin-bottom: 20px;
+        }}
+        .credentials-card {{
+          background: #f0fdf4;
+          border: 1px solid #bbf7d0;
+          border-radius: 12px;
+          padding: 20px;
+          margin: 20px 0;
+        }}
+        .cred-row {{
+          display: flex;
+          justify-content: space-between;
+          padding: 8px 0;
+          border-bottom: 1px solid #dcfce7;
+          font-size: 12px;
+        }}
+        .cred-row:last-child {{
+          border-bottom: none;
+        }}
+        .cred-label {{
+          color: #166534;
+          font-weight: 600;
+          text-transform: uppercase;
+          font-size: 10px;
+          letter-spacing: 0.5px;
+        }}
+        .cred-val {{
+          color: #0f172a;
+          font-weight: 700;
+          font-family: 'Courier New', Courier, monospace;
+        }}
+        .login-btn {{
+          display: block;
+          width: fit-content;
+          margin: 24px auto;
+          background: #047857;
+          color: #ffffff !important;
+          text-decoration: none;
+          padding: 12px 28px;
+          border-radius: 10px;
+          font-weight: 700;
+          font-size: 13px;
+          text-align: center;
+        }}
+        .footer {{
+          background: #f8fafc;
+          padding: 20px 24px;
+          text-align: center;
+          font-size: 11px;
+          color: #94a3b8;
+          border-top: 1px solid #e2e8f0;
+        }}
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>TAREPET MONTESSORI SCHOOL</h1>
+          <p>Official Student Enrollment &amp; Portal Credentials</p>
+        </div>
+        <div class="body-content">
+          <div class="salutation">Welcome, {student_name}!</div>
+          <div class="message">
+            Your official student profile has been registered on the Tarepet Montessori Academic Portal ({grade_level}). Below are your login credentials to access your online coursework, broadsheet results, and CBT examinations:
+          </div>
+          
+          <div class="credentials-card">
+            <div class="cred-row">
+              <span class="cred-label">Student Name</span>
+              <span class="cred-val" style="font-family: inherit;">{student_name}</span>
+            </div>
+            <div class="cred-row">
+              <span class="cred-label">Student ID / Reg No</span>
+              <span class="cred-val" style="color: #047857;">{student_id}</span>
+            </div>
+            <div class="cred-row">
+              <span class="cred-label">Class Level</span>
+              <span class="cred-val" style="font-family: inherit;">{grade_level}</span>
+            </div>
+            <div class="cred-row">
+              <span class="cred-label">Portal Passcode</span>
+              <span class="cred-val" style="color: #b91c1c;">{initial_password}</span>
+            </div>
+            <div class="cred-row">
+              <span class="cred-label">Portal URL</span>
+              <span class="cred-val" style="font-family: inherit;">{portal_url}</span>
+            </div>
+          </div>
+
+          <a href="{portal_url}" class="login-btn">Sign In to Student Portal &rarr;</a>
+        </div>
+        <div class="footer">
+          &copy; Tarepet Montessori School. All rights reserved.<br>
+          Office of Admissions &amp; Academic Records • Yenagoa, Bayelsa State, Nigeria
+        </div>
+      </div>
+    </body>
+    </html>
+    """
+
+    plain_text = f"""
+    TAREPET MONTESSORI SCHOOL - Student Enrollment & Credentials
+    
+    Welcome, {student_name}!
+    
+    Your student account has been created for {grade_level}.
+    
+    Credentials:
+    • Full Name: {student_name}
+    • Student ID / Code: {student_id}
+    • Class Level: {grade_level}
+    • Passcode: {initial_password}
+    • Portal URL: {portal_url}
+    """
+
+    from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'Tarepet Montessori Admin <noreply@tarepetmontessori.org>')
+
+    try:
+        msg = EmailMultiAlternatives(subject, plain_text, from_email, [recipient])
+        msg.attach_alternative(html_content, "text/html")
+        _dispatch_email_async(msg, recipient, f"Student Welcome ({student_id})")
+        logger.info(f"Student welcome email queued for {recipient}")
+        return True
+    except Exception as e:
+        logger.warning(f"Could not queue student welcome email ({e}).")
+        return True
