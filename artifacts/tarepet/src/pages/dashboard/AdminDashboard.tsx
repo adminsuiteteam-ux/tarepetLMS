@@ -2338,6 +2338,19 @@ export default function AdminDashboard() {
         event.type === 'EXAM_STATUS_UPDATED' ||
         event.type === 'EXAM_SUBMISSION'
       ) {
+        const incomingExam = event.payload?.exam;
+        if (incomingExam && incomingExam.id) {
+          const mapped = mapCBTExamToAdminExam(incomingExam);
+          setExamsList(prev => {
+            const idx = prev.findIndex(e => e.id === mapped.id);
+            if (idx >= 0) {
+              const updated = [...prev];
+              updated[idx] = mapped;
+              return updated;
+            }
+            return [mapped, ...prev];
+          });
+        }
         refreshExamsRealtime();
         syncExamsWithBackend().then(res => setExamsList(res.map(mapCBTExamToAdminExam)));
 
@@ -2345,7 +2358,7 @@ export default function AdminDashboard() {
           const ex = event.payload.exam;
           showAlert?.({
             title: '📝 New Exam Submitted for Approval',
-            message: `Teacher ${ex.teacher_name || 'Staff'} submitted CBT Exam: "${ex.title}" (${ex.course_name} - ${ex.class}).`,
+            message: `Teacher ${ex.teacher_name || 'Staff'} submitted CBT Exam: "${ex.title}" (${ex.course_name || ex.course_code} - ${ex.class} ${ex.stream || ''}).`,
             type: 'info'
           });
         }
@@ -3046,7 +3059,10 @@ export default function AdminDashboard() {
       setSelectedSubjectPreview(null);
       setShowSubjectsActionsDropdown(false);
     }
-    if (activeSection !== 'exams') {
+    if (activeSection === 'exams') {
+      syncAdminExams();
+      syncExamsWithBackend().then(res => setExamsList(res.map(mapCBTExamToAdminExam)));
+    } else {
       setSelectedExamClass(null); setSelectedExamStream(null);
       setOpenExamClassDropdown(null); setSelectedExamType(null);
       setExamRepoFilter('all'); setSelectedExamDivision(null);
@@ -4292,7 +4308,7 @@ export default function AdminDashboard() {
                   </div>
                 )}
                 <h2 className="text-xl font-serif font-bold text-foreground">
-                  {selectedExamDivision ? activeDivision?.title : t('exams.manageExams')}
+                  {selectedExamDivision ? activeDivision?.title : t('exams.manageExams', 'Manage Examinations')}
                 </h2>
                 <p className="text-xs text-muted-foreground mt-1">
                   {selectedExamDivision
@@ -4358,43 +4374,43 @@ export default function AdminDashboard() {
             <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
               <h3 className="font-serif font-bold text-lg text-foreground flex items-center gap-2">
                 <ClipboardList className="w-5 h-5 text-primary" />
-                {t('exams.examRepos')}
+                {t('exams.examRepos', 'Examination Repositories')}
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div onClick={() => setExamRepoFilter('pending')} className={`p-4 rounded-xl border cursor-pointer hover:shadow-md transition-all space-y-1 ${examRepoFilter === 'pending' ? 'border-amber-400 bg-amber-500/10' : 'border-amber-200 bg-amber-500/5 hover:border-amber-400'}`}>
                   <div className="flex items-center justify-between text-amber-700 font-bold text-xs">
-                    <span>{t('exams.pendingApproval')}</span>
+                    <span>{t('exams.pendingApproval', 'Pending Approval')}</span>
                     <Clock className="w-4 h-4" />
                   </div>
                   <p className="text-2xl font-serif font-bold text-amber-800">{counts.pending}</p>
-                  <p className="text-[10px] text-amber-600">{t('exams.pendingDesc')}</p>
+                  <p className="text-[10px] text-amber-600">{t('exams.pendingDesc', 'Awaiting certification')}</p>
                 </div>
 
                 <div onClick={() => setExamRepoFilter('approved')} className={`p-4 rounded-xl border cursor-pointer hover:shadow-md transition-all space-y-1 ${examRepoFilter === 'approved' ? 'border-emerald-400 bg-emerald-500/10' : 'border-emerald-200 bg-emerald-500/5 hover:border-emerald-400'}`}>
                   <div className="flex items-center justify-between text-emerald-700 font-bold text-xs">
-                    <span>{t('exams.approvedExams')}</span>
+                    <span>{t('exams.approvedExams', 'Approved Assessments')}</span>
                     <CheckCircle2 className="w-4 h-4" />
                   </div>
                   <p className="text-2xl font-serif font-bold text-emerald-800">{counts.approved}</p>
-                  <p className="text-[10px] text-emerald-600">{t('exams.approvedDesc')}</p>
+                  <p className="text-[10px] text-emerald-600">{t('exams.approvedDesc', 'Certified for testing')}</p>
                 </div>
 
                 <div onClick={() => setExamRepoFilter('rejected')} className={`p-4 rounded-xl border cursor-pointer hover:shadow-md transition-all space-y-1 ${examRepoFilter === 'rejected' ? 'border-rose-400 bg-rose-500/10' : 'border-rose-200 bg-rose-500/5 hover:border-rose-400'}`}>
                   <div className="flex items-center justify-between text-rose-700 font-bold text-xs">
-                    <span>{t('exams.rejectedExams')}</span>
+                    <span>{t('exams.rejectedExams', 'Returned for Revision')}</span>
                     <Ban className="w-4 h-4" />
                   </div>
                   <p className="text-2xl font-serif font-bold text-rose-800">{counts.rejected}</p>
-                  <p className="text-[10px] text-rose-600">{t('exams.rejectedDesc')}</p>
+                  <p className="text-[10px] text-rose-600">{t('exams.rejectedDesc', 'Requires revision')}</p>
                 </div>
 
                 <div onClick={() => setExamRepoFilter('all')} className={`p-4 rounded-xl border cursor-pointer hover:shadow-md transition-all space-y-1 ${examRepoFilter === 'all' ? 'border-primary/50 bg-primary/5' : 'border-border bg-muted/20 hover:border-primary/40'}`}>
                   <div className="flex items-center justify-between text-foreground font-bold text-xs">
-                    <span>{t('exams.totalAssessments')}</span>
+                    <span>{t('exams.totalAssessments', 'Total Assessments')}</span>
                     <ClipboardList className="w-4 h-4 text-primary" />
                   </div>
                   <p className="text-2xl font-serif font-bold text-foreground">{counts.total}</p>
-                  <p className="text-[10px] text-muted-foreground">{t('exams.allTests')}</p>
+                  <p className="text-[10px] text-muted-foreground">{t('exams.allTests', 'All active exams & tests')}</p>
                 </div>
               </div>
             </div>

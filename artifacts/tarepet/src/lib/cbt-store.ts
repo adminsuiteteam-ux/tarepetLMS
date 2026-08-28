@@ -1582,6 +1582,7 @@ export function broadcastRealtimeEvent() {
 export function initCBTStore() {
   if (typeof window !== 'undefined') {
     initWebSocket();
+    syncExamsWithBackend().catch(() => {});
     syncTeachersWithBackend().catch(() => {});
     syncStudentsWithBackend().catch(() => {});
     syncBroadsheetWithBackend().catch(() => {});
@@ -1590,9 +1591,32 @@ export function initCBTStore() {
   }
 }
 
-// Auto-trigger sync on module load
+// Auto-trigger sync on module load and subscribe to real-time exam events
 if (typeof window !== 'undefined') {
   initCBTStore();
+
+  subscribeToWebSocketEvents((event: any) => {
+    if (
+      event.type === 'EXAM_CREATED' ||
+      event.type === 'EXAM_STATUS_UPDATED' ||
+      event.type === 'EXAM_APPROVED' ||
+      event.type === 'EXAM_REJECTED' ||
+      event.type === 'EXAM_ACTIVATED'
+    ) {
+      const incomingExam = event.payload?.exam;
+      if (incomingExam && incomingExam.id) {
+        _exams = loadSavedExams();
+        const existingIdx = _exams.findIndex(e => e.id === incomingExam.id);
+        if (existingIdx >= 0) {
+          _exams[existingIdx] = { ..._exams[existingIdx], ...incomingExam };
+        } else {
+          _exams = [incomingExam, ..._exams];
+        }
+        persistExams(_exams);
+        broadcastRealtimeEvent();
+      }
+    }
+  });
 }
 
 // Clear in-memory cache and localStorage
@@ -1652,6 +1676,11 @@ export async function saveCBTExam(examData: Partial<CBTExam> & { title: string; 
       title: newExam.title,
       description: newExam.description,
       instructions: newExam.instructions,
+      course_name: newExam.course_name,
+      course_code: newExam.course_code,
+      class_name: newExam.class,
+      stream: newExam.stream,
+      teacher_name: newExam.teacher_name,
       assessment_type: newExam.assessment_type,
       term: newExam.term,
       duration_minutes: newExam.duration_minutes,

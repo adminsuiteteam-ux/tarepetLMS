@@ -75,7 +75,9 @@ class CBTQuestionStudentSerializer(serializers.ModelSerializer):
 
 class CBTExamSerializer(serializers.ModelSerializer):
     course_detail = CourseSerializer(source='course', read_only=True)
-    teacher_name = serializers.CharField(source='teacher.user.get_full_name', read_only=True)
+    teacher_name = serializers.CharField(required=False, allow_blank=True, default='Assigned Educator')
+    course_name = serializers.CharField(required=False, allow_blank=True, default='General Assessment')
+    course_code = serializers.CharField(required=False, allow_blank=True, default='GEN-101')
     questions_count = serializers.IntegerField(source='questions.count', read_only=True)
     questions = CBTQuestionSerializer(many=True, required=False)
 
@@ -83,11 +85,15 @@ class CBTExamSerializer(serializers.ModelSerializer):
         model = CBTExam
         fields = [
             'id', 'title', 'description', 'instructions', 'course', 'course_detail',
+            'course_name', 'course_code',
             'teacher', 'teacher_name', 'class_name', 'stream', 'assessment_type', 'term', 'duration_minutes',
             'questions_per_page', 'status', 'results_released', 'rejection_reason', 'approved_by',
             'questions_count', 'questions', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'teacher', 'approved_by', 'created_at', 'updated_at']
+        extra_kwargs = {
+            'course': {'required': False, 'allow_null': True},
+        }
 
     def create(self, validated_data):
         questions_data = validated_data.pop('questions', [])
