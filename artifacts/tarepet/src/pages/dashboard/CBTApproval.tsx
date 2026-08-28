@@ -8,7 +8,7 @@ import {
 import { Link } from 'wouter';
 import { useTranslation } from '@/lib/i18n';
 import { useCustomDialog } from '@/context/DialogContext';
-import { getStoredExams, updateExamStatus, subscribeToCBTStore } from '@/lib/cbt-store';
+import { getStoredExams, updateExamStatus, subscribeToCBTStore, syncExamsWithBackend } from '@/lib/cbt-store';
 
 interface PendingExam {
   id: number;
@@ -75,6 +75,7 @@ export default function AdminCBTApproval() {
 
   useEffect(() => {
     fetchExams();
+    syncExamsWithBackend().then(() => fetchExams());
     const unsub = subscribeToCBTStore(fetchExams);
     return () => unsub();
   }, []);

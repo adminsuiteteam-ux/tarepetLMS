@@ -354,17 +354,22 @@ class CBTExamViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_admin:
-            # pyrefly: ignore [missing-attribute]
+        if getattr(user, 'is_admin', False) or getattr(user, 'role', '') == 'ADMIN':
             return CBTExam.objects.all()
-        elif user.is_teacher and hasattr(user, 'teacher_profile'):
-            return CBTExam.objects.filter(teacher=user.teacher_profile)
-        elif user.is_student:
-            return CBTExam.objects.filter(status='PUBLISHED')
-        return CBTExam.objects.none()
+        elif getattr(user, 'is_teacher', False) or getattr(user, 'role', '') == 'TEACHER':
+            if hasattr(user, 'teacher_profile'):
+                return CBTExam.objects.filter(teacher=user.teacher_profile)
+            return CBTExam.objects.all()
+        elif getattr(user, 'is_student', False) or getattr(user, 'role', '') == 'STUDENT':
+            return CBTExam.objects.filter(status__in=['PUBLISHED', 'ACTIVE', 'APPROVED'])
+        return CBTExam.objects.all()
 
     def perform_create(self, serializer):
-        serializer.save(teacher=self.request.user.teacher_profile)
+        teacher = getattr(self.request.user, 'teacher_profile', None)
+        if teacher:
+            serializer.save(teacher=teacher)
+        else:
+            serializer.save()
 
     # ---------- Teacher: Add questions ----------
     @action(detail=True, methods=['post'], permission_classes=[IsTeacher])
@@ -397,7 +402,7 @@ class CBTExamViewSet(viewsets.ModelViewSet):
             CBTNotification.objects.create(
                 user=admin,
                 title=f'New {exam.get_assessment_type_display()} Pending Approval',
-                message=f'"{exam.title}" for {exam.course.name} ({exam.get_term_display()}) has been submitted by {exam.teacher.user.get_full_name()} and needs your review.',
+                message=f'"{exam.title}" for {getattr(exam.course, "name", "Course")} ({exam.get_term_display()}) has been submitted and needs your review.',
                 notification_type='PENDING_APPROVAL',
                 exam=exam,
             )
@@ -411,24 +416,33 @@ class CBTExamViewSet(viewsets.ModelViewSet):
         exam.approved_by = request.user
         exam.save()
         # Notify teacher that exam is approved and ready to upload/publish
-        CBTNotification.objects.create(
-            user=exam.teacher.user,
-            title=f'{exam.get_assessment_type_display()} Approved!',
-            message=f'Your exam "{exam.title}" has been approved by Admin {request.user.get_full_name()}. You can now upload/publish it to your students.',
-            notification_type='APPROVED',
-            exam=exam,
-        )
+        if exam.teacher and exam.teacher.user:
+            CBTNotification.objects.create(
+                user=exam.teacher.user,
+                title=f'{exam.get_assessment_type_display()} Approved!',
+                message=f'Your exam "{exam.title}" has been approved by Admin {request.user.get_full_name()}. You can now activate and launch it for your students.',
+                notification_type='APPROVED',
+                exam=exam,
+            )
         return Response({'detail': 'Exam approved. Sent back to teacher for uploading.', 'status': exam.status})
 
-    # ---------- Teacher: Upload / Publish to Students ----------
+    # ---------- Teacher: Upload / Publish / Activate to Students ----------
     @action(detail=True, methods=['post'], permission_classes=[IsTeacher])
     def publish(self, request, pk=None):
         exam = self.get_object()
-        if exam.status != 'APPROVED':
-            return Response({'detail': 'Only admin-approved exams can be uploaded/published to students.'}, status=status.HTTP_400_BAD_REQUEST)
-        exam.status = 'PUBLISHED'
+        if exam.status not in ('APPROVED', 'ACTIVE'):
+            return Response({'detail': 'Only admin-approved exams can be activated/published to students.'}, status=status.HTTP_400_BAD_REQUEST)
+        exam.status = 'ACTIVE'
         exam.save()
-        return Response({'detail': 'Exam uploaded and published to students.', 'status': exam.status})
+        return Response({'detail': 'Exam activated and published to students.', 'status': exam.status})
+
+    @action(detail=True, methods=['post'], permission_classes=[IsTeacher])
+    def toggle_results(self, request, pk=None):
+        exam = self.get_object()
+        released = request.data.get('results_released', not exam.results_released)
+        exam.results_released = released
+        exam.save()
+        return Response({'detail': f'Results {"released" if released else "withheld"}.', 'results_released': exam.results_released})
 
     # ---------- Admin: Reject ----------
     @action(detail=True, methods=['post'], permission_classes=[IsAdmin])
@@ -438,21 +452,22 @@ class CBTExamViewSet(viewsets.ModelViewSet):
         exam.status = 'REJECTED'
         exam.rejection_reason = reason
         exam.save()
-        CBTNotification.objects.create(
-            user=exam.teacher.user,
-            title=f'{exam.get_assessment_type_display()} Rejected',
-            message=f'Your exam "{exam.title}" was rejected. Reason: {reason or "No reason provided."}',
-            notification_type='REJECTED',
-            exam=exam,
-        )
+        if exam.teacher and exam.teacher.user:
+            CBTNotification.objects.create(
+                user=exam.teacher.user,
+                title=f'{exam.get_assessment_type_display()} Rejected',
+                message=f'Your exam "{exam.title}" was rejected. Reason: {reason or "No reason provided."}',
+                notification_type='REJECTED',
+                exam=exam,
+            )
         return Response({'detail': 'Exam rejected.', 'status': exam.status, 'reason': reason})
 
     # ---------- Student: Start exam ----------
     @action(detail=True, methods=['post'], permission_classes=[IsStudent])
     def start(self, request, pk=None):
         exam = self.get_object()
-        if exam.status != 'PUBLISHED':
-            return Response({'detail': 'This exam is not available or has not been uploaded by the teacher yet.'}, status=status.HTTP_400_BAD_REQUEST)
+        if exam.status not in ('PUBLISHED', 'ACTIVE', 'APPROVED'):
+            return Response({'detail': 'This exam is not active or has not been launched by the teacher yet.'}, status=status.HTTP_400_BAD_REQUEST)
         student = request.user.student_profile
         attempt, created = CBTStudentAttempt.objects.get_or_create(exam=exam, student=student)
         if attempt.is_submitted:

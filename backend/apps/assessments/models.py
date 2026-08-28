@@ -138,19 +138,24 @@ class CBTExam(models.Model):
         DRAFT = 'DRAFT', _('Draft')
         PENDING_APPROVAL = 'PENDING', _('Pending Admin Approval')
         APPROVED = 'APPROVED', _('Approved by Admin')
+        ACTIVE = 'ACTIVE', _('Active / Ongoing')
         PUBLISHED = 'PUBLISHED', _('Published to Class')
         REJECTED = 'REJECTED', _('Rejected by Admin')
+        COMPLETED = 'COMPLETED', _('Completed')
 
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     instructions = models.TextField(blank=True, null=True, help_text=_('Instructions for students before starting exam'))
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='cbt_exams')
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.CASCADE, related_name='created_cbt_exams')
+    class_name = models.CharField(max_length=50, default='SS1', help_text=_('Target class (e.g. SS1, SS2, SS3)'))
+    stream = models.CharField(max_length=50, default='Science', help_text=_('Target stream (e.g. Science, Arts, Commercial)'))
     assessment_type = models.CharField(max_length=10, choices=AssessmentType.choices, default=AssessmentType.TEST)
     term = models.CharField(max_length=10, choices=Term.choices, default=Term.FIRST_TERM)
     duration_minutes = models.PositiveIntegerField(default=30, help_text=_('Duration in minutes'))
     questions_per_page = models.PositiveIntegerField(default=1, help_text=_('Number of questions displayed per screen view'))
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
+    results_released = models.BooleanField(default=False, help_text=_('Whether students can view their detailed exam scores'))
     rejection_reason = models.TextField(blank=True, null=True)
     approved_by = models.ForeignKey('users.CustomUser', on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_exams')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -160,7 +165,7 @@ class CBTExam(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"[{self.get_assessment_type_display()}] {self.title} ({self.get_term_display()}) - {self.get_status_display()}"
+        return f"[{self.get_assessment_type_display()}] {self.title} ({self.class_name} {self.stream}) - {self.get_status_display()}"
 
 
 class CBTQuestion(models.Model):
@@ -178,6 +183,8 @@ class CBTQuestion(models.Model):
     option_d = models.CharField(max_length=255)
     correct_option = models.CharField(max_length=1, choices=CorrectOption.choices, default=CorrectOption.OPTION_A)
     points = models.FloatField(default=1.0)
+    explanation = models.TextField(blank=True, null=True, help_text=_('Rationale or explanation for correct option'))
+    image_url = models.URLField(blank=True, null=True, max_length=500, help_text=_('Optional image diagram URL'))
     order = models.IntegerField(default=1)
 
     class Meta:

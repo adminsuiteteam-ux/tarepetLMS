@@ -1725,6 +1725,7 @@ export function mapCBTExamToAdminExam(c: CBTExam): any {
     questionsCount: c.questions_count || (c.questions ? c.questions.length : 0),
     invigilator: c.teacher_name || 'Assigned Educator',
     status: mappedStatus,
+    questions: c.questions || [],
     rawCbtExam: c
   };
 }

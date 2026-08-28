@@ -63,31 +63,52 @@ from apps.courses.serializers import CourseSerializer
 class CBTQuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = CBTQuestion
-        fields = ['id', 'exam', 'question_text', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_option', 'points', 'order']
+        fields = ['id', 'exam', 'question_text', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_option', 'points', 'explanation', 'image_url', 'order']
 
 
 class CBTQuestionStudentSerializer(serializers.ModelSerializer):
     """Question serializer for students taking exam — hides correct_option."""
     class Meta:
         model = CBTQuestion
-        fields = ['id', 'question_text', 'option_a', 'option_b', 'option_c', 'option_d', 'points', 'order']
+        fields = ['id', 'question_text', 'option_a', 'option_b', 'option_c', 'option_d', 'points', 'image_url', 'order']
 
 
 class CBTExamSerializer(serializers.ModelSerializer):
     course_detail = CourseSerializer(source='course', read_only=True)
     teacher_name = serializers.CharField(source='teacher.user.get_full_name', read_only=True)
     questions_count = serializers.IntegerField(source='questions.count', read_only=True)
-    questions = CBTQuestionSerializer(many=True, read_only=True)
+    questions = CBTQuestionSerializer(many=True, required=False)
 
     class Meta:
         model = CBTExam
         fields = [
             'id', 'title', 'description', 'instructions', 'course', 'course_detail',
-            'teacher', 'teacher_name', 'assessment_type', 'term', 'duration_minutes',
-            'questions_per_page', 'status', 'rejection_reason', 'approved_by',
+            'teacher', 'teacher_name', 'class_name', 'stream', 'assessment_type', 'term', 'duration_minutes',
+            'questions_per_page', 'status', 'results_released', 'rejection_reason', 'approved_by',
             'questions_count', 'questions', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'teacher', 'status', 'approved_by', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'teacher', 'approved_by', 'created_at', 'updated_at']
+
+    def create(self, validated_data):
+        questions_data = validated_data.pop('questions', [])
+        exam = CBTExam.objects.create(**validated_data)
+        for idx, q_data in enumerate(questions_data, start=1):
+            q_data['order'] = q_data.get('order', idx)
+            CBTQuestion.objects.create(exam=exam, **q_data)
+        return exam
+
+    def update(self, instance, validated_data):
+        questions_data = validated_data.pop('questions', None)
+        for attr, val in validated_data.items():
+            setattr(instance, attr, val)
+        instance.save()
+
+        if questions_data is not None:
+            instance.questions.all().delete()
+            for idx, q_data in enumerate(questions_data, start=1):
+                q_data['order'] = q_data.get('order', idx)
+                CBTQuestion.objects.create(exam=instance, **q_data)
+        return instance
 
 
 class CBTStudentAnswerSerializer(serializers.ModelSerializer):
