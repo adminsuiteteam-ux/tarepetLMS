@@ -4269,6 +4269,22 @@ export default function AdminDashboard() {
             icon: GraduationCap,
             classes: STUDENT_CLASSES.filter(c => c.key.startsWith('SS')),
           },
+          {
+            key: 'JSS',
+            title: 'Junior Secondary CBT Exams',
+            subtitle: 'JSS 1, JSS 2, JSS 3 (General)',
+            description: 'Continuous assessment tests, BECE mock exams, and general curriculum assessments for Junior Secondary students (JSS1–JSS3).',
+            icon: BookOpen,
+            classes: STUDENT_CLASSES.filter(c => c.key.startsWith('JSS')),
+          },
+          {
+            key: 'PRI',
+            title: 'Nursery & Primary Assessments',
+            subtitle: 'NUR 1–3, PRI 1–6 (General)',
+            description: 'Foundational tests, continuous assessments, and early learning evaluations for Nursery and Primary sections.',
+            icon: School,
+            classes: STUDENT_CLASSES.filter(c => c.key.startsWith('NUR') || c.key.startsWith('PRI')),
+          },
         ];
 
         const activeDivision = EXAM_DIVISIONS.find(d => d.key === selectedExamDivision);
@@ -4421,6 +4437,34 @@ export default function AdminDashboard() {
               </div>
             )}
 
+            {/* ── Pending Approval Quick Review (Always prominent when pending exams exist) ── */}
+            {examRepoFilter === 'all' && !selectedExamDivision && counts.pending > 0 && (
+              <div className="bg-amber-500/10 border-2 border-amber-300 dark:border-amber-500/30 rounded-2xl p-5 space-y-4 shadow-sm animate-in fade-in">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-amber-600 animate-pulse" />
+                    <div>
+                      <h3 className="font-serif font-bold text-base text-foreground flex items-center gap-2">
+                        Exams & Tests Awaiting Admin Approval
+                        <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-900 font-extrabold border border-amber-300">
+                          {counts.pending} Action Required
+                        </span>
+                      </h3>
+                      <p className="text-xs text-muted-foreground">These assessments were submitted by form teachers and require admin certification before student testing begins.</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setExamRepoFilter('pending')}
+                    className="text-xs font-bold text-amber-700 dark:text-amber-400 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    View in Pending Repository →
+                  </button>
+                </div>
+
+                {renderExamCardsGrid(examsList.filter(e => e.status === 'Pending Approval'))}
+              </div>
+            )}
+
             {/* ── LEVEL 1: Division Cards (shown when filter is 'all') ── */}
             {examRepoFilter === 'all' && !selectedExamDivision && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -4548,7 +4592,14 @@ export default function AdminDashboard() {
         const clsLabel = SS_CLASSES.find(c => matchStudentClass(c.key, selectedExamClass))?.label || selectedExamClass;
         const matchingExams = examsList.filter(e => 
           matchStudentClass(e.class, selectedExamClass) && 
-          (e.stream === selectedExamStream || (selectedExamStream === 'Art' && e.stream === 'Arts') || (selectedExamStream === 'Arts' && e.stream === 'Art'))
+          (!selectedExamStream || 
+           selectedExamStream === 'General' || 
+           !e.stream || 
+           e.stream === 'General' || 
+           e.stream === 'All' || 
+           e.stream.toLowerCase() === selectedExamStream.toLowerCase() || 
+           (selectedExamStream.toLowerCase().includes('art') && e.stream.toLowerCase().includes('art')) ||
+           (selectedExamStream.toLowerCase().includes('sci') && e.stream.toLowerCase().includes('sci')))
         );
         const testCount = matchingExams.filter(e => e.type === 'Test' || e.rawAssessmentType === 'TEST').length;
         const examCount = matchingExams.filter(e => e.type === 'Exam' || e.rawAssessmentType === 'EXAM').length;
@@ -4626,7 +4677,14 @@ export default function AdminDashboard() {
       const clsLabel = SS_CLASSES.find(c => matchStudentClass(c.key, selectedExamClass))?.label || selectedExamClass;
       const filteredExamsList = examsList.filter(e => {
         const matchClass = !selectedExamClass || matchStudentClass(e.class, selectedExamClass);
-        const matchStream = !selectedExamStream || e.stream === selectedExamStream || (selectedExamStream === 'Art' && e.stream === 'Arts') || (selectedExamStream === 'Arts' && e.stream === 'Art');
+        const matchStream = !selectedExamStream || 
+          selectedExamStream === 'General' || 
+          !e.stream || 
+          e.stream === 'General' || 
+          e.stream === 'All' || 
+          e.stream.toLowerCase() === selectedExamStream.toLowerCase() || 
+          (selectedExamStream.toLowerCase().includes('art') && e.stream.toLowerCase().includes('art')) ||
+          (selectedExamStream.toLowerCase().includes('sci') && e.stream.toLowerCase().includes('sci'));
         const matchType = !selectedExamType || selectedExamType === 'All' || e.type === selectedExamType || (selectedExamType === 'Test' && e.rawAssessmentType === 'TEST') || (selectedExamType === 'Exam' && e.rawAssessmentType === 'EXAM');
         const q = userSearch.toLowerCase();
         const matchSearch = !q || e.title.toLowerCase().includes(q) || e.subject.toLowerCase().includes(q);
