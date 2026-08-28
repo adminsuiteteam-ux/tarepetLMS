@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authClient, setTokens, clearTokens, getRefreshToken, safeRedirect } from '@/lib/api-auth';
 import { sendWebSocketEvent, subscribeToWebSocketEvents } from '@/lib/websocket-client';
-import { clearCBTStoreCache } from '@/lib/cbt-store';
+import { clearCBTStoreCache, isAccountDeleted } from '@/lib/cbt-store';
 import { clearPaymentStoreData } from '@/lib/payments-store';
 
 export type UserRole = 'ADMIN' | 'TEACHER' | 'STUDENT' | 'PARENT';
@@ -40,6 +40,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const stored = localStorage.getItem('tarepet_auth_user') || sessionStorage.getItem('tarepet_auth_user');
       if (stored) {
         const parsed = JSON.parse(stored);
+        if (parsed) {
+          const isDeleted = 
+            isAccountDeleted(parsed.email) || 
+            isAccountDeleted(parsed.id) || 
+            isAccountDeleted(parsed.profile?.student_id) || 
+            isAccountDeleted(parsed.profile?.teacher_id) || 
+            isAccountDeleted(`${parsed.first_name || ''} ${parsed.last_name || ''}`.trim());
+          if (isDeleted) {
+            localStorage.removeItem('tarepet_auth_user');
+            sessionStorage.removeItem('tarepet_auth_user');
+            return null;
+          }
+        }
         if (parsed && parsed.role) {
           parsed.role = parsed.role.toUpperCase() as UserRole;
         }
@@ -103,13 +116,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user]);
 
-  // Real-time multi-tab session synchronization
+  // Real-time multi-tab session synchronization and instant deletion eviction
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'tarepet_auth_user') {
         if (e.newValue) {
           try {
             const parsed = JSON.parse(e.newValue);
+            if (parsed) {
+              const isDeleted = 
+                isAccountDeleted(parsed.email) || 
+                isAccountDeleted(parsed.id) || 
+                isAccountDeleted(parsed.profile?.student_id) || 
+                isAccountDeleted(parsed.profile?.teacher_id) || 
+                isAccountDeleted(`${parsed.first_name || ''} ${parsed.last_name || ''}`.trim());
+              if (isDeleted) {
+                logout();
+                return;
+              }
+            }
             if (parsed && parsed.role) {
               parsed.role = parsed.role.toUpperCase() as UserRole;
             }
@@ -118,11 +143,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
           setUser(null);
         }
+      } else if (e.key === 'tarepet_deleted_accounts') {
+        if (user) {
+          const isDeleted = 
+            isAccountDeleted(user.email) || 
+            isAccountDeleted(user.id) || 
+            isAccountDeleted(user.profile?.student_id) || 
+            isAccountDeleted(user.profile?.teacher_id) || 
+            isAccountDeleted(`${user.first_name || ''} ${user.last_name || ''}`.trim());
+          if (isDeleted) {
+            logout();
+          }
+        }
       }
     };
+
+    const handleAccountDeletedEvent = (e: any) => {
+      if (user) {
+        const deletedId = e.detail?.id;
+        const isDeleted = 
+          (deletedId && (
+            String(user.id) === String(deletedId) ||
+            String(user.email).toLowerCase() === String(deletedId).toLowerCase() ||
+            String(user.profile?.student_id).toLowerCase() === String(deletedId).toLowerCase() ||
+            String(user.profile?.teacher_id).toLowerCase() === String(deletedId).toLowerCase()
+          )) ||
+          isAccountDeleted(user.email) || 
+          isAccountDeleted(user.id) || 
+          isAccountDeleted(user.profile?.student_id) || 
+          isAccountDeleted(user.profile?.teacher_id) || 
+          isAccountDeleted(`${user.first_name || ''} ${user.last_name || ''}`.trim());
+        if (isDeleted) {
+          logout();
+        }
+      }
+    };
+
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+    window.addEventListener('tarepet_teacher_deleted', handleAccountDeletedEvent);
+    window.addEventListener('tarepet_student_deleted', handleAccountDeletedEvent);
+    window.addEventListener('tarepet_store_updated', handleAccountDeletedEvent);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('tarepet_teacher_deleted', handleAccountDeletedEvent);
+      window.removeEventListener('tarepet_student_deleted', handleAccountDeletedEvent);
+      window.removeEventListener('tarepet_store_updated', handleAccountDeletedEvent);
+    };
+  }, [user]);
 
   const login = (accessToken: string, refreshToken: string, userData: User) => {
     const normalizedUser = {

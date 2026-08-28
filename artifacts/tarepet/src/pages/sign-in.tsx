@@ -237,6 +237,18 @@ export default function SignIn() {
     const rawPassword = password.trim();
     const storedDeviceToken = typeof window !== 'undefined' ? (localStorage.getItem('tarepet_device_token') || '') : '';
 
+    // Guard: Prevent any deleted account from authenticating
+    if (
+      isAccountDeleted(rawInput) ||
+      isAccountDeleted(lowerInput) ||
+      (cleanInput.length > 2 && isAccountDeleted(cleanInput))
+    ) {
+      recordLoginActivity(rawInput, 'DELETED_ACCOUNT', 'FAILED_ATTEMPT');
+      setError('This account has been deleted or deactivated. Access is denied.');
+      setIsLoading(false);
+      return;
+    }
+
     const isTargetAdmin = lowerInput === 'admin@tarepet.com' || cleanInput === 'admin' || lowerInput === 'admin';
     const isAdminPassword = rawPassword === 'TarepetAdmin@2026!' || rawPassword === 'admin' || rawPassword === 'Admin@2026!';
 
@@ -251,6 +263,22 @@ export default function SignIn() {
       // 2FA OTP is paused for future updates per directive
       if (res.data && res.data.requires_otp) {
         if (res.data.user) {
+          const u = res.data.user;
+          if (
+            isAccountDeleted(u.email) ||
+            isAccountDeleted(u.id) ||
+            isAccountDeleted(u.student_id) ||
+            isAccountDeleted(u.teacher_id) ||
+            isAccountDeleted(u.profile?.student_id) ||
+            isAccountDeleted(u.profile?.teacher_id) ||
+            isAccountDeleted(`${u.first_name || ''} ${u.last_name || ''}`.trim())
+          ) {
+            recordLoginActivity(u.email || rawInput, 'DELETED_ACCOUNT', 'FAILED_ATTEMPT');
+            setError('This account has been deleted or deactivated. Access is denied.');
+            setIsLoading(false);
+            return;
+          }
+
           recordLoginActivity(res.data.user.email || rawInput, res.data.user.role || 'STAFF', 'SUCCESS');
           login(res.data.access || 'temp_token_bypass', res.data.refresh || '', res.data.user);
           const userRole = (res.data.user.role || 'teacher').toLowerCase();
@@ -263,6 +291,21 @@ export default function SignIn() {
       // Direct login for recognized trusted devices and Student/Parent roles
       const { access, refresh, user: apiUser, device_token: newDevToken } = res.data;
       if (apiUser && apiUser.role) {
+        if (
+          isAccountDeleted(apiUser.email) ||
+          isAccountDeleted(apiUser.id) ||
+          isAccountDeleted(apiUser.student_id) ||
+          isAccountDeleted(apiUser.teacher_id) ||
+          isAccountDeleted(apiUser.profile?.student_id) ||
+          isAccountDeleted(apiUser.profile?.teacher_id) ||
+          isAccountDeleted(`${apiUser.first_name || ''} ${apiUser.last_name || ''}`.trim())
+        ) {
+          recordLoginActivity(apiUser.email || rawInput, 'DELETED_ACCOUNT', 'FAILED_ATTEMPT');
+          setError('This account has been deleted or deactivated. Access is denied.');
+          setIsLoading(false);
+          return;
+        }
+
         if (newDevToken && typeof window !== 'undefined') {
           localStorage.setItem('tarepet_device_token', newDevToken);
         }
@@ -321,6 +364,18 @@ export default function SignIn() {
     }
 
     if (matchedTeacher) {
+      if (
+        isAccountDeleted(matchedTeacher.email) ||
+        isAccountDeleted(matchedTeacher.staffId) ||
+        isAccountDeleted(matchedTeacher.id) ||
+        isAccountDeleted(matchedTeacher.name)
+      ) {
+        recordLoginActivity(matchedTeacher.email || rawInput, 'TEACHER', 'FAILED_ATTEMPT');
+        setError('This teacher account has been deleted or deactivated by the Administrator. Access is denied.');
+        setIsLoading(false);
+        return;
+      }
+
       const expectedPassword = matchedTeacher.password || matchedTeacher.staffId;
       const isDefaultPassword = rawPassword === matchedTeacher.staffId;
 
@@ -405,6 +460,20 @@ export default function SignIn() {
     }
 
     if (matchedStudent) {
+      if (
+        isAccountDeleted(matchedStudent.email) ||
+        isAccountDeleted(matchedStudent.code) ||
+        isAccountDeleted(matchedStudent.admissionNo) ||
+        isAccountDeleted(matchedStudent.studentId) ||
+        isAccountDeleted(matchedStudent.id) ||
+        isAccountDeleted(matchedStudent.name)
+      ) {
+        recordLoginActivity(matchedStudent.email || rawInput, 'STUDENT', 'FAILED_ATTEMPT');
+        setError('This student account has been deleted or deactivated by the Administrator. Access is denied.');
+        setIsLoading(false);
+        return;
+      }
+
       const expectedStudentPassword = matchedStudent.password || matchedStudent.code || matchedStudent.admissionNo;
       const cleanPass = rawPassword.replace(/[^a-z0-9]/gi, '');
       const cleanExpected = (expectedStudentPassword || '').replace(/[^a-z0-9]/gi, '');
