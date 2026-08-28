@@ -1,5 +1,6 @@
 // Central CBT & LMS Engine for Tare Pet Montessori School
 // All data lives in module-level memory and localStorage sync. Syncs with backend API.
+import { authClient, getAccessToken } from './api-auth';
 import { addRealtimeNotification } from './notifications-store';
 import { sendWebSocketEvent, initWebSocket, subscribeToWebSocketEvents } from './websocket-client';
 
@@ -1267,8 +1268,6 @@ let _submissions: CBTSubmission[] = [];
 let _activities: LMSActivity[] = [];
 let _students: StudentRecord[] = loadSavedStudents();
 
-import { authClient } from './api-auth';
-
 export function matchStudentClass(studentGrade?: string, targetClass?: string): boolean {
   if (!studentGrade || !targetClass) return false;
   const cleanS = String(studentGrade).toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -1295,8 +1294,10 @@ export function getStoredStudents(): StudentRecord[] {
   _students = loadSavedStudents();
   return _students;
 }
-
 export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
+  const token = getAccessToken();
+  if (!token) return getStoredStudents();
+
   try {
     const res = await authClient.get('/auth/users/?role=STUDENT&page_size=1000');
     if (res.data) {
@@ -1304,16 +1305,13 @@ export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
       const mockEmails = ['civa.media@tarepet.com', 'hacker@evil.com', 'wronguser@fake.com'];
       const fetched: StudentRecord[] = dataArr
         .filter((u: any) => {
-          const uCode = (u.student_id || u.profile?.student_id || '').toLowerCase();
-          const uEmail = (u.email || '').toLowerCase();
-          const uName = `${u.first_name || ''} ${u.last_name || ''}`.trim().toLowerCase();
-          const isMock = mockEmails.includes(uEmail) || uName.includes('civa.media') || uName.includes('hacker') || uName.includes('wronguser');
-          return !isMock && !isAccountDeleted(u.email) && !isAccountDeleted(u.id) && !isAccountDeleted(uCode) && !isAccountDeleted(uName);
+          const admNo = u.username || u.profile?.admission_number || '';
+          return !mockEmails.includes(u.email) && !isAccountDeleted(u.email) && !isAccountDeleted(u.id) && !isAccountDeleted(admNo) && !isAccountDeleted(`${u.first_name || ''} ${u.last_name || ''}`.trim());
         })
         .map((u: any) => {
           const prof = u.profile || {};
-          const rawGrade = prof.grade_level || prof.grade || u.grade_level || u.grade || 'SS1';
-          const autoCode = prof.student_id || u.student_id || `TMS/STU/${String(u.id).padStart(4, '0')}`;
+          const autoCode = u.username || prof.admission_number || `TMS/2026/${String(u.id).padStart(4, '0')}`;
+          const rawGrade = prof.class_level || prof.grade || 'SS1';
           return {
             id: u.id,
             code: autoCode,
@@ -1361,6 +1359,9 @@ export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
 }
 
 export async function syncTeachersWithBackend(): Promise<TeacherRecord[]> {
+  const token = getAccessToken();
+  if (!token) return getStoredTeachers();
+
   try {
     const res = await authClient.get('/auth/users/?role=TEACHER&page_size=200');
     if (res.data) {
@@ -1729,6 +1730,9 @@ export function mapCBTExamToAdminExam(c: CBTExam): any {
 }
 
 export async function syncExamsWithBackend(): Promise<CBTExam[]> {
+  const token = getAccessToken();
+  if (!token) return loadSavedExams();
+
   try {
     const res = await authClient.get('/assessments/cbt-exams/');
     if (res.data) {

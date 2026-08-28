@@ -1,4 +1,4 @@
-import { authClient } from './api-auth';
+import { authClient, getAccessToken } from './api-auth';
 import { addRealtimeNotification } from './notifications-store';
 import { sendWebSocketEvent } from './websocket-client';
 
@@ -366,6 +366,9 @@ export async function saveDiscountPolicy(policy: DiscountPolicy): Promise<void> 
 }
 
 export async function syncPaymentsWithBackend(): Promise<void> {
+  const token = getAccessToken();
+  if (!token) return;
+
   try {
     const [itemsRes, txRes, schedulesRes, discountsRes] = await Promise.allSettled([
       authClient.get('/finance/fee-items/?page_size=200'),

@@ -123,13 +123,16 @@ authClient.interceptors.response.use(
             refresh: rToken,
           });
           const { access, refresh } = res.data;
-          setTokens(access, refresh || rToken);
-          if (originalRequest.headers) {
-            originalRequest.headers.Authorization = `Bearer ${access}`;
+          if (access) {
+            setTokens(access, refresh || rToken);
+            if (originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${access}`;
+            }
+            return authClient(originalRequest);
           }
-          return authClient(originalRequest);
         } catch (refreshError) {
-          // Token refresh failed
+          // Token refresh failed - clear stale tokens to prevent repeated 401 loops
+          clearTokens();
           return Promise.reject(refreshError);
         }
       }
