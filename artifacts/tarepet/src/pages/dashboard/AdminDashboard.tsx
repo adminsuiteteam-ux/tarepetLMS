@@ -66,10 +66,18 @@ interface TabProps { id: string; label: string; icon: React.ReactNode; badge?: n
 function safeLookup<T = any>(dict: any, key: string | number): T | undefined {
   if (!dict || typeof dict !== 'object') return undefined;
   const k = String(key);
+  if (k === '__proto__' || k === 'constructor' || k === 'prototype') return undefined;
   if (Object.prototype.hasOwnProperty.call(dict, k)) {
     return Reflect.get(dict, k);
   }
   return undefined;
+}
+
+function safeSetProp<T>(obj: Record<string | number, T>, key: string | number, value: T): void {
+  if (!obj || typeof obj !== 'object') return;
+  const strKey = String(key);
+  if (strKey === '__proto__' || strKey === 'constructor' || strKey === 'prototype') return;
+  Reflect.set(obj, strKey, value);
 }
 
 function safeIndex<T = any>(arr: T[] | null | undefined, index: number): T | undefined {
@@ -9216,9 +9224,9 @@ export default function AdminDashboard() {
       );
     }
     if (activeSection === 'attendance') {
-      const isRecordPresent = (id: number) => (attendanceMap[id] || 'PRESENT') === 'PRESENT';
-      const isRecordAbsent  = (id: number) => attendanceMap[id] === 'ABSENT';
-      const isRecordLate    = (id: number) => attendanceMap[id] === 'LATE';
+      const isRecordPresent = (id: number) => (safeLookup(attendanceMap, id) || 'PRESENT') === 'PRESENT';
+      const isRecordAbsent  = (id: number) => safeLookup(attendanceMap, id) === 'ABSENT';
+      const isRecordLate    = (id: number) => safeLookup(attendanceMap, id) === 'LATE';
 
       const presentCount = MOCK_STUDENTS.filter(s => isRecordPresent(s.id)).length;
       const absentCount  = MOCK_STUDENTS.filter(s => isRecordAbsent(s.id)).length;
@@ -9326,7 +9334,7 @@ export default function AdminDashboard() {
                 <button
                   onClick={() => {
                     const allP: Record<number, 'PRESENT'> = {};
-                    MOCK_STUDENTS.forEach(s => { allP[s.id] = 'PRESENT'; });
+                    MOCK_STUDENTS.forEach(s => { safeSetProp(allP, s.id, 'PRESENT'); });
                     setAttendanceMap(allP);
                     if (typeof window !== 'undefined') {
                       try {
@@ -9371,7 +9379,7 @@ export default function AdminDashboard() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {MOCK_STUDENTS.filter(s => s.grade === attendanceClassFilter).map(std => {
-                    const status = attendanceMap[std.id] || 'PRESENT';
+                    const status = safeLookup(attendanceMap, std.id) || 'PRESENT';
                     return (
                       <tr key={std.id} className="hover:bg-muted/20">
                         <td className="py-3 px-4 font-mono font-bold text-primary">{std.admissionNo}</td>
@@ -9550,7 +9558,7 @@ export default function AdminDashboard() {
                   const currentItems = getPaymentItems();
                   const initialMap: Record<string, number> = {};
                   currentItems.forEach(item => {
-                    initialMap[item.id] = getItemAmountForGrade(item, feePricesModalClass);
+                    safeSetProp(initialMap, item.id, getItemAmountForGrade(item, feePricesModalClass));
                   });
                   setFeePricesInputs(initialMap);
                   setShowAddFeePricesModal(true);
