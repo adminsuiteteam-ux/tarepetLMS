@@ -3836,7 +3836,6 @@ export default function AdminDashboard() {
                 onClick={async () => {
                   setIsResetting(true);
                   clearAllStoredStudents();
-                  clearCBTStoreCache();
                   await fetchBackendUsers();
                   setIsResetting(false);
                 }}
@@ -7147,7 +7146,6 @@ export default function AdminDashboard() {
                   setIsResetting(true);
                   clearAllStoredTeachers();
                   clearAllStoredStudents();
-                  clearCBTStoreCache();
                   await fetchBackendUsers();
                   setIsResetting(false);
                 }}

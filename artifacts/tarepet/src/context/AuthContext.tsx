@@ -271,9 +271,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err) {
       console.warn('Could not clear auth storage', err);
     }
-    // Flush local caches securely
+    // Clear user tokens and session data (preserve school CBT exams and academic data)
     try {
-      clearCBTStoreCache();
       clearPaymentStoreData();
     } catch (e) {}
 
