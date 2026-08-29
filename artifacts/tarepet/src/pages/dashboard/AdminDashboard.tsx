@@ -4258,62 +4258,21 @@ export default function AdminDashboard() {
         </div>
       );
 
-      // STEP 1: DIVISION SELECTION (2-level drilldown + Repositories first)
+      // STEP 1: SENIOR SECONDARY CBT CLASS & STREAM SELECTION (+ Repositories)
       if (!selectedExamClass || !selectedExamStream) {
-        const EXAM_DIVISIONS = [
-          {
-            key: 'SS',
-            title: 'Senior Secondary CBT Exams',
-            subtitle: 'SS 1, SS 2, SS 3 (Science & Art)',
-            description: 'Exclusive CBT examinations, WAEC/NECO mock tests, and science/art stream assessments for Senior Secondary students (SS1–SS3).',
-            icon: GraduationCap,
-            classes: STUDENT_CLASSES.filter(c => c.key.startsWith('SS')),
-          },
-          {
-            key: 'JSS',
-            title: 'Junior Secondary CBT Exams',
-            subtitle: 'JSS 1, JSS 2, JSS 3 (General)',
-            description: 'Continuous assessment tests, BECE mock exams, and general curriculum assessments for Junior Secondary students (JSS1–JSS3).',
-            icon: BookOpen,
-            classes: STUDENT_CLASSES.filter(c => c.key.startsWith('JSS')),
-          },
-          {
-            key: 'PRI',
-            title: 'Nursery & Primary Assessments',
-            subtitle: 'NUR 1–3, PRI 1–6 (General)',
-            description: 'Foundational tests, continuous assessments, and early learning evaluations for Nursery and Primary sections.',
-            icon: School,
-            classes: STUDENT_CLASSES.filter(c => c.key.startsWith('NUR') || c.key.startsWith('PRI')),
-          },
-        ];
-
-        const activeDivision = EXAM_DIVISIONS.find(d => d.key === selectedExamDivision);
-        const divisionClasses = activeDivision?.classes || [];
+        const seniorClasses = STUDENT_CLASSES.filter(c => c.key.startsWith('SS'));
 
         return (
           <div className="space-y-6">
             {/* Header */}
             <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
               <div>
-                {selectedExamDivision && (
-                  <div className="flex items-center gap-2 mb-2 text-xs">
-                    <button
-                      onClick={() => { setSelectedExamDivision(null); setOpenExamClassDropdown(null); }}
-                      className="text-primary font-bold hover:underline flex items-center gap-1"
-                    >
-                      <ChevronLeft className="w-4 h-4" /> All Exam Divisions
-                    </button>
-                    <span className="text-muted-foreground">/</span>
-                    <span className="font-semibold text-foreground">{activeDivision?.title}</span>
-                  </div>
-                )}
-                <h2 className="text-xl font-serif font-bold text-foreground">
-                  {selectedExamDivision ? activeDivision?.title : t('exams.manageExams', 'Manage Examinations')}
+                <h2 className="text-xl font-serif font-bold text-foreground flex items-center gap-2">
+                  <GraduationCap className="w-6 h-6 text-primary" />
+                  {t('exams.manageExams', 'Senior Secondary CBT Examinations')}
                 </h2>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {selectedExamDivision
-                    ? activeDivision?.description
-                    : 'Select an exam division to browse class assessments, or view repositories below.'}
+                  Computer-Based Testing (CBT) is strictly for Senior Secondary classes (SS 1–SS 3 Science & Art streams).
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -4352,21 +4311,12 @@ export default function AdminDashboard() {
                     }
                   }}
                   disabled={isSyncingExams}
-                  className="px-3.5 py-2 border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-sm"
+                  className="px-3.5 py-2 border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
                   title="Synchronize exams with live server database"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${isSyncingExams ? 'animate-spin' : ''}`} />
                   {isSyncingExams ? 'Syncing...' : 'Sync Exams Now'}
                 </button>
-
-                {selectedExamDivision && (
-                  <button
-                    onClick={() => { setSelectedExamDivision(null); setOpenExamClassDropdown(null); }}
-                    className="px-3.5 py-2 border border-border rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors flex items-center gap-1.5"
-                  >
-                    <ChevronLeft className="w-4 h-4" /> Back to Divisions
-                  </button>
-                )}
               </div>
             </div>
 
@@ -4424,8 +4374,8 @@ export default function AdminDashboard() {
                     {examRepoFilter === 'approved' && <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Approved Exams & Tests Repository</span>}
                     {examRepoFilter === 'rejected' && <span className="flex items-center gap-1.5"><XCircle className="w-4 h-4 text-rose-500" /> Rejected Exams & Tests Repository</span>}
                   </h3>
-                  <button onClick={() => setExamRepoFilter('all')} className="text-xs font-bold text-primary hover:underline">
-                    {t('exams.backToDrilldown')}
+                  <button onClick={() => setExamRepoFilter('all')} className="text-xs font-bold text-primary hover:underline cursor-pointer">
+                    {t('exams.backToDrilldown', 'Back to Class Levels')}
                   </button>
                 </div>
                 {renderExamCardsGrid(examsList.filter(e => {
@@ -4438,7 +4388,7 @@ export default function AdminDashboard() {
             )}
 
             {/* ── Pending Approval Quick Review (Always prominent when pending exams exist) ── */}
-            {examRepoFilter === 'all' && !selectedExamDivision && counts.pending > 0 && (
+            {examRepoFilter === 'all' && counts.pending > 0 && (
               <div className="bg-amber-500/10 border-2 border-amber-300 dark:border-amber-500/30 rounded-2xl p-5 space-y-4 shadow-sm animate-in fade-in">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div className="flex items-center gap-2">
@@ -4465,122 +4415,80 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            {/* ── LEVEL 1: Division Cards (shown when filter is 'all') ── */}
-            {examRepoFilter === 'all' && !selectedExamDivision && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                {EXAM_DIVISIONS.map(div => {
-                  const Icon = div.icon;
-                  const count = examsList.filter(e => div.classes.some(c => matchStudentClass(c.key, e.class))).length;
-                  return (
-                    <div
-                      key={div.key}
-                      onClick={() => setSelectedExamDivision(div.key)}
-                      className="group bg-card border-2 border-primary/20 hover:border-primary/50 bg-primary/5 p-6 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer space-y-4 flex flex-col justify-between"
-                    >
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
-                            <Icon className="w-6 h-6" />
-                          </div>
-                          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
-                            {count} Assessments
-                          </span>
-                        </div>
-                        <div>
-                          <h3 className="font-serif font-bold text-lg text-foreground group-hover:text-primary transition-colors">
-                            {div.title}
-                          </h3>
-                          <p className="text-[11px] font-semibold text-primary/80 mt-0.5">{div.subtitle}</p>
-                          <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{div.description}</p>
-                        </div>
-                      </div>
-                      <div className="pt-3 border-t border-primary/15 flex items-center justify-between text-xs font-bold text-primary">
-                        <span>Browse {div.classes.length} Class Level{div.classes.length !== 1 ? 's' : ''}</span>
-                        <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            {/* ── Senior Secondary Class Cards (SS1, SS2, SS3) ── */}
+            {examRepoFilter === 'all' && (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-serif font-bold text-lg text-foreground flex items-center gap-2">
+                    <GraduationCap className="w-5 h-5 text-primary" />
+                    Senior Secondary CBT Class Levels (SS 1 - SS 3)
+                  </h3>
+                  <span className="text-xs text-muted-foreground">
+                    Select a class and stream to view or manage CBT assessments
+                  </span>
+                </div>
 
-            {/* ── LEVEL 2: Class Cards within selected division ── */}
-            {examRepoFilter === 'all' && selectedExamDivision && (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                {divisionClasses.map(cls => {
-                  const sciExams = examsList.filter(e => matchStudentClass(cls.key, e.class) && (e.stream === 'Science' || e.stream === 'STEM'));
-                  const artExams = examsList.filter(e => matchStudentClass(cls.key, e.class) && (e.stream === 'Arts' || e.stream === 'Art' || e.stream === 'Commercial'));
-                  const genExams = examsList.filter(e => matchStudentClass(cls.key, e.class));
-                  const totalCount = cls.hasStreams ? (sciExams.length + artExams.length) : genExams.length;
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                  {seniorClasses.map(cls => {
+                    const sciExams = examsList.filter(e => matchStudentClass(cls.key, e.class) && (e.stream === 'Science' || e.stream === 'STEM'));
+                    const artExams = examsList.filter(e => matchStudentClass(cls.key, e.class) && (e.stream === 'Arts' || e.stream === 'Art' || e.stream === 'Commercial'));
+                    const totalCount = sciExams.length + artExams.length;
 
-                  return (
-                    <div key={cls.key} className="relative">
-                      <button
-                        onClick={() => {
-                          if (!cls.hasStreams) {
-                            setSelectedExamClass(cls.key);
-                            setSelectedExamStream('General');
-                            setOpenExamClassDropdown(null);
-                          } else {
+                    return (
+                      <div key={cls.key} className="relative">
+                        <button
+                          onClick={() => {
                             setOpenExamClassDropdown(prev => prev === cls.key ? null : cls.key);
-                          }
-                        }}
-                        className={`group w-full text-left rounded-2xl border-2 p-6 shadow-sm transition-all duration-200 hover:shadow-md hover:scale-[1.02] ${cls.color} ${openExamClassDropdown === cls.key ? 'ring-2 ring-primary/40' : ''}`}
-                      >
-                        <div className="flex items-start justify-between mb-4">
-                          <div className={`p-3 rounded-2xl ${cls.iconBg}`}>
-                            <ClipboardList className="w-6 h-6" />
+                          }}
+                          className={`group w-full text-left rounded-2xl border-2 p-6 shadow-sm transition-all duration-200 hover:shadow-md hover:scale-[1.02] ${cls.color} ${openExamClassDropdown === cls.key ? 'ring-2 ring-primary/40' : ''}`}
+                        >
+                          <div className="flex items-start justify-between mb-4">
+                            <div className={`p-3 rounded-2xl ${cls.iconBg}`}>
+                              <GraduationCap className="w-6 h-6" />
+                            </div>
+                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${cls.iconBg}`}>
+                              {totalCount} CBT Exams
+                            </span>
                           </div>
-                          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${cls.iconBg}`}>
-                            {totalCount} Exams
-                          </span>
-                        </div>
-                        <h3 className="font-serif font-bold text-xl text-foreground mb-1">{cls.label}</h3>
-                        {cls.hasStreams ? (
+                          <h3 className="font-serif font-bold text-xl text-foreground mb-1">{cls.label}</h3>
                           <div className="flex gap-4 text-xs mt-2">
-                            <span className="text-muted-foreground">{t('students.scienceLabel')}<strong className={cls.accent}>{sciExams.length}</strong></span>
-                            <span className="text-muted-foreground">{t('students.artLabel')}<strong className={cls.accent}>{artExams.length}</strong></span>
+                            <span className="text-muted-foreground">{t('students.scienceLabel', 'Science: ')}<strong className={cls.accent}>{sciExams.length}</strong></span>
+                            <span className="text-muted-foreground">{t('students.artLabel', 'Art: ')}<strong className={cls.accent}>{artExams.length}</strong></span>
                           </div>
-                        ) : (
-                          <p className="text-xs text-muted-foreground mt-2 font-medium">General curriculum assessments</p>
-                        )}
-                        <div className={`flex items-center gap-1.5 text-xs font-bold mt-3 ${cls.accent}`}>
-                          <span>{cls.hasStreams ? 'Select Stream' : 'View Assessments'}</span>
-                          {cls.hasStreams ? (
+                          <div className={`flex items-center gap-1.5 text-xs font-bold mt-4 ${cls.accent}`}>
+                            <span>Select Stream (Science / Art)</span>
                             <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${openExamClassDropdown === cls.key ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                             </svg>
-                          ) : (
-                            <ChevronRight className="w-3.5 h-3.5" />
-                          )}
-                        </div>
-                      </button>
+                          </div>
+                        </button>
 
-                      {/* Stream dropdown */}
-                      {cls.hasStreams && openExamClassDropdown === cls.key && (
-                        <div className="absolute left-0 right-0 mt-2 bg-card border border-border rounded-2xl shadow-2xl z-40 py-2">
-                          <p className="px-4 pt-1 pb-2 text-[10px] uppercase font-bold text-muted-foreground tracking-wider">{t('students.chooseStream')}</p>
-                          <button
-                            onClick={() => { setSelectedExamClass(cls.key); setSelectedExamStream('Science'); setOpenExamClassDropdown(null); }}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-foreground hover:bg-primary/5 hover:text-primary transition-colors text-left"
-                          >
-                            <span className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary"><FlaskConical className="w-4 h-4" /></span>
-                            Science Stream
-                            <span className="ml-auto text-xs text-muted-foreground">{sciExams.length} available</span>
-                          </button>
-                          <button
-                            onClick={() => { setSelectedExamClass(cls.key); setSelectedExamStream('Art'); setOpenExamClassDropdown(null); }}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-foreground hover:bg-secondary/5 hover:text-secondary transition-colors text-left"
-                          >
-                            <span className="w-8 h-8 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary"><Palette className="w-4 h-4" /></span>
-                            Art Stream
-                            <span className="ml-auto text-xs text-muted-foreground">{artExams.length} available</span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                        {/* Stream dropdown */}
+                        {openExamClassDropdown === cls.key && (
+                          <div className="absolute left-0 right-0 mt-2 bg-card border border-border rounded-2xl shadow-2xl z-40 py-2">
+                            <p className="px-4 pt-1 pb-2 text-[10px] uppercase font-bold text-muted-foreground tracking-wider">{t('students.chooseStream', 'Choose Stream')}</p>
+                            <button
+                              onClick={() => { setSelectedExamClass(cls.key); setSelectedExamStream('Science'); setOpenExamClassDropdown(null); }}
+                              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-foreground hover:bg-primary/5 hover:text-primary transition-colors text-left cursor-pointer"
+                            >
+                              <span className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary"><FlaskConical className="w-4 h-4" /></span>
+                              Science Stream
+                              <span className="ml-auto text-xs text-muted-foreground">{sciExams.length} available</span>
+                            </button>
+                            <button
+                              onClick={() => { setSelectedExamClass(cls.key); setSelectedExamStream('Art'); setOpenExamClassDropdown(null); }}
+                              className="w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold text-foreground hover:bg-secondary/5 hover:text-secondary transition-colors text-left cursor-pointer"
+                            >
+                              <span className="w-8 h-8 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary"><Palette className="w-4 h-4" /></span>
+                              Art Stream
+                              <span className="ml-auto text-xs text-muted-foreground">{artExams.length} available</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
