@@ -186,6 +186,7 @@ export default function CBTBuilder() {
   const [attempts, setAttempts] = useState<StudentAttempt[]>([]);
   const [attemptDetail, setAttemptDetail] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [mobileStackedOpen, setMobileStackedOpen] = useState<boolean>(false);
   const [form, setForm] = useState<ExamForm>({
     title: '', description: '', instructions: '',
     class: 'SS1', stream: 'Science', course: 'MTH-101',
@@ -930,7 +931,80 @@ export default function CBTBuilder() {
 
     return (
       <div className="min-h-screen bg-background p-4 md:p-8">
-        <div className="max-w-3xl mx-auto space-y-6">
+        {/* Mobile floating eye icon with badge */}
+        <div className="lg:hidden fixed bottom-6 right-5 z-40">
+          <button
+            type="button"
+            onClick={() => setMobileStackedOpen((v: boolean) => !v)}
+            className="relative w-14 h-14 rounded-full bg-foreground text-background shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
+            title="Preview Stacked Questions"
+          >
+            <Eye className="w-6 h-6" />
+            {questions.length > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[22px] h-[22px] px-1 flex items-center justify-center rounded-full bg-rose-600 text-white text-[11px] font-extrabold border-2 border-background shadow-md">
+                {questions.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Mobile stacked questions drawer/modal */}
+        {mobileStackedOpen && (
+          <div className="lg:hidden fixed inset-0 z-50 flex flex-col bg-black/60 backdrop-blur-sm" onClick={() => setMobileStackedOpen(false)}>
+            <div className="mt-auto bg-card rounded-t-3xl border-t border-border shadow-2xl max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
+              <div className="flex items-center justify-between p-5 border-b border-border">
+                <div>
+                  <h2 className="font-serif font-bold text-base text-foreground flex items-center gap-2">
+                    <ClipboardList className="w-5 h-5 text-primary" />
+                    Stacked Questions ({questions.length})
+                  </h2>
+                  <p className="text-xs text-muted-foreground">Exam paper preview — add more below</p>
+                </div>
+                <span className="text-xs font-mono font-bold bg-primary/10 text-primary px-3 py-1 rounded-xl border border-primary/20">
+                  {totalExamPoints} Pts
+                </span>
+              </div>
+              <div className="overflow-y-auto flex-1 p-4 space-y-3">
+                {questions.length === 0 ? (
+                  <div className="text-center py-10 border-2 border-dashed border-border rounded-xl bg-muted/10 space-y-2">
+                    <Lightbulb className="w-8 h-8 text-muted-foreground/40 mx-auto" />
+                    <p className="text-sm font-semibold text-foreground">No questions stacked yet</p>
+                    <p className="text-xs text-muted-foreground">Add your first question below to start building the exam.</p>
+                  </div>
+                ) : (
+                  questions.map((q: any, i: number) => (
+                    <div key={q.id || i} className={`rounded-xl border p-3 transition-all ${
+                      editingQuestionId === q.id ? 'border-primary bg-primary/5' :
+                      justAddedId === q.id ? 'border-emerald-500 bg-emerald-500/5' : 'border-border bg-card'
+                    }`}>
+                      <div className="flex items-start gap-2">
+                        <span className="w-6 h-6 rounded-lg bg-primary/10 text-primary border border-primary/20 flex items-center justify-center text-xs font-bold shrink-0">{i + 1}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-foreground text-xs leading-snug mb-1.5">{q.question_text}</p>
+                          <div className="grid grid-cols-2 gap-1 text-[11px]">
+                            {['A','B','C','D'].map(opt => (
+                              <span key={opt} className={`px-2 py-1 rounded-lg border truncate ${
+                                q.correct_option === opt ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 font-bold' : 'bg-muted/30 border-border text-muted-foreground'
+                              }`}><strong>{opt}.</strong> {opt==='A'?q.option_a:opt==='B'?q.option_b:opt==='C'?q.option_c:q.option_d}{q.correct_option===opt&&' ✓'}</span>
+                            ))}
+                          </div>
+                        </div>
+                        <button type="button" onClick={() => handleDeleteQuestion(q.id)} className="p-1.5 text-muted-foreground hover:text-rose-600 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer shrink-0">
+                          <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+              <div className="p-4 border-t border-border">
+                <button type="button" onClick={() => setMobileStackedOpen(false)} className="w-full py-2.5 rounded-xl border border-border text-foreground font-bold text-sm hover:bg-muted transition">Close Preview</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="max-w-6xl mx-auto space-y-6">
           
           {/* Top Bar with Navigation & Actions */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-5 rounded-2xl border border-border shadow-xs">
@@ -1103,123 +1177,10 @@ export default function CBTBuilder() {
             </div>
           )}
 
-          {/* ── SECTION 1: LIVE STACKED QUESTIONS (DISPLAYED DIRECTLY ABOVE THE INPUT FORM) ── */}
-          <div className="bg-card rounded-2xl border border-border shadow-xs p-5 md:p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-border pb-3">
-              <div>
-                <h2 className="font-serif font-bold text-base text-foreground flex items-center gap-2">
-                  <ClipboardList className="w-5 h-5 text-primary" />
-                  Stacked Exam Questions ({questions.length})
-                </h2>
-                <p className="text-xs text-muted-foreground">
-                  Questions are stacked below in exam presentation order. You can edit, reorder, or delete questions.
-                </p>
-              </div>
-              <span className="text-xs font-mono font-bold bg-primary/10 text-primary px-3 py-1 rounded-xl border border-primary/20">
-                {totalExamPoints} Pts Total
-              </span>
-            </div>
+          {/* ── DESKTOP SIDE-BY-SIDE LAYOUT: LHS = Form, RHS = Stacked Questions ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 items-start">
 
-            {questions.length === 0 ? (
-              <div className="text-center py-10 border-2 border-dashed border-border rounded-xl bg-muted/10 space-y-2">
-                <Lightbulb className="w-8 h-8 text-muted-foreground/40 mx-auto" />
-                <p className="text-sm font-semibold text-foreground">No questions stacked yet</p>
-                <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                  Use the question authoring form below to add your first multiple-choice question. Each added question will stack here automatically.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
-                {questions.map((q: any, i: number) => {
-                  const isJustAdded = justAddedId === q.id;
-                  const isBeingEdited = editingQuestionId === q.id;
-
-                  return (
-                    <div
-                      key={q.id || i}
-                      className={`rounded-xl border p-4 transition-all ${
-                        isBeingEdited
-                          ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
-                          : isJustAdded
-                          ? 'border-emerald-500 bg-emerald-500/5 ring-2 ring-emerald-500/30'
-                          : 'border-border bg-card hover:border-primary/30 shadow-2xs'
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <span className="w-7 h-7 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center text-xs font-bold shrink-0">
-                          {i + 1}
-                        </span>
-                        <div className="flex-1 space-y-2 min-w-0">
-                          <div className="flex items-start justify-between gap-2">
-                            <p className="font-semibold text-foreground text-sm leading-snug">
-                              {q.question_text}
-                            </p>
-                            <div className="flex items-center gap-1 shrink-0">
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-muted text-muted-foreground font-mono">
-                                {q.points || 1} pt
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => handleEditQuestion(q)}
-                                className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
-                                  isBeingEdited
-                                    ? 'bg-primary text-primary-foreground'
-                                    : 'text-primary bg-primary/10 hover:bg-primary/20'
-                                }`}
-                                title="Edit Question"
-                              >
-                                {isBeingEdited ? 'Editing...' : 'Edit'}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteQuestion(q.id)}
-                                className="p-1.5 text-muted-foreground hover:text-rose-600 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
-                                title="Delete Question"
-                              >
-                                <Trash2 className="w-4 h-4 text-rose-500" />
-                              </button>
-                            </div>
-                          </div>
-
-                          {q.image_url && (
-                            <img src={q.image_url} alt={`Question ${i + 1}`} className="max-h-36 rounded-lg border border-border object-contain my-1" />
-                          )}
-
-                          <div className="grid grid-cols-2 gap-1.5 text-xs">
-                            {['A', 'B', 'C', 'D'].map(opt => {
-                              const isCorrect = q.correct_option === opt;
-                              const val = opt === 'A' ? q.option_a : opt === 'B' ? q.option_b : opt === 'C' ? q.option_c : q.option_d;
-                              return (
-                                <span
-                                  key={opt}
-                                  className={`px-2.5 py-1.5 rounded-lg border text-xs truncate ${
-                                    isCorrect
-                                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400 font-bold'
-                                      : 'bg-muted/30 border-border text-muted-foreground'
-                                  }`}
-                                >
-                                  <strong>{opt}.</strong> {val || `[Option ${opt}]`} {isCorrect && ' ✓'}
-                                </span>
-                              );
-                            })}
-                          </div>
-
-                          {q.explanation && (
-                            <p className="text-[11px] text-primary bg-primary/5 p-2 rounded-lg border border-primary/15 flex items-center gap-1.5">
-                              <Lightbulb className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                              <span><strong>Rationale:</strong> {q.explanation}</span>
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* ── SECTION 2: QUESTION AUTHORING / INPUT FORM (DIRECTLY BELOW STACKED LIST) ── */}
+          {/* ── LHS: QUESTION AUTHORING / INPUT FORM ── */}
           <div className="bg-card rounded-2xl shadow-sm p-6 border-2 border-primary/20 space-y-4">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <h3 className="font-bold text-foreground text-sm md:text-base flex items-center gap-2">
@@ -1349,6 +1310,129 @@ export default function CBTBuilder() {
               </div>
             </div>
           </div>
+
+          {/* ── RHS: LIVE STACKED QUESTIONS PANEL (desktop only — mobile uses floating button) ── */}
+          <div className="hidden lg:block sticky top-6">
+            <div className="bg-card rounded-2xl border border-border shadow-xs p-5 md:p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <div>
+                  <h2 className="font-serif font-bold text-base text-foreground flex items-center gap-2">
+                    <ClipboardList className="w-5 h-5 text-primary" />
+                    Stacked Exam Questions ({questions.length})
+                  </h2>
+                  <p className="text-xs text-muted-foreground">
+                    Questions appear here as you add them. Edit or delete inline.
+                  </p>
+                </div>
+                <span className="text-xs font-mono font-bold bg-primary/10 text-primary px-3 py-1 rounded-xl border border-primary/20 shrink-0">
+                  {totalExamPoints} Pts
+                </span>
+              </div>
+
+            {questions.length === 0 ? (
+              <div className="text-center py-10 border-2 border-dashed border-border rounded-xl bg-muted/10 space-y-2">
+                <Lightbulb className="w-8 h-8 text-muted-foreground/40 mx-auto" />
+                <p className="text-sm font-semibold text-foreground">No questions stacked yet</p>
+                <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                  Use the question authoring form below to add your first multiple-choice question. Each added question will stack here automatically.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+                {questions.map((q: any, i: number) => {
+                  const isJustAdded = justAddedId === q.id;
+                  const isBeingEdited = editingQuestionId === q.id;
+
+                  return (
+                    <div
+                      key={q.id || i}
+                      className={`rounded-xl border p-4 transition-all ${
+                        isBeingEdited
+                          ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
+                          : isJustAdded
+                          ? 'border-emerald-500 bg-emerald-500/5 ring-2 ring-emerald-500/30'
+                          : 'border-border bg-card hover:border-primary/30 shadow-2xs'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <span className="w-7 h-7 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center text-xs font-bold shrink-0">
+                          {i + 1}
+                        </span>
+                        <div className="flex-1 space-y-2 min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="font-semibold text-foreground text-sm leading-snug">
+                              {q.question_text}
+                            </p>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-muted text-muted-foreground font-mono">
+                                {q.points || 1} pt
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleEditQuestion(q)}
+                                className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
+                                  isBeingEdited
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'text-primary bg-primary/10 hover:bg-primary/20'
+                                }`}
+                                title="Edit Question"
+                              >
+                                {isBeingEdited ? 'Editing...' : 'Edit'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteQuestion(q.id)}
+                                className="p-1.5 text-muted-foreground hover:text-rose-600 hover:bg-rose-500/10 rounded-lg transition-colors cursor-pointer"
+                                title="Delete Question"
+                              >
+                                <Trash2 className="w-4 h-4 text-rose-500" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {q.image_url && (
+                            <img src={q.image_url} alt={`Question ${i + 1}`} className="max-h-36 rounded-lg border border-border object-contain my-1" />
+                          )}
+
+                          <div className="grid grid-cols-2 gap-1.5 text-xs">
+                            {['A', 'B', 'C', 'D'].map(opt => {
+                              const isCorrect = q.correct_option === opt;
+                              const val = opt === 'A' ? q.option_a : opt === 'B' ? q.option_b : opt === 'C' ? q.option_c : q.option_d;
+                              return (
+                                <span
+                                  key={opt}
+                                  className={`px-2.5 py-1.5 rounded-lg border text-xs truncate ${
+                                    isCorrect
+                                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400 font-bold'
+                                      : 'bg-muted/30 border-border text-muted-foreground'
+                                  }`}
+                                >
+                                  <strong>{opt}.</strong> {val || `[Option ${opt}]`} {isCorrect && ' ✓'}
+                                </span>
+                              );
+                            })}
+                          </div>
+
+                          {q.explanation && (
+                            <p className="text-[11px] text-primary bg-primary/5 p-2 rounded-lg border border-primary/15 flex items-center gap-1.5">
+                              <Lightbulb className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                              <span><strong>Rationale:</strong> {q.explanation}</span>
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            </div>
+          </div>
+
+          {/* close the lg:grid container */}
+          </div>
+
+
 
           {/* ── SECTION 3: BOTTOM SUBMISSION BAR ── */}
           {questions.length > 0 && (
