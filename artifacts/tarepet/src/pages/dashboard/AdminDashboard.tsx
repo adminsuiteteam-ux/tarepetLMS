@@ -3479,17 +3479,36 @@ export default function AdminDashboard() {
     if (activeSection === 'users') {
       // ── LEVEL 3: Individual Student Profile Page ──────────────────────
       if (selectedUser) {
-        const liveStudent = studentsList.find((s: any) => (selectedUser.id && s.id === selectedUser.id) || (selectedUser.admissionNo && s.admissionNo === selectedUser.admissionNo) || (selectedUser.studentId && s.studentId === selectedUser.studentId) || (selectedUser.email && s.email === selectedUser.email));
+        const liveStudent = studentsList.find((s: any) => 
+          (selectedUser.id && s.id === selectedUser.id) || 
+          (selectedUser.admissionNo && (s.admissionNo === selectedUser.admissionNo || s.code === selectedUser.admissionNo || s.studentId === selectedUser.admissionNo)) || 
+          (selectedUser.studentId && (s.studentId === selectedUser.studentId || s.code === selectedUser.studentId || s.admissionNo === selectedUser.studentId)) || 
+          (selectedUser.code && (s.code === selectedUser.code || s.admissionNo === selectedUser.code || s.studentId === selectedUser.code)) || 
+          (selectedUser.email && s.email && s.email.toLowerCase() === selectedUser.email.toLowerCase())
+        );
+
+        const currentAdmNo = liveStudent?.code || liveStudent?.admissionNo || liveStudent?.studentId || selectedUser?.code || selectedUser?.admissionNo || selectedUser?.studentId || selectedUser?.student_id || (selectedUser?.id ? `TMS/STU/${selectedUser.id}` : 'TMS/STU/001');
+
         const u = {
           ...selectedUser,
           ...(liveStudent || {}),
+          id: liveStudent?.id || selectedUser?.id,
+          code: currentAdmNo,
+          admissionNo: currentAdmNo,
+          studentId: currentAdmNo,
+          student_id: currentAdmNo,
           name: (liveStudent?.name || selectedUser?.name || (selectedUser?.first_name ? `${selectedUser.first_name} ${selectedUser.last_name || ''}`.trim() : '') || selectedUser?.email || 'Student'),
-          studentId: (liveStudent?.studentId || selectedUser?.studentId || selectedUser?.admissionNo || selectedUser?.code || (selectedUser?.id ? `TMS/STU/${selectedUser.id}` : 'TMS/STU/001')),
-          grade: (liveStudent?.grade || selectedUser?.grade || selectedUser?.class || 'SS 1'),
-          stream: (liveStudent?.stream || selectedUser?.stream || 'Science'),
+          grade: (liveStudent?.grade || selectedUser?.grade || selectedUser?.class || selectedUser?.profile?.grade_level || selectedUser?.grade_level || 'SS 1'),
+          stream: (liveStudent?.stream || selectedUser?.stream || selectedUser?.profile?.stream || 'Science'),
           status: (liveStudent?.status || selectedUser?.status || 'Active'),
-          house: (liveStudent?.house || selectedUser?.house || 'School House'),
+          house: (liveStudent?.house || selectedUser?.house || selectedUser?.profile?.house || 'School House'),
           profileImage: liveStudent?.profileImage || selectedUser?.profileImage || selectedUser?.profile_image || selectedUser?.profile?.profile_image || '',
+          parentName: liveStudent?.parentName || selectedUser?.parentName || selectedUser?.profile?.parent_name || selectedUser?.parent_name || '',
+          parentPhone: liveStudent?.parentPhone || selectedUser?.parentPhone || selectedUser?.profile?.parent_phone || selectedUser?.parent_phone || selectedUser?.emergency_contact || selectedUser?.profile?.emergency_contact || selectedUser?.phone || '',
+          address: liveStudent?.address || selectedUser?.address || selectedUser?.profile?.address || '',
+          email: liveStudent?.email || selectedUser?.email || '',
+          gender: liveStudent?.gender || selectedUser?.gender || selectedUser?.profile?.gender || 'Not specified',
+          dob: liveStudent?.dob || selectedUser?.dob || selectedUser?.profile?.date_of_birth || selectedUser?.profile?.dob || '',
         };
 
         return (
@@ -3501,7 +3520,7 @@ export default function AdminDashboard() {
                 <ChevronLeft className="w-4 h-4" /> Back to Students Directory
               </button>
               <span className="text-muted-foreground">/</span>
-              <span className="text-foreground font-semibold">{t('studentProfile.breadcrumb')}{u.name}</span>
+              <span className="text-foreground font-semibold">{t('studentProfile.breadcrumb', 'Student Profile — ')}{u.name}</span>
             </div>
 
             {/* Profile Specification Card */}
@@ -3510,7 +3529,7 @@ export default function AdminDashboard() {
               <div className="flex items-center justify-between pb-4 border-b border-border flex-wrap gap-3">
                 <div className="flex items-center gap-3">
                   <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
-                  <h3 className="font-serif font-bold text-lg text-foreground">{t('studentProfile.cardTitle')}</h3>
+                  <h3 className="font-serif font-bold text-lg text-foreground">{t('studentProfile.cardTitle', 'Official Student Profile & Academic Record')}</h3>
                 </div>
                 <div className="relative">
                   <button
@@ -3716,15 +3735,15 @@ export default function AdminDashboard() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-muted/20 p-4 rounded-xl border border-border text-xs">
                       <div>
                         <span className="text-muted-foreground block text-[10px] uppercase font-bold">Parent / Guardian Name</span>
-                        <span className="font-semibold text-foreground">{u.parentName || 'Mr. & Mrs. Amadi'}</span>
+                        <span className="font-semibold text-foreground">{u.parentName || 'Not Provided'}</span>
                       </div>
                       <div>
                         <span className="text-muted-foreground block text-[10px] uppercase font-bold">Emergency Phone</span>
-                        <span className="font-semibold text-primary">{u.parentPhone || u.phone || '08031234567'}</span>
+                        <span className="font-semibold text-primary">{u.parentPhone || u.phone || 'Not Provided'}</span>
                       </div>
                       <div className="sm:col-span-2">
                         <span className="text-muted-foreground block text-[10px] uppercase font-bold">Residential Address</span>
-                        <span className="font-semibold text-foreground">{u.address || 'Yenagoa, Bayelsa State, Nigeria'}</span>
+                        <span className="font-semibold text-foreground">{u.address || 'Not Provided'}</span>
                       </div>
                     </div>
                   </div>

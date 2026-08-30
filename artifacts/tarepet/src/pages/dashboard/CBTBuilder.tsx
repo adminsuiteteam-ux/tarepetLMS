@@ -250,9 +250,11 @@ export default function CBTBuilder() {
     }
   };
 
-  const fetchQuestions = (examId: number) => {
-    const ex = getStoredExams().find(e => e.id === examId);
-    setQuestions(ex?.questions || []);
+  const fetchQuestions = (examId: number | string) => {
+    const list = getStoredExams();
+    const ex = list.find(e => Number(e.id) === Number(examId) || String(e.id) === String(examId))
+            || exams.find(e => Number(e.id) === Number(examId) || String(e.id) === String(examId));
+    setQuestions(ex?.questions ? [...ex.questions] : []);
   };
 
   const [showBulkModal, setShowBulkModal] = useState(false);
@@ -263,20 +265,50 @@ export default function CBTBuilder() {
   const [justAddedId, setJustAddedId] = useState<number | null>(null);
 
   const handleAddQuestion = async () => {
-    if (!selectedExamId) return;
-    const examsList = getStoredExams();
-    const ex = examsList.find(e => e.id === selectedExamId);
-    if (!ex) return;
-
-    if (!newQuestion.question_text.trim()) {
-      showAlert({ title: 'Question Text Required', message: 'Please enter the question text before adding.', type: 'warning' });
+    if (!selectedExamId) {
+      showAlert({ title: 'No Exam Selected', message: 'Please select an exam first.', type: 'warning' });
       return;
+    }
+
+    if (!newQuestion.question_text || !newQuestion.question_text.trim()) {
+      showAlert({ title: 'Question Text Required', message: 'Please enter the question text.', type: 'warning' });
+      return;
+    }
+
+    if (!newQuestion.option_a || !newQuestion.option_a.trim() || !newQuestion.option_b || !newQuestion.option_b.trim()) {
+      showAlert({ title: 'Options Required', message: 'Please provide at least Option A and Option B answer choices.', type: 'warning' });
+      return;
+    }
+
+    const examsList = getStoredExams();
+    let ex = examsList.find(e => Number(e.id) === Number(selectedExamId) || String(e.id) === String(selectedExamId))
+          || exams.find(e => Number(e.id) === Number(selectedExamId) || String(e.id) === String(selectedExamId));
+
+    if (!ex) {
+      ex = {
+        id: selectedExamId,
+        title: form.title || 'Live Exam Paper',
+        description: form.description || '',
+        instructions: form.instructions || '',
+        course_code: form.course || 'ENG-101',
+        course_name: `${form.class} ${form.course}`,
+        class: form.class || 'SS1',
+        stream: form.stream || 'Science',
+        assessment_type: (form.assessment_type as any) || 'TEST',
+        term: form.term === '1ST_TERM' ? 'Term 1' : form.term === '2ND_TERM' ? 'Term 2' : 'Term 3',
+        duration_minutes: form.duration_minutes || 45,
+        questions_per_page: form.questions_per_page || 2,
+        teacher_name: user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Teacher' : 'Teacher',
+        status: 'DRAFT',
+        questions: [],
+        created_at: new Date().toISOString(),
+      };
     }
 
     if (editingQuestionId) {
       // Update existing question
       ex.questions = (ex.questions || []).map((q: any) => {
-        if (q.id === editingQuestionId) {
+        if (Number(q.id) === Number(editingQuestionId) || String(q.id) === String(editingQuestionId)) {
           return {
             ...q,
             question_text: newQuestion.question_text.trim(),
@@ -285,7 +317,7 @@ export default function CBTBuilder() {
             option_c: newQuestion.option_c.trim() || 'Option C',
             option_d: newQuestion.option_d.trim() || 'Option D',
             correct_option: newQuestion.correct_option || 'A',
-            points: newQuestion.points || 1,
+            points: Number(newQuestion.points) || 1,
             explanation: newQuestion.explanation?.trim() || '',
             image_url: newQuestion.image_url?.trim() || '',
           };
@@ -304,7 +336,7 @@ export default function CBTBuilder() {
         option_c: newQuestion.option_c.trim() || 'Option C',
         option_d: newQuestion.option_d.trim() || 'Option D',
         correct_option: newQuestion.correct_option || 'A',
-        points: newQuestion.points || 1,
+        points: Number(newQuestion.points) || 1,
         explanation: newQuestion.explanation?.trim() || '',
         image_url: newQuestion.image_url?.trim() || '',
       };
@@ -315,7 +347,8 @@ export default function CBTBuilder() {
 
     ex.questions_count = ex.questions.length;
     await saveCBTExam(ex);
-    fetchQuestions(selectedExamId);
+    setQuestions([...ex.questions]);
+    fetchExams();
     setNewQuestion({ ...EMPTY_QUESTION });
   };
 
@@ -342,13 +375,15 @@ export default function CBTBuilder() {
   const handleDeleteQuestion = async (qId: number) => {
     if (!selectedExamId) return;
     const examsList = getStoredExams();
-    const ex = examsList.find(e => e.id === selectedExamId);
+    const ex = examsList.find(e => Number(e.id) === Number(selectedExamId) || String(e.id) === String(selectedExamId))
+            || exams.find(e => Number(e.id) === Number(selectedExamId) || String(e.id) === String(selectedExamId));
     if (!ex) return;
 
-    ex.questions = ex.questions.filter((q: any) => q.id !== qId);
+    ex.questions = (ex.questions || []).filter((q: any) => Number(q.id) !== Number(qId) && String(q.id) !== String(qId));
     ex.questions_count = ex.questions.length;
     await saveCBTExam(ex);
-    fetchQuestions(selectedExamId);
+    setQuestions([...ex.questions]);
+    fetchExams();
     if (editingQuestionId === qId) {
       handleCancelEdit();
     }
@@ -357,7 +392,8 @@ export default function CBTBuilder() {
   const handleBulkCSVImport = () => {
     if (!bulkCsvText.trim() || !selectedExamId) return;
     const examsList = getStoredExams();
-    const ex = examsList.find(e => e.id === selectedExamId);
+    const ex = examsList.find(e => Number(e.id) === Number(selectedExamId) || String(e.id) === String(selectedExamId))
+            || exams.find(e => Number(e.id) === Number(selectedExamId) || String(e.id) === String(selectedExamId));
     if (!ex) return;
 
     const lines = bulkCsvText.split('\n').filter(l => l.trim());
@@ -1301,8 +1337,7 @@ export default function CBTBuilder() {
                 <button
                   type="button"
                   onClick={handleAddQuestion}
-                  disabled={!newQuestion.question_text || !newQuestion.option_a || !newQuestion.option_b}
-                  className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition disabled:opacity-50 flex items-center justify-center gap-2 shadow-md cursor-pointer text-sm"
+                  className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition flex items-center justify-center gap-2 shadow-md cursor-pointer text-sm"
                 >
                   <Plus className="w-4 h-4" />
                   {editingQuestionId ? 'Save Question Changes' : `Add Question #${questions.length + 1} to Stack`}

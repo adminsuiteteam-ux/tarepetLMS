@@ -217,9 +217,24 @@ export default function StudentCBTExam() {
     setCalcInput(prev => (prev === '0' || prev === 'Error' ? val : prev + val));
   };
 
+  const getStudentIdentifier = (u: any): string => {
+    if (!u) return '';
+    return (
+      u.profile?.student_id ||
+      u.profile?.studentId ||
+      u.profile?.admission_number ||
+      u.student_id ||
+      u.studentId ||
+      u.admissionNo ||
+      u.code ||
+      u.email ||
+      ''
+    );
+  };
+
   const handleStartExam = async () => {
     if (!selectedExam) return;
-    const studentIdentifier = user?.email || (user?.profile as any)?.studentId || (user as any)?.student_id || '';
+    const studentIdentifier = getStudentIdentifier(user);
     const studentName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email : 'Student';
 
     if (hasStudentSubmittedExam(selectedExam.id, studentIdentifier)) {
@@ -281,9 +296,9 @@ export default function StudentCBTExam() {
     if (timerRef.current) clearInterval(timerRef.current);
 
     try {
-      const studentName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Emeka Amadi' : 'Emeka Amadi';
-      const studentEmail = user?.email || 'emeka.amadi@tarepet.edu.ng';
-      const studentId = (user?.profile as any)?.studentId || 'TMS-2024-101';
+      const studentName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Student' : 'Student';
+      const studentEmail = user?.email || 'student@tarepet.com';
+      const studentId = getStudentIdentifier(user) || 'TMS-STU-001';
 
       const subResult = await submitStudentCBTAttempt(selectedExam.id, answers, {
         name: studentName,
@@ -331,7 +346,7 @@ export default function StudentCBTExam() {
 
   // ============ EXAM LIST ============
   if (phase === 'list') {
-    const studentIdentifier = user?.email || (user?.profile as any)?.studentId || 'TMS-2024-101';
+    const studentIdentifier = getStudentIdentifier(user);
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8">
@@ -689,8 +704,8 @@ export default function StudentCBTExam() {
                   {user?.first_name?.[0] || 'S'}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-foreground truncate">{user ? `${user.first_name} ${user.last_name}` : 'Emeka Amadi'}</p>
-                  <p className="text-[10px] text-muted-foreground truncate">Senior Secondary Student</p>
+                  <p className="text-xs font-bold text-foreground truncate">{user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email : 'Student'}</p>
+                  <p className="text-[10px] text-muted-foreground truncate">Tarepet Montessori Student</p>
                 </div>
               </div>
             </div>

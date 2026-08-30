@@ -1305,33 +1305,34 @@ export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
       const mockEmails = ['civa.media@tarepet.com', 'hacker@evil.com', 'wronguser@fake.com'];
       const fetched: StudentRecord[] = dataArr
         .filter((u: any) => {
-          const admNo = u.username || u.profile?.admission_number || '';
+          const admNo = prof_code(u);
           return !mockEmails.includes(u.email) && !isAccountDeleted(u.email) && !isAccountDeleted(u.id) && !isAccountDeleted(admNo) && !isAccountDeleted(`${u.first_name || ''} ${u.last_name || ''}`.trim());
         })
         .map((u: any) => {
           const prof = u.profile || {};
-          const autoCode = u.username || prof.admission_number || `TMS/2026/${String(u.id).padStart(4, '0')}`;
-          const rawGrade = prof.class_level || prof.grade || 'SS1';
+          const autoCode = prof.student_id || prof.admission_number || u.username || (u.id ? `TMS/2026/${String(u.id).padStart(4, '0')}` : 'TMS/STU/001');
+          const rawGrade = prof.class_level || prof.grade || prof.grade_level || 'SS1';
           return {
             id: u.id,
             code: autoCode,
             admissionNo: autoCode,
+            studentId: autoCode,
             admission_number: autoCode,
             name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
             email: u.email,
             password: autoCode,
             gender: prof.gender || 'Male',
             maritalStatus: 'Single',
-            dob: prof.date_of_birth || prof.dob || 'Not Available',
-            phone: u.phone || prof.phone || 'Not Available',
+            dob: prof.date_of_birth || prof.dob || '',
+            phone: u.phone || prof.phone || '',
             country: 'Nigeria',
             stateOfOrigin: prof.state_of_origin || prof.stateOfOrigin || 'Bayelsa',
             lga: prof.lga || 'Yenagoa',
-            address: prof.address || 'Yenagoa, Bayelsa State',
+            address: prof.address || '',
             grade: rawGrade,
             stream: prof.stream || (rawGrade.toUpperCase().startsWith('SS') ? 'Science' : 'General'),
             programme: prof.programme || (rawGrade.toUpperCase().startsWith('SS') ? 'Senior Secondary Certificate (SSCE)' : 'Montessori Primary Education'),
-            parentName: prof.parent_name || prof.parentName || 'Parent / Guardian',
+            parentName: prof.parent_name || prof.parentName || '',
             parentPhone: prof.parent_phone || prof.parentPhone || prof.emergency_contact || '',
             status: u.is_active !== false ? 'ACTIVE' : 'INACTIVE',
             studyMode: prof.study_mode || prof.studyMode || 'Full Time',
@@ -1356,6 +1357,10 @@ export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
     // Fallback to memory cache
   }
   return _students;
+}
+
+function prof_code(u: any): string {
+  return u.username || u.profile?.admission_number || u.profile?.student_id || '';
 }
 
 export async function syncTeachersWithBackend(): Promise<TeacherRecord[]> {
@@ -1416,48 +1421,67 @@ export async function syncTeachersWithBackend(): Promise<TeacherRecord[]> {
 
 export async function saveStudent(studentData: Partial<StudentRecord> & { name: string }): Promise<StudentRecord> {
   const assignedGrade = studentData.grade || 'SS1';
-  const autoCode = studentData.code || studentData.admissionNo || (studentData as any).student_id || generateAdmissionNumber(assignedGrade, studentData.stream);
-  const autoEmail = studentData.email || formatStudentEmail(studentData.name);
 
+  // Find existing student by ID, email, code, admissionNo, or studentId
   const existingIdx = _students.findIndex(s => 
     (studentData.id && s.id === studentData.id) || 
-    (studentData.email && s.email.toLowerCase() === studentData.email.toLowerCase()) || 
-    (autoCode && (s.code === autoCode || s.admissionNo === autoCode))
+    (studentData.email && s.email && s.email.toLowerCase() === studentData.email.toLowerCase()) || 
+    (studentData.code && (s.code === studentData.code || s.admissionNo === studentData.code || s.studentId === studentData.code)) ||
+    (studentData.admissionNo && (s.admissionNo === studentData.admissionNo || s.code === studentData.admissionNo || s.studentId === studentData.admissionNo)) ||
+    ((studentData as any).studentId && (s.studentId === (studentData as any).studentId || s.code === (studentData as any).studentId || s.admissionNo === (studentData as any).studentId)) ||
+    ((studentData as any).student_id && (s.code === (studentData as any).student_id || s.admissionNo === (studentData as any).student_id || s.studentId === (studentData as any).student_id))
   );
+
+  const existingStudent = existingIdx >= 0 ? _students[existingIdx] : null;
+
+  // Preserve existing student ID if present; only generate for brand new student if not supplied
+  const autoCode = 
+    studentData.code || 
+    studentData.admissionNo || 
+    (studentData as any).studentId || 
+    (studentData as any).student_id || 
+    (studentData as any).admission_number ||
+    existingStudent?.code || 
+    existingStudent?.admissionNo || 
+    existingStudent?.studentId || 
+    generateAdmissionNumber(assignedGrade, studentData.stream);
+
+  const autoEmail = studentData.email || existingStudent?.email || formatStudentEmail(studentData.name);
 
   const sNames = (studentData.name || '').trim().split(' ');
   const firstName = sNames[0] || studentData.name;
   const lastName = sNames.slice(1).join(' ') || 'Student';
 
   const newStudent: StudentRecord = {
-    id: studentData.id || (existingIdx >= 0 ? _students[existingIdx].id : Date.now()),
+    id: studentData.id || existingStudent?.id || Date.now(),
     code: autoCode,
     admissionNo: autoCode,
+    studentId: autoCode,
     name: studentData.name.trim(),
     email: autoEmail,
-    password: studentData.password || autoCode,
-    gender: studentData.gender || (existingIdx >= 0 ? _students[existingIdx].gender : 'Male'),
-    maritalStatus: studentData.maritalStatus || 'Single',
-    dob: studentData.dob || (existingIdx >= 0 ? _students[existingIdx].dob : '2012-05-14'),
-    phone: studentData.phone || (existingIdx >= 0 ? _students[existingIdx].phone : 'Not Available'),
-    country: studentData.country || 'Nigeria',
-    stateOfOrigin: studentData.stateOfOrigin || (existingIdx >= 0 ? _students[existingIdx].stateOfOrigin : 'Bayelsa'),
-    lga: studentData.lga || (existingIdx >= 0 ? _students[existingIdx].lga : 'Yenagoa'),
-    address: studentData.address || (existingIdx >= 0 ? _students[existingIdx].address : 'Yenagoa, Bayelsa State'),
+    password: studentData.password || existingStudent?.password || autoCode,
+    gender: studentData.gender || existingStudent?.gender || 'Male',
+    maritalStatus: studentData.maritalStatus || existingStudent?.maritalStatus || 'Single',
+    dob: studentData.dob || existingStudent?.dob || '2012-05-14',
+    phone: studentData.phone !== undefined ? studentData.phone : (existingStudent?.phone || ''),
+    country: studentData.country || existingStudent?.country || 'Nigeria',
+    stateOfOrigin: studentData.stateOfOrigin || existingStudent?.stateOfOrigin || 'Bayelsa',
+    lga: studentData.lga || existingStudent?.lga || 'Yenagoa',
+    address: studentData.address !== undefined ? studentData.address : (existingStudent?.address || ''),
     grade: assignedGrade,
-    stream: studentData.stream || (assignedGrade.startsWith('SS') ? 'Science' : 'General'),
-    programme: studentData.programme || (assignedGrade.startsWith('SS') ? 'Senior Secondary Certificate (SSCE)' : 'Montessori Primary Education'),
-    parentName: studentData.parentName || (existingIdx >= 0 ? _students[existingIdx].parentName : 'Parent / Guardian'),
-    parentPhone: studentData.parentPhone || (existingIdx >= 0 ? _students[existingIdx].parentPhone : ''),
-    status: studentData.status || 'ACTIVE',
-    studyMode: studentData.studyMode || 'Full Time',
-    attendance: studentData.attendance || '100%',
+    stream: studentData.stream || existingStudent?.stream || (assignedGrade.startsWith('SS') ? 'Science' : 'General'),
+    programme: studentData.programme || existingStudent?.programme || (assignedGrade.startsWith('SS') ? 'Senior Secondary Certificate (SSCE)' : 'Montessori Primary Education'),
+    parentName: studentData.parentName !== undefined ? studentData.parentName : ((studentData as any).parent_name !== undefined ? (studentData as any).parent_name : (existingStudent?.parentName || '')),
+    parentPhone: studentData.parentPhone !== undefined ? studentData.parentPhone : ((studentData as any).parent_phone !== undefined ? (studentData as any).parent_phone : ((studentData as any).emergency_contact || existingStudent?.parentPhone || '')),
+    status: studentData.status || existingStudent?.status || 'ACTIVE',
+    studyMode: studentData.studyMode || existingStudent?.studyMode || 'Full Time',
+    attendance: studentData.attendance || existingStudent?.attendance || '100%',
     atRisk: studentData.atRisk || false,
-    profileImage: studentData.profileImage || (existingIdx >= 0 ? _students[existingIdx].profileImage : ''),
-    house: studentData.house || (existingIdx >= 0 ? _students[existingIdx].house : ''),
+    profileImage: studentData.profileImage !== undefined ? studentData.profileImage : (existingStudent?.profileImage || ''),
+    house: studentData.house || existingStudent?.house || '',
   };
 
-  unmarkDeletedAccount([newStudent.id, newStudent.code, newStudent.admissionNo, newStudent.email, newStudent.name]);
+  unmarkDeletedAccount([newStudent.id, newStudent.code, newStudent.admissionNo, newStudent.studentId, newStudent.email, newStudent.name]);
 
   // Construct full live Django REST payload
   const sPayload = {
@@ -1479,7 +1503,9 @@ export async function saveStudent(studentData: Partial<StudentRecord> & { name: 
     state_of_origin: newStudent.stateOfOrigin,
     lga: newStudent.lga,
     parent_name: newStudent.parentName,
+    parentName: newStudent.parentName,
     parent_phone: newStudent.parentPhone,
+    parentPhone: newStudent.parentPhone,
     emergency_contact: newStudent.parentPhone || newStudent.phone,
     programme: newStudent.programme,
     study_mode: newStudent.studyMode,
@@ -1508,7 +1534,11 @@ export async function saveStudent(studentData: Partial<StudentRecord> & { name: 
   }
 
   // Update in-memory live store
-  const targetIdx = _students.findIndex(s => s.id === newStudent.id || (newStudent.email && s.email.toLowerCase() === newStudent.email.toLowerCase()) || (newStudent.code && s.code === newStudent.code));
+  const targetIdx = _students.findIndex(s => 
+    s.id === newStudent.id || 
+    (newStudent.email && s.email.toLowerCase() === newStudent.email.toLowerCase()) || 
+    (newStudent.code && s.code === newStudent.code)
+  );
   if (targetIdx >= 0) {
     _students[targetIdx] = newStudent;
   } else {
@@ -1672,28 +1702,47 @@ export async function saveCBTExam(examData: Partial<CBTExam> & { title: string; 
   };
 
   try {
-    const res = await authClient.post('/assessments/cbt-exams/', {
-      title: newExam.title,
-      description: newExam.description,
-      instructions: newExam.instructions,
-      course_name: newExam.course_name,
-      course_code: newExam.course_code,
-      class_name: newExam.class,
-      stream: newExam.stream,
-      teacher_name: newExam.teacher_name,
-      assessment_type: newExam.assessment_type,
-      term: newExam.term,
-      duration_minutes: newExam.duration_minutes,
-      questions_per_page: newExam.questions_per_page,
-      status: newExam.status,
-      questions: newExam.questions
-    });
-    if (res?.data?.id) {
-      newExam.id = res.data.id;
+    if (examData.id) {
+      await authClient.patch(`/assessments/cbt-exams/${examData.id}/`, {
+        title: newExam.title,
+        description: newExam.description,
+        instructions: newExam.instructions,
+        course_name: newExam.course_name,
+        course_code: newExam.course_code,
+        class_name: newExam.class,
+        stream: newExam.stream,
+        teacher_name: newExam.teacher_name,
+        assessment_type: newExam.assessment_type,
+        term: newExam.term,
+        duration_minutes: newExam.duration_minutes,
+        questions_per_page: newExam.questions_per_page,
+        status: newExam.status,
+        questions: newExam.questions
+      });
+    } else {
+      const res = await authClient.post('/assessments/cbt-exams/', {
+        title: newExam.title,
+        description: newExam.description,
+        instructions: newExam.instructions,
+        course_name: newExam.course_name,
+        course_code: newExam.course_code,
+        class_name: newExam.class,
+        stream: newExam.stream,
+        teacher_name: newExam.teacher_name,
+        assessment_type: newExam.assessment_type,
+        term: newExam.term,
+        duration_minutes: newExam.duration_minutes,
+        questions_per_page: newExam.questions_per_page,
+        status: newExam.status,
+        questions: newExam.questions
+      });
+      if (res?.data?.id) {
+        newExam.id = res.data.id;
+      }
     }
   } catch (err) {}
 
-  const existingIdx = _exams.findIndex(e => e.id === newExam.id);
+  const existingIdx = _exams.findIndex(e => Number(e.id) === Number(newExam.id) || e.id === newExam.id);
   if (existingIdx >= 0) {
     _exams[existingIdx] = newExam;
   } else {
@@ -2229,21 +2278,22 @@ export function markAllStudentsAttendance(
 export function isStudentMarkedPresent(examId: number, studentIdentifier: string): boolean {
   _examAttendance = loadSavedAttendance();
   const list = safeGetProp(_examAttendance, examId);
+  // If no restricted attendance session exists for this exam, student is allowed
   if (!list || list.length === 0) {
-    const seeded = getExamAttendance(examId);
-    const lower = studentIdentifier.trim().toLowerCase();
-    const found = seeded.find(r => r.studentId.toLowerCase() === lower || r.studentName.toLowerCase() === lower || lower.includes('emeka') || lower === 'student');
-    return found ? found.markedPresent : false;
+    return true;
   }
 
-  const lower = studentIdentifier.trim().toLowerCase();
+  const lower = (studentIdentifier || '').trim().toLowerCase();
+  if (!lower) return true;
+
   const record = list.find(
-    r => r.studentId.toLowerCase() === lower ||
-         r.studentName.toLowerCase() === lower ||
-         (lower.includes('emeka') && r.studentName.toLowerCase().includes('emeka')) ||
-         (lower === 'student' && r.studentName.toLowerCase().includes('emeka'))
+    r => (r.studentId && r.studentId.toLowerCase() === lower) ||
+         (r.studentName && r.studentName.toLowerCase() === lower) ||
+         (r.studentId && lower.includes(r.studentId.toLowerCase())) ||
+         (r.studentName && lower.includes(r.studentName.toLowerCase()))
   );
-  return record ? record.markedPresent : false;
+  // If explicitly found in attendance list, check marked status; if not explicitly marked absent, allow taking the exam
+  return record ? record.markedPresent !== false : true;
 }
 
 // ── Event subscription ────────────────────────────────────────────────────────

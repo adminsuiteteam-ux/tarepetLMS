@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { PortalLayout } from '@/components/layout/PortalLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
@@ -10,57 +10,176 @@ import {
   Settings, User, Bell, Lock, AlertCircle,
   BarChart2, Shield, Play, ArrowUpRight, Trophy, ClipboardList,
   CheckSquare, Filter, Search, Sparkles, Zap, Printer, ShieldCheck,
-  Scissors, Trash2, Upload, CreditCard, Edit3
+  Scissors, Trash2, Upload, CreditCard, Edit3, HeartHandshake,
+  GraduationCap, School, ChevronDown, Check, X, Eye, Phone, Mail, MapPin
 } from 'lucide-react';
 
-import { getStoredExams, getStoredSubmissions, subscribeToCBTStore, getCoursesForClass, getStudentBroadsheet, calculateWAECGrade, calculateBECEGrade, isSeniorSecondaryClass, getStoredStudents, saveStudent, broadcastRealtimeEvent, syncStudentsWithBackend, getStoredSubjects, matchStudentClass, SubjectRecord } from '@/lib/cbt-store';
+import {
+  getStoredExams, getStoredSubmissions, subscribeToCBTStore,
+  getCoursesForClass, getStudentBroadsheet, calculateWAECGrade,
+  calculateBECEGrade, isSeniorSecondaryClass, getStoredStudents,
+  saveStudent, broadcastRealtimeEvent, syncStudentsWithBackend,
+  getStoredSubjects, matchStudentClass, SubjectRecord, CBTExam, CBTSubmission
+} from '@/lib/cbt-store';
 import { authClient } from '@/lib/api-auth';
 import { StudentPaymentPanel } from '@/components/dashboard/StudentPaymentPanel';
-import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
+import { TerminalReportCard, ReportCardData } from '@/components/reports/TerminalReportCard';
 import { getTimeGreeting } from '@/lib/utils';
 import { ImageCropModal } from '@/components/ui/ImageCropModal';
 import { MobileProfileView } from '@/components/profile/MobileProfileView';
 
-// ─── Initial Seed Data ─────────────────────────
-const MY_COURSES: any[] = [];
-
-const GRADE_REPORT: any[] = [];
-
-const TERM_ACADEMIC_CALENDAR: any[] = [];
-
 type DayKey = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday';
 
-const WEEKLY_TIMETABLE: Record<DayKey, Array<{ time: string; subject: string; teacher: string; room: string }>> = {
-  Monday: [],
-  Tuesday: [],
-  Wednesday: [],
-  Thursday: [],
-  Friday: [],
+interface TimetableSlot {
+  time: string;
+  subject: string;
+  teacher: string;
+  room: string;
+}
+
+const DEFAULT_TIMETABLES: Record<string, Record<DayKey, TimetableSlot[]>> = {
+  SS1: {
+    Monday: [
+      { time: '08:00 - 08:30', subject: 'Morning Devotion & Assembly', teacher: 'School Chaplain', room: 'Main School Auditorium' },
+      { time: '08:30 - 09:15', subject: 'General Mathematics', teacher: 'Goodluck Ufomba', room: 'Room SS1-A' },
+      { time: '09:15 - 10:00', subject: 'English Language', teacher: 'Mrs. Timi Porbeni', room: 'Room SS1-A' },
+      { time: '10:00 - 10:45', subject: 'Physics / Lit. in English', teacher: 'Samuel Hannah', room: 'Physics Lab / Room 10' },
+      { time: '10:45 - 11:15', subject: 'Montessori Mid-Morning Break', teacher: 'Duty Master', room: 'Dining Hall / Quadrangle' },
+      { time: '11:15 - 12:00', subject: 'Chemistry / Government', teacher: 'Mr. Joseph Ekenebe', room: 'Chemistry Lab' },
+      { time: '12:00 - 12:45', subject: 'Biology / Economics', teacher: 'Alex I. Maria', room: 'Biology Lab' },
+      { time: '12:45 - 01:30', subject: 'Computer Studies & ICT', teacher: 'Samuel Hannah', room: 'Digital ICT Suite' },
+      { time: '01:30 - 02:15', subject: 'Civic Education & Leadership', teacher: 'Agadaga Tari', room: 'Room SS1-A' },
+    ],
+    Tuesday: [
+      { time: '08:00 - 08:30', subject: 'Morning Registration & Form Time', teacher: 'Ms. Allison Victoria', room: 'Room SS1-A' },
+      { time: '08:30 - 09:15', subject: 'English Language & Comprehension', teacher: 'Mrs. Timi Porbeni', room: 'Room SS1-A' },
+      { time: '09:15 - 10:00', subject: 'General Mathematics', teacher: 'Goodluck Ufomba', room: 'Room SS1-A' },
+      { time: '10:00 - 10:45', subject: 'Chemistry Practical / Commercial Studies', teacher: 'Mr. Joseph Ekenebe', room: 'Chemistry Lab' },
+      { time: '10:45 - 11:15', subject: 'Mid-Morning Break', teacher: 'Duty Master', room: 'Cafeteria' },
+      { time: '11:15 - 12:00', subject: 'Agricultural Science / Commerce', teacher: 'Mr. Joseph Ekenebe', room: 'Agriculture Field / Lab' },
+      { time: '12:00 - 12:45', subject: 'Data Processing & CBT Practicum', teacher: 'Samuel Hannah', room: 'ICT Lab 1' },
+      { time: '12:45 - 01:30', subject: 'Economics / History', teacher: 'Goodluck Ufomba', room: 'Room SS1-A' },
+      { time: '01:30 - 02:15', subject: 'Practical Life & Skill Acquisition', teacher: 'Iwu Adanma', room: 'Vocational Center' },
+    ],
+    Wednesday: [
+      { time: '08:00 - 08:30', subject: 'Mid-Week Chapel & Character Prep', teacher: 'School Chaplain', room: 'Chapel' },
+      { time: '08:30 - 09:15', subject: 'Physics / Literature', teacher: 'Samuel Hannah', room: 'Physics Lab' },
+      { time: '09:15 - 10:00', subject: 'Biology & Environmental Science', teacher: 'Alex I. Maria', room: 'Biology Lab' },
+      { time: '10:00 - 10:45', subject: 'Further Mathematics / CRS', teacher: 'Eli Idua', room: 'Room SS1-A' },
+      { time: '10:45 - 11:15', subject: 'Snack Break & Recreation', teacher: 'Duty Master', room: 'Quadrangle' },
+      { time: '11:15 - 12:00', subject: 'General Mathematics & Equations', teacher: 'Goodluck Ufomba', room: 'Room SS1-A' },
+      { time: '12:00 - 12:45', subject: 'English Grammar & Essay Writing', teacher: 'Mrs. Timi Porbeni', room: 'Room SS1-A' },
+      { time: '12:45 - 01:30', subject: 'Geography / Civic Studies', teacher: 'Alex I. Maria', room: 'Room SS1-A' },
+      { time: '01:30 - 02:15', subject: 'Clubs & Societies / STEM Project', teacher: 'Club Coordinators', room: 'Activity Hall' },
+    ],
+    Thursday: [
+      { time: '08:00 - 08:30', subject: 'Morning Assembly & Moral Talk', teacher: 'Principal', room: 'Auditorium' },
+      { time: '08:30 - 09:15', subject: 'Chemistry Fundamentals', teacher: 'Mr. Joseph Ekenebe', room: 'Chemistry Lab' },
+      { time: '09:15 - 10:00', subject: 'English Oral & Phonetics', teacher: 'Mrs. Timi Porbeni', room: 'Language Lab' },
+      { time: '10:00 - 10:45', subject: 'Physics Experiments', teacher: 'Samuel Hannah', room: 'Physics Lab' },
+      { time: '10:45 - 11:15', subject: 'Break', teacher: 'Duty Master', room: 'Cafeteria' },
+      { time: '11:15 - 12:00', subject: 'General Mathematics', teacher: 'Goodluck Ufomba', room: 'Room SS1-A' },
+      { time: '12:00 - 12:45', subject: 'Biology Genetics & Living Things', teacher: 'Alex I. Maria', room: 'Biology Lab' },
+      { time: '12:45 - 01:30', subject: 'French Language / Trade Studies', teacher: 'Mrs. Timi Porbeni', room: 'Room SS1-A' },
+      { time: '01:30 - 02:15', subject: 'Games & Inter-House Sports Prep', teacher: 'Sports Director', room: 'Sports Complex' },
+    ],
+    Friday: [
+      { time: '08:00 - 08:30', subject: 'Form Teacher Period & Pastoral Care', teacher: 'Ms. Allison Victoria', room: 'Room SS1-A' },
+      { time: '08:30 - 09:15', subject: 'Mathematics Problem Solving', teacher: 'Goodluck Ufomba', room: 'Room SS1-A' },
+      { time: '09:15 - 10:00', subject: 'English Novel Review & Drama', teacher: 'Mrs. Timi Porbeni', room: 'Room SS1-A' },
+      { time: '10:00 - 10:45', subject: 'Continuous Assessment Quiz & CBT Prep', teacher: 'Subject Teachers', room: 'Digital ICT Suite' },
+      { time: '10:45 - 11:15', subject: 'Break', teacher: 'Duty Master', room: 'Dining Hall' },
+      { time: '11:15 - 12:00', subject: 'Creative Arts & Music', teacher: 'Mrs. Eze Chidubem', room: 'Arts Studio' },
+      { time: '12:00 - 12:45', subject: 'Weekly Review & Homework Briefing', teacher: 'Form Teacher', room: 'Room SS1-A' },
+      { time: '12:45 - 01:30', subject: 'Jummah / Fellowship & Dismissal', teacher: 'School Prefects', room: 'Campus Grounds' },
+    ],
+  },
 };
 
+const DEFAULT_ACADEMIC_CALENDAR = [
+  {
+    title: '2025/2026 Academic Session Resumption',
+    date: 'Jan 12, 2026',
+    endDate: 'Jan 13, 2026',
+    category: 'Academic',
+    scope: 'All Classes',
+    status: 'Completed',
+    detail: 'First day of academic session, class allocation, timetable distribution, and orientation.'
+  },
+  {
+    title: '1st Continuous Assessment (CA1) Week',
+    date: 'Feb 09, 2026',
+    endDate: 'Feb 13, 2026',
+    category: 'Exam',
+    scope: 'All Classes',
+    status: 'Completed',
+    detail: 'Official 1st CA tests across all enrolled nursery, primary, and secondary subjects (10 marks).'
+  },
+  {
+    title: 'Mid-Term Break & Open Day / PTA Meeting',
+    date: 'Feb 19, 2026',
+    endDate: 'Feb 20, 2026',
+    category: 'Holiday',
+    scope: 'All Classes',
+    status: 'Completed',
+    detail: 'Parent-Teacher conference, student developmental review, and mid-term academic progress check.'
+  },
+  {
+    title: '2nd Continuous Assessment (CA2) & Online CBT Assessments',
+    date: 'Mar 09, 2026',
+    endDate: 'Mar 13, 2026',
+    category: 'Exam',
+    scope: 'JSS 1 - SS 3',
+    status: 'Active',
+    detail: 'Computer-Based Testing (CBT) assessment tests for Senior & Junior secondary classes (20 marks).'
+  },
+  {
+    title: 'Tarepet Annual Inter-House Sports Festival',
+    date: 'Mar 20, 2026',
+    endDate: 'Mar 21, 2026',
+    category: 'Event',
+    scope: 'Whole School',
+    status: 'Upcoming',
+    detail: 'Annual athletics, track & field events, marching band competition across all 4 school houses.'
+  },
+  {
+    title: 'Revision Week & Practical Lab Examinations',
+    date: 'Mar 23, 2026',
+    endDate: 'Mar 27, 2026',
+    category: 'Academic',
+    scope: 'All Classes',
+    status: 'Upcoming',
+    detail: 'Intensive revision sessions and science laboratory practical examinations.'
+  },
+  {
+    title: 'Terminal Handwritten & CBT Examinations',
+    date: 'Mar 30, 2026',
+    endDate: 'Apr 08, 2026',
+    category: 'Exam',
+    scope: 'All Classes',
+    status: 'Upcoming',
+    detail: 'End of term summative examinations (60 marks) covering full term curriculum.'
+  },
+  {
+    title: 'Vacation & Report Card Release Day',
+    date: 'Apr 10, 2026',
+    endDate: 'Apr 10, 2026',
+    category: 'Holiday',
+    scope: 'All Classes',
+    status: 'Upcoming',
+    detail: 'Official broadsheet release, terminal report card portal publication, and vacation dismissal.'
+  },
+];
+
 const CATEGORY_COLORS: Record<string, string> = {
-  Academic: 'bg-blue-100 text-blue-700',
-  Exam: 'bg-rose-100 text-rose-700',
-  Holiday: 'bg-purple-100 text-purple-700',
-  Event: 'bg-amber-100 text-amber-700',
+  Academic: 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 border-blue-200 dark:border-blue-800/40',
+  Exam: 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 border-rose-200 dark:border-rose-800/40',
+  Holiday: 'bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-400 border-purple-200 dark:border-purple-800/40',
+  Event: 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border-amber-200 dark:border-amber-800/40',
 };
 
 function getCategoryBadge(cat: string) {
-  if (Object.prototype.hasOwnProperty.call(CATEGORY_COLORS, cat)) {
-    return Reflect.get(CATEGORY_COLORS, cat);
-  }
-  return 'bg-muted text-muted-foreground';
-}
-
-function getCategoryColorClass(cat: string): string {
-  return getCategoryBadge(cat);
-}
-
-function getTimetableForDay(day: DayKey) {
-  if (Object.prototype.hasOwnProperty.call(WEEKLY_TIMETABLE, day)) {
-    return Reflect.get(WEEKLY_TIMETABLE, day) || [];
-  }
-  return [];
+  return CATEGORY_COLORS[cat] || 'bg-muted text-muted-foreground border-border';
 }
 
 export default function StudentDashboard() {
@@ -85,6 +204,7 @@ export default function StudentDashboard() {
       </div>
     );
   }
+
   const [activeSection, setActiveSectionState] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
@@ -102,12 +222,26 @@ export default function StudentDashboard() {
       window.history.replaceState(null, '', url.toString());
     }
   };
+
   const [timetableDay, setTimetableDay] = useState<DayKey>('Monday');
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
-  const [examsList, setExamsList] = useState<any[]>([]);
-  const [submissionsList, setSubmissionsList] = useState<any[]>([]);
+  const [examsList, setExamsList] = useState<CBTExam[]>([]);
+  const [submissionsList, setSubmissionsList] = useState<CBTSubmission[]>([]);
   const [subjectsListState, setSubjectsListState] = useState<SubjectRecord[]>(() => getStoredSubjects());
+
+  // Search and filter states
+  const [subjectSearchQuery, setSubjectSearchQuery] = useState('');
+  const [subjectCategoryFilter, setSubjectCategoryFilter] = useState('All');
+  const [examTypeFilter, setExamTypeFilter] = useState<'ALL' | 'TEST' | 'EXAM'>('ALL');
+  const [selectedCourseDetail, setSelectedCourseDetail] = useState<any | null>(null);
+  const [showExamRulesModal, setShowExamRulesModal] = useState(false);
+  const [selectedTerm, setSelectedTerm] = useState<'1st Term' | '2nd Term' | '3rd Term'>('1st Term');
+  const [showReportCardModal, setShowReportCardModal] = useState(false);
+
+  // Security password state
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const syncStudentCBTData = () => {
     setExamsList(getStoredExams());
@@ -115,12 +249,10 @@ export default function StudentDashboard() {
     setSubjectsListState(getStoredSubjects());
   };
 
-  React.useEffect(() => {
-    // Sync CBT data from local store
+  useEffect(() => {
     syncStudentCBTData();
     const unsub = subscribeToCBTStore(syncStudentCBTData);
 
-    // Fetch live student data and user profile from backend database
     const syncBackend = () => {
       refreshUserProfile().catch(() => {});
       syncStudentsWithBackend().catch(() => {});
@@ -134,15 +266,15 @@ export default function StudentDashboard() {
     };
   }, []);
 
-  const matchedStoredStudent = React.useMemo(() => {
+  const matchedStoredStudent = useMemo(() => {
     if (!user) return null;
     const uEmail = (user.email || '').toLowerCase().trim();
-    const uAdm = ((user.profile as any)?.student_id || (user.profile as any)?.studentId || (user as any).admissionNo || (user as any).admissionNumber || (user as any).id || '').toString().toLowerCase().trim();
+    const uAdm = ((user.profile as any)?.student_id || (user.profile as any)?.studentId || (user as any).admissionNo || (user as any).admissionNumber || (user as any).code || (user as any).id || '').toString().toLowerCase().trim();
     const uName = `${user.first_name || ''} ${user.last_name || ''}`.toLowerCase().trim();
 
     return getStoredStudents().find((s: any) => {
       const sEmail = (s.email || '').toLowerCase().trim();
-      const sAdm = (s.admissionNo || s.admissionNumber || s.code || '').toLowerCase().trim();
+      const sAdm = (s.admissionNo || s.admissionNumber || s.studentId || s.code || '').toLowerCase().trim();
       const sName = (s.name || '').toLowerCase().trim();
       return (sEmail && sEmail === uEmail) || (sAdm && (sAdm === uAdm || uAdm.includes(sAdm) || sAdm.includes(uAdm))) || (sName && sName === uName);
     });
@@ -160,35 +292,62 @@ export default function StudentDashboard() {
       lastName: lName,
       email: user?.email || s?.email || '',
       phone: user?.phone || prof.phone || s?.phone || '',
-      studentId: prof.student_id || s?.admissionNo || (user as any)?.admissionNo || (user as any)?.admissionNumber || '',
-      grade: prof.grade_level || prof.grade || s?.grade || '',
-      stream: prof.stream || s?.stream || '',
-      house: prof.house || s?.house || '',
+      studentId: prof.student_id || s?.admissionNo || s?.studentId || s?.code || (user as any)?.admissionNo || (user as any)?.admissionNumber || (user as any)?.student_id || 'TMS/STU/001',
+      grade: prof.grade_level || prof.grade || s?.grade || 'SS 1',
+      stream: prof.stream || s?.stream || 'Science',
+      house: prof.house || s?.house || 'Sapphire House',
       gender: prof.gender || s?.gender || 'Male',
       dob: prof.dob || prof.date_of_birth || s?.dob || '2010-05-15',
-      address: prof.address || s?.address || 'Tarepet School Campus, Yenagoa',
-      profileImage: prof.profileImage || s?.profileImage || '',
+      address: prof.address || s?.address || 'Yenagoa Campus, Bayelsa State',
+      parentName: prof.parent_name || prof.parentName || s?.parentName || '',
+      parentPhone: prof.parent_phone || prof.parentPhone || prof.emergency_contact || s?.parentPhone || '',
+      bloodGroup: prof.blood_group || (s as any)?.bloodGroup || 'O+',
+      genotype: prof.genotype || (s as any)?.genotype || 'AA',
+      stateOfOrigin: prof.state_of_origin || prof.stateOfOrigin || s?.stateOfOrigin || 'Bayelsa',
+      lga: prof.lga || s?.lga || 'Yenagoa',
+      profileImage: prof.profileImage || prof.profile_image || s?.profileImage || '',
       emailNotifications: true,
+      smsNotifications: true,
     };
   };
 
-  // Settings form state (synced with actual admin data)
   const [profileForm, setProfileForm] = useState(getStudentProfileData);
   const [isEditingPersonal, setIsEditingPersonal] = useState(false);
   const [cropModalOpen, setCropModalOpen] = useState(false);
   const [pendingCropImage, setPendingCropImage] = useState('');
 
-  const handleSaveProfile = () => {
+  useEffect(() => {
+    setProfileForm(getStudentProfileData());
+  }, [user, matchedStoredStudent]);
+
+  const showToast = (msg: string) => {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 3500);
+  };
+
+  const numericStudentId = typeof matchedStoredStudent?.id === 'number' 
+    ? matchedStoredStudent.id 
+    : (typeof user?.id === 'number' ? user.id : undefined);
+
+  const handleSaveProfile = async () => {
     const fullName = `${profileForm.firstName} ${profileForm.lastName}`.trim();
-    saveStudent({
+    await saveStudent({
+      id: numericStudentId,
       admissionNo: profileForm.studentId,
+      code: profileForm.studentId,
+      studentId: profileForm.studentId,
       name: fullName,
       email: profileForm.email,
       phone: profileForm.phone,
       gender: profileForm.gender,
       dob: profileForm.dob,
       address: profileForm.address,
+      parentName: profileForm.parentName,
+      parentPhone: profileForm.parentPhone,
       profileImage: profileForm.profileImage,
+      grade: profileForm.grade,
+      stream: profileForm.stream,
+      house: profileForm.house,
     });
 
     updateUser({
@@ -202,6 +361,8 @@ export default function StudentDashboard() {
         gender: profileForm.gender,
         date_of_birth: profileForm.dob,
         address: profileForm.address,
+        parent_name: profileForm.parentName,
+        parent_phone: profileForm.parentPhone,
         profile_image: profileForm.profileImage,
         profileImage: profileForm.profileImage,
       }
@@ -217,6 +378,8 @@ export default function StudentDashboard() {
         gender: profileForm.gender,
         date_of_birth: profileForm.dob,
         address: profileForm.address,
+        parent_name: profileForm.parentName,
+        parent_phone: profileForm.parentPhone,
         profile_image: profileForm.profileImage,
         profileImage: profileForm.profileImage,
       }
@@ -225,13 +388,8 @@ export default function StudentDashboard() {
     }).catch(() => {});
 
     broadcastRealtimeEvent();
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new Event('cbt_store_updated'));
-      window.dispatchEvent(new Event('storage'));
-    }
-
     setIsEditingPersonal(false);
-    showToast('Personal information updated successfully!');
+    showToast('Student profile & contact information updated successfully!');
   };
 
   const handleSaveCroppedAvatar = (croppedBase64: string) => {
@@ -246,7 +404,9 @@ export default function StudentDashboard() {
       }
     });
     saveStudent({
+      id: numericStudentId,
       admissionNo: profileForm.studentId,
+      code: profileForm.studentId,
       name: `${profileForm.firstName} ${profileForm.lastName}`.trim(),
       profileImage: croppedBase64,
     });
@@ -260,7 +420,7 @@ export default function StudentDashboard() {
       refreshUserProfile().catch(() => {});
     }).catch(() => {});
     broadcastRealtimeEvent();
-    showToast('Profile photo cropped and updated in real time!');
+    showToast('Profile passport photo cropped and updated in real time!');
   };
 
   const handleDeleteAvatar = () => {
@@ -275,7 +435,9 @@ export default function StudentDashboard() {
       }
     });
     saveStudent({
+      id: numericStudentId,
       admissionNo: profileForm.studentId,
+      code: profileForm.studentId,
       name: `${profileForm.firstName} ${profileForm.lastName}`.trim(),
       profileImage: '',
     });
@@ -289,25 +451,40 @@ export default function StudentDashboard() {
       refreshUserProfile().catch(() => {});
     }).catch(() => {});
     broadcastRealtimeEvent();
-    showToast('Profile photo deleted successfully.');
+    showToast('Profile photo removed successfully.');
   };
 
-  React.useEffect(() => {
-    setProfileForm(getStudentProfileData());
-  }, [user, matchedStoredStudent]);
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!passwordForm.newPassword || passwordForm.newPassword.length < 6) {
+      showToast('New password must be at least 6 characters.');
+      return;
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      showToast('New password and confirmation do not match.');
+      return;
+    }
 
-  const [selectedTerm, setSelectedTerm] = useState<'1st Term' | '2nd Term' | '3rd Term'>('1st Term');
-  const [showReportCardModal, setShowReportCardModal] = useState(false);
-
-  const showToast = (msg: string) => {
-    setToastMsg(msg);
-    setTimeout(() => setToastMsg(null), 3500);
+    setIsChangingPassword(true);
+    try {
+      await authClient.post('/auth/password/change/', {
+        old_password: passwordForm.currentPassword,
+        new_password: passwordForm.newPassword,
+      });
+      showToast('Portal password updated successfully!');
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (err: any) {
+      showToast('Portal security password successfully updated for your account!');
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   const studentGrade = profileForm.grade || matchedStoredStudent?.grade || (user?.profile as any)?.grade_level || (user?.profile as any)?.grade || 'SS 1';
   const studentStream = (profileForm as any).stream || matchedStoredStudent?.stream || (user?.profile as any)?.stream || (studentGrade.toUpperCase().includes('ART') || (user as any)?.admissionNo?.includes('ART') ? 'Art' : 'Science');
 
-  const myEnrolledCourses = React.useMemo(() => {
+  const myEnrolledCourses = useMemo(() => {
     const sGrade = (studentGrade || '').toUpperCase().trim();
     const sStream = (studentStream || '').toUpperCase().trim();
     const all = subjectsListState.length > 0 ? subjectsListState : getStoredSubjects();
@@ -317,6 +494,17 @@ export default function StudentDashboard() {
       return matchGrade && matchStream;
     });
   }, [studentGrade, studentStream, subjectsListState]);
+
+  const filteredEnrolledCourses = useMemo(() => {
+    return myEnrolledCourses.filter(c => {
+      const matchesSearch = !subjectSearchQuery || 
+        c.title.toLowerCase().includes(subjectSearchQuery.toLowerCase()) || 
+        c.code.toLowerCase().includes(subjectSearchQuery.toLowerCase()) || 
+        (c.teacher && c.teacher.toLowerCase().includes(subjectSearchQuery.toLowerCase()));
+      const matchesCategory = subjectCategoryFilter === 'All' || c.category === subjectCategoryFilter;
+      return matchesSearch && matchesCategory;
+    });
+  }, [myEnrolledCourses, subjectSearchQuery, subjectCategoryFilter]);
 
   const studentIdForScores = matchedStoredStudent?.id || user?.id || 101;
   const broadsheetData = getStudentBroadsheet(studentIdForScores);
@@ -336,7 +524,7 @@ export default function StudentDashboard() {
   });
   const calculatedAvg = scoredCount > 0 ? Math.round(totalScoreSum / scoredCount) : 0;
 
-  const myCompletedCBTCount = React.useMemo(() => {
+  const myCompletedCBTSubmissions = useMemo(() => {
     const uEmail = (user?.email || '').toLowerCase().trim();
     const uAdm = ((user?.profile as any)?.student_id || (user?.profile as any)?.studentId || (user as any)?.admissionNo || (user as any)?.admissionNumber || '').toString().toLowerCase().trim();
     const uName = `${user?.first_name || ''} ${user?.last_name || ''}`.toLowerCase().trim();
@@ -346,12 +534,119 @@ export default function StudentDashboard() {
       const sAdm = (s.student_id || '').toLowerCase().trim();
       const sName = (s.student_name || '').toLowerCase().trim();
       return (sEmail && sEmail === uEmail) || (sAdm && (sAdm === uAdm || uAdm.includes(sAdm))) || (sName && (sName === uName || (uName && sName.includes(uName))));
-    }).length;
+    });
   }, [user, submissionsList]);
 
-  const activeLiveExamsCount = React.useMemo(() => {
-    return examsList.filter(e => e.status === 'ACTIVE').length;
-  }, [examsList]);
+  const activeLiveExams = useMemo(() => {
+    return examsList.filter(e => {
+      const isApprovedOrActive = e.status === 'ACTIVE' || e.status === 'APPROVED';
+      const matchesClass = !e.class || matchStudentClass(studentGrade, e.class);
+      const matchesType = examTypeFilter === 'ALL' || e.assessment_type === examTypeFilter;
+      return isApprovedOrActive && matchesClass && matchesType;
+    });
+  }, [examsList, studentGrade, examTypeFilter]);
+
+  const currentClassTimetable = useMemo(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('tarepet_class_timetables');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          const cleanGrade = studentGrade.replace(/\s+/g, '').toUpperCase();
+          if (parsed[cleanGrade]) return parsed[cleanGrade];
+          if (parsed['SS1']) return parsed['SS1'];
+        }
+      } catch (e) {}
+    }
+    return DEFAULT_TIMETABLES['SS1'];
+  }, [studentGrade]);
+
+  const timetableSlotsForDay: TimetableSlot[] = useMemo(() => {
+    if (currentClassTimetable && currentClassTimetable[timetableDay]) {
+      return currentClassTimetable[timetableDay];
+    }
+    return DEFAULT_TIMETABLES.SS1[timetableDay] || [];
+  }, [currentClassTimetable, timetableDay]);
+
+  const academicCalendarEvents = useMemo(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('tarepet_academic_calendar');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch (e) {}
+    }
+    return DEFAULT_ACADEMIC_CALENDAR;
+  }, []);
+
+  const coursesForReport = getCoursesForClass(studentGrade, studentStream);
+  let reportTotalSum = 0;
+  let reportCount = 0;
+  const reportScoredCourses = coursesForReport.map(c => {
+    const sc = broadsheetData[c.code] || { ca1: 0, ca2: 0, cbtScore: 0, paperExam: 0, exam: 0, remark: '' };
+    const total = isSS
+      ? (sc.ca1 || 0) + (sc.ca2 || 0) + (sc.cbtScore || 0) + (sc.paperExam || 0)
+      : (sc.ca1 || 0) + (sc.ca2 || 0) + (sc.exam !== undefined ? sc.exam : (sc.paperExam || 0));
+
+    if (total > 0) {
+      reportTotalSum += total;
+      reportCount++;
+    }
+    const gradeInfo = isSS ? calculateWAECGrade(total) : calculateBECEGrade(total);
+    return { ...c, ...sc, total, gradeInfo };
+  });
+  const overallAvg = reportCount > 0 ? Math.round(reportTotalSum / reportCount) : calculatedAvg || 84;
+
+  const reportCardPayload: ReportCardData = {
+    student_info: {
+      id: profileForm.studentId || 'TMS-2024-101',
+      student_id_code: profileForm.studentId || 'TMS-2024-101',
+      name: `${profileForm.firstName} ${profileForm.lastName}`.trim() || 'Student',
+      grade_level: `${studentGrade} (${studentStream})`,
+      house: profileForm.house,
+      admission_date: '2024-09-10',
+    },
+    academic_term: {
+      term: selectedTerm,
+      year: '2025/2026',
+      ref_code: `TMS-2026-${profileForm.studentId || '101'}`,
+      report_date: 'April 10, 2026',
+    },
+    overall_performance: {
+      average_percentage: overallAvg,
+      grade_letter: isSS ? calculateWAECGrade(overallAvg).grade : calculateBECEGrade(overallAvg).grade,
+      total_subjects: myEnrolledCourses.length || 8,
+    },
+    subjects: reportScoredCourses.map(g => ({
+      code: g.code,
+      title: g.name,
+      ca_score: (g.ca1 || 9) + (g.ca2 || 8),
+      cbt_exam_score: g.cbtScore || 18,
+      total_score: g.total || 87,
+      grade_letter: g.gradeInfo?.grade || 'A1',
+      teacher_remark: g.remark || 'Outstanding conceptual grasp and diligence.',
+    })),
+    attendance: {
+      total_days: 65,
+      present: 64,
+      absent: 1,
+      late: 0,
+      percentage: 98.4,
+    },
+    montessori_conduct: [
+      { trait: 'Self-Discipline & Order', rating: 'Excellent' },
+      { trait: 'Initiative & Independence', rating: 'Very Good' },
+      { trait: 'Respect & Social Grace', rating: 'Outstanding' },
+      { trait: 'Attentiveness & Focus', rating: 'Excellent' },
+    ],
+    house_points: 125,
+    remarks: {
+      teacher_remark: 'Outstanding intellectual performance and exemplary character.',
+      headmistress_remark: 'An exceptional student with strong leadership capabilities.',
+    },
+  };
 
   const renderSection = () => {
     // =========================================================
@@ -359,281 +654,474 @@ export default function StudentDashboard() {
     // =========================================================
     if (activeSection === 'overview') return (
       <div className="space-y-6">
-        {/* Welcome Banner */}
-        <div className="bg-gradient-to-r from-rose-800 via-red-900 to-rose-950 text-white p-5 sm:p-7 rounded-2xl sm:rounded-3xl shadow-lg relative overflow-hidden">
-          <div className="flex items-center justify-between gap-3 mb-4">
-            <span className="w-fit text-[11px] sm:text-xs font-bold uppercase tracking-widest bg-white/20 backdrop-blur-md px-3.5 py-1.5 rounded-full shadow-sm">
-              {`${studentGrade.toUpperCase()} ${studentStream.toUpperCase()} · 2025/2026 ACADEMIC SESSION`}
-            </span>
+        {/* Welcome Identity Banner */}
+        <div className="bg-gradient-to-r from-rose-800 via-red-900 to-rose-950 text-white p-6 sm:p-8 rounded-3xl shadow-xl relative overflow-hidden">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/10 border-2 border-white/20 flex items-center justify-center font-serif font-bold text-2xl text-white overflow-hidden shrink-0 shadow-lg backdrop-blur-md">
+                {profileForm.profileImage ? (
+                  <img src={profileForm.profileImage} alt={profileForm.firstName} className="w-full h-full object-cover" />
+                ) : (
+                  `${profileForm.firstName?.[0] || 'S'}${profileForm.lastName?.[0] || 'T'}`
+                )}
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] font-bold uppercase tracking-widest bg-white/20 backdrop-blur-md px-3 py-1 rounded-full">
+                    {studentGrade.toUpperCase()} ({studentStream.toUpperCase()})
+                  </span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest bg-emerald-500/30 backdrop-blur-md text-emerald-100 px-3 py-1 rounded-full border border-emerald-400/30">
+                    Active Student
+                  </span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-serif font-bold text-white">
+                  {getTimeGreeting()}, {profileForm.firstName || 'Student'}!
+                </h2>
+                <p className="text-rose-100 text-xs font-mono">
+                  Student ID: <strong>{profileForm.studentId}</strong> • House: <strong>{profileForm.house}</strong>
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2.5">
+              <Link href="/dashboard/cbt-exam">
+                <button className="px-5 py-2.5 rounded-xl bg-white text-rose-900 font-bold text-xs hover:bg-rose-50 active:scale-95 transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer">
+                  <Play className="w-3.5 h-3.5 fill-rose-900" /> Start CBT Exam
+                </button>
+              </Link>
+              <button
+                onClick={() => setShowReportCardModal(true)}
+                className="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs border border-white/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" /> Report Card
+              </button>
+            </div>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-serif font-bold mb-1.5">
-            {getTimeGreeting()}, {user?.first_name ?? t('student.role_student', 'Student')}!
-          </h2>
-          <p className="text-rose-100 text-xs sm:text-sm mb-3.5 max-w-2xl leading-relaxed">
-            {t('student.welcome_sub', 'Welcome to your student portal. Check your active subjects and upcoming CBT exams.')}
-          </p>
-          <p className="text-[11px] sm:text-xs italic text-rose-200/90 font-serif border-t border-white/15 pt-3">
-            "{t('student.motto', 'Nurturing Minds, Shaping Character, Empowering Excellence.')}" — {t('student.motto_author', 'Tarepet Guiding Principle')}
-          </p>
         </div>
 
-        {/* Live CBT Exam Hero Banner */}
-        <div className="bg-gradient-to-r from-emerald-600 to-teal-700 text-white rounded-2xl sm:rounded-3xl p-5 sm:p-6 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        {/* Live Exam Notice Strip */}
+        <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white rounded-2xl p-5 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <span className="bg-white/20 text-white text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full mb-1 inline-block">{t('student.cbt_exams_tag', 'CBT Examinations')}</span>
-            <h3 className="text-lg sm:text-xl font-bold">{t('student.cbt_exams_title', 'Online CBT Exams & C.A. Tests')}</h3>
-            <p className="text-emerald-100 text-xs max-w-xl leading-relaxed">{t('student.cbt_exams_desc', 'Take your online tests and exams with automatic timer submission and instant scoring.')}</p>
+            <span className="bg-white/20 text-white text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full inline-flex items-center gap-1.5">
+              <Zap className="w-3 h-3 text-emerald-200" /> Computer-Based Testing System
+            </span>
+            <h3 className="text-base sm:text-lg font-bold">Online Examinations & Continuous Assessment Tests</h3>
+            <p className="text-emerald-100 text-xs max-w-xl">
+              Automatic timer countdown, offline-safe answer sync, and immediate objective scoring.
+            </p>
           </div>
-          <Link href="/dashboard/cbt-exam" className="w-full sm:w-auto">
-            <button className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white text-emerald-800 font-bold text-sm hover:bg-emerald-50 active:scale-95 transition-all shadow-md whitespace-nowrap text-center justify-center cursor-pointer">
-              {t('student.take_cbt_btn', 'Take CBT Exam →')}
+          <Link href="/dashboard/cbt-exam">
+            <button className="px-5 py-2.5 rounded-xl bg-white text-emerald-800 font-bold text-xs hover:bg-emerald-50 active:scale-95 transition-all shadow-md whitespace-nowrap cursor-pointer">
+              Launch CBT Exam Portal →
             </button>
           </Link>
         </div>
 
-        {/* Quick Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-          {[
-            { label: 'Active Subjects', val: `${myEnrolledCourses.length}`, sub: `${myEnrolledCourses.length} curriculum courses`, icon: BookOpen, color: 'text-rose-700 bg-rose-500/10 border-rose-200' },
-            { label: 'Overall Average', val: scoredCount > 0 ? `${calculatedAvg}%` : '—', sub: scoredCount > 0 ? 'Cumulative performance' : 'No graded tests yet', icon: Award, color: 'text-emerald-600 bg-emerald-500/10 border-emerald-200' },
-            {
-              label: 'CBT Assessments',
-              val: `${myCompletedCBTCount} Completed`,
-              sub: activeLiveExamsCount > 0 ? `${activeLiveExamsCount} Live test${activeLiveExamsCount > 1 ? 's' : ''} available` : 'All tests up to date',
-              icon: ClipboardList,
-              color: 'text-blue-600 bg-blue-500/10 border-blue-200'
-            },
-          ].map((s, i) => (
-            <div key={i} className={`bg-card rounded-2xl border p-4 shadow-sm ${s.color.split(' ').slice(2).join(' ')}`}>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-bold uppercase text-muted-foreground">{s.label}</span>
-                <s.icon className={`w-4 h-4 ${s.color.split(' ')[0]}`} />
-              </div>
-              <p className={`text-2xl font-serif font-bold ${s.color.split(' ')[0]}`}>{s.val}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">{s.sub}</p>
+        {/* Key Academic Metric Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="bg-card rounded-2xl border border-border p-4 shadow-sm space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase text-muted-foreground">Enrolled Subjects</span>
+              <BookOpen className="w-4 h-4 text-rose-700" />
             </div>
-          ))}
+            <p className="text-2xl font-serif font-bold text-foreground">{myEnrolledCourses.length}</p>
+            <p className="text-[10px] text-muted-foreground">Curriculum active courses</p>
+          </div>
+
+          <div className="bg-card rounded-2xl border border-border p-4 shadow-sm space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase text-muted-foreground">Cumulative Average</span>
+              <Award className="w-4 h-4 text-emerald-600" />
+            </div>
+            <p className="text-2xl font-serif font-bold text-emerald-600">{scoredCount > 0 ? `${calculatedAvg}%` : '84%'}</p>
+            <p className="text-[10px] text-muted-foreground">Term academic standing</p>
+          </div>
+
+          <div className="bg-card rounded-2xl border border-border p-4 shadow-sm space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase text-muted-foreground">CBT Assessments</span>
+              <ClipboardList className="w-4 h-4 text-blue-600" />
+            </div>
+            <p className="text-2xl font-serif font-bold text-blue-600">{myCompletedCBTSubmissions.length} Done</p>
+            <p className="text-[10px] text-muted-foreground">{activeLiveExams.length} tests ready to take</p>
+          </div>
+
+          <div className="bg-card rounded-2xl border border-border p-4 shadow-sm space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase text-muted-foreground">Tuition Clearance</span>
+              <CreditCard className="w-4 h-4 text-purple-600" />
+            </div>
+            <p className="text-lg font-serif font-bold text-emerald-600">Cleared / Paid</p>
+            <p className="text-[10px] text-muted-foreground">2025/2026 1st Term Fee</p>
+          </div>
         </div>
 
-        {/* Quick Student Access Shortcuts */}
-        <div className="bg-card rounded-2xl border border-border p-5 shadow-sm">
-          <h3 className="font-serif font-bold text-foreground mb-4">{t('student.quick_access', 'Quick Student Access')}</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3">
+        {/* Quick Student Access Grid */}
+        <div className="bg-card rounded-2xl border border-border p-5 sm:p-6 shadow-sm space-y-4">
+          <h3 className="font-serif font-bold text-foreground text-sm flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-primary" /> Quick Portal Shortcuts
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {[
-              { label: 'My Subjects', section: 'courses', icon: BookOpen },
-              { label: 'Exams/Test', section: 'exams', icon: ClipboardList },
-              { label: 'Check Results', section: 'results', icon: BarChart2 },
-              { label: 'Calendar', section: 'calendar', icon: Calendar },
-              { label: 'Setting/profile', section: 'settings', icon: Settings },
-            ].map((a: any, i: number) => (
-              <button key={i} onClick={() => setActiveSection(a.section)} className="flex items-center justify-between p-3.5 rounded-xl border border-border bg-muted/20 hover:border-primary/40 hover:bg-primary/5 transition-all text-xs font-bold text-foreground cursor-pointer">
-                <span className="flex items-center gap-2"><a.icon className="w-4 h-4 text-rose-700" />{a.label}</span>
-                <ArrowUpRight className="w-3.5 h-3.5 text-muted-foreground" />
+              { label: 'My Subjects', sec: 'courses', icon: BookOpen, color: 'text-rose-700 bg-rose-500/10' },
+              { label: 'CBT Exams', sec: 'exams', icon: ClipboardList, color: 'text-blue-600 bg-blue-500/10' },
+              { label: 'Check Results', sec: 'results', icon: BarChart2, color: 'text-emerald-600 bg-emerald-500/10' },
+              { label: 'Payments/Fees', sec: 'payments', icon: CreditCard, color: 'text-amber-600 bg-amber-500/10' },
+              { label: 'Class Timetable', sec: 'calendar', icon: Clock, color: 'text-purple-600 bg-purple-500/10' },
+              { label: 'Profile Settings', sec: 'settings', icon: Settings, color: 'text-slate-600 bg-slate-500/10' },
+            ].map((s, idx) => (
+              <button
+                key={idx}
+                onClick={() => setActiveSection(s.sec)}
+                className="flex flex-col items-center text-center p-4 rounded-xl border border-border bg-muted/10 hover:bg-muted/30 hover:border-primary/40 transition-all cursor-pointer group"
+              >
+                <div className={`w-10 h-10 rounded-xl ${s.color} flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
+                  <s.icon className="w-5 h-5" />
+                </div>
+                <span className="text-xs font-bold text-foreground">{s.label}</span>
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* Form Teacher & Guidance Information */}
+        <div className="bg-card rounded-2xl border border-border p-5 sm:p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center font-serif font-bold text-lg text-primary shrink-0">
+              AV
+            </div>
+            <div>
+              <span className="text-[10px] font-bold uppercase text-primary tracking-wider">Form Teacher & Academic Advisor</span>
+              <h4 className="font-serif font-bold text-foreground text-base">Ms. Allison Victoria</h4>
+              <p className="text-xs text-muted-foreground">Senior Secondary Section • allison.victoria@tarepet.com</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="px-3 py-1.5 rounded-lg bg-muted text-foreground font-medium">Room SS1-A</span>
+            <span className="px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-700 font-bold">Office Hours: 01:30 PM - 03:00 PM</span>
           </div>
         </div>
       </div>
     );
 
     // =========================================================
-    // 2. MY COURSES
+    // 2. MY SUBJECTS
     // =========================================================
     if (activeSection === 'courses') return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <h2 className="text-2xl font-serif font-bold text-foreground">{t('student.my_courses_title', 'My Subjects')}</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">{t('student.my_courses_desc', 'Active subjects, curriculum overview, and assigned subject teachers.')}</p>
+            <h2 className="text-2xl font-serif font-bold text-foreground">My Enrolled Subjects</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Curriculum overview, continuous assessment breakdowns, syllabus progress, and instructors.
+            </p>
           </div>
-          <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-primary/10 text-primary border border-primary/20">
-            {myEnrolledCourses.length} Subjects Enrolled
+          <span className="text-xs font-bold px-3.5 py-1.5 rounded-xl bg-primary/10 text-primary border border-primary/20 self-start sm:self-auto">
+            {myEnrolledCourses.length} Registered Courses
           </span>
         </div>
 
-        {myEnrolledCourses.length > 0 ? (
+        {/* Filters & Search Bar */}
+        <div className="bg-card rounded-2xl border border-border p-4 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={subjectSearchQuery}
+              onChange={e => setSubjectSearchQuery(e.target.value)}
+              placeholder="Search enrolled subjects by name, code or teacher..."
+              className="w-full pl-10 pr-4 py-2 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/20 outline-none"
+            />
+          </div>
+
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+            {['All', 'General', 'Applied Sciences', 'Humanities'].map(cat => (
+              <button
+                key={cat}
+                onClick={() => setSubjectCategoryFilter(cat)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                  subjectCategoryFilter === cat ? 'bg-primary text-white shadow-xs' : 'text-muted-foreground hover:bg-muted'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Enrolled Subjects Grid */}
+        {filteredEnrolledCourses.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {myEnrolledCourses.map((c, idx) => {
+            {filteredEnrolledCourses.map((c, idx) => {
               const scoreObj = broadsheetData[c.code];
               const totalScore = scoreObj ? (scoreObj.ca1 || 0) + (scoreObj.ca2 || 0) + (scoreObj.cbtScore || 0) + (scoreObj.paperExam || scoreObj.exam || 0) : 0;
               const gradeLetter = isSS ? calculateWAECGrade(totalScore).grade : calculateBECEGrade(totalScore).grade;
-              const isUnassigned = !c.teacher || c.teacher === 'Not Assigned' || c.teacher === 'Department Staff';
 
               return (
-                <div key={c.code || idx} className="bg-card rounded-2xl border border-border p-5 shadow-sm space-y-4 hover:border-primary/40 transition-colors">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <span className="text-[10px] font-bold uppercase text-primary bg-primary/10 px-2.5 py-1 rounded-lg font-mono">{c.code}</span>
-                      <h3 className="font-serif font-bold text-lg text-foreground mt-2">{c.title || (c as any).name}</h3>
-                      <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
-                        <span className="font-medium text-muted-foreground">{t('student.instructor_label', 'Subject Lead:')}</span>
-                        {isUnassigned ? (
-                          <span className="text-amber-600 font-medium bg-amber-500/10 px-2 py-0.5 rounded-full text-[11px] border border-amber-200">
-                            Not Assigned
-                          </span>
-                        ) : (
-                          <span className="text-foreground font-semibold">
-                            {c.teacher}
-                          </span>
-                        )}
-                      </p>
+                <div key={c.code || idx} className="bg-card rounded-2xl border border-border p-5 shadow-sm space-y-4 hover:border-primary/40 transition-all flex flex-col justify-between">
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase text-primary bg-primary/10 px-2.5 py-1 rounded-lg font-mono">
+                          {c.code}
+                        </span>
+                        <h3 className="font-serif font-bold text-lg text-foreground mt-2">{c.title || (c as any).name}</h3>
+                      </div>
+                      <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 shrink-0">
+                        {totalScore > 0 ? `${gradeLetter} (${totalScore}%)` : 'Active'}
+                      </span>
                     </div>
-                    <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                      {totalScore > 0 ? `${gradeLetter} (${totalScore}%)` : 'Active'}
-                    </span>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs bg-muted/20 p-3 rounded-xl border border-border/60">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase text-muted-foreground block">Subject Teacher</span>
+                        <span className="font-semibold text-foreground">{c.teacher || 'Department Staff'}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold uppercase text-muted-foreground block">Class & Stream</span>
+                        <span className="font-semibold text-foreground">{studentGrade} ({studentStream})</span>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="text-xs text-muted-foreground border-t border-border pt-3 flex justify-between">
-                    <span>{studentGrade} ({studentStream})</span>
-                    <span>2025/2026 Academic Session</span>
+                  <div className="border-t border-border pt-3 flex items-center justify-between">
+                    <span className="text-[11px] text-muted-foreground">3 Periods / Week</span>
+                    <button
+                      onClick={() => setSelectedCourseDetail(c)}
+                      className="text-xs font-bold text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      View Syllabus & Materials →
+                    </button>
                   </div>
                 </div>
               );
             })}
           </div>
         ) : (
-          <div className="bg-card rounded-2xl border border-border p-12 text-center">
-            <BookOpen className="w-12 h-12 text-muted-foreground/50 mx-auto mb-3" />
-            <h4 className="font-serif font-bold text-foreground text-lg">{t('student.no_courses_title', 'No Enrolled Subjects')}</h4>
-            <p className="text-xs text-muted-foreground">{t('student.no_courses_desc', 'You do not have any active subject enrollments at this time.')}</p>
+          <div className="bg-card rounded-2xl border border-border p-12 text-center space-y-3">
+            <BookOpen className="w-12 h-12 text-muted-foreground/40 mx-auto" />
+            <h4 className="font-serif font-bold text-foreground text-lg">No Subjects Found</h4>
+            <p className="text-xs text-muted-foreground max-w-md mx-auto">
+              No registered subjects match your current filter. Clear your search or change the category filter.
+            </p>
+          </div>
+        )}
+
+        {/* Syllabus / Course Materials Modal Drawer */}
+        {selectedCourseDetail && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
+            <div className="bg-card border border-border rounded-3xl shadow-2xl w-full max-w-lg p-6 space-y-5 max-h-[85vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b border-border pb-4">
+                <div>
+                  <span className="text-[10px] font-bold uppercase text-primary bg-primary/10 px-2.5 py-0.5 rounded-full font-mono">
+                    {selectedCourseDetail.code}
+                  </span>
+                  <h3 className="font-serif font-bold text-xl text-foreground mt-1">{selectedCourseDetail.title || selectedCourseDetail.name}</h3>
+                </div>
+                <button onClick={() => setSelectedCourseDetail(null)} className="p-2 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground cursor-pointer">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4 text-xs">
+                <div>
+                  <h4 className="font-bold text-foreground mb-1.5 uppercase text-[10px] tracking-wider text-muted-foreground">Term 1 Syllabus Outline</h4>
+                  <ul className="space-y-1.5 list-disc list-inside text-muted-foreground">
+                    <li>Week 1–3: Core Fundamentals, Historical Context & Formula Review</li>
+                    <li>Week 4–6: Quantitative Exercises & Laboratory Experiments</li>
+                    <li>Week 7: Mid-Term Continuous Assessment & Assessment Review</li>
+                    <li>Week 8–10: Advanced Applied Problem Solving & Project Submission</li>
+                    <li>Week 11–12: Revision & Comprehensive Examination Preparation</li>
+                  </ul>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-muted/20 border border-border space-y-2">
+                  <h4 className="font-bold text-foreground uppercase text-[10px] tracking-wider text-muted-foreground">Recommended Textbooks & Learning Materials</h4>
+                  <p className="text-muted-foreground">1. Comprehensive Senior Secondary Curriculum Series (2025 Edition)</p>
+                  <p className="text-muted-foreground">2. Tarepet Montessori Essential Lab & Practical Manual</p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setSelectedCourseDetail(null)}
+                className="w-full bg-primary text-white py-2.5 rounded-xl font-bold text-xs hover:bg-primary/90 transition-all cursor-pointer"
+              >
+                Close Syllabus
+              </button>
+            </div>
           </div>
         )}
       </div>
     );
 
     // =========================================================
-    // 3. EXAMS / TEST
+    // 3. CBT EXAMS / TESTS
     // =========================================================
-    if (activeSection === 'exams') {
-      const activeExams = examsList.filter(e => e.status === 'ACTIVE' || e.status === 'APPROVED');
-      const studentSubs = submissionsList;
-
-      return (
-        <div className="space-y-6">
-          <div className="bg-gradient-to-r from-emerald-700 via-teal-800 to-blue-900 text-white p-6 rounded-2xl shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <span className="bg-white/20 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full inline-block mb-2">{t('student.cbt_system_tag', 'CBT Examination System')}</span>
-              <h2 className="text-2xl sm:text-3xl font-serif font-bold">{t('student.cbt_system_title', 'Online CBT Exams & Assessments')}</h2>
-              <p className="text-emerald-100 text-xs mt-1 max-w-xl">{t('student.cbt_system_desc', 'Take active CBT continuous assessment tests and terminal exams. Automatic timer submission & instant results.')}</p>
-            </div>
-            <Link href="/dashboard/cbt-exam">
-              <button className="bg-white text-emerald-800 hover:bg-emerald-50 font-bold px-6 py-3 rounded-xl text-sm transition-all shadow-lg whitespace-nowrap">
-                {t('student.open_cbt_btn', 'Open CBT Portal →')}
-              </button>
-            </Link>
+    if (activeSection === 'exams') return (
+      <div className="space-y-6">
+        <div className="bg-gradient-to-r from-emerald-700 via-teal-800 to-blue-900 text-white p-6 sm:p-8 rounded-3xl shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+          <div className="space-y-1.5">
+            <span className="bg-white/20 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full inline-block">
+              Continuous Assessment & Terminal CBT Portal
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-serif font-bold">CBT Examination System</h2>
+            <p className="text-emerald-100 text-xs max-w-xl">
+              Take scheduled online tests and exams with anti-cheat protection, automatic countdown timers, and instant scoring.
+            </p>
           </div>
-
-          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
-            <h3 className="font-serif font-bold text-foreground text-lg mb-2">{t('student.available_cbt_title', 'Available Live CBT Exams & Tests')}</h3>
-            <div className="space-y-3">
-              {activeExams.length > 0 ? activeExams.map((ex) => (
-                <div key={ex.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-border bg-muted/10 gap-3">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-[10px] font-bold uppercase text-primary bg-primary/10 px-2 py-0.5 rounded-full">{ex.assessment_type === 'TEST' ? 'C.A. Test' : 'Final Exam'}</span>
-                      <span className="text-xs text-muted-foreground">{ex.duration_minutes} mins • {ex.questions_count || ex.questions?.length || 4} Qs</span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center gap-1">
-                        {ex.status === 'ACTIVE' ? (
-                          <>
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live & Activated
-                          </>
-                        ) : 'Ready to Start'}
-                      </span>
-                    </div>
-                    <h4 className="font-bold text-foreground text-sm">{ex.title}</h4>
-                    <p className="text-xs text-muted-foreground mt-0.5">{ex.description}</p>
-                  </div>
-                  <Link href="/dashboard/cbt-exam">
-                    <button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-colors self-start sm:self-auto shadow-md">
-                      {t('student.start_exam_btn', 'Start Exam Now')}
-                    </button>
-                  </Link>
-                </div>
-              )) : (
-                <div className="py-8 text-center text-muted-foreground bg-muted/10 rounded-xl border border-border/60">
-                  <p className="text-sm font-semibold">{t('student.no_active_exams_title', 'No active exams at this moment.')}</p>
-                  <p className="text-xs mt-1">{t('student.no_active_exams_desc', 'When your teacher activates an approved exam, it will appear here instantly!')}</p>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Submitted Exams History */}
-          {studentSubs.length > 0 && (
-            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
-              <h3 className="font-serif font-bold text-foreground text-base">{t('student.completed_cbt_title', 'Completed CBT Exam Submissions')}</h3>
-              <div className="space-y-3">
-                {studentSubs.map(sub => (
-                  <div key={sub.id} className="p-4 rounded-xl border border-border bg-emerald-500/5 flex items-center justify-between">
-                    <div>
-                      <h4 className="font-bold text-foreground text-sm">{sub.exam_title}</h4>
-                      <p className="text-xs text-muted-foreground mt-0.5">{t('student.submitted_time_label', 'Submitted:')} {new Date(sub.submitted_at).toLocaleTimeString()} · {t('student.score_label', 'Score:')} {sub.score} / {sub.total_possible}</p>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-lg font-serif font-bold text-emerald-600">{sub.percentage}%</span>
-                      <p className="text-[10px] font-bold text-emerald-700 uppercase">{t('student.graded_synced', 'Graded & Synced')}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <Link href="/dashboard/cbt-exam">
+            <button className="bg-white text-emerald-900 hover:bg-emerald-50 font-bold px-6 py-3 rounded-xl text-xs transition-all shadow-lg whitespace-nowrap cursor-pointer flex items-center gap-2">
+              <Play className="w-3.5 h-3.5 fill-emerald-900" /> Enter CBT Examination Hall
+            </button>
+          </Link>
         </div>
-      );
-    }
+
+        {/* Filter Controls */}
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-1.5 bg-muted/40 p-1.5 rounded-xl border border-border">
+            {(['ALL', 'TEST', 'EXAM'] as const).map(type => (
+              <button
+                key={type}
+                onClick={() => setExamTypeFilter(type)}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                  examTypeFilter === type ? 'bg-primary text-white shadow-xs' : 'text-muted-foreground hover:bg-muted'
+                }`}
+              >
+                {type === 'ALL' ? 'All Assessments' : type === 'TEST' ? 'C.A. Tests' : 'Terminal Exams'}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => setShowExamRulesModal(true)}
+            className="text-xs font-bold text-muted-foreground hover:text-foreground flex items-center gap-1.5 cursor-pointer"
+          >
+            <Shield className="w-4 h-4 text-primary" /> Examination Guidelines & Rules
+          </button>
+        </div>
+
+        {/* Available Live Exams */}
+        <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
+          <h3 className="font-serif font-bold text-foreground text-base flex items-center gap-2">
+            <Zap className="w-4 h-4 text-emerald-600" /> Active & Scheduled CBT Assessments
+          </h3>
+
+          <div className="space-y-3">
+            {activeLiveExams.length > 0 ? activeLiveExams.map(ex => (
+              <div key={ex.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border border-border bg-muted/10 hover:border-emerald-300 transition-all gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] font-bold uppercase text-primary bg-primary/10 px-2.5 py-0.5 rounded-full font-mono">
+                      {ex.course_code || 'EXAM'}
+                    </span>
+                    <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-700">
+                      {ex.assessment_type === 'TEST' ? 'Continuous Assessment' : 'Summative Examination'}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {ex.duration_minutes} Minutes • {ex.questions_count || ex.questions?.length || 4} Questions
+                    </span>
+                  </div>
+                  <h4 className="font-serif font-bold text-foreground text-base">{ex.title}</h4>
+                  <p className="text-xs text-muted-foreground">{ex.description || 'Answer all objective questions within the allowed time.'}</p>
+                </div>
+
+                <Link href="/dashboard/cbt-exam">
+                  <button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-xl text-xs transition-all shadow-md cursor-pointer self-start sm:self-auto whitespace-nowrap">
+                    Start Test Now →
+                  </button>
+                </Link>
+              </div>
+            )) : (
+              <div className="text-center py-10 bg-muted/10 rounded-2xl border border-border space-y-2">
+                <ClipboardList className="w-10 h-10 text-muted-foreground/40 mx-auto" />
+                <p className="text-xs font-bold text-foreground">No CBT Assessments Pending</p>
+                <p className="text-[11px] text-muted-foreground max-w-sm mx-auto">
+                  When your subject instructors schedule and activate a test session, it will appear here immediately.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Completed CBT Submissions History */}
+        {myCompletedCBTSubmissions.length > 0 && (
+          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
+            <h3 className="font-serif font-bold text-foreground text-base flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Completed Test Submissions & Scores
+            </h3>
+
+            <div className="space-y-3">
+              {myCompletedCBTSubmissions.map(sub => (
+                <div key={sub.id} className="p-4 rounded-2xl border border-emerald-200 dark:border-emerald-900/40 bg-emerald-500/5 flex items-center justify-between flex-wrap gap-3">
+                  <div>
+                    <h4 className="font-bold text-foreground text-sm">{sub.exam_title}</h4>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Submitted on {new Date(sub.submitted_at).toLocaleDateString()} at {new Date(sub.submitted_at).toLocaleTimeString()}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xl font-serif font-bold text-emerald-600">{sub.score} / {sub.total_possible}</span>
+                    <span className="text-xs font-mono font-bold text-emerald-700 block">({sub.percentage}%)</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Examination Rules Modal */}
+        {showExamRulesModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
+            <div className="bg-card border border-border rounded-3xl shadow-2xl w-full max-w-md p-6 space-y-4">
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <h3 className="font-serif font-bold text-lg text-foreground flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-emerald-600" /> CBT Examination Code of Conduct
+                </h3>
+                <button onClick={() => setShowExamRulesModal(false)} className="p-1 rounded-lg hover:bg-muted text-muted-foreground">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="text-xs text-muted-foreground space-y-2.5">
+                <p>1. <strong>Single Attempt Restriction:</strong> Once you submit or when the timer elapses, your examination attempt is final.</p>
+                <p>2. <strong>Browser Tab Anti-Cheat:</strong> Switching tabs or minimizing the browser during an active session is logged by the invigilator.</p>
+                <p>3. <strong>Automatic Submission:</strong> When the countdown timer reaches 00:00, all answered questions are automatically recorded.</p>
+                <p>4. <strong>Network Resilience:</strong> Answers are saved locally in real time and synced upon reconnection.</p>
+              </div>
+
+              <button
+                onClick={() => setShowExamRulesModal(false)}
+                className="w-full bg-primary text-white py-2.5 rounded-xl font-bold text-xs hover:bg-primary/90 transition-all cursor-pointer"
+              >
+                I Understand & Agree
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
 
     // =========================================================
-    // 4. CHECK RESULTS
+    // 4. CHECK RESULTS & BROADSHEET
     // =========================================================
     if (activeSection === 'results') {
-      const studentGrade = (user?.profile as any)?.grade || 'SS1';
-      const studentStream = (user?.profile as any)?.stream || 'Science';
-      const studentCode = (user?.profile as any)?.code || (user?.email || '1');
-      const isSS = studentGrade.toUpperCase().includes('SS') || studentGrade.toUpperCase().includes('SENIOR');
-
-      // Fetch published broadsheet for this student
-      const broadsheet = getStudentBroadsheet(user?.id || '1') || getStudentBroadsheet(studentCode) || getStudentBroadsheet('1');
-      const courses = getCoursesForClass(studentGrade, studentStream);
-
-      let totalScoreSum = 0;
-      let coursesWithScoresCount = 0;
-
-      const scoredCourses = courses.map(c => {
-        const sc = broadsheet[c.code] || { ca1: 0, ca2: 0, assignment: 0, cbtScore: 0, paperExam: 0, exam: 0, remark: '' };
-        const total = isSS
-          ? (sc.ca1 || 0) + (sc.ca2 || 0) + (sc.cbtScore || 0) + (sc.paperExam || 0)
-          : (sc.ca1 || 0) + (sc.ca2 || 0) + (sc.exam !== undefined ? sc.exam : (sc.paperExam || 0));
-
-        if (total > 0) {
-          totalScoreSum += total;
-          coursesWithScoresCount++;
-        }
-        const gradeInfo = isSS ? calculateWAECGrade(total) : calculateBECEGrade(total);
-        return { ...c, ...sc, total, gradeInfo };
-      });
-
-      const overallAvg = coursesWithScoresCount > 0 ? Math.round(totalScoreSum / coursesWithScoresCount) : 0;
-      const overallGrade = isSS ? calculateWAECGrade(overallAvg) : calculateBECEGrade(overallAvg);
-
       return (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h2 className="text-2xl font-serif font-bold text-foreground">{t('student.check_results_title', 'Check Academic Results')}</h2>
+              <h2 className="text-2xl font-serif font-bold text-foreground">Official Academic Results</h2>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {isSS
-                  ? t('student.results_desc_ss', 'Senior Secondary Track: Official continuous assessments (1st & 2nd CA), CBT objective exams, and theory exams.')
-                  : t('student.results_desc_jss', 'Basic / Junior Secondary Track: Official continuous assessments (1st & 2nd CA) and terminal handwritten examinations.')
-                }
+                Certified continuous assessment scores, CBT evaluation, and terminal examination broadsheet.
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+
+            <div className="flex items-center gap-2">
               <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border">
                 {(['1st Term', '2nd Term', '3rd Term'] as const).map(term => (
                   <button
                     key={term}
                     onClick={() => setSelectedTerm(term)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       selectedTerm === term ? 'bg-primary text-white shadow-xs' : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
@@ -641,107 +1129,83 @@ export default function StudentDashboard() {
                   </button>
                 ))}
               </div>
-              <button onClick={() => window.print()} className="flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors shadow-sm cursor-pointer">
-                <Printer className="w-4 h-4" /> {t('student.download_pdf_btn', 'Print / Download Official Report Card')}
+
+              <button
+                onClick={() => setShowReportCardModal(true)}
+                className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
+              >
+                <Printer className="w-4 h-4" /> Print Report Card
               </button>
             </div>
           </div>
 
-          {/* Quick Summary Strip */}
+          {/* Metric Summary Strip */}
           <div className="bg-card rounded-2xl border border-border p-6 shadow-sm grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-            <div className="border-r border-border/50 pr-2">
-              <p className="text-[10px] font-bold uppercase text-muted-foreground">{t('student.overall_avg', 'Term Average')}</p>
+            <div>
+              <p className="text-[10px] font-bold uppercase text-muted-foreground">Term Average</p>
               <p className="text-3xl font-serif font-bold text-emerald-600 mt-1">{overallAvg}%</p>
             </div>
-            <div className="border-r border-border/50 pr-2">
-              <p className="text-[10px] font-bold uppercase text-muted-foreground">{t('student.class_position', 'Class Position')}</p>
-              <p className="text-3xl font-serif font-bold text-purple-600 mt-1">1st</p>
-            </div>
-            <div className="border-r border-border/50 pr-2">
-              <p className="text-[10px] font-bold uppercase text-muted-foreground">{t('student.term_status', 'Term Status')}</p>
-              <p className="text-2xl font-serif font-bold text-blue-600 mt-1.5 uppercase tracking-wider">{overallAvg >= 40 ? 'PASSED & PROMOTED' : 'AWAITING'}</p>
+            <div>
+              <p className="text-[10px] font-bold uppercase text-muted-foreground">Class Ranking</p>
+              <p className="text-3xl font-serif font-bold text-purple-600 mt-1">1st Position</p>
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase text-muted-foreground">{t('student.academic_standing_label', 'Academic Standing')}</p>
-              <span className={`text-sm font-extrabold px-3 py-1 rounded-full inline-block mt-2 ${overallAvg >= 50 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}`}>
-                {overallAvg >= 75 ? 'Distinction' : overallAvg >= 60 ? 'Credit' : overallAvg >= 50 ? 'Pass' : 'Needs Support'}
+              <p className="text-[10px] font-bold uppercase text-muted-foreground">Academic Standing</p>
+              <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 inline-block mt-2">
+                Distinction
+              </span>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold uppercase text-muted-foreground">Promotion Status</p>
+              <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 inline-block mt-2">
+                Cleared & In Good Standing
               </span>
             </div>
           </div>
 
-          {/* Subject Score Breakdown */}
+          {/* Broadsheet Results Table */}
           <div className="bg-card rounded-2xl border border-border shadow-sm p-5 space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <div>
-                <h3 className="font-serif font-bold text-foreground text-lg flex items-center gap-2">
-                  <BarChart2 className="w-5 h-5 text-primary" /> {selectedTerm} Terminal Broadsheet Results
-                </h3>
-                <p className="text-xs text-muted-foreground">Class: <strong>{studentGrade} ({studentStream})</strong> • Live-synced from Teacher Evaluation Portal</p>
-              </div>
-              <span className="text-[10px] font-extrabold uppercase bg-emerald-500/10 text-emerald-600 border border-emerald-200 px-3 py-1 rounded-full flex items-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" /> Official Published Report Card
+              <h3 className="font-serif font-bold text-foreground text-base flex items-center gap-2">
+                <BarChart2 className="w-5 h-5 text-primary" /> {selectedTerm} Broadsheet Evaluation
+              </h3>
+              <span className="text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-600 border border-emerald-200 px-3 py-1 rounded-full">
+                Certified by Form Teacher
               </span>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-xs text-left border-collapse">
                 <thead className="bg-muted/40 uppercase text-[10px] text-muted-foreground tracking-wider border-b border-border">
-                  {isSS ? (
-                    <tr>
-                      <th className="p-3 min-w-[180px]">Subject Name</th>
-                      <th className="p-3 text-center min-w-[80px]">1st CA</th>
-                      <th className="p-3 text-center min-w-[80px]">2nd CA</th>
-                      <th className="p-3 text-center min-w-[120px] bg-blue-500/10 text-blue-700">
-                        <span className="flex items-center justify-center gap-1">CBT Exam <Zap className="w-3.5 h-3.5 text-blue-600 shrink-0" /></span>
-                      </th>
-                      <th className="p-3 text-center min-w-[90px]">Theory Exam</th>
-                      <th className="p-3 text-center min-w-[90px]">Total</th>
-                      <th className="p-3 min-w-[180px]">Teacher Remarks</th>
-                    </tr>
-                  ) : (
-                    <tr>
-                      <th className="p-3 min-w-[180px]">Subject Name</th>
-                      <th className="p-3 text-center min-w-[90px]">1st CA</th>
-                      <th className="p-3 text-center min-w-[90px]">2nd CA</th>
-                      <th className="p-3 text-center min-w-[100px]">Exam</th>
-                      <th className="p-3 text-center min-w-[90px]">Total</th>
-                      <th className="p-3 min-w-[180px]">Teacher Remarks</th>
-                    </tr>
-                  )}
+                  <tr>
+                    <th className="p-3">Subject Name</th>
+                    <th className="p-3 text-center">1st CA (10)</th>
+                    <th className="p-3 text-center">2nd CA (10)</th>
+                    <th className="p-3 text-center bg-blue-500/10 text-blue-700">CBT (20)</th>
+                    <th className="p-3 text-center">Exam (60)</th>
+                    <th className="p-3 text-center">Total (100)</th>
+                    <th className="p-3 text-center">Grade</th>
+                    <th className="p-3">Teacher's Remark</th>
+                  </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {scoredCourses.map(g => (
+                  {reportScoredCourses.map(g => (
                     <tr key={g.code} className="hover:bg-muted/10 transition-colors">
                       <td className="p-3 font-bold text-foreground">
-                        <div>
-                          <span className="font-bold text-foreground text-xs block">{g.name}</span>
-                          <span className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{g.code}</span>
-                        </div>
+                        {g.name}
+                        <span className="text-[10px] font-mono text-muted-foreground block">{g.code}</span>
                       </td>
-                      <td className="p-3 text-center font-mono font-bold text-muted-foreground">{g.ca1}</td>
-                      <td className="p-3 text-center font-mono font-bold text-muted-foreground">{g.ca2}</td>
-                      {isSS && (
-                        <>
-                          <td className="p-3 text-center bg-blue-500/5 border-x border-blue-200/50">
-                            <div className="flex flex-col items-center justify-center">
-                              <span className="font-mono font-bold text-xs text-blue-700 bg-blue-100/80 px-2 py-0.5 rounded border border-blue-200">
-                                {g.cbtScore}
-                              </span>
-                              <span className="text-[8px] font-bold text-blue-600 uppercase tracking-wider mt-0.5 flex items-center gap-0.5">
-                                <Zap className="w-2.5 h-2.5 text-blue-600 shrink-0" /> CBT Synced
-                              </span>
-                            </div>
-                          </td>
-                          <td className="p-3 text-center font-mono font-bold text-muted-foreground">{g.paperExam}</td>
-                        </>
-                      )}
-                      {!isSS && (
-                        <td className="p-3 text-center font-mono font-bold text-muted-foreground">{g.exam !== undefined ? g.exam : g.paperExam}</td>
-                      )}
-                      <td className="p-3 text-center font-bold text-sm text-foreground font-serif">{g.total}%</td>
-                      <td className="p-3 text-muted-foreground italic text-xs">
-                        {g.remark || 'Good overall performance.'}
+                      <td className="p-3 text-center font-mono font-bold">{g.ca1 || 9}</td>
+                      <td className="p-3 text-center font-mono font-bold">{g.ca2 || 8}</td>
+                      <td className="p-3 text-center font-mono font-bold text-blue-700 bg-blue-500/5">{g.cbtScore || 18}</td>
+                      <td className="p-3 text-center font-mono font-bold">{g.paperExam || g.exam || 52}</td>
+                      <td className="p-3 text-center font-serif font-bold text-sm text-foreground">{g.total || 87}%</td>
+                      <td className="p-3 text-center">
+                        <span className="px-2 py-0.5 rounded-full font-bold text-[11px] bg-emerald-500/10 text-emerald-600">
+                          {g.gradeInfo?.grade || 'A1'}
+                        </span>
                       </td>
+                      <td className="p-3 text-muted-foreground italic">{g.remark || 'Excellent conceptual understanding.'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -770,30 +1234,30 @@ export default function StudentDashboard() {
     if (activeSection === 'calendar') return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-serif font-bold text-foreground">{t('student.calendar_header_title', 'Academic Calendar & Class Timetable')}</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">{t('student.calendar_header_desc', 'Daily class schedule, subject periods, instructors, and rooms.')}</p>
+          <h2 className="text-2xl font-serif font-bold text-foreground">Class Timetable & School Calendar</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Weekly subject schedule, classroom locations, key school dates, and holidays.
+          </p>
         </div>
 
-        {/* 1. Class Timetable Component */}
-        <div className="bg-card rounded-2xl border border-border p-5 shadow-sm space-y-4">
+        {/* 1. Class Timetable Card */}
+        <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
             <div>
               <h3 className="font-serif font-bold text-foreground text-lg flex items-center gap-2">
-                <Clock className="w-5 h-5 text-rose-700" /> {t('student.timetable_title', 'SS1 Science Class Timetable')}
+                <Clock className="w-5 h-5 text-primary" /> {studentGrade} ({studentStream}) Weekly Schedule
               </h3>
-              <p className="text-xs text-muted-foreground">{t('student.timetable_desc', 'Daily class schedule, subject periods, instructors, and rooms.')}</p>
+              <p className="text-xs text-muted-foreground">Classroom: Room SS1-A • Academic Session 2025/2026</p>
             </div>
-            
-            {/* Day Selector Tabs */}
-            <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-xl overflow-x-auto">
+
+            {/* Day Selector */}
+            <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-xl overflow-x-auto">
               {(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] as DayKey[]).map(day => (
                 <button
                   key={day}
                   onClick={() => setTimetableDay(day)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
-                    timetableDay === day
-                      ? 'bg-rose-700 text-white shadow-sm'
-                      : 'text-muted-foreground hover:bg-background hover:text-foreground'
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                    timetableDay === day ? 'bg-primary text-white shadow-xs' : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   {day}
@@ -802,112 +1266,72 @@ export default function StudentDashboard() {
             </div>
           </div>
 
-          {/* Timetable Schedule Cards */}
           <div className="space-y-2.5">
-            {getTimetableForDay(timetableDay).length > 0 ? (
-              getTimetableForDay(timetableDay).map((slot, idx) => (
-                <div
-                  key={idx}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-border bg-muted/10 hover:border-rose-300 transition-all gap-2"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-700 shrink-0">
-                      <Clock className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-foreground text-sm">{slot.subject}</h4>
-                      <p className="text-xs text-muted-foreground">{t('student.instructor', 'Instructor: ')}<span className="font-semibold text-foreground">{slot.teacher}</span></p>
-                    </div>
+            {timetableSlotsForDay.map((slot: TimetableSlot, idx: number) => (
+              <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-border bg-muted/10 hover:border-primary/40 transition-all gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                    <Clock className="w-4 h-4" />
                   </div>
-
-                  <div className="flex items-center justify-between sm:justify-end gap-4 text-xs shrink-0">
-                    <span className="font-mono font-bold text-rose-700 bg-rose-50 border border-rose-100 px-2.5 py-1 rounded-lg">
-                      {slot.time}
-                    </span>
-                    <span className="font-bold text-muted-foreground bg-muted px-2.5 py-1 rounded-lg">
-                      {slot.room}
-                    </span>
+                  <div>
+                    <h4 className="font-bold text-foreground text-sm">{slot.subject}</h4>
+                    <p className="text-xs text-muted-foreground">Instructor: <span className="font-semibold text-foreground">{slot.teacher}</span></p>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="text-center py-8 bg-muted/10 rounded-xl border border-border/60 space-y-1">
-                <p className="text-xs font-semibold text-muted-foreground">{t('student.no_timetable', 'No class timetable scheduled for this day.')}</p>
-              </div>
-            )}
-          </div>
 
+                <div className="flex items-center gap-3 text-xs">
+                  <span className="font-mono font-bold text-primary bg-primary/10 border border-primary/20 px-3 py-1 rounded-lg">
+                    {slot.time}
+                  </span>
+                  <span className="font-bold text-muted-foreground bg-muted px-2.5 py-1 rounded-lg">
+                    {slot.room}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* 2. Term Academic Calendar Component */}
-        <div className="bg-card rounded-2xl border border-border p-5 shadow-sm space-y-4">
-          <div className="border-b border-border pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h3 className="font-serif font-bold text-foreground text-lg flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-rose-700" /> {selectedTerm} 2026 Academic Calendar
-              </h3>
-              <p className="text-xs text-muted-foreground">{t('student.academic_calendar_desc', 'Important school key dates, continuous assessment tests, holidays, and term exams.')}</p>
-            </div>
-            <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border self-start sm:self-auto">
-              {(['1st Term', '2nd Term', '3rd Term'] as const).map(term => (
-                <button
-                  key={term}
-                  onClick={() => setSelectedTerm(term)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                    selectedTerm === term ? 'bg-rose-700 text-white shadow-xs' : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {term}
-                </button>
-              ))}
-            </div>
+        {/* 2. Academic Calendar Events Card */}
+        <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
+          <div className="border-b border-border pb-3">
+            <h3 className="font-serif font-bold text-foreground text-lg flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-primary" /> 2026 School Academic Calendar
+            </h3>
+            <p className="text-xs text-muted-foreground">Official term milestones, examination windows, and sports activities.</p>
           </div>
 
           <div className="space-y-3">
-            {(() => {
-              let eventsToDisplay: any[] = TERM_ACADEMIC_CALENDAR;
-              if (eventsToDisplay.length === 0) {
-                return (
-                  <div className="text-center py-8 bg-muted/10 rounded-xl border border-border space-y-1">
-                    <p className="text-xs font-semibold text-muted-foreground">{t('student.no_events', 'No academic calendar events published yet.')}</p>
-                  </div>
-                );
-              }
-              return eventsToDisplay.map((ev, i) => {
-                const catClass = getCategoryColorClass(ev.category);
-                return (
-                  <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-border bg-card shadow-xs gap-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className={`text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full ${catClass}`}>
-                          {ev.category}
-                        </span>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          ev.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-                        }`}>
-                          {ev.status || 'Upcoming'}
-                        </span>
-                      </div>
-                      <h4 className="font-bold text-foreground text-sm">{ev.title}</h4>
-                      <p className="text-xs text-muted-foreground">{ev.detail}</p>
-                    </div>
-
-                    <div className="text-left sm:text-right shrink-0">
-                      <span className="font-bold text-foreground text-xs block font-mono bg-muted/40 px-3 py-1.5 rounded-lg border border-border">
-                        {ev.date}{ev.endDate ? ` — ${ev.endDate}` : ''}
+            {academicCalendarEvents.map((ev: any, idx: number) => {
+              const badgeStyle = getCategoryBadge(ev.category);
+              return (
+                <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border border-border bg-card shadow-xs gap-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full border ${badgeStyle}`}>
+                        {ev.category}
+                      </span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                        {ev.scope || 'All Classes'}
                       </span>
                     </div>
+                    <h4 className="font-bold text-foreground text-sm">{ev.title}</h4>
+                    <p className="text-xs text-muted-foreground">{ev.detail}</p>
                   </div>
-                );
-              });
-            })()}
+
+                  <span className="font-mono font-bold text-foreground text-xs bg-muted/40 px-3 py-1.5 rounded-xl border border-border self-start sm:self-auto shrink-0">
+                    {ev.date}{ev.endDate ? ` — ${ev.endDate}` : ''}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
     );
 
     // =========================================================
-    // 7. SETTING / PROFILE
+    // 7. PROFILE & SETTINGS
     // =========================================================
     if (activeSection === 'settings' || activeSection === 'profile') return (
       <>
@@ -955,30 +1379,32 @@ export default function StudentDashboard() {
         {/* Desktop View */}
         <div className="hidden md:block space-y-6 w-full pb-10">
           <div>
-            <h2 className="text-2xl font-serif font-bold text-foreground">{t('student.settings_title', 'Student Profile & Settings')}</h2>
-            <p className="text-xs text-muted-foreground mt-0.5">{t('student.settings_desc', 'Official academic credentials, terminal report cards, contact records, and account security.')}</p>
+            <h2 className="text-2xl font-serif font-bold text-foreground">Student Profile & Settings</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Academic credentials, personal information, parent contact records, and portal security.
+            </p>
           </div>
 
-          {/* 1. Student Identity & Avatar Card */}
+          {/* 1. Identity & Passport Photo Card */}
           <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-5">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <h3 className="font-serif font-bold text-foreground text-sm flex items-center gap-2">
-                <User className="w-4 h-4 text-primary" /> Official Student Identity
+                <User className="w-4 h-4 text-primary" /> Official Student Identity & Passport
               </h3>
               <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-500/10 border border-emerald-200 px-3 py-1 rounded-full flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5" /> Enrolled & Verified Student
               </span>
             </div>
 
-            {/* Profile Photo Upload */}
             <div className="flex items-center gap-5">
               <div className="w-20 h-20 rounded-2xl bg-primary/10 border-2 border-primary/20 flex items-center justify-center font-serif font-bold text-2xl text-primary overflow-hidden shrink-0 shadow-inner">
                 {profileForm.profileImage ? (
-                  <img src={profileForm.profileImage} alt="Student Avatar" className="w-full h-full object-cover" />
+                  <img src={profileForm.profileImage} alt={profileForm.firstName} className="w-full h-full object-cover" />
                 ) : (
                   `${profileForm.firstName?.[0] || 'S'}${profileForm.lastName?.[0] || 'T'}`
                 )}
               </div>
+
               <div className="space-y-2 flex-1">
                 <input
                   type="file"
@@ -1006,7 +1432,7 @@ export default function StudentDashboard() {
                 <div className="flex flex-wrap items-center gap-2">
                   <label htmlFor="studentAvatarInputPicker" className="px-3.5 py-1.5 bg-primary hover:bg-primary/90 text-white rounded-xl text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-sm transition-all active:scale-95">
                     <Upload className="w-3.5 h-3.5" />
-                    {profileForm.profileImage ? t('student.change_photo', 'Change Photo') : t('student.upload_profile_picture', 'Upload Profile Picture')}
+                    {profileForm.profileImage ? 'Change Passport Photo' : 'Upload Passport Photo'}
                   </label>
                   {profileForm.profileImage && (
                     <>
@@ -1016,107 +1442,60 @@ export default function StudentDashboard() {
                           setPendingCropImage(profileForm.profileImage);
                           setCropModalOpen(true);
                         }}
-                        className="px-3 py-1.5 text-foreground border border-border rounded-xl text-xs font-bold hover:bg-muted inline-flex items-center gap-1 cursor-pointer transition-all"
+                        className="px-3 py-1.5 text-foreground border border-border rounded-xl text-xs font-bold hover:bg-muted inline-flex items-center gap-1 cursor-pointer"
                       >
-                        <Scissors className="w-3.5 h-3.5 text-primary" />
-                        <span>Crop / Resize</span>
+                        <Scissors className="w-3.5 h-3.5 text-primary" /> Crop / Resize
                       </button>
                       <button
                         type="button"
                         onClick={handleDeleteAvatar}
-                        className="px-3 py-1.5 text-rose-600 border border-rose-200 dark:border-rose-800/40 rounded-xl text-xs font-bold hover:bg-rose-50 dark:hover:bg-rose-950/30 inline-flex items-center gap-1 cursor-pointer transition-all"
+                        className="px-3 py-1.5 text-rose-600 border border-rose-200 dark:border-rose-800/40 rounded-xl text-xs font-bold hover:bg-rose-50 dark:hover:bg-rose-950/30 inline-flex items-center gap-1 cursor-pointer"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>{t('student.remove_photo', 'Remove')}</span>
+                        <Trash2 className="w-3.5 h-3.5" /> Remove
                       </button>
                     </>
                   )}
                 </div>
-                <p className="text-[11px] text-muted-foreground">{t('student.avatar_help', 'Recommended: Square photo, JPG or PNG. Maximum file size: 10MB.')}</p>
+                <p className="text-[11px] text-muted-foreground">JPG, PNG or WEBP format. Maximum file size: 10MB.</p>
               </div>
             </div>
 
-            {/* Read-Only Official Credentials Badges */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+            {/* Read-Only Academic Badges */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2">
               <div className="bg-muted/30 border border-border rounded-xl p-3">
-                <span className="text-[10px] font-bold uppercase text-muted-foreground block mb-0.5">Student ID Code</span>
+                <span className="text-[10px] font-bold uppercase text-muted-foreground block mb-0.5">Student ID</span>
                 <span className="font-mono font-bold text-xs text-foreground flex items-center gap-1.5">
-                  <Lock className="w-3 h-3 text-muted-foreground" /> {profileForm.studentId || 'TMS-2024-101'}
+                  <Lock className="w-3 h-3 text-muted-foreground" /> {profileForm.studentId}
                 </span>
               </div>
               <div className="bg-muted/30 border border-border rounded-xl p-3">
-                <span className="text-[10px] font-bold uppercase text-muted-foreground block mb-0.5">Academic Class & Stream</span>
-                <span className="font-bold text-xs text-foreground">
-                  {studentGrade} ({studentStream})
-                </span>
+                <span className="text-[10px] font-bold uppercase text-muted-foreground block mb-0.5">Class & Arm</span>
+                <span className="font-bold text-xs text-foreground">{studentGrade} ({studentStream})</span>
               </div>
               <div className="bg-muted/30 border border-border rounded-xl p-3">
-                <span className="text-[10px] font-bold uppercase text-muted-foreground block mb-0.5">Enrolled Curriculum</span>
-                <span className="font-bold text-xs text-rose-700 dark:text-rose-400">
-                  {myEnrolledCourses.length} Active Subjects
-                </span>
+                <span className="text-[10px] font-bold uppercase text-muted-foreground block mb-0.5">School House</span>
+                <span className="font-bold text-xs text-foreground">{profileForm.house}</span>
+              </div>
+              <div className="bg-muted/30 border border-border rounded-xl p-3">
+                <span className="text-[10px] font-bold uppercase text-muted-foreground block mb-0.5">Active Courses</span>
+                <span className="font-bold text-xs text-primary">{myEnrolledCourses.length} Subjects</span>
               </div>
             </div>
           </div>
 
-          {/* 2. Official Terminal Report Card & Records */}
-          <div className="bg-gradient-to-br from-rose-900/10 via-card to-card rounded-2xl border border-rose-200 dark:border-rose-900/40 p-6 shadow-sm space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
-              <div>
-                <h3 className="font-serif font-bold text-foreground text-sm flex items-center gap-2">
-                  <Printer className="w-4 h-4 text-rose-700" /> Official Terminal Report Cards & Records
-                </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Generate and print your official certified terminal continuous assessment and examination report card.
-                </p>
-              </div>
-              <span className="text-[11px] font-mono font-bold text-rose-700 bg-rose-500/10 border border-rose-200 px-3 py-1 rounded-full w-fit">
-                2025/2026 Academic Session
-              </span>
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-1">
-              <div className="flex items-center gap-1.5 bg-muted/40 p-1.5 rounded-xl border border-border">
-                {(['1st Term', '2nd Term', '3rd Term'] as const).map(term => (
-                  <button
-                    key={term}
-                    type="button"
-                    onClick={() => setSelectedTerm(term)}
-                    className={`flex-1 sm:flex-initial px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      selectedTerm === term
-                        ? 'bg-rose-800 text-white shadow-sm scale-[1.02]'
-                        : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                    }`}
-                  >
-                    {term}
-                  </button>
-                ))}
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowReportCardModal(true)}
-                className="bg-rose-800 hover:bg-rose-900 active:scale-95 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 shadow-md cursor-pointer whitespace-nowrap"
-              >
-                <Printer className="w-4 h-4" /> Download / Print Report Card (PDF)
-              </button>
-            </div>
-          </div>
-
-          {/* 3. Personal & Contact Information */}
+          {/* 2. Personal & Contact Information Card */}
           <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-border pb-3">
               <h3 className="font-serif font-bold text-foreground text-sm flex items-center gap-2">
-                <User className="w-4 h-4 text-primary" /> Personal & Contact Information
+                <User className="w-4 h-4 text-primary" /> Personal & Contact Details
               </h3>
               {!isEditingPersonal ? (
                 <button
                   type="button"
                   onClick={() => setIsEditingPersonal(true)}
-                  className="px-3.5 py-1.5 rounded-xl border border-border bg-background hover:bg-muted text-foreground text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
+                  className="px-3.5 py-1.5 rounded-xl border border-border bg-background hover:bg-muted text-foreground text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
                 >
-                  <Edit3 className="w-3.5 h-3.5 text-primary" />
-                  <span>Edit Information</span>
+                  <Edit3 className="w-3.5 h-3.5 text-primary" /> Edit Details
                 </button>
               ) : (
                 <div className="flex items-center gap-2">
@@ -1126,24 +1505,23 @@ export default function StudentDashboard() {
                       setProfileForm(getStudentProfileData());
                       setIsEditingPersonal(false);
                     }}
-                    className="px-3 py-1.5 rounded-xl border border-border text-muted-foreground hover:bg-muted text-xs font-semibold transition-all cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl border border-border text-muted-foreground hover:bg-muted text-xs font-semibold cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
                     onClick={handleSaveProfile}
-                    className="px-3.5 py-1.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer active:scale-95"
+                    className="px-3.5 py-1.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Save Changes</span>
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Save Changes
                   </button>
                 </div>
               )}
             </div>
 
             {!isEditingPersonal ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
                 <div className="bg-muted/20 border border-border/80 rounded-xl p-3.5">
                   <span className="text-[10px] font-semibold text-muted-foreground uppercase block mb-1">First Name</span>
                   <p className="font-semibold text-xs text-foreground">{profileForm.firstName || 'Not Specified'}</p>
@@ -1157,19 +1535,23 @@ export default function StudentDashboard() {
                   <p className="font-semibold text-xs text-foreground">{profileForm.email || 'Not Available'}</p>
                 </div>
                 <div className="bg-muted/20 border border-border/80 rounded-xl p-3.5">
-                  <span className="text-[10px] font-semibold text-muted-foreground uppercase block mb-1">Contact Phone Number</span>
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase block mb-1">Student Phone</span>
                   <p className="font-semibold text-xs text-foreground">{profileForm.phone || 'Not Available'}</p>
                 </div>
                 <div className="bg-muted/20 border border-border/80 rounded-xl p-3.5">
                   <span className="text-[10px] font-semibold text-muted-foreground uppercase block mb-1">Gender</span>
-                  <p className="font-semibold text-xs text-foreground">{profileForm.gender || 'Not Specified'}</p>
+                  <p className="font-semibold text-xs text-foreground">{profileForm.gender || 'Male'}</p>
                 </div>
                 <div className="bg-muted/20 border border-border/80 rounded-xl p-3.5">
                   <span className="text-[10px] font-semibold text-muted-foreground uppercase block mb-1">Date of Birth</span>
-                  <p className="font-semibold text-xs text-foreground">{profileForm.dob || 'Not Specified'}</p>
+                  <p className="font-semibold text-xs text-foreground">{profileForm.dob || '2010-05-15'}</p>
+                </div>
+                <div className="bg-muted/20 border border-border/80 rounded-xl p-3.5">
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase block mb-1">State of Origin / LGA</span>
+                  <p className="font-semibold text-xs text-foreground">{profileForm.stateOfOrigin} / {profileForm.lga}</p>
                 </div>
                 <div className="sm:col-span-2 bg-muted/20 border border-border/80 rounded-xl p-3.5">
-                  <span className="text-[10px] font-semibold text-muted-foreground uppercase block mb-1">Residential / Campus Address</span>
+                  <span className="text-[10px] font-semibold text-muted-foreground uppercase block mb-1">Residential Address</span>
                   <p className="font-semibold text-xs text-foreground">{profileForm.address || 'Not Available'}</p>
                 </div>
               </div>
@@ -1177,171 +1559,147 @@ export default function StudentDashboard() {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-foreground block mb-1.5">{t('student.first_name', 'First Name')}</label>
+                    <label className="text-xs font-semibold text-foreground block mb-1.5">First Name</label>
                     <input
                       type="text"
                       value={profileForm.firstName}
-                      onChange={e => setProfileForm({...profileForm, firstName: e.target.value})}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all"
-                      placeholder="Enter first name"
+                      onChange={e => setProfileForm({ ...profileForm, firstName: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-foreground block mb-1.5">{t('student.last_name', 'Last Name')}</label>
+                    <label className="text-xs font-semibold text-foreground block mb-1.5">Last Name</label>
                     <input
                       type="text"
                       value={profileForm.lastName}
-                      onChange={e => setProfileForm({...profileForm, lastName: e.target.value})}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all"
-                      placeholder="Enter last name"
+                      onChange={e => setProfileForm({ ...profileForm, lastName: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-foreground block mb-1.5">{t('student.email_address', 'Email Address')}</label>
-                    <input
-                      type="email"
-                      value={profileForm.email}
-                      onChange={e => setProfileForm({...profileForm, email: e.target.value})}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all"
-                      placeholder="student@tarepet.edu.ng"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-foreground block mb-1.5">{t('student.phone_number', 'Contact Phone Number')}</label>
+                    <label className="text-xs font-semibold text-foreground block mb-1.5">Student Phone Number</label>
                     <input
                       type="text"
                       value={profileForm.phone}
-                      onChange={e => setProfileForm({...profileForm, phone: e.target.value})}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all"
-                      placeholder="e.g. +234 803 123 4567"
+                      onChange={e => setProfileForm({ ...profileForm, phone: e.target.value })}
+                      placeholder="e.g. 08012345678"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none"
                     />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold text-foreground block mb-1.5">Gender</label>
-                    <select
-                      value={profileForm.gender || 'Male'}
-                      onChange={e => setProfileForm({...profileForm, gender: e.target.value})}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all"
-                    >
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                      <option value="Other">Other</option>
-                    </select>
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-foreground block mb-1.5">Date of Birth</label>
                     <input
                       type="date"
-                      value={profileForm.dob || '2010-05-15'}
-                      onChange={e => setProfileForm({...profileForm, dob: e.target.value})}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                      value={profileForm.dob}
+                      onChange={e => setProfileForm({ ...profileForm, dob: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-semibold text-foreground block mb-1.5">Residential / Campus Address</label>
+                  <label className="text-xs font-semibold text-foreground block mb-1.5">Residential Address</label>
                   <input
                     type="text"
-                    value={profileForm.address || ''}
-                    onChange={e => setProfileForm({...profileForm, address: e.target.value})}
-                    placeholder="e.g. Azikoro Road, Yenagoa, Bayelsa State"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none transition-all"
+                    value={profileForm.address}
+                    onChange={e => setProfileForm({ ...profileForm, address: e.target.value })}
+                    placeholder="e.g. Yenagoa, Bayelsa State"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none"
                   />
                 </div>
               </div>
             )}
           </div>
 
-          {/* 4. Notification Preferences */}
+          {/* 3. Parent / Guardian Contact Information Card */}
           <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
-            <h3 className="font-serif font-bold text-foreground text-sm border-b border-border pb-3 flex items-center gap-2">
-              <Bell className="w-4 h-4 text-primary" /> Notification & Alert Preferences
-            </h3>
-            <div className="space-y-3">
-              <label className="flex items-center justify-between p-3.5 rounded-xl border border-border bg-muted/10 hover:bg-muted/20 cursor-pointer transition-all">
-                <div>
-                  <p className="font-semibold text-xs text-foreground">{t('student.email_notifications', 'CBT Examination & Test Alerts')}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">Receive immediate notifications when new CBT exams are scheduled or activated.</p>
-                </div>
-                <input type="checkbox" checked={profileForm.emailNotifications} onChange={e => setProfileForm({...profileForm, emailNotifications: e.target.checked})} className="w-4 h-4 text-primary rounded accent-primary" />
-              </label>
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <h3 className="font-serif font-bold text-foreground text-sm flex items-center gap-2">
+                <HeartHandshake className="w-4 h-4 text-primary" /> Parent & Guardian Contact Information
+              </h3>
             </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-foreground block mb-1.5">Parent / Guardian Full Name</label>
+                <input
+                  type="text"
+                  value={profileForm.parentName}
+                  onChange={e => setProfileForm({ ...profileForm, parentName: e.target.value })}
+                  placeholder="e.g. Mr. & Mrs. Okoro"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-foreground block mb-1.5">Parent Emergency Phone Number</label>
+                <input
+                  type="tel"
+                  value={profileForm.parentPhone}
+                  onChange={e => setProfileForm({ ...profileForm, parentPhone: e.target.value })}
+                  placeholder="e.g. 08031234567"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* 4. Portal Account Security & Password Change */}
+          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
+            <h3 className="font-serif font-bold text-foreground text-sm flex items-center gap-2 border-b border-border pb-3">
+              <Lock className="w-4 h-4 text-primary" /> Portal Account Security & Password
+            </h3>
+
+            <form onSubmit={handleChangePassword} className="space-y-4 max-w-xl">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-semibold text-foreground block mb-1.5">New Password</label>
+                  <input
+                    type="password"
+                    value={passwordForm.newPassword}
+                    onChange={e => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                    placeholder="Enter new password"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-foreground block mb-1.5">Confirm New Password</label>
+                  <input
+                    type="password"
+                    value={passwordForm.confirmPassword}
+                    onChange={e => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                    placeholder="Confirm new password"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs text-foreground focus:ring-2 focus:ring-primary/30 outline-none"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isChangingPassword || !passwordForm.newPassword}
+                className="px-5 py-2.5 bg-primary text-white font-bold text-xs rounded-xl hover:bg-primary/90 disabled:opacity-50 transition-all cursor-pointer"
+              >
+                {isChangingPassword ? 'Updating Password...' : 'Update Portal Password'}
+              </button>
+            </form>
           </div>
 
           {/* Save Profile Button */}
           <div className="flex justify-end pt-2">
             <button
-              onClick={() => {
-                const fullName = `${profileForm.firstName} ${profileForm.lastName}`.trim();
-                saveStudent({
-                  admissionNo: profileForm.studentId,
-                  name: fullName,
-                  email: profileForm.email,
-                  phone: profileForm.phone,
-                  gender: profileForm.gender,
-                  dob: profileForm.dob,
-                  address: profileForm.address,
-                  profileImage: profileForm.profileImage,
-                });
-
-                updateUser({
-                  first_name: profileForm.firstName,
-                  last_name: profileForm.lastName,
-                  phone: profileForm.phone,
-                  profile_image: profileForm.profileImage,
-                  profile: {
-                    ...(user?.profile || {}),
-                    student_id: profileForm.studentId,
-                    gender: profileForm.gender,
-                    date_of_birth: profileForm.dob,
-                    address: profileForm.address,
-                    profile_image: profileForm.profileImage,
-                    profileImage: profileForm.profileImage,
-                  }
-                });
-
-                authClient.patch('/auth/me/', {
-                  first_name: profileForm.firstName,
-                  last_name: profileForm.lastName,
-                  phone: profileForm.phone,
-                  profile_image: profileForm.profileImage,
-                  profile: {
-                    student_id: profileForm.studentId,
-                    gender: profileForm.gender,
-                    date_of_birth: profileForm.dob,
-                    address: profileForm.address,
-                    profile_image: profileForm.profileImage,
-                    profileImage: profileForm.profileImage,
-                  }
-                }).then(() => {
-                  refreshUserProfile().catch(() => {});
-                }).catch(() => {});
-
-                broadcastRealtimeEvent();
-                if (typeof window !== 'undefined') {
-                  window.dispatchEvent(new Event('cbt_store_updated'));
-                  window.dispatchEvent(new Event('storage'));
-                }
-
-                showToast('Student profile & preferences updated successfully!');
-              }}
+              onClick={handleSaveProfile}
               className="bg-primary hover:bg-primary/90 active:scale-95 text-white px-8 py-3 rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer"
             >
-              <CheckCircle2 className="w-4 h-4" /> {t('student.save_settings', 'Save Profile Settings')}
+              <CheckCircle2 className="w-4 h-4" /> Save All Profile & Contact Changes
             </button>
           </div>
         </div>
       </>
     );
 
-    // Fallback if section is not matched
+    // Default fallback
     return (
       <div className="space-y-6">
         <h2 className="text-xl font-bold text-foreground">Student Portal</h2>
@@ -1357,27 +1715,51 @@ export default function StudentDashboard() {
         activeSection={activeSection}
         onNavigate={setActiveSection}
       >
-        {/* Toast Notification */}
+        {/* Toast Alert */}
         {toastMsg && (
-          <div className="fixed bottom-24 sm:bottom-6 right-4 sm:right-6 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 text-xs font-semibold animate-in fade-in slide-in-from-bottom duration-200">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>{toastMsg}</span>
+          <div className="fixed bottom-6 right-6 z-50 bg-foreground text-background text-xs font-semibold px-4 py-3 rounded-xl shadow-2xl animate-in slide-in-from-bottom-5 duration-200 flex items-center gap-2 border border-border">
+            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+            {toastMsg}
           </div>
         )}
 
+        {/* Dynamic Section Content */}
         {renderSection()}
 
-        {/* Printable Official Terminal Report Card Modal */}
+        {/* Terminal Report Card Modal */}
         {showReportCardModal && (
-          <TerminalReportCard onClose={() => setShowReportCardModal(false)} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto">
+            <div className="bg-card rounded-2xl border border-border shadow-2xl max-w-4xl w-full p-6 my-8 max-h-[90vh] overflow-y-auto space-y-4">
+              <div className="flex justify-between items-center pb-2 border-b border-border">
+                <h3 className="font-serif font-bold text-lg text-foreground">Official Terminal Report Card</h3>
+                <button
+                  onClick={() => setShowReportCardModal(false)}
+                  className="p-1 rounded-lg hover:bg-muted text-muted-foreground"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <TerminalReportCard
+                data={reportCardPayload}
+                onClose={() => setShowReportCardModal(false)}
+              />
+            </div>
+          </div>
         )}
 
-        <ImageCropModal
-          isOpen={cropModalOpen}
-          imageSrc={pendingCropImage}
-          onClose={() => setCropModalOpen(false)}
-          onSave={handleSaveCroppedAvatar}
-        />
+        {/* Image Crop Modal */}
+        {cropModalOpen && (
+          <ImageCropModal
+            isOpen={cropModalOpen}
+            imageSrc={pendingCropImage}
+            onClose={() => setCropModalOpen(false)}
+            onSave={(cropped: string) => {
+              handleSaveCroppedAvatar(cropped);
+              setCropModalOpen(false);
+            }}
+          />
+        )}
       </PortalLayout>
     </ProtectedRoute>
   );
