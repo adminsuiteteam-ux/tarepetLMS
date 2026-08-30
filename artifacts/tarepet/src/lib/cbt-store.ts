@@ -1843,7 +1843,25 @@ export async function syncExamsWithBackend(): Promise<CBTExam[]> {
         }));
         
         const local = loadSavedExams();
-        const merged = [...mappedExams];
+        const merged = mappedExams.map(m => {
+          const loc = local.find(l => l.id === m.id);
+          if (loc) {
+            // Preserve locally approved/active/published status if backend returned pending/draft
+            const preferStatus = (loc.status && loc.status !== 'PENDING' && loc.status !== 'DRAFT') ? loc.status : (m.status || loc.status);
+            return {
+              ...m,
+              status: preferStatus,
+              rejection_reason: loc.rejection_reason || m.rejection_reason,
+              results_released: loc.results_released ?? m.results_released,
+              questions: (loc.questions && loc.questions.length > 0) ? loc.questions : m.questions,
+              class: loc.class || m.class,
+              stream: loc.stream || m.stream,
+              course_name: loc.course_name || m.course_name,
+              course_code: loc.course_code || m.course_code,
+            };
+          }
+          return m;
+        });
         for (const loc of local) {
           if (!merged.some(m => m.id === loc.id)) {
             merged.push(loc);
