@@ -236,14 +236,21 @@ class UserSerializer(serializers.ModelSerializer):
                 'medical_conditions': 'medical_conditions',
                 'allergies': 'allergies',
                 'emergency_contact': 'emergency_contact',
+                'emergencyContact': 'emergency_contact',
                 'address': 'address',
+                'residential_address': 'address',
+                'residentialAddress': 'address',
                 'state_of_origin': 'state_of_origin',
                 'stateOfOrigin': 'state_of_origin',
                 'lga': 'lga',
                 'parent_name': 'parent_name',
                 'parentName': 'parent_name',
+                'parent_guardian_name': 'parent_name',
+                'guardian_name': 'parent_name',
                 'parent_phone': 'parent_phone',
                 'parentPhone': 'parent_phone',
+                'emergency_phone': 'parent_phone',
+                'emergencyPhone': 'parent_phone',
                 'programme': 'programme',
                 'study_mode': 'study_mode',
                 'studyMode': 'study_mode',
@@ -260,6 +267,8 @@ class UserSerializer(serializers.ModelSerializer):
                                 setattr(s_prof, attr, parsed_d)
                         else:
                             setattr(s_prof, attr, val)
+            if not s_prof.emergency_contact and s_prof.parent_phone:
+                s_prof.emergency_contact = s_prof.parent_phone
             s_prof.save()
 
         elif instance.role == User.Role.PARENT:
@@ -396,39 +405,39 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             'email': {'validators': []}
         }
 
-    def create(self, validated_data):
-        role = validated_data.get('role', User.Role.STUDENT)
-        first_name = validated_data.get('first_name', '').strip()
-        last_name = validated_data.get('last_name', '').strip()
-        email = validated_data.get('email', '').strip().lower()
+        raw_input = getattr(self, 'initial_data', {})
+        raw_data = raw_input if isinstance(raw_input, dict) else {}
+        prof_input = raw_data.get('profile', {})
+        raw_prof = prof_input if isinstance(prof_input, dict) else {}
+        merged_source = {**raw_prof, **raw_data, **validated_data}
 
-        # Extract student profile extra fields
-        grade_val = validated_data.pop('grade_level', None) or validated_data.pop('grade', 'SS1')
-        stream_val = validated_data.pop('stream', '')
-        house_val = validated_data.pop('house', '')
-        emerg_val = validated_data.pop('emergency_contact', '')
-        state_val = validated_data.pop('state_of_origin', None) or validated_data.pop('stateOfOrigin', '')
-        lga_val = validated_data.pop('lga', '')
-        p_name_val = validated_data.pop('parent_name', None) or validated_data.pop('parentName', '')
-        p_phone_val = validated_data.pop('parent_phone', None) or validated_data.pop('parentPhone', '')
-        prog_val = validated_data.pop('programme', '')
-        study_val = validated_data.pop('study_mode', None) or validated_data.pop('studyMode', 'Full Time')
+        # Extract student profile extra fields robustly
+        grade_val = merged_source.get('grade_level') or merged_source.get('grade') or 'SS1'
+        stream_val = merged_source.get('stream') or ''
+        house_val = merged_source.get('house') or ''
+        emerg_val = merged_source.get('emergency_contact') or merged_source.get('emergencyContact') or ''
+        state_val = merged_source.get('state_of_origin') or merged_source.get('stateOfOrigin') or ''
+        lga_val = merged_source.get('lga') or ''
+        p_name_val = merged_source.get('parent_name') or merged_source.get('parentName') or merged_source.get('parent_guardian_name') or merged_source.get('guardian_name') or ''
+        p_phone_val = merged_source.get('parent_phone') or merged_source.get('parentPhone') or merged_source.get('emergency_phone') or merged_source.get('emergencyPhone') or merged_source.get('phone') or ''
+        prog_val = merged_source.get('programme') or ''
+        study_val = merged_source.get('study_mode') or merged_source.get('studyMode') or 'Full Time'
 
         # Extract teacher profile extra fields
-        dept = validated_data.pop('department', None) or validated_data.pop('teachingDivision', 'Academic Department')
-        spec = validated_data.pop('specialization', '')
-        qual = validated_data.pop('qualifications', None) or validated_data.pop('qualification', '')
-        subs = validated_data.pop('subjects_taught', None) or validated_data.pop('subjectsAssigned', [])
-        hire = parse_date_safe(validated_data.pop('hire_date', None) or validated_data.pop('joined', None))
-        gen = validated_data.pop('gender', '')
-        dob_val = parse_date_safe(validated_data.pop('date_of_birth', None) or validated_data.pop('dob', None))
-        addr = validated_data.pop('address', '')
-        sal = validated_data.pop('salary', '')
-        bank = validated_data.pop('bank_name', None) or validated_data.pop('bankName', '')
-        acct = validated_data.pop('account_number', None) or validated_data.pop('accountNumber', '')
-        form_tch = validated_data.pop('form_teacher_of', None) or validated_data.pop('formTeacherOf', '')
-        prof_img = validated_data.pop('profile_image', None) or validated_data.pop('profileImage', '')
-        bio_val = validated_data.pop('bio', '')
+        dept = merged_source.get('department') or merged_source.get('teachingDivision') or 'Academic Department'
+        spec = merged_source.get('specialization') or ''
+        qual = merged_source.get('qualifications') or merged_source.get('qualification') or ''
+        subs = merged_source.get('subjects_taught') or merged_source.get('subjectsAssigned') or []
+        hire = parse_date_safe(merged_source.get('hire_date') or merged_source.get('joined'))
+        gen = merged_source.get('gender') or 'Male'
+        dob_val = parse_date_safe(merged_source.get('date_of_birth') or merged_source.get('dob'))
+        addr = merged_source.get('address') or merged_source.get('residential_address') or merged_source.get('residentialAddress') or ''
+        sal = merged_source.get('salary') or ''
+        bank = merged_source.get('bank_name') or merged_source.get('bankName') or ''
+        acct = merged_source.get('account_number') or merged_source.get('accountNumber') or ''
+        form_tch = merged_source.get('form_teacher_of') or merged_source.get('formTeacherOf') or ''
+        prof_img = merged_source.get('profile_image') or merged_source.get('profileImage') or ''
+        bio_val = merged_source.get('bio') or ''
 
         # Enforce email format: firstname.surname@tarepet.com for Student & Teacher
         if not email or '@' not in email:
@@ -440,12 +449,18 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
                 email = email or "user@tarepet.com"
 
         # Determine Student ID / Teacher ID and Password
-        password = validated_data.get('password')
-        custom_stu_id = validated_data.pop('student_id', None)
+        password = validated_data.get('password') or raw_data.get('password')
+        custom_stu_id = (
+            merged_source.get('student_id') or
+            merged_source.get('studentId') or
+            merged_source.get('code') or
+            merged_source.get('admissionNo') or
+            merged_source.get('admission_number')
+        )
         custom_tch_id = (
-            validated_data.pop('teacher_id', None) or
-            validated_data.pop('staffId', None) or
-            validated_data.pop('staff_id', None)
+            merged_source.get('teacher_id') or
+            merged_source.get('staffId') or
+            merged_source.get('staff_id')
         )
 
         if role == User.Role.STUDENT:
@@ -472,8 +487,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         if user:
             user.first_name = first_name or user.first_name
             user.last_name = last_name or user.last_name
-            if validated_data.get('phone'):
-                user.phone = validated_data.get('phone')
+            if merged_source.get('phone'):
+                user.phone = merged_source.get('phone')
             if prof_img:
                 user.profile_image = prof_img
             if password:
@@ -486,7 +501,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
                 password=password,
                 first_name=first_name,
                 last_name=last_name,
-                phone=validated_data.get('phone', ''),
+                phone=merged_source.get('phone', ''),
                 role=role,
                 profile_image=prof_img or None,
             )
@@ -506,13 +521,13 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
                     'stream': stream_val,
                     'gender': gen,
                     'house': house_val,
-                    'emergency_contact': emerg_val or p_phone_val,
+                    'emergency_contact': emerg_val or p_phone_val or user.phone,
                     'date_of_birth': dob_val,
                     'address': addr,
                     'state_of_origin': state_val,
                     'lga': lga_val,
                     'parent_name': p_name_val,
-                    'parent_phone': p_phone_val,
+                    'parent_phone': p_phone_val or emerg_val or user.phone,
                     'programme': prog_val,
                     'study_mode': study_val,
                     'profile_image': prof_img or '',

@@ -2867,18 +2867,18 @@ export default function AdminDashboard() {
               studentId: autoCode,
               name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
               email: u.email,
-              phone: u.phone || prof.phone || prof.parent_phone || '',
-              gender: prof.gender || 'Male',
+              phone: u.phone || prof.phone || prof.parent_phone || prof.parentPhone || prof.emergency_phone || prof.emergency_contact || '',
+              gender: prof.gender || (u as any).gender || 'Male',
               grade: prof.grade_level || prof.grade || 'SS1',
               stream: prof.stream || 'Science',
               house: prof.house || '',
-              dob: prof.date_of_birth || prof.dob || '',
+              dob: prof.date_of_birth || prof.dob || (u as any).dob || '',
               country: prof.country || 'Nigeria',
               stateOfOrigin: prof.state_of_origin || prof.stateOfOrigin || 'Bayelsa',
               lga: prof.lga || 'Yenagoa',
-              address: prof.address || '',
-              parentName: prof.parent_name || prof.parentName || '',
-              parentPhone: prof.parent_phone || prof.parentPhone || prof.emergency_contact || '',
+              address: prof.address || prof.residential_address || (u as any).address || '',
+              parentName: prof.parent_name || prof.parentName || prof.parent_guardian_name || (u as any).parent_name || (u as any).parentName || '',
+              parentPhone: prof.parent_phone || prof.parentPhone || prof.emergency_phone || prof.emergencyPhone || prof.emergency_contact || (u as any).parent_phone || (u as any).parentPhone || u.phone || '',
               programme: prof.programme || '',
               studyMode: prof.study_mode || prof.studyMode || 'Full Time',
               status: u.is_active ? 'Active' : 'Inactive',
@@ -3017,7 +3017,13 @@ export default function AdminDashboard() {
   const handleSaveStudentRealtime = async (updated: any) => {
     const saved = await saveStudent(updated);
     setStudentsList(getStoredStudents());
-    if (selectedUser?.id === updated.id || (selectedUser?.admissionNo && selectedUser?.admissionNo === updated.admissionNo) || (selectedUser?.studentId && selectedUser?.studentId === updated.studentId)) {
+    if (
+      selectedUser?.id === updated.id || 
+      (selectedUser?.admissionNo && (selectedUser?.admissionNo === updated.admissionNo || selectedUser?.admissionNo === updated.code || selectedUser?.admissionNo === updated.studentId)) || 
+      (selectedUser?.studentId && (selectedUser?.studentId === updated.studentId || selectedUser?.studentId === updated.admissionNo || selectedUser?.studentId === updated.code)) ||
+      (selectedUser?.code && (selectedUser?.code === updated.code || selectedUser?.code === updated.admissionNo || selectedUser?.code === updated.studentId)) ||
+      (selectedUser?.email && updated.email && selectedUser.email.toLowerCase() === updated.email.toLowerCase())
+    ) {
       setSelectedUser(saved || updated);
     }
     if (updated.email) {
@@ -3627,9 +3633,9 @@ export default function AdminDashboard() {
           status: (liveStudent?.status || selectedUser?.status || 'Active'),
           house: (liveStudent?.house || selectedUser?.house || selectedUser?.profile?.house || 'School House'),
           profileImage: liveStudent?.profileImage || selectedUser?.profileImage || selectedUser?.profile_image || selectedUser?.profile?.profile_image || '',
-          parentName: liveStudent?.parentName || selectedUser?.parentName || selectedUser?.profile?.parent_name || selectedUser?.parent_name || '',
-          parentPhone: liveStudent?.parentPhone || selectedUser?.parentPhone || selectedUser?.profile?.parent_phone || selectedUser?.parent_phone || selectedUser?.emergency_contact || selectedUser?.profile?.emergency_contact || selectedUser?.phone || '',
-          address: liveStudent?.address || selectedUser?.address || selectedUser?.profile?.address || '',
+          parentName: liveStudent?.parentName || selectedUser?.parentName || selectedUser?.profile?.parent_name || selectedUser?.profile?.parentName || selectedUser?.parent_name || '',
+          parentPhone: liveStudent?.parentPhone || selectedUser?.parentPhone || selectedUser?.profile?.parent_phone || selectedUser?.profile?.parentPhone || selectedUser?.profile?.emergency_phone || selectedUser?.emergency_phone || selectedUser?.parent_phone || selectedUser?.emergency_contact || selectedUser?.profile?.emergency_contact || selectedUser?.phone || liveStudent?.phone || '',
+          address: liveStudent?.address || selectedUser?.address || selectedUser?.profile?.address || selectedUser?.profile?.residential_address || selectedUser?.residential_address || '',
           email: liveStudent?.email || selectedUser?.email || '',
           gender: liveStudent?.gender || selectedUser?.gender || selectedUser?.profile?.gender || 'Not specified',
           dob: liveStudent?.dob || selectedUser?.dob || selectedUser?.profile?.date_of_birth || selectedUser?.profile?.dob || '',
