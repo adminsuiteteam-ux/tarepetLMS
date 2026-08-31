@@ -3845,8 +3845,8 @@ export default function AdminDashboard() {
                         <span className="font-semibold text-foreground">{u.grade} ({u.stream || 'General'})</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground block text-[10px] uppercase font-bold">Admission Date</span>
-                        <span className="font-semibold text-foreground">{u.joined || '2025/2026 Academic Year'}</span>
+                        <span className="text-muted-foreground block text-[10px] uppercase font-bold">Date of Birth</span>
+                        <span className="font-semibold text-foreground">{u.dob || 'Not Provided'}</span>
                       </div>
                     </div>
                   </div>
