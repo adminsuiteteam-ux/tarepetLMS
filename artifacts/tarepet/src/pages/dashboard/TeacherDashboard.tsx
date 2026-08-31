@@ -11,14 +11,14 @@ import {
   TrendingUp, Play, Lock, MessageSquare, ChevronDown, ChevronRight, ChevronLeft,
   CheckSquare, XCircle, RefreshCw, PenLine, Globe, Layers, ArrowUpRight,
   ClipboardList, Settings, ShieldCheck, User, Bell, Printer, CreditCard, GraduationCap, Zap, School,
-  Save, History, Sparkles, RotateCcw, FileSpreadsheet, Check, Scissors, Sun, Moon, Rocket
+  Save, History, Sparkles, RotateCcw, FileSpreadsheet, Check, Scissors, Sun, Moon, Rocket, Edit3, Unlock, Lightbulb
 } from 'lucide-react';
 
 import { authClient } from '@/lib/api-auth';
 import { addRealtimeNotification } from '@/lib/notifications-store';
 import { ImageCropModal } from '@/components/ui/ImageCropModal';
 import { MobileProfileView } from '@/components/profile/MobileProfileView';
-import { getStoredExams, updateExamStatus, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, getStoredTeachers, saveTeacher, saveStudent, deleteStudent, subscribeToCBTStore, broadcastRealtimeEvent, syncStudentsWithBackend, syncTeachersWithBackend, syncExamsWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, calculateBECEGrade, isSeniorSecondaryClass, CourseBroadsheetScore, PromotionRecord, getPromotionHistory, executeStudentPromotions, getNextProgressiveClass, getArchivedCohortsForTeacher, matchStudentClass } from '@/lib/cbt-store';
+import { getStoredExams, updateExamStatus, deleteCBTExam, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, getStoredTeachers, saveTeacher, saveStudent, deleteStudent, subscribeToCBTStore, broadcastRealtimeEvent, syncStudentsWithBackend, syncTeachersWithBackend, syncExamsWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, calculateBECEGrade, isSeniorSecondaryClass, CourseBroadsheetScore, PromotionRecord, getPromotionHistory, executeStudentPromotions, getNextProgressiveClass, getArchivedCohortsForTeacher, matchStudentClass } from '@/lib/cbt-store';
 import { useTranslation } from '@/lib/i18n';
 import { TerminalReportCard, ReportCardData, SubjectScore } from '@/components/reports/TerminalReportCard';
 import { getTimeGreeting } from '@/lib/utils';
@@ -29,6 +29,12 @@ function getSafeProperty<T>(obj: Record<string | number, T> | null | undefined, 
     return Reflect.get(obj, key);
   }
   return undefined;
+}
+
+function setSafeProperty<T>(obj: Record<string | number, T> | null | undefined, key: string | number, value: T) {
+  if (obj && typeof obj === 'object') {
+    Reflect.set(obj, key, value);
+  }
 }
 
 // ─── Initial Seed Data (Form Teacher & Subject Teacher) ───────
@@ -263,6 +269,8 @@ export default function TeacherDashboard() {
   const [examStartMode, setExamStartMode] = useState<'GENERAL' | 'INDIVIDUAL'>('GENERAL');
   const [selectedStudentForIndividual, setSelectedStudentForIndividual] = useState<string>('');
   const [previewSubmissionModal, setPreviewSubmissionModal] = useState<any | null>(null);
+  const [previewExamModal, setPreviewExamModal] = useState<any | null>(null);
+  const [previewExamLocked, setPreviewExamLocked] = useState<boolean>(true);
 
   // Broadsheet & Detailed Student Score Table State
   const [selectedBroadsheetStudent, setSelectedBroadsheetStudent] = useState<any | null>(null);
@@ -478,11 +486,11 @@ export default function TeacherDashboard() {
       const nextClass = getNextProgressiveClass(currentClass, student.stream);
       const isPass = avg >= 50;
 
-      initialMap[student.id] = {
+      setSafeProperty(initialMap, student.id, {
         status: isPass ? (nextClass === 'Graduated (Alumni)' ? 'graduated' : 'promoted') : 'repeated',
         toClass: nextClass,
         cumulativeAverage: avg
-      };
+      });
     });
 
     setPromotionSelections(initialMap);
@@ -492,7 +500,7 @@ export default function TeacherDashboard() {
   const handleExecutePromotionSubmit = async (currentClass: string, targetRoster: any[]) => {
     const teacherProfile = getTeacherProfileData();
     const promotionsPayload = targetRoster.map(s => {
-      const sel = promotionSelections[s.id] || {
+      const sel = getSafeProperty(promotionSelections, s.id) || {
         status: 'promoted' as const,
         toClass: getNextProgressiveClass(currentClass, s.stream),
         cumulativeAverage: 75
@@ -1980,7 +1988,7 @@ export default function TeacherDashboard() {
               <h2 className="text-2xl sm:text-3xl font-serif font-bold">
                 {t('teacher.cbt_exam_control', 'CBT Exam Control')}
               </h2>
-              <p className="text-blue-100 text-xs mt-1 max-w-xl">Create, schedule, and manage online CBT examination papers for Senior Secondary students (SS 1 - SS 3).</p>
+              <p className="text-blue-100 text-xs mt-1 max-w-xl">{t('teacher.cbt_exam_sub', 'Create, schedule, and manage online CBT examination papers for Senior Secondary students (SS 1 - SS 3).')}</p>
             </div>
             {isSeniorSecondaryTeacher ? (
               <Link href="/dashboard/cbt-builder">
@@ -1990,7 +1998,7 @@ export default function TeacherDashboard() {
               </Link>
             ) : (
               <div className="bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2.5 rounded-xl text-xs text-blue-100 font-medium">
-                🔒 CBT Builder is restricted to Senior Secondary (SS1 - SS3)
+                {t('teacher.cbt_restricted', '🔒 CBT Builder is restricted to Senior Secondary (SS1 - SS3)')}
               </div>
             )}
           </div>
@@ -2007,7 +2015,7 @@ export default function TeacherDashboard() {
                       selectedExamClass === cls ? 'bg-primary text-white shadow-xs' : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    {cls === 'ALL' ? 'All Classes' : cls}
+                    {cls === 'ALL' ? t('common.all_classes', 'All Classes') : cls}
                   </button>
                 ))}
               </div>
@@ -2020,7 +2028,7 @@ export default function TeacherDashboard() {
                       selectedExamStream === st ? 'bg-emerald-600 text-white shadow-xs' : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    {st === 'ALL' ? 'All Streams' : st}
+                    {st === 'ALL' ? t('common.all_streams', 'All Streams') : st}
                   </button>
                 ))}
               </div>
@@ -2032,12 +2040,12 @@ export default function TeacherDashboard() {
             <div className="bg-slate-50 dark:bg-slate-900/40 border-2 border-slate-300 dark:border-slate-700 rounded-2xl p-5 shadow-sm space-y-3">
               <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-bold text-sm">
                 <FileText className="w-5 h-5 text-slate-600" />
-                <span>Draft Exams In-Progress ({draftExams.length})</span>
+                <span>{t('teacher.draft_exams_title', 'Draft Exams In-Progress')} ({draftExams.length})</span>
                 <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 ml-auto">
-                  ✏️ Draft Papers
+                  ✏️ {t('teacher.draft_papers', 'Draft Papers')}
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground">These exams are being drafted. You can continue adding questions or previewing them before submitting to the Admin.</p>
+              <p className="text-xs text-muted-foreground">{t('teacher.draft_exams_desc', 'These exams are being drafted. You can continue adding questions or previewing them before submitting to the Admin.')}</p>
               <div className="space-y-3 pt-1">
                 {draftExams.map(ex => (
                   <div key={ex.id} className="bg-white dark:bg-card p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
@@ -2045,7 +2053,7 @@ export default function TeacherDashboard() {
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">{ex.class || 'SS1'} {ex.stream || 'Science'}</span>
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-800 border border-slate-300">
-                          Draft ({ex.questions_count || ex.questions?.length || 0} Questions)
+                          {t('teacher.draft_badge', 'Draft')} ({ex.questions_count || ex.questions?.length || 0} {t('teacher.questions', 'Questions')})
                         </span>
                       </div>
                       <h4 className="font-bold text-foreground text-sm">{ex.title}</h4>
@@ -2055,7 +2063,7 @@ export default function TeacherDashboard() {
                       <button
                         className="bg-primary hover:bg-primary/90 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-colors shadow-md flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
                       >
-                        <Plus className="w-4 h-4" /> Resume in CBT Builder
+                        <Plus className="w-4 h-4" /> {t('teacher.resume_in_cbt_builder', 'Resume in CBT Builder')}
                       </button>
                     </Link>
                   </div>
@@ -2077,7 +2085,7 @@ export default function TeacherDashboard() {
               <p className="text-xs text-amber-700">{t('teacher.pending_review_desc', 'These exams have been submitted for approval and are currently awaiting Admin review. You will receive a notification once approved.')}</p>
               <div className="space-y-3 pt-1">
                 {pendingExams.map(ex => (
-                  <div key={ex.id} className="bg-white p-4 rounded-xl border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                  <div key={ex.id} className="bg-white dark:bg-card p-4 rounded-xl border border-amber-200 dark:border-amber-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">{ex.class || 'SS1'} {ex.stream || 'Science'}</span>
@@ -2086,17 +2094,52 @@ export default function TeacherDashboard() {
                         </span>
                       </div>
                       <h4 className="font-bold text-foreground text-sm">{ex.title}</h4>
-                      <p className="text-xs text-muted-foreground">{ex.duration_minutes} mins · {ex.questions_count || ex.questions?.length} Questions · Created by {ex.teacher_name || 'Teacher'}</p>
+                      <p className="text-xs text-muted-foreground">{ex.duration_minutes} mins · {ex.questions_count || ex.questions?.length || 0} Questions · Created by {ex.teacher_name || 'Teacher'}</p>
                     </div>
-                    <button
-                      onClick={() => {
-                        updateExamStatus(ex.id, 'PENDING');
-                        showToast(`Re-sent "${ex.title}" to School Admin for approval!`);
-                      }}
-                      className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-colors shadow-md flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
-                    >
-                      <Send className="w-4 h-4" /> Re-send to Admin
-                    </button>
+                    <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPreviewExamLocked(true);
+                          setPreviewExamModal(ex);
+                        }}
+                        className="bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 font-bold px-3.5 py-2 rounded-xl text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                      >
+                        <Eye className="w-3.5 h-3.5" /> Preview Questions
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updateExamStatus(ex.id, 'PENDING');
+                          showToast(`Re-sent "${ex.title}" to School Admin for approval!`);
+                        }}
+                        className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition-colors shadow-md flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Send className="w-3.5 h-3.5" /> Re-send
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const confirmed = await showConfirm({
+                            title: 'Delete Pending Examination?',
+                            message: `Are you sure you want to delete "${ex.title}"?`,
+                            type: 'confirm',
+                            badge: 'Delete Exam',
+                            confirmText: 'Yes, Delete',
+                            cancelText: 'Cancel'
+                          });
+                          if (confirmed) {
+                            deleteCBTExam(ex.id);
+                            setTeacherExams(getStoredExams());
+                            showToast(`Deleted "${ex.title}".`);
+                          }
+                        }}
+                        className="p-2 text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                        title="Delete Exam"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -2133,19 +2176,56 @@ export default function TeacherDashboard() {
                         </span>
                       </div>
                       <h4 className="font-bold text-foreground text-sm">{ex.title}</h4>
-                      <p className="text-xs text-muted-foreground">{ex.duration_minutes} mins · {ex.questions_count || ex.questions?.length} Questions · Subject: {ex.course_name}</p>
+                      <p className="text-xs text-muted-foreground">{ex.duration_minutes} mins · {ex.questions_count || ex.questions?.length || 0} Questions · Subject: {ex.course_name}</p>
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const records = getExamAttendance(ex.id, ex.class || 'SS1', ex.stream || 'Science');
-                        setExamAttendanceState(records);
-                        setSelectedAttendanceExam(ex);
-                      }}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl text-xs transition-colors shadow-md flex items-center gap-1.5 self-start sm:self-auto ring-2 ring-emerald-400/50 cursor-pointer animate-pulse"
-                    >
-                      <Rocket className="w-4 h-4" /> Publish Exam
-                    </button>
+                    <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPreviewExamLocked(true);
+                          setPreviewExamModal(ex);
+                        }}
+                        className="bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 font-bold px-3 py-2 rounded-xl text-xs transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
+                      >
+                        <Eye className="w-3.5 h-3.5" /> Preview
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const records = getExamAttendance(ex.id, ex.class || 'SS1', ex.stream || 'Science');
+                          setExamAttendanceState(records);
+                          setSelectedAttendanceExam(ex);
+                        }}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition-colors shadow-md flex items-center gap-1.5 ring-2 ring-emerald-400/50 cursor-pointer animate-pulse"
+                      >
+                        <Rocket className="w-4 h-4" /> Publish Exam
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          const confirmed = await showConfirm({
+                            title: 'Delete Approved Examination Paper?',
+                            message: `Are you sure you want to delete "${ex.title}"?`,
+                            type: 'confirm',
+                            badge: 'Delete Exam',
+                            confirmText: 'Yes, Delete',
+                            cancelText: 'Cancel'
+                          });
+                          if (confirmed) {
+                            deleteCBTExam(ex.id);
+                            setTeacherExams(getStoredExams());
+                            showToast(`Deleted "${ex.title}".`);
+                          }
+                        }}
+                        className="p-2 text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                        title="Delete Exam"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -2168,26 +2248,63 @@ export default function TeacherDashboard() {
                       setExamAttendanceState(records);
                       setSelectedAttendanceExam(ex);
                     }}
-                    className="p-4 rounded-xl border border-emerald-200 bg-emerald-500/5 flex items-center justify-between cursor-pointer hover:bg-emerald-500/10 transition-colors"
+                    className="p-4 rounded-xl border border-emerald-200 bg-emerald-500/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-emerald-500/10 transition-colors"
                   >
                     <div>
                       <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 flex items-center gap-1.5 w-fit">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" /> Live in Student Portal
                       </span>
                       <h4 className="font-bold text-foreground text-sm mt-1">{ex.title}</h4>
-                      <p className="text-xs text-muted-foreground">{ex.duration_minutes} mins · {ex.class || 'SS1'} {ex.stream || 'Science'} Students</p>
+                      <p className="text-xs text-muted-foreground">{ex.duration_minutes} mins · {ex.class || 'SS1'} {ex.stream || 'Science'} Students · {ex.questions_count || ex.questions?.length || 0} Questions</p>
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const records = getExamAttendance(ex.id, ex.class || 'SS1', ex.stream || 'Science');
-                        setExamAttendanceState(records);
-                        setSelectedAttendanceExam(ex);
-                      }}
-                      className="text-xs font-bold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 px-3 py-1.5 rounded-xl flex items-center gap-1 transition-colors"
-                    >
-                      <UserCheck className="w-3.5 h-3.5" /> View / Edit Attendance
-                    </button>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPreviewExamLocked(true);
+                          setPreviewExamModal(ex);
+                        }}
+                        className="text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-3 py-1.5 rounded-xl flex items-center gap-1 transition-colors cursor-pointer shadow-2xs"
+                      >
+                        <Eye className="w-3.5 h-3.5" /> Preview Questions
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const records = getExamAttendance(ex.id, ex.class || 'SS1', ex.stream || 'Science');
+                          setExamAttendanceState(records);
+                          setSelectedAttendanceExam(ex);
+                        }}
+                        className="text-xs font-bold text-emerald-700 bg-emerald-100 hover:bg-emerald-200 px-3 py-1.5 rounded-xl flex items-center gap-1 transition-colors cursor-pointer"
+                      >
+                        <UserCheck className="w-3.5 h-3.5" /> View / Edit Attendance
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          const confirmed = await showConfirm({
+                            title: 'Delete Live Active Examination?',
+                            message: `Are you sure you want to delete live exam "${ex.title}"?\n\nThis will immediately remove this exam from the student portal and delete all associated attendance records.`,
+                            type: 'confirm',
+                            badge: 'Delete Live Exam',
+                            confirmText: 'Yes, Delete Live Exam',
+                            cancelText: 'Cancel',
+                          });
+                          if (confirmed) {
+                            deleteCBTExam(ex.id);
+                            setTeacherExams(getStoredExams());
+                            showToast(`Live exam "${ex.title}" deleted.`);
+                          }
+                        }}
+                        className="p-1.5 text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer"
+                        title="Delete Live Exam"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -5103,15 +5220,16 @@ export default function TeacherDashboard() {
                       setPromotionSelections(prev => {
                         const next = { ...prev };
                         Object.keys(next).forEach(id => {
-                          const avg = next[id].cumulativeAverage;
+                          const selItem = getSafeProperty(next, id);
+                          const avg = selItem?.cumulativeAverage || 0;
                           const currentClass = broadsheetClassFilter || formClass || 'JSS 3 Faith';
                           const s = roster.find(r => r.id === id);
                           const dest = getNextProgressiveClass(currentClass, s?.stream);
-                          next[id] = {
-                            ...next[id],
+                          setSafeProperty(next, id, {
                             status: avg >= 50 ? (dest === 'Graduated (Alumni)' ? 'graduated' : 'promoted') : 'repeated',
-                            toClass: avg >= 50 ? dest : currentClass
-                          };
+                            toClass: avg >= 50 ? dest : currentClass,
+                            cumulativeAverage: avg
+                          });
                         });
                         return next;
                       });
@@ -5147,7 +5265,7 @@ export default function TeacherDashboard() {
                       {roster
                         .filter(s => (s.grade || '').toLowerCase().includes((broadsheetClassFilter || formClass || 'JSS 3').toLowerCase()))
                         .map(student => {
-                          const sel = promotionSelections[student.id] || {
+                          const sel = getSafeProperty(promotionSelections, student.id) || {
                             status: 'promoted',
                             toClass: getNextProgressiveClass(broadsheetClassFilter || formClass || 'JSS 3 Faith', student.stream),
                             cumulativeAverage: 75
@@ -5408,7 +5526,211 @@ export default function TeacherDashboard() {
           </div>
         )}
 
-        {/* 🖨️ Terminal Report Card Modal */}
+        {/* 📋 CBT Exam Questions Preview Modal (Read-Only Preview with Unlock & Enable Editing) */}
+        {previewExamModal && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+            <div className="bg-card rounded-3xl border border-border shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+              {/* Header */}
+              <div className="p-5 border-b border-border flex items-center justify-between bg-gradient-to-r from-blue-500/10 via-primary/5 to-transparent">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-md shrink-0">
+                    <Eye className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-serif font-bold text-base text-foreground">
+                        {previewExamModal.title}
+                      </h3>
+                      {previewExamModal.status === 'PENDING' ? (
+                        <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-amber-600" /> Sent for Admin Approval
+                        </span>
+                      ) : previewExamModal.status === 'APPROVED' ? (
+                        <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 flex items-center gap-1">
+                          <Check className="w-3 h-3 text-emerald-600" /> Approved by Admin
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800">
+                          {previewExamModal.status || 'DRAFT'}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Subject: <strong className="text-foreground">{previewExamModal.course_name}</strong> • Class: <strong className="text-foreground">{previewExamModal.class || 'SS1'} {previewExamModal.stream || 'Science'}</strong> • Duration: <strong className="text-foreground">{previewExamModal.duration_minutes || 45} mins</strong> • Total: <strong className="text-primary font-bold">{(previewExamModal.questions || []).length} Questions</strong>
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPreviewExamModal(null)}
+                  className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Status Banner / Mode Bar */}
+              <div className="px-6 py-3 border-b border-border bg-muted/20 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                {previewExamLocked ? (
+                  <div className="flex items-center gap-2 text-xs text-amber-800 dark:text-amber-300">
+                    <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span><strong>Read-Only Preview:</strong> Question editing is locked while awaiting admin approval.</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400">
+                    <Unlock className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span><strong>Editing Enabled:</strong> You can modify questions or resume in CBT Exam Builder.</span>
+                  </div>
+                )}
+
+                {previewExamLocked ? (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const confirmed = await showConfirm({
+                        title: 'Unlock & Enable Question Editing?',
+                        message: `Editing this examination will withdraw its current approval submission and return it to Draft status so you can modify questions.\n\nOnce finished, you can re-submit the updated paper to the Admin.`,
+                        type: 'confirm',
+                        badge: 'Enable Question Editing',
+                        confirmText: 'Yes, Enable Editing',
+                        cancelText: 'Keep in Read-Only Preview',
+                      });
+                      if (confirmed) {
+                        setPreviewExamLocked(false);
+                        const allExams = getStoredExams();
+                        const target = allExams.find(e => e.id === previewExamModal.id);
+                        if (target) {
+                          target.status = 'DRAFT';
+                          updateExamStatus(target.id, 'DRAFT');
+                          setTeacherExams(getStoredExams());
+                          setPreviewExamModal({ ...target });
+                        }
+                        showToast('✏️ Question editing enabled! You can now make changes or edit in CBT Builder.');
+                      }
+                    }}
+                    className="px-4 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" /> Enable Editing / Unlock Questions
+                  </button>
+                ) : (
+                  <Link href="/dashboard/cbt-builder">
+                    <button
+                      type="button"
+                      onClick={() => setPreviewExamModal(null)}
+                      className="px-4 py-1.5 rounded-xl bg-primary text-white text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+                    >
+                      <Rocket className="w-3.5 h-3.5" /> Open Full CBT Builder →
+                    </button>
+                  </Link>
+                )}
+              </div>
+
+              {/* Questions Content */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                {(!previewExamModal.questions || previewExamModal.questions.length === 0) ? (
+                  <div className="text-center py-12 border-2 border-dashed border-border rounded-2xl bg-muted/10 space-y-2">
+                    <Lightbulb className="w-10 h-10 text-muted-foreground/40 mx-auto" />
+                    <h4 className="font-bold text-sm text-foreground">No questions stacked in this exam paper</h4>
+                    <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                      Click "Open in CBT Exam Builder" to start authoring and stacking multiple-choice questions.
+                    </p>
+                  </div>
+                ) : (
+                  previewExamModal.questions.map((q: any, idx: number) => (
+                    <div key={q.id || idx} className="p-4 rounded-2xl border border-border bg-card shadow-2xs space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-2.5">
+                          <span className="w-7 h-7 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">
+                            {idx + 1}
+                          </span>
+                          <div>
+                            <p className="font-semibold text-foreground text-sm leading-relaxed">
+                              {q.question_text}
+                            </p>
+                            {q.image_url && (
+                              <img src={q.image_url} alt="Question Diagram" className="mt-2 max-h-48 rounded-xl border border-border object-contain" />
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-[11px] font-mono font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-lg border border-primary/20 shrink-0">
+                          {q.points || 1} pt(s)
+                        </span>
+                      </div>
+
+                      {/* Options Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                        {[
+                          { key: 'A', text: q.option_a },
+                          { key: 'B', text: q.option_b },
+                          { key: 'C', text: q.option_c },
+                          { key: 'D', text: q.option_d },
+                        ].filter(opt => !!opt.text).map(opt => {
+                          const isCorrect = q.correct_option === opt.key;
+                          return (
+                            <div
+                              key={opt.key}
+                              className={`p-2.5 rounded-xl border text-xs flex items-center justify-between gap-2 ${
+                                isCorrect
+                                  ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-800 dark:text-emerald-300 font-bold'
+                                  : 'bg-muted/30 border-border text-foreground'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2 truncate">
+                                <span className={`w-5 h-5 rounded-lg flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                                  isCorrect ? 'bg-emerald-600 text-white' : 'bg-muted border border-border text-muted-foreground'
+                                }`}>
+                                  {opt.key}
+                                </span>
+                                <span className="truncate">{opt.text}</span>
+                              </div>
+                              {isCorrect && (
+                                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-emerald-200 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-200 shrink-0 flex items-center gap-0.5">
+                                  <Check className="w-3 h-3" /> Correct Key
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {q.explanation && (
+                        <div className="text-xs bg-muted/40 p-3 rounded-xl border border-border/60 text-muted-foreground">
+                          <strong className="text-foreground">Explanation / Solution:</strong> {q.explanation}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-4 border-t border-border bg-muted/10 flex items-center justify-between gap-3">
+                <span className="text-xs text-muted-foreground">
+                  Exam Paper: <strong className="text-foreground">{previewExamModal.title}</strong>
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPreviewExamModal(null)}
+                    className="px-5 py-2.5 rounded-xl border border-border text-xs font-bold text-foreground hover:bg-muted transition-colors cursor-pointer"
+                  >
+                    Close Preview
+                  </button>
+                  <Link href="/dashboard/cbt-builder">
+                    <button
+                      type="button"
+                      onClick={() => setPreviewExamModal(null)}
+                      className="px-5 py-2.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-bold shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Rocket className="w-3.5 h-3.5" /> Launch CBT Exam Builder
+                    </button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {selectedReportCardStudent && (
           <TerminalReportCard
             data={buildReportCardData(selectedReportCardStudent)}

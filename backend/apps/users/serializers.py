@@ -405,6 +405,12 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             'email': {'validators': []}
         }
 
+    def create(self, validated_data):
+        email = validated_data.get('email', '')
+        first_name = validated_data.get('first_name', '')
+        last_name = validated_data.get('last_name', '')
+        role = validated_data.get('role', User.Role.STUDENT)
+
         raw_input = getattr(self, 'initial_data', {})
         raw_data = raw_input if isinstance(raw_input, dict) else {}
         prof_input = raw_data.get('profile', {})
@@ -595,3 +601,4 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
 
         user.refresh_from_db()
         return user
+

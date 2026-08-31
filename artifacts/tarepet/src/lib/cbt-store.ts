@@ -2231,17 +2231,29 @@ function persistAttendance(att: Record<string, CBTAttendanceRecord[]>) {
 export function getStudentsForClass(className: string = 'SS1', stream: string = 'Science'): CBTStudentInfo[] {
   const c = className || 'SS1';
   const s = stream || 'Science';
-  const cClean = c.toLowerCase().trim();
-
   const stored = getStoredStudents();
+  
   const matched = stored.filter(st => {
-    const sGrade = (st.grade || '').toLowerCase().trim();
-    if (!cClean) return true;
-    return sGrade.includes(cClean) || cClean.includes(sGrade);
+    // Check class matching (SS 1 matches SS1, etc.)
+    const matchesClass = matchStudentClass(st.grade, c) || 
+      (st.grade && c && (st.grade.toLowerCase().replace(/\s+/g, '').includes(c.toLowerCase().replace(/\s+/g, '')) || 
+                         c.toLowerCase().replace(/\s+/g, '').includes(st.grade.toLowerCase().replace(/\s+/g, ''))));
+    if (!matchesClass) return false;
+
+    // Check stream matching if stream is specified
+    if (s && s !== 'ALL' && st.stream) {
+      const sNorm = s.toLowerCase().trim();
+      const stStreamNorm = st.stream.toLowerCase().trim();
+      if (sNorm.includes('art') && stStreamNorm.includes('art')) return true;
+      if (sNorm.includes('sci') && (stStreamNorm.includes('sci') || stStreamNorm.includes('stem'))) return true;
+      if (sNorm.includes('comm') && stStreamNorm.includes('comm')) return true;
+      return sNorm === stStreamNorm;
+    }
+    return true;
   });
 
   return matched.map(st => ({
-    studentId: st.code || st.admissionNo || `TMS/${st.id}`,
+    studentId: st.code || st.admissionNo || st.studentId || `TMS/${st.id}`,
     studentName: st.name,
     class: st.grade || c,
     stream: st.stream || s,
@@ -2252,24 +2264,38 @@ export function getStudentsForClass(className: string = 'SS1', stream: string = 
 
 export function getExamAttendance(examId: number, className: string = 'SS1', stream: string = 'Science'): CBTAttendanceRecord[] {
   _examAttendance = loadSavedAttendance();
-  const list = safeGetProp(_examAttendance, examId);
-  if (list && list.length > 0) return list;
-
+  const existingList: CBTAttendanceRecord[] = safeGetProp(_examAttendance, examId) || [];
   const classStudents = getStudentsForClass(className, stream);
-  const seeded: CBTAttendanceRecord[] = classStudents.map(s => ({
-    examId,
-    studentId: s.studentId,
-    studentName: s.studentName,
-    class: s.class,
-    stream: s.stream,
-    markedPresent: false,
-    markedAt: new Date().toISOString(),
-    markedBy: 'Teacher Invigilator'
-  }));
 
-  safeSetProp(_examAttendance, examId, seeded);
+  // Dynamically merge class students with existing records so newly registered students always appear!
+  const merged: CBTAttendanceRecord[] = classStudents.map(s => {
+    const found = existingList.find(r => 
+      (r.studentId && s.studentId && r.studentId.toLowerCase() === s.studentId.toLowerCase()) || 
+      (r.studentName && s.studentName && r.studentName.toLowerCase().trim() === s.studentName.toLowerCase().trim())
+    );
+    if (found) {
+      return {
+        ...found,
+        studentName: s.studentName,
+        class: s.class || found.class,
+        stream: s.stream || found.stream
+      };
+    }
+    return {
+      examId,
+      studentId: s.studentId,
+      studentName: s.studentName,
+      class: s.class,
+      stream: s.stream,
+      markedPresent: false,
+      markedAt: new Date().toISOString(),
+      markedBy: 'Teacher Invigilator'
+    };
+  });
+
+  safeSetProp(_examAttendance, examId, merged);
   persistAttendance(_examAttendance);
-  return seeded;
+  return merged;
 }
 
 export function setStudentExamAttendance(

@@ -4,7 +4,7 @@ import { authClient } from '@/lib/api-auth';
 import { motion } from 'framer-motion';
 import { 
   Plus, Trash2, Send, BookOpen, Clock, ChevronLeft, CheckCircle2,
-  FileText, AlertTriangle, Eye, Users, FlaskConical, Palette, ClipboardList, Rocket, Lightbulb, Lock
+  FileText, AlertTriangle, Eye, Users, FlaskConical, Palette, ClipboardList, Rocket, Lightbulb, Lock, Edit3, Unlock
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { useTranslation } from '@/lib/i18n';
@@ -260,6 +260,7 @@ export default function CBTBuilder() {
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [bulkCsvText, setBulkCsvText] = useState('');
+  const [isLockedPreview, setIsLockedPreview] = useState<boolean>(false);
 
   const [editingQuestionId, setEditingQuestionId] = useState<number | null>(null);
   const [justAddedId, setJustAddedId] = useState<number | null>(null);
@@ -305,9 +306,13 @@ export default function CBTBuilder() {
       };
     }
 
+    // Preserve existing questions from React state or store
+    const currentQList = (questions && questions.length > 0) ? [...questions] : (ex.questions ? [...ex.questions] : []);
+    let updatedQuestions: any[] = [];
+
     if (editingQuestionId) {
       // Update existing question
-      ex.questions = (ex.questions || []).map((q: any) => {
+      updatedQuestions = currentQList.map((q: any) => {
         if (Number(q.id) === Number(editingQuestionId) || String(q.id) === String(editingQuestionId)) {
           return {
             ...q,
@@ -326,8 +331,8 @@ export default function CBTBuilder() {
       });
       setEditingQuestionId(null);
     } else {
-      // Add new question to stack
-      const newQId = Date.now() + Math.floor(Math.random() * 1000);
+      // Add new question to stack with unique ID
+      const newQId = Date.now() + Math.floor(Math.random() * 100000);
       const newQ = {
         id: newQId,
         question_text: newQuestion.question_text.trim(),
@@ -340,19 +345,29 @@ export default function CBTBuilder() {
         explanation: newQuestion.explanation?.trim() || '',
         image_url: newQuestion.image_url?.trim() || '',
       };
-      ex.questions = [...(ex.questions || []), newQ];
+      updatedQuestions = [...currentQList, newQ];
       setJustAddedId(newQId);
       setTimeout(() => setJustAddedId(null), 3000);
     }
 
-    ex.questions_count = ex.questions.length;
+    ex.questions = updatedQuestions;
+    ex.questions_count = updatedQuestions.length;
     await saveCBTExam(ex);
-    setQuestions([...ex.questions]);
+    setQuestions([...updatedQuestions]);
     fetchExams();
     setNewQuestion({ ...EMPTY_QUESTION });
   };
 
   const handleEditQuestion = (q: any) => {
+    if (isLockedPreview) {
+      showAlert({
+        title: 'Preview Mode Locked',
+        message: 'Question editing is locked while the exam is submitted for Admin approval. Click "Enable Editing" first.',
+        type: 'info',
+        badge: 'Read-Only Preview'
+      });
+      return;
+    }
     setEditingQuestionId(q.id);
     setNewQuestion({
       question_text: q.question_text || '',
@@ -374,15 +389,26 @@ export default function CBTBuilder() {
 
   const handleDeleteQuestion = async (qId: number) => {
     if (!selectedExamId) return;
+    if (isLockedPreview) {
+      showAlert({
+        title: 'Preview Mode Locked',
+        message: 'Question deleting is locked while the exam is submitted for Admin approval. Click "Enable Editing" first.',
+        type: 'info',
+        badge: 'Read-Only Preview'
+      });
+      return;
+    }
     const examsList = getStoredExams();
-    const ex = examsList.find(e => Number(e.id) === Number(selectedExamId) || String(e.id) === String(selectedExamId))
+    let ex = examsList.find(e => Number(e.id) === Number(selectedExamId) || String(e.id) === String(selectedExamId))
             || exams.find(e => Number(e.id) === Number(selectedExamId) || String(e.id) === String(selectedExamId));
     if (!ex) return;
 
-    ex.questions = (ex.questions || []).filter((q: any) => Number(q.id) !== Number(qId) && String(q.id) !== String(qId));
-    ex.questions_count = ex.questions.length;
+    const currentQList = (questions && questions.length > 0) ? [...questions] : (ex.questions ? [...ex.questions] : []);
+    const updated = currentQList.filter((q: any) => Number(q.id) !== Number(qId) && String(q.id) !== String(qId));
+    ex.questions = updated;
+    ex.questions_count = updated.length;
     await saveCBTExam(ex);
-    setQuestions([...ex.questions]);
+    setQuestions([...updated]);
     fetchExams();
     if (editingQuestionId === qId) {
       handleCancelEdit();
@@ -766,18 +792,18 @@ export default function CBTBuilder() {
                       <div className="flex gap-2 flex-wrap items-center">
                         {(exam.status === 'DRAFT' || exam.status === 'REJECTED') && (
                           <button
-                            onClick={() => { setSelectedExamId(exam.id); fetchQuestions(exam.id); setView('questions'); }}
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-600 hover:bg-blue-100 transition"
+                            onClick={() => { setSelectedExamId(exam.id); fetchQuestions(exam.id); setIsLockedPreview(false); setView('questions'); }}
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-600 hover:bg-blue-100 transition cursor-pointer"
                           >
                             {t("Edit Questions")}
                           </button>
                         )}
                         {exam.status === 'PENDING' && (
                           <button
-                            onClick={() => { setSelectedExamId(exam.id); fetchQuestions(exam.id); setView('questions'); }}
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300 hover:bg-amber-200 transition flex items-center gap-1"
+                            onClick={() => { setSelectedExamId(exam.id); fetchQuestions(exam.id); setIsLockedPreview(true); setView('questions'); }}
+                            className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200 transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
                           >
-                            <Eye className="w-3.5 h-3.5" /> View Exam Questions
+                            <Eye className="w-3.5 h-3.5" /> Preview Exam Questions (Locked)
                           </button>
                         )}
                         {exam.status === 'APPROVED' && (
@@ -1216,135 +1242,210 @@ export default function CBTBuilder() {
           {/* ── DESKTOP SIDE-BY-SIDE LAYOUT: LHS = Form, RHS = Stacked Questions ── */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 items-start">
 
-          {/* ── LHS: QUESTION AUTHORING / INPUT FORM ── */}
-          <div className="bg-card rounded-2xl shadow-sm p-6 border-2 border-primary/20 space-y-4">
-            <div className="flex items-center justify-between border-b border-border pb-3">
-              <h3 className="font-bold text-foreground text-sm md:text-base flex items-center gap-2">
-                <Plus className="w-5 h-5 text-primary" />
-                {editingQuestionId ? `Edit Question` : `Add Question #${questions.length + 1}`}
-              </h3>
-              {editingQuestionId && (
+          {/* ── LHS: QUESTION AUTHORING / INPUT FORM OR LOCKED PREVIEW CARD ── */}
+          {isLockedPreview ? (
+            <div className="bg-amber-50/80 dark:bg-amber-950/30 border-2 border-amber-300 dark:border-amber-700 rounded-2xl shadow-sm p-6 space-y-5">
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-md shrink-0">
+                  <Lock className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-amber-950 dark:text-amber-200 text-base">
+                    Read-Only Exam Preview Mode
+                  </h3>
+                  <p className="text-xs text-amber-800/80 dark:text-amber-300/80 mt-0.5">
+                    This examination has been submitted for Admin approval. Question editing is currently locked to preserve submitted exam integrity.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-card p-4 rounded-xl border border-amber-200 dark:border-amber-800/60 space-y-2.5 text-xs">
+                <div className="flex justify-between py-1 border-b border-border/50">
+                  <span className="text-muted-foreground">Status:</span>
+                  <span className="font-bold text-amber-700 dark:text-amber-400 uppercase flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-amber-600" /> Sent for Admin Approval
+                  </span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-border/50">
+                  <span className="text-muted-foreground">Class & Stream:</span>
+                  <span className="font-bold text-foreground">{currentExam?.class} {currentExam?.stream}</span>
+                </div>
+                <div className="flex justify-between py-1 border-b border-border/50">
+                  <span className="text-muted-foreground">Subject:</span>
+                  <span className="font-bold text-foreground">{currentExam?.course_name}</span>
+                </div>
+                <div className="flex justify-between py-1">
+                  <span className="text-muted-foreground">Stacked Questions:</span>
+                  <span className="font-bold text-primary">{questions.length} Questions ({totalExamPoints} pts)</span>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-2">
                 <button
                   type="button"
-                  onClick={handleCancelEdit}
-                  className="text-xs font-bold text-muted-foreground hover:text-foreground px-2.5 py-1 rounded-lg border border-border hover:bg-muted"
+                  onClick={async () => {
+                    const confirmed = await showConfirm({
+                      title: 'Unlock & Enable Question Editing?',
+                      message: `Editing this examination will withdraw its current approval submission and return it to Draft status so you can modify questions.\n\nOnce finished, you can re-submit the updated paper to the Admin.`,
+                      type: 'confirm',
+                      badge: 'Enable Question Editing',
+                      confirmText: 'Yes, Enable Editing',
+                      cancelText: 'Keep in Read-Only Preview',
+                    });
+                    if (confirmed) {
+                      setIsLockedPreview(false);
+                      if (currentExam) {
+                        currentExam.status = 'DRAFT';
+                        await saveCBTExam(currentExam);
+                        fetchExams();
+                      }
+                      showAlert({
+                        title: 'Editing Unlocked',
+                        message: 'Question editing is now enabled! You can now add, edit, or remove questions.',
+                        type: 'success',
+                        badge: 'CBT Authoring'
+                      });
+                    }
+                  }}
+                  className="w-full py-3.5 px-4 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  Cancel Edit
+                  <Edit3 className="w-4 h-4" /> Enable Editing / Unlock Questions
                 </button>
-              )}
+                <p className="text-[11px] text-center text-muted-foreground">
+                  Clicking "Enable Editing" unlocks authoring and allows you to make changes before resubmitting.
+                </p>
+              </div>
             </div>
-
-            <div className="space-y-3">
-              <div>
-                <label className={labelClass}>{t("Question Text")} <span className="text-rose-500">*</span></label>
-                <textarea
-                  className={inputClass}
-                  rows={2}
-                  value={newQuestion.question_text}
-                  onChange={e => setNewQuestion({...newQuestion, question_text: e.target.value})}
-                  placeholder="e.g. Solve for x in the equation: 3x + 9 = 24"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className={labelClass}>{t("Option A")} <span className="text-rose-500">*</span></label>
-                  <input
-                    className={inputClass}
-                    value={newQuestion.option_a}
-                    onChange={e => setNewQuestion({...newQuestion, option_a: e.target.value})}
-                    placeholder="Option A answer text"
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>{t("Option B")} <span className="text-rose-500">*</span></label>
-                  <input
-                    className={inputClass}
-                    value={newQuestion.option_b}
-                    onChange={e => setNewQuestion({...newQuestion, option_b: e.target.value})}
-                    placeholder="Option B answer text"
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>{t("Option C")}</label>
-                  <input
-                    className={inputClass}
-                    value={newQuestion.option_c}
-                    onChange={e => setNewQuestion({...newQuestion, option_c: e.target.value})}
-                    placeholder="Option C answer text"
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>{t("Option D")}</label>
-                  <input
-                    className={inputClass}
-                    value={newQuestion.option_d}
-                    onChange={e => setNewQuestion({...newQuestion, option_d: e.target.value})}
-                    placeholder="Option D answer text"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={labelClass}>{t("Correct Answer Key")} <span className="text-rose-500">*</span></label>
-                  <select
-                    className={inputClass}
-                    value={newQuestion.correct_option}
-                    onChange={e => setNewQuestion({...newQuestion, correct_option: e.target.value})}
+          ) : (
+            <div className="bg-card rounded-2xl shadow-sm p-6 border-2 border-primary/20 space-y-4">
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <h3 className="font-bold text-foreground text-sm md:text-base flex items-center gap-2">
+                  <Plus className="w-5 h-5 text-primary" />
+                  {editingQuestionId ? `Edit Question` : `Add Question #${questions.length + 1}`}
+                </h3>
+                {editingQuestionId && (
+                  <button
+                    type="button"
+                    onClick={handleCancelEdit}
+                    className="text-xs font-bold text-muted-foreground hover:text-foreground px-2.5 py-1 rounded-lg border border-border hover:bg-muted"
                   >
-                    <option value="A">Option A</option>
-                    <option value="B">Option B</option>
-                    <option value="C">Option C</option>
-                    <option value="D">Option D</option>
-                  </select>
-                </div>
+                    Cancel Edit
+                  </button>
+                )}
+              </div>
+
+              <div className="space-y-3">
                 <div>
-                  <label className={labelClass}>{t("Points / Weight")}</label>
-                  <input
-                    type="number"
+                  <label className={labelClass}>{t("Question Text")} <span className="text-rose-500">*</span></label>
+                  <textarea
                     className={inputClass}
-                    value={newQuestion.points}
-                    onChange={e => setNewQuestion({...newQuestion, points: parseFloat(e.target.value) || 1})}
-                    min={0.5}
-                    step={0.5}
+                    rows={2}
+                    value={newQuestion.question_text}
+                    onChange={e => setNewQuestion({...newQuestion, question_text: e.target.value})}
+                    placeholder="e.g. Solve for x in the equation: 3x + 9 = 24"
                   />
                 </div>
-              </div>
 
-              <div>
-                <label className={labelClass}>{t("Answer Explanation / Solution (Optional)")}</label>
-                <input
-                  className={inputClass}
-                  value={newQuestion.explanation || ''}
-                  onChange={e => setNewQuestion({...newQuestion, explanation: e.target.value})}
-                  placeholder="e.g. 3x = 24 - 9 => 3x = 15 => x = 5"
-                />
-              </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelClass}>{t("Option A")} <span className="text-rose-500">*</span></label>
+                    <input
+                      className={inputClass}
+                      value={newQuestion.option_a}
+                      onChange={e => setNewQuestion({...newQuestion, option_a: e.target.value})}
+                      placeholder="Option A answer text"
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>{t("Option B")} <span className="text-rose-500">*</span></label>
+                    <input
+                      className={inputClass}
+                      value={newQuestion.option_b}
+                      onChange={e => setNewQuestion({...newQuestion, option_b: e.target.value})}
+                      placeholder="Option B answer text"
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>{t("Option C")}</label>
+                    <input
+                      className={inputClass}
+                      value={newQuestion.option_c}
+                      onChange={e => setNewQuestion({...newQuestion, option_c: e.target.value})}
+                      placeholder="Option C answer text"
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>{t("Option D")}</label>
+                    <input
+                      className={inputClass}
+                      value={newQuestion.option_d}
+                      onChange={e => setNewQuestion({...newQuestion, option_d: e.target.value})}
+                      placeholder="Option D answer text"
+                    />
+                  </div>
+                </div>
 
-              <div>
-                <label className={labelClass}>{t("Question Image Attachment URL (Optional)")}</label>
-                <input
-                  type="url"
-                  className={inputClass}
-                  value={newQuestion.image_url || ''}
-                  onChange={e => setNewQuestion({...newQuestion, image_url: e.target.value})}
-                  placeholder="https://example.com/geometry-diagram.png"
-                />
-              </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={labelClass}>{t("Correct Answer Key")} <span className="text-rose-500">*</span></label>
+                    <select
+                      className={inputClass}
+                      value={newQuestion.correct_option}
+                      onChange={e => setNewQuestion({...newQuestion, correct_option: e.target.value})}
+                    >
+                      <option value="A">Option A</option>
+                      <option value="B">Option B</option>
+                      <option value="C">Option C</option>
+                      <option value="D">Option D</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelClass}>{t("Points / Weight")}</label>
+                    <input
+                      type="number"
+                      className={inputClass}
+                      value={newQuestion.points}
+                      onChange={e => setNewQuestion({...newQuestion, points: parseFloat(e.target.value) || 1})}
+                      min={0.5}
+                      step={0.5}
+                    />
+                  </div>
+                </div>
 
-              <div className="pt-2 flex items-center gap-3">
-                <button
-                  type="button"
-                  onClick={handleAddQuestion}
-                  className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition flex items-center justify-center gap-2 shadow-md cursor-pointer text-sm"
-                >
-                  <Plus className="w-4 h-4" />
-                  {editingQuestionId ? 'Save Question Changes' : `Add Question #${questions.length + 1} to Stack`}
-                </button>
+                <div>
+                  <label className={labelClass}>{t("Answer Explanation / Solution (Optional)")}</label>
+                  <input
+                    className={inputClass}
+                    value={newQuestion.explanation || ''}
+                    onChange={e => setNewQuestion({...newQuestion, explanation: e.target.value})}
+                    placeholder="e.g. 3x = 24 - 9 => 3x = 15 => x = 5"
+                  />
+                </div>
+
+                <div>
+                  <label className={labelClass}>{t("Question Image Attachment URL (Optional)")}</label>
+                  <input
+                    type="url"
+                    className={inputClass}
+                    value={newQuestion.image_url || ''}
+                    onChange={e => setNewQuestion({...newQuestion, image_url: e.target.value})}
+                    placeholder="https://example.com/geometry-diagram.png"
+                  />
+                </div>
+
+                <div className="pt-2 flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleAddQuestion}
+                    className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition flex items-center justify-center gap-2 shadow-md cursor-pointer text-sm"
+                  >
+                    <Plus className="w-4 h-4" />
+                    {editingQuestionId ? 'Save Question Changes' : `Add Question #${questions.length + 1} to Stack`}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* ── RHS: LIVE STACKED QUESTIONS PANEL (desktop only — mobile uses floating button) ── */}
           <div className="hidden lg:block sticky top-6">
