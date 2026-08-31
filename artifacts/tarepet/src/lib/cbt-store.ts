@@ -1527,9 +1527,21 @@ export async function saveStudent(studentData: Partial<StudentRecord> & { name: 
     }
   } catch (err: any) {
     console.warn('Backend student sync response:', err?.response?.data || err?.message);
-    // If registration failed due to existing user email, attempt patch
-    if (err?.response?.data?.email && typeof newStudent.id === 'number' && newStudent.id < 1000000000) {
-      await authClient.patch(`/auth/users/${newStudent.id}/`, sPayload).catch(() => {});
+    // If registration failed due to existing user email, search for user and patch
+    try {
+      if (typeof newStudent.id === 'number' && newStudent.id < 1000000000) {
+        await authClient.patch(`/auth/users/${newStudent.id}/`, sPayload);
+      } else if (newStudent.email) {
+        const existingUserRes = await authClient.get(`/auth/users/?search=${encodeURIComponent(newStudent.email)}`);
+        const foundUsers = Array.isArray(existingUserRes.data?.results) ? existingUserRes.data.results : (Array.isArray(existingUserRes.data) ? existingUserRes.data : []);
+        const matched = foundUsers.find((u: any) => u.email?.toLowerCase() === newStudent.email?.toLowerCase());
+        if (matched && matched.id) {
+          newStudent.id = matched.id;
+          await authClient.patch(`/auth/users/${matched.id}/`, sPayload);
+        }
+      }
+    } catch (fallbackErr) {
+      console.warn('Fallback patch failed:', fallbackErr);
     }
   }
 
@@ -1540,7 +1552,7 @@ export async function saveStudent(studentData: Partial<StudentRecord> & { name: 
     (newStudent.code && s.code === newStudent.code)
   );
   if (targetIdx >= 0) {
-    _students[targetIdx] = newStudent;
+    _students[targetIdx] = { ..._students[targetIdx], ...newStudent };
   } else {
     _students = [newStudent, ..._students];
   }
@@ -1561,13 +1573,37 @@ export async function saveStudent(studentData: Partial<StudentRecord> & { name: 
 }
 
 export function saveStoredStudents(students: StudentRecord[]) {
-  _students = students;
+  const local = loadSavedStudents();
+  const merged = students.map(s => {
+    const existing = local.find(e => (s.id && e.id === s.id) || (s.email && e.email && e.email.toLowerCase() === s.email.toLowerCase()) || (s.code && e.code === s.code));
+    if (existing) {
+      return {
+        ...existing,
+        ...s,
+        parentName: s.parentName || existing.parentName || '',
+        parentPhone: s.parentPhone || existing.parentPhone || '',
+        address: s.address || existing.address || '',
+        dob: s.dob || existing.dob || '',
+        house: s.house || existing.house || '',
+        stateOfOrigin: s.stateOfOrigin || existing.stateOfOrigin || '',
+        lga: s.lga || existing.lga || '',
+        country: s.country || existing.country || '',
+        programme: s.programme || existing.programme || '',
+        studyMode: s.studyMode || existing.studyMode || 'Full Time',
+        profileImage: s.profileImage || existing.profileImage || '',
+      };
+    }
+    return s;
+  });
+
+  _students = merged;
   if (typeof window !== 'undefined') {
     try {
       localStorage.setItem('tarepet_students_list', JSON.stringify(_students));
     } catch (e) {}
   }
   broadcastRealtimeEvent();
+  return _students;
 }
 
 export function clearAllStoredStudents() {

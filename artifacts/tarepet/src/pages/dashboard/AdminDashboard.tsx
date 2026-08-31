@@ -1451,13 +1451,36 @@ const EditStudentModal = ({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
+              <label htmlFor="edit-student-dob" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('common.dateOfBirth', 'Date of Birth')}</label>
+              <input id="edit-student-dob" name="edit_student_dob" aria-label="Date of Birth" type="date" value={form.dob || ''} onChange={e => setForm({ ...form, dob: e.target.value })}
+                className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+            </div>
+            <div>
+              <label htmlFor="edit-student-state" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">State of Origin / LGA</label>
+              <div className="grid grid-cols-2 gap-1.5">
+                <input id="edit-student-state" name="edit_student_state" aria-label="State of Origin" type="text" placeholder="State" value={form.stateOfOrigin || ''} onChange={e => setForm({ ...form, stateOfOrigin: e.target.value })}
+                  className="w-full border border-border rounded-xl px-3 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary text-xs" />
+                <input id="edit-student-lga" name="edit_student_lga" aria-label="LGA" type="text" placeholder="LGA" value={form.lga || ''} onChange={e => setForm({ ...form, lga: e.target.value })}
+                  className="w-full border border-border rounded-xl px-3 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary text-xs" />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="edit-student-address" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('students.residentialAddress', 'Residential Address')}</label>
+            <input id="edit-student-address" name="edit_student_address" aria-label="Residential Address" type="text" placeholder="e.g. 12 Kpansia-Epie Road, Yenagoa, Bayelsa State" value={form.address || ''} onChange={e => setForm({ ...form, address: e.target.value })}
+              className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
               <label htmlFor="edit-student-parentname" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('students.parentName', 'Parent / Guardian Name')}</label>
-              <input id="edit-student-parentname" name="edit_student_parent_name" aria-label="Parent or Guardian Name" type="text" value={form.parentName || ''} onChange={e => setForm({ ...form, parentName: e.target.value })}
+              <input id="edit-student-parentname" name="edit_student_parent_name" aria-label="Parent or Guardian Name" type="text" placeholder="e.g. Chief & Mrs. Amadi" value={form.parentName || ''} onChange={e => setForm({ ...form, parentName: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
             </div>
             <div>
               <label htmlFor="edit-student-parentphone" className="text-[10px] font-bold uppercase text-muted-foreground block mb-1">{t('students.parentPhone', 'Parent Contact Phone')}</label>
-              <input id="edit-student-parentphone" name="edit_student_parent_phone" aria-label="Parent Contact Phone Number" type="tel" value={form.parentPhone || form.phone || ''} onChange={e => setForm({ ...form, parentPhone: e.target.value, phone: e.target.value })}
+              <input id="edit-student-parentphone" name="edit_student_parent_phone" aria-label="Parent Contact Phone Number" type="tel" placeholder="08031234567" value={form.parentPhone || form.phone || ''} onChange={e => setForm({ ...form, parentPhone: e.target.value, phone: e.target.value })}
                 className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary" />
             </div>
           </div>
@@ -1824,7 +1847,19 @@ const CreateSubjectModal = ({ onClose, onCreated, defaultClass, defaultStream }:
 
 const AddUserModal = ({ onClose }: { onClose: () => void }) => {
   const { t } = useTranslation();
-  const [form, setForm] = useState({ name: '', email: '', role: 'STUDENT', status: 'Active' });
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    role: 'STUDENT',
+    status: 'Active',
+    grade: 'SS1',
+    stream: 'Science',
+    parentName: '',
+    parentPhone: '',
+    address: '',
+    gender: 'Male',
+    house: '',
+  });
   const [created, setCreated] = useState(false);
   const [generatedCreds, setGeneratedCreds] = useState<{ email: string; studentId: string } | null>(null);
 
@@ -1849,7 +1884,7 @@ const AddUserModal = ({ onClose }: { onClose: () => void }) => {
     const finalEmail = form.role === 'STUDENT' ? formatStudentEmail(form.name) : (form.email || formatStudentEmail(form.name));
     const schoolId = form.role === 'TEACHER' 
       ? `TMS/TCH/${Math.floor(1000 + Math.random() * 9000)}`
-      : generateAdmissionNumber('SS1', 'Science');
+      : generateAdmissionNumber(form.grade || 'SS1', form.stream || 'Science');
 
     if (form.role === 'STUDENT') {
       await saveStudent({
@@ -1857,9 +1892,15 @@ const AddUserModal = ({ onClose }: { onClose: () => void }) => {
         email: finalEmail,
         code: schoolId,
         admissionNo: schoolId,
+        studentId: schoolId,
         password: schoolId,
-        grade: 'SS1',
-        stream: 'Science',
+        grade: form.grade || 'SS1',
+        stream: form.stream || 'Science',
+        parentName: form.parentName || '',
+        parentPhone: form.parentPhone || '',
+        address: form.address || '',
+        gender: form.gender || 'Male',
+        house: form.house || '',
         status: 'ACTIVE'
       });
       await syncStudentsWithBackend();
@@ -1885,8 +1926,8 @@ const AddUserModal = ({ onClose }: { onClose: () => void }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-md p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in zoom-in duration-150">
+      <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
         <h3 className="font-serif font-bold text-xl text-foreground mb-4">{t('createUser.title')}</h3>
         {!created ? (
           <div className="space-y-3">
@@ -1894,15 +1935,28 @@ const AddUserModal = ({ onClose }: { onClose: () => void }) => {
               <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createUser.fullName')}</label>
               <input value={form.name} onChange={e => handleNameChange(e.target.value)} placeholder="e.g. Kelechi Amadi" className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary" />
             </div>
-            <div>
-              <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createUser.role')}</label>
-              <select value={form.role} onChange={e => handleRoleChange(e.target.value)} className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary">
-                <option value="STUDENT">{t('createUser.student')}</option>
-                <option value="TEACHER">{t('createUser.teacher')}</option>
-                <option value="PARENT">{t('createUser.parent')}</option>
-                <option value="ADMIN">{t('createUser.admin')}</option>
-              </select>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createUser.role')}</label>
+                <select value={form.role} onChange={e => handleRoleChange(e.target.value)} className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary">
+                  <option value="STUDENT">{t('createUser.student')}</option>
+                  <option value="TEACHER">{t('createUser.teacher')}</option>
+                  <option value="PARENT">{t('createUser.parent')}</option>
+                  <option value="ADMIN">{t('createUser.admin')}</option>
+                </select>
+              </div>
+              {form.role === 'STUDENT' ? (
+                <div>
+                  <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('students.classLevel', 'Class Level')}</label>
+                  <select value={form.grade} onChange={e => setForm({ ...form, grade: e.target.value })} className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary">
+                    {['Creche', 'Reception', 'Nursery 1', 'Nursery 2', 'Primary 1', 'Primary 2', 'Primary 3', 'Primary 4', 'Primary 5', 'Primary 6', 'JSS1', 'JSS2', 'JSS3', 'SS1', 'SS2', 'SS3'].map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+              ) : null}
             </div>
+
             <div>
               <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createUser.email')}</label>
               <input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder={form.role === 'STUDENT' ? "firstname.surname@tarepet.com" : "e.g. ngozi.eze@tarepet.edu.ng"} className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary font-mono text-xs" />
@@ -1912,9 +1966,29 @@ const AddUserModal = ({ onClose }: { onClose: () => void }) => {
                 </p>
               )}
             </div>
+
+            {form.role === 'STUDENT' && (
+              <div className="space-y-3 pt-2 border-t border-border">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('students.parentName', 'Parent / Guardian Name')}</label>
+                    <input value={form.parentName} onChange={e => setForm({ ...form, parentName: e.target.value })} placeholder="e.g. Chief & Mrs. Amadi" className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('students.parentPhone', 'Emergency Phone')}</label>
+                    <input value={form.parentPhone} onChange={e => setForm({ ...form, parentPhone: e.target.value })} placeholder="08031234567" className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('students.residentialAddress', 'Residential Address')}</label>
+                  <input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} placeholder="e.g. 12 School Road, Yenagoa" className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary" />
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-3 pt-2">
-              <button onClick={handleCreate} disabled={!form.name.trim()} className="flex-1 bg-primary text-white py-2.5 rounded-xl font-bold text-xs hover:bg-primary/90 disabled:opacity-50 transition-colors">{t('createUser.createBtn')}</button>
-              <button onClick={onClose} className="border border-border px-4 py-2.5 rounded-xl text-xs hover:bg-accent transition-colors">{t('createUser.cancel')}</button>
+              <button onClick={handleCreate} disabled={!form.name.trim()} className="flex-1 bg-primary text-white py-2.5 rounded-xl font-bold text-xs hover:bg-primary/90 disabled:opacity-50 transition-colors cursor-pointer">{t('createUser.createBtn')}</button>
+              <button onClick={onClose} className="border border-border px-4 py-2.5 rounded-xl text-xs hover:bg-accent transition-colors cursor-pointer">{t('createUser.cancel')}</button>
             </div>
           </div>
         ) : (
@@ -1958,6 +2032,10 @@ const CreateUserForTypeModal = ({
     department: '',
     staffId: '',
     grade: '',
+    parentName: '',
+    parentPhone: '',
+    address: '',
+    house: '',
   });
   const [created, setCreated] = useState(false);
 
@@ -1988,9 +2066,15 @@ const CreateUserForTypeModal = ({
           email: form.email.trim(),
           code: schoolId,
           admissionNo: schoolId,
+          studentId: schoolId,
           password: schoolId,
           grade: form.grade || 'SS1',
           stream: 'Science',
+          parentName: form.parentName || '',
+          parentPhone: form.parentPhone || form.phone || '',
+          address: form.address || '',
+          house: form.house || '',
+          dob: form.dob || '',
           status: 'ACTIVE'
         });
         await syncStudentsWithBackend();
@@ -2149,15 +2233,39 @@ const CreateUserForTypeModal = ({
                     </div>
                     <div>
                       <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('createStaff.houseAssignment')}</label>
-                      <select className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary">
-                        <option>{t('createStaff.autoAssign')}</option>
-                        <option>{t('createStaff.blueHouse')}</option>
-                        <option>{t('createStaff.purpleHouse')}</option>
-                        <option>{t('createStaff.greenHouse')}</option>
-                        <option>{t('createStaff.redHouse')}</option>
+                      <select value={form.house} onChange={e => setForm({ ...form, house: e.target.value })}
+                        className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary">
+                        <option value="">{t('createStaff.autoAssign')}</option>
+                        <option value="Blue House">{t('createStaff.blueHouse')}</option>
+                        <option value="Purple House">{t('createStaff.purpleHouse')}</option>
+                        <option value="Green House">{t('createStaff.greenHouse')}</option>
+                        <option value="Red House">{t('createStaff.redHouse')}</option>
                       </select>
                     </div>
                   </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('students.parentName', 'Parent / Guardian Name')}</label>
+                      <input value={form.parentName} onChange={e => setForm({ ...form, parentName: e.target.value })}
+                        placeholder="e.g. Chief & Mrs. Amadi"
+                        className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('students.parentPhone', 'Emergency Phone')}</label>
+                      <input value={form.parentPhone} onChange={e => setForm({ ...form, parentPhone: e.target.value })}
+                        placeholder="08031234567"
+                        className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('students.residentialAddress', 'Residential Address')}</label>
+                    <input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })}
+                      placeholder="e.g. 12 Kpansia-Epie Road, Yenagoa"
+                      className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary" />
+                  </div>
+
                   <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-800 flex items-start gap-2">
                     <Key className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
                     <div><strong>{t('auth.studentAuth', 'Student Authentication:')}</strong> {t('auth.studentAuthDesc', 'Student ID Number (Admission No) will be auto-generated. Students log into their portal using their Email Address and Student ID Number.')}</div>
@@ -2749,22 +2857,38 @@ export default function AdminDashboard() {
             const isDeleted = isAccountDeleted(email) || isAccountDeleted(u.id) || isAccountDeleted(sId) || isAccountDeleted(uName);
             return !mockEmails.includes(email) && !uName.includes('civa.media') && !uName.includes('hacker') && !uName.includes('wronguser') && !isDeleted;
           })
-          .map((u: any) => ({
-            id: u.id,
-            studentId: u.profile?.student_id || u.student_id || `TMS/STU/${String(u.id).padStart(4, '0')}`,
-            name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
-            email: u.email,
-            phone: u.phone || u.profile?.phone || '',
-            gender: u.profile?.gender || '',
-            grade: u.profile?.grade_level || u.profile?.grade || '',
-            stream: u.profile?.stream || '',
-            status: u.is_active ? 'Active' : 'Inactive',
-            joined: u.profile?.hire_date || (u.date_joined ? u.date_joined.split('T')[0] : ''),
-            profileImage: u.profile?.profile_image || u.profile_image || (u as any).profileImage || '',
-          }));
+          .map((u: any) => {
+            const prof = u.profile || {};
+            const autoCode = prof.student_id || u.student_id || (u.id ? `TMS/STU/${String(u.id).padStart(4, '0')}` : 'TMS/STU/001');
+            return {
+              id: u.id,
+              code: autoCode,
+              admissionNo: autoCode,
+              studentId: autoCode,
+              name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
+              email: u.email,
+              phone: u.phone || prof.phone || prof.parent_phone || '',
+              gender: prof.gender || 'Male',
+              grade: prof.grade_level || prof.grade || 'SS1',
+              stream: prof.stream || 'Science',
+              house: prof.house || '',
+              dob: prof.date_of_birth || prof.dob || '',
+              country: prof.country || 'Nigeria',
+              stateOfOrigin: prof.state_of_origin || prof.stateOfOrigin || 'Bayelsa',
+              lga: prof.lga || 'Yenagoa',
+              address: prof.address || '',
+              parentName: prof.parent_name || prof.parentName || '',
+              parentPhone: prof.parent_phone || prof.parentPhone || prof.emergency_contact || '',
+              programme: prof.programme || '',
+              studyMode: prof.study_mode || prof.studyMode || 'Full Time',
+              status: u.is_active ? 'Active' : 'Inactive',
+              joined: prof.admission_date || prof.hire_date || (u.date_joined ? u.date_joined.split('T')[0] : ''),
+              profileImage: prof.profile_image || u.profile_image || (u as any).profileImage || '',
+            };
+          });
 
         saveStoredStudents(liveStudents);
-        setStudentsList(liveStudents);
+        setStudentsList(getStoredStudents());
       }
 
       // Fetch live Finance Income & Expenses from Django Database
