@@ -272,6 +272,20 @@ export default function TeacherDashboard() {
   const [previewExamModal, setPreviewExamModal] = useState<any | null>(null);
   const [previewExamLocked, setPreviewExamLocked] = useState<boolean>(true);
 
+  // Live real-time sync for attendance exam candidates roster (so newly enrolled students immediately appear)
+  React.useEffect(() => {
+    if (selectedAttendanceExam) {
+      const records = getExamAttendance(
+        selectedAttendanceExam.id,
+        selectedAttendanceExam.class || 'SS1',
+        selectedAttendanceExam.stream || 'Science',
+        selectedAttendanceExam.course_code,
+        selectedAttendanceExam.course_name
+      );
+      setExamAttendanceState(records);
+    }
+  }, [roster, selectedAttendanceExam?.id]);
+
   // Broadsheet & Detailed Student Score Table State
   const [selectedBroadsheetStudent, setSelectedBroadsheetStudent] = useState<any | null>(null);
   const [broadsheetScores, setBroadsheetScores] = useState<Record<string, CourseBroadsheetScore>>({});
@@ -2162,7 +2176,7 @@ export default function TeacherDashboard() {
                   <div
                     key={ex.id}
                     onClick={() => {
-                      const records = getExamAttendance(ex.id, ex.class || 'SS1', ex.stream || 'Science');
+                      const records = getExamAttendance(ex.id, ex.class || 'SS1', ex.stream || 'Science', ex.course_code, ex.course_name);
                       setExamAttendanceState(records);
                       setSelectedAttendanceExam(ex);
                     }}
@@ -2194,7 +2208,7 @@ export default function TeacherDashboard() {
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          const records = getExamAttendance(ex.id, ex.class || 'SS1', ex.stream || 'Science');
+                          const records = getExamAttendance(ex.id, ex.class || 'SS1', ex.stream || 'Science', ex.course_code, ex.course_name);
                           setExamAttendanceState(records);
                           setSelectedAttendanceExam(ex);
                         }}
@@ -2244,7 +2258,7 @@ export default function TeacherDashboard() {
                   <div
                     key={ex.id}
                     onClick={() => {
-                      const records = getExamAttendance(ex.id, ex.class || 'SS1', ex.stream || 'Science');
+                      const records = getExamAttendance(ex.id, ex.class || 'SS1', ex.stream || 'Science', ex.course_code, ex.course_name);
                       setExamAttendanceState(records);
                       setSelectedAttendanceExam(ex);
                     }}
@@ -2273,7 +2287,7 @@ export default function TeacherDashboard() {
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          const records = getExamAttendance(ex.id, ex.class || 'SS1', ex.stream || 'Science');
+                          const records = getExamAttendance(ex.id, ex.class || 'SS1', ex.stream || 'Science', ex.course_code, ex.course_name);
                           setExamAttendanceState(records);
                           setSelectedAttendanceExam(ex);
                         }}
@@ -2449,47 +2463,47 @@ export default function TeacherDashboard() {
                   {formClass && (
                     <option value={formClass}>⭐ {formClass} ({t('teacher.assigned_form_class', 'Your Assigned Class')})</option>
                   )}
-                  <optgroup label="🧸 Nursery & Early Years">
-                    <option value="Creche">Creche</option>
-                    <option value="Nursery 1 Faith">Nursery 1 Faith</option>
-                    <option value="Nursery 1 Love">Nursery 1 Love</option>
-                    <option value="Nursery 2 Faith">Nursery 2 Faith</option>
-                    <option value="Nursery 2 Love">Nursery 2 Love</option>
-                    <option value="Nursery 3 Faith">Nursery 3 Faith</option>
-                    <option value="Nursery 3 Love">Nursery 3 Love</option>
+                  <optgroup label={t('teacher.nursery_early_years', '🧸 Nursery & Early Years')}>
+                    <option value="Creche">{t('teacher.creche', 'Creche')}</option>
+                    <option value="Nursery 1 Faith">{t('teacher.nursery_1_faith', 'Nursery 1 Faith')}</option>
+                    <option value="Nursery 1 Love">{t('teacher.nursery_1_love', 'Nursery 1 Love')}</option>
+                    <option value="Nursery 2 Faith">{t('teacher.nursery_2_faith', 'Nursery 2 Faith')}</option>
+                    <option value="Nursery 2 Love">{t('teacher.nursery_2_love', 'Nursery 2 Love')}</option>
+                    <option value="Nursery 3 Faith">{t('teacher.nursery_3_faith', 'Nursery 3 Faith')}</option>
+                    <option value="Nursery 3 Love">{t('teacher.nursery_3_love', 'Nursery 3 Love')}</option>
                   </optgroup>
-                  <optgroup label="🎒 Primary Education (Basic 1–6)">
-                    <option value="Primary 1 Faith">Primary 1 Faith</option>
-                    <option value="Primary 1 Love">Primary 1 Love</option>
-                    <option value="Primary 2 Faith">Primary 2 Faith</option>
-                    <option value="Primary 2 Love">Primary 2 Love</option>
-                    <option value="Primary 3 Faith">Primary 3 Faith</option>
-                    <option value="Primary 3 Love">Primary 3 Love</option>
-                    <option value="Primary 4 Faith">Primary 4 Faith</option>
-                    <option value="Primary 4 Love">Primary 4 Love</option>
-                    <option value="Primary 5 Faith">Primary 5 Faith</option>
-                    <option value="Primary 5 Love">Primary 5 Love</option>
-                    <option value="Primary 6 Faith">Primary 6 Faith</option>
-                    <option value="Primary 6 Love">Primary 6 Love</option>
+                  <optgroup label={t('teacher.primary_education_group', '🎒 Primary Education (Basic 1–6)')}>
+                    <option value="Primary 1 Faith">{t('teacher.primary_1_faith', 'Primary 1 Faith')}</option>
+                    <option value="Primary 1 Love">{t('teacher.primary_1_love', 'Primary 1 Love')}</option>
+                    <option value="Primary 2 Faith">{t('teacher.primary_2_faith', 'Primary 2 Faith')}</option>
+                    <option value="Primary 2 Love">{t('teacher.primary_2_love', 'Primary 2 Love')}</option>
+                    <option value="Primary 3 Faith">{t('teacher.primary_3_faith', 'Primary 3 Faith')}</option>
+                    <option value="Primary 3 Love">{t('teacher.primary_3_love', 'Primary 3 Love')}</option>
+                    <option value="Primary 4 Faith">{t('teacher.primary_4_faith', 'Primary 4 Faith')}</option>
+                    <option value="Primary 4 Love">{t('teacher.primary_4_love', 'Primary 4 Love')}</option>
+                    <option value="Primary 5 Faith">{t('teacher.primary_5_faith', 'Primary 5 Faith')}</option>
+                    <option value="Primary 5 Love">{t('teacher.primary_5_love', 'Primary 5 Love')}</option>
+                    <option value="Primary 6 Faith">{t('teacher.primary_6_faith', 'Primary 6 Faith')}</option>
+                    <option value="Primary 6 Love">{t('teacher.primary_6_love', 'Primary 6 Love')}</option>
                   </optgroup>
-                  <optgroup label="📚 Junior Secondary (JSS 1–3 · Handwritten)">
-                    <option value="JSS 1 Faith">JSS 1 Faith</option>
-                    <option value="JSS 1 Love">JSS 1 Love</option>
-                    <option value="JSS 2 Faith">JSS 2 Faith</option>
-                    <option value="JSS 2 Love">JSS 2 Love</option>
-                    <option value="JSS 3 Faith">JSS 3 Faith</option>
-                    <option value="JSS 3 Love">JSS 3 Love</option>
+                  <optgroup label={t('teacher.junior_sec_group', '📚 Junior Secondary (JSS 1–3 · Handwritten)')}>
+                    <option value="JSS 1 Faith">{t('teacher.jss_1_faith', 'JSS 1 Faith')}</option>
+                    <option value="JSS 1 Love">{t('teacher.jss_1_love', 'JSS 1 Love')}</option>
+                    <option value="JSS 2 Faith">{t('teacher.jss_2_faith', 'JSS 2 Faith')}</option>
+                    <option value="JSS 2 Love">{t('teacher.jss_2_love', 'JSS 2 Love')}</option>
+                    <option value="JSS 3 Faith">{t('teacher.jss_3_faith', 'JSS 3 Faith')}</option>
+                    <option value="JSS 3 Love">{t('teacher.jss_3_love', 'JSS 3 Love')}</option>
                   </optgroup>
-                  <optgroup label="🎓 Senior Secondary (SS 1–3 · CBT + Theory)">
-                    <option value="SS 1 Science">SS 1 Science</option>
-                    <option value="SS 1 Art">SS 1 Art</option>
-                    <option value="SS 1 Commercial">SS 1 Commercial</option>
-                    <option value="SS 2 Science">SS 2 Science</option>
-                    <option value="SS 2 Art">SS 2 Art</option>
-                    <option value="SS 2 Commercial">SS 2 Commercial</option>
-                    <option value="SS 3 Science">SS 3 Science</option>
-                    <option value="SS 3 Art">SS 3 Art</option>
-                    <option value="SS 3 Commercial">SS 3 Commercial</option>
+                  <optgroup label={t('teacher.senior_sec_group', '🎓 Senior Secondary (SS 1–3 · CBT + Theory)')}>
+                    <option value="SS 1 Science">{t('teacher.ss_1_science', 'SS 1 Science')}</option>
+                    <option value="SS 1 Art">{t('teacher.ss_1_art', 'SS 1 Art')}</option>
+                    <option value="SS 1 Commercial">{t('teacher.ss_1_commercial', 'SS 1 Commercial')}</option>
+                    <option value="SS 2 Science">{t('teacher.ss_2_science', 'SS 2 Science')}</option>
+                    <option value="SS 2 Art">{t('teacher.ss_2_art', 'SS 2 Art')}</option>
+                    <option value="SS 2 Commercial">{t('teacher.ss_2_commercial', 'SS 2 Commercial')}</option>
+                    <option value="SS 3 Science">{t('teacher.ss_3_science', 'SS 3 Science')}</option>
+                    <option value="SS 3 Art">{t('teacher.ss_3_art', 'SS 3 Art')}</option>
+                    <option value="SS 3 Commercial">{t('teacher.ss_3_commercial', 'SS 3 Commercial')}</option>
                   </optgroup>
                 </select>
               </div>
@@ -3181,12 +3195,12 @@ export default function TeacherDashboard() {
                   className="px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs font-bold text-foreground focus:ring-2 focus:ring-indigo-500 outline-none"
                 >
                   <option value="ALL">{t('teacher.all_classes', 'All Classes')}</option>
-                  <option value="JSS 1">JSS 1</option>
-                  <option value="JSS 2">JSS 2</option>
-                  <option value="JSS 3">JSS 3</option>
-                  <option value="SS 1">SS 1</option>
-                  <option value="SS 2">SS 2</option>
-                  <option value="SS 3">SS 3</option>
+                  <option value="JSS 1">{t('teacher.jss_1', 'JSS 1')}</option>
+                  <option value="JSS 2">{t('teacher.jss_2', 'JSS 2')}</option>
+                  <option value="JSS 3">{t('teacher.jss_3', 'JSS 3')}</option>
+                  <option value="SS 1">{t('teacher.ss_1', 'SS 1')}</option>
+                  <option value="SS 2">{t('teacher.ss_2', 'SS 2')}</option>
+                  <option value="SS 3">{t('teacher.ss_3', 'SS 3')}</option>
                 </select>
               </div>
             </div>
@@ -3252,7 +3266,7 @@ export default function TeacherDashboard() {
                             </div>
                             <div>
                               <p className="font-bold text-foreground">{rec.studentName}</p>
-                              <p className="text-[10px] text-muted-foreground">Promoted by {rec.promotedByTeacherName || 'Form Teacher'}</p>
+                              <p className="text-[10px] text-muted-foreground">{t('teacher.promoted_by_prefix', 'Promoted by ')}{rec.promotedByTeacherName || t('teacher.form_teacher_title', 'Form Teacher')}</p>
                             </div>
                           </div>
                         </td>
@@ -3927,13 +3941,13 @@ export default function TeacherDashboard() {
                           onChange={e => setProfileForm({ ...profileForm, department: e.target.value })}
                           className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
                         >
-                          <option value="Primary Education (Basic 1 - 6)">Primary Education (Basic 1 - 6)</option>
-                          <option value="Junior Secondary (JSS 1 - JSS 3)">Junior Secondary (JSS 1 - JSS 3)</option>
-                          <option value="Senior Secondary (SS 1 - SS 3)">Senior Secondary (SS 1 - SS 3)</option>
-                          <option value="Physical & Applied Sciences">Physical & Applied Sciences</option>
-                          <option value="Commercial & Humanities">Commercial & Humanities</option>
-                          <option value="Creative Arts & Languages">Creative Arts & Languages</option>
-                          <option value="Administrative & Support Faculty">Administrative & Support Faculty</option>
+                          <option value="Primary Education (Basic 1 - 6)">{t('teacher.dept_primary', 'Primary Education (Basic 1 - 6)')}</option>
+                          <option value="Junior Secondary (JSS 1 - JSS 3)">{t('teacher.dept_junior_sec', 'Junior Secondary (JSS 1 - JSS 3)')}</option>
+                          <option value="Senior Secondary (SS 1 - SS 3)">{t('teacher.dept_senior_sec', 'Senior Secondary (SS 1 - SS 3)')}</option>
+                          <option value="Physical & Applied Sciences">{t('teacher.dept_sciences', 'Physical & Applied Sciences')}</option>
+                          <option value="Commercial & Humanities">{t('teacher.dept_commercial', 'Commercial & Humanities')}</option>
+                          <option value="Creative Arts & Languages">{t('teacher.dept_arts', 'Creative Arts & Languages')}</option>
+                          <option value="Administrative & Support Faculty">{t('teacher.dept_admin', 'Administrative & Support Faculty')}</option>
                         </select>
                       </div>
                       <div>
@@ -3944,23 +3958,23 @@ export default function TeacherDashboard() {
                           className="w-full px-3 py-2 rounded-xl border border-border bg-muted/20 text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
                         >
                           <option value="None">{t('teacher.class_none', 'None (Subject Teacher Only)')}</option>
-                          <option value="Nursery 1">Nursery 1</option>
-                          <option value="Nursery 2">Nursery 2</option>
-                          <option value="KG / Pre-Primary">KG / Pre-Primary</option>
-                          <option value="Basic 1">Basic 1</option>
-                          <option value="Basic 2">Basic 2</option>
-                          <option value="Basic 3">Basic 3</option>
-                          <option value="Basic 4">Basic 4</option>
-                          <option value="Basic 5">Basic 5</option>
-                          <option value="JSS 1">JSS 1</option>
-                          <option value="JSS 2">JSS 2</option>
-                          <option value="JSS 3">JSS 3</option>
-                          <option value="SS 1">SS 1</option>
-                          <option value="SS 2">SS 2</option>
-                          <option value="SS 3">SS 3</option>
-                          <option value="Senior Science">Senior Science</option>
-                          <option value="Senior Arts">Senior Arts</option>
-                          <option value="Senior Commercial">Senior Commercial</option>
+                          <option value="Nursery 1">{t('teacher.nursery_1', 'Nursery 1')}</option>
+                          <option value="Nursery 2">{t('teacher.nursery_2', 'Nursery 2')}</option>
+                          <option value="KG / Pre-Primary">{t('teacher.kg_pre_primary', 'KG / Pre-Primary')}</option>
+                          <option value="Basic 1">{t('teacher.basic_1', 'Basic 1')}</option>
+                          <option value="Basic 2">{t('teacher.basic_2', 'Basic 2')}</option>
+                          <option value="Basic 3">{t('teacher.basic_3', 'Basic 3')}</option>
+                          <option value="Basic 4">{t('teacher.basic_4', 'Basic 4')}</option>
+                          <option value="Basic 5">{t('teacher.basic_5', 'Basic 5')}</option>
+                          <option value="JSS 1">{t('teacher.jss_1', 'JSS 1')}</option>
+                          <option value="JSS 2">{t('teacher.jss_2', 'JSS 2')}</option>
+                          <option value="JSS 3">{t('teacher.jss_3', 'JSS 3')}</option>
+                          <option value="SS 1">{t('teacher.ss_1', 'SS 1')}</option>
+                          <option value="SS 2">{t('teacher.ss_2', 'SS 2')}</option>
+                          <option value="SS 3">{t('teacher.ss_3', 'SS 3')}</option>
+                          <option value="Senior Science">{t('teacher.senior_science', 'Senior Science')}</option>
+                          <option value="Senior Arts">{t('teacher.senior_arts', 'Senior Arts')}</option>
+                          <option value="Senior Commercial">{t('teacher.senior_commercial', 'Senior Commercial')}</option>
                         </select>
                       </div>
                       <div>
@@ -4066,24 +4080,24 @@ export default function TeacherDashboard() {
                 <CheckCircle2 className="w-8 h-8" />
               </div>
               <div className="space-y-1.5">
-                <h3 className="font-serif font-bold text-xl text-foreground">Profile Updated Successfully!</h3>
+                <h3 className="font-serif font-bold text-xl text-foreground">{t('teacher.profile_updated_title', 'Profile Updated Successfully!')}</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Your faculty details, academic assignments, and digital records have been updated and synchronized in real time with the backend and school admin.
+                  {t('teacher.profile_updated_desc', 'Your faculty details, academic assignments, and digital records have been updated and synchronized in real time with the backend and school admin.')}
                 </p>
               </div>
 
               <div className="bg-muted/20 border border-border rounded-2xl p-4 text-left space-y-2 text-xs">
                 <div className="flex justify-between items-center pb-1.5 border-b border-border/50">
-                  <span className="text-muted-foreground font-medium">Faculty Name</span>
+                  <span className="text-muted-foreground font-medium">{t('teacher.faculty_name_label', 'Faculty Name')}</span>
                   <span className="font-bold text-foreground">{profileForm.firstName} {profileForm.lastName}</span>
                 </div>
                 <div className="flex justify-between items-center pb-1.5 border-b border-border/50">
-                  <span className="text-muted-foreground font-medium">Staff ID</span>
+                  <span className="text-muted-foreground font-medium">{t('teacher.staff_id_label', 'Staff ID')}</span>
                   <span className="font-mono font-bold text-primary">{profileForm.staffId}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground font-medium">Duty / Specialization</span>
-                  <span className="font-semibold text-foreground text-right truncate max-w-[180px]">{profileForm.specialization || 'Form Teacher'}</span>
+                  <span className="text-muted-foreground font-medium">{t('teacher.duty_specialization_label', 'Duty / Specialization')}</span>
+                  <span className="font-semibold text-foreground text-right truncate max-w-[180px]">{profileForm.specialization || t('teacher.form_teacher_title', 'Form Teacher')}</span>
                 </div>
               </div>
 
@@ -4093,7 +4107,7 @@ export default function TeacherDashboard() {
                   onClick={() => setShowProfileSavedModal(false)}
                   className="w-full py-3 px-6 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md shadow-emerald-600/25 active:scale-95 transition-all cursor-pointer"
                 >
-                  Done
+                  {t('teacher.done_btn', 'Done')}
                 </button>
               </div>
             </div>
@@ -4115,7 +4129,7 @@ export default function TeacherDashboard() {
         {/* 1. Profile Photo & Avatar Management */}
         <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-4">
           <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
-            <User className="w-4 h-4 text-primary" /> Profile Photo & Avatar Management
+            <User className="w-4 h-4 text-primary" /> {t('teacher.profile_photo_management', 'Profile Photo & Avatar Management')}
           </h3>
           <div className="flex flex-col sm:flex-row items-center gap-5 p-4 rounded-2xl bg-muted/20 border border-border">
             <div className="w-20 h-20 rounded-2xl bg-emerald-500/10 border-2 border-emerald-500/20 flex items-center justify-center font-serif font-bold text-2xl text-emerald-700 shadow-sm overflow-hidden shrink-0">
@@ -4132,7 +4146,7 @@ export default function TeacherDashboard() {
                   className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-xl text-xs font-bold cursor-pointer inline-flex items-center gap-1.5 shadow-sm transition-all"
                 >
                   <Upload className="w-3.5 h-3.5" />
-                  <span>Upload & Crop Photo</span>
+                  <span>{t('teacher.upload_crop_photo', 'Upload & Crop Photo')}</span>
                 </label>
                 <input
                   type="file"
@@ -4168,7 +4182,7 @@ export default function TeacherDashboard() {
                       className="px-3.5 py-2 text-foreground border border-border rounded-xl text-xs font-bold hover:bg-muted inline-flex items-center gap-1 cursor-pointer"
                     >
                       <Scissors className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>Crop / Resize</span>
+                      <span>{t('teacher.crop_resize', 'Crop / Resize')}</span>
                     </button>
                     <button
                       type="button"
@@ -4176,12 +4190,12 @@ export default function TeacherDashboard() {
                       className="px-3.5 py-2 text-rose-600 border border-rose-200 dark:border-rose-800/40 rounded-xl text-xs font-bold hover:bg-rose-50 dark:hover:bg-rose-950/30 inline-flex items-center gap-1.5 cursor-pointer"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
-                      <span>Delete Photo</span>
+                      <span>{t('teacher.delete_photo', 'Delete Photo')}</span>
                     </button>
                   </>
                 )}
               </div>
-              <p className="text-[10px] text-muted-foreground">Supported: JPG, PNG, WEBP. Deleting photo resets to official monogram initials.</p>
+              <p className="text-[10px] text-muted-foreground">{t('teacher.photo_support_notice', 'Supported: JPG, PNG, WEBP. Deleting photo resets to official monogram initials.')}</p>
             </div>
           </div>
         </div>
@@ -4189,7 +4203,7 @@ export default function TeacherDashboard() {
         {/* 2. Personal & Faculty Contact Information */}
         <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-4">
           <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
-            <GraduationCap className="w-4 h-4 text-primary" /> Faculty Details & Specialization
+            <GraduationCap className="w-4 h-4 text-primary" /> {t('teacher.faculty_details_specialization', 'Faculty Details & Specialization')}
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -4249,7 +4263,7 @@ export default function TeacherDashboard() {
         {/* 3. Display & Visual Appearance */}
         <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-4">
           <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
-            <Sun className="w-4 h-4 text-primary" /> Display & Visual Appearance
+            <Sun className="w-4 h-4 text-primary" /> {t('teacher.display_appearance', 'Display & Visual Appearance')}
           </h3>
           <div className="flex items-center justify-between p-3.5 rounded-2xl border border-border bg-muted/10">
             <div className="flex items-center gap-3">
@@ -4257,8 +4271,8 @@ export default function TeacherDashboard() {
                 {isDarkMode ? <Moon className="w-5 h-5 text-amber-400" /> : <Sun className="w-5 h-5 text-primary" />}
               </div>
               <div>
-                <p className="font-bold text-xs text-foreground">Theme Display Mode</p>
-                <p className="text-[10px] text-muted-foreground">{isDarkMode ? 'Dark interface mode active' : 'Light interface mode active'}</p>
+                <p className="font-bold text-xs text-foreground">{t('teacher.theme_display_mode', 'Theme Display Mode')}</p>
+                <p className="text-[10px] text-muted-foreground">{isDarkMode ? t('teacher.dark_mode_active', 'Dark interface mode active') : t('teacher.light_mode_active', 'Light interface mode active')}</p>
               </div>
             </div>
             <button
@@ -4267,7 +4281,7 @@ export default function TeacherDashboard() {
               className="px-4 py-2 rounded-full bg-primary hover:bg-primary/90 text-white font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
             >
               {isDarkMode ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
-              <span>{isDarkMode ? 'Switch to Light' : 'Switch to Dark'}</span>
+              <span>{isDarkMode ? t('teacher.switch_to_light', 'Switch to Light') : t('teacher.switch_to_dark', 'Switch to Dark')}</span>
             </button>
           </div>
         </div>
@@ -4275,7 +4289,7 @@ export default function TeacherDashboard() {
         {/* 4. Notification Preferences */}
         <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-4">
           <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
-            <Bell className="w-4 h-4 text-primary" /> Real-time Notification Preferences
+            <Bell className="w-4 h-4 text-primary" /> {t('teacher.notif_preferences', 'Real-time Notification Preferences')}
           </h3>
           <div className="space-y-3">
             <label className="flex items-center justify-between p-3.5 rounded-2xl border border-border bg-muted/10 cursor-pointer">
@@ -4298,11 +4312,11 @@ export default function TeacherDashboard() {
         {/* 5. Account Security & Password */}
         <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-4">
           <h3 className="font-serif font-bold text-foreground text-base border-b border-border pb-3 flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-primary" /> Account Security & Password
+            <ShieldCheck className="w-4 h-4 text-primary" /> {t('teacher.account_security_password', 'Account Security & Password')}
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Current Password</label>
+              <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">{t('teacher.current_password', 'Current Password')}</label>
               <input
                 type="password"
                 value={passwordForm.current}
@@ -4312,7 +4326,7 @@ export default function TeacherDashboard() {
               />
             </div>
             <div>
-              <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">New Password</label>
+              <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">{t('teacher.new_password', 'New Password')}</label>
               <input
                 type="password"
                 value={passwordForm.newPassword}
@@ -4322,7 +4336,7 @@ export default function TeacherDashboard() {
               />
             </div>
             <div>
-              <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Confirm New Password</label>
+              <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">{t('teacher.confirm_new_password', 'Confirm New Password')}</label>
               <input
                 type="password"
                 value={passwordForm.confirmPassword}
@@ -4334,7 +4348,7 @@ export default function TeacherDashboard() {
           </div>
           {passwordSuccess && (
             <p className="text-xs text-emerald-600 font-bold flex items-center gap-1.5">
-              <CheckCircle2 className="w-3.5 h-3.5" /> Password updated successfully.
+              <CheckCircle2 className="w-3.5 h-3.5" /> {t('teacher.password_updated_success', 'Password updated successfully.')}
             </p>
           )}
           <div className="pt-2">
@@ -4371,7 +4385,7 @@ export default function TeacherDashboard() {
               }}
               className="bg-primary text-white px-6 py-2.5 rounded-full text-xs font-bold hover:bg-primary/90 transition-colors shadow-sm cursor-pointer disabled:opacity-50"
             >
-              {passwordSaving ? 'Updating...' : 'Update Password'}
+              {passwordSaving ? t('teacher.updating_btn', 'Updating...') : t('teacher.update_password_btn', 'Update Password')}
             </button>
           </div>
         </div>
@@ -4379,12 +4393,12 @@ export default function TeacherDashboard() {
         {/* 6. System & App Information */}
         <div className="bg-muted/20 rounded-3xl border border-border p-5 text-xs text-muted-foreground flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="space-y-0.5 text-center sm:text-left">
-            <p className="font-bold text-foreground">Tarepet Montessori LMS v2.4.0</p>
-            <p className="text-[11px]">School Portal Engine • Realtime WebSocket Connected</p>
+            <p className="font-bold text-foreground">{t('teacher.app_version', 'Tarepet Montessori LMS v2.4.0')}</p>
+            <p className="text-[11px]">{t('teacher.school_portal_engine', 'School Portal Engine • Realtime WebSocket Connected')}</p>
           </div>
           <div className="flex items-center gap-2">
             <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">System Online</span>
+            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{t('teacher.system_online', 'System Online')}</span>
           </div>
         </div>
       </div>
@@ -4671,14 +4685,14 @@ export default function TeacherDashboard() {
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-serif font-bold text-base text-foreground">
-                        Publish Examination: {selectedAttendanceExam.title}
+                        {t('teacher.publish_exam_title', 'Publish Examination:')} {selectedAttendanceExam.title}
                       </h3>
                       <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 flex items-center gap-1">
-                        <Check className="w-3 h-3 text-emerald-600" /> Approved by Admin
+                        <Check className="w-3 h-3 text-emerald-600" /> {t('teacher.approved_by_admin', 'Approved by Admin')}
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      Subject: <strong className="text-foreground">{selectedAttendanceExam.course_name || selectedAttendanceExam.course_code}</strong> • Class: <strong className="text-foreground">{selectedAttendanceExam.class || 'SS1'} {selectedAttendanceExam.stream || 'Science'}</strong> • Duration: <strong className="text-foreground">{selectedAttendanceExam.duration_minutes || 45} mins</strong>
+                      {t('teacher.subject_label_prefix', 'Subject:')} <strong className="text-foreground">{selectedAttendanceExam.course_name || selectedAttendanceExam.course_code}</strong> • {t('teacher.class_label_prefix', 'Class:')} <strong className="text-foreground">{selectedAttendanceExam.class || 'SS1'} {selectedAttendanceExam.stream || 'Science'}</strong> • {t('teacher.duration_label_prefix', 'Duration:')} <strong className="text-foreground">{selectedAttendanceExam.duration_minutes || 45} mins</strong>
                     </p>
                   </div>
                 </div>
@@ -4691,7 +4705,7 @@ export default function TeacherDashboard() {
                 {/* 1. Mode Selection Cards */}
                 <div>
                   <label className="text-[11px] font-extrabold uppercase text-muted-foreground tracking-wider block mb-2.5">
-                    Select Publishing Mode
+                    {t('teacher.select_publishing_mode', 'Select Publishing Mode')}
                   </label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {/* General Publish Card */}
@@ -4713,13 +4727,13 @@ export default function TeacherDashboard() {
                           {examStartMode === 'GENERAL' ? '● SELECTED' : 'Option 1'}
                         </span>
                       </div>
-                      <h4 className="font-bold text-sm text-foreground">General Publish</h4>
+                      <h4 className="font-bold text-sm text-foreground">{t('teacher.general_publish_mode', 'General Publish')}</h4>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Publish to <strong>all students</strong> taking {selectedAttendanceExam.course_name} in {selectedAttendanceExam.class} {selectedAttendanceExam.stream}. The test immediately goes live for every student taking that subject.
+                        {t('teacher.publish_to_prefix', 'Publish to ')}<strong>{t('teacher.all_students_bold', 'all students')}</strong> {t('teacher.taking_course_suffix', 'taking')} {selectedAttendanceExam.course_name} in {selectedAttendanceExam.class} {selectedAttendanceExam.stream}.
                       </p>
                       <div className="mt-3 pt-2 border-t border-border/50 flex items-center justify-between text-[11px]">
-                        <span className="text-muted-foreground">Class Roster:</span>
-                        <strong className="text-emerald-700 dark:text-emerald-400 font-bold">{examAttendanceState.length} Students Enrolled</strong>
+                        <span className="text-muted-foreground">{t('teacher.class_roster_label', 'Class Roster:')}</span>
+                        <strong className="text-emerald-700 dark:text-emerald-400 font-bold">{examAttendanceState.length} {t('teacher.students_enrolled_suffix', 'Students Enrolled')}</strong>
                       </div>
                     </div>
 
@@ -4742,12 +4756,12 @@ export default function TeacherDashboard() {
                           {examStartMode === 'INDIVIDUAL' ? '● SELECTED' : 'Option 2'}
                         </span>
                       </div>
-                      <h4 className="font-bold text-sm text-foreground">Individual Publish</h4>
+                      <h4 className="font-bold text-sm text-foreground">{t('teacher.individual_publish_mode', 'Individual Publish')}</h4>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Shows a table of all students taking the subject and you decide to publish it individually to specific candidates.
+                        {t('teacher.individual_publish_desc', 'Shows a table of all students taking the subject and you decide to publish it individually to specific candidates.')}
                       </p>
                       <div className="mt-3 pt-2 border-t border-border/50 flex items-center justify-between text-[11px]">
-                        <span className="text-muted-foreground">Selected Candidates:</span>
+                        <span className="text-muted-foreground">{t('teacher.selected_candidates_label', 'Selected Candidates:')}</span>
                         <strong className="text-primary font-bold">
                           {examAttendanceState.filter(r => r.markedPresent).length} of {examAttendanceState.length} Selected
                         </strong>
@@ -4763,9 +4777,9 @@ export default function TeacherDashboard() {
                       <Globe className="w-5 h-5" />
                     </div>
                     <div className="text-xs">
-                      <h5 className="font-bold text-emerald-900 dark:text-emerald-200 text-sm">General Exam Publication</h5>
+                      <h5 className="font-bold text-emerald-900 dark:text-emerald-200 text-sm">{t('teacher.general_exam_pub_title', 'General Exam Publication')}</h5>
                       <p className="text-emerald-700 dark:text-emerald-400 mt-0.5">
-                        Clicking <strong>Publish General Exam</strong> will activate this test for all <strong>{examAttendanceState.length} students</strong> enrolled in <strong>{selectedAttendanceExam.course_name} ({selectedAttendanceExam.class} {selectedAttendanceExam.stream})</strong>. Every student will immediately see and be able to take the exam in their portal.
+                        {t('teacher.clicking_prefix', 'Clicking ')}<strong>{t('teacher.publish_general_exam_btn', 'Publish General Exam')}</strong> {t('teacher.general_pub_explanation', 'will activate this test for all enrolled candidates.')}
                       </p>
                     </div>
                   </div>
@@ -4776,8 +4790,8 @@ export default function TeacherDashboard() {
                   <div className="space-y-3">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                       <div>
-                        <h4 className="font-bold text-sm text-foreground">Students Taking {selectedAttendanceExam.course_name}</h4>
-                        <p className="text-xs text-muted-foreground">Choose which students to publish this exam for. Only the checked students will have live access.</p>
+                        <h4 className="font-bold text-sm text-foreground">{t('teacher.students_taking_course_prefix', 'Students Taking ')}{selectedAttendanceExam.course_name}</h4>
+                        <p className="text-xs text-muted-foreground">{t('teacher.choose_students_publish_desc', 'Choose which students to publish this exam for. Only the checked students will have live access.')}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <button
@@ -4788,7 +4802,7 @@ export default function TeacherDashboard() {
                           }}
                           className="text-[11px] font-bold px-3 py-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-200 hover:bg-emerald-200 transition cursor-pointer"
                         >
-                          ✓ Select All
+                          {t('teacher.select_all_btn', '✓ Select All')}
                         </button>
                         <button
                           type="button"
@@ -4798,7 +4812,7 @@ export default function TeacherDashboard() {
                           }}
                           className="text-[11px] font-semibold px-3 py-1.5 rounded-lg bg-muted text-muted-foreground hover:text-foreground transition cursor-pointer"
                         >
-                          Clear All
+                          {t('teacher.clear_all_btn', 'Clear All')}
                         </button>
                       </div>
                     </div>
@@ -4843,11 +4857,11 @@ export default function TeacherDashboard() {
                             <div>
                               {student.markedPresent ? (
                                 <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 flex items-center gap-1">
-                                  <Check className="w-3 h-3 text-emerald-600" /> Selected to Publish
+                                  <Check className="w-3 h-3 text-emerald-600" /> {t('teacher.selected_to_publish', 'Selected to Publish')}
                                 </span>
                               ) : (
                                 <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                                  Not Selected
+                                  {t('teacher.not_selected', 'Not Selected')}
                                 </span>
                               )}
                             </div>
@@ -4857,9 +4871,9 @@ export default function TeacherDashboard() {
                     </div>
 
                     <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
-                      <span>Total Students: {examAttendanceState.length}</span>
+                      <span>{t('teacher.total_students_prefix', 'Total Students: ')}{examAttendanceState.length}</span>
                       <span className="font-bold text-primary">
-                        {examAttendanceState.filter(r => r.markedPresent).length} Selected for Individual Publication
+                        {examAttendanceState.filter(r => r.markedPresent).length} {t('teacher.selected_for_ind_pub', 'Selected for Individual Publication')}
                       </span>
                     </div>
                   </div>
@@ -4873,7 +4887,7 @@ export default function TeacherDashboard() {
                   onClick={() => setSelectedAttendanceExam(null)}
                   className="px-4 py-2.5 rounded-xl border border-border text-xs font-semibold hover:bg-muted transition-colors cursor-pointer"
                 >
-                  Cancel
+                  {t('teacher.cancel_btn', 'Cancel')}
                 </button>
 
                 {examStartMode === 'GENERAL' ? (
@@ -5247,7 +5261,7 @@ export default function TeacherDashboard() {
                 <div className="text-xs text-muted-foreground bg-amber-500/10 border border-amber-500/20 text-amber-900 dark:text-amber-200 rounded-xl p-3 flex items-start gap-2">
                   <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-bold">Permanent Archival Notice:</span> When you finalize promotions, each student's current grades and broadsheet will be permanently archived under <strong>Academic History</strong>. Their broadsheet for the new session will start fresh for their incoming Form Teacher.
+                    <span className="font-bold">{t('teacher.perm_archival_notice', 'Permanent Archival Notice:')}</span> {t('teacher.perm_archival_desc', 'When you finalize promotions, each student\'s current grades and broadsheet will be permanently archived under Academic History. Their broadsheet for the new session will start fresh for their incoming Form Teacher.')}
                   </div>
                 </div>
 
@@ -5255,10 +5269,10 @@ export default function TeacherDashboard() {
                   <table className="w-full text-left text-xs">
                     <thead>
                       <tr className="bg-muted/40 text-[11px] font-bold text-muted-foreground border-b border-border uppercase">
-                        <th className="py-2.5 px-3">Student</th>
-                        <th className="py-2.5 px-2 text-center">Cum. Average</th>
-                        <th className="py-2.5 px-3">Promotion Decision</th>
-                        <th className="py-2.5 px-3">Destination Class</th>
+                        <th className="py-2.5 px-3">{t('teacher.student', 'Student')}</th>
+                        <th className="py-2.5 px-2 text-center">{t('teacher.cum_average', 'Cum. Average')}</th>
+                        <th className="py-2.5 px-3">{t('teacher.promotion_decision', 'Promotion Decision')}</th>
+                        <th className="py-2.5 px-3">{t('teacher.destination_class', 'Destination Class')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/60">
@@ -5307,10 +5321,10 @@ export default function TeacherDashboard() {
                                     'border-border bg-muted/20 text-foreground'
                                   }`}
                                 >
-                                  <option value="promoted">✅ Promote to Next Class</option>
-                                  <option value="repeated">🔄 Repeat Current Class</option>
-                                  <option value="graduated">🎓 Graduated (Alumni)</option>
-                                  <option value="transferred">📤 Transferred / Withdrawn</option>
+                                  <option value="promoted">{t('teacher.promote_option', '✅ Promote to Next Class')}</option>
+                                  <option value="repeated">{t('teacher.repeat_option', '🔄 Repeat Current Class')}</option>
+                                  <option value="graduated">{t('teacher.graduated_option', '🎓 Graduated (Alumni)')}</option>
+                                  <option value="transferred">{t('teacher.transferred_option', '📤 Transferred / Withdrawn')}</option>
                                 </select>
                               </td>
                               <td className="py-2.5 px-3">
@@ -5327,25 +5341,25 @@ export default function TeacherDashboard() {
                                   }}
                                   className="px-2.5 py-1.5 rounded-lg border border-border bg-muted/20 text-xs font-semibold text-foreground w-full max-w-[200px]"
                                 >
-                                  <option value="Graduated (Alumni)">🎓 Graduated (Alumni)</option>
-                                  <optgroup label="Junior Secondary">
-                                    <option value="JSS 1 Faith">JSS 1 Faith</option>
-                                    <option value="JSS 1 Grace">JSS 1 Grace</option>
-                                    <option value="JSS 2 Faith">JSS 2 Faith</option>
-                                    <option value="JSS 2 Grace">JSS 2 Grace</option>
-                                    <option value="JSS 3 Faith">JSS 3 Faith</option>
-                                    <option value="JSS 3 Grace">JSS 3 Grace</option>
+                                  <option value="Graduated (Alumni)">{t('teacher.graduated_alumni', '🎓 Graduated (Alumni)')}</option>
+                                  <optgroup label={t('teacher.junior_sec_group', 'Junior Secondary')}>
+                                    <option value="JSS 1 Faith">{t('teacher.jss_1_faith', 'JSS 1 Faith')}</option>
+                                    <option value="JSS 1 Grace">{t('teacher.jss_1_grace', 'JSS 1 Grace')}</option>
+                                    <option value="JSS 2 Faith">{t('teacher.jss_2_faith', 'JSS 2 Faith')}</option>
+                                    <option value="JSS 2 Grace">{t('teacher.jss_2_grace', 'JSS 2 Grace')}</option>
+                                    <option value="JSS 3 Faith">{t('teacher.jss_3_faith', 'JSS 3 Faith')}</option>
+                                    <option value="JSS 3 Grace">{t('teacher.jss_3_grace', 'JSS 3 Grace')}</option>
                                   </optgroup>
-                                  <optgroup label="Senior Secondary">
-                                    <option value="SS 1 Science">SS 1 Science</option>
-                                    <option value="SS 1 Art">SS 1 Art</option>
-                                    <option value="SS 1 Commercial">SS 1 Commercial</option>
-                                    <option value="SS 2 Science">SS 2 Science</option>
-                                    <option value="SS 2 Art">SS 2 Art</option>
-                                    <option value="SS 2 Commercial">SS 2 Commercial</option>
-                                    <option value="SS 3 Science">SS 3 Science</option>
-                                    <option value="SS 3 Art">SS 3 Art</option>
-                                    <option value="SS 3 Commercial">SS 3 Commercial</option>
+                                  <optgroup label={t('teacher.senior_sec_group', 'Senior Secondary')}>
+                                    <option value="SS 1 Science">{t('teacher.ss_1_science', 'SS 1 Science')}</option>
+                                    <option value="SS 1 Art">{t('teacher.ss_1_art', 'SS 1 Art')}</option>
+                                    <option value="SS 1 Commercial">{t('teacher.ss_1_commercial', 'SS 1 Commercial')}</option>
+                                    <option value="SS 2 Science">{t('teacher.ss_2_science', 'SS 2 Science')}</option>
+                                    <option value="SS 2 Art">{t('teacher.ss_2_art', 'SS 2 Art')}</option>
+                                    <option value="SS 2 Commercial">{t('teacher.ss_2_commercial', 'SS 2 Commercial')}</option>
+                                    <option value="SS 3 Science">{t('teacher.ss_3_science', 'SS 3 Science')}</option>
+                                    <option value="SS 3 Art">{t('teacher.ss_3_art', 'SS 3 Art')}</option>
+                                    <option value="SS 3 Commercial">{t('teacher.ss_3_commercial', 'SS 3 Commercial')}</option>
                                   </optgroup>
                                 </select>
                               </td>
@@ -5360,7 +5374,7 @@ export default function TeacherDashboard() {
               {/* Modal Footer */}
               <div className="p-4 border-t border-border bg-muted/10 flex items-center justify-between gap-3">
                 <div className="text-xs text-muted-foreground">
-                  Session: <span className="font-bold text-foreground">{promotionSession}</span> ({promotionTerm})
+                  {t('teacher.session_prefix', 'Session: ')}<span className="font-bold text-foreground">{promotionSession}</span> ({promotionTerm})
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -5368,7 +5382,7 @@ export default function TeacherDashboard() {
                     onClick={() => setShowPromotionModal(false)}
                     className="px-4 py-2.5 rounded-xl border border-border text-xs font-bold text-foreground hover:bg-muted transition-colors cursor-pointer"
                   >
-                    Cancel
+                    {t('teacher.cancel_btn', 'Cancel')}
                   </button>
                   <button
                     type="button"
@@ -5379,7 +5393,7 @@ export default function TeacherDashboard() {
                     }}
                     className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md transition-all flex items-center gap-2 cursor-pointer"
                   >
-                    <GraduationCap className="w-4 h-4" /> Finalize & Execute Promotion
+                    <GraduationCap className="w-4 h-4" /> {t('teacher.finalize_promotion_btn', 'Finalize & Execute Promotion')}
                   </button>
                 </div>
               </div>
@@ -5401,10 +5415,10 @@ export default function TeacherDashboard() {
                   </span>
                   <div>
                     <h3 className="font-serif font-bold text-lg text-foreground">
-                      {showHistoryBroadsheetModal.studentName} — Archived Broadsheet
+                      {showHistoryBroadsheetModal.studentName} — {t('teacher.archived_broadsheet_title', 'Archived Broadsheet')}
                     </h3>
                     <p className="text-xs text-muted-foreground">
-                      Session: <span className="font-semibold text-foreground">{showHistoryBroadsheetModal.academicSession}</span> ({showHistoryBroadsheetModal.term || '3rd Term'}) · Class: <span className="font-semibold text-foreground">{showHistoryBroadsheetModal.fromClass}</span> → <span className="font-semibold text-indigo-600">{showHistoryBroadsheetModal.toClass}</span>
+                      {t('teacher.session_prefix', 'Session: ')}<span className="font-semibold text-foreground">{showHistoryBroadsheetModal.academicSession}</span> ({showHistoryBroadsheetModal.term || '3rd Term'}) · {t('teacher.class_label_prefix', 'Class:')} <span className="font-semibold text-foreground">{showHistoryBroadsheetModal.fromClass}</span> → <span className="font-semibold text-indigo-600">{showHistoryBroadsheetModal.toClass}</span>
                     </p>
                   </div>
                 </div>
@@ -5420,19 +5434,19 @@ export default function TeacherDashboard() {
               <div className="flex-1 overflow-y-auto p-5 space-y-4">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-muted/20 p-4 rounded-xl border border-border">
                   <div>
-                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">Student ID</span>
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">{t('teacher.student_id_label', 'Student ID')}</span>
                     <span className="font-mono text-xs font-bold text-foreground">{showHistoryBroadsheetModal.studentCode}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">Final Cumulative Avg</span>
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">{t('teacher.final_cum_avg_label', 'Final Cumulative Avg')}</span>
                     <span className="text-sm font-bold text-emerald-600">{showHistoryBroadsheetModal.cumulativeAverage}%</span>
                   </div>
                   <div>
-                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">Promotion Outcome</span>
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">{t('teacher.promotion_outcome_label', 'Promotion Outcome')}</span>
                     <span className="text-xs font-bold text-indigo-600 uppercase">{showHistoryBroadsheetModal.status}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">Archived On</span>
+                    <span className="text-[10px] uppercase font-bold text-muted-foreground block">{t('teacher.archived_on_label', 'Archived On')}</span>
                     <span className="text-xs font-semibold text-foreground">{new Date(showHistoryBroadsheetModal.promotedAt).toLocaleDateString()}</span>
                   </div>
                 </div>
@@ -5441,21 +5455,21 @@ export default function TeacherDashboard() {
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
                       <tr className="bg-muted/40 border-b border-border text-[11px] font-bold text-muted-foreground uppercase">
-                        <th className="py-2.5 px-3">Subject / Course</th>
-                        <th className="py-2.5 px-2 text-center">1st CA</th>
-                        <th className="py-2.5 px-2 text-center">2nd CA</th>
-                        <th className="py-2.5 px-2 text-center">CBT Obj</th>
-                        <th className="py-2.5 px-2 text-center">Theory / Exam</th>
-                        <th className="py-2.5 px-2 text-center font-bold text-foreground">Total Score</th>
-                        <th className="py-2.5 px-2 text-center">Grade</th>
-                        <th className="py-2.5 px-3">Remark</th>
+                        <th className="py-2.5 px-3">{t('teacher.subject_course_th', 'Subject / Course')}</th>
+                        <th className="py-2.5 px-2 text-center">{t('teacher.ca1_th', '1st CA')}</th>
+                        <th className="py-2.5 px-2 text-center">{t('teacher.ca2_th', '2nd CA')}</th>
+                        <th className="py-2.5 px-2 text-center">{t('teacher.cbt_obj_th', 'CBT Obj')}</th>
+                        <th className="py-2.5 px-2 text-center">{t('teacher.theory_exam_th', 'Theory / Exam')}</th>
+                        <th className="py-2.5 px-2 text-center font-bold text-foreground">{t('teacher.total_score_th', 'Total Score')}</th>
+                        <th className="py-2.5 px-2 text-center">{t('teacher.grade_th', 'Grade')}</th>
+                        <th className="py-2.5 px-3">{t('teacher.remark_th', 'Remark')}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/60">
                       {Object.keys(showHistoryBroadsheetModal.broadsheetSnapshot || {}).length === 0 ? (
                         <tr>
                           <td colSpan={8} className="py-8 text-center text-muted-foreground">
-                            No subject score records recorded for this historical snapshot.
+                            {t('teacher.no_snapshot_scores', 'No subject score records recorded for this historical snapshot.')}
                           </td>
                         </tr>
                       ) : (
@@ -5494,14 +5508,14 @@ export default function TeacherDashboard() {
               {/* Footer */}
               <div className="p-4 border-t border-border bg-muted/10 flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">
-                  Signed: <strong>{showHistoryBroadsheetModal.promotedByTeacherName || 'Form Teacher'}</strong>
+                  {t('teacher.signed_prefix', 'Signed: ')}<strong>{showHistoryBroadsheetModal.promotedByTeacherName || t('teacher.form_teacher_title', 'Form Teacher')}</strong>
                 </span>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setShowHistoryBroadsheetModal(null)}
                     className="px-4 py-2 rounded-xl border border-border text-xs font-bold text-foreground hover:bg-muted transition-colors cursor-pointer"
                   >
-                    Close
+                    {t('teacher.close_btn', 'Close')}
                   </button>
                   <button
                     onClick={() => {
@@ -5518,7 +5532,7 @@ export default function TeacherDashboard() {
                     }}
                     className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
                   >
-                    <Printer className="w-3.5 h-3.5" /> Print Terminal Report Card
+                    <Printer className="w-3.5 h-3.5" /> {t('teacher.print_report_card_btn', 'Print Terminal Report Card')}
                   </button>
                 </div>
               </div>
@@ -5556,7 +5570,7 @@ export default function TeacherDashboard() {
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      Subject: <strong className="text-foreground">{previewExamModal.course_name}</strong> • Class: <strong className="text-foreground">{previewExamModal.class || 'SS1'} {previewExamModal.stream || 'Science'}</strong> • Duration: <strong className="text-foreground">{previewExamModal.duration_minutes || 45} mins</strong> • Total: <strong className="text-primary font-bold">{(previewExamModal.questions || []).length} Questions</strong>
+                      {t('teacher.subject_label_prefix', 'Subject:')} <strong className="text-foreground">{previewExamModal.course_name}</strong> • {t('teacher.class_label_prefix', 'Class:')} <strong className="text-foreground">{previewExamModal.class || 'SS1'} {previewExamModal.stream || 'Science'}</strong> • {t('teacher.duration_label_prefix', 'Duration:')} <strong className="text-foreground">{previewExamModal.duration_minutes || 45} mins</strong> • {t('teacher.total_label_prefix', 'Total:')} <strong className="text-primary font-bold">{(previewExamModal.questions || []).length} Questions</strong>
                     </p>
                   </div>
                 </div>
@@ -5574,12 +5588,12 @@ export default function TeacherDashboard() {
                 {previewExamLocked ? (
                   <div className="flex items-center gap-2 text-xs text-amber-800 dark:text-amber-300">
                     <Lock className="w-4 h-4 text-amber-600 shrink-0" />
-                    <span><strong>Read-Only Preview:</strong> Question editing is locked while awaiting admin approval.</span>
+                    <span><strong>{t('teacher.readonly_preview_prefix', 'Read-Only Preview:')}</strong> {t('teacher.readonly_preview_desc', 'Question editing is locked while awaiting admin approval.')}</span>
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400">
                     <Unlock className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <span><strong>Editing Enabled:</strong> You can modify questions or resume in CBT Exam Builder.</span>
+                    <span><strong>{t('teacher.editing_enabled_prefix', 'Editing Enabled:')}</strong> {t('teacher.editing_enabled_desc', 'You can modify questions or resume in CBT Exam Builder.')}</span>
                   </div>
                 )}
 
@@ -5613,7 +5627,7 @@ export default function TeacherDashboard() {
                     <Edit3 className="w-3.5 h-3.5" /> Enable Editing / Unlock Questions
                   </button>
                 ) : (
-                  <Link href="/dashboard/cbt-builder">
+                  <Link href={`/dashboard/cbt-builder?examId=${previewExamModal.id}&locked=false`}>
                     <button
                       type="button"
                       onClick={() => setPreviewExamModal(null)}
@@ -5630,9 +5644,9 @@ export default function TeacherDashboard() {
                 {(!previewExamModal.questions || previewExamModal.questions.length === 0) ? (
                   <div className="text-center py-12 border-2 border-dashed border-border rounded-2xl bg-muted/10 space-y-2">
                     <Lightbulb className="w-10 h-10 text-muted-foreground/40 mx-auto" />
-                    <h4 className="font-bold text-sm text-foreground">No questions stacked in this exam paper</h4>
+                    <h4 className="font-bold text-sm text-foreground">{t('teacher.no_questions_stacked', 'No questions stacked in this exam paper')}</h4>
                     <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                      Click "Open in CBT Exam Builder" to start authoring and stacking multiple-choice questions.
+                      {t('teacher.click_open_cbt_builder_desc', 'Click "Open in CBT Exam Builder" to start authoring and stacking multiple-choice questions.')}
                     </p>
                   </div>
                 ) : (
@@ -5695,7 +5709,7 @@ export default function TeacherDashboard() {
 
                       {q.explanation && (
                         <div className="text-xs bg-muted/40 p-3 rounded-xl border border-border/60 text-muted-foreground">
-                          <strong className="text-foreground">Explanation / Solution:</strong> {q.explanation}
+                          <strong className="text-foreground">{t('teacher.explanation_solution_label', 'Explanation / Solution:')}</strong> {q.explanation}
                         </div>
                       )}
                     </div>
@@ -5706,7 +5720,7 @@ export default function TeacherDashboard() {
               {/* Modal Footer */}
               <div className="p-4 border-t border-border bg-muted/10 flex items-center justify-between gap-3">
                 <span className="text-xs text-muted-foreground">
-                  Exam Paper: <strong className="text-foreground">{previewExamModal.title}</strong>
+                  {t('teacher.exam_paper_prefix', 'Exam Paper: ')}<strong className="text-foreground">{previewExamModal.title}</strong>
                 </span>
                 <div className="flex items-center gap-2">
                   <button
@@ -5714,9 +5728,9 @@ export default function TeacherDashboard() {
                     onClick={() => setPreviewExamModal(null)}
                     className="px-5 py-2.5 rounded-xl border border-border text-xs font-bold text-foreground hover:bg-muted transition-colors cursor-pointer"
                   >
-                    Close Preview
+                    {t('teacher.close_preview_btn', 'Close Preview')}
                   </button>
-                  <Link href="/dashboard/cbt-builder">
+                  <Link href={`/dashboard/cbt-builder?examId=${previewExamModal.id}&locked=false`}>
                     <button
                       type="button"
                       onClick={() => setPreviewExamModal(null)}

@@ -2887,8 +2887,12 @@ export default function AdminDashboard() {
             };
           });
 
-        saveStoredStudents(liveStudents);
-        setStudentsList(getStoredStudents());
+        if (liveStudents.length > 0) {
+          const mergedStudents = saveStoredStudents(liveStudents);
+          setStudentsList(mergedStudents || getStoredStudents());
+        } else {
+          setStudentsList(getStoredStudents());
+        }
       }
 
       // Fetch live Finance Income & Expenses from Django Database
@@ -3891,7 +3895,10 @@ export default function AdminDashboard() {
           title: 'Nursery Division',
           subtitle: 'Nursery 1–3',
           description: 'Early Childhood Montessori Education & Developmental Foundation',
-          filterFn: (s: any) => s.grade && (s.grade.toUpperCase().includes('NUR') || s.grade.toUpperCase().includes('CRECHE')),
+          filterFn: (s: any) => {
+            const g = (s.grade || '').toUpperCase();
+            return (g.includes('NUR') || g.includes('CRECHE')) && !g.includes('PRI') && !g.includes('BASIC') && !g.includes('JSS') && !g.includes('SS');
+          },
           icon: School
         },
         {
@@ -3899,7 +3906,10 @@ export default function AdminDashboard() {
           title: 'Primary Division',
           subtitle: 'Primary 1–6',
           description: 'Foundational Elementary Curriculum & Basic Quantitative Skills',
-          filterFn: (s: any) => s.grade && (s.grade.toUpperCase().includes('PRI') || s.grade.toUpperCase().includes('BASIC')),
+          filterFn: (s: any) => {
+            const g = (s.grade || '').toUpperCase();
+            return (g.includes('PRI') || g.includes('BASIC') || g.includes('BSC')) && !g.includes('JSS') && !g.includes('SS');
+          },
           icon: BookOpen
         },
         {
@@ -3907,7 +3917,10 @@ export default function AdminDashboard() {
           title: 'Junior Secondary',
           subtitle: 'JSS 1–3',
           description: 'Basic Education Curriculum & State BECE Examination Prep',
-          filterFn: (s: any) => s.grade && (s.grade.toUpperCase().includes('JSS') || s.grade.toUpperCase().includes('JUNIOR')),
+          filterFn: (s: any) => {
+            const g = (s.grade || '').toUpperCase();
+            return g.includes('JSS') || g.includes('JUNIOR') || g.startsWith('JS');
+          },
           icon: GraduationCap
         },
         {
@@ -3915,7 +3928,11 @@ export default function AdminDashboard() {
           title: 'Senior Secondary',
           subtitle: 'SS 1–3 (Science & Art)',
           description: 'Senior Secondary Academic Programs, WAEC & NECO Streams',
-          filterFn: (s: any) => s.grade && (s.grade.toUpperCase().includes('SS') || s.grade.toUpperCase().includes('SENIOR')),
+          filterFn: (s: any) => {
+            const g = (s.grade || '').toUpperCase();
+            const isJunior = g.includes('JSS') || g.includes('JUNIOR') || g.startsWith('JS');
+            return !isJunior && (g.includes('SS') || g.includes('SENIOR'));
+          },
           icon: Award
         }
       ];
@@ -3984,9 +4001,13 @@ export default function AdminDashboard() {
               <button
                 onClick={async () => {
                   setIsResetting(true);
-                  clearAllStoredStudents();
-                  await fetchBackendUsers();
-                  setIsResetting(false);
+                  try {
+                    await syncStudentsWithBackend();
+                    await fetchBackendUsers();
+                  } finally {
+                    setStudentsList(getStoredStudents());
+                    setIsResetting(false);
+                  }
                 }}
                 disabled={isResetting}
                 className="px-3 py-2.5 border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 shrink-0 disabled:opacity-50 cursor-pointer"

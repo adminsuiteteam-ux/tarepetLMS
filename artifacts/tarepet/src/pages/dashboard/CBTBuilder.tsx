@@ -211,9 +211,27 @@ export default function CBTBuilder() {
 
   useEffect(() => {
     fetchExams();
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const urlExamId = params.get('examId');
+      const urlLocked = params.get('locked');
+      if (urlExamId) {
+        const idNum = Number(urlExamId) || urlExamId;
+        setSelectedExamId(idNum as any);
+        fetchQuestions(idNum);
+        setIsLockedPreview(urlLocked === 'true');
+        setView('questions');
+      }
+    }
     const unsub = subscribeToCBTStore(fetchExams);
     return () => unsub();
   }, []);
+
+  useEffect(() => {
+    if (selectedExamId) {
+      fetchQuestions(selectedExamId);
+    }
+  }, [selectedExamId]);
 
   const handleCreateExam = async () => {
     if (!form.title) {
@@ -254,7 +272,11 @@ export default function CBTBuilder() {
     const list = getStoredExams();
     const ex = list.find(e => Number(e.id) === Number(examId) || String(e.id) === String(examId))
             || exams.find(e => Number(e.id) === Number(examId) || String(e.id) === String(examId));
-    setQuestions(ex?.questions ? [...ex.questions] : []);
+    if (ex && Array.isArray(ex.questions)) {
+      setQuestions([...ex.questions]);
+    } else {
+      setQuestions([]);
+    }
   };
 
   const [showBulkModal, setShowBulkModal] = useState(false);
@@ -350,7 +372,7 @@ export default function CBTBuilder() {
       setTimeout(() => setJustAddedId(null), 3000);
     }
 
-    ex.questions = updatedQuestions;
+    ex.questions = [...updatedQuestions];
     ex.questions_count = updatedQuestions.length;
     await saveCBTExam(ex);
     setQuestions([...updatedQuestions]);
