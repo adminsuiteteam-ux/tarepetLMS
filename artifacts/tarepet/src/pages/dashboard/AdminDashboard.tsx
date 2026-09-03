@@ -3896,8 +3896,8 @@ export default function AdminDashboard() {
           subtitle: 'Nursery 1–3',
           description: 'Early Childhood Montessori Education & Developmental Foundation',
           filterFn: (s: any) => {
-            const g = (s.grade || '').toUpperCase();
-            return (g.includes('NUR') || g.includes('CRECHE')) && !g.includes('PRI') && !g.includes('BASIC') && !g.includes('JSS') && !g.includes('SS');
+            const g = (s.grade || '').toUpperCase().trim();
+            return /\b(NUR|NURSERY|CRECHE|KG|KINDERGARTEN)\b/i.test(g) && !/\b(PRI|PRIMARY|BASIC|JSS)\b/i.test(g) && !/\bSS/i.test(g);
           },
           icon: School
         },
@@ -3907,8 +3907,8 @@ export default function AdminDashboard() {
           subtitle: 'Primary 1–6',
           description: 'Foundational Elementary Curriculum & Basic Quantitative Skills',
           filterFn: (s: any) => {
-            const g = (s.grade || '').toUpperCase();
-            return (g.includes('PRI') || g.includes('BASIC') || g.includes('BSC')) && !g.includes('JSS') && !g.includes('SS');
+            const g = (s.grade || '').toUpperCase().trim();
+            return /\b(PRI|PRIMARY|BASIC|BSC)\b/i.test(g) && !/\bJSS/i.test(g) && !/\bSS/i.test(g);
           },
           icon: BookOpen
         },
@@ -3918,8 +3918,8 @@ export default function AdminDashboard() {
           subtitle: 'JSS 1–3',
           description: 'Basic Education Curriculum & State BECE Examination Prep',
           filterFn: (s: any) => {
-            const g = (s.grade || '').toUpperCase();
-            return g.includes('JSS') || g.includes('JUNIOR') || g.startsWith('JS');
+            const g = (s.grade || '').toUpperCase().trim();
+            return /\bJSS/i.test(g) || /\bJUNIOR/i.test(g) || /^JS/i.test(g);
           },
           icon: GraduationCap
         },
@@ -3929,9 +3929,9 @@ export default function AdminDashboard() {
           subtitle: 'SS 1–3 (Science & Art)',
           description: 'Senior Secondary Academic Programs, WAEC & NECO Streams',
           filterFn: (s: any) => {
-            const g = (s.grade || '').toUpperCase();
-            const isJunior = g.includes('JSS') || g.includes('JUNIOR') || g.startsWith('JS');
-            return !isJunior && (g.includes('SS') || g.includes('SENIOR'));
+            const g = (s.grade || '').toUpperCase().trim();
+            const isJunior = /\bJSS/i.test(g) || /\bJUNIOR/i.test(g) || /^JS/i.test(g);
+            return !isJunior && (/\bSS[1-3]/i.test(g) || /\bSS\s*[1-3]/i.test(g) || /\bSENIOR/i.test(g) || /^SS/i.test(g));
           },
           icon: Award
         }
