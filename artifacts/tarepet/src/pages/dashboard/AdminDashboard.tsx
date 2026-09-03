@@ -47,7 +47,7 @@ import {
   Briefcase, UserCog, BookMarked, MessageSquare, KeyRound,
   BadgeCheck, Ban, RotateCcw, FileDown, Send, FlaskConical, Palette,
   School, CalendarCheck, Megaphone, UserPlus, FileSpreadsheet, TrendingUp, Sparkles, ChevronRight, Eye, Layers, ShieldCheck, Bell, AlertTriangle, Key, Trophy, BarChart3, TrendingDown, XCircle, UploadCloud, Camera,
-  Scissors, Loader2, Tag, Sun, Moon
+  Scissors, Loader2, Tag, Sun, Moon, Filter
 } from 'lucide-react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, LineChart, Line, CartesianGrid,
@@ -3891,24 +3891,47 @@ export default function AdminDashboard() {
       // ── LEVEL 1 & 2: Complete Student Directory View (Always Visible) ───
       const SCHOOL_DIVISIONS = [
         {
+          key: 'ALL',
+          title: 'All Students',
+          subtitle: 'Whole School (All Levels)',
+          description: 'Alphabetical directory of all active enrolled learners across all levels in the school.',
+          classes: [],
+          filterFn: () => true,
+          icon: Users
+        },
+        {
           key: 'NURSERY',
-          title: 'Nursery Division',
-          subtitle: 'Nursery 1–3',
-          description: 'Early Childhood Montessori Education & Developmental Foundation',
+          title: 'Nursery & Creche',
+          subtitle: 'Creche & Nursery 1–3',
+          description: 'Early Childhood Montessori Education (Creche, Toddler, Reception, Nursery 1–3)',
+          classes: [
+            { key: 'Creche', label: 'Creche / Toddler' },
+            { key: 'NUR1', label: 'Nursery 1' },
+            { key: 'NUR2', label: 'Nursery 2' },
+            { key: 'NUR3', label: 'Nursery 3' },
+          ],
           filterFn: (s: any) => {
             const g = (s.grade || '').toUpperCase().trim();
-            return /\b(NUR|NURSERY|CRECHE|KG|KINDERGARTEN)\b/i.test(g) && !/\b(PRI|PRIMARY|BASIC|JSS)\b/i.test(g) && !/\bSS/i.test(g);
+            return (g.includes('NUR') || g.includes('CRECHE') || g.includes('KG') || g.includes('RECEPT')) && !g.includes('PRI') && !g.includes('BASIC') && !g.includes('JSS') && !g.includes('SS');
           },
           icon: School
         },
         {
           key: 'PRIMARY',
           title: 'Primary Division',
-          subtitle: 'Primary 1–6',
-          description: 'Foundational Elementary Curriculum & Basic Quantitative Skills',
+          subtitle: 'Primary 1–6 (Basic 1–6)',
+          description: 'Foundational Elementary Curriculum (Primary 1 to Primary 6 / Basic 1–6)',
+          classes: [
+            { key: 'PRI1', label: 'Primary 1' },
+            { key: 'PRI2', label: 'Primary 2' },
+            { key: 'PRI3', label: 'Primary 3 (Basic 3)' },
+            { key: 'PRI4', label: 'Primary 4' },
+            { key: 'PRI5', label: 'Primary 5' },
+            { key: 'PRI6', label: 'Primary 6 (Basic 6)' },
+          ],
           filterFn: (s: any) => {
             const g = (s.grade || '').toUpperCase().trim();
-            return /\b(PRI|PRIMARY|BASIC|BSC)\b/i.test(g) && !/\bJSS/i.test(g) && !/\bSS/i.test(g);
+            return (g.includes('PRI') || g.includes('BASIC') || g.includes('BSC')) && !g.includes('JSS') && !g.includes('SS');
           },
           icon: BookOpen
         },
@@ -3916,10 +3939,15 @@ export default function AdminDashboard() {
           key: 'JSS',
           title: 'Junior Secondary',
           subtitle: 'JSS 1–3',
-          description: 'Basic Education Curriculum & State BECE Examination Prep',
+          description: 'Basic Education Curriculum & State BECE Examination Prep (JSS 1 to JSS 3)',
+          classes: [
+            { key: 'JSS1', label: 'JSS 1' },
+            { key: 'JSS2', label: 'JSS 2' },
+            { key: 'JSS3', label: 'JSS 3' },
+          ],
           filterFn: (s: any) => {
             const g = (s.grade || '').toUpperCase().trim();
-            return /\bJSS/i.test(g) || /\bJUNIOR/i.test(g) || /^JS/i.test(g);
+            return (g.includes('JSS') || g.includes('JUNIOR') || /^JS/i.test(g)) && !g.startsWith('SS');
           },
           icon: GraduationCap
         },
@@ -3927,22 +3955,28 @@ export default function AdminDashboard() {
           key: 'SS',
           title: 'Senior Secondary',
           subtitle: 'SS 1–3 (Science & Art)',
-          description: 'Senior Secondary Academic Programs, WAEC & NECO Streams',
+          description: 'Senior Secondary Academic Programs, WAEC & NECO Streams (SS 1 to SS 3)',
+          classes: [
+            { key: 'SS1', label: 'SS 1' },
+            { key: 'SS2', label: 'SS 2' },
+            { key: 'SS3', label: 'SS 3' },
+          ],
           filterFn: (s: any) => {
             const g = (s.grade || '').toUpperCase().trim();
-            const isJunior = /\bJSS/i.test(g) || /\bJUNIOR/i.test(g) || /^JS/i.test(g);
+            const isJunior = g.includes('JSS') || g.includes('JUNIOR') || /^JS/i.test(g);
             return !isJunior && (/\bSS[1-3]/i.test(g) || /\bSS\s*[1-3]/i.test(g) || /\bSENIOR/i.test(g) || /^SS/i.test(g));
           },
           icon: Award
         }
       ];
 
-      const activeDivisionData = SCHOOL_DIVISIONS.find(d => d.key === selectedDivision);
+      const currentDivisionKey = selectedDivision || 'ALL';
+      const activeDivisionData = SCHOOL_DIVISIONS.find(d => d.key === currentDivisionKey) || SCHOOL_DIVISIONS[0];
 
       const filteredStudentRecords = studentsList.filter(s => {
         const q = userSearch.toLowerCase();
         const matchSearch = !q || 
-          s.name.toLowerCase().includes(q) || 
+          (s.name && s.name.toLowerCase().includes(q)) || 
           (s.studentId && s.studentId.toLowerCase().includes(q)) || 
           (s.code && s.code.toLowerCase().includes(q)) || 
           (s.email && s.email.toLowerCase().includes(q)) || 
@@ -3951,7 +3985,7 @@ export default function AdminDashboard() {
           (s.parentPhone && s.parentPhone.includes(q));
 
         let matchDivision = true;
-        if (selectedDivision && activeDivisionData) {
+        if (selectedDivision && selectedDivision !== 'ALL' && activeDivisionData) {
           matchDivision = activeDivisionData.filterFn(s);
         }
 
@@ -3968,34 +4002,40 @@ export default function AdminDashboard() {
           {/* Header Banner */}
           <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
             <div>
-              {selectedDivision && (
+              {selectedDivision && selectedDivision !== 'ALL' && (
                 <div className="flex items-center gap-2 mb-2 text-xs">
                   <button
                     onClick={() => { setSelectedDivision(null); setSelectedClass(null); setUserSearch(''); }}
                     className="text-primary font-bold hover:underline flex items-center gap-1 cursor-pointer"
                   >
-                    <ChevronLeft className="w-4 h-4" /> All School Divisions
+                    <ChevronLeft className="w-4 h-4" /> All School Students
                   </button>
                   <span className="text-muted-foreground">/</span>
                   <span className="font-semibold text-foreground">{activeDivisionData?.title}</span>
+                  {selectedClass && (
+                    <>
+                      <span className="text-muted-foreground">/</span>
+                      <span className="font-bold text-primary">{selectedClass}</span>
+                    </>
+                  )}
                 </div>
               )}
               <h2 className="font-bold text-xl text-foreground">
-                {selectedDivision ? activeDivisionData?.title : 'Students & Learner Directory'}
+                {selectedDivision && selectedDivision !== 'ALL' ? activeDivisionData?.title : 'Students & Learner Directory'}
               </h2>
               <p className="text-xs text-muted-foreground mt-1">
-                {selectedDivision
+                {selectedDivision && selectedDivision !== 'ALL'
                   ? activeDivisionData?.description
-                  : 'Manage active student enrollments, academic records, ID cards, and class distributions.'}
+                  : 'Manage active student enrollments, academic records, ID cards, and class distributions (arranged alphabetically).'}
               </p>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
-              {selectedDivision && (
+              {selectedDivision && selectedDivision !== 'ALL' && (
                 <button
                   onClick={() => { setSelectedDivision(null); setSelectedClass(null); setUserSearch(''); }}
                   className="px-3.5 py-2.5 border border-border rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors flex items-center gap-1.5 cursor-pointer"
                 >
-                  <ChevronLeft className="w-4 h-4" /> Back to Divisions
+                  <ChevronLeft className="w-4 h-4" /> View All Students
                 </button>
               )}
               <button
@@ -4044,7 +4084,7 @@ export default function AdminDashboard() {
             <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Active Status</p>
-                <h3 className="text-2xl font-serif font-bold text-emerald-600 mt-1">{studentsList.filter(s => s.status === 'Active').length}</h3>
+                <h3 className="text-2xl font-serif font-bold text-emerald-600 mt-1">{studentsList.filter(s => s.status === 'Active' || s.status === 'ACTIVE').length}</h3>
                 <p className="text-[11px] text-muted-foreground mt-0.5">In good standing</p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center"><CheckCircle2 className="w-5 h-5" /></div>
@@ -4067,29 +4107,29 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* Interactive Academic Stage Division Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          {/* Interactive Academic Stage Division Cards (5 Cards: All Students, Nursery & Creche, Primary, JSS, SS) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {SCHOOL_DIVISIONS.map(div => {
               const Icon = div.icon;
-              const count = studentsList.filter(div.filterFn).length;
-              const isSelected = selectedDivision === div.key;
+              const count = div.key === 'ALL' ? studentsList.length : studentsList.filter(div.filterFn).length;
+              const isSelected = (div.key === 'ALL' && (!selectedDivision || selectedDivision === 'ALL')) || selectedDivision === div.key;
               return (
                 <div
                   key={div.key}
                   onClick={() => {
-                    setSelectedDivision(isSelected ? null : div.key);
+                    setSelectedDivision(div.key === 'ALL' ? null : div.key);
                     setSelectedClass(null);
                   }}
-                  className={`group border-2 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer space-y-3 flex flex-col justify-between ${
+                  className={`group border-2 p-4 rounded-2xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer space-y-3 flex flex-col justify-between ${
                     isSelected ? 'border-primary bg-primary/10 ring-2 ring-primary/20' : 'border-border bg-card hover:border-primary/40'
                   }`}
                 >
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
-                        <Icon className="w-5 h-5" />
+                      <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold">
+                        <Icon className="w-4 h-4" />
                       </div>
-                      <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
                         {count} Students
                       </span>
                     </div>
@@ -4099,7 +4139,7 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                   <div className="pt-2 border-t border-border flex items-center justify-between text-[11px] font-bold text-primary">
-                    <span>{isSelected ? 'Viewing Division' : 'Filter by Division'}</span>
+                    <span>{isSelected ? 'Active Division' : 'Filter by Division'}</span>
                     <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isSelected ? 'rotate-90' : 'group-hover:translate-x-1'}`} />
                   </div>
                 </div>
@@ -4107,9 +4147,53 @@ export default function AdminDashboard() {
             })}
           </div>
 
+          {/* Individual Class Level Filter Bar (Sub-Filter Pills for Selected Division) */}
+          {selectedDivision && selectedDivision !== 'ALL' && activeDivisionData?.classes && activeDivisionData.classes.length > 0 && (
+            <div className="bg-card p-3 rounded-2xl border border-border shadow-xs flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold text-muted-foreground mr-1 flex items-center gap-1.5">
+                <Filter className="w-3.5 h-3.5 text-primary" />
+                {activeDivisionData.title} Classes:
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedClass(null)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  !selectedClass
+                    ? 'bg-primary text-white shadow-xs'
+                    : 'bg-muted/40 hover:bg-muted text-foreground border border-border'
+                }`}
+              >
+                All {activeDivisionData.title} ({studentsList.filter(activeDivisionData.filterFn).length})
+              </button>
+              {activeDivisionData.classes.map(cls => {
+                const classCount = studentsList.filter(s => activeDivisionData.filterFn(s) && matchStudentClass(s.grade, cls.key)).length;
+                const isClassActive = selectedClass === cls.key || selectedClass === cls.label;
+                return (
+                  <button
+                    key={cls.key}
+                    type="button"
+                    onClick={() => setSelectedClass(isClassActive ? null : cls.key)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      isClassActive
+                        ? 'bg-primary text-white shadow-xs'
+                        : 'bg-muted/40 hover:bg-muted text-foreground border border-border'
+                    }`}
+                  >
+                    <span>{cls.label}</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono ${
+                      isClassActive ? 'bg-white/20 text-white' : 'bg-muted text-muted-foreground'
+                    }`}>
+                      {classCount}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           {/* Live Students Data Table (Always Visible) */}
           <div className="space-y-4 pt-2">
-            {/* Filter Pills & Search Bar */}
+            {/* Filter Controls & Search Bar */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -4117,38 +4201,70 @@ export default function AdminDashboard() {
                   type="text"
                   value={userSearch}
                   onChange={e => setUserSearch(e.target.value)}
-                  placeholder={`Search ${selectedDivision ? activeDivisionData?.title : 'all students'} by name, admission no, class, parent phone...`}
+                  placeholder={`Search ${selectedDivision && selectedDivision !== 'ALL' ? activeDivisionData?.title : 'all students'} alphabetically by name, admission no, class, parent phone...`}
                   className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-muted/20 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
 
-              {/* Active Filter Indicators */}
+              {/* Division Dropdown Selector */}
               <div className="flex items-center gap-2 flex-wrap">
-                {selectedDivision && (
-                  <div className="flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-2 rounded-xl border border-primary/20 text-xs font-bold shrink-0">
-                    <span>Division: {activeDivisionData?.title}</span>
-                    <button
-                      onClick={() => { setSelectedDivision(null); setUserSearch(''); }}
-                      className="hover:bg-primary/20 p-1 rounded-md transition-colors cursor-pointer"
-                      title="Clear division filter"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                <select
+                  value={selectedDivision || 'ALL'}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setSelectedDivision(val === 'ALL' ? null : val);
+                    setSelectedClass(null);
+                  }}
+                  className="px-3 py-2 border border-border rounded-xl bg-card text-xs font-bold text-foreground focus:ring-2 focus:ring-primary focus:outline-none cursor-pointer"
+                  aria-label="Filter by School Division"
+                >
+                  <option value="ALL">All School Divisions ({studentsList.length})</option>
+                  <option value="NURSERY">Nursery & Creche ({studentsList.filter(s => SCHOOL_DIVISIONS[1].filterFn(s)).length})</option>
+                  <option value="PRIMARY">Primary Division ({studentsList.filter(s => SCHOOL_DIVISIONS[2].filterFn(s)).length})</option>
+                  <option value="JSS">Junior Secondary ({studentsList.filter(s => SCHOOL_DIVISIONS[3].filterFn(s)).length})</option>
+                  <option value="SS">Senior Secondary ({studentsList.filter(s => SCHOOL_DIVISIONS[4].filterFn(s)).length})</option>
+                </select>
+
+                {/* Class Dropdown Selector */}
+                {selectedDivision && selectedDivision !== 'ALL' && activeDivisionData?.classes && activeDivisionData.classes.length > 0 && (
+                  <select
+                    value={selectedClass || ''}
+                    onChange={e => setSelectedClass(e.target.value || null)}
+                    className="px-3 py-2 border border-border rounded-xl bg-card text-xs font-bold text-foreground focus:ring-2 focus:ring-primary focus:outline-none cursor-pointer"
+                    aria-label="Filter by Specific Class"
+                  >
+                    <option value="">All {activeDivisionData.title} Classes</option>
+                    {activeDivisionData.classes.map(cls => (
+                      <option key={cls.key} value={cls.key}>{cls.label}</option>
+                    ))}
+                  </select>
                 )}
-                {selectedClass && (
-                  <div className="flex items-center gap-1.5 bg-secondary/10 text-secondary px-3 py-2 rounded-xl border border-secondary/20 text-xs font-bold shrink-0">
-                    <span>Class: {selectedClass}</span>
-                    <button
-                      onClick={() => setSelectedClass(null)}
-                      className="hover:bg-secondary/20 p-1 rounded-md transition-colors cursor-pointer"
-                      title="Clear class filter"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+
+                {/* Reset Filters Button */}
+                {(selectedDivision || selectedClass || userSearch) && (
+                  <button
+                    onClick={() => { setSelectedDivision(null); setSelectedClass(null); setUserSearch(''); }}
+                    className="px-3 py-2 border border-border rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors flex items-center gap-1 cursor-pointer"
+                    title="Reset all filters to All Students"
+                  >
+                    <X className="w-3.5 h-3.5" /> Reset to All
+                  </button>
                 )}
               </div>
+            </div>
+
+            {/* Results Count & Current Active View Indicator */}
+            <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+              <span>
+                Showing <strong>{filteredStudentRecords.length}</strong> of <strong>{studentsList.length}</strong> students
+                {selectedDivision && selectedDivision !== 'ALL' && (
+                  <> in <strong className="text-primary">{activeDivisionData?.title}</strong></>
+                )}
+                {selectedClass && (
+                  <> • Class: <strong className="text-secondary">{selectedClass}</strong></>
+                )}
+                {' '}(sorted alphabetically)
+              </span>
             </div>
 
             {/* Students Table */}
