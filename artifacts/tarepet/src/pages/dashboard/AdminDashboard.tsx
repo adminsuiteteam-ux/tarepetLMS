@@ -3957,7 +3957,9 @@ export default function AdminDashboard() {
           subtitle: 'SS 1–3 (Science & Art)',
           description: 'Senior Secondary Academic Programs, WAEC & NECO Streams (SS 1 to SS 3)',
           classes: [
-            { key: 'SS1', label: 'SS 1' },
+            { key: 'SS1', label: 'SS 1 (All)' },
+            { key: 'SS1_SCI', label: 'SS 1 Faith (Science)' },
+            { key: 'SS1_ART', label: 'SS 1 Love (Art)' },
             { key: 'SS2', label: 'SS 2' },
             { key: 'SS3', label: 'SS 3' },
           ],
@@ -3991,7 +3993,13 @@ export default function AdminDashboard() {
 
         let matchClassPill = true;
         if (selectedClass) {
-          matchClassPill = matchStudentClass(s.grade, selectedClass);
+          if (selectedClass === 'SS1_SCI') {
+            matchClassPill = matchStudentClass(s.grade, 'SS1') && ((s.stream || '').toUpperCase().includes('SCI') || (s.arm || '').toUpperCase().includes('FAITH') || (s.house || '').toUpperCase().includes('FAITH'));
+          } else if (selectedClass === 'SS1_ART') {
+            matchClassPill = matchStudentClass(s.grade, 'SS1') && ((s.stream || '').toUpperCase().includes('ART') || (s.arm || '').toUpperCase().includes('LOVE') || (s.house || '').toUpperCase().includes('LOVE'));
+          } else {
+            matchClassPill = matchStudentClass(s.grade, selectedClass);
+          }
         }
 
         return matchSearch && matchDivision && matchClassPill;
@@ -4166,7 +4174,12 @@ export default function AdminDashboard() {
                 All {activeDivisionData.title} ({studentsList.filter(activeDivisionData.filterFn).length})
               </button>
               {activeDivisionData.classes.map(cls => {
-                const classCount = studentsList.filter(s => activeDivisionData.filterFn(s) && matchStudentClass(s.grade, cls.key)).length;
+                const classCount = studentsList.filter(s => {
+                  if (!activeDivisionData.filterFn(s)) return false;
+                  if (cls.key === 'SS1_SCI') return matchStudentClass(s.grade, 'SS1') && ((s.stream || '').toUpperCase().includes('SCI') || (s.arm || '').toUpperCase().includes('FAITH') || (s.house || '').toUpperCase().includes('FAITH'));
+                  if (cls.key === 'SS1_ART') return matchStudentClass(s.grade, 'SS1') && ((s.stream || '').toUpperCase().includes('ART') || (s.arm || '').toUpperCase().includes('LOVE') || (s.house || '').toUpperCase().includes('LOVE'));
+                  return matchStudentClass(s.grade, cls.key);
+                }).length;
                 const isClassActive = selectedClass === cls.key || selectedClass === cls.label;
                 return (
                   <button
