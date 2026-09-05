@@ -19617,7 +19617,7 @@ export const DEFAULT_STUDENTS: StudentRecord[] = [
 function loadSavedStudents(): StudentRecord[] {
   if (typeof window === 'undefined') return DEFAULT_STUDENTS;
   try {
-    const CURRENT_ROSTER_VER = '2026-v6-full-roster-622';
+    const CURRENT_ROSTER_VER = '2026-v7-sync-merge-fix';
     const savedVer = localStorage.getItem('tarepet_students_version');
     if (savedVer !== CURRENT_ROSTER_VER) {
       localStorage.setItem('tarepet_students_version', CURRENT_ROSTER_VER);
@@ -19753,7 +19753,14 @@ export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
         });
 
       if (fetched.length > 0) {
-        _students = fetched;
+        // Merge backend-fetched students with DEFAULT_STUDENTS so local roster is preserved
+        const fetchedKeys = new Set(fetched.map(s => String(s.studentId || s.admissionNo || s.code || s.email || '').toLowerCase()));
+        const missingDefaults = DEFAULT_STUDENTS.filter(d => {
+          const dKey = String(d.studentId || d.admissionNo || d.code || '').toLowerCase();
+          const dEmail = String(d.email || '').toLowerCase();
+          return !fetchedKeys.has(dKey) && !fetchedKeys.has(dEmail) && !isAccountDeleted(d.code) && !isAccountDeleted(d.name);
+        });
+        _students = [...fetched, ...missingDefaults];
         if (typeof window !== 'undefined') {
           try {
             localStorage.setItem('tarepet_students_list', JSON.stringify(_students));
