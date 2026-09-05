@@ -60,9 +60,11 @@ class Command(BaseCommand):
                 last_name = ' '.join(parts[1:])
 
             raw_phone = s.get('phone', '').strip()
-            phone = '' if raw_phone.lower() in [
-                'not provided', 'not available', 'none', 'null'
-            ] else raw_phone
+            if raw_phone.lower() in ['not provided', 'not available', 'none', 'null', '']:
+                phone = ''
+            else:
+                primary_phone = raw_phone.split(',')[0].split('/')[0].strip()
+                phone = primary_phone[:20]
 
             raw_dob = s.get('dob', '').strip()
             dob_val = None
