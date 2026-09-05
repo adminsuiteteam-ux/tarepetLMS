@@ -3364,7 +3364,7 @@ export default function AdminDashboard() {
         { label: 'Manage Exams', icon: ClipboardList, color: 'bg-primary/10 text-primary hover:bg-primary/20 border-primary/20', action: () => setActiveSection('exams') },
         { label: 'Upload Results', icon: FileSpreadsheet, color: 'bg-secondary/10 text-secondary hover:bg-secondary/20 border-secondary/20', action: () => setActiveSection('results') },
         { label: 'View Attendance', icon: CalendarCheck, color: 'bg-primary/10 text-primary hover:bg-primary/20 border-primary/20', action: () => setActiveSection('attendance') },
-        { label: 'Generate Reports', icon: BarChart2, color: 'bg-secondary/10 text-secondary hover:bg-secondary/20 border-secondary/20', action: () => setActiveSection('reports') },
+        { label: 'Manage Finance', icon: DollarSign, color: 'bg-secondary/10 text-secondary hover:bg-secondary/20 border-secondary/20', action: () => setActiveSection('finance') },
       ];
 
       const recentActivities: any[] = [];
@@ -3575,17 +3575,12 @@ export default function AdminDashboard() {
             <div className="bg-card p-6 rounded-2xl border border-border shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-bold text-base text-foreground">{t('dashboard.upcomingEvents')}</h3>
-                <button onClick={() => setActiveSection('calendar')} className="text-xs font-semibold text-primary hover:underline flex items-center gap-1">
-                  {t('common.viewAll')} <ChevronRight className="w-3.5 h-3.5" />
-                </button>
+                <span className="text-xs text-muted-foreground">{t('dashboard.today')}</span>
               </div>
               <div className="space-y-3">
                 {upcomingEvents.length === 0 ? (
                   <div className="text-center py-6 space-y-1">
-                    <p className="text-xs font-semibold text-muted-foreground">No upcoming calendar events.</p>
-                    <button onClick={() => setActiveSection('calendar')} className="text-[11px] font-bold text-primary hover:underline">
-                      + Add Calendar Event
-                    </button>
+                    <p className="text-xs font-semibold text-muted-foreground">No upcoming events scheduled.</p>
                   </div>
                 ) : (
                   upcomingEvents.map((evt, idx) => (

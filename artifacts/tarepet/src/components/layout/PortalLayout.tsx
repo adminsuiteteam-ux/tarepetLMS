@@ -41,9 +41,11 @@ const ROLE_NAV: Record<string, NavSection[]> = {
     { id: 'attendance',     label: 'Attendance',        icon: CalendarCheck },
     { id: 'exams',          label: 'Manage Exams',      icon: ClipboardList },
     { id: 'finance',        label: 'Finance',           icon: DollarSign },
-    { id: 'manage_admins',  label: 'Manage Sub-Admins', icon: ShieldAlert },
-    { id: 'calendar',       label: 'School Calendar',   icon: Calendar },
-    { id: 'reports',        label: 'Reports',           icon: BarChart2 },
+    // ── ARCHIVED (Will be re-added in a future update) ───────────────────
+    // { id: 'manage_admins',  label: 'Manage Sub-Admins', icon: ShieldAlert },
+    // { id: 'calendar',       label: 'School Calendar',   icon: Calendar },
+    // { id: 'reports',        label: 'Reports',           icon: BarChart2 },
+    // ─────────────────────────────────────────────────────────────────────
     { id: 'profile',        label: 'My Profile',        icon: UserCheck },
     { id: 'settings',       label: 'Settings',          icon: Settings },
   ],
