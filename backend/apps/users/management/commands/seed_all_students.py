@@ -20,7 +20,11 @@ class Command(BaseCommand):
         with open(json_path, 'r', encoding='utf-8') as f:
             students = json.load(f)
 
-        self.stdout.write(self.style.NOTICE(f'Found {len(students)} student records to seed into Neon DB.'))
+        self.stdout.write(self.style.NOTICE(f'Found {len(students)} student records in dataset.'))
+        existing_count = StudentProfile.objects.count()
+        if existing_count >= 622:
+            self.stdout.write(self.style.SUCCESS(f'All {existing_count} students already seeded in DB. Instant skip.'))
+            return
 
         created_users = 0
         updated_users = 0
