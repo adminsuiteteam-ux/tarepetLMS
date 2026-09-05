@@ -349,11 +349,7 @@ class Command(BaseCommand):
                 teacher_email = tr['email']
                 teacher_id_val = tr['teacher_id']
 
-        # 4. Clean up and purge all mock parent & student accounts
-        ParentProfile.objects.all().delete()
-        User.objects.filter(role=User.Role.PARENT).delete()
-        StudentProfile.objects.all().delete()
-        User.objects.filter(role=User.Role.STUDENT).delete()
+        # 4. Remove mock test accounts only (preserve real students and parents)
         User.objects.filter(email__in=[
             'ebi.amadi@tarepet.com',
             'civa.media@tarepet.com',
@@ -366,6 +362,13 @@ class Command(BaseCommand):
             'somto.nnamdi@tarepet.com',
             'tari.powei@tarepet.com',
         ]).delete()
+
+        # 5. Ensure all 622 official students are seeded
+        from django.core.management import call_command
+        try:
+            call_command('seed_all_students')
+        except Exception as e:
+            self.stdout.write(self.style.WARNING(f'Could not run seed_all_students: {e}'))
 
         primary_student_prof = None
 

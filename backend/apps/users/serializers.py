@@ -56,7 +56,7 @@ class CustomTokenObtainPairSerializer(serializers.Serializer):
                 user = target_user
             # 2. Check default fallback password matching Staff ID, Student ID, or Admin master password
             elif (teacher_id and (password.strip().upper() == teacher_id.strip().upper())) or \
-                 (student_id and (password.strip().upper() == student_id.strip().upper())) or \
+                 (student_id and (password.strip().upper() == student_id.strip().upper() or password.strip().upper() == student_id.strip().upper().split('/')[-1])) or \
                  (target_user.role == User.Role.ADMIN and password == 'TarepetAdmin@2026!'):
                 target_user.set_password(password)
                 target_user.save(update_fields=['password'])

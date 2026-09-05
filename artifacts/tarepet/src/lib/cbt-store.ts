@@ -19723,16 +19723,17 @@ export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
         .map((u: any) => {
           const prof = u.profile || {};
           const autoCode = prof.student_id || prof.admission_number || u.username || (u.id ? `TMS/2026/${String(u.id).padStart(4, '0')}` : 'TMS/STU/001');
+          const shortCode = autoCode.includes('/') ? autoCode.split('/').pop() || autoCode : autoCode;
           const rawGrade = prof.class_level || prof.grade || prof.grade_level || 'SS1';
           return {
             id: u.id,
-            code: autoCode,
+            code: shortCode || autoCode,
             admissionNo: autoCode,
             studentId: autoCode,
             admission_number: autoCode,
             name: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.email,
             email: u.email,
-            password: autoCode,
+            password: shortCode || autoCode,
             gender: prof.gender || (u as any).gender || 'Male',
             maritalStatus: 'Single',
             dob: prof.date_of_birth || prof.dob || (u as any).dob || '',

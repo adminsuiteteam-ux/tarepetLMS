@@ -237,8 +237,13 @@ SPECTACULAR_SETTINGS = {
     'SERVE_INCLUDE_SCHEMA': False,
 }
 
-# Persistent Cache Settings (PostgreSQL Database Cache + Redis if available)
-if _redis_url:
+# Persistent Session & Cache Settings (Database Sessions for 100% reliability)
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 86400 * 30  # 30 days
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+
+if _redis_url and is_render and not _redis_url.startswith('redis://red-'):
     try:
         # pyrefly: ignore [missing-import]
         import django_redis
@@ -248,40 +253,26 @@ if _redis_url:
                 'LOCATION': _redis_url,
                 'OPTIONS': {
                     'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-                    'SOCKET_CONNECT_TIMEOUT': 10,
-                    'SOCKET_TIMEOUT': 10,
-                    'CONNECTION_POOL_KWARGS': {
-                        'max_connections': 50,
-                        'retry_on_timeout': True,
-                    },
+                    'SOCKET_CONNECT_TIMEOUT': 5,
+                    'SOCKET_TIMEOUT': 5,
                     'IGNORE_EXCEPTIONS': True,
                 }
             }
         }
-        SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
-        SESSION_CACHE_ALIAS = 'default'
     except ImportError:
         CACHES = {
             'default': {
-                'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-                'LOCATION': _redis_url,
+                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+                'LOCATION': 'tarepet-locmem-cache',
             }
         }
-        SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 else:
     CACHES = {
         'default': {
-            'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-            'LOCATION': 'tarepet_cache_table',
-            'TIMEOUT': 86400 * 30,  # 30 days cache retention
-            'OPTIONS': {
-                'MAX_ENTRIES': 10000,
-                'CULL_FREQUENCY': 3,
-            }
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'tarepet-locmem-cache',
         }
     }
-    SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
-    SESSION_CACHE_ALIAS = 'default'
 
 SESSION_COOKIE_AGE = 86400 * 30  # 30 days
 SESSION_SAVE_EVERY_REQUEST = True
