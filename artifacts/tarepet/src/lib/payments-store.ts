@@ -167,29 +167,24 @@ export interface DiscountPolicy {
 }
 
 export const DEFAULT_CLASS_FEE_SCHEDULES: ClassFeeSchedule[] = [
-  { class_level: 'Nursery 1', division: 'CRECHE_NURSERY', tuition_fee: 35000, development_levy: 5000, books_materials: 10000, uniform_sports: 8000, pta_medical: 3000, exam_levy: 2000, session: '2025/2026', term: '2nd Term' },
-  { class_level: 'Nursery 2', division: 'CRECHE_NURSERY', tuition_fee: 35000, development_levy: 5000, books_materials: 10000, uniform_sports: 8000, pta_medical: 3000, exam_levy: 2000, session: '2025/2026', term: '2nd Term' },
-  { class_level: 'Nursery 3', division: 'CRECHE_NURSERY', tuition_fee: 38000, development_levy: 5000, books_materials: 10000, uniform_sports: 8000, pta_medical: 3000, exam_levy: 2000, session: '2025/2026', term: '2nd Term' },
-  { class_level: 'Primary 1', division: 'PRIMARY', tuition_fee: 40000, development_levy: 6000, books_materials: 12000, uniform_sports: 9000, pta_medical: 3000, exam_levy: 2000, session: '2025/2026', term: '2nd Term' },
-  { class_level: 'Primary 2', division: 'PRIMARY', tuition_fee: 40000, development_levy: 6000, books_materials: 12000, uniform_sports: 9000, pta_medical: 3000, exam_levy: 2000, session: '2025/2026', term: '2nd Term' },
-  { class_level: 'Primary 3', division: 'PRIMARY', tuition_fee: 42000, development_levy: 6000, books_materials: 12000, uniform_sports: 9000, pta_medical: 3000, exam_levy: 2000, session: '2025/2026', term: '2nd Term' },
-  { class_level: 'Primary 4', division: 'PRIMARY', tuition_fee: 42000, development_levy: 6000, books_materials: 12000, uniform_sports: 9000, pta_medical: 3000, exam_levy: 2000, session: '2025/2026', term: '2nd Term' },
-  { class_level: 'Primary 5', division: 'PRIMARY', tuition_fee: 45000, development_levy: 6000, books_materials: 14000, uniform_sports: 9000, pta_medical: 3000, exam_levy: 3000, session: '2025/2026', term: '2nd Term' },
-  { class_level: 'Primary 6', division: 'PRIMARY', tuition_fee: 48000, development_levy: 6000, books_materials: 14000, uniform_sports: 9000, pta_medical: 3000, exam_levy: 5000, session: '2025/2026', term: '2nd Term' },
-  { class_level: 'JSS 1', division: 'JUNIOR_SECONDARY', tuition_fee: 45000, development_levy: 8000, books_materials: 15000, uniform_sports: 10000, pta_medical: 4000, exam_levy: 3000, session: '2025/2026', term: '2nd Term' },
-  { class_level: 'JSS 2', division: 'JUNIOR_SECONDARY', tuition_fee: 45000, development_levy: 8000, books_materials: 15000, uniform_sports: 10000, pta_medical: 4000, exam_levy: 3000, session: '2025/2026', term: '2nd Term' },
-  { class_level: 'JSS 3', division: 'JUNIOR_SECONDARY', tuition_fee: 50000, development_levy: 8000, books_materials: 15000, uniform_sports: 10000, pta_medical: 4000, exam_levy: 10000, session: '2025/2026', term: '2nd Term' },
-  { class_level: 'SS 1', division: 'SENIOR_SECONDARY', tuition_fee: 55000, development_levy: 10000, books_materials: 18000, uniform_sports: 12000, pta_medical: 5000, exam_levy: 4000, session: '2025/2026', term: '2nd Term' },
-  { class_level: 'SS 2', division: 'SENIOR_SECONDARY', tuition_fee: 55000, development_levy: 10000, books_materials: 18000, uniform_sports: 12000, pta_medical: 5000, exam_levy: 4000, session: '2025/2026', term: '2nd Term' },
-  { class_level: 'SS 3', division: 'SENIOR_SECONDARY', tuition_fee: 60000, development_levy: 10000, books_materials: 18000, uniform_sports: 12000, pta_medical: 5000, exam_levy: 15000, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'Nursery 1', division: 'CRECHE_NURSERY', tuition_fee: 0, development_levy: 0, books_materials: 0, uniform_sports: 0, pta_medical: 0, exam_levy: 0, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'Nursery 2', division: 'CRECHE_NURSERY', tuition_fee: 0, development_levy: 0, books_materials: 0, uniform_sports: 0, pta_medical: 0, exam_levy: 0, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'Nursery 3', division: 'CRECHE_NURSERY', tuition_fee: 0, development_levy: 0, books_materials: 0, uniform_sports: 0, pta_medical: 0, exam_levy: 0, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'Primary 1', division: 'PRIMARY', tuition_fee: 0, development_levy: 0, books_materials: 0, uniform_sports: 0, pta_medical: 0, exam_levy: 0, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'Primary 2', division: 'PRIMARY', tuition_fee: 0, development_levy: 0, books_materials: 0, uniform_sports: 0, pta_medical: 0, exam_levy: 0, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'Primary 3', division: 'PRIMARY', tuition_fee: 0, development_levy: 0, books_materials: 0, uniform_sports: 0, pta_medical: 0, exam_levy: 0, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'Primary 4', division: 'PRIMARY', tuition_fee: 0, development_levy: 0, books_materials: 0, uniform_sports: 0, pta_medical: 0, exam_levy: 0, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'Primary 5', division: 'PRIMARY', tuition_fee: 0, development_levy: 0, books_materials: 0, uniform_sports: 0, pta_medical: 0, exam_levy: 0, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'Primary 6', division: 'PRIMARY', tuition_fee: 0, development_levy: 0, books_materials: 0, uniform_sports: 0, pta_medical: 0, exam_levy: 0, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'JSS 1', division: 'JUNIOR_SECONDARY', tuition_fee: 0, development_levy: 0, books_materials: 0, uniform_sports: 0, pta_medical: 0, exam_levy: 0, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'JSS 2', division: 'JUNIOR_SECONDARY', tuition_fee: 0, development_levy: 0, books_materials: 0, uniform_sports: 0, pta_medical: 0, exam_levy: 0, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'JSS 3', division: 'JUNIOR_SECONDARY', tuition_fee: 0, development_levy: 0, books_materials: 0, uniform_sports: 0, pta_medical: 0, exam_levy: 0, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'SS 1', division: 'SENIOR_SECONDARY', tuition_fee: 0, development_levy: 0, books_materials: 0, uniform_sports: 0, pta_medical: 0, exam_levy: 0, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'SS 2', division: 'SENIOR_SECONDARY', tuition_fee: 0, development_levy: 0, books_materials: 0, uniform_sports: 0, pta_medical: 0, exam_levy: 0, session: '2025/2026', term: '2nd Term' },
+  { class_level: 'SS 3', division: 'SENIOR_SECONDARY', tuition_fee: 0, development_levy: 0, books_materials: 0, uniform_sports: 0, pta_medical: 0, exam_levy: 0, session: '2025/2026', term: '2nd Term' },
 ];
 
-export const DEFAULT_DISCOUNT_POLICIES: DiscountPolicy[] = [
-  { code: 'SIBLING_2ND', name: '2nd Sibling Concession', discount_type: 'PERCENTAGE', value: 10.00, description: '10% discount on tuition for second enrolled child in family.', is_active: true },
-  { code: 'SIBLING_3RD', name: '3rd Sibling Concession', discount_type: 'PERCENTAGE', value: 15.00, description: '15% discount on tuition for third and subsequent children.', is_active: true },
-  { code: 'STAFF_CHILD', name: 'Faculty & Staff Child Waiver', discount_type: 'PERCENTAGE', value: 50.00, description: '50% tuition waiver for biological children of active Tarepet educators.', is_active: true },
-  { code: 'SCHOLARSHIP_MERIT', name: 'Academic Merit Scholarship', discount_type: 'PERCENTAGE', value: 100.00, description: '100% full tuition scholarship award for exceptional scholars.', is_active: true },
-];
+export const DEFAULT_DISCOUNT_POLICIES: DiscountPolicy[] = [];
 
 function loadSavedClassSchedules(): ClassFeeSchedule[] {
   if (typeof window === 'undefined') return DEFAULT_CLASS_FEE_SCHEDULES;
@@ -197,6 +192,11 @@ function loadSavedClassSchedules(): ClassFeeSchedule[] {
     const saved = localStorage.getItem('tarepet_class_fee_schedules');
     if (saved) {
       const parsed = JSON.parse(saved);
+      const hasLegacyMock = Array.isArray(parsed) && parsed.some((p: any) => p.class_level === 'Nursery 1' && p.tuition_fee === 35000);
+      if (hasLegacyMock) {
+        localStorage.removeItem('tarepet_class_fee_schedules');
+        return DEFAULT_CLASS_FEE_SCHEDULES;
+      }
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
   } catch (e) {}
@@ -209,6 +209,11 @@ function loadSavedDiscountPolicies(): DiscountPolicy[] {
     const saved = localStorage.getItem('tarepet_discount_policies');
     if (saved) {
       const parsed = JSON.parse(saved);
+      const hasLegacyMock = Array.isArray(parsed) && parsed.some((p: any) => p.code === 'SIBLING_2ND');
+      if (hasLegacyMock) {
+        localStorage.removeItem('tarepet_discount_policies');
+        return DEFAULT_DISCOUNT_POLICIES;
+      }
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
   } catch (e) {}

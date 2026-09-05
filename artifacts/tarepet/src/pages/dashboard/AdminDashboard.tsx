@@ -9939,20 +9939,31 @@ export default function AdminDashboard() {
               </div>
 
               {/* Pricing Matrix Summary Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {[
-                  { label: 'Levels Configured', val: `${classFeeSchedules.length} Classes`, sub: 'Crèche to SS3 Exam', color: 'text-primary' },
-                  { label: 'Lowest Term Fee', val: fmtCurrency(Math.min(...classFeeSchedules.map(s => (s.tuition_fee + s.development_levy + s.books_materials + s.uniform_sports + s.pta_medical + s.exam_levy)))), sub: 'Nursery 1 & 2', color: 'text-emerald-600' },
-                  { label: 'Highest Term Fee', val: fmtCurrency(Math.max(...classFeeSchedules.map(s => (s.tuition_fee + s.development_levy + s.books_materials + s.uniform_sports + s.pta_medical + s.exam_levy)))), sub: 'SS3 Exam Class', color: 'text-indigo-600' },
-                  { label: 'Average Mandatory Levy', val: fmtCurrency(Math.round(classFeeSchedules.reduce((sum, s) => sum + (s.tuition_fee + s.development_levy + s.books_materials + s.uniform_sports + s.pta_medical + s.exam_levy), 0) / (classFeeSchedules.length || 1))), sub: 'Across all 15 classes', color: 'text-amber-600' },
-                ].map(stat => (
-                  <div key={stat.label} className="bg-card p-4 rounded-2xl border border-border space-y-1">
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">{stat.label}</p>
-                    <p className={`text-lg font-bold font-serif ${stat.color}`}>{stat.val}</p>
-                    <p className="text-[10px] text-muted-foreground">{stat.sub}</p>
+              {(() => {
+                const feeTotals = classFeeSchedules.map(s => (s.tuition_fee + s.development_levy + s.books_materials + s.uniform_sports + s.pta_medical + s.exam_levy));
+                const nonZeroFees = feeTotals.filter(f => f > 0);
+                const lowestFee = nonZeroFees.length > 0 ? Math.min(...nonZeroFees) : 0;
+                const highestFee = nonZeroFees.length > 0 ? Math.max(...nonZeroFees) : 0;
+                const avgFee = nonZeroFees.length > 0 ? Math.round(nonZeroFees.reduce((a, b) => a + b, 0) / nonZeroFees.length) : 0;
+                const configuredCount = nonZeroFees.length;
+
+                return (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    {[
+                      { label: 'Levels Configured', val: `${configuredCount} / ${classFeeSchedules.length} Set`, sub: configuredCount === 0 ? 'Awaiting Fee Setup' : `${classFeeSchedules.length - configuredCount} Pending`, color: 'text-primary' },
+                      { label: 'Lowest Term Fee', val: fmtCurrency(lowestFee), sub: lowestFee === 0 ? 'No fees set yet' : 'Minimum approved fee', color: 'text-emerald-600' },
+                      { label: 'Highest Term Fee', val: fmtCurrency(highestFee), sub: highestFee === 0 ? 'No fees set yet' : 'Maximum approved fee', color: 'text-indigo-600' },
+                      { label: 'Average Mandatory Levy', val: fmtCurrency(avgFee), sub: avgFee === 0 ? 'No fees set yet' : `Across ${configuredCount} classes`, color: 'text-amber-600' },
+                    ].map(stat => (
+                      <div key={stat.label} className="bg-card p-4 rounded-2xl border border-border space-y-1">
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">{stat.label}</p>
+                        <p className={`text-lg font-bold font-serif ${stat.color}`}>{stat.val}</p>
+                        <p className="text-[10px] text-muted-foreground">{stat.sub}</p>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                );
+              })()}
 
               {/* Matrix Table */}
               <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
@@ -10067,8 +10078,8 @@ export default function AdminDashboard() {
                 let debtorsCount = 0;
 
                 studentsList.forEach(std => {
-                  const sched = classFeeSchedules.find(s => matchStudentClass(s.class_level, std.classLevel || std.grade || '')) || classFeeSchedules[3];
-                  const feeBilled = sched ? (sched.tuition_fee + sched.development_levy + sched.books_materials + sched.uniform_sports + sched.pta_medical + sched.exam_levy) : 65000;
+                  const sched = classFeeSchedules.find(s => matchStudentClass(s.class_level, std.classLevel || std.grade || ''));
+                  const feeBilled = sched ? (sched.tuition_fee + sched.development_levy + sched.books_materials + sched.uniform_sports + sched.pta_medical + sched.exam_levy) : 0;
                   billedSum += feeBilled;
 
                   const stdTxs = adminTransactions.filter(t => (String(t.studentId) === String(std.id) || String(t.studentId) === String(std.admissionNo) || t.studentName === std.name) && t.status === 'SUCCESS');
@@ -10130,8 +10141,8 @@ export default function AdminDashboard() {
                           return matchesSearch && matchesClass;
                         })
                         .map(std => {
-                          const sched = classFeeSchedules.find(s => matchStudentClass(s.class_level, std.classLevel || std.grade || '')) || classFeeSchedules[3];
-                          const feeBilled = sched ? (sched.tuition_fee + sched.development_levy + sched.books_materials + sched.uniform_sports + sched.pta_medical + sched.exam_levy) : 65000;
+                          const sched = classFeeSchedules.find(s => matchStudentClass(s.class_level, std.classLevel || std.grade || ''));
+                          const feeBilled = sched ? (sched.tuition_fee + sched.development_levy + sched.books_materials + sched.uniform_sports + sched.pta_medical + sched.exam_levy) : 0;
 
                           const stdTxs = adminTransactions.filter(t => (String(t.studentId) === String(std.id) || String(t.studentId) === String(std.admissionNo) || t.studentName === std.name) && t.status === 'SUCCESS');
                           const stdPaid = stdTxs.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
@@ -10212,46 +10223,54 @@ export default function AdminDashboard() {
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {discountPolicies.map(policy => (
-                  <div key={policy.code} className="bg-card rounded-2xl border border-border p-5 shadow-sm space-y-3 flex flex-col justify-between">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-mono font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-md">{policy.code}</span>
-                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
-                          policy.is_active ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200' : 'bg-muted text-muted-foreground'
-                        }`}>
-                          {policy.is_active ? 'Active Policy' : 'Inactive'}
-                        </span>
+              {discountPolicies.length === 0 ? (
+                <div className="bg-card rounded-2xl border border-dashed border-border p-8 text-center space-y-2">
+                  <Tag className="w-8 h-8 text-muted-foreground mx-auto opacity-40" />
+                  <p className="text-sm font-semibold text-foreground">No Concession Rules Configured</p>
+                  <p className="text-xs text-muted-foreground max-w-md mx-auto">Click "Add New Concession Rule" to create sibling discounts, staff child waivers, or scholarship deductions.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {discountPolicies.map(policy => (
+                    <div key={policy.code} className="bg-card rounded-2xl border border-border p-5 shadow-sm space-y-3 flex flex-col justify-between">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-mono font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-md">{policy.code}</span>
+                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                            policy.is_active ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200' : 'bg-muted text-muted-foreground'
+                          }`}>
+                            {policy.is_active ? 'Active Policy' : 'Inactive'}
+                          </span>
+                        </div>
+                        <h4 className="font-serif font-bold text-base text-foreground">{policy.name}</h4>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{policy.description}</p>
                       </div>
-                      <h4 className="font-serif font-bold text-base text-foreground">{policy.name}</h4>
-                      <p className="text-xs text-muted-foreground leading-relaxed">{policy.description}</p>
-                    </div>
-                    <div className="pt-3 border-t border-border flex items-center justify-between">
-                      <div>
-                        <p className="text-[10px] uppercase font-bold text-muted-foreground">Concession Benefit</p>
-                        <p className="text-lg font-bold font-serif text-primary">
-                          {policy.value}{policy.discount_type === 'PERCENTAGE' ? '% Tuition Waiver' : ' NGN Flat Deduct'}
-                        </p>
+                      <div className="pt-3 border-t border-border flex items-center justify-between">
+                        <div>
+                          <p className="text-[10px] uppercase font-bold text-muted-foreground">Concession Benefit</p>
+                          <p className="text-lg font-bold font-serif text-primary">
+                            {policy.value}{policy.discount_type === 'PERCENTAGE' ? '% Tuition Waiver' : ' NGN Flat Deduct'}
+                          </p>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            const updated = { ...policy, is_active: !policy.is_active };
+                            await saveDiscountPolicy(updated);
+                            setDiscountPolicies(getDiscountPolicies());
+                            setFinanceSaveAlert(`Updated ${policy.name} active status.`);
+                            setTimeout(() => setFinanceSaveAlert(''), 3000);
+                          }}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors ${
+                            policy.is_active ? 'bg-rose-50 border-rose-200 text-rose-600 hover:bg-rose-100' : 'bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100'
+                          }`}
+                        >
+                          {policy.is_active ? 'Deactivate' : 'Activate'}
+                        </button>
                       </div>
-                      <button
-                        onClick={async () => {
-                          const updated = { ...policy, is_active: !policy.is_active };
-                          await saveDiscountPolicy(updated);
-                          setDiscountPolicies(getDiscountPolicies());
-                          setFinanceSaveAlert(`Updated ${policy.name} active status.`);
-                          setTimeout(() => setFinanceSaveAlert(''), 3000);
-                        }}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors ${
-                          policy.is_active ? 'bg-rose-50 border-rose-200 text-rose-600 hover:bg-rose-100' : 'bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100'
-                        }`}
-                      >
-                        {policy.is_active ? 'Deactivate' : 'Activate'}
-                      </button>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
