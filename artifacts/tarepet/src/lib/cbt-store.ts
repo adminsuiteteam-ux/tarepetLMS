@@ -1072,7 +1072,7 @@ export function saveStoredSubjects(subjects: SubjectRecord[]) {
 }
 
 function loadDeletedAccounts(): string[] {
-  const defaultBlacklist = ['hacker@evil.com', 'wronguser@fake.com', 'tp-stu-090', 'tp-stu-089', 'hacker user', 'wronguser user'];
+  const defaultBlacklist = ['hacker@evil.com', 'wronguser@fake.com', 'hacker user', 'wronguser user'];
   if (typeof window === 'undefined') return defaultBlacklist;
   try {
     const raw = localStorage.getItem('tarepet_deleted_accounts');
@@ -1131,12 +1131,13 @@ export function isAccountDeleted(input: string | number | undefined | null): boo
   const list = loadDeletedAccounts();
   const lower = String(input).trim().toLowerCase();
   const clean = lower.replace(/[^a-z0-9]/g, '');
+  if (!clean) return false;
   return list.some(item => {
     const itemLower = item.toLowerCase();
     const itemClean = itemLower.replace(/[^a-z0-9]/g, '');
     return (
       itemLower === lower ||
-      (clean.length > 2 && itemClean === clean)
+      (clean.length >= 4 && itemClean === clean)
     );
   });
 }
@@ -19617,10 +19618,13 @@ export const DEFAULT_STUDENTS: StudentRecord[] = [
 function loadSavedStudents(): StudentRecord[] {
   if (typeof window === 'undefined') return DEFAULT_STUDENTS;
   try {
-    const CURRENT_ROSTER_VER = '2026-v7-sync-merge-fix';
+    const CURRENT_ROSTER_VER = '2026-v8-permanent-roster-622';
     const savedVer = localStorage.getItem('tarepet_students_version');
     if (savedVer !== CURRENT_ROSTER_VER) {
       localStorage.setItem('tarepet_students_version', CURRENT_ROSTER_VER);
+      try {
+        localStorage.removeItem('tarepet_deleted_accounts');
+      } catch (e) {}
       localStorage.setItem('tarepet_students_list', JSON.stringify(DEFAULT_STUDENTS));
       return DEFAULT_STUDENTS;
     }
@@ -19630,16 +19634,15 @@ function loadSavedStudents(): StudentRecord[] {
       if (Array.isArray(parsed) && parsed.length >= DEFAULT_STUDENTS.length) {
         const liveOnly = parsed.filter((s: any) => {
           const sCode = String(s.code || s.admissionNo || s.studentId || '').toLowerCase();
-          const sName = String(s.name || '').toLowerCase();
           const sEmail = String(s.email || '').toLowerCase();
-          const isMock = sName.includes('civa.media') || sName.includes('hacker') || sName.includes('wronguser') || sEmail.includes('hacker@') || sEmail.includes('wronguser@') || sEmail.includes('civa.media');
-          const isDeleted = isAccountDeleted(sCode) || isAccountDeleted(sEmail) || isAccountDeleted(sName) || isAccountDeleted(s.id);
+          const isMock = sEmail.includes('hacker@') || sEmail.includes('wronguser@') || sEmail.includes('civa.media');
+          const isDeleted = isAccountDeleted(sCode) || isAccountDeleted(sEmail);
           return !isMock && !isDeleted;
         });
 
         // Merge any default students missing from local storage
-        const existingKeys = new Set(liveOnly.map((s: any) => String(s.studentId || s.admissionNo || s.code || '').toLowerCase()));
-        const missingDefaults = DEFAULT_STUDENTS.filter(d => !existingKeys.has(String(d.studentId || d.admissionNo || d.code).toLowerCase()) && !isAccountDeleted(d.code) && !isAccountDeleted(d.name));
+        const existingKeys = new Set(liveOnly.map((s: any) => String(s.studentId || s.admissionNo || s.code || '').toLowerCase().replace(/[^a-z0-9]/g, '')));
+        const missingDefaults = DEFAULT_STUDENTS.filter(d => !existingKeys.has(String(d.studentId || d.admissionNo || d.code).toLowerCase().replace(/[^a-z0-9]/g, '')));
         const combined = [...liveOnly, ...missingDefaults];
         localStorage.setItem('tarepet_students_list', JSON.stringify(combined));
         return combined;
@@ -19754,11 +19757,16 @@ export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
 
       if (fetched.length > 0) {
         // Merge backend-fetched students with DEFAULT_STUDENTS so local roster is preserved
-        const fetchedKeys = new Set(fetched.map(s => String(s.studentId || s.admissionNo || s.code || s.email || '').toLowerCase()));
+        const fetchedKeys = new Set<string>();
+        fetched.forEach(s => {
+          [s.studentId, s.admissionNo, s.code, s.email].forEach(k => {
+            if (k) fetchedKeys.add(String(k).toLowerCase().replace(/[^a-z0-9]/g, ''));
+          });
+        });
         const missingDefaults = DEFAULT_STUDENTS.filter(d => {
-          const dKey = String(d.studentId || d.admissionNo || d.code || '').toLowerCase();
-          const dEmail = String(d.email || '').toLowerCase();
-          return !fetchedKeys.has(dKey) && !fetchedKeys.has(dEmail) && !isAccountDeleted(d.code) && !isAccountDeleted(d.name);
+          const dKey = String(d.studentId || d.admissionNo || d.code || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          const dEmail = String(d.email || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+          return !fetchedKeys.has(dKey) && !fetchedKeys.has(dEmail);
         });
         _students = [...fetched, ...missingDefaults];
         if (typeof window !== 'undefined') {
@@ -20005,23 +20013,27 @@ export function saveStoredStudents(backendStudents: StudentRecord[]) {
     !isAccountDeleted(b.email) && 
     !isAccountDeleted(b.studentId) && 
     !isAccountDeleted(b.code) && 
-    !isAccountDeleted(b.admissionNo) && 
-    !isAccountDeleted(b.id) &&
-    !isAccountDeleted(b.name)
+    !isAccountDeleted(b.admissionNo)
   );
 
   // Map backend items over existing local items for enrichments
   const merged: StudentRecord[] = validBackend.map(s => {
-    const existing = existingLocal.find(e => 
-      (s.id && e.id === s.id) || 
-      (s.email && e.email && e.email.toLowerCase() === s.email.toLowerCase()) || 
-      (s.code && e.code === s.code) ||
-      (s.admissionNo && e.admissionNo === s.admissionNo)
-    );
+    const sAdm = String(s.admissionNo || s.studentId || s.code || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const sEmail = String(s.email || '').toLowerCase().trim();
+    const existing = existingLocal.find(e => {
+      const eAdm = String(e.admissionNo || e.studentId || e.code || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const eEmail = String(e.email || '').toLowerCase().trim();
+      return (sAdm && eAdm && sAdm === eAdm) || (sEmail && eEmail && sEmail === eEmail);
+    });
     if (existing) {
       return {
         ...existing,
         ...s,
+        id: existing.id,
+        code: existing.code,
+        admissionNo: existing.admissionNo,
+        grade: existing.grade || s.grade,
+        gender: existing.gender || s.gender,
         parentName: s.parentName || existing.parentName || '',
         parentPhone: s.parentPhone || existing.parentPhone || '',
         address: s.address || existing.address || '',
@@ -20038,31 +20050,23 @@ export function saveStoredStudents(backendStudents: StudentRecord[]) {
     return s;
   });
 
-  // Preserve any local / default students not yet in backend
+  const mergedKeys = new Set(merged.map(m => String(m.admissionNo || m.studentId || m.code || m.email || '').toLowerCase().replace(/[^a-z0-9]/g, '')));
+
+  // Preserve any local students not yet in merged
   for (const local of existingLocal) {
-    if (isAccountDeleted(local.email) || isAccountDeleted(local.code) || isAccountDeleted(local.studentId) || isAccountDeleted(local.admissionNo) || isAccountDeleted(local.id) || isAccountDeleted(local.name)) continue;
-    const isAlreadyIn = merged.some(m => 
-      (local.id && m.id === local.id) ||
-      (local.code && m.code && String(m.code).toLowerCase() === String(local.code).toLowerCase()) ||
-      (local.admissionNo && m.admissionNo && String(m.admissionNo).toLowerCase().replace(/[^a-z0-9]/g, '') === String(local.admissionNo).toLowerCase().replace(/[^a-z0-9]/g, '')) ||
-      (local.email && m.email && m.email.toLowerCase().trim() === local.email.toLowerCase().trim())
-    );
-    if (!isAlreadyIn) {
+    const locKey = String(local.admissionNo || local.studentId || local.code || local.email || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (locKey && !mergedKeys.has(locKey)) {
       merged.push(local);
+      mergedKeys.add(locKey);
     }
   }
 
-  // Also ensure default students are present
+  // Ensure every default student is guaranteed present
   for (const def of DEFAULT_STUDENTS) {
-    if (isAccountDeleted(def.email) || isAccountDeleted(def.code) || isAccountDeleted(def.studentId) || isAccountDeleted(def.admissionNo) || isAccountDeleted(def.id) || isAccountDeleted(def.name)) continue;
-    const exists = merged.some(m => 
-      (def.id && m.id === def.id) ||
-      (def.code && m.code && String(m.code).toLowerCase() === String(def.code).toLowerCase()) ||
-      (def.admissionNo && m.admissionNo && String(m.admissionNo).toLowerCase().replace(/[^a-z0-9]/g, '') === String(def.admissionNo).toLowerCase().replace(/[^a-z0-9]/g, '')) ||
-      (def.email && m.email && m.email.toLowerCase().trim() === def.email.toLowerCase().trim())
-    );
-    if (!exists) {
+    const defKey = String(def.admissionNo || def.studentId || def.code || def.email || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (defKey && !mergedKeys.has(defKey)) {
       merged.push(def);
+      mergedKeys.add(defKey);
     }
   }
 
