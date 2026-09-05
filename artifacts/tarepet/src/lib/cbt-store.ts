@@ -15088,7 +15088,7 @@ export const DEFAULT_STUDENTS: StudentRecord[] = [
     admissionNo: 'TMS/BSC4/2039',
     studentId: 'TMS/BSC4/2039',
     admission_number: 'TMS/BSC4/2039',
-    name: 'Ukaegbu God's Favour',
+    name: "Ukaegbu God's Favour",
     email: 'ukaegbu.favour@tarepet.com',
     password: '2039',
     gender: 'Male',
@@ -19617,37 +19617,17 @@ export const DEFAULT_STUDENTS: StudentRecord[] = [
 function loadSavedStudents(): StudentRecord[] {
   if (typeof window === 'undefined') return DEFAULT_STUDENTS;
   try {
-    const CURRENT_ROSTER_VER = '2026-v4-nursery-basic4-basic5-jss1';
+    const CURRENT_ROSTER_VER = '2026-v6-full-roster-622';
     const savedVer = localStorage.getItem('tarepet_students_version');
     if (savedVer !== CURRENT_ROSTER_VER) {
       localStorage.setItem('tarepet_students_version', CURRENT_ROSTER_VER);
       localStorage.setItem('tarepet_students_list', JSON.stringify(DEFAULT_STUDENTS));
       return DEFAULT_STUDENTS;
     }
-  if (typeof window === 'undefined') return DEFAULT_STUDENTS;
-  try {
-    const CURRENT_ROSTER_VER = '2026-v5-nursery1-and-2-complete';
-    const savedVer = localStorage.getItem('tarepet_students_version');
-    if (savedVer !== CURRENT_ROSTER_VER) {
-      localStorage.setItem('tarepet_students_version', CURRENT_ROSTER_VER);
-      localStorage.setItem('tarepet_students_list', JSON.stringify(DEFAULT_STUDENTS));
-      return DEFAULT_STUDENTS;
-    }
-  if (typeof window === 'undefined') return DEFAULT_STUDENTS;
-  try {
-    const CURRENT_ROSTER_VER = '2026-v5-nursery1-and-2-complete';
-    const savedVer = localStorage.getItem('tarepet_students_version');
-    if (savedVer !== CURRENT_ROSTER_VER) {
-      localStorage.setItem('tarepet_students_version', CURRENT_ROSTER_VER);
-      localStorage.setItem('tarepet_students_list', JSON.stringify(DEFAULT_STUDENTS));
-      return DEFAULT_STUDENTS;
-    }
-  if (typeof window === 'undefined') return DEFAULT_STUDENTS;
-  try {
     const saved = localStorage.getItem('tarepet_students_list');
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed)) {
+      if (Array.isArray(parsed) && parsed.length >= DEFAULT_STUDENTS.length) {
         const liveOnly = parsed.filter((s: any) => {
           const sCode = String(s.code || s.admissionNo || s.studentId || '').toLowerCase();
           const sName = String(s.name || '').toLowerCase();
