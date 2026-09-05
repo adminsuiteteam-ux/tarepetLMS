@@ -38,10 +38,10 @@ const ROLE_NAV: Record<string, NavSection[]> = {
     { id: 'classes',        label: 'Classes',           icon: School },
     { id: 'subjects',       label: 'Subjects',          icon: BookOpen },
     { id: 'results',        label: 'Results',           icon: FileText },
-    { id: 'attendance',     label: 'Attendance',        icon: CalendarCheck },
     { id: 'exams',          label: 'Manage Exams',      icon: ClipboardList },
     { id: 'finance',        label: 'Finance',           icon: DollarSign },
     // ── ARCHIVED (Will be re-added in a future update) ───────────────────
+    // { id: 'attendance',     label: 'Attendance',        icon: CalendarCheck },
     // { id: 'manage_admins',  label: 'Manage Sub-Admins', icon: ShieldAlert },
     // { id: 'calendar',       label: 'School Calendar',   icon: Calendar },
     // { id: 'reports',        label: 'Reports',           icon: BarChart2 },

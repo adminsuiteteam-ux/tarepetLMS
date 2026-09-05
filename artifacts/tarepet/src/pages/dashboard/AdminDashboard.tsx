@@ -2367,6 +2367,23 @@ export default function AdminDashboard() {
   const [usersList, setUsersList] = useState(MOCK_USERS);
   const [studentsList, setStudentsList] = useState<any[]>(() => getStoredStudents());
 
+  // Helper functions for consistent status badge display across all tables & cards
+  const getNormalizedStatus = (rawStatus: any): 'Active' | 'On Leave' | 'Inactive' => {
+    if (!rawStatus) return 'Active';
+    const str = String(rawStatus).trim().toUpperCase();
+    if (str === 'ACTIVE' || str === 'TRUE') return 'Active';
+    if (str === 'ON LEAVE' || str === 'ON_LEAVE' || str === 'LEAVE' || str === 'SUSPENDED') return 'On Leave';
+    if (str === 'INACTIVE' || str === 'FALSE' || str === 'DISABLED' || str === 'DEACTIVATED') return 'Inactive';
+    return 'Active';
+  };
+
+  const getStatusBadgeClass = (rawStatus: any) => {
+    const norm = getNormalizedStatus(rawStatus);
+    if (norm === 'Active') return 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20';
+    if (norm === 'On Leave') return 'bg-amber-500/10 text-amber-600 border-amber-500/20';
+    return 'bg-rose-500/10 text-rose-600 border-rose-500/20';
+  };
+
   const [wsExamStatus, setWsExamStatus] = useState<string>(() => getWebSocketStatus());
   const [isSyncingExams, setIsSyncingExams] = useState(false);
   const [examsList, setExamsList] = useState<any[]>(() => getStoredExams().map(mapCBTExamToAdminExam));
@@ -3363,7 +3380,7 @@ export default function AdminDashboard() {
         { label: 'Add Teacher', icon: GraduationCap, color: 'bg-secondary/10 text-secondary hover:bg-secondary/20 border-secondary/20', action: () => { setActiveSection('users'); setUserSubPage('TEACHER'); } },
         { label: 'Manage Exams', icon: ClipboardList, color: 'bg-primary/10 text-primary hover:bg-primary/20 border-primary/20', action: () => setActiveSection('exams') },
         { label: 'Upload Results', icon: FileSpreadsheet, color: 'bg-secondary/10 text-secondary hover:bg-secondary/20 border-secondary/20', action: () => setActiveSection('results') },
-        { label: 'View Attendance', icon: CalendarCheck, color: 'bg-primary/10 text-primary hover:bg-primary/20 border-primary/20', action: () => setActiveSection('attendance') },
+        { label: 'Class Timetable', icon: School, color: 'bg-primary/10 text-primary hover:bg-primary/20 border-primary/20', action: () => setActiveSection('classes') },
         { label: 'Manage Finance', icon: DollarSign, color: 'bg-secondary/10 text-secondary hover:bg-secondary/20 border-secondary/20', action: () => setActiveSection('finance') },
       ];
 
@@ -3821,10 +3838,8 @@ export default function AdminDashboard() {
                     <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-muted text-muted-foreground border border-border">
                       {u.house || 'School House'}
                     </span>
-                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
-                      u.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-600 border border-rose-500/20'
-                    }`}>
-                      {u.status}
+                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${getStatusBadgeClass(u.status)}`}>
+                      {getNormalizedStatus(u.status)}
                     </span>
                   </div>
                 </div>
@@ -3897,13 +3912,12 @@ export default function AdminDashboard() {
         {
           key: 'NURSERY',
           title: 'Nursery & Creche',
-          subtitle: 'Creche & Nursery 1–3',
-          description: 'Early Childhood Montessori Education (Creche, Toddler, Reception, Nursery 1–3)',
+          subtitle: 'Nursery 1–3',
+          description: 'Early Childhood Montessori Education (Nursery 1 to Nursery 3)',
           classes: [
-            { key: 'Creche', label: 'Creche / Toddler' },
-            { key: 'NUR1', label: 'Nursery 1' },
-            { key: 'NUR2', label: 'Nursery 2' },
-            { key: 'NUR3', label: 'Nursery 3' },
+            { key: 'NUR1', label: 'Nursery 1', shortLabel: 'Nur 1' },
+            { key: 'NUR2', label: 'Nursery 2', shortLabel: 'Nur 2' },
+            { key: 'NUR3', label: 'Nursery 3', shortLabel: 'Nur 3' },
           ],
           filterFn: (s: any) => {
             const g = (s.grade || '').toUpperCase().trim();
@@ -3917,12 +3931,12 @@ export default function AdminDashboard() {
           subtitle: 'Primary 1–6 (Basic 1–6)',
           description: 'Foundational Elementary Curriculum (Primary 1 to Primary 6 / Basic 1–6)',
           classes: [
-            { key: 'PRI1', label: 'Primary 1' },
-            { key: 'PRI2', label: 'Primary 2' },
-            { key: 'PRI3', label: 'Primary 3 (Basic 3)' },
-            { key: 'PRI4', label: 'Primary 4' },
-            { key: 'PRI5', label: 'Primary 5' },
-            { key: 'PRI6', label: 'Primary 6 (Basic 6)' },
+            { key: 'PRI1', label: 'Primary 1', shortLabel: 'Pri 1' },
+            { key: 'PRI2', label: 'Primary 2', shortLabel: 'Pri 2' },
+            { key: 'PRI3', label: 'Primary 3', shortLabel: 'Pri 3' },
+            { key: 'PRI4', label: 'Primary 4', shortLabel: 'Pri 4' },
+            { key: 'PRI5', label: 'Primary 5', shortLabel: 'Pri 5' },
+            { key: 'PRI6', label: 'Primary 6', shortLabel: 'Pri 6' },
           ],
           filterFn: (s: any) => {
             const g = (s.grade || '').toUpperCase().trim();
@@ -3936,9 +3950,9 @@ export default function AdminDashboard() {
           subtitle: 'JSS 1–3',
           description: 'Basic Education Curriculum & State BECE Examination Prep (JSS 1 to JSS 3)',
           classes: [
-            { key: 'JSS1', label: 'JSS 1' },
-            { key: 'JSS2', label: 'JSS 2' },
-            { key: 'JSS3', label: 'JSS 3' },
+            { key: 'JSS1', label: 'JSS 1', shortLabel: 'JSS 1' },
+            { key: 'JSS2', label: 'JSS 2', shortLabel: 'JSS 2' },
+            { key: 'JSS3', label: 'JSS 3', shortLabel: 'JSS 3' },
           ],
           filterFn: (s: any) => {
             const g = (s.grade || '').toUpperCase().trim();
@@ -3949,14 +3963,12 @@ export default function AdminDashboard() {
         {
           key: 'SS',
           title: 'Senior Secondary',
-          subtitle: 'SS 1–3 (Science & Art)',
+          subtitle: 'SS 1–3',
           description: 'Senior Secondary Academic Programs, WAEC & NECO Streams (SS 1 to SS 3)',
           classes: [
-            { key: 'SS1', label: 'SS 1 (All)' },
-            { key: 'SS1_SCI', label: 'SS 1 Faith (Science)' },
-            { key: 'SS1_ART', label: 'SS 1 Love (Art)' },
-            { key: 'SS2', label: 'SS 2' },
-            { key: 'SS3', label: 'SS 3' },
+            { key: 'SS1', label: 'SS 1', shortLabel: 'SS 1' },
+            { key: 'SS2', label: 'SS 2', shortLabel: 'SS 2' },
+            { key: 'SS3', label: 'SS 3', shortLabel: 'SS 3' },
           ],
           filterFn: (s: any) => {
             const g = (s.grade || '').toUpperCase().trim();
@@ -3966,6 +3978,15 @@ export default function AdminDashboard() {
           icon: Award
         }
       ];
+
+      const matchStudentToClass = (s: any, clsKey: string) => {
+        if (!s || !s.grade) return false;
+        if (clsKey === 'NUR1') {
+          return matchStudentClass(s.grade, 'NUR1') || 
+            /creche|toddler|recept/i.test(s.grade || '');
+        }
+        return matchStudentClass(s.grade, clsKey);
+      };
 
       const currentDivisionKey = selectedDivision || 'ALL';
       const activeDivisionData = SCHOOL_DIVISIONS.find(d => d.key === currentDivisionKey) || SCHOOL_DIVISIONS[0];
@@ -3988,13 +4009,7 @@ export default function AdminDashboard() {
 
         let matchClassPill = true;
         if (selectedClass) {
-          if (selectedClass === 'SS1_SCI') {
-            matchClassPill = matchStudentClass(s.grade, 'SS1') && ((s.stream || '').toUpperCase().includes('SCI') || (s.arm || '').toUpperCase().includes('FAITH') || (s.house || '').toUpperCase().includes('FAITH'));
-          } else if (selectedClass === 'SS1_ART') {
-            matchClassPill = matchStudentClass(s.grade, 'SS1') && ((s.stream || '').toUpperCase().includes('ART') || (s.arm || '').toUpperCase().includes('LOVE') || (s.house || '').toUpperCase().includes('LOVE'));
-          } else {
-            matchClassPill = matchStudentClass(s.grade, selectedClass);
-          }
+          matchClassPill = matchStudentToClass(s, selectedClass);
         }
 
         return matchSearch && matchDivision && matchClassPill;
@@ -4087,7 +4102,6 @@ export default function AdminDashboard() {
             <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex items-center justify-between">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Active Status</p>
-                <h3 className="text-2xl font-serif font-bold text-emerald-600 mt-1">{studentsList.filter(s => s.status === 'Active' || s.status === 'ACTIVE').length}</h3>
                 <p className="text-[11px] text-muted-foreground mt-0.5">In good standing</p>
               </div>
               <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center"><CheckCircle2 className="w-5 h-5" /></div>
@@ -4150,52 +4164,90 @@ export default function AdminDashboard() {
             })}
           </div>
 
-          {/* Individual Class Level Filter Bar (Sub-Filter Pills for Selected Division) */}
+          {/* Individual Class Level Cards (Shown when a Division is selected: 3 for Nursery, 6 for Primary, 3 for JSS, 3 for SS) */}
           {selectedDivision && selectedDivision !== 'ALL' && activeDivisionData?.classes && activeDivisionData.classes.length > 0 && (
-            <div className="bg-card p-3 rounded-2xl border border-border shadow-xs flex flex-wrap items-center gap-2">
-              <span className="text-xs font-bold text-muted-foreground mr-1 flex items-center gap-1.5">
-                <Filter className="w-3.5 h-3.5 text-primary" />
-                {activeDivisionData.title} Classes:
-              </span>
-              <button
-                type="button"
-                onClick={() => setSelectedClass(null)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  !selectedClass
-                    ? 'bg-primary text-white shadow-xs'
-                    : 'bg-muted/40 hover:bg-muted text-foreground border border-border'
-                }`}
-              >
-                All {activeDivisionData.title} ({studentsList.filter(activeDivisionData.filterFn).length})
-              </button>
-              {activeDivisionData.classes.map(cls => {
-                const classCount = studentsList.filter(s => {
-                  if (!activeDivisionData.filterFn(s)) return false;
-                  if (cls.key === 'SS1_SCI') return matchStudentClass(s.grade, 'SS1') && ((s.stream || '').toUpperCase().includes('SCI') || (s.arm || '').toUpperCase().includes('FAITH') || (s.house || '').toUpperCase().includes('FAITH'));
-                  if (cls.key === 'SS1_ART') return matchStudentClass(s.grade, 'SS1') && ((s.stream || '').toUpperCase().includes('ART') || (s.arm || '').toUpperCase().includes('LOVE') || (s.house || '').toUpperCase().includes('LOVE'));
-                  return matchStudentClass(s.grade, cls.key);
-                }).length;
-                const isClassActive = selectedClass === cls.key || selectedClass === cls.label;
-                return (
-                  <button
-                    key={cls.key}
-                    type="button"
-                    onClick={() => setSelectedClass(isClassActive ? null : cls.key)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                      isClassActive
-                        ? 'bg-primary text-white shadow-xs'
-                        : 'bg-muted/40 hover:bg-muted text-foreground border border-border'
-                    }`}
-                  >
-                    <span>{cls.label}</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono ${
-                      isClassActive ? 'bg-white/20 text-white' : 'bg-muted text-muted-foreground'
-                    }`}>
-                      {classCount}
-                    </span>
-                  </button>
-                );
-              })}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 px-1">
+                <Filter className="w-4 h-4 text-primary" />
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{activeDivisionData.title} — Select a Class</span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedClass(null)}
+                  className={`ml-auto px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    !selectedClass
+                      ? 'bg-primary text-white shadow-xs'
+                      : 'bg-muted/40 hover:bg-muted text-foreground border border-border hover:border-primary/40'
+                  }`}
+                >
+                  Show All {activeDivisionData.title} ({studentsList.filter(activeDivisionData.filterFn).length})
+                </button>
+              </div>
+              <div className={`grid gap-3 ${
+                activeDivisionData.classes.length <= 3 ? 'grid-cols-1 sm:grid-cols-3' :
+                activeDivisionData.classes.length <= 4 ? 'grid-cols-2 sm:grid-cols-4' :
+                'grid-cols-2 sm:grid-cols-3 lg:grid-cols-6'
+              }`}>
+                {activeDivisionData.classes.map(cls => {
+                  const classStudents = studentsList.filter(s => activeDivisionData.filterFn(s) && matchStudentToClass(s, cls.key));
+                  const classCount = classStudents.length;
+                  const maleCount = classStudents.filter(s => s.gender === 'Male').length;
+                  const femaleCount = classStudents.filter(s => s.gender === 'Female').length;
+                  const activeCount = classStudents.filter(s => getNormalizedStatus(s.status) === 'Active').length;
+                  const isClassActive = selectedClass === cls.key || selectedClass === cls.label;
+
+                  // Stream counts for SS classes
+                  const isSS = cls.key.startsWith('SS');
+                  const sciCount = isSS ? classStudents.filter(s => (s.stream || '').toUpperCase().includes('SCI') || (s.arm || '').toUpperCase().includes('FAITH') || (s.house || '').toUpperCase().includes('FAITH')).length : 0;
+                  const artCount = isSS ? classCount - sciCount : 0;
+
+                  return (
+                    <div
+                      key={cls.key}
+                      onClick={() => setSelectedClass(isClassActive ? null : cls.key)}
+                      className={`group relative p-4 rounded-2xl border-2 transition-all duration-200 cursor-pointer flex flex-col justify-between gap-3 ${
+                        isClassActive
+                          ? 'border-primary bg-primary/10 ring-2 ring-primary/20 shadow-md'
+                          : 'border-border bg-card hover:border-primary/40 hover:shadow-sm'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold ${
+                          isClassActive ? 'bg-primary text-white' : 'bg-primary/10 text-primary'
+                        }`}>
+                          <School className="w-4 h-4" />
+                        </div>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          isClassActive ? 'bg-primary text-white' : 'bg-primary/10 text-primary border border-primary/20'
+                        }`}>
+                          {classCount} Learners
+                        </span>
+                      </div>
+                      <div>
+                        <h4 className={`font-bold text-sm transition-colors ${
+                          isClassActive ? 'text-primary' : 'text-foreground group-hover:text-primary'
+                        }`}>{cls.label}</h4>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          {maleCount} Boys · {femaleCount} Girls
+                        </p>
+                        {isSS && classCount > 0 && (
+                          <p className="text-[10px] text-primary/80 font-medium mt-0.5">
+                            {sciCount} Sci · {artCount} Art
+                          </p>
+                        )}
+                        <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">
+                          {activeCount} Active
+                        </p>
+                      </div>
+                      <div className="pt-2 border-t border-border/60 flex items-center justify-between text-[10px] font-bold">
+                        <span className={isClassActive ? 'text-primary' : 'text-muted-foreground group-hover:text-primary'}>
+                          {isClassActive ? 'Viewing Roster' : 'View Students'}
+                        </span>
+                        <ChevronRight className={`w-3 h-3 transition-transform ${isClassActive ? 'rotate-90 text-primary' : 'text-muted-foreground group-hover:translate-x-0.5'}`} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 
@@ -4327,10 +4379,8 @@ export default function AdminDashboard() {
                           {s.parentPhone || s.phone || '08031234567'}
                         </td>
                         <td className="py-4 px-4">
-                          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
-                            s.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-rose-500/10 text-rose-600 border-rose-500/20'
-                          }`}>
-                            {s.status}
+                          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${getStatusBadgeClass(s.status)}`}>
+                            {getNormalizedStatus(s.status)}
                           </span>
                         </td>
                         <td className="py-4 px-4 text-right">
@@ -7083,7 +7133,8 @@ export default function AdminDashboard() {
                         {/* Set On Leave / Set Active */}
                         <button
                           onClick={() => {
-                            const newStatus = tchr.status === 'Active' ? 'On Leave' : 'Active';
+                            const currStatus = getNormalizedStatus(tchr.status);
+                            const newStatus = currStatus === 'Active' ? 'On Leave' : 'Active';
                             saveTeacher({ ...tchr, status: newStatus });
                             setTeachersList(getStoredTeachers());
                             setSelectedTeacher({ ...tchr, status: newStatus });
@@ -7091,10 +7142,10 @@ export default function AdminDashboard() {
                           }}
                           className="w-full flex items-center gap-3 px-4 py-3 text-xs font-semibold text-foreground hover:bg-accent transition-colors text-left"
                         >
-                          <span className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${tchr.status === 'Active' ? 'bg-amber-500/10' : 'bg-emerald-500/10'}`}>
-                            <UserCheck className={`w-3.5 h-3.5 ${tchr.status === 'Active' ? 'text-amber-600' : 'text-emerald-600'}`} />
+                          <span className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${getNormalizedStatus(tchr.status) === 'Active' ? 'bg-amber-500/10' : 'bg-emerald-500/10'}`}>
+                            <UserCheck className={`w-3.5 h-3.5 ${getNormalizedStatus(tchr.status) === 'Active' ? 'text-amber-600' : 'text-emerald-600'}`} />
                           </span>
-                          {tchr.status === 'Active' ? 'Set On Leave' : 'Set Active'}
+                          {getNormalizedStatus(tchr.status) === 'Active' ? 'Set On Leave' : 'Set Active'}
                         </button>
                         <div className="border-t border-border mx-3 my-1" />
                         {/* Edit */}
@@ -7224,10 +7275,8 @@ export default function AdminDashboard() {
                     )}
                   </div>
 
-                  <span className={`mt-3 px-3.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${
-                    tchr.status === 'Active' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' : 'bg-amber-500/10 text-amber-600 border-amber-500/20'
-                  }`}>
-                    {tchr.status || 'Active'}
+                  <span className={`mt-3 px-3.5 py-1 rounded-full text-[10px] font-bold border uppercase tracking-wider ${getStatusBadgeClass(tchr.status)}`}>
+                    {getNormalizedStatus(tchr.status)}
                   </span>
                   <p className="text-[11px] text-muted-foreground mt-2 font-medium">Faculty Member</p>
                 </div>
@@ -7625,10 +7674,8 @@ export default function AdminDashboard() {
                           <p className="text-[10px]">{tchr.studentsCount || 0} Students</p>
                         </td>
                         <td className="py-4 px-4">
-                          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
-                            tchr.status === 'Active' ? 'bg-primary/10 text-primary border-primary/20' : 'bg-amber-500/10 text-amber-600 border-amber-200'
-                          }`}>
-                            {tchr.status}
+                          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${getStatusBadgeClass(tchr.status)}`}>
+                            {getNormalizedStatus(tchr.status)}
                           </span>
                         </td>
                         <td className="py-4 px-4 text-right">
