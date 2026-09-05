@@ -7,6 +7,7 @@ from drf_spectacular.views import (
 )
 
 from django.http import JsonResponse, HttpResponse
+from apps.users.views import SeedStudentsView
 
 def health_check(request):
     return JsonResponse({'status': 'healthy', 'service': 'tarepet-backend'})
@@ -23,6 +24,7 @@ urlpatterns = [
     path('', health_check, name='root-health'),
     path('favicon.ico', favicon_view, name='favicon'),
     path('health/', health_check, name='health-check'),
+    path('api/seed-students/', SeedStudentsView.as_view(), name='root-seed-students'),
     path('api/sentry-debug/', trigger_sentry_test, name='sentry-debug'),
     path('admin/', admin.site.urls),
 

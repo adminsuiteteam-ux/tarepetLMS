@@ -705,3 +705,83 @@ class SystemSettingsView(APIView):
             **serializer.data,
             **(settings_obj.settings_data or {})
         }, status=status.HTTP_200_OK)
+
+
+class SeedStudentsView(APIView):
+    """
+    Triggers seeding of all 622 students into the database.
+    Can be accessed by:
+    1. Authenticated Staff / Admin users (via Bearer token or session)
+    2. Any request with valid secret query param: ?secret=tarepet-seed-2026
+    3. Any request with X-Seed-Key header
+    Supports ?force=true to force re-synchronization.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        return self._run_seed(request)
+
+    def post(self, request):
+        return self._run_seed(request)
+
+    def _run_seed(self, request):
+        from django.core.management import call_command
+        import io
+
+        secret = (
+            request.query_params.get('secret')
+            or request.headers.get('X-Seed-Key')
+            or request.headers.get('x-seed-key')
+        )
+        valid_secrets = {'tarepet-seed-2026', getattr(settings, 'SECRET_KEY', None)}
+        is_secret_valid = secret in valid_secrets
+
+        is_admin = bool(
+            request.user
+            and request.user.is_authenticated
+            and (getattr(request.user, 'is_admin', False) or getattr(request.user, 'is_staff', False))
+        )
+
+        if not (is_secret_valid or is_admin):
+            return Response(
+                {
+                    'error': 'Unauthorized. Admin credentials or a valid secret key (?secret=tarepet-seed-2026) required.'
+                },
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        force = (
+            str(request.query_params.get('force', '')).lower() in ['1', 'true', 'yes']
+            or (isinstance(request.data, dict) and bool(request.data.get('force')))
+        )
+
+        out = io.StringIO()
+        try:
+            if force:
+                call_command('seed_all_students', force=True, stdout=out, stderr=out)
+            else:
+                call_command('seed_all_students', stdout=out, stderr=out)
+        except Exception as e:
+            return Response(
+                {
+                    'success': False,
+                    'error': str(e),
+                    'output': out.getvalue(),
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        profile_count = StudentProfile.objects.count()
+        user_count = CustomUser.objects.filter(role=CustomUser.Role.STUDENT).count()
+
+        return Response(
+            {
+                'success': True,
+                'message': f'Student database seeded successfully. Current student profiles: {profile_count}, student users: {user_count}.',
+                'profiles_count': profile_count,
+                'users_count': user_count,
+                'output': out.getvalue(),
+            },
+            status=status.HTTP_200_OK,
+        )
+

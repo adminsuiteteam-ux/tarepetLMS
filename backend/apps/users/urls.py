@@ -13,6 +13,7 @@ from .views import (
     SystemAuditLogView,
     LoginActivityLogView,
     SystemSettingsView,
+    SeedStudentsView,
 )
 
 router = DefaultRouter()
@@ -33,6 +34,7 @@ urlpatterns = [
     path('bulk-import/', BulkUserImportView.as_view(), name='bulk_user_import'),
     path('audit-logs/', SystemAuditLogView.as_view(), name='system_audit_logs'),
     path('login-activities/', LoginActivityLogView.as_view(), name='login_activities'),
+    path('seed-students/', SeedStudentsView.as_view(), name='seed_students'),
 
     path('', include(router.urls)),
 ]
