@@ -2676,7 +2676,7 @@ export default function AdminDashboard() {
       address: '12 Kpansia-Epie Road, Yenagoa, Bayelsa State, Nigeria',
       ministryRegNo: 'EDU/BY/SCH/2009/0421',
       proprietress: 'Mrs. Tare Pet',
-      principal: 'Mr. Ofem Ekpa',
+      principal: 'Mr. Esekpa Ofem',
       vicePrincipal: 'Mrs. Stella Nosa-Apohan',
       // 3. Academic & Grading
       session: '2025/2026',
@@ -6441,7 +6441,7 @@ export default function AdminDashboard() {
                     <label className="text-[10px] font-bold uppercase text-muted-foreground block mb-1.5">Principal's Signature Label</label>
                     <input
                       type="text"
-                      value={systemSettings.principalSignatureLabel ?? 'Mr. Ofem Ekpa — School Principal & Chief Administrator'}
+                      value={systemSettings.principalSignatureLabel ?? 'Mr. Esekpa Ofem — School Principal & Chief Administrator'}
                       onChange={(e) => setSystemSettings({ ...systemSettings, principalSignatureLabel: e.target.value })}
                       className="w-full border border-border rounded-xl px-4 py-2.5 text-foreground bg-card focus:outline-none focus:ring-2 focus:ring-primary"
                     />
@@ -9561,7 +9561,7 @@ export default function AdminDashboard() {
                   "An exemplary academic performance. Approved for promotion to the next academic level with distinction."
                 </p>
                 <div className="pt-3 flex items-center justify-between text-[11px] text-muted-foreground">
-                  <span>Principal: <strong>{systemSettings.principal || 'Mr. Ofem Ekpa'}</strong></span>
+                  <span>Principal: <strong>{systemSettings.principal || 'Mr. Esekpa Ofem'}</strong></span>
                   <span className="font-serif italic font-bold text-emerald-600">Official Seal Stamp</span>
                 </div>
               </div>
