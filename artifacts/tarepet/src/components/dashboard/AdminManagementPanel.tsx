@@ -46,8 +46,8 @@ const INITIAL_SUB_ADMINS: SubAdminUser[] = [
   },
   {
     id: 'subadmin_2',
-    name: 'Dr. Emmanuel Okafor',
-    email: 'emmanuel.okafor@tarepetmontessorischool.com',
+    name: 'Mr. Ofem Ekpa',
+    email: 'ofem.ekpa@tarepetmontessorischool.com',
     staffId: 'TMS/ADM/0102',
     role: 'PRINCIPAL',
     status: 'ACTIVE',
@@ -71,7 +71,7 @@ const INITIAL_AUDIT_LOGS: AdminAuditLog[] = [
   },
   {
     id: 'log_2',
-    adminName: 'Dr. Emmanuel Okafor',
+    adminName: 'Mr. Ofem Ekpa',
     staffId: 'TMS/ADM/0102',
     role: 'PRINCIPAL',
     action: 'Logged into Principal Executive Dashboard',

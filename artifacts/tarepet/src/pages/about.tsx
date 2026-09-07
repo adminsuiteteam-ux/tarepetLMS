@@ -2,6 +2,7 @@ import { PageTransition } from "@/components/layout/Layout";
 import { motion } from "framer-motion";
 import aboutImg from "@assets/school_building.jpg";
 import vicePrincipalImg from "@assets/vice_principal.jpg";
+import principalImg from "@assets/principal.jpg";
 import headMistressImg from "@assets/head_mistress.jpg";
 import nurseryHeadImg from "@assets/nursery_head.jpg";
 import proprietressImg from "@assets/proprietress.jpg";
@@ -226,7 +227,7 @@ export default function About() {
             {[
               { name: "Chief (Mrs) Victoria Ebunomiye Kpotoge", role: "Proprietress / Founder", initials: "VK", image: proprietressImg, imagePos: "center 20%" },
               { name: "Mrs. Chwerdu Erebeli", role: "School Administrator", initials: "CE" },
-              { name: "Mr. Ofem Ekpa", role: "Principal", initials: "OE" },
+              { name: "Mr. Ofem Ekpa", role: "Principal", initials: "OE", image: principalImg, imagePos: "center 15%" },
               { name: "Mrs. Stella Nosa-Apohan", role: "Vice Principal", initials: "SN", image: vicePrincipalImg, imagePos: "center top" },
               { name: "Ms. Akidei Afayero", role: "Head Mistress", initials: "AA", image: headMistressImg, imagePos: "center top" },
               { name: "Mrs. Tina Mabu", role: "Nursery Head", initials: "TM", image: nurseryHeadImg, imagePos: "center top" }
