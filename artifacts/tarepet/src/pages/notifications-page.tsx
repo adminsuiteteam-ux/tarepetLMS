@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
+import { useAuth } from '@/context/AuthContext';
 import {
   Bell,
   CheckCheck,
@@ -13,7 +14,8 @@ import {
   Info,
   CheckCircle2,
   ShieldAlert,
-  ArrowLeft
+  ArrowLeft,
+  ChevronRight
 } from 'lucide-react';
 import {
   getNotificationsForRole,
@@ -102,8 +104,9 @@ function formatExactTime(iso: string): string {
 }
 
 export default function NotificationsPage() {
+  const { user } = useAuth();
   const [, setLocation] = useLocation();
-  const [selectedRole, setSelectedRole] = useState<NotifRole>('ADMIN');
+  const [selectedRole, setSelectedRole] = useState<NotifRole>((user?.role as NotifRole) || 'ADMIN');
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -142,7 +145,14 @@ export default function NotificationsPage() {
         </div>
 
         <button
-          onClick={() => setLocation('/dashboard')}
+          onClick={() => {
+            const role = (user?.role || '').toLowerCase();
+            if (role === 'teacher') setLocation('/dashboard/teacher');
+            else if (role === 'student') setLocation('/dashboard/student');
+            else if (role === 'parent') setLocation('/dashboard/parent');
+            else if (role === 'admin') setLocation('/dashboard/admin');
+            else setLocation('/dashboard');
+          }}
           className="px-4 py-2 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-muted transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" /> Return to Dashboard
@@ -278,9 +288,16 @@ export default function NotificationsPage() {
             return (
               <div
                 key={n.id}
-                onClick={() => !n.read && markAsRead(n.id)}
-                className={`p-5 rounded-2xl border transition-all flex items-start justify-between gap-4 cursor-pointer relative group ${
+                onClick={() => {
+                  if (!n.read) markAsRead(n.id);
+                  if (n.actionUrl) setLocation(n.actionUrl);
+                }}
+                className={`p-5 rounded-2xl border transition-all flex items-start justify-between gap-4 relative group ${
+                  n.actionUrl ? 'cursor-pointer' : 'cursor-default'
+                } ${
                   n.read ? 'bg-card border-border hover:border-muted-foreground/30' : 'bg-emerald-500/[0.04] border-emerald-500/30 shadow-xs'
+                } ${
+                  n.actionUrl ? 'hover:shadow-md hover:scale-[1.005]' : ''
                 }`}
               >
                 <div className="flex items-start gap-3.5 min-w-0">
@@ -305,6 +322,17 @@ export default function NotificationsPage() {
                       {n.title}
                     </h4>
                     <p className="text-xs text-muted-foreground leading-relaxed">{n.message}</p>
+
+                    {/* Actionable CTA */}
+                    {n.actionUrl && (
+                      <div className={`inline-flex items-center gap-1 mt-2 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full transition-all ${
+                        n.read
+                          ? 'bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'
+                          : 'bg-emerald-500/10 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white'
+                      }`}>
+                        Take Action <ChevronRight className="w-3 h-3" />
+                      </div>
+                    )}
                   </div>
                 </div>
 

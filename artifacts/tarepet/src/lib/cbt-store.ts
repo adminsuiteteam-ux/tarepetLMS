@@ -34,6 +34,7 @@ export interface CBTQuestion {
   points: number;
   explanation?: string;
   image_url?: string;
+  order?: number;
 }
 
 export interface CBTExam {
@@ -237,7 +238,7 @@ export function formatStudentEmail(fullName: string): string {
   const parts = clean.split(/\s+/).filter(Boolean);
   if (parts.length === 0) return 'student@tarepet.com';
   const firstName = parts[0];
-  const surname = parts.length > 1 ? parts[parts.length - 1] : 'tarepet';
+  const surname = parts.length > 1 ? (parts.at(-1) ?? 'tarepet') : 'tarepet';
   return `${firstName}.${surname}@tarepet.com`;
 }
 
@@ -20147,7 +20148,7 @@ if (typeof window !== 'undefined') {
       const incomingExam = event.payload?.exam;
       if (incomingExam && incomingExam.id) {
         _exams = loadSavedExams();
-        const existingIdx = _exams.findIndex(e => e.id === incomingExam.id);
+        const existingIdx = _exams.findIndex(e => Number(e.id) === Number(incomingExam.id));
         if (existingIdx >= 0) {
           _exams[existingIdx] = { ..._exams[existingIdx], ...incomingExam };
         } else {
@@ -20155,6 +20156,19 @@ if (typeof window !== 'undefined') {
         }
         persistExams(_exams);
         broadcastRealtimeEvent();
+      }
+    }
+
+    if (event.type === 'EXAM_DELETED') {
+      const deletedExamId = Number(event.payload?.examId || event.payload?.id);
+      if (deletedExamId) {
+        _exams = loadSavedExams().filter(e => Number(e.id) !== deletedExamId);
+        persistExams(_exams);
+        broadcastRealtimeEvent();
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('tarepet_store_updated', { detail: { type: 'exam_deleted', id: deletedExamId } }));
+          window.dispatchEvent(new CustomEvent('tarepet_exam_deleted', { detail: { id: deletedExamId } }));
+        }
       }
     }
   });
@@ -20213,8 +20227,21 @@ export async function saveCBTExam(examData: Partial<CBTExam> & { title: string; 
   };
 
   try {
-    if (examData.id) {
-      await authClient.patch(`/assessments/cbt-exams/${examData.id}/`, {
+    const payloadQuestions = (newExam.questions || []).map((q, idx) => ({
+      question_text: q.question_text || '',
+      option_a: q.option_a || '',
+      option_b: q.option_b || '',
+      option_c: q.option_c || '',
+      option_d: q.option_d || '',
+      correct_option: q.correct_option || 'A',
+      points: Number(q.points) || 1,
+      explanation: q.explanation || '',
+      image_url: q.image_url || null,
+      order: q.order || (idx + 1)
+    }));
+
+    if (examData.id && typeof examData.id === 'number' && examData.id < 1000000000000) {
+      const res = await authClient.patch(`/assessments/cbt-exams/${examData.id}/`, {
         title: newExam.title,
         description: newExam.description,
         instructions: newExam.instructions,
@@ -20228,8 +20255,11 @@ export async function saveCBTExam(examData: Partial<CBTExam> & { title: string; 
         duration_minutes: newExam.duration_minutes,
         questions_per_page: newExam.questions_per_page,
         status: newExam.status,
-        questions: newExam.questions
+        questions: payloadQuestions
       });
+      if (res?.data?.id) {
+        newExam.id = res.data.id;
+      }
     } else {
       const res = await authClient.post('/assessments/cbt-exams/', {
         title: newExam.title,
@@ -20245,13 +20275,15 @@ export async function saveCBTExam(examData: Partial<CBTExam> & { title: string; 
         duration_minutes: newExam.duration_minutes,
         questions_per_page: newExam.questions_per_page,
         status: newExam.status,
-        questions: newExam.questions
+        questions: payloadQuestions
       });
       if (res?.data?.id) {
         newExam.id = res.data.id;
       }
     }
-  } catch (err) {}
+  } catch (err: any) {
+    console.error('[CBTStore] Failed to save exam to backend API:', err?.response?.data || err?.message || err);
+  }
 
   const existingIdx = _exams.findIndex(e => Number(e.id) === Number(newExam.id) || e.id === newExam.id);
   if (existingIdx >= 0) {
@@ -20272,7 +20304,8 @@ export async function saveCBTExam(examData: Partial<CBTExam> & { title: string; 
       message: `${newExam.teacher_name} submitted "${newExam.title}" (${newExam.course_name} - ${newExam.class}) for Admin approval.`,
       category: 'ACADEMICS',
       type: 'exam',
-      recipientRole: 'ADMIN'
+      recipientRole: 'ADMIN',
+      actionUrl: `/dashboard/cbt-approval?examId=${newExam.id}`,
     });
 
     sendWebSocketEvent('EXAM_CREATED', { exam: newExam });
@@ -20410,12 +20443,21 @@ export async function updateExamStatus(examId: number, status: CBTExam['status']
       message: `${exam.teacher_name || 'Teacher'} submitted "${exam.title}" (${exam.course_name} - ${exam.class}) for Admin approval.`,
       category: 'ACADEMICS',
       type: 'exam',
-      recipientRole: 'ADMIN'
+      recipientRole: 'ADMIN',
+      actionUrl: `/dashboard/cbt-approval?examId=${exam.id}`,
     });
     sendWebSocketEvent('EXAM_CREATED', { exam });
   } else if (status === 'ACTIVE') {
     exam.activated_at = new Date().toISOString();
     addRealtimeActivity('EXAM_ACTIVATED', `Exam Activated for Students: ${exam.title}`, `Now live for ${exam.class} ${exam.stream} students.`, exam.teacher_name);
+    addRealtimeNotification({
+      title: '🟢 New Exam Available',
+      message: `"${exam.title}" (${exam.course_name} - ${exam.class}) is now LIVE. Open your Student Portal to begin.`,
+      category: 'ACADEMICS',
+      type: 'exam',
+      recipientRole: 'STUDENT',
+      actionUrl: `/dashboard/cbt-exam?examId=${exam.id}`,
+    });
     sendWebSocketEvent('EXAM_ACTIVATED', { exam });
   } else if (status === 'APPROVED') {
     addRealtimeActivity('EXAM_APPROVED', `Admin Approved CBT Exam: ${exam.title}`, `Approved for ${exam.course_name} by Admin Suite.`, 'School Principal / Admin');
@@ -20424,7 +20466,8 @@ export async function updateExamStatus(examId: number, status: CBTExam['status']
       message: `Admin approved CBT Exam "${exam.title}" (${exam.course_name} - ${exam.class}).`,
       category: 'ACADEMICS',
       type: 'exam',
-      recipientRole: 'TEACHER'
+      recipientRole: 'TEACHER',
+      actionUrl: `/dashboard/cbt-builder?examId=${exam.id}`,
     });
     sendWebSocketEvent('EXAM_APPROVED', { exam });
   } else if (status === 'REJECTED') {
@@ -20435,7 +20478,8 @@ export async function updateExamStatus(examId: number, status: CBTExam['status']
       message: `Exam "${exam.title}" was returned by Admin. Reason: ${reason || 'Revision needed'}`,
       category: 'ACADEMICS',
       type: 'exam',
-      recipientRole: 'TEACHER'
+      recipientRole: 'TEACHER',
+      actionUrl: `/dashboard/cbt-builder?examId=${exam.id}`,
     });
     sendWebSocketEvent('EXAM_REJECTED', { exam });
   }
@@ -20483,6 +20527,7 @@ export function deleteCBTExam(examId: number): boolean {
   authClient.delete(`/assessments/cbt-exams/${examId}/`).catch(() => {});
 
   broadcastRealtimeEvent();
+  sendWebSocketEvent('EXAM_DELETED', { examId });
   if (target) {
     addRealtimeActivity(
       'EXAM_REJECTED',
@@ -20624,7 +20669,8 @@ export async function submitStudentCBTAttempt(
     title: `CBT Submission Received: ${sName}`,
     message: `${sName} (${exam.class} ${exam.stream}) completed ${exam.title} (${exam.course_code}). Score: ${score}/${total_possible} (${percentage}%). Click to preview.`,
     type: 'exam',
-    recipientRole: 'TEACHER'
+    recipientRole: 'TEACHER',
+    actionUrl: `/dashboard/teacher?section=results`,
   });
   broadcastRealtimeEvent();
   sendWebSocketEvent('EXAM_SUBMISSION', { submission: newSub, examId: exam.id });

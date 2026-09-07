@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useLocation } from 'wouter';
+import { useAuth } from '@/context/AuthContext';
 import {
   Search,
   Users,
@@ -11,6 +12,7 @@ import {
 import { getStoredTeachers, getStoredStudents, getStoredExams } from '@/lib/cbt-store';
 
 export default function SearchPage() {
+  const { user } = useAuth();
   const [, setLocation] = useLocation();
   const [query, setQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'students' | 'teachers' | 'exams'>('all');
@@ -34,8 +36,8 @@ export default function SearchPage() {
     const matchedStudents = students
       .filter((s: any) => {
         const name = (s.name || '').toLowerCase();
-        const id = (s.studentId || s.admissionNo || '').toLowerCase();
-        const grade = (s.grade || '').toLowerCase();
+        const id = (s.studentId || s.admissionNo || s.code || '').toLowerCase();
+        const grade = (s.grade || s.stream || '').toLowerCase();
         const email = (s.email || '').toLowerCase();
         return name.includes(q) || id.includes(q) || grade.includes(q) || email.includes(q);
       })
@@ -48,7 +50,9 @@ export default function SearchPage() {
         category: 'Student Roster',
         icon: GraduationCap,
         badgeColor: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
-        targetUrl: `/dashboard/admin?section=students&id=${s.id}`,
+        targetUrl: user?.role === 'TEACHER'
+          ? `/dashboard/teacher?section=students&id=${s.id}`
+          : `/dashboard/admin?section=students&id=${s.id}`,
       }));
 
     const matchedTeachers = teachers
@@ -69,7 +73,9 @@ export default function SearchPage() {
         category: 'Faculty Directory',
         icon: Users,
         badgeColor: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20',
-        targetUrl: `/dashboard/admin?section=teachers&id=${t.id}`,
+        targetUrl: user?.role === 'TEACHER'
+          ? `/dashboard/teacher?section=overview`
+          : `/dashboard/admin?section=teachers&id=${t.id}`,
       }));
 
     const storedExams = getStoredExams();
@@ -89,7 +95,9 @@ export default function SearchPage() {
         category: 'CBT Assessment',
         icon: FileText,
         badgeColor: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
-        targetUrl: `/dashboard/admin?section=exams`,
+        targetUrl: user?.role === 'TEACHER'
+          ? `/dashboard/teacher?section=exams`
+          : `/dashboard/admin?section=exams`,
       }));
 
     return {
@@ -98,7 +106,7 @@ export default function SearchPage() {
       teachers: matchedTeachers,
       exams: matchedExams,
     };
-  }, [query, teachers, students]);
+  }, [query, teachers, students, user?.role]);
 
   const activeResults = results[activeTab] || [];
   const hasQuery = query.trim().length > 0;
@@ -118,7 +126,14 @@ export default function SearchPage() {
         </div>
 
         <button
-          onClick={() => setLocation('/dashboard')}
+          onClick={() => {
+            const role = (user?.role || '').toLowerCase();
+            if (role === 'teacher') setLocation('/dashboard/teacher');
+            else if (role === 'student') setLocation('/dashboard/student');
+            else if (role === 'parent') setLocation('/dashboard/parent');
+            else if (role === 'admin') setLocation('/dashboard/admin');
+            else setLocation('/dashboard');
+          }}
           className="px-4 py-2 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-muted transition-all flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
         >
           <X className="w-4 h-4" /> Return to Dashboard

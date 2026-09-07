@@ -23,7 +23,7 @@ export const DashboardRedirect: React.FC = () => {
           setLocation('/dashboard/parent');
           break;
         default:
-          setLocation('/dashboard/admin');
+          setLocation('/sign-in');
       }
     } else if (!isLoading && !user) {
       setLocation('/sign-in');

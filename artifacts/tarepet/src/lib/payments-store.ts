@@ -596,7 +596,8 @@ export async function recordTransaction(txData: Omit<PaymentTransaction, 'id' | 
     message: `${newTx.studentName} paid ₦${newTx.amount.toLocaleString()} for ${newTx.itemName}`,
     category: 'BILLING',
     type: 'fee',
-    recipientRole: 'ADMIN'
+    recipientRole: 'ADMIN',
+    actionUrl: '/dashboard/admin?section=finance',
   });
 
   return newTx;

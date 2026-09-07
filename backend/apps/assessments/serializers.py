@@ -64,6 +64,9 @@ class CBTQuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = CBTQuestion
         fields = ['id', 'exam', 'question_text', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_option', 'points', 'explanation', 'image_url', 'order']
+        extra_kwargs = {
+            'exam': {'required': False, 'allow_null': True}
+        }
 
 
 class CBTQuestionStudentSerializer(serializers.ModelSerializer):

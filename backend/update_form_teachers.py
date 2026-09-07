@@ -40,10 +40,10 @@ OFFICIAL_19_TEACHERS = [
         'phone': '08062429432',
         'teacher_id': 'TMS/TCH/0070',
         'gender': 'Female',
-        'form_class': 'Creche',
+        'form_class': 'Nursery 1',
         'dept': 'Early Years & Vocational Studies',
-        'spec': 'Prevocational Studies (NUR - SS3) & Creche',
-        'bio': 'Form Educator for Creche and Prevocational Studies instructor from Nursery to SS 3.'
+        'spec': 'Prevocational Studies (NUR - SS3) & Nursery Education',
+        'bio': 'Form Teacher for Nursery 1 and Prevocational Studies instructor.'
     },
     {
         'first_name': 'Nwachukwu (O)',
@@ -52,10 +52,10 @@ OFFICIAL_19_TEACHERS = [
         'phone': '07032356176',
         'teacher_id': 'TMS/TCH/0061',
         'gender': 'Female',
-        'form_class': 'Primary 2',
+        'form_class': 'Basic 3',
         'dept': 'Primary Section',
-        'spec': 'Primary 2 Curriculum & Basic Sciences',
-        'bio': 'Form Teacher for Primary 2 nurturing foundational literacy, numeracy, and science inquiry.'
+        'spec': 'Basic 3 Curriculum & Basic Sciences',
+        'bio': 'Form Teacher for Basic 3 nurturing foundational literacy, numeracy, and science inquiry.'
     },
     {
         'first_name': 'Mrs. Ozichi Nwaudo',
@@ -88,10 +88,10 @@ OFFICIAL_19_TEACHERS = [
         'phone': '08131251726',
         'teacher_id': 'TMS/TCH/0017',
         'gender': 'Male',
-        'form_class': 'Senior Science',
+        'form_class': 'SS 3',
         'dept': 'Physical & Commercial Sciences',
         'spec': 'Physics (PRI - SS3) & Financial Accounting (JSS 1)',
-        'bio': 'Senior Physics instructor for Primary to SS 3 and Financial Accounting instructor for JSS 1.'
+        'bio': 'Form Teacher for SS 3, Senior Physics and Accounting instructor.'
     },
     {
         'first_name': 'Simeon Blessed',
@@ -102,8 +102,8 @@ OFFICIAL_19_TEACHERS = [
         'gender': 'Male',
         'form_class': 'JSS 1',
         'dept': 'Creative Arts & Music Department',
-        'spec': 'Music (JSS 1) & Basic 4 Curriculum',
-        'bio': 'Form Teacher and instructor for Music (JSS 1) and Basic 4 creative arts.'
+        'spec': 'Music (JSS 1) & Creative Arts',
+        'bio': 'Form Teacher for JSS 1 and instructor for Music & Creative Arts.'
     },
     {
         'first_name': 'Egufe B.',
@@ -112,10 +112,10 @@ OFFICIAL_19_TEACHERS = [
         'phone': '08066154094',
         'teacher_id': 'TMS/TCH/0071',
         'gender': 'Male',
-        'form_class': 'JSS Vocational',
+        'form_class': 'JSS 2',
         'dept': 'Vocational & Technical Studies',
         'spec': 'Home Economics (JSS 1 - 3)',
-        'bio': 'Instructor for Home Economics across Junior Secondary classes (JSS 1 to JSS 3).'
+        'bio': 'Form Teacher for JSS 2 and instructor for Home Economics.'
     },
     {
         'first_name': 'Oyiniki Anita',
@@ -124,10 +124,10 @@ OFFICIAL_19_TEACHERS = [
         'phone': '08146183309',
         'teacher_id': 'TMS/TCH/0026',
         'gender': 'Female',
-        'form_class': 'JSS 3 Love',
+        'form_class': 'JSS 3',
         'dept': 'Junior Secondary Section',
         'spec': 'English Language & Verbal Reasoning (JSS 3)',
-        'bio': 'Form Teacher for JSS 3 Love and instructor in English Language & Verbal Reasoning.'
+        'bio': 'Form Teacher for JSS 3 and instructor in English Language & Verbal Reasoning.'
     },
     {
         'first_name': 'Mrs. Eze Chidubem',
@@ -136,10 +136,10 @@ OFFICIAL_19_TEACHERS = [
         'phone': '08142417833',
         'teacher_id': 'TMS/TCH/0044',
         'gender': 'Female',
-        'form_class': 'JSS 2 Faith',
+        'form_class': 'JSS 2',
         'dept': 'Creative & Cultural Arts Department',
         'spec': 'Fine Art & Creative Arts (JSS 1 - 3)',
-        'bio': 'Form Teacher for JSS 2 Faith and Fine Art instructor for JSS 1, JSS 2, and JSS 3.'
+        'bio': 'Form Teacher for JSS 2 and Fine Art instructor.'
     },
     {
         'first_name': 'Agadaga',
@@ -148,10 +148,10 @@ OFFICIAL_19_TEACHERS = [
         'phone': '08065008494',
         'teacher_id': 'TMS/TCH/0072',
         'gender': 'Male',
-        'form_class': 'None',
+        'form_class': 'Basic 5',
         'dept': 'Social Sciences Department',
-        'spec': 'Social Studies (SOS) & Civic Education (JSS 1 - 3)',
-        'bio': 'Instructor in Social Studies and Civic Education for Junior Secondary classes.'
+        'spec': 'Social Studies & Basic 5 Curriculum',
+        'bio': 'Form Teacher for Basic 5 and instructor in Social Studies.'
     },
     {
         'first_name': 'Amos',
@@ -160,10 +160,10 @@ OFFICIAL_19_TEACHERS = [
         'phone': '07035339196',
         'teacher_id': 'TMS/TCH/0054',
         'gender': 'Male',
-        'form_class': 'JSS 3 Faith',
+        'form_class': 'JSS 3',
         'dept': 'Business & Commercial Studies',
         'spec': 'Business Studies (JSS 1 - 2) & Civic Education',
-        'bio': 'Form Teacher for JSS 3 Faith and Business Studies educator.'
+        'bio': 'Form Teacher for JSS 3 and Business Studies educator.'
     },
     {
         'first_name': 'Iwu',
@@ -172,10 +172,10 @@ OFFICIAL_19_TEACHERS = [
         'phone': '08039341848',
         'teacher_id': 'TMS/TCH/0064',
         'gender': 'Female',
-        'form_class': 'JSS 1 Faith',
+        'form_class': 'JSS 1',
         'dept': 'Senior Secondary Commercial Department',
         'spec': 'Marketing & Commerce (SS 1 - 3)',
-        'bio': 'Form Teacher for JSS 1 Faith and Commerce & Marketing instructor for SS 1 to SS 3.'
+        'bio': 'Form Teacher for JSS 1 and Commerce & Marketing instructor.'
     },
     {
         'first_name': 'Mr. Joseph',
@@ -184,10 +184,10 @@ OFFICIAL_19_TEACHERS = [
         'phone': '08137183618',
         'teacher_id': 'TMS/TCH/0043',
         'gender': 'Male',
-        'form_class': 'SS 2 Grace',
+        'form_class': 'SS 2',
         'dept': 'Senior Secondary Section',
         'spec': 'Senior Secondary Studies (SS 1 - 3)',
-        'bio': 'Form Teacher for SS 2 Grace and Senior Secondary educator.'
+        'bio': 'Form Teacher for SS 2 and Senior Secondary educator.'
     },
     {
         'first_name': 'Goodluck',
@@ -196,10 +196,10 @@ OFFICIAL_19_TEACHERS = [
         'phone': '08032288883',
         'teacher_id': 'TMS/TCH/0027',
         'gender': 'Male',
-        'form_class': 'None',
+        'form_class': 'SS 3',
         'dept': 'Mathematics & Sciences Department',
         'spec': 'Mathematics (JSS 2 & SS 2)',
-        'bio': 'Mathematics instructor for Junior Secondary 2 and Senior Secondary 2.'
+        'bio': 'Form Teacher for SS 3 and Mathematics instructor.'
     },
     {
         'first_name': 'Eli',
@@ -208,10 +208,10 @@ OFFICIAL_19_TEACHERS = [
         'phone': '08068583070',
         'teacher_id': 'TMS/TCH/0025',
         'gender': 'Male',
-        'form_class': 'SS 1 Art',
+        'form_class': 'SS 1',
         'dept': 'Mathematics & Quantitative Sciences',
         'spec': 'Mathematics & Further Mathematics (JSS 3, SS 1, SS 2, SS 3)',
-        'bio': 'Form Teacher for SS 1 Art and Mathematics & Further Mathematics specialist.'
+        'bio': 'Form Teacher for SS 1 and Mathematics & Further Mathematics specialist.'
     },
     {
         'first_name': 'Alex I.',
@@ -220,10 +220,10 @@ OFFICIAL_19_TEACHERS = [
         'phone': '09066984417',
         'teacher_id': 'TMS/TCH/0013',
         'gender': 'Female',
-        'form_class': 'None',
+        'form_class': 'Basic 6',
         'dept': 'Earth & Environmental Sciences',
-        'spec': 'Geography (SS 1 - 3)',
-        'bio': 'Senior Geography educator across Senior Secondary classes (SS 1 to SS 3).'
+        'spec': 'Geography & Basic 6 Curriculum',
+        'bio': 'Form Teacher for Basic 6 and Geography educator.'
     },
     {
         'first_name': 'Emmanuel U.',
@@ -232,10 +232,10 @@ OFFICIAL_19_TEACHERS = [
         'phone': '08021472342',
         'teacher_id': 'TMS/TCH/0022',
         'gender': 'Male',
-        'form_class': 'None',
+        'form_class': 'Nursery 2',
         'dept': 'Biological & Life Sciences',
-        'spec': 'Biology (SS 1 - 3)',
-        'bio': 'Senior Biology educator for Senior Secondary classes (SS 1 to SS 3).'
+        'spec': 'Biology & Early Childhood Education',
+        'bio': 'Form Teacher for Nursery 2 and Senior Biology educator.'
     },
 ]
 

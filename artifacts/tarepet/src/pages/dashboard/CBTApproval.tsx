@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { useTranslation } from '@/lib/i18n';
+import { useAuth } from '@/context/AuthContext';
 import { useCustomDialog } from '@/context/DialogContext';
 import { getStoredExams, updateExamStatus, subscribeToCBTStore, syncExamsWithBackend } from '@/lib/cbt-store';
 
@@ -57,6 +58,7 @@ function getQuestionOptionText(q: any, opt: string): string {
 
 export default function AdminCBTApproval() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const { showAlert } = useCustomDialog();
   const [view, setView] = useState<View>('queue');
   const [exams, setExams] = useState<PendingExam[]>([]);
@@ -77,8 +79,41 @@ export default function AdminCBTApproval() {
     fetchExams();
     syncExamsWithBackend().then(() => fetchExams());
     const unsub = subscribeToCBTStore(fetchExams);
-    return () => unsub();
+
+    // Continuous real-time multi-device sync polling (every 8s)
+    const pollInterval = setInterval(() => {
+      syncExamsWithBackend().then(() => fetchExams()).catch(() => {});
+    }, 8000);
+
+    // Instant re-sync when admin unlocks device or focuses tab
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        syncExamsWithBackend().then(() => fetchExams()).catch(() => {});
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      unsub();
+      clearInterval(pollInterval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, []);
+
+  // Auto-open requested exam in preview mode if navigated via deep-link notification (?examId=...)
+  useEffect(() => {
+    if (exams.length > 0 && typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const urlExamId = params.get('examId');
+      if (urlExamId) {
+        const found = exams.find(e => String(e.id) === String(urlExamId));
+        if (found) {
+          setSelectedExam(found);
+          setView('preview');
+        }
+      }
+    }
+  }, [exams]);
 
   const pendingExams = exams.filter(e => e.status === 'PENDING');
   const otherExams = exams.filter(e => e.status !== 'PENDING');
@@ -117,7 +152,7 @@ export default function AdminCBTApproval() {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-violet-50 p-4 md:p-8">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-3 mb-8">
-            <Link href="/dashboard/admin">
+            <Link href={`/dashboard/${(user?.role || 'admin').toLowerCase()}`}>
               <button className="p-2 rounded-lg bg-white shadow hover:bg-slate-50 transition"><ChevronLeft className="w-5 h-5" /></button>
             </Link>
             <div>

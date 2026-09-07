@@ -2339,7 +2339,7 @@ export default function AdminDashboard() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const urlSec = params.get('section');
-      if (urlSec) return urlSec;
+      if (urlSec) return urlSec === 'cbt' ? 'exams' : urlSec;
       const cached = null;
       if (cached) return cached;
     }
@@ -2496,12 +2496,35 @@ export default function AdminDashboard() {
           });
         }
       }
+
+      if (event.type === 'EXAM_DELETED' && (event.payload?.examId || event.payload?.id)) {
+        const delId = Number(event.payload.examId || event.payload.id);
+        setExamsList(prev => prev.filter(e => Number(e.id) !== delId));
+        refreshExamsRealtime();
+      }
     });
+
+    // Continuous real-time multi-device sync polling (every 10s)
+    const pollInterval = setInterval(() => {
+      syncExamsWithBackend().then(res => setExamsList(res.map(mapCBTExamToAdminExam))).catch(() => {});
+      syncStudentsWithBackend().then(res => setStudentsList(res)).catch(() => {});
+    }, 10000);
+
+    // Instant re-sync when admin unlocks device or focuses tab
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        syncExamsWithBackend().then(res => setExamsList(res.map(mapCBTExamToAdminExam))).catch(() => {});
+        syncStudentsWithBackend().then(res => setStudentsList(res)).catch(() => {});
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
       unsubCBT();
       unsubWsStatus();
       unsubEvents();
+      clearInterval(pollInterval);
+      document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, [refreshExamsRealtime]);
 
@@ -2510,7 +2533,13 @@ export default function AdminDashboard() {
   const [selectedExamStream, setSelectedExamStream] = useState<string | null>(null); // 'Science' | 'Art'
   const [openExamClassDropdown, setOpenExamClassDropdown] = useState<string | null>(null); // dropdown toggle
   const [selectedExamType, setSelectedExamType] = useState<string | null>(null);    // 'Test' | 'Exam' | 'All'
-  const [examRepoFilter, setExamRepoFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [examRepoFilter, setExamRepoFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>(() => {
+    if (typeof window !== 'undefined') {
+      const f = new URLSearchParams(window.location.search).get('filter');
+      if (f === 'pending' || f === 'approved' || f === 'rejected' || f === 'all') return f as any;
+    }
+    return 'all';
+  });
   const [selectedExamDivision, setSelectedExamDivision] = useState<string | null>(null);
 
   // Manage subjects drill-down state

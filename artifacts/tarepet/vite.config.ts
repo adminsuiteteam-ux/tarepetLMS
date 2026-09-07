@@ -30,7 +30,15 @@ export default defineConfig({
     sourcemap: false, // Do not expose source maps in production
     outDir: path.resolve(import.meta.dirname, 'dist/public'),
     emptyOutDir: true,
-    chunkSizeWarningLimit: 3000,
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-charts': ['recharts'],
+          'vendor-motion': ['framer-motion'],
+        },
+      },
+    },
   },
   server: {
     port,

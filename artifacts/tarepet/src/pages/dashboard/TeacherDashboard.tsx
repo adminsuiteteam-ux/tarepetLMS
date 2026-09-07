@@ -1,5 +1,5 @@
 // Tarepet Montessori Teacher Dashboard Component (Fully Internationalized)
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { PortalLayout } from '@/components/layout/PortalLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { useAuth } from '@/context/AuthContext';
@@ -14,7 +14,7 @@ import {
   Save, History, Sparkles, RotateCcw, FileSpreadsheet, Check, Scissors, Sun, Moon, Rocket, Edit3, Unlock, Lightbulb
 } from 'lucide-react';
 
-import { authClient } from '@/lib/api-auth';
+import { authClient, getAccessToken } from '@/lib/api-auth';
 import { addRealtimeNotification } from '@/lib/notifications-store';
 import { ImageCropModal } from '@/components/ui/ImageCropModal';
 import { MobileProfileView } from '@/components/profile/MobileProfileView';
@@ -72,8 +72,8 @@ export default function TeacherDashboard() {
   const [activeSection, setActiveSectionState] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
-      const urlSec = params.get('section');
-      if (urlSec) return urlSec;
+      const urlSec = params.get('section') || params.get('tab');
+      if (urlSec) return urlSec === 'cbt' ? 'exams' : urlSec;
     }
     return 'overview';
   });
@@ -191,14 +191,44 @@ export default function TeacherDashboard() {
     syncStudentsWithBackend().then(res => setRoster(res));
     syncTeachersWithBackend();
     syncExamsWithBackend().then(res => setTeacherExams(res));
+
     const unsub = subscribeToCBTStore(() => {
       setRoster(getStoredStudents());
       setTeacherExams(getStoredExams());
     });
-    return () => unsub();
+
+    // Continuous real-time multi-device sync polling (every 10s)
+    const pollInterval = setInterval(() => {
+      syncExamsWithBackend().then(res => setTeacherExams(res)).catch(() => {});
+      syncStudentsWithBackend().then(res => setRoster(res)).catch(() => {});
+    }, 10000);
+
+    // Instant re-sync when teacher unlocks device or focuses tab
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        syncExamsWithBackend().then(res => setTeacherExams(res)).catch(() => {});
+        syncStudentsWithBackend().then(res => setRoster(res)).catch(() => {});
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      unsub();
+      clearInterval(pollInterval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, []);
 
   const [studentSearch, setStudentSearch] = useState('');
+  const [selectedRosterClass, setSelectedRosterClass] = useState<string>('DEFAULT');
+
+  const availableRosterClasses = React.useMemo(() => {
+    const set = new Set<string>();
+    roster.forEach(s => { if (s.grade) set.add(s.grade.trim()); });
+    return Array.from(set).sort();
+  }, [roster]);
+
+  const activeRosterClass = selectedRosterClass === 'DEFAULT' ? formClass : (selectedRosterClass === 'ALL' ? '' : selectedRosterClass);
   const [attendanceState, setAttendanceState] = useState<Record<number, string>>({
     1: 'present', 2: 'present', 3: 'late', 4: 'present', 5: 'present'
   });
@@ -659,15 +689,18 @@ export default function TeacherDashboard() {
       name: profileForm.fullName || `${profileForm.firstName} ${profileForm.lastName}`,
       profileImage: croppedBase64,
     });
-    authClient.put('/auth/me/', {
-      profile_image: croppedBase64,
-      profile: {
+    const token = getAccessToken();
+    if (token && !token.startsWith('mock_') && !token.startsWith('verified_2fa_') && !token.startsWith('temp_token')) {
+      authClient.put('/auth/me/', {
         profile_image: croppedBase64,
-        profileImage: croppedBase64,
-      }
-    }).then(() => {
-      refreshUserProfile().catch(() => {});
-    }).catch(() => {});
+        profile: {
+          profile_image: croppedBase64,
+          profileImage: croppedBase64,
+        }
+      }).then(() => {
+        refreshUserProfile().catch(() => {});
+      }).catch(() => {});
+    }
     broadcastRealtimeEvent();
     showToast('Profile photo cropped and updated in real time!');
   };
@@ -690,13 +723,16 @@ export default function TeacherDashboard() {
       name: profileForm.fullName || `${profileForm.firstName} ${profileForm.lastName}`,
       profileImage: '',
     });
-    authClient.put('/auth/me/', {
-      profile_image: '',
-      profile: {
+    const token = getAccessToken();
+    if (token && !token.startsWith('mock_') && !token.startsWith('verified_2fa_') && !token.startsWith('temp_token')) {
+      authClient.put('/auth/me/', {
         profile_image: '',
-        profileImage: '',
-      }
-    }).catch(() => {});
+        profile: {
+          profile_image: '',
+          profileImage: '',
+        }
+      }).catch(() => {});
+    }
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('tarepet_avatar_deleted'));
       window.dispatchEvent(new CustomEvent('tarepet_user_updated'));
@@ -849,49 +885,279 @@ export default function TeacherDashboard() {
     // =========================================================
     // 1. OVERVIEW
     // =========================================================
-    if (activeSection === 'overview') return (
-      <div className="space-y-6">
-        {/* Welcome Header */}
-        <div className="bg-gradient-to-r from-emerald-700 via-emerald-800 to-teal-900 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
-          <p className="text-xs font-bold uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full inline-block mb-3">{t('teacher.management_portal', 'Teacher Management Portal')}</p>
-          <h2 className="text-2xl sm:text-3xl font-serif font-bold mb-1">{getTimeGreeting()}, {user?.first_name ?? 'Teacher'}!</h2>
-          <p className="text-emerald-100 text-sm">{t('teacher.manage_subtitle', 'Manage classes, CBT assessments, and student progress.')}</p>
-        </div>
+    if (activeSection === 'overview') {
+      const formClassStudents = roster.filter(s => formClass ? matchStudentClass(s.grade, formClass) : false);
+      const formClassStudentsCount = formClassStudents.length;
 
-        {/* CBT Exam Engine Card (Senior Secondary SS1-SS3 Teachers & Admins Only) */}
-        {isSeniorSecondaryTeacher && (
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-2xl p-5 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <span className="bg-white/20 text-white text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full mb-1.5 inline-block">{t('teacher.cbt_assessment_system', 'CBT Assessment System')}</span>
-              <h3 className="text-xl font-bold">{t('teacher.cbt_exam_builder_title', 'CBT Exam Builder & Management')}</h3>
-              <p className="text-blue-100 text-xs mt-1">{t('teacher.cbt_exam_builder_desc', 'Create CBT tests/exams, submit for admin approval, upload to students & sync scores to report cards.')}</p>
-            </div>
-            <Link href="/dashboard/cbt-builder">
-              <button className="px-5 py-2.5 rounded-xl bg-white text-blue-700 font-bold text-sm hover:bg-blue-50 transition shadow-md whitespace-nowrap">
-                {t('teacher.open_cbt_builder', 'Open CBT Builder →')}
-              </button>
-            </Link>
+      // School-wide class size metrics
+      const classBreakdown: Record<string, number> = {};
+      roster.forEach(s => {
+        const g = (s.grade || 'General').trim();
+        classBreakdown[g] = (classBreakdown[g] || 0) + 1;
+      });
+      const uniqueClassesCount = Object.keys(classBreakdown).length || (SCHOOL_CLASSES.length || 1);
+      const schoolAvgStudentsPerClass = uniqueClassesCount > 0 ? Math.round(roster.length / uniqueClassesCount) : 0;
+
+      // Form Class specific metrics
+      const formMaleCount = formClassStudents.filter(s => (s.gender || '').toLowerCase().startsWith('m')).length;
+      const formFemaleCount = formClassStudents.filter(s => (s.gender || '').toLowerCase().startsWith('f')).length;
+
+      const formAvgAttendance = formClassStudents.length > 0
+        ? Math.round(
+            formClassStudents.reduce((sum, s) => {
+              const clean = String(s.attendance || '95').replace(/[^0-9.]/g, '');
+              return sum + (parseFloat(clean) || 95);
+            }, 0) / formClassStudents.length
+          )
+        : 96;
+
+      let totalScores = 0;
+      let scoredStudentsCount = 0;
+      formClassStudents.forEach(s => {
+        const bs = getStudentBroadsheet(s.id);
+        if (bs && Object.keys(bs).length > 0) {
+          const scores = Object.values(bs) as any[];
+          const studentAvg = scores.reduce((sum, sc) => {
+            const tot = sc.total || ((sc.ca1 || 0) + (sc.ca2 || 0) + (sc.cbtScore || 0) + (sc.paperExam || sc.exam || 0));
+            return sum + tot;
+          }, 0) / (scores.length || 1);
+          totalScores += studentAvg;
+          scoredStudentsCount++;
+        }
+      });
+      const formAcademicAvg = scoredStudentsCount > 0 ? Math.round((totalScores / scoredStudentsCount) * 10) / 10 : 76.5;
+
+      const atRiskStudentsCount = formClassStudents.filter(s => {
+        if (s.atRisk) return true;
+        const cleanAtt = parseFloat(String(s.attendance || '95').replace(/[^0-9.]/g, '')) || 95;
+        return cleanAtt < 75;
+      }).length;
+
+      return (
+        <div className="space-y-6">
+          {/* Welcome Header */}
+          <div className="bg-gradient-to-r from-emerald-700 via-emerald-800 to-teal-900 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
+            <p className="text-xs font-bold uppercase tracking-widest bg-white/20 px-3 py-1 rounded-full inline-block mb-3">
+              {formClass ? `Form Teacher Portal • ${formClass}` : t('teacher.management_portal', 'Teacher Management Portal')}
+            </p>
+            <h2 className="text-2xl sm:text-3xl font-serif font-bold mb-1">{getTimeGreeting()}, {user?.first_name ?? 'Teacher'}!</h2>
+            <p className="text-emerald-100 text-sm">
+              {formClass
+                ? `Form Teacher for ${formClass} • Managing ${formClassStudentsCount} students (School average: ~${schoolAvgStudentsPerClass} students/class).`
+                : t('teacher.manage_subtitle', 'Manage classes, CBT assessments, and student progress.')}
+            </p>
           </div>
-        )}
 
-        {/* Quick Stats Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {[
-            { label: 'Assigned Classes', val: '0', sub: '0 Students', icon: BookOpen, color: 'text-primary bg-primary/10 border-primary/20' },
-            { label: 'Pending Grading', val: `${submissions.length}`, sub: 'Action required', icon: FileText, color: 'text-amber-600 bg-amber-500/10 border-amber-200' },
-            { label: 'At-Risk Students', val: '0', sub: 'None flagged', icon: AlertCircle, color: 'text-rose-600 bg-rose-500/10 border-rose-200' },
-            { label: 'Avg Attendance', val: '0%', sub: 'No attendance recorded', icon: UserCheck, color: 'text-emerald-600 bg-emerald-500/10 border-emerald-200' },
-          ].map((s, i) => (
-            <div key={i} className={`bg-card rounded-2xl border p-4 shadow-sm ${s.color.split(' ').slice(2).join(' ')}`}>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-bold uppercase text-muted-foreground">{s.label}</span>
-                <s.icon className={`w-4 h-4 ${s.color.split(' ')[0]}`} />
+          {/* Form Teacher Cohort & Student Numbers Analytics Card */}
+          {formClass && (
+            <div className="bg-card border-2 border-emerald-500/30 rounded-2xl p-5 sm:p-6 shadow-sm relative overflow-hidden bg-gradient-to-br from-emerald-500/5 via-teal-500/5 to-card space-y-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-border/60">
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wide uppercase bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                      <GraduationCap className="w-3.5 h-3.5" />
+                      <span>{t('teacher.form_teacher_dashboard', 'Form Teacher Dashboard')}</span>
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-primary/10 text-primary border border-primary/20">
+                      {`${t('teacher.class_label', 'Class:')} ${formClass}`}
+                    </span>
+                  </div>
+                  <h3 className="font-serif font-bold text-xl text-foreground flex items-center gap-2">
+                    {`${formClass} ${t('teacher.student_strength_averages', 'Student Strength & Cohort Averages')}`}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {t('teacher.cohort_averages_desc', 'Real-time count of enrolled students, benchmark averages across school classes, and attendance rate.')}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setActiveSection('students')}
+                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    <span>{`${t('teacher.class_roster', 'Class Roster')} (${formClassStudentsCount})`}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveSection('students');
+                      setStudentSubTab('attendance');
+                    }}
+                    className="px-4 py-2 rounded-xl border border-border bg-card hover:bg-muted text-foreground text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <UserCheck className="w-3.5 h-3.5 text-teal-600" />
+                    <span>{t('teacher.attendance', 'Attendance')}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSection('results')}
+                    className="px-4 py-2 rounded-xl border border-border bg-card hover:bg-muted text-foreground text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-primary" />
+                    <span>{t('teacher.broadsheet', 'Broadsheet')}</span>
+                  </button>
+                </div>
               </div>
-              <p className={`text-2xl font-serif font-bold ${s.color.split(' ')[0]}`}>{s.val}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">{s.sub}</p>
+
+              {/* 4 Metric Tiles */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="bg-card/90 border border-border rounded-xl p-4 shadow-2xs">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground block mb-1">{t('teacher.your_class_enrolled', 'Your Class Enrolled')}</span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-serif font-bold text-emerald-600 dark:text-emerald-400">{formClassStudentsCount}</span>
+                    <span className="text-xs text-muted-foreground">{t('common.students', 'Students')}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-1.5 pt-1.5 border-t border-border/50">
+                    <span className="text-blue-600 font-semibold">{`${formMaleCount} ${t('common.boys', 'Boys')}`}</span>
+                    <span>{'•'}</span>
+                    <span className="text-pink-600 font-semibold">{`${formFemaleCount} ${t('common.girls', 'Girls')}`}</span>
+                  </div>
+                </div>
+
+                <div className="bg-card/90 border border-border rounded-xl p-4 shadow-2xs">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground block mb-1">{t('teacher.school_avg_per_class', 'School Avg / Class')}</span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-serif font-bold text-indigo-600 dark:text-indigo-400">{`~${schoolAvgStudentsPerClass}`}</span>
+                    <span className="text-xs text-muted-foreground">{t('common.students', 'Students')}</span>
+                  </div>
+                  <div className="text-[11px] text-muted-foreground mt-1.5 pt-1.5 border-t border-border/50 truncate">
+                    {formClassStudentsCount >= schoolAvgStudentsPerClass 
+                      ? `+${formClassStudentsCount - schoolAvgStudentsPerClass} ${t('teacher.vs_school_avg', 'vs school avg')}`
+                      : `${schoolAvgStudentsPerClass - formClassStudentsCount} ${t('teacher.vs_school_avg', 'vs school avg')}`}
+                  </div>
+                </div>
+
+                <div className="bg-card/90 border border-border rounded-xl p-4 shadow-2xs">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground block mb-1">{t('teacher.class_academic_avg', 'Class Academic Avg')}</span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-serif font-bold text-amber-600 dark:text-amber-400">{`${formAcademicAvg}%`}</span>
+                    <span className="text-xs text-muted-foreground">{t('common.score', 'Score')}</span>
+                  </div>
+                  <div className="text-[11px] text-muted-foreground mt-1.5 pt-1.5 border-t border-border/50 truncate">
+                    {scoredStudentsCount > 0 ? `${scoredStudentsCount} ${t('teacher.scores_synced', 'scores synced')}` : t('teacher.term_benchmark', 'Term benchmark')}
+                  </div>
+                </div>
+
+                <div className="bg-card/90 border border-border rounded-xl p-4 shadow-2xs">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground block mb-1">{t('teacher.average_attendance', 'Average Attendance')}</span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-serif font-bold text-teal-600 dark:text-teal-400">{`${formAvgAttendance}%`}</span>
+                    <span className="text-xs text-muted-foreground">{t('common.present', 'Present')}</span>
+                  </div>
+                  <div className="text-[11px] text-muted-foreground mt-1.5 pt-1.5 border-t border-border/50 truncate">
+                    {atRiskStudentsCount > 0 ? `⚠️ ${atRiskStudentsCount} ${t('teacher.students_at_risk', 'student(s) at risk')}` : `✓ ${t('teacher.regular_attendance', 'Regular attendance')}`}
+                  </div>
+                </div>
+              </div>
+
+              {/* Comparative Student Numbers Across Class Cohorts */}
+              {Object.keys(classBreakdown).length > 0 && (
+                <div className="bg-muted/20 border border-border/60 rounded-xl p-4 space-y-2.5">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                      <TrendingUp className="w-3.5 h-3.5 text-primary" />
+                      <span>{t('teacher.comparative_student_numbers', 'Comparative Student Numbers Across School Classes')}</span>
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">
+                      {`${t('teacher.school_total', 'School Total:')} `}
+                      <strong className="text-foreground">{roster.length}</strong>
+                      {` ${t('common.students_lowercase', 'students')} ${t('teacher.across', 'across')} `}
+                      <strong className="text-foreground">{uniqueClassesCount}</strong>
+                      {` ${t('teacher.class_arms', 'class arms')} (${t('teacher.avg', 'Avg:')} `}
+                      <strong className="text-primary">{schoolAvgStudentsPerClass}</strong>
+                      {`${t('teacher.per_class', '/class)')}`}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 pt-1">
+                    {Object.entries(classBreakdown).map(([clsName, count]) => {
+                      const isMyClass = formClass && matchStudentClass(clsName, formClass);
+                      return (
+                        <div
+                          key={clsName}
+                          className={`p-2.5 rounded-lg border text-center transition-all ${
+                            isMyClass 
+                              ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-950 dark:text-emerald-200 ring-2 ring-emerald-500/30 font-bold' 
+                              : 'bg-card border-border text-foreground'
+                          }`}
+                        >
+                          <span className="text-[10px] font-bold block truncate" title={clsName}>
+                            {isMyClass ? `⭐ ${clsName}` : clsName}
+                          </span>
+                          <div className="flex items-baseline justify-center gap-1 mt-0.5">
+                            <span className={`text-base font-bold ${isMyClass ? 'text-emerald-700 dark:text-emerald-300 font-serif text-lg' : 'text-foreground'}`}>
+                              {count}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground">{t('common.students_lowercase', 'students')}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
-          ))}
-        </div>
+          )}
+
+          {/* CBT Exam Engine Card (Senior Secondary SS1-SS3 Teachers & Admins Only) */}
+          {isSeniorSecondaryTeacher && (
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-2xl p-5 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <span className="bg-white/20 text-white text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full mb-1.5 inline-block">{t('teacher.cbt_assessment_system', 'CBT Assessment System')}</span>
+                <h3 className="text-xl font-bold">{t('teacher.cbt_exam_builder_title', 'CBT Exam Builder & Management')}</h3>
+                <p className="text-blue-100 text-xs mt-1">{t('teacher.cbt_exam_builder_desc', 'Create CBT tests/exams, submit for admin approval, upload to students & sync scores to report cards.')}</p>
+              </div>
+              <Link href="/dashboard/cbt-builder">
+                <button className="px-5 py-2.5 rounded-xl bg-white text-blue-700 font-bold text-sm hover:bg-blue-50 transition shadow-md whitespace-nowrap">
+                  {t('teacher.open_cbt_builder', 'Open CBT Builder →')}
+                </button>
+              </Link>
+            </div>
+          )}
+
+          {/* Quick Stats Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[
+              {
+                label: formClass ? 'Form Class Students' : 'Assigned Students',
+                val: `${formClass ? formClassStudentsCount : roster.length}`,
+                sub: formClass ? `${formClass} (${formMaleCount}B / ${formFemaleCount}G)` : `${roster.length} Total Enrolled`,
+                icon: Users,
+                color: 'text-primary bg-primary/10 border-primary/20',
+              },
+              {
+                label: 'Avg Students / Class',
+                val: `~${schoolAvgStudentsPerClass}`,
+                sub: `School average across ${uniqueClassesCount} classes`,
+                icon: TrendingUp,
+                color: 'text-indigo-600 bg-indigo-500/10 border-indigo-200',
+              },
+              {
+                label: formClass ? 'Class Academic Avg' : 'Pending Grading',
+                val: formClass ? `${formAcademicAvg}%` : `${submissions.length}`,
+                sub: formClass ? (scoredStudentsCount > 0 ? `${scoredStudentsCount} broadsheets synced` : 'Term benchmark') : 'Action required',
+                icon: formClass ? Award : FileText,
+                color: 'text-amber-600 bg-amber-500/10 border-amber-200',
+              },
+              {
+                label: 'Avg Attendance',
+                val: `${formAvgAttendance}%`,
+                sub: atRiskStudentsCount > 0 ? `${atRiskStudentsCount} student(s) flagged` : `${formClass ? formClassStudentsCount : roster.length} students monitored`,
+                icon: UserCheck,
+                color: 'text-emerald-600 bg-emerald-500/10 border-emerald-200',
+              },
+            ].map((s, i) => (
+              <div key={i} className={`bg-card rounded-2xl border p-4 shadow-sm ${s.color.split(' ').slice(2).join(' ')}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground">{s.label}</span>
+                  <s.icon className={`w-4 h-4 ${s.color.split(' ')[0]}`} />
+                </div>
+                <p className={`text-2xl font-serif font-bold ${s.color.split(' ')[0]}`}>{s.val}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{s.sub}</p>
+              </div>
+            ))}
+          </div>
 
         {/* Quick Action Navigation Buttons */}
         <div className="bg-card rounded-2xl border border-border p-5 shadow-sm">
@@ -944,6 +1210,7 @@ export default function TeacherDashboard() {
         </div>
       </div>
     );
+  }
 
     // =========================================================
     // 2. MANAGE STUDENTS
@@ -2073,13 +2340,38 @@ export default function TeacherDashboard() {
                       <h4 className="font-bold text-foreground text-sm">{ex.title}</h4>
                       <p className="text-xs text-muted-foreground">{ex.duration_minutes} mins · Subject: {ex.course_name}</p>
                     </div>
-                    <Link href="/dashboard/cbt-builder">
-                      <button
-                        className="bg-primary hover:bg-primary/90 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-colors shadow-md flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
-                      >
-                        <Plus className="w-4 h-4" /> {t('teacher.resume_in_cbt_builder', 'Resume in CBT Builder')}
-                      </button>
-                    </Link>
+                    <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+                      <Link href={`/dashboard/cbt-builder?examId=${ex.id}`}>
+                        <button
+                          className="bg-primary hover:bg-primary/90 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-colors shadow-md flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Plus className="w-4 h-4" /> {t('teacher.resume_in_cbt_builder', 'Resume in CBT Builder')}
+                        </button>
+                      </Link>
+                      {((ex.questions_count || ex.questions?.length || 0) > 0) && (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const confirmed = await showConfirm({
+                              title: 'Submit Exam for Admin Approval?',
+                              message: `Are you ready to submit "${ex.title}" with ${ex.questions_count || ex.questions?.length} stacked question(s) to the School Admin for review?`,
+                              type: 'confirm',
+                              badge: 'Admin Review',
+                              confirmText: 'Yes, Submit for Approval',
+                              cancelText: 'Keep in Draft',
+                            });
+                            if (confirmed) {
+                              await updateExamStatus(ex.id, 'PENDING');
+                              setTeacherExams(getStoredExams());
+                              showToast(`"${ex.title}" submitted to Admin for approval!`);
+                            }
+                          }}
+                          className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-colors shadow-md flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Send className="w-3.5 h-3.5" /> {t('teacher.submit_for_approval', 'Submit for Approval')}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -3728,30 +4020,33 @@ export default function TeacherDashboard() {
                     }
                   } catch (err) {}
 
-                  authClient.patch('/auth/me/', {
-                    first_name: profileForm.firstName,
-                    last_name: profileForm.lastName,
-                    phone: profileForm.phone,
-                    email: profileForm.email,
-                    profile: {
-                      teacher_id: profileForm.staffId,
-                      gender: profileForm.gender,
-                      dob: profileForm.dob,
-                      address: profileForm.address,
-                      department: profileForm.department,
-                      qualifications: profileForm.qualification,
-                      specialization: profileForm.specialization,
-                      form_teacher_of: profileForm.formClass || formClass,
-                      hire_date: profileForm.joiningDate,
-                      salary: profileForm.salary,
-                      bank_name: profileForm.bankName,
-                      account_number: profileForm.accountNumber,
-                      bio: profileForm.bio,
-                      profile_image: profileForm.profileImage,
-                    }
-                  }).then(() => {
-                    syncTeachersWithBackend();
-                  }).catch(() => {});
+                  const token = getAccessToken();
+                  if (token && !token.startsWith('mock_') && !token.startsWith('verified_2fa_') && !token.startsWith('temp_token')) {
+                    authClient.patch('/auth/me/', {
+                      first_name: profileForm.firstName,
+                      last_name: profileForm.lastName,
+                      phone: profileForm.phone,
+                      email: profileForm.email,
+                      profile: {
+                        teacher_id: profileForm.staffId,
+                        gender: profileForm.gender,
+                        dob: profileForm.dob,
+                        address: profileForm.address,
+                        department: profileForm.department,
+                        qualifications: profileForm.qualification,
+                        specialization: profileForm.specialization,
+                        form_teacher_of: profileForm.formClass || formClass,
+                        hire_date: profileForm.joiningDate,
+                        salary: profileForm.salary,
+                        bank_name: profileForm.bankName,
+                        account_number: profileForm.accountNumber,
+                        bio: profileForm.bio,
+                        profile_image: profileForm.profileImage,
+                      }
+                    }).then(() => {
+                      syncTeachersWithBackend();
+                    }).catch(() => {});
+                  }
 
                   addRealtimeNotification({
                     title: 'Teacher Profile Updated',
@@ -4239,15 +4534,18 @@ export default function TeacherDashboard() {
                   specialization: profileForm.specialization,
                 });
                 try {
-                  await authClient.patch('/auth/me/', {
-                    first_name: profileForm.firstName,
-                    last_name: profileForm.lastName,
-                    phone: profileForm.phone,
-                    email: profileForm.email,
-                    profile: {
-                      specialization: profileForm.specialization
-                    }
-                  });
+                  const token = getAccessToken();
+                  if (token && !token.startsWith('mock_') && !token.startsWith('verified_2fa_') && !token.startsWith('temp_token')) {
+                    await authClient.patch('/auth/me/', {
+                      first_name: profileForm.firstName,
+                      last_name: profileForm.lastName,
+                      phone: profileForm.phone,
+                      email: profileForm.email,
+                      profile: {
+                        specialization: profileForm.specialization
+                      }
+                    });
+                  }
                 } catch (e) {}
                 broadcastRealtimeEvent();
                 window.dispatchEvent(new Event('cbt_store_updated'));

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { authClient } from '@/lib/api-auth';
+import { authClient, getAccessToken } from '@/lib/api-auth';
 import { useAuth, User } from '@/context/AuthContext';
 
 export interface LoginCredentials {
@@ -43,6 +43,8 @@ export function useRegisterMutation() {
 
 export function useUserProfileQuery() {
   const { isAuthenticated } = useAuth();
+  const token = getAccessToken();
+  const isRealToken = Boolean(token && !token.startsWith('mock_') && !token.startsWith('verified_2fa_') && !token.startsWith('temp_token'));
 
   return useQuery<User>({
     queryKey: ['userProfile'],
@@ -50,7 +52,7 @@ export function useUserProfileQuery() {
       const res = await authClient.get('/auth/me/');
       return res.data;
     },
-    enabled: isAuthenticated,
+    enabled: isAuthenticated && isRealToken,
     staleTime: 1000 * 60 * 5, // 5 minutes cache
   });
 }

@@ -298,13 +298,13 @@ class RegisterView(generics.CreateAPIView):
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
         if self.request.user and self.request.user.is_authenticated:
             return self.request.user
-        admin = User.objects.filter(role='ADMIN', is_active=True).first() or User.objects.first()
-        return admin
+        from rest_framework.exceptions import NotAuthenticated
+        raise NotAuthenticated("Authentication credentials were not provided or are invalid.")
 
 
 from rest_framework.pagination import PageNumberPagination

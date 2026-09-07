@@ -4,7 +4,7 @@ services:
     runtime: python
     rootDir: backend
     buildCommand: "./build.sh"
-    startCommand: "gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --threads 4 --worker-class gthread --max-requests 500 --max-requests-jitter 50 --timeout 120"
+    startCommand: "daphne -b 0.0.0.0 -p $PORT config.asgi:application"
     plan: free
     envVars:
       - key: SECRET_KEY
@@ -14,7 +14,7 @@ services:
       - key: ALLOWED_HOSTS
         value: ".onrender.com,localhost,127.0.0.1,tarepetmontessorischool.com,www.tarepetmontessorischool.com"
       - key: DATABASE_URL
-        value: "postgresql://neondb_owner:npg_gT4JuHd3NIzB@ep-snowy-cell-ay49xhsa-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require"
+        sync: false
       - key: EMAIL_BACKEND
         value: "django.core.mail.backends.smtp.EmailBackend"
       - key: EMAIL_HOST
@@ -24,7 +24,7 @@ services:
       - key: EMAIL_HOST_USER
         value: "tarepetm@gmail.com"
       - key: EMAIL_HOST_PASSWORD
-        value: "kyfl dlyu jgka pwis"
+        sync: false
       - key: EMAIL_USE_TLS
         value: "True"
       - key: DEFAULT_FROM_EMAIL

@@ -279,9 +279,7 @@ export default function CBTBuilder() {
     }
   };
 
-  const [showBulkModal, setShowBulkModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const [bulkCsvText, setBulkCsvText] = useState('');
   const [isLockedPreview, setIsLockedPreview] = useState<boolean>(false);
 
   const [editingQuestionId, setEditingQuestionId] = useState<number | null>(null);
@@ -437,56 +435,33 @@ export default function CBTBuilder() {
     }
   };
 
-  const handleBulkCSVImport = () => {
-    if (!bulkCsvText.trim() || !selectedExamId) return;
-    const examsList = getStoredExams();
-    const ex = examsList.find(e => Number(e.id) === Number(selectedExamId) || String(e.id) === String(selectedExamId))
-            || exams.find(e => Number(e.id) === Number(selectedExamId) || String(e.id) === String(selectedExamId));
-    if (!ex) return;
 
-    const lines = bulkCsvText.split('\n').filter(l => l.trim());
-    let addedCount = 0;
-    lines.forEach((line, idx) => {
-      if (idx === 0 && (line.toLowerCase().includes('question') || line.toLowerCase().includes('option'))) return;
-      const cols = line.split(',').map(c => c.trim().replace(/^"(.*)"$/, '$1'));
-      if (cols.length >= 6) {
-        const qObj = {
-          id: Date.now() + idx + Math.floor(Math.random() * 1000),
-          question_text: cols[0],
-          option_a: cols[1],
-          option_b: cols[2],
-          option_c: cols[3],
-          option_d: cols[4],
-          correct_option: (cols[5] || 'A').toUpperCase(),
-          points: parseFloat(cols[6]) || 1,
-          explanation: cols[7] || '',
-          image_url: cols[8] || '',
-        };
-        ex.questions.push(qObj);
-        addedCount++;
-      }
-    });
-
-    if (addedCount > 0) {
-      ex.questions_count = ex.questions.length;
-      saveCBTExam(ex);
-      fetchQuestions(selectedExamId);
-      setBulkCsvText('');
-      setShowBulkModal(false);
-      showAlert({ title: 'Success', message: `Successfully imported ${addedCount} questions into exam!`, type: 'success' });
-    } else {
-      showAlert({ title: 'Error', message: 'Could not parse questions. Expected format: question_text, option_a, option_b, option_c, option_d, correct_option, points, explanation, image_url', type: 'error' });
-    }
-  };
 
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'DRAFT' | 'PENDING' | 'APPROVED'>('ALL');
 
   const handleSubmitForApproval = async () => {
-    if (!selectedExamId) return;
-    const ex = getStoredExams().find(e => e.id === selectedExamId);
-    if (!ex) return;
+    if (!selectedExamId) {
+      showAlert({
+        title: 'No Exam Selected',
+        message: 'Please select or create an exam first before submitting.',
+        type: 'warning',
+      });
+      return;
+    }
+    const allExams = getStoredExams();
+    let ex = allExams.find(e => Number(e.id) === Number(selectedExamId) || String(e.id) === String(selectedExamId))
+          || exams.find(e => Number(e.id) === Number(selectedExamId) || String(e.id) === String(selectedExamId));
+    if (!ex) {
+      showAlert({
+        title: 'Exam Not Found',
+        message: 'Could not find the target exam paper. Please select the exam from the list and try again.',
+        type: 'error',
+      });
+      return;
+    }
 
-    if (!ex.questions || ex.questions.length === 0) {
+    const examQuestions = (questions && questions.length > 0) ? questions : (ex.questions || []);
+    if (!examQuestions || examQuestions.length === 0) {
       showAlert({
         title: 'No Questions Added',
         message: 'Please add at least 1 question before submitting this exam for Admin approval.',
@@ -495,9 +470,14 @@ export default function CBTBuilder() {
       return;
     }
 
+    // Ensure store has the latest questions saved
+    ex.questions = [...examQuestions];
+    ex.questions_count = examQuestions.length;
+    await saveCBTExam(ex);
+
     const confirmed = await showConfirm({
       title: 'Submit Exam for Admin Approval?',
-      message: `Are you ready to submit "${ex.title}" with ${ex.questions.length} stacked question(s) to the School Admin?\n\nOnce submitted, the Admin will review and approve the assessment for student portal access.`,
+      message: `Are you ready to submit "${ex.title}" with ${examQuestions.length} stacked question(s) to the School Admin?\n\nOnce submitted, the Admin will review and approve the assessment for student portal access.`,
       type: 'confirm',
       badge: 'Admin Review',
       confirmText: 'Yes, Submit for Approval',
@@ -505,7 +485,7 @@ export default function CBTBuilder() {
     });
     if (!confirmed) return;
 
-    await updateExamStatus(selectedExamId, 'PENDING');
+    await updateExamStatus(ex.id, 'PENDING');
     showAlert({
       title: 'Submitted for Admin Approval',
       message: `Exam "${ex.title}" has been submitted to the School Admin. You will be notified once it is approved.`,
@@ -539,7 +519,7 @@ export default function CBTBuilder() {
 
   const fetchAttemptDetail = (examId: number, attemptId: number) => {
     const sub = getStoredSubmissions().find(s => s.id === attemptId);
-    const ex = getStoredExams().find(e => e.id === examId);
+    const ex = getStoredExams().find(e => Number(e.id) === Number(examId) || String(e.id) === String(examId));
     if (sub && ex) {
       setAttemptDetail({
         ...sub,
@@ -846,7 +826,7 @@ export default function CBTBuilder() {
                             </button>
                             <button
                               onClick={() => {
-                                const examObj = getStoredExams().find(e => e.id === exam.id);
+                                const examObj = getStoredExams().find(e => Number(e.id) === Number(exam.id) || String(e.id) === String(exam.id));
                                 const nextState = !examObj?.results_released;
                                 setExamResultsReleased(exam.id, nextState);
                                 showAlert({
@@ -1010,7 +990,8 @@ export default function CBTBuilder() {
 
   // ============ ADD QUESTIONS ============
   if (view === 'questions' && selectedExamId) {
-    const currentExam = exams.find(e => e.id === selectedExamId) || getStoredExams().find(e => e.id === selectedExamId);
+    const currentExam = exams.find(e => Number(e.id) === Number(selectedExamId) || String(e.id) === String(selectedExamId))
+      || getStoredExams().find(e => Number(e.id) === Number(selectedExamId) || String(e.id) === String(selectedExamId));
     const totalExamPoints = questions.reduce((sum: number, q: any) => sum + (parseFloat(q.points) || 1), 0);
 
     return (
@@ -1117,15 +1098,6 @@ export default function CBTBuilder() {
             </div>
 
             <div className="flex items-center gap-2 flex-wrap sm:justify-end">
-              <button
-                type="button"
-                onClick={() => setShowBulkModal(true)}
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-muted text-foreground font-bold border border-border hover:bg-muted/80 transition text-xs cursor-pointer"
-                title="Bulk CSV Import"
-              >
-                📥 Bulk CSV
-              </button>
-              
               {questions.length > 0 && (
                 <>
                   <button
@@ -1228,38 +1200,7 @@ export default function CBTBuilder() {
             </div>
           )}
 
-          {/* Bulk CSV Modal */}
-          {showBulkModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in">
-              <div className="bg-card rounded-2xl p-6 max-w-xl w-full border border-border shadow-2xl space-y-4">
-                <div className="flex items-center justify-between border-b border-border pb-3">
-                  <h3 className="font-bold text-base text-foreground flex items-center gap-2">
-                    📥 {t("Bulk Import Questions via CSV")}
-                  </h3>
-                  <button onClick={() => setShowBulkModal(false)} className="text-muted-foreground hover:text-foreground font-bold">✕</button>
-                </div>
-                <div className="space-y-2 text-xs text-muted-foreground">
-                  <p className="font-medium">{t("Paste CSV content below (one line per question):")}</p>
-                  <p className="bg-muted/50 p-2.5 rounded-lg border border-border font-mono text-[10px] text-muted-foreground">
-                    {t("question_text, option_a, option_b, option_c, option_d, correct_option, points, explanation, image_url")}
-                  </p>
-                  <textarea
-                    rows={8}
-                    className="w-full border border-input rounded-xl p-3 text-xs font-mono bg-card text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary focus:outline-none"
-                    value={bulkCsvText}
-                    onChange={e => setBulkCsvText(e.target.value)}
-                    placeholder={t("What is 2 + 2?, 3, 4, 5, 6, B, 1, Basic addition, https://...\nWhat is H2O?, Hydrogen, Oxygen, Water, Carbon, C, 1, Water molecule, ")}
-                  />
-                </div>
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
-                  <button type="button" onClick={() => setShowBulkModal(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-muted-foreground hover:bg-muted">{t("Cancel")}</button>
-                  <button type="button" onClick={handleBulkCSVImport} disabled={!bulkCsvText.trim()} className="px-5 py-2 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs shadow-md transition disabled:opacity-50 cursor-pointer">
-                    {t("Parse & Import Questions")}
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+
 
           {/* ── DESKTOP SIDE-BY-SIDE LAYOUT: LHS = Form, RHS = Stacked Questions ── */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-6 items-start">

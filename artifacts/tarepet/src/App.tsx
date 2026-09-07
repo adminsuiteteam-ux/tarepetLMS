@@ -7,43 +7,62 @@ import { Layout } from '@/components/layout/Layout';
 import { AnimatePresence } from 'framer-motion';
 import { AuthProvider } from '@/context/AuthContext';
 
+import { Suspense, lazy } from 'react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 
-// Pages
+// Eager initial landing page
 import Home from '@/pages/home';
-import About from '@/pages/about';
-import Programs from '@/pages/programs';
-import Admissions from '@/pages/admissions';
-import Blog from '@/pages/blog';
-import Contact from '@/pages/contact';
-import Gallery from '@/pages/gallery';
-import Events from '@/pages/events';
-import SignIn from '@/pages/sign-in';
 import DashboardRedirect from '@/pages/dashboard/DashboardRedirect';
-import AdminDashboard from '@/pages/dashboard/AdminDashboard';
-import TeacherDashboard from '@/pages/dashboard/TeacherDashboard';
-import TeacherProfile from '@/pages/dashboard/TeacherProfile';
-import StudentDashboard from '@/pages/dashboard/StudentDashboard';
-import ParentDashboard from '@/pages/dashboard/ParentDashboard';
-import CBTExam from '@/pages/dashboard/CBTExam';
-import CBTBuilder from '@/pages/dashboard/CBTBuilder';
-import CBTApproval from '@/pages/dashboard/CBTApproval';
-import SearchPage from '@/pages/search-page';
-import NotificationsPage from '@/pages/notifications-page';
+
+// Lazy-loaded secondary public pages
+const About = lazy(() => import('@/pages/about'));
+const Programs = lazy(() => import('@/pages/programs'));
+const Admissions = lazy(() => import('@/pages/admissions'));
+const Blog = lazy(() => import('@/pages/blog'));
+const Contact = lazy(() => import('@/pages/contact'));
+const Gallery = lazy(() => import('@/pages/gallery'));
+const Events = lazy(() => import('@/pages/events'));
+const SignIn = lazy(() => import('@/pages/sign-in'));
+
+// Lazy-loaded authenticated dashboard suites
+const AdminDashboard = lazy(() => import('@/pages/dashboard/AdminDashboard'));
+const TeacherDashboard = lazy(() => import('@/pages/dashboard/TeacherDashboard'));
+const TeacherProfile = lazy(() => import('@/pages/dashboard/TeacherProfile'));
+const StudentDashboard = lazy(() => import('@/pages/dashboard/StudentDashboard'));
+const ParentDashboard = lazy(() => import('@/pages/dashboard/ParentDashboard'));
+const CBTExam = lazy(() => import('@/pages/dashboard/CBTExam'));
+const CBTBuilder = lazy(() => import('@/pages/dashboard/CBTBuilder'));
+const CBTApproval = lazy(() => import('@/pages/dashboard/CBTApproval'));
+const SearchPage = lazy(() => import('@/pages/search-page'));
+const NotificationsPage = lazy(() => import('@/pages/notifications-page'));
 
 const queryClient = new QueryClient();
+
+function PageLoadingFallback() {
+  return (
+    <div className="min-h-[50vh] flex items-center justify-center p-8">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-8 h-8 border-3 border-emerald-500/20 border-t-emerald-600 rounded-full animate-spin" />
+        <p className="text-xs text-muted-foreground font-medium animate-pulse">Loading...</p>
+      </div>
+    </div>
+  );
+}
 
 function PublicRoute({ component: Component }: { component: React.ComponentType }) {
   return (
     <Layout>
-      <Component />
+      <Suspense fallback={<PageLoadingFallback />}>
+        <Component />
+      </Suspense>
     </Layout>
   );
 }
 
 function Router() {
   return (
-    <Switch>
+    <Suspense fallback={<PageLoadingFallback />}>
+      <Switch>
       {/* Standalone Authentication Pages */}
       <Route path="/sign-in" component={SignIn} />
       <Route path="/signin" component={SignIn} />
@@ -133,7 +152,8 @@ function Router() {
       
       <Route component={NotFound} />
     </Switch>
-  );
+  </Suspense>
+);
 }
 
 function getRouterBase() {

@@ -342,6 +342,50 @@ from .serializers import (
 )
 
 
+import logging
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+
+logger = logging.getLogger(__name__)
+
+
+def broadcast_cbt_event(event_type: str, exam_instance):
+    try:
+        channel_layer = get_channel_layer()
+        if channel_layer:
+            serializer = CBTExamSerializer(exam_instance)
+            async_to_sync(channel_layer.group_send)(
+                'tarepet_live_events',
+                {
+                    'type': 'broadcast_event',
+                    'data': {
+                        'type': event_type,
+                        'payload': {'exam': serializer.data},
+                    }
+                }
+            )
+    except Exception as e:
+        logger.warning(f"Failed to broadcast CBT event {event_type}: {e}")
+
+
+def broadcast_cbt_deletion(exam_id: int):
+    try:
+        channel_layer = get_channel_layer()
+        if channel_layer:
+            async_to_sync(channel_layer.group_send)(
+                'tarepet_live_events',
+                {
+                    'type': 'broadcast_event',
+                    'data': {
+                        'type': 'EXAM_DELETED',
+                        'payload': {'examId': exam_id},
+                    }
+                }
+            )
+    except Exception as e:
+        logger.warning(f"Failed to broadcast CBT deletion for exam {exam_id}: {e}")
+
+
 class CBTExamViewSet(viewsets.ModelViewSet):
     """
     CBT Exam management:
@@ -367,9 +411,19 @@ class CBTExamViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         teacher = getattr(self.request.user, 'teacher_profile', None)
         if teacher:
-            serializer.save(teacher=teacher)
+            exam = serializer.save(teacher=teacher)
         else:
-            serializer.save()
+            exam = serializer.save()
+        broadcast_cbt_event('EXAM_CREATED', exam)
+
+    def perform_update(self, serializer):
+        exam = serializer.save()
+        broadcast_cbt_event('EXAM_STATUS_UPDATED', exam)
+
+    def perform_destroy(self, instance):
+        exam_id = instance.id
+        instance.delete()
+        broadcast_cbt_deletion(exam_id)
 
     # ---------- Teacher: Add questions ----------
     @action(detail=True, methods=['post'], permission_classes=[IsTeacher])
@@ -406,6 +460,7 @@ class CBTExamViewSet(viewsets.ModelViewSet):
                 notification_type='PENDING_APPROVAL',
                 exam=exam,
             )
+        broadcast_cbt_event('EXAM_CREATED', exam)
         return Response({'detail': 'Exam submitted for admin approval.', 'status': exam.status})
 
     # ---------- Admin: Approve ----------
@@ -424,6 +479,7 @@ class CBTExamViewSet(viewsets.ModelViewSet):
                 notification_type='APPROVED',
                 exam=exam,
             )
+        broadcast_cbt_event('EXAM_APPROVED', exam)
         return Response({'detail': 'Exam approved. Sent back to teacher for uploading.', 'status': exam.status})
 
     # ---------- Teacher: Upload / Publish / Activate to Students ----------
@@ -434,6 +490,7 @@ class CBTExamViewSet(viewsets.ModelViewSet):
             return Response({'detail': 'Only admin-approved exams can be activated/published to students.'}, status=status.HTTP_400_BAD_REQUEST)
         exam.status = 'ACTIVE'
         exam.save()
+        broadcast_cbt_event('EXAM_ACTIVATED', exam)
         return Response({'detail': 'Exam activated and published to students.', 'status': exam.status})
 
     @action(detail=True, methods=['post'], permission_classes=[IsTeacher])
@@ -460,6 +517,7 @@ class CBTExamViewSet(viewsets.ModelViewSet):
                 notification_type='REJECTED',
                 exam=exam,
             )
+        broadcast_cbt_event('EXAM_REJECTED', exam)
         return Response({'detail': 'Exam rejected.', 'status': exam.status, 'reason': reason})
 
     # ---------- Student: Start exam ----------

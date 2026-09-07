@@ -12,7 +12,7 @@ import {
   BarChart2, ChevronDown, Upload, Trash2, Scissors
 } from 'lucide-react';
 
-import { authClient } from '@/lib/api-auth';
+import { authClient, getAccessToken } from '@/lib/api-auth';
 import { getStoredTeachers, saveTeacher, broadcastRealtimeEvent, addRealtimeActivity, syncTeachersWithBackend } from '@/lib/cbt-store';
 import { addRealtimeNotification } from '@/lib/notifications-store';
 import { ImageCropModal } from '@/components/ui/ImageCropModal';
@@ -54,15 +54,18 @@ export default function TeacherProfile() {
       name: profileForm.fullName || `${profileForm.firstName} ${profileForm.lastName}`,
       profileImage: croppedBase64,
     });
-    authClient.put('/auth/me/', {
-      profile_image: croppedBase64,
-      profile: {
+    const token = getAccessToken();
+    if (token && !token.startsWith('mock_') && !token.startsWith('verified_2fa_') && !token.startsWith('temp_token')) {
+      authClient.put('/auth/me/', {
         profile_image: croppedBase64,
-        profileImage: croppedBase64,
-      }
-    }).then(() => {
-      refreshUserProfile().catch(() => {});
-    }).catch(() => {});
+        profile: {
+          profile_image: croppedBase64,
+          profileImage: croppedBase64,
+        }
+      }).then(() => {
+        refreshUserProfile().catch(() => {});
+      }).catch(() => {});
+    }
     broadcastRealtimeEvent();
     showToast('Profile photo cropped and updated in real time!');
   };
@@ -85,13 +88,16 @@ export default function TeacherProfile() {
       name: profileForm.fullName || `${profileForm.firstName} ${profileForm.lastName}`,
       profileImage: '',
     });
-    authClient.put('/auth/me/', {
-      profile_image: '',
-      profile: {
+    const token = getAccessToken();
+    if (token && !token.startsWith('mock_') && !token.startsWith('verified_2fa_') && !token.startsWith('temp_token')) {
+      authClient.put('/auth/me/', {
         profile_image: '',
-        profileImage: '',
-      }
-    }).catch(() => {});
+        profile: {
+          profile_image: '',
+          profileImage: '',
+        }
+      }).catch(() => {});
+    }
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('tarepet_avatar_deleted'));
       window.dispatchEvent(new CustomEvent('tarepet_user_updated'));
@@ -206,36 +212,43 @@ export default function TeacherProfile() {
       setProfileForm(getInitialProfile());
     });
 
-    // 2. Fetch live user profile from Django REST API backend (/auth/me/)
-    authClient.get('/auth/me/').then(res => {
-      if (res.data && res.data.profile) {
-        const p = res.data.profile;
-        const subs = Array.isArray(p.subjects_taught) ? p.subjects_taught.map((s: any) => typeof s === 'string' ? s : s.name).join(', ') : p.subjects_taught;
-        const rawF = p.form_teacher_of || p.formTeacherOf;
-        const cleanF = (rawF && rawF !== 'None' && !rawF.startsWith('No')) ? rawF : 'None';
-        setProfileForm(prev => ({
-          ...prev,
-          firstName: res.data.first_name || prev.firstName,
-          lastName: res.data.last_name || prev.lastName,
-          email: res.data.email || prev.email,
-          phone: res.data.phone || p.phone || prev.phone,
-          staffId: p.teacher_id || prev.staffId,
-          department: p.department || prev.department,
-          formClass: cleanF,
-          roleTitle: cleanF !== 'None' ? `Form Teacher (${cleanF})` : (p.department || 'Subject Teacher'),
-          specialization: p.specialization || subs || prev.specialization,
-          qualification: p.qualifications || prev.qualification,
-          gender: p.gender || prev.gender,
-          dob: p.dob || prev.dob,
-          address: p.address || prev.address,
-          joiningDate: p.hire_date || prev.joiningDate,
-          salary: p.salary || prev.salary,
-          bankName: p.bank_name || prev.bankName,
-          accountNumber: p.account_number || prev.accountNumber,
-          profileImage: res.data.profile_image || p.profile_image || p.profileImage || prev.profileImage,
-        }));
-      }
-    }).catch(() => {});
+    // 2. Fetch live user profile from Django REST API backend (/auth/me/) only with genuine backend token
+    const token = getAccessToken();
+    if (token && !token.startsWith('mock_') && !token.startsWith('verified_2fa_') && !token.startsWith('temp_token')) {
+      authClient.get('/auth/me/').then(res => {
+        if (res.data && res.data.profile) {
+          // Safety guard: ensure response belongs to this teacher
+          if (user?.email && res.data.email && user.email.toLowerCase().trim() !== res.data.email.toLowerCase().trim()) {
+            return;
+          }
+          const p = res.data.profile;
+          const subs = Array.isArray(p.subjects_taught) ? p.subjects_taught.map((s: any) => typeof s === 'string' ? s : s.name).join(', ') : p.subjects_taught;
+          const rawF = p.form_teacher_of || p.formTeacherOf;
+          const cleanF = (rawF && rawF !== 'None' && !rawF.startsWith('No')) ? rawF : 'None';
+          setProfileForm(prev => ({
+            ...prev,
+            firstName: res.data.first_name || prev.firstName,
+            lastName: res.data.last_name || prev.lastName,
+            email: res.data.email || prev.email,
+            phone: res.data.phone || p.phone || prev.phone,
+            staffId: p.teacher_id || prev.staffId,
+            department: p.department || prev.department,
+            formClass: cleanF,
+            roleTitle: cleanF !== 'None' ? `Form Teacher (${cleanF})` : (p.department || 'Subject Teacher'),
+            specialization: p.specialization || subs || prev.specialization,
+            qualification: p.qualifications || prev.qualification,
+            gender: p.gender || prev.gender,
+            dob: p.dob || prev.dob,
+            address: p.address || prev.address,
+            joiningDate: p.hire_date || prev.joiningDate,
+            salary: p.salary || prev.salary,
+            bankName: p.bank_name || prev.bankName,
+            accountNumber: p.account_number || prev.accountNumber,
+            profileImage: res.data.profile_image || p.profile_image || p.profileImage || prev.profileImage,
+          }));
+        }
+      }).catch(() => {});
+    }
   }, [user]);
 
   const showToast = (msg: string) => {
@@ -347,35 +360,40 @@ export default function TeacherProfile() {
     });
 
     // 3. Sync to Django Backend Database via API, then re-fetch authoritative profile
-    authClient.put('/auth/me/', {
-      first_name: profileForm.firstName,
-      last_name: profileForm.lastName,
-      phone: profileForm.phone,
-      email: profileForm.email,
-      profile: {
-        teacher_id: profileForm.staffId,
-        department: profileForm.department,
-        specialization: profileForm.specialization,
-        qualifications: profileForm.qualification,
-        gender: profileForm.gender,
-        dob: profileForm.dob || null,
-        address: profileForm.address,
-        bio: profileForm.bio,
-        form_teacher_of: profileForm.formClass,
-        hire_date: profileForm.joiningDate,
-        salary: profileForm.salary,
-        bank_name: profileForm.bankName,
-        account_number: profileForm.accountNumber,
-        profile_image: profileForm.profileImage,
-        profileImage: profileForm.profileImage,
-      }
-    }).then(() => {
-      // Re-fetch authoritative profile from database to guarantee sync
-      refreshUserProfile().catch(() => {});
+    const token = getAccessToken();
+    if (token && !token.startsWith('mock_') && !token.startsWith('verified_2fa_') && !token.startsWith('temp_token')) {
+      authClient.put('/auth/me/', {
+        first_name: profileForm.firstName,
+        last_name: profileForm.lastName,
+        phone: profileForm.phone,
+        email: profileForm.email,
+        profile: {
+          teacher_id: profileForm.staffId,
+          department: profileForm.department,
+          specialization: profileForm.specialization,
+          qualifications: profileForm.qualification,
+          gender: profileForm.gender,
+          dob: profileForm.dob || null,
+          address: profileForm.address,
+          bio: profileForm.bio,
+          form_teacher_of: profileForm.formClass,
+          hire_date: profileForm.joiningDate,
+          salary: profileForm.salary,
+          bank_name: profileForm.bankName,
+          account_number: profileForm.accountNumber,
+          profile_image: profileForm.profileImage,
+          profileImage: profileForm.profileImage,
+        }
+      }).then(() => {
+        // Re-fetch authoritative profile from database to guarantee sync
+        refreshUserProfile().catch(() => {});
+        showToast(t('teacher.profile_saved_success', 'Profile updated and synced to Admin Portal in real time!'));
+      }).catch(() => {
+        showToast(t('teacher.profile_saved_success', 'Profile updated and synced to Admin Portal in real time!'));
+      });
+    } else {
       showToast(t('teacher.profile_saved_success', 'Profile updated and synced to Admin Portal in real time!'));
-    }).catch(() => {
-      showToast(t('teacher.profile_saved_success', 'Profile updated and synced to Admin Portal in real time!'));
-    });
+    }
 
     broadcastRealtimeEvent();
     if (typeof window !== 'undefined') {

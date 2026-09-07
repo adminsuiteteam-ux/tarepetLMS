@@ -31,7 +31,7 @@ type StatusListener = (status: WSConnectionStatus) => void;
 let socket: WebSocket | null = null;
 let currentStatus: WSConnectionStatus = 'disconnected';
 let reconnectAttempts = 0;
-const MAX_RECONNECT_ATTEMPTS = 2; // Stop spamming if backend WS is not provisioned (WSGI mode)
+const MAX_RECONNECT_ATTEMPTS = 50; // Continuously reconnect across mobile/desktop sessions
 let reconnectTimer: any = null;
 let pingInterval: any = null;
 const eventListeners = new Set<WSEventListener>();
@@ -140,21 +140,25 @@ function getWebSocketUrl(): string | null {
 
   const loc = window.location;
 
-  // 2. In local development with Django Channels on port 8000
+  // 2. Local development with Django Channels on port 8000
   if (loc.hostname === 'localhost' || loc.hostname === '127.0.0.1') {
     const protocol = loc.protocol === 'https:' ? 'wss:' : 'ws:';
     return `${protocol}//${loc.hostname}:8000/ws/live/`;
   }
 
-  // 3. In production, only connect if VITE_WS_ENABLED is explicitly enabled
-  const wsEnabled = (import.meta as any).env?.VITE_WS_ENABLED === 'true';
-  if (wsEnabled) {
-    const protocol = loc.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${protocol}//${loc.host}/ws/live/`;
-  }
+  // 3. In production: dynamically resolve to backend ASGI Daphne server
+  const rawApiUrl = 
+    (import.meta as any).env?.VITE_API_BASE_URL ||
+    (import.meta as any).env?.VITE_API_URL || 
+    'https://tarepet-backend-4iw6.onrender.com/api/v1';
 
-  // When backend is running standard WSGI (Gunicorn), rely on high-speed BroadcastChannel
-  return null;
+  try {
+    const urlObj = new URL(rawApiUrl);
+    const wsProto = urlObj.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${wsProto}//${urlObj.host}/ws/live/`;
+  } catch {
+    return 'wss://tarepet-backend-4iw6.onrender.com/ws/live/';
+  }
 }
 
 export function initWebSocket(): () => void {
@@ -279,3 +283,20 @@ export function sendWebSocketEvent(type: WSEventMessage['type'], payload?: any) 
   // 4. Dispatch local DOM & JS events immediately so current page reacts instantly
   dispatchIncomingEvent(msg);
 }
+
+// Auto-wake on mobile screen unlock or network reconnect
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    reconnectAttempts = 0;
+    initWebSocket();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      if (!socket || socket.readyState === WebSocket.CLOSED) {
+        reconnectAttempts = 0;
+        initWebSocket();
+      }
+    }
+  });
+}
+

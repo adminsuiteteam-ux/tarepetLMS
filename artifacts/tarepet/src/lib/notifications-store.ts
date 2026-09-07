@@ -14,6 +14,7 @@ export interface Notification {
   read: boolean;
   type: 'info' | 'success' | 'warning' | 'exam' | 'fee' | 'attendance';
   role: NotifRole;         // which role this belongs to (for filtering)
+  actionUrl?: string;      // optional deep-link; clicking the card navigates here
 }
 
 // ── Persistent state with LocalStorage + Real-time Sync ──────────────────────
@@ -72,6 +73,7 @@ if (typeof window !== 'undefined') {
           read: Boolean(p.read),
           type: (p.type || 'info').toLowerCase() as any,
           role: (p.role || 'ALL') as NotifRole,
+          actionUrl: p.actionUrl || undefined,
         };
         _notifications = [incomingNotif, ..._notifications];
         notifyListeners();
@@ -104,6 +106,7 @@ export async function syncNotificationsWithBackend(role: NotifRole): Promise<voi
           read: Boolean(sn.is_read ?? sn.read),
           type: (sn.notification_type || sn.type || 'info').toLowerCase() as any,
           role: (sn.recipient_role || sn.role || role) as NotifRole,
+          actionUrl: sn.action_url || sn.actionUrl || undefined,
         }));
 
         const existing = getAll();
@@ -184,6 +187,7 @@ export function addNotification(notif: Omit<Notification, 'id' | 'read' | 'time'
     type: notif.type,
     recipient_role: notif.role,
     role: notif.role,
+    action_url: notif.actionUrl || null,
     is_read: false,
   }).catch(() => {});
 }
@@ -194,11 +198,14 @@ export function addRealtimeNotification(options: {
   category?: string;
   type?: 'info' | 'success' | 'warning' | 'exam' | 'fee' | 'attendance';
   recipientRole?: NotifRole;
+  /** Deep-link: clicking the notification card will navigate the user here */
+  actionUrl?: string;
 }) {
   addNotification({
     title: options.title,
     message: options.message,
     type: options.type === 'fee' || options.type === 'exam' || options.type === 'warning' || options.type === 'success' ? options.type : 'info',
-    role: options.recipientRole || 'ADMIN'
+    role: options.recipientRole || 'ADMIN',
+    actionUrl: options.actionUrl,
   });
 }

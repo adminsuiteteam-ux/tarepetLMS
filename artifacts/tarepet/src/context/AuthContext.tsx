@@ -73,13 +73,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshUserProfile = React.useCallback(async () => {
     const access = localStorage.getItem('tarepet_access_token') || sessionStorage.getItem('tarepet_access_token');
-    if (!access) return;
+    // Skip backend call if token is absent or is a local mock / bypass token
+    if (!access || access.startsWith('mock_') || access.startsWith('verified_2fa_') || access.startsWith('temp_token')) return;
     try {
       const res = await authClient.get('/auth/me/');
       if (res.data && res.data.email) {
+        let currentEmail = '';
+        let currentRole: UserRole | undefined = undefined;
+        try {
+          const raw = localStorage.getItem('tarepet_auth_user') || sessionStorage.getItem('tarepet_auth_user');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            currentEmail = (parsed.email || '').toLowerCase().trim();
+            currentRole = parsed.role;
+          }
+        } catch {}
+
+        const returnedEmail = res.data.email.toLowerCase().trim();
+
+        // Safety Guard: Never allow /auth/me/ to overwrite an active session with a different user account
+        if (currentEmail && returnedEmail && currentEmail !== returnedEmail) {
+          console.warn('[AuthContext] Discarded /auth/me/ response: returned email does not match active session user', {
+            current: currentEmail,
+            returned: returnedEmail,
+          });
+          return;
+        }
+
         const normalized = {
           ...res.data,
-          role: (res.data.role || 'STUDENT').toUpperCase() as UserRole
+          role: (res.data.role || currentRole || 'STUDENT').toUpperCase() as UserRole
         };
         setUser(normalized);
         localStorage.setItem('tarepet_auth_user', JSON.stringify(normalized));

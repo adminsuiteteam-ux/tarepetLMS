@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'wouter';
-import { Bell, X, CheckCheck, Trash2, BookOpen, CreditCard, UserCheck, AlertTriangle, Info, CheckCircle2 } from 'lucide-react';
+import { Bell, X, CheckCheck, Trash2, BookOpen, CreditCard, UserCheck, AlertTriangle, Info, CheckCircle2, ChevronRight } from 'lucide-react';
 import {
   getNotificationsForRole,
   getUnreadCount,
@@ -112,9 +112,26 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ role }) =>
 
   useEffect(() => {
     syncNotifs();
-    syncNotificationsWithBackend(role);
+    syncNotificationsWithBackend(role).catch(() => {});
     const unsub = subscribeToNotifications(syncNotifs);
-    return unsub;
+
+    // Continuous real-time notification sync polling (every 10s)
+    const pollInterval = setInterval(() => {
+      syncNotificationsWithBackend(role).catch(() => {});
+    }, 10000);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        syncNotificationsWithBackend(role).catch(() => {});
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      unsub();
+      clearInterval(pollInterval);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, [role]);
 
 
@@ -151,6 +168,10 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ role }) =>
 
   const handleItemClick = (n: Notification) => {
     if (!n.read) markAsRead(n.id);
+    if (n.actionUrl) {
+      setOpen(false);
+      setLocation(n.actionUrl);
+    }
   };
 
   const handleRemove = (e: React.MouseEvent, id: string) => {
@@ -250,8 +271,10 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ role }) =>
                     <li
                       key={n.id}
                       onClick={() => handleItemClick(n)}
-                      className={`relative flex gap-3 px-4 py-3 cursor-pointer transition-colors border-b border-border/50 last:border-0 group
+                      className={`relative flex gap-3 px-4 py-3 transition-colors border-b border-border/50 last:border-0 group
+                        ${n.actionUrl ? 'cursor-pointer' : 'cursor-default'}
                         ${n.read ? 'bg-card hover:bg-muted/30' : 'bg-primary/[0.03] hover:bg-primary/[0.07]'}
+                        ${n.actionUrl && !n.read ? 'hover:border-l-2 hover:border-l-emerald-500' : ''}
                       `}
                     >
                       {/* Icon */}
@@ -270,10 +293,18 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ role }) =>
                           </span>
                         </div>
                         <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{n.message}</p>
+                        {/* Actionable CTA chip */}
+                        {n.actionUrl && (
+                          <span className={`inline-flex items-center gap-0.5 mt-1.5 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full transition-colors
+                            ${n.read ? 'bg-muted text-muted-foreground' : 'bg-emerald-500/10 text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white'}
+                          `}>
+                            Tap to take action <ChevronRight className="w-2.5 h-2.5" />
+                          </span>
+                        )}
                       </div>
 
-                      {/* Unread dot */}
-                      {!n.read && (
+                      {/* Unread dot (hidden when actionUrl present – CTA chip serves same purpose) */}
+                      {!n.read && !n.actionUrl && (
                         <span className={`absolute right-3 top-3.5 w-1.5 h-1.5 rounded-full ${style.dot} shrink-0`} />
                       )}
 
