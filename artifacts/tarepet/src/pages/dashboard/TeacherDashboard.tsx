@@ -305,6 +305,10 @@ export default function TeacherDashboard() {
   // Live real-time sync for attendance exam candidates roster (so newly enrolled students immediately appear)
   React.useEffect(() => {
     if (selectedAttendanceExam) {
+      syncStudentsWithBackend().then(res => {
+        if (res && res.length > 0) setRoster(res);
+      }).catch(() => {});
+
       const records = getExamAttendance(
         selectedAttendanceExam.id,
         selectedAttendanceExam.class || 'SS1',

@@ -5,9 +5,12 @@ import vicePrincipalImg from "@assets/vice_principal.jpg";
 import headMistressImg from "@assets/head_mistress.jpg";
 import nurseryHeadImg from "@assets/nursery_head.jpg";
 import proprietressImg from "@assets/proprietress.jpg";
-import { CheckCircle, Award, Target, Eye, Sparkles, Trophy, Sprout, MapPin } from "lucide-react";
+import { CheckCircle, Target, Eye, Sparkles, Trophy, Sprout, MapPin } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 
 export default function About() {
+  const { t } = useTranslation();
+
   return (
     <PageTransition>
       {/* Hero Header */}
@@ -16,7 +19,7 @@ export default function About() {
         <div className="absolute inset-0 z-0">
           <img
             src={aboutImg}
-            alt="Tare Pet Campus Building"
+            alt={t('about.hero_img_alt', 'Tare Pet Campus Building')}
             className="w-full h-full object-cover opacity-95 scale-105 brightness-100"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/35 to-black/20" />
@@ -34,7 +37,7 @@ export default function About() {
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-button text-white text-xs font-semibold uppercase tracking-wider mb-6 shadow-lg border border-white/20"
           >
             <Sparkles className="w-3.5 h-3.5 text-yellow-400" />
-            <span>Discover Our Legacy</span>
+            <span>{t('about.badge', 'Discover Our Legacy')}</span>
           </motion.div>
 
           <motion.h1 
@@ -43,7 +46,8 @@ export default function About() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-4xl sm:text-5xl md:text-6xl font-serif font-bold text-white mb-6 tracking-tight drop-shadow-md leading-[1.15]"
           >
-            About Tare Pet <span className="text-primary italic font-light">Montessori School</span>
+            {t('about.title_prefix', 'About Tare Pet')}{' '}
+            <span className="text-primary italic font-light">{t('about.title_suffix', 'Montessori School')}</span>
           </motion.h1>
 
           <motion.p 
@@ -52,7 +56,7 @@ export default function About() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-lg md:text-xl text-white/90 max-w-3xl mx-auto font-sans leading-relaxed font-normal mb-10"
           >
-            A premier educational institution in Yenagoa, Bayelsa State — dedicated to shaping confident, independent, and ethical leaders through child-centered discovery and academic excellence.
+            {t('about.description', 'A premier educational institution in Yenagoa, Bayelsa State — dedicated to shaping confident, independent, and ethical leaders through child-centered discovery and academic excellence.')}
           </motion.p>
 
           {/* Quick Highlight Pills Bar */}
@@ -63,13 +67,13 @@ export default function About() {
             className="flex flex-wrap items-center justify-center gap-3 md:gap-4 text-xs md:text-sm font-sans"
           >
             <span className="flex items-center gap-2 px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
-              <Trophy className="w-4 h-4 text-yellow-400" /> Established October 1, 2002
+              <Trophy className="w-4 h-4 text-yellow-400" /> {t('about.established', 'Established October 1, 2002')}
             </span>
             <span className="flex items-center gap-2 px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
-              <Sprout className="w-4 h-4 text-green-400" /> Montessori & Erdkinder Method
+              <Sprout className="w-4 h-4 text-green-400" /> {t('about.method', 'Montessori & Erdkinder Method')}
             </span>
             <span className="flex items-center gap-2 px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
-              <MapPin className="w-4 h-4 text-red-400" /> 47 Chief John Obi Str., Kpansia, Yenagoa
+              <MapPin className="w-4 h-4 text-red-400" /> {t('about.location', '47 Chief John Obi Str., Kpansia, Yenagoa')}
             </span>
           </motion.div>
         </div>
@@ -91,12 +95,12 @@ export default function About() {
               <div className="w-14 h-14 bg-primary/15 rounded-2xl flex items-center justify-center mb-6 text-primary group-hover:scale-110 transition-transform">
                 <Target className="w-7 h-7" />
               </div>
-              <h2 className="text-3xl font-serif font-bold text-foreground mb-4 group-hover:text-primary transition-colors">Our Mission</h2>
+              <h2 className="text-3xl font-serif font-bold text-foreground mb-4 group-hover:text-primary transition-colors">{t('about.mission_title', 'Our Mission')}</h2>
               <p className="text-muted-foreground leading-relaxed text-lg mb-3">
-                To enhance creativity, teamwork, leadership skills and love among students.
+                {t('about.mission_desc', 'To enhance creativity, teamwork, leadership skills and love among students.')}
               </p>
               <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full font-mono">
-                1 Corinthians 15:4-5
+                {t('about.mission_verse', '1 Corinthians 15:4-5')}
               </span>
             </motion.div>
 
@@ -112,9 +116,9 @@ export default function About() {
               <div className="w-14 h-14 bg-secondary/15 rounded-2xl flex items-center justify-center mb-6 text-secondary group-hover:scale-110 transition-transform">
                 <Eye className="w-7 h-7" />
               </div>
-              <h2 className="text-3xl font-serif font-bold text-foreground mb-4 group-hover:text-secondary transition-colors">Our Vision</h2>
+              <h2 className="text-3xl font-serif font-bold text-foreground mb-4 group-hover:text-secondary transition-colors">{t('about.vision_title', 'Our Vision')}</h2>
               <p className="text-muted-foreground leading-relaxed text-lg">
-                To raise a generation of children who will love the Lord, walk in godly wisdom, and lead in academic and societal excellence.
+                {t('about.vision_desc', 'To raise a generation of children who will love the Lord, walk in godly wisdom, and lead in academic and societal excellence.')}
               </p>
             </motion.div>
           </div>
@@ -134,7 +138,7 @@ export default function About() {
             >
               <img 
                 src={aboutImg} 
-                alt="Tare Pet Montessori School Citadel of Praise Building Exterior" 
+                alt={t('about.philosophy_img_alt', 'Tare Pet Montessori School Citadel of Praise Building Exterior')} 
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
               />
             </motion.div>
@@ -146,31 +150,36 @@ export default function About() {
               transition={{ duration: 0.7, delay: 0.15 }}
             >
               <h2 className="text-xs font-bold tracking-widest text-primary uppercase mb-3 px-3 py-1 rounded-full bg-primary/10 inline-block">
-                Our Approach
+                {t('about.approach_badge', 'Our Approach')}
               </h2>
-              <h3 className="text-4xl md:text-5xl font-serif font-bold text-foreground mb-8">The Montessori Philosophy</h3>
+              <h3 className="text-4xl md:text-5xl font-serif font-bold text-foreground mb-8">{t('about.philosophy_title', 'The Montessori Philosophy')}</h3>
               
               <div className="space-y-6 text-lg text-muted-foreground leading-relaxed">
                 <p>
-                  At Tare Pet Montessori School, we believe that education is not merely about transmitting facts, but about nurturing the human spirit. We adhere closely to the principles laid down by Dr. Maria Montessori.
+                  {t('about.philosophy_p1', 'At Tare Pet Montessori School, we believe that education is not merely about transmitting facts, but about nurturing the human spirit. We adhere closely to the principles laid down by Dr. Maria Montessori.')}
                 </p>
                 <p>
-                  For our older students, we embrace the <strong>Erdkinder</strong> approach — translating to "children of the earth." This philosophy emphasizes connecting adolescents to society through practical work, commerce, and connection to nature.
+                  {t('about.philosophy_p2_part1', 'For our older students, we embrace the ')}<strong>{t('about.erdkinder', 'Erdkinder')}</strong>{t('about.philosophy_p2_part2', ' approach — translating to "children of the earth." This philosophy emphasizes connecting adolescents to society through practical work, commerce, and connection to nature.')}
                 </p>
                 <p>
-                  We view the classroom as a prepared environment, and the teacher as a guide. Here, discipline comes from within, fostered by engaging work and deep respect for each individual.
+                  {t('about.philosophy_p3', 'We view the classroom as a prepared environment, and the teacher as a guide. Here, discipline comes from within, fostered by engaging work and deep respect for each individual.')}
                 </p>
               </div>
 
               <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {['Respect for the Child', 'The Absorbent Mind', 'Sensitive Periods', 'The Prepared Environment'].map((point, i) => (
+                {[
+                  { key: 'about.principle_1', label: 'Respect for the Child' },
+                  { key: 'about.principle_2', label: 'The Absorbent Mind' },
+                  { key: 'about.principle_3', label: 'Sensitive Periods' },
+                  { key: 'about.principle_4', label: 'The Prepared Environment' },
+                ].map((point, i) => (
                   <motion.div 
                     key={i} 
                     whileHover={{ scale: 1.03 }}
                     className="flex items-center gap-3 p-3 rounded-xl glass-card border border-white/70"
                   >
                     <CheckCircle className="w-5 h-5 text-secondary shrink-0" />
-                    <span className="font-medium text-foreground text-sm">{point}</span>
+                    <span className="font-medium text-foreground text-sm">{t(point.key, point.label)}</span>
                   </motion.div>
                 ))}
               </div>
@@ -188,12 +197,12 @@ export default function About() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <h2 className="text-4xl font-serif font-bold text-foreground mb-8">Our History</h2>
+            <h2 className="text-4xl font-serif font-bold text-foreground mb-8">{t('about.history_title', 'Our History')}</h2>
             <p className="text-muted-foreground text-lg leading-relaxed mb-6">
-              Founded on <strong>October 1, 2002</strong>, and located at 47 Chief John Obi Str., Nuxtin, Kpansia, Yenagoa, Tare Pet Montessori School was established with a bold mandate: to raise a generation of creative, disciplined, and God-fearing leaders in Bayelsa State.
+              {t('about.history_p1_part1', 'Founded on ')}<strong>{t('about.history_date', 'October 1, 2002')}</strong>{t('about.history_p1_part2', ', and located at 47 Chief John Obi Str., Nuxtin, Kpansia, Yenagoa, Tare Pet Montessori School was established with a bold mandate: to raise a generation of creative, disciplined, and God-fearing leaders in Bayelsa State.')}
             </p>
             <p className="text-muted-foreground text-lg leading-relaxed">
-              Spanning over two decades of educational excellence, we offer complete academic continuity from Creche, Advance Nursery, Nursery 1 & 2, Basic 1-6 (Primary), up to Junior and Senior Secondary (JS1-SS3), residential boarding, and special needs education.
+              {t('about.history_p2', 'Spanning over two decades of educational excellence, we offer complete academic continuity from Creche, Advance Nursery, Nursery 1 & 2, Basic 1-6 (Primary), up to Junior and Senior Secondary (JS1-SS3), residential boarding, and special needs education.')}
             </p>
           </motion.div>
         </div>
@@ -209,8 +218,8 @@ export default function About() {
             transition={{ duration: 0.6 }}
             className="text-center max-w-3xl mx-auto mb-16"
           >
-            <h2 className="text-4xl font-serif font-bold text-foreground mb-6">School Management & Leadership</h2>
-            <p className="text-muted-foreground text-lg">Guided by experienced educational leaders passionate about child development.</p>
+            <h2 className="text-4xl font-serif font-bold text-foreground mb-6">{t('about.leadership_title', 'School Management & Leadership')}</h2>
+            <p className="text-muted-foreground text-lg">{t('about.leadership_subtitle', 'Guided by experienced educational leaders passionate about child development.')}</p>
           </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -247,8 +256,8 @@ export default function About() {
                   </div>
                 )}
                 <div className="p-6 flex-1 flex flex-col justify-center">
-                  <h3 className="text-lg font-bold text-foreground mb-1 leading-snug">{leader.name}</h3>
-                  <p className="text-primary font-semibold text-xs uppercase tracking-wider">{leader.role}</p>
+                  <h3 className="text-lg font-bold text-foreground mb-1 leading-snug">{t(`about.leader_${i}_name`, leader.name)}</h3>
+                  <p className="text-primary font-semibold text-xs uppercase tracking-wider">{t(`about.leader_${i}_role`, leader.role)}</p>
                 </div>
               </motion.div>
             ))}

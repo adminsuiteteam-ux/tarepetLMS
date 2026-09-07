@@ -89,8 +89,9 @@ const getStatusBadgeStyle = (status: string) => {
   }
 };
 
-import { getStoredExams, saveCBTExam, updateExamStatus, getStoredSubmissions, subscribeToCBTStore, SENIOR_COURSES, JUNIOR_COURSES, getCoursesForClass, setExamResultsReleased, deleteCBTExam, SCHOOL_CLASSES, isSeniorSecondaryClass, getStoredTeachers } from '@/lib/cbt-store';
+import { getStoredExams, saveCBTExam, updateExamStatus, getStoredSubmissions, subscribeToCBTStore, syncExamsWithBackend, SENIOR_COURSES, JUNIOR_COURSES, getCoursesForClass, setExamResultsReleased, deleteCBTExam, SCHOOL_CLASSES, isSeniorSecondaryClass, getStoredTeachers } from '@/lib/cbt-store';
 import { addRealtimeNotification } from '@/lib/notifications-store';
+import { subscribeToWebSocketEvents } from '@/lib/websocket-client';
 
 const ALL_CLASS_CARDS = [
   {
@@ -211,6 +212,10 @@ export default function CBTBuilder() {
 
   useEffect(() => {
     fetchExams();
+    syncExamsWithBackend().then(res => {
+      if (res && res.length > 0) setExams(res as any);
+    }).catch(() => {});
+
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const urlExamId = params.get('examId');
@@ -223,8 +228,41 @@ export default function CBTBuilder() {
         setView('questions');
       }
     }
-    const unsub = subscribeToCBTStore(fetchExams);
-    return () => unsub();
+
+    const handleFocus = () => {
+      syncExamsWithBackend().then(res => {
+        if (res && res.length > 0) setExams(res as any);
+      }).catch(() => {});
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', handleFocus);
+    }
+
+    const unsubCBT = subscribeToCBTStore(fetchExams);
+    const unsubWS = subscribeToWebSocketEvents((event: any) => {
+      if (
+        event.type === 'EXAM_CREATED' ||
+        event.type === 'EXAM_STATUS_UPDATED' ||
+        event.type === 'EXAM_APPROVED' ||
+        event.type === 'EXAM_REJECTED' ||
+        event.type === 'EXAM_ACTIVATED' ||
+        event.type === 'EXAM_DELETED' ||
+        event.type === 'CBT_STORE_MUTATED'
+      ) {
+        fetchExams();
+        syncExamsWithBackend().then(res => {
+          if (res && res.length > 0) setExams(res as any);
+        }).catch(() => {});
+      }
+    });
+
+    return () => {
+      unsubCBT();
+      unsubWS();
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('focus', handleFocus);
+      }
+    };
   }, []);
 
   useEffect(() => {
