@@ -374,7 +374,7 @@ export default function TeacherDashboard() {
     return {
       student_info: {
         id: student?.id || '',
-        student_id_code: student?.code || student?.admission_number || student?.admissionNo || `TMS/${student?.id || ''}`,
+        student_id_code: student?.admissionNo || student?.studentId || student?.code || student?.admission_number || `TMS/${student?.id || ''}`,
         name: student?.name || '',
         grade_level: student?.grade || '',
         house: student?.house || 'School House',
@@ -556,7 +556,7 @@ export default function TeacherDashboard() {
       return {
         studentId: s.id,
         studentName: s.name,
-        studentCode: s.code || s.admission_number || `TP/${s.id}`,
+        studentCode: s.admissionNo || s.studentId || s.code || s.admission_number || `TP/${s.id}`,
         toClass: sel.toClass,
         status: sel.status,
         cumulativeAverage: sel.cumulativeAverage,
@@ -1177,7 +1177,7 @@ export default function TeacherDashboard() {
                   <div>
                     <span className="text-muted-foreground font-medium">{t('teacher.lbl_student_id_prefix', 'Student ID:')} </span>
                     <strong className="text-foreground font-mono font-bold text-xs bg-rose-500/10 text-rose-600 px-2.5 py-0.5 rounded border border-rose-500/20">
-                      {u.code}
+                      {u.admissionNo || u.studentId || u.code}
                     </strong>
                   </div>
                   <div>
@@ -1354,7 +1354,7 @@ export default function TeacherDashboard() {
                       title="Click row to view student profile"
                     >
                       <td className="p-3 font-bold text-foreground group-hover:text-primary transition-colors">{s.name}</td>
-                      <td className="p-3 text-muted-foreground font-mono">{s.code}</td>
+                      <td className="p-3 text-muted-foreground font-mono">{s.admissionNo || s.studentId || s.code}</td>
                       <td className="p-3 font-semibold text-primary">{s.grade}</td>
                       <td className="p-3 text-emerald-600 font-semibold">{s.attendance}</td>
                       <td className="p-3">
@@ -1388,7 +1388,7 @@ export default function TeacherDashboard() {
                 const currentAttendance = Object.entries(attendanceState).find(([k]) => Number(k) === s.id)?.[1] ?? 'present';
                 return (
                   <div key={s.id} className="flex items-center justify-between p-3.5 rounded-xl border border-border bg-muted/10">
-                    <span className="font-bold text-sm text-foreground">{s.name} ({s.code})</span>
+                    <span className="font-bold text-sm text-foreground">{s.name} ({s.admissionNo || s.studentId || s.code})</span>
                     <div className="flex gap-2">
                       {['present', 'late', 'absent'].map(st => (
                         <button
@@ -1737,7 +1737,7 @@ export default function TeacherDashboard() {
                       <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                         <div>
                           <span className="text-muted-foreground text-[10px] block">{t('teacher.id_card_student_id')}</span>
-                          <p className="font-bold font-mono text-foreground">{showIDCardModal.code || showIDCardModal.studentId}</p>
+                          <p className="font-bold font-mono text-foreground">{showIDCardModal.admissionNo || showIDCardModal.studentId || showIDCardModal.code}</p>
                         </div>
                         <div>
                           <span className="text-muted-foreground text-[10px] block">{t('teacher.id_card_valid_until')}</span>
@@ -3128,7 +3128,7 @@ export default function TeacherDashboard() {
 
                             {/* Student ID */}
                             <td className="p-3 text-muted-foreground font-mono font-bold text-xs">
-                              {s.code || `TMS/${s.id}`}
+                              {s.admissionNo || s.studentId || s.code || `TMS/${s.id}`}
                             </td>
 
                             {/* 1st CA Input */}
@@ -5441,7 +5441,7 @@ export default function TeacherDashboard() {
                             <tr key={student.id} className="hover:bg-muted/20">
                               <td className="py-2.5 px-3">
                                 <p className="font-bold text-foreground">{student.name}</p>
-                                <span className="font-mono text-[10px] text-muted-foreground">{student.code || student.admission_number || student.email}</span>
+                                <span className="font-mono text-[10px] text-muted-foreground">{student.admissionNo || student.studentId || student.code || student.admission_number || student.email}</span>
                               </td>
                               <td className="py-2.5 px-2 text-center">
                                 <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${

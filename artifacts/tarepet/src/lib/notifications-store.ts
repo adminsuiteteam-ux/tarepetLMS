@@ -1,5 +1,6 @@
 // ─── Notifications Store ─────────────────────────────────────────────────────
-// Pure API-backed notification store. No localStorage. In-memory state only.
+// Persistent notification store with dismissed-ID tracking to prevent
+// cleared notifications from reappearing after page refresh / backend sync.
 // ─────────────────────────────────────────────────────────────────────────────
 import { authClient } from './api-auth';
 import { sendWebSocketEvent, subscribeToWebSocketEvents } from './websocket-client';
@@ -17,6 +18,63 @@ export interface Notification {
   actionUrl?: string;      // optional deep-link; clicking the card navigates here
 }
 
+// ── Dismissed-notification tracking ──────────────────────────────────────────
+// Tracks individually dismissed notification IDs and per-role "clear all"
+// timestamps so that backend sync never re-introduces cleared items.
+const DISMISSED_IDS_KEY = 'tarepet_dismissed_notification_ids';
+const CLEAR_ALL_TS_KEY  = 'tarepet_clear_all_timestamps';
+
+function loadDismissedIds(): Set<string> {
+  if (typeof window === 'undefined') return new Set();
+  try {
+    const raw = localStorage.getItem(DISMISSED_IDS_KEY);
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) return new Set(arr);
+    }
+  } catch {}
+  return new Set();
+}
+
+function saveDismissedIds(ids: Set<string>) {
+  if (typeof window === 'undefined') return;
+  try {
+    // Cap at 500 to avoid localStorage bloat
+    const arr = [...ids].slice(-500);
+    localStorage.setItem(DISMISSED_IDS_KEY, JSON.stringify(arr));
+  } catch {}
+}
+
+function loadClearAllTimestamps(): Record<string, number> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem(CLEAR_ALL_TS_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return {};
+}
+
+function saveClearAllTimestamps(ts: Record<string, number>) {
+  if (typeof window === 'undefined') return;
+  try { localStorage.setItem(CLEAR_ALL_TS_KEY, JSON.stringify(ts)); } catch {}
+}
+
+let _dismissedIds = loadDismissedIds();
+let _clearAllTimestamps = loadClearAllTimestamps();
+
+/** Returns true if a notification should be hidden (was dismissed or cleared). */
+function isDismissed(n: { id: string; role?: string; time?: string }): boolean {
+  if (_dismissedIds.has(n.id)) return true;
+  // Check role-level "clear all" timestamp
+  const role = n.role || 'ALL';
+  const clearedAt = _clearAllTimestamps[role];
+  if (clearedAt) {
+    const notifTime = n.time ? new Date(n.time).getTime() : 0;
+    if (notifTime <= clearedAt) return true;
+  }
+  return false;
+}
+
 // ── Persistent state with LocalStorage + Real-time Sync ──────────────────────
 function loadSavedNotifications(): Notification[] {
   if (typeof window === 'undefined') return [];
@@ -24,7 +82,7 @@ function loadSavedNotifications(): Notification[] {
     const saved = localStorage.getItem('tarepet_notifications_list');
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed)) return parsed;
+      if (Array.isArray(parsed)) return parsed.filter(n => !isDismissed(n));
     }
   } catch (e) {}
   return [];
@@ -64,20 +122,23 @@ if (typeof window !== 'undefined') {
     if (event.type === 'NOTIFICATION_RECEIVED' && event.payload) {
       const p = event.payload;
       const notifId = String(p.id || `notif-${Date.now()}`);
-      if (!_notifications.some(n => n.id === notifId)) {
-        const incomingNotif: Notification = {
-          id: notifId,
-          title: p.title || 'Notification',
-          message: p.message || '',
-          time: p.time || new Date().toISOString(),
-          read: Boolean(p.read),
-          type: (p.type || 'info').toLowerCase() as any,
-          role: (p.role || 'ALL') as NotifRole,
-          actionUrl: p.actionUrl || undefined,
-        };
-        _notifications = [incomingNotif, ..._notifications];
-        notifyListeners();
-      }
+      // Skip dismissed notifications and duplicates
+      if (_dismissedIds.has(notifId) || _notifications.some(n => n.id === notifId)) return;
+      const incomingNotif: Notification = {
+        id: notifId,
+        title: p.title || 'Notification',
+        message: p.message || '',
+        time: p.time || new Date().toISOString(),
+        read: Boolean(p.read),
+        type: (p.type || 'info').toLowerCase() as any,
+        role: (p.role || 'ALL') as NotifRole,
+        actionUrl: p.actionUrl || undefined,
+      };
+      // Also check clearAll timestamps
+      if (isDismissed(incomingNotif)) return;
+      _notifications = [incomingNotif, ..._notifications];
+      setAll(_notifications);
+      notifyListeners();
     }
   });
 }
@@ -109,9 +170,12 @@ export async function syncNotificationsWithBackend(role: NotifRole): Promise<voi
           actionUrl: sn.action_url || sn.actionUrl || undefined,
         }));
 
+        // ★ Filter out any dismissed or cleared notifications before merging
+        const filteredNotifs = mappedServerNotifs.filter(n => !isDismissed(n));
+
         const existing = getAll();
         const otherRoles = existing.filter(n => n.role !== role);
-        setAll([...mappedServerNotifs, ...otherRoles]);
+        setAll([...filteredNotifs, ...otherRoles]);
         notifyListeners();
       }
     }
@@ -151,6 +215,10 @@ export function markAllAsRead(role: NotifRole) {
 }
 
 export function clearNotification(id: string) {
+  // ★ Persist the dismissed ID so it survives refresh + backend re-sync
+  _dismissedIds.add(id);
+  saveDismissedIds(_dismissedIds);
+
   setAll(getAll().filter(n => n.id !== id));
   notifyListeners();
   authClient.delete(`/communication/notifications/${id}/`).catch(() =>
@@ -159,6 +227,15 @@ export function clearNotification(id: string) {
 }
 
 export function clearAllNotifications(role: NotifRole) {
+  // ★ Record the "clear all" timestamp for this role
+  _clearAllTimestamps[role] = Date.now();
+  saveClearAllTimestamps(_clearAllTimestamps);
+
+  // Also add every current notification for this role to the dismissed set
+  const toClear = getAll().filter(n => n.role === role);
+  toClear.forEach(n => _dismissedIds.add(n.id));
+  saveDismissedIds(_dismissedIds);
+
   setAll(getAll().filter(n => n.role !== role));
   notifyListeners();
   authClient.post(`/communication/notifications/clear-all/`, { role }).catch(() =>
