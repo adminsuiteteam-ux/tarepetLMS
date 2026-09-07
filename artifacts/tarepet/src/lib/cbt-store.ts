@@ -1193,13 +1193,16 @@ export function deleteTeacher(teacherIdOrStaffId: number | string): boolean {
 }
 
 export function deleteStudent(studentIdOrAdmissionNo: number | string): boolean {
+  if (!studentIdOrAdmissionNo || String(studentIdOrAdmissionNo).trim() === '' || ['not provided', 'notprovided', 'none', 'null', 'undefined'].includes(String(studentIdOrAdmissionNo).trim().toLowerCase())) {
+    return false;
+  }
   _students = loadSavedStudents();
   const target = _students.find(s => 
     s.id === studentIdOrAdmissionNo || 
-    s.code === studentIdOrAdmissionNo || 
-    s.admissionNo === studentIdOrAdmissionNo || 
-    s.studentId === studentIdOrAdmissionNo || 
-    s.email === studentIdOrAdmissionNo ||
+    (s.code && s.code === studentIdOrAdmissionNo) || 
+    (s.admissionNo && s.admissionNo === studentIdOrAdmissionNo) || 
+    (s.studentId && s.studentId === studentIdOrAdmissionNo) || 
+    (s.email && s.email.toLowerCase() === String(studentIdOrAdmissionNo).toLowerCase()) ||
     String(s.id) === String(studentIdOrAdmissionNo)
   );
 
@@ -19789,9 +19792,9 @@ export const DEFAULT_STUDENTS: StudentRecord[] = [
   },
   {
     "id": 729,
-    "code": "",
+    "code": "TP-STU-0054",
     "admissionNo": "",
-    "studentId": "",
+    "studentId": "TP-STU-0054",
     "admission_number": "",
     "name": "Chukwuenye Prosper",
     "email": "chukwuenye.prosper@tarepet.com",
@@ -19818,9 +19821,9 @@ export const DEFAULT_STUDENTS: StudentRecord[] = [
   },
   {
     "id": 730,
-    "code": "",
+    "code": "TP-STU-0055",
     "admissionNo": "",
-    "studentId": "",
+    "studentId": "TP-STU-0055",
     "admission_number": "",
     "name": "Agonebi Yeshma Kitalete",
     "email": "agonebi.yeshmakitalete@tarepet.com",
@@ -19934,9 +19937,9 @@ export const DEFAULT_STUDENTS: StudentRecord[] = [
   },
   {
     "id": 734,
-    "code": "",
+    "code": "TP-STU-0059",
     "admissionNo": "",
-    "studentId": "",
+    "studentId": "TP-STU-0059",
     "admission_number": "",
     "name": "Noble Jeffery",
     "email": "noble.jeffery@tarepet.com",
@@ -19992,9 +19995,9 @@ export const DEFAULT_STUDENTS: StudentRecord[] = [
   },
   {
     "id": 736,
-    "code": "",
+    "code": "TP-STU-0061",
     "admissionNo": "",
-    "studentId": "",
+    "studentId": "TP-STU-0061",
     "admission_number": "",
     "name": "Starwiz Sampson Grace",
     "email": "starwiz.sampsongrace@tarepet.com",
@@ -20601,9 +20604,9 @@ export const DEFAULT_STUDENTS: StudentRecord[] = [
   },
   {
     "id": 757,
-    "code": "",
+    "code": "TP-STU-0082",
     "admissionNo": "",
-    "studentId": "",
+    "studentId": "TP-STU-0082",
     "admission_number": "",
     "name": "Ezike Brian",
     "email": "ezike.brian@tarepet.com",
@@ -20659,9 +20662,9 @@ export const DEFAULT_STUDENTS: StudentRecord[] = [
   },
   {
     "id": 759,
-    "code": "",
+    "code": "TP-STU-0084",
     "admissionNo": "",
-    "studentId": "",
+    "studentId": "TP-STU-0084",
     "admission_number": "",
     "name": "Akpos Ayibatari Purity",
     "email": "akpos.ayibataripurity@tarepet.com",
@@ -20688,9 +20691,9 @@ export const DEFAULT_STUDENTS: StudentRecord[] = [
   },
   {
     "id": 760,
-    "code": "",
+    "code": "TP-STU-0085",
     "admissionNo": "",
-    "studentId": "",
+    "studentId": "TP-STU-0085",
     "admission_number": "",
     "name": "Isaac Grace",
     "email": "isaac.grace@tarepet.com",
@@ -21210,9 +21213,9 @@ export const DEFAULT_STUDENTS: StudentRecord[] = [
   },
   {
     "id": 778,
-    "code": "",
+    "code": "TP-STU-0103",
     "admissionNo": "",
-    "studentId": "",
+    "studentId": "TP-STU-0103",
     "admission_number": "",
     "name": "Haruna Idris",
     "email": "haruna.idris@tarepet.com",
@@ -21326,9 +21329,9 @@ export const DEFAULT_STUDENTS: StudentRecord[] = [
   },
   {
     "id": 782,
-    "code": "",
+    "code": "TP-STU-0107",
     "admissionNo": "",
-    "studentId": "",
+    "studentId": "TP-STU-0107",
     "admission_number": "",
     "name": "Ojokai Eli",
     "email": "ojokai.eli@tarepet.com",
@@ -21471,9 +21474,9 @@ export const DEFAULT_STUDENTS: StudentRecord[] = [
   },
   {
     "id": 787,
-    "code": "",
+    "code": "TP-STU-0112",
     "admissionNo": "",
-    "studentId": "",
+    "studentId": "TP-STU-0112",
     "admission_number": "",
     "name": "Evsaen Osayanwuo",
     "email": "evsaen.osayanwuo@tarepet.com",
@@ -21761,9 +21764,9 @@ export const DEFAULT_STUDENTS: StudentRecord[] = [
   },
   {
     "id": 797,
-    "code": "",
+    "code": "TP-STU-0122",
     "admissionNo": "",
-    "studentId": "",
+    "studentId": "TP-STU-0122",
     "admission_number": "",
     "name": "Timiadi Tokoni",
     "email": "timiadi.tokoni@tarepet.com",
@@ -22196,9 +22199,9 @@ export const DEFAULT_STUDENTS: StudentRecord[] = [
   },
   {
     "id": 812,
-    "code": "",
+    "code": "TP-STU-0137",
     "admissionNo": "",
-    "studentId": "",
+    "studentId": "TP-STU-0137",
     "admission_number": "",
     "name": "Kori Deborah",
     "email": "kori.deborah@tarepet.com",
@@ -22283,9 +22286,9 @@ export const DEFAULT_STUDENTS: StudentRecord[] = [
   },
   {
     "id": 815,
-    "code": "",
+    "code": "TP-STU-0140",
     "admissionNo": "",
-    "studentId": "",
+    "studentId": "TP-STU-0140",
     "admission_number": "",
     "name": "Firstborn Ebenezer",
     "email": "firstborn.ebenezer@tarepet.com",
@@ -22314,7 +22317,7 @@ export const DEFAULT_STUDENTS: StudentRecord[] = [
 function loadSavedStudents(): StudentRecord[] {
   if (typeof window === 'undefined') return DEFAULT_STUDENTS;
   try {
-    const CURRENT_ROSTER_VER = '2026-v10-complete-roster-715';
+    const CURRENT_ROSTER_VER = '2026-v11-complete-roster-715-unique-keys';
     const savedVer = localStorage.getItem('tarepet_students_version');
     if (savedVer !== CURRENT_ROSTER_VER) {
       localStorage.setItem('tarepet_students_version', CURRENT_ROSTER_VER);
@@ -22337,9 +22340,16 @@ function loadSavedStudents(): StudentRecord[] {
           return !isTestAccount && !isDeleted;
         });
 
-        // Merge any default students missing from local storage
-        const existingKeys = new Set(liveOnly.map((s: any) => String(s.studentId || s.admissionNo || s.code || '').toLowerCase().replace(/[^a-z0-9]/g, '')));
-        const missingDefaults = DEFAULT_STUDENTS.filter(d => !existingKeys.has(String(d.studentId || d.admissionNo || d.code).toLowerCase().replace(/[^a-z0-9]/g, '')));
+        // Merge any default students missing from local storage with robust non-colliding keys
+        const getCleanKey = (s: any) => {
+          const email = String(s.email || '').trim().toLowerCase();
+          if (email) return `email:${email}`;
+          const code = String(s.code || s.studentId || s.admissionNo || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+          if (code && !['notprovided', 'none', 'null', 'undefined'].includes(code)) return `code:${code}`;
+          return `id:${s.id}`;
+        };
+        const existingKeys = new Set(liveOnly.map(getCleanKey));
+        const missingDefaults = DEFAULT_STUDENTS.filter(d => !existingKeys.has(getCleanKey(d)));
         const combined = [...liveOnly, ...missingDefaults];
         localStorage.setItem('tarepet_students_list', JSON.stringify(combined));
         return combined;
@@ -22456,16 +22466,23 @@ export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
 
       if (fetched.length > 0) {
         // Merge backend-fetched students with DEFAULT_STUDENTS so local roster is preserved
-        const fetchedKeys = new Set<string>();
+        const fetchedEmails = new Set<string>();
+        const fetchedCodes = new Set<string>();
         fetched.forEach(s => {
-          [s.studentId, s.admissionNo, s.code, s.email].forEach(k => {
-            if (k) fetchedKeys.add(String(k).toLowerCase().replace(/[^a-z0-9]/g, ''));
+          if (s.email) fetchedEmails.add(s.email.trim().toLowerCase());
+          [s.studentId, s.code].forEach(k => {
+            if (k) {
+              const clean = String(k).trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+              if (clean && !['notprovided', 'none', 'null', 'undefined'].includes(clean)) fetchedCodes.add(clean);
+            }
           });
         });
         const missingDefaults = DEFAULT_STUDENTS.filter(d => {
-          const dKey = String(d.studentId || d.admissionNo || d.code || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-          const dEmail = String(d.email || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-          return !fetchedKeys.has(dKey) && !fetchedKeys.has(dEmail);
+          const dEmail = String(d.email || '').trim().toLowerCase();
+          if (dEmail && fetchedEmails.has(dEmail)) return false;
+          const dCode = String(d.studentId || d.code || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+          if (dCode && fetchedCodes.has(dCode)) return false;
+          return true;
         });
         _students = [...fetched, ...missingDefaults];
         if (typeof window !== 'undefined') {
@@ -22546,13 +22563,14 @@ export async function saveStudent(studentData: Partial<StudentRecord> & { name: 
   const assignedGrade = studentData.grade || 'SS1';
 
   // Find existing student by ID, email, code, admissionNo, or studentId
+  const isValidLookupKey = (v: any) => v && typeof v === 'string' && !['', 'not provided', 'notprovided', 'none', 'null', 'undefined'].includes(v.trim().toLowerCase());
   const existingIdx = _students.findIndex(s => 
     (studentData.id && s.id === studentData.id) || 
     (studentData.email && s.email && s.email.toLowerCase() === studentData.email.toLowerCase()) || 
-    (studentData.code && (s.code === studentData.code || s.admissionNo === studentData.code || s.studentId === studentData.code)) ||
-    (studentData.admissionNo && (s.admissionNo === studentData.admissionNo || s.code === studentData.admissionNo || s.studentId === studentData.admissionNo)) ||
-    ((studentData as any).studentId && (s.studentId === (studentData as any).studentId || s.code === (studentData as any).studentId || s.admissionNo === (studentData as any).studentId)) ||
-    ((studentData as any).student_id && (s.code === (studentData as any).student_id || s.admissionNo === (studentData as any).student_id || s.studentId === (studentData as any).student_id))
+    (isValidLookupKey(studentData.code) && (s.code === studentData.code || s.admissionNo === studentData.code || s.studentId === studentData.code)) ||
+    (isValidLookupKey(studentData.admissionNo) && (s.admissionNo === studentData.admissionNo || s.code === studentData.admissionNo || s.studentId === studentData.admissionNo)) ||
+    (isValidLookupKey((studentData as any).studentId) && (s.studentId === (studentData as any).studentId || s.code === (studentData as any).studentId || s.admissionNo === (studentData as any).studentId)) ||
+    (isValidLookupKey((studentData as any).student_id) && (s.code === (studentData as any).student_id || s.admissionNo === (studentData as any).student_id || s.studentId === (studentData as any).student_id))
   );
 
   const existingStudent = existingIdx >= 0 ? _students[existingIdx] : null;
@@ -22682,7 +22700,7 @@ export async function saveStudent(studentData: Partial<StudentRecord> & { name: 
   const targetIdx = _students.findIndex(s => 
     s.id === newStudent.id || 
     (newStudent.email && s.email.toLowerCase() === newStudent.email.toLowerCase()) || 
-    (newStudent.code && s.code === newStudent.code)
+    (isValidLookupKey(newStudent.code) && s.code === newStudent.code)
   );
   if (targetIdx >= 0) {
     _students[targetIdx] = { ..._students[targetIdx], ...newStudent };

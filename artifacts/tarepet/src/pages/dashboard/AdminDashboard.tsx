@@ -2985,7 +2985,14 @@ export default function AdminDashboard() {
       });
       setSelectedUser((prev: any) => {
         if (!prev) return null;
-        return latestStudents.find((s: any) => (prev.id && s.id === prev.id) || (prev.admissionNo && s.admissionNo === prev.admissionNo) || (prev.studentId && s.studentId === prev.studentId) || (prev.email && s.email === prev.email)) || prev;
+        const isValidId = (v: any) => v && typeof v === 'string' && !['', 'not provided', 'notprovided', 'none', 'n/a', 'undefined', 'null'].includes(v.trim().toLowerCase());
+        return latestStudents.find((s: any) => 
+          (prev.id && s.id === prev.id) || 
+          (prev.email && s.email && s.email.toLowerCase() === prev.email.toLowerCase()) ||
+          (isValidId(prev.admissionNo) && s.admissionNo === prev.admissionNo) || 
+          (isValidId(prev.studentId) && s.studentId === prev.studentId) ||
+          (isValidId(prev.code) && s.code === prev.code)
+        ) || prev;
       });
     };
 
@@ -3068,12 +3075,13 @@ export default function AdminDashboard() {
   const handleSaveStudentRealtime = async (updated: any) => {
     const saved = await saveStudent(updated);
     setStudentsList(getStoredStudents());
+    const isValidId = (v: any) => v && typeof v === 'string' && !['', 'not provided', 'notprovided', 'none', 'n/a', 'undefined', 'null'].includes(v.trim().toLowerCase());
     if (
-      selectedUser?.id === updated.id || 
-      (selectedUser?.admissionNo && (selectedUser?.admissionNo === updated.admissionNo || selectedUser?.admissionNo === updated.code || selectedUser?.admissionNo === updated.studentId)) || 
-      (selectedUser?.studentId && (selectedUser?.studentId === updated.studentId || selectedUser?.studentId === updated.admissionNo || selectedUser?.studentId === updated.code)) ||
-      (selectedUser?.code && (selectedUser?.code === updated.code || selectedUser?.code === updated.admissionNo || selectedUser?.code === updated.studentId)) ||
-      (selectedUser?.email && updated.email && selectedUser.email.toLowerCase() === updated.email.toLowerCase())
+      (selectedUser?.id && selectedUser.id === updated.id) || 
+      (selectedUser?.email && updated.email && selectedUser.email.toLowerCase() === updated.email.toLowerCase()) ||
+      (isValidId(selectedUser?.admissionNo) && (selectedUser?.admissionNo === updated.admissionNo || selectedUser?.admissionNo === updated.code || selectedUser?.admissionNo === updated.studentId)) || 
+      (isValidId(selectedUser?.studentId) && (selectedUser?.studentId === updated.studentId || selectedUser?.studentId === updated.admissionNo || selectedUser?.studentId === updated.code)) ||
+      (isValidId(selectedUser?.code) && (selectedUser?.code === updated.code || selectedUser?.code === updated.admissionNo || selectedUser?.code === updated.studentId))
     ) {
       setSelectedUser(saved || updated);
     }
@@ -3655,24 +3663,27 @@ export default function AdminDashboard() {
     if (activeSection === 'users') {
       // ── LEVEL 3: Individual Student Profile Page ──────────────────────
       if (selectedUser) {
+        const isValidId = (v: any) => v && typeof v === 'string' && !['', 'not provided', 'notprovided', 'none', 'n/a', 'undefined', 'null'].includes(v.trim().toLowerCase());
+
         const liveStudent = studentsList.find((s: any) => 
           (selectedUser.id && s.id === selectedUser.id) || 
-          (selectedUser.admissionNo && (s.admissionNo === selectedUser.admissionNo || s.code === selectedUser.admissionNo || s.studentId === selectedUser.admissionNo)) || 
-          (selectedUser.studentId && (s.studentId === selectedUser.studentId || s.code === selectedUser.studentId || s.admissionNo === selectedUser.studentId)) || 
-          (selectedUser.code && (s.code === selectedUser.code || s.admissionNo === selectedUser.code || s.studentId === selectedUser.code)) || 
-          (selectedUser.email && s.email && s.email.toLowerCase() === selectedUser.email.toLowerCase())
+          (selectedUser.email && s.email && s.email.toLowerCase() === selectedUser.email.toLowerCase()) ||
+          (isValidId(selectedUser.admissionNo) && (s.admissionNo === selectedUser.admissionNo || s.code === selectedUser.admissionNo || s.studentId === selectedUser.admissionNo)) || 
+          (isValidId(selectedUser.studentId) && (s.studentId === selectedUser.studentId || s.code === selectedUser.studentId || s.admissionNo === selectedUser.studentId)) || 
+          (isValidId(selectedUser.code) && (s.code === selectedUser.code || s.admissionNo === selectedUser.code || s.studentId === selectedUser.code))
         );
 
-        const currentAdmNo = liveStudent?.code || liveStudent?.admissionNo || liveStudent?.studentId || selectedUser?.code || selectedUser?.admissionNo || selectedUser?.studentId || selectedUser?.student_id || (selectedUser?.id ? `TMS/STU/${selectedUser.id}` : 'TMS/STU/001');
+        const realAdmNo = isValidId(liveStudent?.admissionNo) ? liveStudent.admissionNo : (isValidId(selectedUser?.admissionNo) ? selectedUser.admissionNo : 'Not Provided');
+        const uniqueSystemCode = liveStudent?.code || liveStudent?.studentId || selectedUser?.code || selectedUser?.studentId || (selectedUser?.id ? `TMS/STU/${selectedUser.id}` : 'TMS/STU/001');
 
         const u = {
           ...selectedUser,
           ...(liveStudent || {}),
           id: liveStudent?.id || selectedUser?.id,
-          code: currentAdmNo,
-          admissionNo: currentAdmNo,
-          studentId: currentAdmNo,
-          student_id: currentAdmNo,
+          code: uniqueSystemCode,
+          admissionNo: realAdmNo,
+          studentId: realAdmNo !== 'Not Provided' ? realAdmNo : uniqueSystemCode,
+          student_id: realAdmNo !== 'Not Provided' ? realAdmNo : uniqueSystemCode,
           name: (liveStudent?.name || selectedUser?.name || (selectedUser?.first_name ? `${selectedUser.first_name} ${selectedUser.last_name || ''}`.trim() : '') || selectedUser?.email || 'Student'),
           grade: (liveStudent?.grade || selectedUser?.grade || selectedUser?.class || selectedUser?.profile?.grade_level || selectedUser?.grade_level || 'SS 1'),
           stream: (liveStudent?.stream || selectedUser?.stream || selectedUser?.profile?.stream || 'Science'),
@@ -3857,7 +3868,7 @@ export default function AdminDashboard() {
                   <div className="space-y-1">
                     <h2 className="text-xl font-serif font-bold text-foreground">{u.name}</h2>
                     <p className="text-xs font-mono font-bold text-primary bg-primary/10 px-3 py-1 rounded-full inline-block border border-primary/20">
-                      {u.studentId}
+                      {u.admissionNo || 'Not Provided'}
                     </p>
                   </div>
 
