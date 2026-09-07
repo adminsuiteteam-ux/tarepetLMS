@@ -1975,7 +1975,7 @@ const AddUserModal = ({ onClose }: { onClose: () => void }) => {
                     <input value={form.parentName} onChange={e => setForm({ ...form, parentName: e.target.value })} placeholder="e.g. Chief & Mrs. Amadi" className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary" />
                   </div>
                   <div>
-                    <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('students.parentPhone', 'Emergency Phone')}</label>
+                    <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('students.parentPhone', 'Parents Phone')}</label>
                     <input value={form.parentPhone} onChange={e => setForm({ ...form, parentPhone: e.target.value })} placeholder="08031234567" className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary" />
                   </div>
                 </div>
@@ -2252,7 +2252,7 @@ const CreateUserForTypeModal = ({
                         className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary" />
                     </div>
                     <div>
-                      <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('students.parentPhone', 'Emergency Phone')}</label>
+                      <label className="text-xs font-bold uppercase text-muted-foreground block mb-1">{t('students.parentPhone', 'Parents Phone')}</label>
                       <input value={form.parentPhone} onChange={e => setForm({ ...form, parentPhone: e.target.value })}
                         placeholder="08031234567"
                         className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-muted/20 focus:outline-none focus:ring-2 focus:ring-primary" />
@@ -3428,8 +3428,8 @@ export default function AdminDashboard() {
           {/* Header Banner */}
           <div className="bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h2 className="font-bold text-xl text-foreground mb-1">{t('dashboard.title')}</h2>
-              <p className="text-xs text-muted-foreground">{t('dashboard.welcome')}</p>
+              <h2 className="font-bold text-xl text-foreground mb-1">{t('dashboard.title', 'Dashboard')}</h2>
+              <p className="text-xs text-muted-foreground">{t('dashboard.welcome', "Welcome back! Here's an overview of today's academic and administrative performance.")}</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-primary/10 text-primary border border-primary/20 flex items-center gap-1.5">
@@ -3443,7 +3443,7 @@ export default function AdminDashboard() {
             {/* Card 1: Total Students */}
             <div className="bg-card p-5 rounded-2xl border border-border shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('dashboard.totalStudents')}</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('dashboard.totalStudents', 'Total Students')}</p>
                 <h3 className="text-3xl font-bold text-foreground">{studentsList.length}</h3>
                 <p className="text-[11px] text-muted-foreground font-medium flex items-center gap-1">
                   Enrolled Students
@@ -3457,9 +3457,9 @@ export default function AdminDashboard() {
             {/* Card 2: Teachers */}
             <div className="bg-card p-5 rounded-2xl border border-border shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('dashboard.teachers')}</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('dashboard.teachers', 'Teachers')}</p>
                 <h3 className="text-3xl font-bold text-foreground">{teachersList.length}</h3>
-                <p className="text-[11px] text-muted-foreground font-medium">{t('dashboard.fullTimeFaculty')}</p>
+                <p className="text-[11px] text-muted-foreground font-medium">{t('dashboard.fullTimeFaculty', 'Full-time faculty')}</p>
               </div>
               <div className="w-12 h-12 rounded-2xl bg-secondary/10 text-secondary flex items-center justify-center shrink-0">
                 <GraduationCap className="w-6 h-6" />
@@ -3469,7 +3469,7 @@ export default function AdminDashboard() {
             {/* Card 3: Classes */}
             <div className="bg-card p-5 rounded-2xl border border-border shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('dashboard.classes')}</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('dashboard.classes', 'Classes')}</p>
                 <h3 className="text-3xl font-bold text-foreground">{activeClassesCount}</h3>
                 <p className="text-[11px] text-muted-foreground font-medium">Active class levels</p>
               </div>
@@ -3481,9 +3481,9 @@ export default function AdminDashboard() {
             {/* Card 4: Attendance Today */}
             <div className="bg-card p-5 rounded-2xl border border-border shadow-sm flex items-center justify-between hover:shadow-md transition-shadow">
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('dashboard.attendanceToday')}</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('dashboard.attendanceToday', 'Attendance Today')}</p>
                 <h3 className="text-3xl font-bold text-secondary">{calculatedAttendancePercent}%</h3>
-                <p className="text-[11px] text-muted-foreground font-medium">{t('dashboard.dailyAverage')}</p>
+                <p className="text-[11px] text-muted-foreground font-medium">{t('dashboard.dailyAverage', 'Daily Average')}</p>
               </div>
               <div className="w-12 h-12 rounded-2xl bg-secondary/10 text-secondary flex items-center justify-center shrink-0">
                 <CalendarCheck className="w-6 h-6" />
@@ -3497,8 +3497,8 @@ export default function AdminDashboard() {
             <div className="bg-card p-6 rounded-2xl border border-border shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-bold text-base text-foreground">{t('dashboard.classPerformance')}</h3>
-                  <p className="text-xs text-muted-foreground">{t('dashboard.classPerformanceDesc')}</p>
+                  <h3 className="font-bold text-base text-foreground">{t('dashboard.classPerformance', 'Class Academic Performance')}</h3>
+                  <p className="text-xs text-muted-foreground">{t('dashboard.classPerformanceDesc', 'Average overall performance score per class')}</p>
                 </div>
                 <span className="p-2 rounded-xl bg-muted text-muted-foreground">
                   <BarChart2 className="w-4 h-4" />
@@ -3532,8 +3532,8 @@ export default function AdminDashboard() {
             <div className="bg-card p-6 rounded-2xl border border-border shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-bold text-base text-foreground">{t('dashboard.weeklyAttendance')}</h3>
-                  <p className="text-xs text-muted-foreground">{t('dashboard.weeklyAttendanceDesc')}</p>
+                  <h3 className="font-bold text-base text-foreground">{t('dashboard.weeklyAttendance', 'Weekly Attendance Trend')}</h3>
+                  <p className="text-xs text-muted-foreground">{t('dashboard.weeklyAttendanceDesc', 'Aggregated student presence over the current week')}</p>
                 </div>
                 <span className="p-2 rounded-xl bg-muted text-muted-foreground">
                   <Calendar className="w-4 h-4" />
@@ -3569,7 +3569,7 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Column 1: Quick Actions */}
             <div className="bg-card p-6 rounded-2xl border border-border shadow-sm space-y-4">
-              <h3 className="font-bold text-base text-foreground">{t('dashboard.quickActions')}</h3>
+              <h3 className="font-bold text-base text-foreground">{t('dashboard.quickActions', 'Quick Actions')}</h3>
               <div className="grid grid-cols-2 gap-3">
                 {quickActionButtons.map((btn, idx) => {
                   const Icon = btn.icon;
@@ -3590,8 +3590,8 @@ export default function AdminDashboard() {
             {/* Column 2: Recent Activities */}
             <div className="bg-card p-6 rounded-2xl border border-border shadow-sm space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-base text-foreground">{t('dashboard.recentActivities')}</h3>
-                <span className="text-xs text-muted-foreground">{t('dashboard.today')}</span>
+                <h3 className="font-bold text-base text-foreground">{t('dashboard.recentActivities', 'Recent Activities')}</h3>
+                <span className="text-xs text-muted-foreground">{t('dashboard.today', 'Today')}</span>
               </div>
               <div className="space-y-3">
                 {recentActivities.length === 0 ? (
@@ -3621,8 +3621,8 @@ export default function AdminDashboard() {
             {/* Column 3: Upcoming Events */}
             <div className="bg-card p-6 rounded-2xl border border-border shadow-sm space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-base text-foreground">{t('dashboard.upcomingEvents')}</h3>
-                <span className="text-xs text-muted-foreground">{t('dashboard.today')}</span>
+                <h3 className="font-bold text-base text-foreground">{t('dashboard.upcomingEvents', 'Upcoming Events')}</h3>
+                <span className="text-xs text-muted-foreground">{t('dashboard.today', 'Today')}</span>
               </div>
               <div className="space-y-3">
                 {upcomingEvents.length === 0 ? (
@@ -3912,7 +3912,7 @@ export default function AdminDashboard() {
                         <span className="font-semibold text-foreground">{u.parentName || 'Not Provided'}</span>
                       </div>
                       <div>
-                        <span className="text-muted-foreground block text-[10px] uppercase font-bold">Emergency Phone</span>
+                        <span className="text-muted-foreground block text-[10px] uppercase font-bold">Parents Phone</span>
                         <span className="font-semibold text-primary">{u.parentPhone || u.phone || 'Not Provided'}</span>
                       </div>
                       <div className="sm:col-span-2">
@@ -4366,7 +4366,7 @@ export default function AdminDashboard() {
                     <th className="py-3.5 px-4">Class Level & Arm</th>
                     <th className="py-3.5 px-4">House / Group</th>
                     <th className="py-3.5 px-4">Parent / Guardian</th>
-                    <th className="py-3.5 px-4">Emergency Phone</th>
+                    <th className="py-3.5 px-4">Parents Phone</th>
                     <th className="py-3.5 px-4">Status</th>
                     <th className="py-3.5 px-4 text-right text-[10px]">Actions</th>
                   </tr>
@@ -11760,7 +11760,7 @@ export default function AdminDashboard() {
                           className="w-full px-3 py-2 rounded-xl border border-border bg-background text-xs focus:ring-2 focus:ring-primary focus:outline-none" />
                       </div>
                       <div>
-                        <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.parentPhone', 'Parent Emergency Contact Phone')}</label>
+                        <label className="block text-xs font-semibold mb-1 text-foreground">{t('wizard.parentPhone', 'Parents Phone Number')}</label>
                         <input type="tel" placeholder="e.g. 08031234567" value={newStudentForm.parentPhone}
                           onChange={e => setNewStudentForm({ ...newStudentForm, parentPhone: e.target.value })}
                           className="w-full px-3 py-2 rounded-xl border border-border bg-background text-xs focus:ring-2 focus:ring-primary focus:outline-none" />

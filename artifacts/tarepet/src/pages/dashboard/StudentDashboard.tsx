@@ -1634,7 +1634,7 @@ export default function StudentDashboard() {
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-foreground block mb-1.5">Parent Emergency Phone Number</label>
+                <label className="text-xs font-semibold text-foreground block mb-1.5">Parents Phone Number</label>
                 <input
                   type="tel"
                   value={profileForm.parentPhone}

@@ -1,4 +1,22 @@
 {
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome back! Here's an overview of today's academic and administrative performance.",
+    "totalStudents": "Total Students",
+    "teachers": "Teachers",
+    "fullTimeFaculty": "Full-time faculty",
+    "classes": "Classes",
+    "attendanceToday": "Attendance Today",
+    "dailyAverage": "Daily Average",
+    "classPerformance": "Class Academic Performance",
+    "classPerformanceDesc": "Average overall performance score per class",
+    "weeklyAttendance": "Weekly Attendance Trend",
+    "weeklyAttendanceDesc": "Aggregated student presence over the current week",
+    "quickActions": "Quick Actions",
+    "recentActivities": "Recent Activities",
+    "today": "Today",
+    "upcomingEvents": "Upcoming Events"
+  },
   "idCard": {
     "title": "Student ID Card Generator",
     "schoolName": "Tarepet Montessori School",
@@ -358,7 +376,7 @@
     "stateOfOrigin": "State of Origin *",
     "address": "Residential Location / Address *",
     "parentName": "Parent / Guardian Full Name *",
-    "parentPhone": "Parent Emergency Contact Phone *",
+    "parentPhone": "Parents Phone Number *",
     "photoTitle": "4. Student Profile Photograph",
     "uploadPhoto": "Upload Official Student Photo",
     "selectPhotoHint": "JPG, PNG or WEBP up to 10MB. Automatically cropped to portrait.",

@@ -121,6 +121,30 @@ const defaultTranslations = new Map<string, string>([
   ['signin.forgot_password', 'Forgot password?'],
   ['signin.footer_note', 'This portal is for enrolled parents and staff only. For admission inquiries, please visit our '],
   ['signin.admissions_page', 'Admissions page'],
+
+  // Student parent contacts
+  ['students.parentPhone', 'Parents Phone'],
+  ['wizard.parentPhone', 'Parents Phone Number'],
+  ['students.parentName', 'Parent / Guardian Name'],
+  ['students.residentialAddress', 'Residential Address'],
+
+  // Dashboard Overview
+  ['dashboard.title', 'Dashboard'],
+  ['dashboard.welcome', "Welcome back! Here's an overview of today's academic and administrative performance."],
+  ['dashboard.totalStudents', 'Total Students'],
+  ['dashboard.teachers', 'Teachers'],
+  ['dashboard.fullTimeFaculty', 'Full-time faculty'],
+  ['dashboard.classes', 'Classes'],
+  ['dashboard.attendanceToday', 'Attendance Today'],
+  ['dashboard.dailyAverage', 'Daily Average'],
+  ['dashboard.classPerformance', 'Class Academic Performance'],
+  ['dashboard.classPerformanceDesc', 'Average overall performance score per class'],
+  ['dashboard.weeklyAttendance', 'Weekly Attendance Trend'],
+  ['dashboard.weeklyAttendanceDesc', 'Aggregated student presence over the current week'],
+  ['dashboard.quickActions', 'Quick Actions'],
+  ['dashboard.recentActivities', 'Recent Activities'],
+  ['dashboard.today', 'Today'],
+  ['dashboard.upcomingEvents', 'Upcoming Events'],
 ]);
 
 export function t(key: string, fallback?: string): string {
