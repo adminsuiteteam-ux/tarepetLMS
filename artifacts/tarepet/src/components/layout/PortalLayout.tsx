@@ -372,27 +372,7 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
         })}
       </nav>
 
-      {/* Theme Quick Switcher in Sidebar */}
-      <div className="px-3 pb-2 shrink-0">
-        <button
-          type="button"
-          onClick={() => toggleTheme(!isDarkMode)}
-          title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-          className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold border border-border bg-muted/40 hover:bg-muted text-foreground transition-all cursor-pointer shadow-2xs"
-        >
-          <div className="flex items-center gap-2.5">
-            {isDarkMode ? (
-              <Moon className="w-4 h-4 text-amber-400 shrink-0" />
-            ) : (
-              <Sun className="w-4 h-4 text-amber-500 shrink-0" />
-            )}
-            <span className="truncate">{isDarkMode ? 'Dark Mode' : 'Light Mode'}</span>
-          </div>
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary shrink-0">
-            {isDarkMode ? '🌙 Dark' : '☀️ Light'}
-          </span>
-        </button>
-      </div>
+
 
       {/* User card & logout */}
       <div className="p-3 pb-6 border-t border-border shrink-0 bg-card">
