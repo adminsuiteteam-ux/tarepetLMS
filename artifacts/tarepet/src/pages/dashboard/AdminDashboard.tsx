@@ -2894,14 +2894,15 @@ export default function AdminDashboard() {
       if (studentRes.status === 'fulfilled' && studentRes.value.data) {
         const res = studentRes.value;
         const users = Array.isArray(res.data?.results) ? res.data.results : Array.isArray(res.data) ? res.data : [];
-        const mockEmails = ['civa.media@tarepet.com', 'hacker@evil.com', 'wronguser@fake.com'];
         const liveStudents = users
           .filter((u: any) => {
             const email = (u.email || '').toLowerCase();
             const sId = (u.student_id || u.profile?.student_id || '').toLowerCase();
             const uName = `${u.first_name || ''} ${u.last_name || ''}`.trim().toLowerCase();
             const isDeleted = isAccountDeleted(email) || isAccountDeleted(u.id) || isAccountDeleted(sId) || isAccountDeleted(uName);
-            return !mockEmails.includes(email) && !uName.includes('civa.media') && !uName.includes('hacker') && !uName.includes('wronguser') && !isDeleted;
+            // Filter by server-side flag only — no hardcoded email blacklists in frontend
+            const isTestAccount = Boolean(u.is_test_account);
+            return !isTestAccount && !isDeleted;
           })
           .map((u: any) => {
             const prof = u.profile || {};
@@ -5621,7 +5622,8 @@ export default function AdminDashboard() {
                     e.preventDefault();
                     adminPasswordForm.current = adminPasswordForm.current.trim();
                     const currentPass = getAdminPassword();
-                    const isValid = adminPasswordForm.current === currentPass || adminPasswordForm.current === 'TarepetAdmin@2026!';
+                    // Security: validate against the stored password only — no hardcoded backdoor.
+                    const isValid = adminPasswordForm.current === currentPass;
                     if (!isValid) {
                       setAdminPasswordStatus({ type: 'error', message: 'Current password is incorrect. Please enter your valid current password.' });
                       return;

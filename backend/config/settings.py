@@ -24,10 +24,22 @@ def get_secret_key():
     secret_file = BASE_DIR / 'secret_key.txt'
     if secret_file.exists():
         return secret_file.read_text().strip()
-    return 'tarepet-montessori-lms-enterprise-super-secure-key-2026-prod-jwt-neon-layerbase'
+    # Security: do NOT fall back to a hardcoded key.
+    # Generate a temporary random key and emit a loud warning so operators notice immediately.
+    from django.core.exceptions import ImproperlyConfigured
+    import sys
+    _warn = (
+        "\n\n[SECURITY] SECRET_KEY environment variable is NOT set!\n"
+        "A random key has been generated for this process only — all existing "
+        "sessions and JWT tokens will be invalidated on restart.\n"
+        "Set SECRET_KEY in your Render environment variables immediately.\n"
+    )
+    print(_warn, file=sys.stderr)
+    return secrets.token_hex(50)
 
 SECRET_KEY = get_secret_key()
-DEBUG = env.bool('DEBUG', default=True)
+# Security: default to False — debug mode must be explicitly opted into via env var.
+DEBUG = env.bool('DEBUG', default=False)
 
 try:
     # pyrefly: ignore [missing-import]
@@ -56,7 +68,8 @@ ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[
     '.onrender.com',
     'tarepetmontessorischool.com',
     'www.tarepetmontessorischool.com',
-    '*',
+    # Security: wildcard '*' removed — it enables Host-header injection attacks.
+    # In production the ALLOWED_HOSTS env var on Render overrides this list entirely.
 ])
 
 CORS_ALLOW_ALL_ORIGINS = False
@@ -125,7 +138,8 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'drf_spectacular',
-    'django_celery_beat',
+    # django_celery_beat removed: no Celery worker is deployed on the free Render plan
+    # and no periodic tasks are defined. Re-add when a worker service is provisioned.
 
     # LMS Local Apps
     'apps.users',
@@ -302,11 +316,12 @@ SESSION_COOKIE_AGE = 86400 * 30  # 30 days
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
-# Celery Settings
-CELERY_BROKER_URL = env('CELERY_BROKER_URL', default=_redis_url or 'redis://127.0.0.1:6379/0')
-CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default=_redis_url or 'redis://127.0.0.1:6379/0')
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
+# Celery Settings — currently disabled (no worker process on Render free plan).
+# To enable: add a worker service in render.yaml and uncomment below.
+# CELERY_BROKER_URL = env('CELERY_BROKER_URL', default=_redis_url or 'redis://127.0.0.1:6379/0')
+# CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default=_redis_url or 'redis://127.0.0.1:6379/0')
+# CELERY_ACCEPT_CONTENT = ['json']
+# CELERY_TASK_SERIALIZER = 'json'
 
 # CORS Headers
 CORS_ALLOW_ALL_ORIGINS = False

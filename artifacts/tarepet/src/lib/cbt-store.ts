@@ -1073,14 +1073,15 @@ export function saveStoredSubjects(subjects: SubjectRecord[]) {
 }
 
 function loadDeletedAccounts(): string[] {
-  const defaultBlacklist = ['hacker@evil.com', 'wronguser@fake.com', 'hacker user', 'wronguser user'];
-  if (typeof window === 'undefined') return defaultBlacklist;
+  // Deleted accounts are tracked only via localStorage after the admin deletes them.
+  // No hardcoded email addresses — filtering is done via server-side is_test_account flag.
+  if (typeof window === 'undefined') return [];
   try {
     const raw = localStorage.getItem('tarepet_deleted_accounts');
     const custom = raw ? JSON.parse(raw) : [];
-    return Array.from(new Set([...defaultBlacklist, ...custom]));
+    return Array.isArray(custom) ? custom : [];
   } catch {
-    return defaultBlacklist;
+    return [];
   }
 }
 
@@ -19636,9 +19637,10 @@ function loadSavedStudents(): StudentRecord[] {
         const liveOnly = parsed.filter((s: any) => {
           const sCode = String(s.code || s.admissionNo || s.studentId || '').toLowerCase();
           const sEmail = String(s.email || '').toLowerCase();
-          const isMock = sEmail.includes('hacker@') || sEmail.includes('wronguser@') || sEmail.includes('civa.media');
+          // Use server-side is_test_account flag — no hardcoded email addresses in frontend
+          const isTestAccount = Boolean(s.is_test_account);
           const isDeleted = isAccountDeleted(sCode) || isAccountDeleted(sEmail);
-          return !isMock && !isDeleted;
+          return !isTestAccount && !isDeleted;
         });
 
         // Merge any default students missing from local storage
@@ -19715,11 +19717,12 @@ export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
     const res = await authClient.get('/auth/users/?role=STUDENT&page_size=1000');
     if (res.data) {
       const dataArr = Array.isArray(res.data?.results) ? res.data.results : Array.isArray(res.data) ? res.data : [];
-      const mockEmails = ['civa.media@tarepet.com', 'hacker@evil.com', 'wronguser@fake.com'];
       const fetched: StudentRecord[] = dataArr
         .filter((u: any) => {
           const admNo = u.student_id || u.profile?.student_id || u.username || '';
-          return !mockEmails.includes(u.email) && !isAccountDeleted(u.email) && !isAccountDeleted(u.id) && !isAccountDeleted(admNo) && !isAccountDeleted(`${u.first_name || ''} ${u.last_name || ''}`.trim());
+          // Use server-side is_test_account flag — no hardcoded email addresses in frontend
+          const isTestAccount = Boolean(u.is_test_account);
+          return !isTestAccount && !isAccountDeleted(u.email) && !isAccountDeleted(u.id) && !isAccountDeleted(admNo) && !isAccountDeleted(`${u.first_name || ''} ${u.last_name || ''}`.trim());
         })
         .map((u: any) => {
           const prof = u.profile || {};
