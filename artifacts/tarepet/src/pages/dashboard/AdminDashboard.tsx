@@ -2481,11 +2481,13 @@ export default function AdminDashboard() {
 
         if (event.type === 'EXAM_CREATED' && event.payload?.exam) {
           const ex = event.payload.exam;
-          showAlert?.({
-            title: '📝 New Exam Submitted for Approval',
-            message: `Teacher ${ex.teacher_name || 'Staff'} submitted CBT Exam: "${ex.title}" (${ex.course_name || ex.course_code} - ${ex.class} ${ex.stream || ''}).`,
-            type: 'info'
-          });
+          if (ex.status === 'PENDING' || ex.status === 'Pending Approval') {
+            showAlert?.({
+              title: '📝 New Exam Submitted for Approval',
+              message: `Teacher ${ex.teacher_name || 'Staff'} submitted CBT Exam: "${ex.title}" (${ex.course_name || ex.course_code} - ${ex.class} ${ex.stream || ''}).`,
+              type: 'info'
+            });
+          }
         }
         if (event.type === 'EXAM_ACTIVATED' && event.payload?.exam) {
           const ex = event.payload.exam;

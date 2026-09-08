@@ -519,10 +519,14 @@ export default function CBTBuilder() {
       return;
     }
 
-    // Ensure store has the latest questions saved
+    // Ensure store and backend have the latest questions saved
     ex.questions = [...examQuestions];
     ex.questions_count = examQuestions.length;
-    await saveCBTExam(ex);
+    const saved = await saveCBTExam(ex);
+    const targetId = saved?.id || ex.id;
+    if (saved?.id) {
+      setSelectedExamId(saved.id);
+    }
 
     const confirmed = await showConfirm({
       title: 'Submit Exam for Admin Approval?',
@@ -534,7 +538,7 @@ export default function CBTBuilder() {
     });
     if (!confirmed) return;
 
-    await updateExamStatus(ex.id, 'PENDING');
+    await updateExamStatus(targetId, 'PENDING');
     showAlert({
       title: 'Submitted for Admin Approval',
       message: `Exam "${ex.title}" has been submitted to the School Admin. You will be notified once it is approved.`,
@@ -1046,7 +1050,7 @@ export default function CBTBuilder() {
     return (
       <div className="min-h-screen bg-background p-4 md:p-8">
         {/* Mobile floating eye icon with badge */}
-        <div className="lg:hidden fixed bottom-6 right-5 z-40">
+        <div className="lg:hidden fixed bottom-24 right-4 z-40">
           <button
             type="button"
             onClick={() => setMobileStackedOpen((v: boolean) => !v)}
@@ -1594,7 +1598,7 @@ export default function CBTBuilder() {
 
           {/* ── SECTION 3: BOTTOM SUBMISSION BAR ── */}
           {questions.length > 0 && (
-            <div className="bg-card rounded-2xl p-5 border border-border shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="bg-card rounded-2xl p-5 border border-border shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-30 mb-8 lg:mb-0">
               <div>
                 <p className="font-serif font-bold text-sm text-foreground">
                   Ready to Submit {questions.length} Stacked Questions?

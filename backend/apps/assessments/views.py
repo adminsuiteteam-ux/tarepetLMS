@@ -461,7 +461,10 @@ class CBTExamViewSet(viewsets.ModelViewSet):
             exam = serializer.save(teacher=teacher, teacher_name=teacher_name or 'Assigned Educator')
         else:
             exam = serializer.save(teacher_name=teacher_name or 'Assigned Educator')
-        broadcast_cbt_event('EXAM_CREATED', exam)
+        if exam.status == 'PENDING':
+            broadcast_cbt_event('EXAM_CREATED', exam)
+        else:
+            broadcast_cbt_event('EXAM_STATUS_UPDATED', exam)
 
     def perform_update(self, serializer):
         exam = serializer.save()

@@ -23169,7 +23169,12 @@ export async function syncExamsWithBackend(): Promise<CBTExam[]> {
         const merged = mappedExams.map(m => {
           const loc = local.find(l => l.id === m.id);
           if (loc) {
-            const preferStatus = (loc.status && loc.status !== 'PENDING' && loc.status !== 'DRAFT') ? loc.status : (m.status || loc.status);
+            let preferStatus = m.status || loc.status;
+            if (loc.status === 'PENDING' && (!m.status || m.status === 'DRAFT' || m.status === 'PENDING')) {
+              preferStatus = 'PENDING';
+            } else if (loc.status && loc.status !== 'DRAFT' && loc.status !== 'PENDING') {
+              preferStatus = loc.status;
+            }
             const preferQuestions = (m.questions && m.questions.length > 0)
               ? m.questions
               : (loc.questions && loc.questions.length > 0 ? loc.questions : []);
@@ -23206,31 +23211,37 @@ export async function syncExamsWithBackend(): Promise<CBTExam[]> {
   return _exams;
 }
 
-export async function updateExamStatus(examId: number, status: CBTExam['status'], reason?: string): Promise<CBTExam | null> {
+export async function updateExamStatus(examId: number | string, status: CBTExam['status'], reason?: string): Promise<CBTExam | null> {
   _exams = loadSavedExams();
-  const exam = _exams.find(e => Number(e.id) === Number(examId) || e.id === examId);
+  const numId = Number(examId);
+  const exam = _exams.find(e => Number(e.id) === numId || String(e.id) === String(examId));
   if (!exam) return null;
 
   exam.status = status;
   if (reason) exam.rejection_reason = reason;
 
-  const isRealBackendId = typeof examId === 'number' && examId < 1_000_000_000_000;
+  const isRealBackendId = !isNaN(numId) && numId > 0 && numId < 1_000_000_000_000;
   if (isRealBackendId) {
     try {
       if (status === 'APPROVED') {
-        await authClient.post(`/assessments/cbt-exams/${examId}/approve/`).catch(async () => {
-          await authClient.patch(`/assessments/cbt-exams/${examId}/`, { status, rejection_reason: reason });
+        await authClient.post(`/assessments/cbt-exams/${numId}/approve/`).catch(async () => {
+          await authClient.patch(`/assessments/cbt-exams/${numId}/`, { status, rejection_reason: reason });
         });
       } else if (status === 'REJECTED') {
-        await authClient.post(`/assessments/cbt-exams/${examId}/reject/`, { reason }).catch(async () => {
-          await authClient.patch(`/assessments/cbt-exams/${examId}/`, { status, rejection_reason: reason });
+        await authClient.post(`/assessments/cbt-exams/${numId}/reject/`, { reason }).catch(async () => {
+          await authClient.patch(`/assessments/cbt-exams/${numId}/`, { status, rejection_reason: reason });
         });
       } else if (status === 'ACTIVE') {
-        await authClient.post(`/assessments/cbt-exams/${examId}/publish/`).catch(async () => {
-          await authClient.patch(`/assessments/cbt-exams/${examId}/`, { status });
+        await authClient.post(`/assessments/cbt-exams/${numId}/publish/`).catch(async () => {
+          await authClient.patch(`/assessments/cbt-exams/${numId}/`, { status });
+        });
+      } else if (status === 'PENDING') {
+        await authClient.post(`/assessments/cbt-exams/${numId}/submit_for_approval/`).catch(async (e) => {
+          console.warn('[CBTStore] submit_for_approval fallback to patch:', e?.response?.data || e);
+          await authClient.patch(`/assessments/cbt-exams/${numId}/`, { status: 'PENDING', rejection_reason: reason });
         });
       } else {
-        await authClient.patch(`/assessments/cbt-exams/${examId}/`, {
+        await authClient.patch(`/assessments/cbt-exams/${numId}/`, {
           status: status,
           rejection_reason: reason
         });
@@ -23246,7 +23257,7 @@ export async function updateExamStatus(examId: number, status: CBTExam['status']
   if (status === 'PENDING') {
     addRealtimeActivity('EXAM_CREATED', `Exam Submitted for Admin Approval: ${exam.title}`, `Subject: ${exam.course_name} (${exam.class} ${exam.stream})`, exam.teacher_name);
     addRealtimeNotification({
-      title: 'ðŸ“ Exam Pending Approval',
+      title: '📝 Exam Pending Approval',
       message: `${exam.teacher_name || 'Teacher'} submitted "${exam.title}" (${exam.course_name} - ${exam.class}) for Admin approval.`,
       category: 'ACADEMICS',
       type: 'exam',
