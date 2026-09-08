@@ -1,5 +1,8 @@
-from rest_framework_simplejwt.authentication import JWTAuthentication
+from typing import Optional
+from rest_framework.request import Request
+from rest_framework_simplejwt.authentication import JWTAuthentication, AuthUser
 from rest_framework_simplejwt.exceptions import InvalidToken, AuthenticationFailed
+from rest_framework_simplejwt.tokens import AccessToken, Token
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -12,7 +15,7 @@ class GracefulJWTAuthentication(JWTAuthentication):
     mapping them to the proper database user.
     Fails gracefully on invalid/expired tokens so that optional-auth endpoints do not block.
     """
-    def authenticate(self, request):
+    def authenticate(self, request: Request) -> Optional[tuple[AuthUser, Token]]:
         header = self.get_header(request)
         if header is not None:
             raw_token = self.get_raw_token(header)
@@ -29,14 +32,14 @@ class GracefulJWTAuthentication(JWTAuthentication):
                         User.objects.filter(is_superuser=True).first()
                     )
                     if admin_user:
-                        return (admin_user, None)
+                        return (admin_user, AccessToken.for_user(admin_user))
                 elif str_token == 'mock_access_token':
                     teacher_user = (
                         User.objects.filter(role='TEACHER').first() or
                         User.objects.filter(is_staff=True).first()
                     )
                     if teacher_user:
-                        return (teacher_user, None)
+                        return (teacher_user, AccessToken.for_user(teacher_user))
 
         try:
             return super().authenticate(request)
