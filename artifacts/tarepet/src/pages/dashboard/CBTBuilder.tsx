@@ -280,6 +280,7 @@ export default function CBTBuilder() {
     setLoading(true);
     try {
       const selectedCourse = SENIOR_COURSES.find(c => c.code === form.course) || availableCourses[0] || SENIOR_COURSES[0];
+      const canonicalTerm = form.term === '2ND_TERM' ? '2ND_TERM' : form.term === '3RD_TERM' ? '3RD_TERM' : '1ST_TERM';
       const created = await saveCBTExam({
         title: form.title,
         description: form.description,
@@ -288,10 +289,10 @@ export default function CBTBuilder() {
         course_name: `${form.class} ${selectedCourse.name}`,
         class: form.class,
         stream: form.stream,
-        assessment_type: form.assessment_type as any,
-        term: form.term === '1ST_TERM' ? 'Term 1' : form.term === '2ND_TERM' ? 'Term 2' : 'Term 3',
-        duration_minutes: form.duration_minutes,
-        questions_per_page: form.questions_per_page,
+        assessment_type: (form.assessment_type || 'TEST') as any,
+        term: canonicalTerm,
+        duration_minutes: Number(form.duration_minutes) || 45,
+        questions_per_page: Number(form.questions_per_page) || 2,
         teacher_name: user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Mrs. Okafor Chioma' : 'Mrs. Okafor Chioma',
         status: 'DRAFT',
         questions: [],
@@ -415,10 +416,10 @@ export default function CBTBuilder() {
     setEditingQuestionId(null);
     setTimeout(() => questionInputRef.current?.focus(), 60);
 
-    // ── Instant Local & Background Persistence (non-blocking) ─────────────
+    // ── Instant Local & Backend Persistence ─────────────
     ex.questions = [...updatedQuestions];
     ex.questions_count = updatedQuestions.length;
-    saveCBTExam(ex).catch(e => console.debug('CBT sync error:', e));
+    await saveCBTExam(ex).catch(e => console.debug('CBT sync error:', e));
     fetchExams();
   };
 
@@ -476,10 +477,10 @@ export default function CBTBuilder() {
       handleCancelEdit();
     }
 
-    // Background persistence
+    // Backend and local persistence
     ex.questions = updated;
     ex.questions_count = updated.length;
-    saveCBTExam(ex).catch(e => console.debug('CBT sync error:', e));
+    await saveCBTExam(ex).catch(e => console.debug('CBT sync error:', e));
     fetchExams();
   };
 

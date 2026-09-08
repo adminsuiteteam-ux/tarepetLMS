@@ -119,7 +119,7 @@ export default function AdminCBTApproval() {
   const otherExams = exams.filter(e => e.status !== 'PENDING');
 
   const handleApprove = async (examId: number) => {
-    updateExamStatus(examId, 'APPROVED');
+    await updateExamStatus(examId, 'APPROVED');
     showAlert({
       title: 'Exam Approved',
       message: 'Examination approved! The teacher can now click "Proceed / Activate Exam" in their portal to begin the test session.',
@@ -132,7 +132,7 @@ export default function AdminCBTApproval() {
   };
 
   const handleReject = async (examId: number) => {
-    updateExamStatus(examId, 'REJECTED', rejectReason || 'Requires revision');
+    await updateExamStatus(examId, 'REJECTED', rejectReason || 'Requires revision');
     setShowRejectModal(false);
     setRejectReason('');
     showAlert({

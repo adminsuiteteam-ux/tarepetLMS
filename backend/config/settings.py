@@ -211,16 +211,24 @@ _db_config = env.db(
 )
 # Layerbase serverless keepalive & pool settings
 if _db_config.get('ENGINE') != 'django.db.backends.sqlite3':
+    _db_options = {
+        'sslmode': 'require',
+        'keepalives': 1,
+        'keepalives_idle': 60,
+        'keepalives_interval': 10,
+        'keepalives_count': 5,
+        'connect_timeout': 60,  # allow 60s for Layerbase cold-start wake-up
+    }
+    db_host = _db_config.get('HOST')
+    if db_host:
+        try:
+            import socket
+            _db_options['hostaddr'] = socket.gethostbyname(db_host)
+        except Exception:
+            pass
     _db_config.update({
         'CONN_MAX_AGE': 0,   # serverless: no persistent connections (prevents mid-op drops)
-        'OPTIONS': {
-            'sslmode': 'require',
-            'keepalives': 1,
-            'keepalives_idle': 60,
-            'keepalives_interval': 10,
-            'keepalives_count': 5,
-            'connect_timeout': 60,  # allow 60s for Layerbase cold-start wake-up
-        },
+        'OPTIONS': _db_options,
     })
 DATABASES = {'default': _db_config}
 

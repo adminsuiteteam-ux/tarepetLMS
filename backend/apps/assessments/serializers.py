@@ -98,6 +98,48 @@ class CBTExamSerializer(serializers.ModelSerializer):
             'course': {'required': False, 'allow_null': True},
         }
 
+    def to_internal_value(self, data):
+        if hasattr(data, 'copy'):
+            data = data.copy()
+        else:
+            data = dict(data)
+
+        # Normalize term
+        if 'term' in data and data['term']:
+            val = str(data['term']).upper().strip()
+            if '1' in val:
+                data['term'] = '1ST_TERM'
+            elif '2' in val:
+                data['term'] = '2ND_TERM'
+            elif '3' in val:
+                data['term'] = '3RD_TERM'
+
+        # Normalize assessment_type
+        if 'assessment_type' in data and data['assessment_type']:
+            val = str(data['assessment_type']).upper().strip()
+            if 'EXAM' in val:
+                data['assessment_type'] = 'EXAM'
+            else:
+                data['assessment_type'] = 'TEST'
+
+        # Normalize status
+        if 'status' in data and data['status']:
+            val = str(data['status']).upper().strip()
+            if 'PEND' in val:
+                data['status'] = 'PENDING'
+            elif 'APPROV' in val:
+                data['status'] = 'APPROVED'
+            elif 'REJECT' in val:
+                data['status'] = 'REJECTED'
+            elif 'ACTIV' in val:
+                data['status'] = 'ACTIVE'
+            elif 'DRAFT' in val:
+                data['status'] = 'DRAFT'
+            elif 'COMPLET' in val:
+                data['status'] = 'COMPLETED'
+
+        return super().to_internal_value(data)
+
     def create(self, validated_data):
         questions_data = validated_data.pop('questions', [])
         exam = CBTExam.objects.create(**validated_data)

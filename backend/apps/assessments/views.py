@@ -398,22 +398,68 @@ class CBTExamViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if getattr(user, 'is_admin', False) or getattr(user, 'role', '') == 'ADMIN':
-            return CBTExam.objects.all()
+        qs = CBTExam.objects.prefetch_related('questions')
+
+        is_admin_user = (
+            getattr(user, 'is_admin', False) or
+            getattr(user, 'role', '') == 'ADMIN' or
+            getattr(user, 'is_staff', False) or
+            getattr(user, 'is_superuser', False)
+        )
+
+        if is_admin_user:
+            pass  # Admins see all exams
         elif getattr(user, 'is_teacher', False) or getattr(user, 'role', '') == 'TEACHER':
-            if hasattr(user, 'teacher_profile'):
-                return CBTExam.objects.filter(teacher=user.teacher_profile)
-            return CBTExam.objects.all()
+            if hasattr(user, 'teacher_profile') and user.teacher_profile:
+                # Teachers see their own exams or unassigned / curriculum bank exams
+                qs = qs.filter(Q(teacher=user.teacher_profile) | Q(teacher__isnull=True))
         elif getattr(user, 'is_student', False) or getattr(user, 'role', '') == 'STUDENT':
-            return CBTExam.objects.filter(status__in=['PUBLISHED', 'ACTIVE', 'APPROVED'])
-        return CBTExam.objects.all()
+            qs = qs.filter(status__in=['PUBLISHED', 'ACTIVE', 'APPROVED'])
+
+        # Query parameter filters for SS1-SS3, stream, and status
+        class_name = self.request.query_params.get('class_name') or self.request.query_params.get('class')
+        stream = self.request.query_params.get('stream')
+        status_param = self.request.query_params.get('status')
+        assessment_type = self.request.query_params.get('assessment_type')
+        term = self.request.query_params.get('term')
+
+        if class_name:
+            qs = qs.filter(class_name__iexact=class_name)
+        if stream:
+            qs = qs.filter(stream__iexact=stream)
+        if status_param:
+            norm_status = status_param.upper().strip()
+            if 'PEND' in norm_status:
+                qs = qs.filter(status='PENDING')
+            elif 'APPROV' in norm_status:
+                qs = qs.filter(status='APPROVED')
+            elif 'REJECT' in norm_status:
+                qs = qs.filter(status='REJECTED')
+            elif 'ACTIV' in norm_status:
+                qs = qs.filter(status='ACTIVE')
+            elif 'DRAFT' in norm_status:
+                qs = qs.filter(status='DRAFT')
+            else:
+                qs = qs.filter(status__iexact=status_param)
+        if assessment_type:
+            qs = qs.filter(assessment_type__iexact=assessment_type)
+        if term:
+            qs = qs.filter(term__iexact=term)
+
+        return qs
 
     def perform_create(self, serializer):
         teacher = getattr(self.request.user, 'teacher_profile', None)
+        teacher_name = serializer.validated_data.get('teacher_name')
+        if not teacher_name and teacher:
+            teacher_name = teacher.user.get_full_name()
+        if not teacher_name and self.request.user.is_authenticated:
+            teacher_name = self.request.user.get_full_name() or self.request.user.email
+
         if teacher:
-            exam = serializer.save(teacher=teacher)
+            exam = serializer.save(teacher=teacher, teacher_name=teacher_name or 'Assigned Educator')
         else:
-            exam = serializer.save()
+            exam = serializer.save(teacher_name=teacher_name or 'Assigned Educator')
         broadcast_cbt_event('EXAM_CREATED', exam)
 
     def perform_update(self, serializer):

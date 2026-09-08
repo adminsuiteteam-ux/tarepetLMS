@@ -22963,6 +22963,34 @@ export async function saveCBTExam(examData: Partial<CBTExam> & { title: string; 
   _exams = loadSavedExams();
   const foundCourse = SENIOR_COURSES.find(c => c.code === examData.course_code || c.name === examData.course_name) || SENIOR_COURSES[0];
 
+  // Canonical normalization of term for Django choices ('1ST_TERM', '2ND_TERM', '3RD_TERM')
+  let canonicalTerm = '1ST_TERM';
+  if (examData.term) {
+    const tStr = String(examData.term).toUpperCase();
+    if (tStr.includes('1')) canonicalTerm = '1ST_TERM';
+    else if (tStr.includes('2')) canonicalTerm = '2ND_TERM';
+    else if (tStr.includes('3')) canonicalTerm = '3RD_TERM';
+  }
+
+  // Canonical normalization of assessment_type ('TEST', 'EXAM')
+  let canonicalType: 'TEST' | 'EXAM' = 'TEST';
+  if (examData.assessment_type) {
+    const aStr = String(examData.assessment_type).toUpperCase();
+    canonicalType = aStr.includes('EXAM') ? 'EXAM' : 'TEST';
+  }
+
+  // Canonical normalization of status
+  let canonicalStatus: CBTExam['status'] = 'DRAFT';
+  if (examData.status) {
+    const sStr = String(examData.status).toUpperCase();
+    if (sStr.includes('PEND')) canonicalStatus = 'PENDING';
+    else if (sStr.includes('APPROV')) canonicalStatus = 'APPROVED';
+    else if (sStr.includes('REJECT')) canonicalStatus = 'REJECTED';
+    else if (sStr.includes('ACTIV')) canonicalStatus = 'ACTIVE';
+    else if (sStr.includes('COMPLET')) canonicalStatus = 'COMPLETED';
+    else canonicalStatus = 'DRAFT';
+  }
+
   const newExam: CBTExam = {
     id: examData.id || Date.now(),
     title: examData.title,
@@ -22972,18 +23000,73 @@ export async function saveCBTExam(examData: Partial<CBTExam> & { title: string; 
     course_name: examData.course_name || foundCourse.name,
     class: examData.class || 'SS1',
     stream: examData.stream || 'Science',
-    assessment_type: examData.assessment_type || 'TEST',
-    term: examData.term || '2ND_TERM',
+    assessment_type: canonicalType,
+    term: canonicalTerm,
     duration_minutes: examData.duration_minutes || 45,
     questions_count: examData.questions ? examData.questions.length : (examData.questions_count || 0),
     questions_per_page: examData.questions_per_page || 2,
     teacher_name: examData.teacher_name || 'Mr. Okonkwo Paul',
-    status: examData.status || 'DRAFT',
+    status: canonicalStatus,
     questions: examData.questions || [],
     created_at: examData.created_at || new Date().toISOString(),
   };
 
-  // ── 1. Update In-Memory & LocalStorage INSTANTLY (0ms latency) ──────────────
+  const payloadQuestions = (newExam.questions || []).map((q, idx) => ({
+    question_text: q.question_text || '',
+    option_a: q.option_a || '',
+    option_b: q.option_b || '',
+    option_c: q.option_c || '',
+    option_d: q.option_d || '',
+    correct_option: q.correct_option || 'A',
+    points: Number(q.points) || 1,
+    explanation: q.explanation || '',
+    image_url: q.image_url || null,
+    order: q.order || (idx + 1)
+  }));
+
+  const examPayload = {
+    title: newExam.title,
+    description: newExam.description,
+    instructions: newExam.instructions,
+    course_name: newExam.course_name,
+    course_code: newExam.course_code,
+    class_name: newExam.class,
+    stream: newExam.stream,
+    teacher_name: newExam.teacher_name,
+    assessment_type: newExam.assessment_type,
+    term: newExam.term,
+    duration_minutes: newExam.duration_minutes,
+    questions_per_page: newExam.questions_per_page,
+    status: newExam.status,
+    questions: payloadQuestions
+  };
+
+  // ── 1. Authoritative Backend Synchronization (synchronous for multi-device consistency) ──
+  const isRealBackendId = examData.id && typeof examData.id === 'number' && examData.id < 1_000_000_000_000;
+
+  try {
+    if (isRealBackendId) {
+      const res = await authClient.patch(`/assessments/cbt-exams/${examData.id}/`, examPayload);
+      if (res?.data?.id) {
+        newExam.id = res.data.id;
+        if (Array.isArray(res.data.questions)) {
+          newExam.questions = res.data.questions;
+        }
+      }
+    } else {
+      const res = await authClient.post('/assessments/cbt-exams/', examPayload);
+      if (res?.data?.id) {
+        newExam.id = res.data.id;
+        if (Array.isArray(res.data.questions)) {
+          newExam.questions = res.data.questions;
+        }
+      }
+    }
+  } catch (err: any) {
+    console.warn('[CBTStore] Direct backend sync deferred to local cache:', err?.response?.data || err?.message || err);
+  }
+
+  // ── 2. Update In-Memory & LocalStorage with real backend ID ──────────────
   const existingIdx = _exams.findIndex(e => Number(e.id) === Number(newExam.id) || e.id === newExam.id);
   if (existingIdx >= 0) {
     _exams[existingIdx] = newExam;
@@ -22992,70 +23075,6 @@ export async function saveCBTExam(examData: Partial<CBTExam> & { title: string; 
   }
   persistExams(_exams);
   broadcastRealtimeEvent();
-
-  // ── 2. Background API Sync (non-blocking) ──────────────────────────────────
-  (async () => {
-    try {
-      const payloadQuestions = (newExam.questions || []).map((q, idx) => ({
-        question_text: q.question_text || '',
-        option_a: q.option_a || '',
-        option_b: q.option_b || '',
-        option_c: q.option_c || '',
-        option_d: q.option_d || '',
-        correct_option: q.correct_option || 'A',
-        points: Number(q.points) || 1,
-        explanation: q.explanation || '',
-        image_url: q.image_url || null,
-        order: q.order || (idx + 1)
-      }));
-
-      if (examData.id && typeof examData.id === 'number' && examData.id < 1000000000000) {
-        const res = await authClient.patch(`/assessments/cbt-exams/${examData.id}/`, {
-          title: newExam.title,
-          description: newExam.description,
-          instructions: newExam.instructions,
-          course_name: newExam.course_name,
-          course_code: newExam.course_code,
-          class_name: newExam.class,
-          stream: newExam.stream,
-          teacher_name: newExam.teacher_name,
-          assessment_type: newExam.assessment_type,
-          term: newExam.term,
-          duration_minutes: newExam.duration_minutes,
-          questions_per_page: newExam.questions_per_page,
-          status: newExam.status,
-          questions: payloadQuestions
-        });
-        if (res?.data?.id && res.data.id !== newExam.id) {
-          newExam.id = res.data.id;
-          persistExams(_exams);
-        }
-      } else {
-        const res = await authClient.post('/assessments/cbt-exams/', {
-          title: newExam.title,
-          description: newExam.description,
-          instructions: newExam.instructions,
-          course_name: newExam.course_name,
-          course_code: newExam.course_code,
-          class_name: newExam.class,
-          stream: newExam.stream,
-          teacher_name: newExam.teacher_name,
-          assessment_type: newExam.assessment_type,
-          term: newExam.term,
-          duration_minutes: newExam.duration_minutes,
-          questions_per_page: newExam.questions_per_page,
-          status: newExam.status,
-          questions: payloadQuestions
-        });
-        if (res?.data?.id && res.data.id !== newExam.id) {
-          newExam.id = res.data.id;
-          persistExams(_exams);
-        }
-      }
-    } catch (err: any) {
-      console.debug('[CBTStore] Exam background sync deferred or offline:', err?.message || err);
-    }
-  })();
 
   // Only dispatch notifications and WebSocket broadcast if the exam was explicitly submitted for approval (PENDING)
   if (newExam.status === 'PENDING') {
@@ -23115,9 +23134,6 @@ export function mapCBTExamToAdminExam(c: CBTExam): any {
 }
 
 export async function syncExamsWithBackend(): Promise<CBTExam[]> {
-  const token = getAccessToken();
-  if (!token) return loadSavedExams();
-
   try {
     const res = await authClient.get('/assessments/cbt-exams/');
     if (res.data) {
@@ -23137,37 +23153,43 @@ export async function syncExamsWithBackend(): Promise<CBTExam[]> {
           class: item.class_name || item.class || 'SS1',
           stream: item.stream || 'Science',
           assessment_type: item.assessment_type || 'TEST',
-          term: item.term || '2ND_TERM',
+          term: item.term || '1ST_TERM',
           duration_minutes: item.duration_minutes || 45,
           questions_count: item.questions_count || (Array.isArray(item.questions) ? item.questions.length : 0),
           questions_per_page: item.questions_per_page || 2,
           teacher_name: item.teacher_name || item.created_by_name || 'Assigned Educator',
           status: item.status || 'PENDING',
+          // Backend questions are the source of truth — they must be visible on ALL devices
           questions: Array.isArray(item.questions) ? item.questions : [],
           created_at: item.created_at || new Date().toISOString(),
           results_released: item.results_released || false,
         }));
-        
+
         const local = loadSavedExams();
         const merged = mappedExams.map(m => {
           const loc = local.find(l => l.id === m.id);
           if (loc) {
-            // Preserve locally approved/active/published status if backend returned pending/draft
             const preferStatus = (loc.status && loc.status !== 'PENDING' && loc.status !== 'DRAFT') ? loc.status : (m.status || loc.status);
+            const preferQuestions = (m.questions && m.questions.length > 0)
+              ? m.questions
+              : (loc.questions && loc.questions.length > 0 ? loc.questions : []);
             return {
               ...m,
               status: preferStatus,
               rejection_reason: loc.rejection_reason || m.rejection_reason,
               results_released: loc.results_released ?? m.results_released,
-              questions: (loc.questions && loc.questions.length > 0) ? loc.questions : m.questions,
-              class: loc.class || m.class,
-              stream: loc.stream || m.stream,
-              course_name: loc.course_name || m.course_name,
-              course_code: loc.course_code || m.course_code,
+              questions: preferQuestions,
+              questions_count: preferQuestions.length || m.questions_count,
+              class: m.class || loc.class,
+              stream: m.stream || loc.stream,
+              course_name: m.course_name || loc.course_name,
+              course_code: m.course_code || loc.course_code,
             };
           }
           return m;
         });
+
+        // Also include purely local exams (not yet synced to backend — temp ID)
         for (const loc of local) {
           if (!merged.some(m => m.id === loc.id)) {
             merged.push(loc);
@@ -23186,17 +23208,40 @@ export async function syncExamsWithBackend(): Promise<CBTExam[]> {
 
 export async function updateExamStatus(examId: number, status: CBTExam['status'], reason?: string): Promise<CBTExam | null> {
   _exams = loadSavedExams();
-  const exam = _exams.find(e => e.id === examId);
+  const exam = _exams.find(e => Number(e.id) === Number(examId) || e.id === examId);
   if (!exam) return null;
 
   exam.status = status;
+  if (reason) exam.rejection_reason = reason;
 
-  try {
-    await authClient.patch(`/assessments/cbt-exams/${examId}/`, {
-      status: status,
-      rejection_reason: reason
-    });
-  } catch (e) {}
+  const isRealBackendId = typeof examId === 'number' && examId < 1_000_000_000_000;
+  if (isRealBackendId) {
+    try {
+      if (status === 'APPROVED') {
+        await authClient.post(`/assessments/cbt-exams/${examId}/approve/`).catch(async () => {
+          await authClient.patch(`/assessments/cbt-exams/${examId}/`, { status, rejection_reason: reason });
+        });
+      } else if (status === 'REJECTED') {
+        await authClient.post(`/assessments/cbt-exams/${examId}/reject/`, { reason }).catch(async () => {
+          await authClient.patch(`/assessments/cbt-exams/${examId}/`, { status, rejection_reason: reason });
+        });
+      } else if (status === 'ACTIVE') {
+        await authClient.post(`/assessments/cbt-exams/${examId}/publish/`).catch(async () => {
+          await authClient.patch(`/assessments/cbt-exams/${examId}/`, { status });
+        });
+      } else {
+        await authClient.patch(`/assessments/cbt-exams/${examId}/`, {
+          status: status,
+          rejection_reason: reason
+        });
+      }
+    } catch (e) {
+      console.warn('[CBTStore] Status update to backend deferred:', e);
+    }
+  }
+
+  persistExams(_exams);
+  broadcastRealtimeEvent();
 
   if (status === 'PENDING') {
     addRealtimeActivity('EXAM_CREATED', `Exam Submitted for Admin Approval: ${exam.title}`, `Subject: ${exam.course_name} (${exam.class} ${exam.stream})`, exam.teacher_name);
