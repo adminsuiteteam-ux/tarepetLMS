@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { authClient } from '@/lib/api-auth';
 import { motion } from 'framer-motion';
@@ -184,6 +184,7 @@ export default function CBTBuilder() {
   const [selectedExamId, setSelectedExamId] = useState<number | null>(null);
   const [questions, setQuestions] = useState<any[]>([]);
   const [newQuestion, setNewQuestion] = useState<QuestionForm>({ ...EMPTY_QUESTION });
+  const questionInputRef = useRef<HTMLTextAreaElement>(null);
   const [attempts, setAttempts] = useState<StudentAttempt[]>([]);
   const [attemptDetail, setAttemptDetail] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -408,12 +409,17 @@ export default function CBTBuilder() {
       setTimeout(() => setJustAddedId(null), 3000);
     }
 
+    // ── Instant Optimistic UI Update (0ms delay) ──────────────────────────
+    setQuestions([...updatedQuestions]);
+    setNewQuestion({ ...EMPTY_QUESTION });
+    setEditingQuestionId(null);
+    setTimeout(() => questionInputRef.current?.focus(), 60);
+
+    // ── Instant Local & Background Persistence (non-blocking) ─────────────
     ex.questions = [...updatedQuestions];
     ex.questions_count = updatedQuestions.length;
-    await saveCBTExam(ex);
-    setQuestions([...updatedQuestions]);
+    saveCBTExam(ex).catch(e => console.debug('CBT sync error:', e));
     fetchExams();
-    setNewQuestion({ ...EMPTY_QUESTION });
   };
 
   const handleEditQuestion = (q: any) => {
@@ -463,14 +469,18 @@ export default function CBTBuilder() {
 
     const currentQList = (questions && questions.length > 0) ? [...questions] : (ex.questions ? [...ex.questions] : []);
     const updated = currentQList.filter((q: any) => Number(q.id) !== Number(qId) && String(q.id) !== String(qId));
-    ex.questions = updated;
-    ex.questions_count = updated.length;
-    await saveCBTExam(ex);
+    
+    // Instant optimistic removal
     setQuestions([...updated]);
-    fetchExams();
     if (editingQuestionId === qId) {
       handleCancelEdit();
     }
+
+    // Background persistence
+    ex.questions = updated;
+    ex.questions_count = updated.length;
+    saveCBTExam(ex).catch(e => console.debug('CBT sync error:', e));
+    fetchExams();
   };
 
 
@@ -1339,10 +1349,17 @@ export default function CBTBuilder() {
                 <div>
                   <label className={labelClass}>{t("Question Text")} <span className="text-rose-500">*</span></label>
                   <textarea
+                    ref={questionInputRef}
                     className={inputClass}
                     rows={2}
                     value={newQuestion.question_text}
                     onChange={e => setNewQuestion({...newQuestion, question_text: e.target.value})}
+                    onKeyDown={e => {
+                      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddQuestion();
+                      }
+                    }}
                     placeholder="e.g. Solve for x in the equation: 3x + 9 = 24"
                   />
                 </div>
@@ -1434,15 +1451,18 @@ export default function CBTBuilder() {
                   />
                 </div>
 
-                <div className="pt-2 flex items-center gap-3">
+                <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
                   <button
                     type="button"
                     onClick={handleAddQuestion}
-                    className="flex-1 h-12 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 transition flex items-center justify-center gap-2 shadow-md cursor-pointer text-sm"
+                    className="w-full sm:flex-1 h-12 rounded-xl bg-primary text-primary-foreground font-bold hover:bg-primary/90 active:scale-[0.99] transition flex items-center justify-center gap-2 shadow-md cursor-pointer text-sm"
                   >
                     <Plus className="w-4 h-4" />
                     {editingQuestionId ? 'Save Question Changes' : `Add Question #${questions.length + 1} to Stack`}
                   </button>
+                  <span className="text-[11px] text-muted-foreground hidden sm:inline-block font-mono bg-muted/50 px-2.5 py-1.5 rounded-lg border border-border">
+                    Tip: <kbd className="px-1.5 py-0.5 bg-background border border-border rounded text-[10px] font-bold">Ctrl</kbd> + <kbd className="px-1.5 py-0.5 bg-background border border-border rounded text-[10px] font-bold">Enter</kbd> to stack
+                  </span>
                 </div>
               </div>
             </div>

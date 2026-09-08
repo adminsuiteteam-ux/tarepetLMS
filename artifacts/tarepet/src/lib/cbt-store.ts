@@ -22983,81 +22983,86 @@ export async function saveCBTExam(examData: Partial<CBTExam> & { title: string; 
     created_at: examData.created_at || new Date().toISOString(),
   };
 
-  try {
-    const payloadQuestions = (newExam.questions || []).map((q, idx) => ({
-      question_text: q.question_text || '',
-      option_a: q.option_a || '',
-      option_b: q.option_b || '',
-      option_c: q.option_c || '',
-      option_d: q.option_d || '',
-      correct_option: q.correct_option || 'A',
-      points: Number(q.points) || 1,
-      explanation: q.explanation || '',
-      image_url: q.image_url || null,
-      order: q.order || (idx + 1)
-    }));
-
-    if (examData.id && typeof examData.id === 'number' && examData.id < 1000000000000) {
-      const res = await authClient.patch(`/assessments/cbt-exams/${examData.id}/`, {
-        title: newExam.title,
-        description: newExam.description,
-        instructions: newExam.instructions,
-        course_name: newExam.course_name,
-        course_code: newExam.course_code,
-        class_name: newExam.class,
-        stream: newExam.stream,
-        teacher_name: newExam.teacher_name,
-        assessment_type: newExam.assessment_type,
-        term: newExam.term,
-        duration_minutes: newExam.duration_minutes,
-        questions_per_page: newExam.questions_per_page,
-        status: newExam.status,
-        questions: payloadQuestions
-      });
-      if (res?.data?.id) {
-        newExam.id = res.data.id;
-      }
-    } else {
-      const res = await authClient.post('/assessments/cbt-exams/', {
-        title: newExam.title,
-        description: newExam.description,
-        instructions: newExam.instructions,
-        course_name: newExam.course_name,
-        course_code: newExam.course_code,
-        class_name: newExam.class,
-        stream: newExam.stream,
-        teacher_name: newExam.teacher_name,
-        assessment_type: newExam.assessment_type,
-        term: newExam.term,
-        duration_minutes: newExam.duration_minutes,
-        questions_per_page: newExam.questions_per_page,
-        status: newExam.status,
-        questions: payloadQuestions
-      });
-      if (res?.data?.id) {
-        newExam.id = res.data.id;
-      }
-    }
-  } catch (err: any) {
-    console.error('[CBTStore] Failed to save exam to backend API:', err?.response?.data || err?.message || err);
-  }
-
+  // ── 1. Update In-Memory & LocalStorage INSTANTLY (0ms latency) ──────────────
   const existingIdx = _exams.findIndex(e => Number(e.id) === Number(newExam.id) || e.id === newExam.id);
   if (existingIdx >= 0) {
     _exams[existingIdx] = newExam;
   } else {
     _exams = [newExam, ..._exams];
   }
-
   persistExams(_exams);
   broadcastRealtimeEvent();
+
+  // ── 2. Background API Sync (non-blocking) ──────────────────────────────────
+  (async () => {
+    try {
+      const payloadQuestions = (newExam.questions || []).map((q, idx) => ({
+        question_text: q.question_text || '',
+        option_a: q.option_a || '',
+        option_b: q.option_b || '',
+        option_c: q.option_c || '',
+        option_d: q.option_d || '',
+        correct_option: q.correct_option || 'A',
+        points: Number(q.points) || 1,
+        explanation: q.explanation || '',
+        image_url: q.image_url || null,
+        order: q.order || (idx + 1)
+      }));
+
+      if (examData.id && typeof examData.id === 'number' && examData.id < 1000000000000) {
+        const res = await authClient.patch(`/assessments/cbt-exams/${examData.id}/`, {
+          title: newExam.title,
+          description: newExam.description,
+          instructions: newExam.instructions,
+          course_name: newExam.course_name,
+          course_code: newExam.course_code,
+          class_name: newExam.class,
+          stream: newExam.stream,
+          teacher_name: newExam.teacher_name,
+          assessment_type: newExam.assessment_type,
+          term: newExam.term,
+          duration_minutes: newExam.duration_minutes,
+          questions_per_page: newExam.questions_per_page,
+          status: newExam.status,
+          questions: payloadQuestions
+        });
+        if (res?.data?.id && res.data.id !== newExam.id) {
+          newExam.id = res.data.id;
+          persistExams(_exams);
+        }
+      } else {
+        const res = await authClient.post('/assessments/cbt-exams/', {
+          title: newExam.title,
+          description: newExam.description,
+          instructions: newExam.instructions,
+          course_name: newExam.course_name,
+          course_code: newExam.course_code,
+          class_name: newExam.class,
+          stream: newExam.stream,
+          teacher_name: newExam.teacher_name,
+          assessment_type: newExam.assessment_type,
+          term: newExam.term,
+          duration_minutes: newExam.duration_minutes,
+          questions_per_page: newExam.questions_per_page,
+          status: newExam.status,
+          questions: payloadQuestions
+        });
+        if (res?.data?.id && res.data.id !== newExam.id) {
+          newExam.id = res.data.id;
+          persistExams(_exams);
+        }
+      }
+    } catch (err: any) {
+      console.debug('[CBTStore] Exam background sync deferred or offline:', err?.message || err);
+    }
+  })();
 
   // Only dispatch notifications and WebSocket broadcast if the exam was explicitly submitted for approval (PENDING)
   if (newExam.status === 'PENDING') {
     addRealtimeActivity('EXAM_CREATED', `CBT Exam Submitted for Approval: ${newExam.title}`, `Subject: ${newExam.course_name} (${newExam.class} ${newExam.stream})`, newExam.teacher_name);
 
     addRealtimeNotification({
-      title: 'ðŸ“ Exam Pending Approval',
+      title: 'Exam Pending Approval',
       message: `${newExam.teacher_name} submitted "${newExam.title}" (${newExam.course_name} - ${newExam.class}) for Admin approval.`,
       category: 'ACADEMICS',
       type: 'exam',
