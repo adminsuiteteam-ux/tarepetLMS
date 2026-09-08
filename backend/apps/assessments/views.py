@@ -662,14 +662,15 @@ class CBTExamViewSet(viewsets.ModelViewSet):
         attempt.percentage = round((total_score / total_possible * 100), 2) if total_possible > 0 else 0.0
         attempt.save()
 
-        # Notify teacher
-        CBTNotification.objects.create(
-            user=exam.teacher.user,
-            title=f'Student Submitted: {exam.title}',
-            message=f'{student.user.get_full_name()} has {"auto-" if auto else ""}submitted "{exam.title}" — Score: {attempt.score}/{attempt.total_possible} ({attempt.percentage}%)',
-            notification_type='EXAM_SUBMITTED',
-            exam=exam,
-        )
+        # Notify teacher if assigned
+        if exam.teacher and getattr(exam.teacher, 'user', None):
+            CBTNotification.objects.create(
+                user=exam.teacher.user,
+                title=f'Student Submitted: {exam.title}',
+                message=f'{student.user.get_full_name()} has {"auto-" if auto else ""}submitted "{exam.title}" — Score: {attempt.score}/{attempt.total_possible} ({attempt.percentage}%)',
+                notification_type='EXAM_SUBMITTED',
+                exam=exam,
+            )
 
         return Response({
             'detail': 'Exam submitted and graded.',
