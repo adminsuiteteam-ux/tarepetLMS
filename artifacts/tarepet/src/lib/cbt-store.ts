@@ -23101,11 +23101,16 @@ export function mapCBTExamToAdminExam(c: CBTExam): any {
     ['ACTIVE', 'Ongoing'],
     ['COMPLETED', 'Completed'],
     ['PENDING', 'Pending Approval'],
+    ['Pending Approval', 'Pending Approval'],
+    ['pending', 'Pending Approval'],
     ['REJECTED', 'Rejected'],
     ['DRAFT', 'Draft'],
     ['ARCHIVED', 'Archived'],
   ]);
-  const mappedStatus = statusMap.get(c.status) || (c.status === 'ACTIVE' ? 'Ongoing' : c.status === 'APPROVED' ? 'Approved' : c.status === 'DRAFT' ? 'Draft' : 'Pending Approval');
+  const sNorm = (c.status || '').toUpperCase().replace(/[\s_]+/g, '');
+  const mappedStatus = sNorm === 'PENDING' || sNorm === 'PENDINGAPPROVAL'
+    ? 'Pending Approval'
+    : (statusMap.get(c.status) || (c.status === 'ACTIVE' ? 'Ongoing' : c.status === 'APPROVED' ? 'Approved' : c.status === 'DRAFT' ? 'Draft' : 'Pending Approval'));
   
   // Standardize type to 'Test' | 'Exam' for filter compatibility while retaining full display labels
   const standardType = c.assessment_type === 'EXAM' ? 'Exam' : 'Test';
@@ -23167,17 +23172,19 @@ export async function syncExamsWithBackend(): Promise<CBTExam[]> {
 
         const local = loadSavedExams();
         const merged = mappedExams.map(m => {
-          const loc = local.find(l => l.id === m.id);
+          const loc = local.find(l => Number(l.id) === Number(m.id));
           if (loc) {
+            const isLocPending = (loc.status || '').toUpperCase().replace(/[\s_]+/g, '').includes('PEND');
+            const isMPending = (m.status || '').toUpperCase().replace(/[\s_]+/g, '').includes('PEND');
             let preferStatus = m.status || loc.status;
-            if (loc.status === 'PENDING' && (!m.status || m.status === 'DRAFT' || m.status === 'PENDING')) {
+            if (isLocPending && (!m.status || m.status === 'DRAFT' || isMPending)) {
               preferStatus = 'PENDING';
-            } else if (loc.status && loc.status !== 'DRAFT' && loc.status !== 'PENDING') {
+            } else if (loc.status && loc.status !== 'DRAFT' && !isLocPending) {
               preferStatus = loc.status;
             }
-            const preferQuestions = (m.questions && m.questions.length > 0)
-              ? m.questions
-              : (loc.questions && loc.questions.length > 0 ? loc.questions : []);
+            const preferQuestions = (loc.questions && loc.questions.length > 0)
+              ? loc.questions
+              : (m.questions && m.questions.length > 0 ? m.questions : []);
             return {
               ...m,
               status: preferStatus,

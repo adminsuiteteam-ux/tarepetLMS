@@ -48,10 +48,10 @@ function getStatusStyle(status: string): string {
 function getQuestionOptionText(q: any, opt: string): string {
   if (!q) return '';
   switch (opt) {
-    case 'A': return q.option_a || '';
-    case 'B': return q.option_b || '';
-    case 'C': return q.option_c || '';
-    case 'D': return q.option_d || '';
+    case 'A': return q.option_a ?? (Array.isArray(q.options) ? q.options[0] : '');
+    case 'B': return q.option_b ?? (Array.isArray(q.options) ? q.options[1] : '');
+    case 'C': return q.option_c ?? (Array.isArray(q.options) ? q.options[2] : '');
+    case 'D': return q.option_d ?? (Array.isArray(q.options) ? q.options[3] : '');
     default: return '';
   }
 }
@@ -115,8 +115,26 @@ export default function AdminCBTApproval() {
     }
   }, [exams]);
 
-  const pendingExams = exams.filter(e => e.status === 'PENDING');
-  const otherExams = exams.filter(e => e.status !== 'PENDING');
+  const isPending = (s?: string) => {
+    const norm = (s || '').toUpperCase().replace(/[\s_]+/g, '');
+    return norm === 'PENDING' || norm === 'PENDINGAPPROVAL';
+  };
+
+  const pendingExams = exams.filter(e => isPending(e.status));
+  const otherExams = exams.filter(e => !isPending(e.status));
+
+  // Dynamically fetch questions if selected exam questions are empty
+  useEffect(() => {
+    if (view === 'preview' && selectedExam && (!selectedExam.questions || selectedExam.questions.length === 0) && selectedExam.id) {
+      authClient.get(`/assessments/cbt-exams/${selectedExam.id}/`)
+        .then(res => {
+          if (Array.isArray(res.data?.questions) && res.data.questions.length > 0) {
+            setSelectedExam(prev => prev ? { ...prev, questions: res.data.questions } : prev);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [view, selectedExam?.id]);
 
   const handleApprove = async (examId: number) => {
     await updateExamStatus(examId, 'APPROVED');

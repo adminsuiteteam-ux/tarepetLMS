@@ -1631,33 +1631,26 @@ const AwardPointsModal = ({ house, onClose }: { house: any; onClose: () => void 
 
 const ExamPreviewModal = ({ exam, onClose }: { exam: any; onClose: () => void }) => {
   const { t } = useTranslation();
-  // Objective Multiple Choice Questions (A, B, C, D)
-  const questions = exam.questions || [
-    {
-      num: 1,
-      text: `Which of the following represents the primary theorem/rule applied in ${exam.subject || 'this course'}?`,
-      options: ['Option A: Fundamental Principle I', 'Option B: Secondary Derivation II', 'Option C: Empirical Postulate III', 'Option D: Auxiliary Rule IV'],
-      correct: 'Option A: Fundamental Principle I'
-    },
-    {
-      num: 2,
-      text: `In Montessori practical application, what is the main objective during ${exam.subject || 'this subject'} practical work?`,
-      options: ['Option A: Theoretical memorization', 'Option B: Self-directed experiential learning', 'Option C: Group lectures', 'Option D: Rote repetition'],
-      correct: 'Option B: Self-directed experiential learning'
-    },
-    {
-      num: 3,
-      text: `Identify the correct unit or standard formula used when calculating metrics in ${exam.subject || 'this topic'}:`,
-      options: ['Option A: Formula X = a + b', 'Option B: Formula Y = m * c^2', 'Option C: Standard Metric Alpha', 'Option D: Derived Constant Beta'],
-      correct: 'Option C: Standard Metric Alpha'
-    },
-    {
-      num: 4,
-      text: `Which scientist or scholar is credited with establishing the foundational theory of ${exam.subject || 'this domain'}?`,
-      options: ['Option A: Dr. Maria Montessori', 'Option B: Isaac Newton', 'Option C: Albert Einstein', 'Option D: Michael Faraday'],
-      correct: 'Option A: Dr. Maria Montessori'
-    },
-  ];
+  const [loadedQuestions, setLoadedQuestions] = useState<any[]>(() => {
+    if (Array.isArray(exam.questions) && exam.questions.length > 0) return exam.questions;
+    if (Array.isArray(exam.rawCbtExam?.questions) && exam.rawCbtExam.questions.length > 0) return exam.rawCbtExam.questions;
+    return [];
+  });
+  const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
+
+  useEffect(() => {
+    if (loadedQuestions.length === 0 && exam.id) {
+      setIsLoadingQuestions(true);
+      authClient.get(`/assessments/cbt-exams/${exam.id}/`)
+        .then(res => {
+          if (Array.isArray(res.data?.questions) && res.data.questions.length > 0) {
+            setLoadedQuestions(res.data.questions);
+          }
+        })
+        .catch(() => {})
+        .finally(() => setIsLoadingQuestions(false));
+    }
+  }, [exam.id, loadedQuestions.length]);
 
   const rules = exam.rules || [
     "All questions are 100% Objective Multiple Choice (A, B, C, D).",
@@ -1679,7 +1672,7 @@ const ExamPreviewModal = ({ exam, onClose }: { exam: any; onClose: () => void })
             <h3 className="font-serif font-bold text-xl text-foreground mt-2">{exam.title}</h3>
             <p className="text-xs text-muted-foreground mt-1">{t('examPreview.subject')}<span className="text-foreground font-semibold">{exam.subject}</span></p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -1720,37 +1713,92 @@ const ExamPreviewModal = ({ exam, onClose }: { exam: any; onClose: () => void })
 
           {/* Objective Questions Preview */}
           <div className="space-y-4">
-            <h4 className="font-serif font-bold text-sm text-foreground flex items-center gap-1.5">
-              <FileText className="w-4 h-4 text-primary" /> {t('examPreview.objectiveTitle')}
-            </h4>
-            <div className="space-y-3">
-              {questions.map((q: any, i: number) => (
-                <div key={i} className="p-4 border border-border rounded-xl bg-card hover:bg-muted/10 transition-colors space-y-2">
-                  <p className="font-bold text-foreground">{t('examPreview.question')}{q.num || i + 1}:</p>
-                  <p className="text-foreground leading-relaxed text-sm">{q.text}</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                    {(q.options || ['Option A', 'Option B', 'Option C', 'Option D']).map((opt: string, optIdx: number) => {
-                      const OPTION_KEYS = new Map([[0, 'A'], [1, 'B'], [2, 'C'], [3, 'D']]);
-                      const isCorrect = q.correct === opt || q.correct_option === OPTION_KEYS.get(optIdx);
-                      return (
-                        <div key={optIdx} className={`p-2.5 rounded-lg border text-xs flex items-center justify-between ${
-                          isCorrect ? 'bg-emerald-500/10 border-emerald-300 text-emerald-800 font-bold' : 'bg-muted/30 border-border/60 text-muted-foreground'
-                        }`}>
-                          <span>{opt}</span>
-                          {isCorrect && <span className="text-emerald-600">{t('examPreview.correct')}</span>}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
+            <div className="flex items-center justify-between">
+              <h4 className="font-serif font-bold text-sm text-foreground flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-primary" /> {t('examPreview.objectiveTitle', 'Objective Examination Questions')}
+              </h4>
+              <span className="text-xs font-bold text-primary px-2.5 py-0.5 rounded-full bg-primary/10">
+                {loadedQuestions.length} Question{loadedQuestions.length !== 1 ? 's' : ''}
+              </span>
             </div>
+
+            {isLoadingQuestions && (
+              <div className="p-8 text-center bg-muted/20 rounded-2xl">
+                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                <p className="text-xs text-muted-foreground">Loading questions from server...</p>
+              </div>
+            )}
+
+            {!isLoadingQuestions && loadedQuestions.length === 0 && (
+              <div className="p-8 text-center bg-muted/20 rounded-2xl border border-border">
+                <FileText className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
+                <p className="text-sm font-semibold text-foreground">No questions attached yet</p>
+                <p className="text-xs text-muted-foreground mt-1">This examination has no questions uploaded.</p>
+              </div>
+            )}
+
+            {!isLoadingQuestions && loadedQuestions.length > 0 && (
+              <div className="space-y-3">
+                {loadedQuestions.map((q: any, i: number) => {
+                  const qNum = q.order || q.num || i + 1;
+                  const qText = q.question_text || q.text || q.question || 'No question text provided';
+                  const rawOpts = [
+                    { key: 'A', text: q.option_a ?? (Array.isArray(q.options) ? q.options[0] : null) },
+                    { key: 'B', text: q.option_b ?? (Array.isArray(q.options) ? q.options[1] : null) },
+                    { key: 'C', text: q.option_c ?? (Array.isArray(q.options) ? q.options[2] : null) },
+                    { key: 'D', text: q.option_d ?? (Array.isArray(q.options) ? q.options[3] : null) },
+                  ];
+                  const correctKey = (q.correct_option || q.correct || '').toString().trim().toUpperCase();
+
+                  return (
+                    <div key={q.id || i} className="p-4 border border-border rounded-xl bg-card hover:bg-muted/10 transition-colors space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="font-bold text-foreground">{t('examPreview.question', 'Question ')}{qNum}:</p>
+                        <span className="text-[11px] font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded-md">
+                          {q.points || 1} mark{(q.points || 1) > 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      <p className="text-foreground leading-relaxed text-sm font-medium">{qText}</p>
+                      {q.image_url && (
+                        <div className="my-2 max-h-48 overflow-hidden rounded-lg border border-border bg-black/5 flex items-center justify-center">
+                          <img src={q.image_url} alt={`Question ${qNum}`} className="max-h-48 object-contain" />
+                        </div>
+                      )}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                        {rawOpts.map((opt) => {
+                          if (!opt.text) return null;
+                          const isCorrect = correctKey === opt.key || correctKey === opt.text.toUpperCase() || opt.text.toUpperCase().startsWith(`${correctKey}.`);
+                          return (
+                            <div
+                              key={opt.key}
+                              className={`p-2.5 rounded-lg border text-xs flex items-center justify-between transition-colors ${
+                                isCorrect
+                                  ? 'bg-emerald-500/15 border-emerald-400 text-emerald-800 dark:text-emerald-300 font-bold'
+                                  : 'bg-muted/30 border-border/60 text-muted-foreground'
+                              }`}
+                            >
+                              <span><strong className="mr-1.5">{opt.key}.</strong> {opt.text}</span>
+                              {isCorrect && <span className="text-emerald-600 font-bold flex items-center gap-1">✓ Correct</span>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {q.explanation && (
+                        <p className="text-[11px] text-muted-foreground italic pt-1 border-t border-border/40">
+                          <strong>Explanation:</strong> {q.explanation}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 
         {/* Footer */}
         <div className="p-4 border-t border-border flex justify-end bg-muted/10 rounded-b-3xl">
-          <button onClick={onClose} className="bg-primary text-white px-6 py-2 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors">
+          <button onClick={onClose} className="bg-primary text-white px-6 py-2 rounded-xl text-xs font-bold hover:bg-primary/90 transition-colors cursor-pointer">
             {t('examPreview.closePreview')}
           </button>
         </div>
@@ -2467,7 +2515,7 @@ export default function AdminDashboard() {
         if (incomingExam && incomingExam.id) {
           const mapped = mapCBTExamToAdminExam(incomingExam);
           setExamsList(prev => {
-            const idx = prev.findIndex(e => e.id === mapped.id);
+            const idx = prev.findIndex(e => Number(e.id) === Number(mapped.id));
             if (idx >= 0) {
               const updated = [...prev];
               updated[idx] = mapped;
@@ -2475,8 +2523,9 @@ export default function AdminDashboard() {
             }
             return [mapped, ...prev];
           });
+        } else {
+          refreshExamsRealtime();
         }
-        refreshExamsRealtime();
         // Delay backend sync to allow the backend time to process the new exam
         // (immediate sync would overwrite locally-added exams with stale backend data)
         setTimeout(() => {
@@ -4490,17 +4539,31 @@ export default function AdminDashboard() {
 
     // 3-EX. MANAGE EXAMS
     if (activeSection === 'exams') {
+      const isPendingExam = (s?: string) => {
+        const norm = (s || '').toUpperCase().replace(/[\s_]+/g, '');
+        return norm === 'PENDING' || norm === 'PENDINGAPPROVAL';
+      };
+      const isApprovedExam = (s?: string) => {
+        const norm = (s || '').toUpperCase().replace(/[\s_]+/g, '');
+        return norm === 'APPROVED';
+      };
+      const isRejectedExam = (s?: string) => {
+        const norm = (s || '').toUpperCase().replace(/[\s_]+/g, '');
+        return norm === 'REJECTED';
+      };
+
       const EXAM_STATUSES = ['Pending Approval', 'Approved', 'Ongoing', 'Completed', 'Cancelled', 'Rejected'] as const;
-      type ExamStatus = typeof EXAM_STATUSES[number];
+      type ExamStatus = typeof EXAM_STATUSES[number] | string;
 
       const statusColor = (s: ExamStatus) => {
+        if (isPendingExam(s)) return 'bg-amber-500/10 text-amber-600 border-amber-200';
+        if (isApprovedExam(s)) return 'bg-emerald-500/10 text-emerald-600 border-emerald-200';
+        if (isRejectedExam(s)) return 'bg-red-500/10 text-red-600 border-red-200';
         switch (s) {
-          case 'Pending Approval': return 'bg-amber-500/10 text-amber-600 border-amber-200';
-          case 'Approved':         return 'bg-emerald-500/10 text-emerald-600 border-emerald-200';
-          case 'Ongoing':          return 'bg-secondary/10 text-secondary border-secondary/20';
-          case 'Completed':        return 'bg-muted text-muted-foreground border-border';
-          case 'Cancelled':        return 'bg-rose-500/10 text-rose-600 border-rose-200';
-          case 'Rejected':         return 'bg-red-500/10 text-red-600 border-red-200';
+          case 'Ongoing':   return 'bg-secondary/10 text-secondary border-secondary/20';
+          case 'Completed': return 'bg-muted text-muted-foreground border-border';
+          case 'Cancelled': return 'bg-rose-500/10 text-rose-600 border-rose-200';
+          default:          return 'bg-amber-500/10 text-amber-600 border-amber-200';
         }
       };
 
@@ -4521,10 +4584,10 @@ export default function AdminDashboard() {
 
       const counts = {
         total:     examsList.length,
-        pending:   examsList.filter(e => e.status === 'Pending Approval').length,
-        approved:  examsList.filter(e => e.status === 'Approved').length,
-        rejected:  examsList.filter(e => e.status === 'Rejected').length,
-        ongoing:   examsList.filter(e => e.status === 'Ongoing').length,
+        pending:   examsList.filter(e => isPendingExam(e.status)).length,
+        approved:  examsList.filter(e => isApprovedExam(e.status)).length,
+        rejected:  examsList.filter(e => isRejectedExam(e.status)).length,
+        ongoing:   examsList.filter(e => e.status === 'Ongoing' || e.status === 'ACTIVE').length,
       };
 
       // Helper to render exam card grid
@@ -4582,32 +4645,32 @@ export default function AdminDashboard() {
                   <FileText className="w-3.5 h-3.5" /> {t('exams.preview')}
                 </button>
 
-                {exam.status === 'Pending Approval' && (
+                {isPendingExam(exam.status) && (
                   <>
                     <button
                       onClick={() => handleApprove(exam.id)}
-                      className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm"
+                      className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm cursor-pointer"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" /> {t('exams.approve')}
                     </button>
                     <button
                       onClick={() => handleReject(exam.id)}
-                      className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 transition-colors"
+                      className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                     >
                       <Ban className="w-3.5 h-3.5" /> {t('exams.reject')}
                     </button>
                   </>
                 )}
 
-                {exam.status === 'Approved' && (
+                {isApprovedExam(exam.status) && (
                   <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
                     <CheckCircle2 className="w-4 h-4" /> Approved for CBT
                   </span>
                 )}
-                {exam.status === 'Rejected' && (
+                {isRejectedExam(exam.status) && (
                   <button
                     onClick={() => handleApprove(exam.id)}
-                    className="text-xs font-bold text-rose-600 hover:underline"
+                    className="text-xs font-bold text-rose-600 hover:underline cursor-pointer"
                   >
                     {t('exams.reApprove')}
                   </button>
@@ -4769,9 +4832,9 @@ export default function AdminDashboard() {
                   </button>
                 </div>
                 {renderExamCardsGrid(examsList.filter(e => {
-                  if (examRepoFilter === 'pending') return e.status === 'Pending Approval';
-                  if (examRepoFilter === 'approved') return e.status === 'Approved';
-                  if (examRepoFilter === 'rejected') return e.status === 'Rejected';
+                  if (examRepoFilter === 'pending') return isPendingExam(e.status);
+                  if (examRepoFilter === 'approved') return isApprovedExam(e.status);
+                  if (examRepoFilter === 'rejected') return isRejectedExam(e.status);
                   return true;
                 }))}
               </div>
@@ -4801,7 +4864,7 @@ export default function AdminDashboard() {
                   </button>
                 </div>
 
-                {renderExamCardsGrid(examsList.filter(e => e.status === 'Pending Approval'))}
+                {renderExamCardsGrid(examsList.filter(e => isPendingExam(e.status)))}
               </div>
             )}
 
@@ -4986,7 +5049,11 @@ export default function AdminDashboard() {
         const matchType = !selectedExamType || selectedExamType === 'All' || e.type === selectedExamType || (selectedExamType === 'Test' && e.rawAssessmentType === 'TEST') || (selectedExamType === 'Exam' && e.rawAssessmentType === 'EXAM');
         const q = userSearch.toLowerCase();
         const matchSearch = !q || e.title.toLowerCase().includes(q) || e.subject.toLowerCase().includes(q);
-        const matchStatus = examFilterStatus === 'All' || e.status === examFilterStatus;
+        const matchStatus = examFilterStatus === 'All' || 
+          e.status === examFilterStatus || 
+          (examFilterStatus === 'Pending Approval' && isPendingExam(e.status)) ||
+          (examFilterStatus === 'Approved' && isApprovedExam(e.status)) ||
+          (examFilterStatus === 'Rejected' && isRejectedExam(e.status));
         return matchClass && matchStream && matchType && matchSearch && matchStatus;
       });
 
