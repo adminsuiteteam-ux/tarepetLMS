@@ -175,7 +175,24 @@ export async function syncNotificationsWithBackend(role: NotifRole): Promise<voi
 
         const existing = getAll();
         const otherRoles = existing.filter(n => n.role !== role);
-        setAll([...filteredNotifs, ...otherRoles]);
+
+        // ★ Preserve locally-added notifications (client-generated IDs) that
+        //   the backend hasn't processed yet. These have IDs starting with
+        //   'notif-' and are kept if they were created within the last 60 seconds.
+        const now = Date.now();
+        const localOnlyNotifs = existing.filter(n => {
+          if (n.role !== role && n.role !== 'ALL') return false;
+          const isLocalId = typeof n.id === 'string' && n.id.startsWith('notif-');
+          if (!isLocalId) return false;
+          // Keep if created less than 60s ago (backend may not have it yet)
+          const createdAt = n.time ? new Date(n.time).getTime() : 0;
+          return (now - createdAt) < 60000;
+        });
+
+        // Merge: server notifications + preserved local notifications + other roles
+        const serverIds = new Set(filteredNotifs.map(n => n.id));
+        const uniqueLocalNotifs = localOnlyNotifs.filter(n => !serverIds.has(n.id));
+        setAll([...uniqueLocalNotifs, ...filteredNotifs, ...otherRoles]);
         notifyListeners();
       }
     }

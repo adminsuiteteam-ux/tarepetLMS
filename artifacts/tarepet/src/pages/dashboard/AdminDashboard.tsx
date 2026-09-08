@@ -2477,7 +2477,11 @@ export default function AdminDashboard() {
           });
         }
         refreshExamsRealtime();
-        syncExamsWithBackend().then(res => setExamsList(res.map(mapCBTExamToAdminExam)));
+        // Delay backend sync to allow the backend time to process the new exam
+        // (immediate sync would overwrite locally-added exams with stale backend data)
+        setTimeout(() => {
+          syncExamsWithBackend().then(res => setExamsList(res.map(mapCBTExamToAdminExam))).catch(() => {});
+        }, 3000);
 
         if (event.type === 'EXAM_CREATED' && event.payload?.exam) {
           const ex = event.payload.exam;
