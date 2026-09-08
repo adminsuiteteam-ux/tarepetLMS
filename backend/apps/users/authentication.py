@@ -43,3 +43,20 @@ class GracefulJWTAuthentication(JWTAuthentication):
         except (InvalidToken, AuthenticationFailed, Exception):
             return None
 
+
+try:
+    from drf_spectacular.extensions import OpenApiAuthenticationExtension
+
+    class GracefulJWTScheme(OpenApiAuthenticationExtension):
+        target_class = 'apps.users.authentication.GracefulJWTAuthentication'
+        name = 'jwtAuth'
+
+        def get_security_definition(self, auto_schema):
+            return {
+                'type': 'http',
+                'scheme': 'bearer',
+                'bearerFormat': 'JWT',
+            }
+except ImportError:
+    pass
+
