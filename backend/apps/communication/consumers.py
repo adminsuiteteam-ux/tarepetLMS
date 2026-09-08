@@ -63,8 +63,8 @@ class LiveEventsConsumer(AsyncJsonWebsocketConsumer):
             except Exception:
                 payload = {}
 
-        # 1. Persist Notifications to Database
-        if msg_type in ['NOTIFICATION_RECEIVED', 'EXAM_CREATED', 'EXAM_APPROVED', 'EXAM_ACTIVATED', 'EXAM_REJECTED']:
+        # 1. Persist Notifications to Database (only genuine notifications with proper titles and messages)
+        if msg_type == 'NOTIFICATION_RECEIVED':
             await self._save_notification(msg_type, payload or content)
 
         # 2. Persist Activities to Database
@@ -90,15 +90,19 @@ class LiveEventsConsumer(AsyncJsonWebsocketConsumer):
     def _save_notification(self, msg_type: str, data: dict):
         try:
             from apps.communication.models import Notification
-            title = data.get('title') or f"Update: {msg_type}"
-            message = data.get('message') or data.get('detail') or str(data)
+            title = data.get('title')
+            message = data.get('message') or data.get('detail')
+            # Never save notifications without human-readable title and message,
+            # and never save raw python dict/object dumps
+            if not title or not message or isinstance(message, (dict, list)):
+                return
             ntype = data.get('type') or data.get('notification_type') or 'info'
-            role = data.get('recipientRole') or data.get('recipient_role') or 'ALL'
+            role = data.get('recipientRole') or data.get('recipient_role') or data.get('role') or 'ALL'
             Notification.objects.create(
-                title=title[:255],
-                message=message,
-                notification_type=ntype[:50],
-                recipient_role=role[:50]
+                title=str(title)[:255],
+                message=str(message),
+                notification_type=str(ntype)[:50],
+                recipient_role=str(role)[:50]
             )
         except Exception as e:
             logger.debug("Failed to persist notification from WebSocket: %s", e)

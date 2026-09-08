@@ -62,9 +62,16 @@ function saveClearAllTimestamps(ts: Record<string, number>) {
 let _dismissedIds = loadDismissedIds();
 let _clearAllTimestamps = loadClearAllTimestamps();
 
-/** Returns true if a notification should be hidden (was dismissed or cleared). */
-function isDismissed(n: { id: string; role?: string; time?: string }): boolean {
+/** Returns true if a notification should be hidden (was dismissed, cleared, or malformed raw data dump). */
+function isDismissed(n: { id: string; role?: string; time?: string; title?: string; message?: string }): boolean {
   if (_dismissedIds.has(n.id)) return true;
+
+  // Filter out any raw JSON dictionary dumps or unformatted internal event updates
+  const title = String(n.title || '');
+  const message = String(n.message || '');
+  if (title.startsWith('Update: EXAM_') || title === 'Update: UNKNOWN') return true;
+  if (message.startsWith('{') && (message.includes("'exam'") || message.includes('"exam"'))) return true;
+
   // Check role-level "clear all" timestamp
   const role = n.role || 'ALL';
   const clearedAt = _clearAllTimestamps[role];

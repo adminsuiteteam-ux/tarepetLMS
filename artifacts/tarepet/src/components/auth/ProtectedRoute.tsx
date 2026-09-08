@@ -19,6 +19,8 @@ const translations: Record<string, string> = {
 const t = (key: string): string =>
   Object.prototype.hasOwnProperty.call(translations, key) ? translations[key] : key;
 
+import LoadingScreen from '@/components/ui/LoadingScreen';
+
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   allowedRoles,
@@ -27,14 +29,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const [, setLocation] = useLocation();
 
   if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="text-sm font-medium text-muted-foreground">{t('authenticating_session')}</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message={t('authenticating_session')} fullScreen={true} />;
   }
 
   if (!isAuthenticated) {

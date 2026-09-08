@@ -36,17 +36,12 @@ const CBTApproval = lazy(() => import('@/pages/dashboard/CBTApproval'));
 const SearchPage = lazy(() => import('@/pages/search-page'));
 const NotificationsPage = lazy(() => import('@/pages/notifications-page'));
 
+import LoadingScreen from '@/components/ui/LoadingScreen';
+
 const queryClient = new QueryClient();
 
 function PageLoadingFallback() {
-  return (
-    <div className="min-h-[50vh] flex items-center justify-center p-8">
-      <div className="flex flex-col items-center gap-3">
-        <div className="w-8 h-8 border-3 border-emerald-500/20 border-t-emerald-600 rounded-full animate-spin" />
-        <p className="text-xs text-muted-foreground font-medium animate-pulse">Loading...</p>
-      </div>
-    </div>
-  );
+  return <LoadingScreen message="Loading Tarepet..." fullScreen={true} />;
 }
 
 function PublicRoute({ component: Component }: { component: React.ComponentType }) {
