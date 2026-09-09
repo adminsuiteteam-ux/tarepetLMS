@@ -489,22 +489,50 @@ export default function CBTBuilder() {
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'DRAFT' | 'PENDING' | 'APPROVED'>('ALL');
 
   const handleSubmitForApproval = async () => {
-    if (!selectedExamId) {
-      showAlert({
-        title: 'No Exam Selected',
-        message: 'Please select or create an exam first before submitting.',
-        type: 'warning',
-      });
-      return;
-    }
-    const allExams = getStoredExams();
-    let ex = allExams.find(e => Number(e.id) === Number(selectedExamId) || String(e.id) === String(selectedExamId))
-          || exams.find(e => Number(e.id) === Number(selectedExamId) || String(e.id) === String(selectedExamId));
+    // ── Resolve the exam object ──────────────────────────────────────────
+    // Priority: stored exams (by ID) → in-memory state → reconstruct from form
+    const resolveExam = () => {
+      if (selectedExamId) {
+        const allExams = getStoredExams();
+        const fromStore = allExams.find(e =>
+          Number(e.id) === Number(selectedExamId) || String(e.id) === String(selectedExamId)
+        ) || exams.find(e =>
+          Number(e.id) === Number(selectedExamId) || String(e.id) === String(selectedExamId)
+        );
+        if (fromStore) return fromStore;
+      }
+      // If we have questions typed in memory but no exam found by ID (e.g. after
+      // backend replaced temp ID and React state hasn't updated yet), build a
+      // lightweight exam object from the current form fields so submission can proceed.
+      if (questions.length > 0 || form.title) {
+        return {
+          id: selectedExamId ?? Date.now(),
+          title: form.title || 'Untitled Exam',
+          description: form.description || '',
+          instructions: form.instructions || '',
+          course_code: form.course || 'ENG-101',
+          course_name: form.course || 'English Language',
+          class: form.class || 'SS1',
+          stream: form.stream || 'Science',
+          assessment_type: (form.assessment_type || 'TEST') as any,
+          term: form.term || '1ST_TERM',
+          duration_minutes: form.duration_minutes || 45,
+          questions_per_page: form.questions_per_page || 2,
+          teacher_name: user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() : 'Teacher',
+          status: 'DRAFT' as any,
+          questions: questions || [],
+        };
+      }
+      return null;
+    };
+
+    const ex = resolveExam();
+
     if (!ex) {
       showAlert({
-        title: 'Exam Not Found',
-        message: 'Could not find the target exam paper. Please select the exam from the list and try again.',
-        type: 'error',
+        title: 'No Exam Selected',
+        message: 'Please select or create an exam first, then add questions before submitting.',
+        type: 'warning',
       });
       return;
     }

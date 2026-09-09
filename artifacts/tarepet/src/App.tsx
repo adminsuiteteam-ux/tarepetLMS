@@ -14,27 +14,52 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import Home from '@/pages/home';
 import DashboardRedirect from '@/pages/dashboard/DashboardRedirect';
 
+/**
+ * lazyWithRetry: wraps React.lazy with automatic chunk-load-failure recovery.
+ * When a deployment changes asset hashes, old cached chunk references break.
+ * This helper retries the import once, then forces a full page reload so users
+ * are never stuck on the "Failed to fetch dynamically imported module" crash.
+ */
+function lazyWithRetry<T extends React.ComponentType<any>>(
+  factory: () => Promise<{ default: T }>
+) {
+  return lazy(() =>
+    factory().catch((err: any) => {
+      const reloadKey = `chunk_reload_${factory.toString().slice(0, 60)}`;
+      const hasReloaded = sessionStorage.getItem(reloadKey);
+      if (!hasReloaded) {
+        sessionStorage.setItem(reloadKey, '1');
+        window.location.reload();
+        // Return a never-resolving promise while reload happens
+        return new Promise(() => {}) as any;
+      }
+      // Already tried reload – surface the error so the error boundary catches it
+      throw err;
+    })
+  );
+}
+
 // Lazy-loaded secondary public pages
-const About = lazy(() => import('@/pages/about'));
-const Programs = lazy(() => import('@/pages/programs'));
-const Admissions = lazy(() => import('@/pages/admissions'));
-const Blog = lazy(() => import('@/pages/blog'));
-const Contact = lazy(() => import('@/pages/contact'));
-const Gallery = lazy(() => import('@/pages/gallery'));
-const Events = lazy(() => import('@/pages/events'));
-const SignIn = lazy(() => import('@/pages/sign-in'));
+const About = lazyWithRetry(() => import('@/pages/about'));
+const Programs = lazyWithRetry(() => import('@/pages/programs'));
+const Admissions = lazyWithRetry(() => import('@/pages/admissions'));
+const Blog = lazyWithRetry(() => import('@/pages/blog'));
+const Contact = lazyWithRetry(() => import('@/pages/contact'));
+const Gallery = lazyWithRetry(() => import('@/pages/gallery'));
+const Events = lazyWithRetry(() => import('@/pages/events'));
+const SignIn = lazyWithRetry(() => import('@/pages/sign-in'));
 
 // Lazy-loaded authenticated dashboard suites
-const AdminDashboard = lazy(() => import('@/pages/dashboard/AdminDashboard'));
-const TeacherDashboard = lazy(() => import('@/pages/dashboard/TeacherDashboard'));
-const TeacherProfile = lazy(() => import('@/pages/dashboard/TeacherProfile'));
-const StudentDashboard = lazy(() => import('@/pages/dashboard/StudentDashboard'));
-const ParentDashboard = lazy(() => import('@/pages/dashboard/ParentDashboard'));
-const CBTExam = lazy(() => import('@/pages/dashboard/CBTExam'));
-const CBTBuilder = lazy(() => import('@/pages/dashboard/CBTBuilder'));
-const CBTApproval = lazy(() => import('@/pages/dashboard/CBTApproval'));
-const SearchPage = lazy(() => import('@/pages/search-page'));
-const NotificationsPage = lazy(() => import('@/pages/notifications-page'));
+const AdminDashboard = lazyWithRetry(() => import('@/pages/dashboard/AdminDashboard'));
+const TeacherDashboard = lazyWithRetry(() => import('@/pages/dashboard/TeacherDashboard'));
+const TeacherProfile = lazyWithRetry(() => import('@/pages/dashboard/TeacherProfile'));
+const StudentDashboard = lazyWithRetry(() => import('@/pages/dashboard/StudentDashboard'));
+const ParentDashboard = lazyWithRetry(() => import('@/pages/dashboard/ParentDashboard'));
+const CBTExam = lazyWithRetry(() => import('@/pages/dashboard/CBTExam'));
+const CBTBuilder = lazyWithRetry(() => import('@/pages/dashboard/CBTBuilder'));
+const CBTApproval = lazyWithRetry(() => import('@/pages/dashboard/CBTApproval'));
+const SearchPage = lazyWithRetry(() => import('@/pages/search-page'));
+const NotificationsPage = lazyWithRetry(() => import('@/pages/notifications-page'));
 
 import LoadingScreen from '@/components/ui/LoadingScreen';
 
