@@ -208,11 +208,20 @@ export async function syncNotificationsWithBackend(role: NotifRole): Promise<voi
   }
 }
 
+// ── Role matching helper ──────────────────────────────────────────────────────
+function matchesRole(notifRole?: string, targetRole?: string): boolean {
+  if (!notifRole || !targetRole) return true;
+  const nr = String(notifRole).toUpperCase().trim();
+  const tr = String(targetRole).toUpperCase().trim();
+  return nr === 'ALL' || nr === tr;
+}
+
 // ── Public API ────────────────────────────────────────────────────────────────
 
 export function getNotificationsForRole(role: NotifRole): Notification[] {
+  const targetRole = (role || '').toUpperCase();
   return getAll()
-    .filter(n => n.role === role || n.role === 'ALL')
+    .filter(n => matchesRole(n.role, targetRole))
     .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
 }
 
@@ -221,7 +230,8 @@ export function getUnreadCount(role: NotifRole): number {
 }
 
 export function markAsRead(id: string) {
-  const updated = getAll().map(n => n.id === id ? { ...n, read: true } : n);
+  const sId = String(id);
+  const updated = getAll().map(n => String(n.id) === sId ? { ...n, read: true } : n);
   setAll(updated);
   notifyListeners();
   authClient.post(`/communication/notifications/${id}/mark_read/`).catch(() =>
@@ -230,7 +240,13 @@ export function markAsRead(id: string) {
 }
 
 export function markAllAsRead(role: NotifRole) {
-  const updated = getAll().map(n => n.role === role ? { ...n, read: true } : n);
+  const targetRole = (role || '').toUpperCase();
+  const updated = getAll().map(n => {
+    if (matchesRole(n.role, targetRole)) {
+      return { ...n, read: true };
+    }
+    return n;
+  });
   setAll(updated);
   notifyListeners();
   authClient.post(`/communication/notifications/mark_all_read/`, { role }).catch(() =>
@@ -239,11 +255,12 @@ export function markAllAsRead(role: NotifRole) {
 }
 
 export function clearNotification(id: string) {
+  const sId = String(id);
   // ★ Persist the dismissed ID so it survives refresh + backend re-sync
-  _dismissedIds.add(id);
+  _dismissedIds.add(sId);
   saveDismissedIds(_dismissedIds);
 
-  setAll(getAll().filter(n => n.id !== id));
+  setAll(getAll().filter(n => String(n.id) !== sId));
   notifyListeners();
   authClient.delete(`/communication/notifications/${id}/`).catch(() =>
     authClient.delete(`/notifications/${id}/`).catch(() => {})
@@ -251,20 +268,130 @@ export function clearNotification(id: string) {
 }
 
 export function clearAllNotifications(role: NotifRole) {
+  const targetRole = (role || '').toUpperCase();
   // ★ Record the "clear all" timestamp for this role
   _clearAllTimestamps[role] = Date.now();
+  if (targetRole !== role) _clearAllTimestamps[targetRole] = Date.now();
   saveClearAllTimestamps(_clearAllTimestamps);
 
-  // Also add every current notification for this role to the dismissed set
-  const toClear = getAll().filter(n => n.role === role);
-  toClear.forEach(n => _dismissedIds.add(n.id));
+  // Also add every current notification for this role (or ALL) to the dismissed set
+  const allNotifs = getAll();
+  const toClear = allNotifs.filter(n => matchesRole(n.role, targetRole));
+  toClear.forEach(n => _dismissedIds.add(String(n.id)));
   saveDismissedIds(_dismissedIds);
 
-  setAll(getAll().filter(n => n.role !== role));
+  setAll(allNotifs.filter(n => !matchesRole(n.role, targetRole)));
   notifyListeners();
   authClient.post(`/communication/notifications/clear-all/`, { role }).catch(() =>
     authClient.post(`/notifications/clear-all/`, { role }).catch(() => {})
   );
+}
+
+/**
+ * Intelligently resolves the target application URL for any notification
+ * based on explicit actionUrl or keywords in its type, title, message, and the user's role.
+ */
+export function resolveNotificationUrl(n: Notification, userRole?: string): string {
+  // 1. Explicit actionUrl
+  if (n.actionUrl && typeof n.actionUrl === 'string' && n.actionUrl.trim() !== '') {
+    return n.actionUrl;
+  }
+
+  const role = (userRole || n.role || '').toUpperCase();
+  const text = `${n.title || ''} ${n.message || ''} ${n.type || ''}`.toLowerCase();
+
+  // 2. Exam / CBT / Test / Assessment / Approval
+  if (
+    n.type === 'exam' ||
+    text.includes('exam') ||
+    text.includes('cbt') ||
+    text.includes('assessment') ||
+    text.includes('test') ||
+    text.includes('question')
+  ) {
+    if (role === 'ADMIN') {
+      if (text.includes('pending') || text.includes('approval') || text.includes('submitted') || text.includes('created')) {
+        return '/dashboard/cbt-approval';
+      }
+      return '/dashboard/admin?section=exams';
+    }
+    if (role === 'TEACHER') return '/dashboard/cbt-builder';
+    if (role === 'STUDENT') return '/dashboard/cbt-exam';
+    if (role === 'PARENT') return '/dashboard/parent';
+    return '/dashboard/cbt-approval';
+  }
+
+  // 3. Finance / School Fees / Tuition / Payment
+  if (
+    n.type === 'fee' ||
+    text.includes('fee') ||
+    text.includes('tuition') ||
+    text.includes('payment') ||
+    text.includes('receipt') ||
+    text.includes('bill') ||
+    text.includes('bursar')
+  ) {
+    if (role === 'ADMIN') return '/dashboard/admin?section=finance';
+    if (role === 'PARENT') return '/dashboard/parent';
+    if (role === 'STUDENT') return '/dashboard/student';
+    return '/dashboard/admin?section=finance';
+  }
+
+  // 4. Attendance / Absence / Roll Call
+  if (
+    n.type === 'attendance' ||
+    text.includes('attendance') ||
+    text.includes('absent') ||
+    text.includes('present') ||
+    text.includes('roll call')
+  ) {
+    if (role === 'ADMIN') return '/dashboard/admin?section=attendance';
+    if (role === 'TEACHER') return '/dashboard/teacher';
+    if (role === 'PARENT') return '/dashboard/parent';
+    if (role === 'STUDENT') return '/dashboard/student';
+    return '/dashboard/admin?section=attendance';
+  }
+
+  // 5. Students / Enrollment / Admissions
+  if (
+    text.includes('student') ||
+    text.includes('admission') ||
+    text.includes('enroll')
+  ) {
+    if (role === 'ADMIN') return '/dashboard/admin?section=students';
+    return '/dashboard/student';
+  }
+
+  // 6. Staff / Teachers / Payroll
+  if (
+    text.includes('teacher') ||
+    text.includes('staff') ||
+    text.includes('payroll') ||
+    text.includes('salary')
+  ) {
+    if (role === 'ADMIN') return '/dashboard/admin?section=staff';
+    return '/dashboard/teacher';
+  }
+
+  // 7. Timetable / Schedule / Classes
+  if (
+    text.includes('timetable') ||
+    text.includes('schedule') ||
+    text.includes('class')
+  ) {
+    if (role === 'ADMIN') return '/dashboard/admin?section=classes';
+    if (role === 'TEACHER') return '/dashboard/teacher';
+    if (role === 'STUDENT') return '/dashboard/student';
+    return '/dashboard/admin?section=classes';
+  }
+
+  // 8. Default fallback per role
+  if (role === 'ADMIN') return '/dashboard/admin';
+  if (role === 'TEACHER') return '/dashboard/teacher';
+  if (role === 'STUDENT') return '/dashboard/student';
+  if (role === 'PARENT') return '/dashboard/parent';
+
+  return '/dashboard/notifications';
 }
 
 export function addNotification(notif: Omit<Notification, 'id' | 'read' | 'time'>) {

@@ -26,6 +26,7 @@ import {
   clearAllNotifications,
   subscribeToNotifications,
   syncNotificationsWithBackend,
+  resolveNotificationUrl,
   type NotifRole,
   type Notification,
 } from '@/lib/notifications-store';
@@ -290,14 +291,17 @@ export default function NotificationsPage() {
                 key={n.id}
                 onClick={() => {
                   if (!n.read) markAsRead(n.id);
-                  if (n.actionUrl) setLocation(n.actionUrl);
+                  const target = resolveNotificationUrl(n, selectedRole);
+                  if (target.includes('section=')) {
+                    const match = target.match(/section=([a-zA-Z0-9_-]+)/);
+                    if (match && match[1]) {
+                      window.dispatchEvent(new CustomEvent('admin-navigate-section', { detail: { section: match[1] } }));
+                    }
+                  }
+                  setLocation(target);
                 }}
-                className={`p-5 rounded-2xl border transition-all flex items-start justify-between gap-4 relative group ${
-                  n.actionUrl ? 'cursor-pointer' : 'cursor-default'
-                } ${
+                className={`p-5 rounded-2xl border transition-all flex items-start justify-between gap-4 relative group cursor-pointer hover:shadow-md hover:scale-[1.005] ${
                   n.read ? 'bg-card border-border hover:border-muted-foreground/30' : 'bg-emerald-500/[0.04] border-emerald-500/30 shadow-xs'
-                } ${
-                  n.actionUrl ? 'hover:shadow-md hover:scale-[1.005]' : ''
                 }`}
               >
                 <div className="flex items-start gap-3.5 min-w-0">
@@ -324,15 +328,13 @@ export default function NotificationsPage() {
                     <p className="text-xs text-muted-foreground leading-relaxed">{n.message}</p>
 
                     {/* Actionable CTA */}
-                    {n.actionUrl && (
-                      <div className={`inline-flex items-center gap-1 mt-2 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full transition-all ${
-                        n.read
-                          ? 'bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'
-                          : 'bg-emerald-500/10 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white'
-                      }`}>
-                        Take Action <ChevronRight className="w-3 h-3" />
-                      </div>
-                    )}
+                    <div className={`inline-flex items-center gap-1 mt-2 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full transition-all ${
+                      n.read
+                        ? 'bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'
+                        : 'bg-emerald-500/10 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white'
+                    }`}>
+                      Click to Open <ChevronRight className="w-3 h-3" />
+                    </div>
                   </div>
                 </div>
 

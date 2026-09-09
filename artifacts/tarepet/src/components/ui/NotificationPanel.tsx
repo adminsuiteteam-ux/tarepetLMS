@@ -10,6 +10,7 @@ import {
   clearAllNotifications,
   subscribeToNotifications,
   syncNotificationsWithBackend,
+  resolveNotificationUrl,
   type NotifRole,
   type Notification,
 } from '@/lib/notifications-store';
@@ -159,24 +160,38 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ role }) =>
 
   const handleBellClick = () => setOpen(prev => !prev);
 
-  const handleMarkAllRead = () => markAllAsRead(role);
+  const handleMarkAllRead = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    markAllAsRead(role);
+    syncNotifs();
+  };
 
-  const handleClearAll = () => {
+  const handleClearAll = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
     clearAllNotifications(role);
-    setOpen(false);
+    syncNotifs();
   };
 
   const handleItemClick = (n: Notification) => {
     if (!n.read) markAsRead(n.id);
-    if (n.actionUrl) {
-      setOpen(false);
-      setLocation(n.actionUrl);
+    const targetUrl = resolveNotificationUrl(n, role);
+    setOpen(false);
+
+    // If navigating within admin dashboard, dispatch event so active tab updates instantly
+    if (targetUrl.includes('section=')) {
+      const match = targetUrl.match(/section=([a-zA-Z0-9_-]+)/);
+      if (match && match[1]) {
+        window.dispatchEvent(new CustomEvent('admin-navigate-section', { detail: { section: match[1] } }));
+      }
     }
+
+    setLocation(targetUrl);
   };
 
   const handleRemove = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     clearNotification(id);
+    syncNotifs();
   };
 
   return (
@@ -189,7 +204,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ role }) =>
         aria-label="Open notifications"
         aria-haspopup="true"
         aria-expanded={open}
-        className="relative p-2 rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+        className="relative p-2 rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer"
       >
         <Bell className={`w-5 h-5 transition-all ${open ? 'text-primary' : ''}`} />
         {unreadCount > 0 && (
@@ -227,27 +242,34 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ role }) =>
             <div className="flex items-center gap-1">
               {unreadCount > 0 && (
                 <button
+                  type="button"
                   onClick={handleMarkAllRead}
                   title="Mark all as read"
-                  className="p-1.5 rounded-lg text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors"
+                  className="p-1.5 rounded-lg text-muted-foreground hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-colors cursor-pointer"
                 >
-                  <CheckCheck className="w-3.5 h-3.5" />
+                  <CheckCheck className="w-4 h-4" />
                 </button>
               )}
               {notifications.length > 0 && (
                 <button
+                  type="button"
                   onClick={handleClearAll}
                   title="Clear all notifications"
-                  className="p-1.5 rounded-lg text-muted-foreground hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+                  className="p-1.5 rounded-lg text-muted-foreground hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors cursor-pointer"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-4 h-4" />
                 </button>
               )}
               <button
-                onClick={() => setOpen(false)}
-                className="p-1.5 rounded-lg text-muted-foreground hover:bg-accent transition-colors"
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setOpen(false);
+                }}
+                title="Close notifications"
+                className="p-1.5 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -264,17 +286,15 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ role }) =>
               </div>
             ) : (
               <ul>
-                {notifications.map((n, i) => {
+                {notifications.map((n) => {
                   const style = getTypeStyle(n.type);
                   const TypeIcon = style.icon;
                   return (
                     <li
                       key={n.id}
                       onClick={() => handleItemClick(n)}
-                      className={`relative flex gap-3 px-4 py-3 transition-colors border-b border-border/50 last:border-0 group
-                        ${n.actionUrl ? 'cursor-pointer' : 'cursor-default'}
-                        ${n.read ? 'bg-card hover:bg-muted/30' : 'bg-primary/[0.03] hover:bg-primary/[0.07]'}
-                        ${n.actionUrl && !n.read ? 'hover:border-l-2 hover:border-l-emerald-500' : ''}
+                      className={`relative flex gap-3 px-4 py-3 transition-colors border-b border-border/50 last:border-0 group cursor-pointer
+                        ${n.read ? 'bg-card hover:bg-muted/40' : 'bg-primary/[0.04] hover:bg-primary/[0.08] border-l-2 border-l-primary'}
                       `}
                     >
                       {/* Icon */}
@@ -283,7 +303,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ role }) =>
                       </div>
 
                       {/* Content */}
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 pr-4">
                         <div className="flex items-start justify-between gap-2">
                           <p className={`text-xs font-bold leading-tight ${n.read ? 'text-muted-foreground' : 'text-foreground'}`}>
                             {n.title}
@@ -293,25 +313,23 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ role }) =>
                           </span>
                         </div>
                         <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{n.message}</p>
+                        
                         {/* Actionable CTA chip */}
-                        {n.actionUrl && (
-                          <span className={`inline-flex items-center gap-0.5 mt-1.5 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full transition-colors
-                            ${n.read ? 'bg-muted text-muted-foreground' : 'bg-emerald-500/10 text-emerald-600 group-hover:bg-emerald-500 group-hover:text-white'}
-                          `}>
-                            Tap to take action <ChevronRight className="w-2.5 h-2.5" />
-                          </span>
-                        )}
+                        <span className={`inline-flex items-center gap-0.5 mt-1.5 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full transition-colors ${
+                          n.read
+                            ? 'bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'
+                            : 'bg-emerald-500/10 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white'
+                        }`}>
+                          Click to open <ChevronRight className="w-2.5 h-2.5" />
+                        </span>
                       </div>
-
-                      {/* Unread dot (hidden when actionUrl present – CTA chip serves same purpose) */}
-                      {!n.read && !n.actionUrl && (
-                        <span className={`absolute right-3 top-3.5 w-1.5 h-1.5 rounded-full ${style.dot} shrink-0`} />
-                      )}
 
                       {/* Remove button */}
                       <button
+                        type="button"
                         onClick={(e) => handleRemove(e, n.id)}
-                        className="absolute right-3 bottom-2.5 hidden group-hover:flex p-1 rounded-md text-muted-foreground hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+                        title="Dismiss"
+                        className="absolute right-2 top-2 p-1 rounded-md text-muted-foreground/50 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors cursor-pointer"
                       >
                         <X className="w-3 h-3" />
                       </button>

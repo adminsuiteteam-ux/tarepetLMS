@@ -2403,6 +2403,30 @@ export default function AdminDashboard() {
     }
     setActiveSectionState(section);
   };
+
+  useEffect(() => {
+    const handleUrlOrEventChange = (e?: any) => {
+      if (e?.detail?.section) {
+        const sec = e.detail.section === 'cbt' ? 'exams' : e.detail.section;
+        setActiveSectionState(sec);
+        return;
+      }
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const urlSec = params.get('section');
+        if (urlSec) {
+          setActiveSectionState(urlSec === 'cbt' ? 'exams' : urlSec);
+        }
+      }
+    };
+    window.addEventListener('popstate', handleUrlOrEventChange);
+    window.addEventListener('admin-navigate-section', handleUrlOrEventChange);
+    return () => {
+      window.removeEventListener('popstate', handleUrlOrEventChange);
+      window.removeEventListener('admin-navigate-section', handleUrlOrEventChange);
+    };
+  }, []);
+
   const [userSubPage, setUserSubPage] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [selectedDivision, setSelectedDivision] = useState<string | null>(null);
