@@ -4545,12 +4545,12 @@ export default function TeacherDashboard() {
         {/* 6. System & App Information */}
         <div className="bg-muted/20 rounded-3xl border border-border p-5 text-xs text-muted-foreground flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="space-y-0.5 text-center sm:text-left">
-            <p className="font-bold text-foreground">{t('teacher.app_version', 'Tarepet Montessori LMS v2.4.0')}</p>
-            <p className="text-[11px]">{t('teacher.school_portal_engine', 'School Portal Engine • Realtime WebSocket Connected')}</p>
+            <p className="font-bold text-foreground">{t('teacher.app_version', 'Tarepet Montessori LMS')}</p>
+            <p className="text-[11px]">{t('teacher.school_portal_engine', 'Tarepet Montessori School • Staff Portal')}</p>
           </div>
           <div className="flex items-center gap-2">
             <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{t('teacher.system_online', 'System Online')}</span>
+            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{t('teacher.system_online', 'System Active')}</span>
           </div>
         </div>
       </div>

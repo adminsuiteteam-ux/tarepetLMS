@@ -4753,46 +4753,26 @@ export default function AdminDashboard() {
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                {/* Real-time WebSocket Connection Indicator */}
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold shadow-sm bg-card">
-                  {wsExamStatus === 'connected' ? (
-                    <span className="inline-flex items-center gap-1.5 text-emerald-600 font-bold">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                      WS Live Synced
-                    </span>
-                  ) : wsExamStatus === 'connecting' ? (
-                    <span className="inline-flex items-center gap-1.5 text-amber-600 font-semibold">
-                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
-                      Connecting WS...
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 text-muted-foreground font-semibold">
-                      <span className="w-2 h-2 rounded-full bg-muted-foreground"></span>
-                      Local Offline
-                    </span>
-                  )}
-                </div>
-
-                {/* Instant Sync Action */}
+                {/* Refresh Exams Action */}
                 <button
                   onClick={async () => {
                     setIsSyncingExams(true);
                     try {
                       const res = await syncExamsWithBackend();
                       setExamsList(res.map(mapCBTExamToAdminExam));
-                      showAlert?.({ title: 'Exams Synchronized', message: `✅ Live synchronized ${res.length} exam records from server.`, type: 'success' });
+                      showAlert?.({ title: 'Exams Refreshed', message: 'Exam records updated successfully.', type: 'success' });
                     } catch (e) {
-                      showAlert?.({ title: 'Sync Completed', message: 'Local exam records verified.', type: 'info' });
+                      showAlert?.({ title: 'Refresh Completed', message: 'Local exam records verified.', type: 'info' });
                     } finally {
                       setTimeout(() => setIsSyncingExams(false), 500);
                     }
                   }}
                   disabled={isSyncingExams}
                   className="px-3.5 py-2 border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
-                  title="Synchronize exams with live server database"
+                  title="Refresh exams list"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${isSyncingExams ? 'animate-spin' : ''}`} />
-                  {isSyncingExams ? 'Syncing...' : 'Sync Exams Now'}
+                  {isSyncingExams ? 'Refreshing...' : 'Refresh Exams'}
                 </button>
               </div>
             </div>
