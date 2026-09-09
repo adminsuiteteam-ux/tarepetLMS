@@ -65,21 +65,55 @@ export function captureException(error: any, context?: Record<string, any>) {
   }
 }
 
+/** Returns true if this error is a Vite/webpack chunk-load failure (stale hash after deployment). */
+function isChunkLoadError(error: any): boolean {
+  const msg = String(error?.message || error || '');
+  return (
+    msg.includes('Failed to fetch dynamically imported module') ||
+    msg.includes('Importing a module script failed') ||
+    msg.includes('ChunkLoadError') ||
+    msg.includes('Loading chunk') ||
+    (error?.name === 'ChunkLoadError')
+  );
+}
+
+const CHUNK_RELOAD_KEY = 'tarepet_chunk_reload_attempted';
+
 export class SentryErrorBoundary extends React.Component<
   { children: React.ReactNode; fallback?: React.ReactNode },
-  { hasError: boolean; error: any }
+  { hasError: boolean; error: any; isChunkError: boolean }
 > {
   constructor(props: { children: React.ReactNode; fallback?: React.ReactNode }) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, isChunkError: false };
   }
 
   static getDerivedStateFromError(error: any) {
-    return { hasError: true, error };
+    const chunkErr = isChunkLoadError(error);
+    // If this is a chunk error AND we haven't reloaded yet, trigger a silent reload.
+    if (chunkErr && typeof window !== 'undefined') {
+      const alreadyReloaded = sessionStorage.getItem(CHUNK_RELOAD_KEY);
+      if (!alreadyReloaded) {
+        sessionStorage.setItem(CHUNK_RELOAD_KEY, '1');
+        window.location.reload();
+        // Return minimal state — page is reloading so nothing will render
+        return { hasError: false, error: null, isChunkError: true };
+      }
+    }
+    return { hasError: true, error, isChunkError: chunkErr };
   }
 
   componentDidCatch(error: any, errorInfo: any) {
-    captureException(error, errorInfo);
+    if (!isChunkLoadError(error)) {
+      captureException(error, errorInfo);
+    }
+  }
+
+  componentDidMount() {
+    // Clear the reload flag once the app successfully mounts (fresh deployment loaded fine)
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem(CHUNK_RELOAD_KEY);
+    }
   }
 
   render() {
@@ -87,6 +121,34 @@ export class SentryErrorBoundary extends React.Component<
       if (this.props.fallback) {
         return this.props.fallback;
       }
+
+      // Chunk errors that have already retried: show a simpler, friendlier prompt
+      if (this.state.isChunkError) {
+        return (
+          <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50 text-slate-800 font-sans">
+            <div className="max-w-sm w-full p-6 bg-white rounded-3xl shadow-xl border border-slate-200 text-center space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto text-2xl">
+                🔄
+              </div>
+              <h2 className="text-lg font-bold font-serif text-slate-900">Update Available</h2>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                The app has been updated. Please reload to get the latest version.
+              </p>
+              <button
+                onClick={() => {
+                  sessionStorage.removeItem(CHUNK_RELOAD_KEY);
+                  this.setState({ hasError: false, error: null, isChunkError: false });
+                  window.location.reload();
+                }}
+                className="w-full px-5 py-2.5 bg-primary text-white rounded-xl font-bold text-xs hover:bg-primary/90 transition shadow-sm"
+              >
+                Reload & Continue
+              </button>
+            </div>
+          </div>
+        );
+      }
+
       const errMessage = this.state.error?.message || String(this.state.error || '');
       return (
         <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50 text-slate-800 font-sans">
@@ -106,7 +168,7 @@ export class SentryErrorBoundary extends React.Component<
             <div className="flex flex-col sm:flex-row items-center justify-center gap-2 pt-2">
               <button
                 onClick={() => {
-                  this.setState({ hasError: false, error: null });
+                  this.setState({ hasError: false, error: null, isChunkError: false });
                   window.location.reload();
                 }}
                 className="w-full sm:w-auto px-5 py-2.5 bg-primary text-white rounded-xl font-bold text-xs hover:bg-primary/90 transition shadow-sm"

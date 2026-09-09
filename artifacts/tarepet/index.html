@@ -20,7 +20,23 @@
               l.pathname.slice(0, -1) + decoded + l.hash
           );
         }
-      }(window.location))
+      }(window.location));
+
+      // Global interceptor for stale Vite deployment chunks (avoids "Failed to fetch dynamically imported module")
+      window.addEventListener('vite:preloadError', function(event) {
+        event.preventDefault();
+        var key = 'tarepet_chunk_reload_count';
+        var count = parseInt(sessionStorage.getItem(key) || '0', 10);
+        if (count < 2) {
+          sessionStorage.setItem(key, String(count + 1));
+          window.location.reload();
+        }
+      });
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          sessionStorage.removeItem('tarepet_chunk_reload_count');
+        }, 5000);
+      });
     </script>
     <meta name="description" content="Tarepet Montessori School — built on Replit. Update this description to reflect the app." />
     <meta name="robots" content="index, follow" />
