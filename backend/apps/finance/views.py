@@ -1,6 +1,18 @@
+import hashlib
+import hmac
+import os
+import re
+import requests
+from django.conf import settings
+from django.db import transaction
+from django.db.models import Q
+from django.utils import timezone
 from rest_framework import viewsets, permissions, status
+from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
+
+from apps.users.permissions import IsAdmin, IsTeacher, IsParent, IsStudent
 from .models import (
     FeeItem, FeeTransaction, IncomeRecord, ExpenseRecord,
     ClassFeeSchedule, DiscountPolicy, StudentFeeAccount
@@ -24,14 +36,14 @@ class FeeItemViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
             return [permissions.AllowAny()]
-        return [permissions.IsAuthenticated()]
+        return [IsAdmin()]
 
     def get_object(self):
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
         lookup_val = self.kwargs[lookup_url_kwarg]
         # Try item_key first, then primary key id
         obj = FeeItem.objects.filter(item_key=lookup_val).first()
-        if not obj and lookup_val.isdigit():
+        if not obj and str(lookup_val).isdigit():
             obj = FeeItem.objects.filter(id=int(lookup_val)).first()
         if not obj:
             from django.http import Http404
@@ -58,9 +70,6 @@ class FeeItemViewSet(viewsets.ModelViewSet):
                     'currency': item.get('currency', 'NGN'),
                     'due_date': item.get('dueDate') or item.get('due_date') or None,
                     'description': item.get('description', ''),
-                    'is_required': item.get('isRequired', False),
-                    'term': item.get('term', '1ST_TERM'),
-                    'session': item.get('session', '2026/2027'),
                 }
             )
             saved_items.append(fee_obj)
@@ -68,66 +77,146 @@ class FeeItemViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class FeeTransactionViewSet(viewsets.ModelViewSet):
-    queryset = FeeTransaction.objects.all()
+class FeeTransactionViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Read-only viewset for transactions scoped strictly to caller's role.
+    Transactions are recorded server-side via PaystackVerifyView or PaystackWebhookView.
+    """
+    queryset = FeeTransaction.objects.all().order_by('-paid_at')
     serializer_class = FeeTransactionSerializer
-
-    def get_permissions(self):
-        return [permissions.AllowAny()]  # allow transactions recording from Paystack checkout
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
-        queryset = super().get_queryset()
+        if not user or not user.is_authenticated:
+            return FeeTransaction.objects.none()
+
+        if getattr(user, 'is_admin', False) or user.is_staff or user.is_superuser:
+            qs = FeeTransaction.objects.all().order_by('-paid_at')
+        elif getattr(user, 'is_parent', False) and hasattr(user, 'parent_profile'):
+            children = user.parent_profile.children.all()
+            c_emails = [c.user.email for c in children if c.user and c.user.email]
+            c_ids = [c.student_id for c in children if c.student_id]
+            qs = FeeTransaction.objects.filter(
+                Q(student_email__in=c_emails) |
+                Q(student__in=children)
+            ).order_by('-paid_at')
+        else:
+            # Student or personal caller
+            q = Q(student_email__iexact=user.email)
+            if hasattr(user, 'student_profile') and user.student_profile:
+                q |= Q(student=user.student_profile)
+            qs = FeeTransaction.objects.filter(q).order_by('-paid_at')
+
         student_id = self.request.query_params.get('student_id')
         if student_id:
-            queryset = queryset.filter(student_id=student_id)
+            qs = qs.filter(student__student_id=student_id)
         email = self.request.query_params.get('email')
         if email:
-            queryset = queryset.filter(student_email=email)
-        return queryset
+            qs = qs.filter(student_email__iexact=email)
+        return qs
 
-    def create(self, request, *args, **kwargs):
-        data = request.data.copy()
-        # Accept camelCase payload fields
-        ref = data.get('reference') or data.get('ref')
-        if not ref:
-            import time
-            ref = f"TX_{int(time.time()*1000)}"
-            data['reference'] = ref
 
-        student_name = data.get('studentName') or data.get('student_name', 'Student')
-        student_email = data.get('studentEmail') or data.get('student_email', '')
-        item_key = data.get('itemId') or data.get('item_key', 'general_fee')
-        item_name = data.get('itemName') or data.get('item_name', 'General School Fee')
-        amount = data.get('amount', 0)
-        channel = data.get('channel', 'paystack')
-        status_val = data.get('status', 'SUCCESS')
-        term = data.get('term', '1ST_TERM')
-        session = data.get('session', '2026/2027')
-        receipt_url = data.get('receiptUrl') or data.get('receipt_url')
+class PaystackVerifyView(APIView):
+    """
+    Authoritative server-side payment verification via Paystack API.
+    Replaces client-side status assertions and offline simulators.
+    """
+    permission_classes = [permissions.IsAuthenticated]
 
-        tx, created = FeeTransaction.objects.update_or_create(
-            reference=ref,
-            defaults={
-                'student_name': student_name,
-                'student_email': student_email,
-                'item_key': item_key,
-                'item_name': item_name,
-                'amount': amount,
-                'channel': channel,
-                'status': status_val,
-                'term': term,
-                'session': session,
-                'receipt_url': receipt_url,
-            }
-        )
-        return Response(FeeTransactionSerializer(tx).data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+    def post(self, request):
+        reference = (request.data.get('reference') or request.data.get('ref') or '').strip()
+        if not reference or not re.fullmatch(r'[A-Za-z0-9_\-]{6,100}', reference):
+            return Response({'detail': 'Invalid transaction reference format.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        secret_key = getattr(settings, 'PAYSTACK_SECRET_KEY', None) or os.getenv('PAYSTACK_SECRET_KEY', '')
+        payload = {}
+
+        if secret_key:
+            try:
+                resp = requests.get(
+                    f'https://api.paystack.co/transaction/verify/{reference}',
+                    headers={'Authorization': f'Bearer {secret_key}'},
+                    timeout=15,
+                )
+                if resp.status_code == 200:
+                    resp_json = resp.json()
+                    payload = resp_json.get('data', {})
+                else:
+                    return Response({'detail': 'Paystack returned non-success response.'}, status=status.HTTP_402_PAYMENT_REQUIRED)
+            except Exception as e:
+                return Response({'detail': f'Gateway network error: {str(e)}'}, status=status.HTTP_502_BAD_GATEWAY)
+
+            if payload.get('status') != 'success':
+                return Response({'detail': 'Payment could not be verified with Paystack.'}, status=status.HTTP_402_PAYMENT_REQUIRED)
+
+            amount_naira = float(payload.get('amount', 0)) / 100.0
+        elif getattr(settings, 'DEBUG', False):
+            # Development fallback when running locally without secret key
+            amount_naira = float(request.data.get('amount') or 0.0)
+            payload = {'status': 'success', 'reference': reference, 'simulated': True}
+        else:
+            return Response({'detail': 'Payment gateway credentials are not configured on server.'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        with transaction.atomic():
+            student_profile = getattr(request.user, 'student_profile', None)
+            student_name = request.data.get('studentName') or request.data.get('student_name') or request.user.get_full_name() or 'Student'
+            item_key = request.data.get('itemId') or request.data.get('item_key', 'general_fee')
+            item_name = request.data.get('itemName') or request.data.get('item_name', 'School Fee Payment')
+            term = request.data.get('term', '1ST_TERM')
+            session = request.data.get('session', '2026/2027')
+            receipt_url = request.data.get('receiptUrl') or request.data.get('receipt_url') or ''
+
+            tx, created = FeeTransaction.objects.update_or_create(
+                reference=reference,
+                defaults={
+                    'student': student_profile,
+                    'student_name': student_name,
+                    'student_email': request.user.email,
+                    'item_key': item_key,
+                    'item_name': item_name,
+                    'amount': amount_naira,
+                    'channel': FeeTransaction.Channel.PAYSTACK,
+                    'status': FeeTransaction.Status.SUCCESS,
+                    'term': term,
+                    'session': session,
+                    'receipt_url': receipt_url,
+                }
+            )
+
+        return Response(FeeTransactionSerializer(tx).data, status=status.HTTP_200_OK)
+
+
+class PaystackWebhookView(APIView):
+    """
+    Webhook endpoint to capture payment settlements asynchronously with HMAC-SHA512 validation.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        signature = request.META.get('HTTP_X_PAYSTACK_SIGNATURE', '')
+        secret_key = getattr(settings, 'PAYSTACK_SECRET_KEY', None) or os.getenv('PAYSTACK_SECRET_KEY', '')
+        if not signature or not secret_key:
+            return Response({'detail': 'Signature header or secret key missing.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        computed_sig = hmac.new(secret_key.encode('utf-8'), request.body, hashlib.sha512).hexdigest()
+        if not hmac.compare_digest(computed_sig, signature):
+            return Response({'detail': 'Invalid webhook signature.'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        event_data = request.data
+        if event_data.get('event') == 'charge.success':
+            data = event_data.get('data', {})
+            ref = data.get('reference')
+            if ref:
+                FeeTransaction.objects.filter(reference=ref).update(status=FeeTransaction.Status.SUCCESS)
+
+        return Response({'status': 'ok'}, status=status.HTTP_200_OK)
 
 
 class IncomeRecordViewSet(viewsets.ModelViewSet):
     queryset = IncomeRecord.objects.all().order_by('-date')
     serializer_class = IncomeRecordSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [IsAdmin]
 
     def perform_create(self, serializer):
         user = self.request.user if self.request.user and self.request.user.is_authenticated else None
@@ -137,7 +226,7 @@ class IncomeRecordViewSet(viewsets.ModelViewSet):
 class ExpenseRecordViewSet(viewsets.ModelViewSet):
     queryset = ExpenseRecord.objects.all().order_by('-date')
     serializer_class = ExpenseRecordSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [IsAdmin]
 
     def perform_create(self, serializer):
         user = self.request.user if self.request.user and self.request.user.is_authenticated else None
@@ -147,10 +236,13 @@ class ExpenseRecordViewSet(viewsets.ModelViewSet):
 class ClassFeeScheduleViewSet(viewsets.ModelViewSet):
     queryset = ClassFeeSchedule.objects.all()
     serializer_class = ClassFeeScheduleSerializer
-    permission_classes = [permissions.AllowAny]
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.IsAuthenticated()]
+        return [IsAdmin()]
 
     def get_queryset(self):
-        # Auto-seed if empty
         if not ClassFeeSchedule.objects.exists():
             default_classes = [
                 ('Nursery 1', 'CRECHE_NURSERY', 35000, 5000, 10000, 8000, 3000, 2000),
@@ -160,43 +252,43 @@ class ClassFeeScheduleViewSet(viewsets.ModelViewSet):
                 ('Primary 2', 'PRIMARY', 40000, 6000, 12000, 9000, 3000, 2000),
                 ('Primary 3', 'PRIMARY', 42000, 6000, 12000, 9000, 3000, 2000),
                 ('Primary 4', 'PRIMARY', 42000, 6000, 12000, 9000, 3000, 2000),
-                ('Primary 5', 'PRIMARY', 45000, 6000, 14000, 9000, 3000, 3000),
-                ('Primary 6', 'PRIMARY', 48000, 6000, 14000, 9000, 3000, 5000),
-                ('JSS 1', 'JUNIOR_SECONDARY', 45000, 8000, 15000, 10000, 4000, 3000),
-                ('JSS 2', 'JUNIOR_SECONDARY', 45000, 8000, 15000, 10000, 4000, 3000),
-                ('JSS 3', 'JUNIOR_SECONDARY', 50000, 8000, 15000, 10000, 4000, 10000),
-                ('SS 1', 'SENIOR_SECONDARY', 55000, 10000, 18000, 12000, 5000, 4000),
-                ('SS 2', 'SENIOR_SECONDARY', 55000, 10000, 18000, 12000, 5000, 4000),
-                ('SS 3', 'SENIOR_SECONDARY', 60000, 10000, 18000, 12000, 5000, 15000),
+                ('Primary 5', 'PRIMARY', 45000, 6000, 12000, 9000, 3000, 2000),
+                ('Primary 6', 'PRIMARY', 48000, 6000, 12000, 9000, 3000, 2000),
+                ('JSS 1', 'SECONDARY', 55000, 8000, 15000, 12000, 4000, 3000),
+                ('JSS 2', 'SECONDARY', 55000, 8000, 15000, 12000, 4000, 3000),
+                ('JSS 3', 'SECONDARY', 60000, 8000, 15000, 12000, 4000, 5000),
+                ('SS 1', 'SECONDARY', 65000, 10000, 18000, 14000, 5000, 4000),
+                ('SS 2', 'SECONDARY', 65000, 10000, 18000, 14000, 5000, 4000),
+                ('SS 3', 'SECONDARY', 75000, 10000, 18000, 14000, 5000, 10000),
             ]
-            for cl, div, tuit, dev, bks, unif, pta, exm in default_classes:
+            for c_name, div, tuit, dev, bks, unif, pta, ex in default_classes:
                 ClassFeeSchedule.objects.create(
-                    class_level=cl,
+                    class_name=c_name,
                     division=div,
-                    tuition_fee=tuit,
+                    tuition=tuit,
                     development_levy=dev,
                     books_materials=bks,
                     uniform_sports=unif,
                     pta_medical=pta,
-                    exam_levy=exm,
+                    exam_levy=ex,
                     session='2025/2026',
                     term='2nd Term'
                 )
         return super().get_queryset()
 
-    @action(detail=False, methods=['post'], url_path='bulk-update')
-    def bulk_update(self, request):
-        schedules = request.data if isinstance(request.data, list) else request.data.get('schedules', [])
+    @action(detail=False, methods=['post'], url_path='bulk-save')
+    def bulk_save(self, request):
+        schedules_data = request.data if isinstance(request.data, list) else request.data.get('schedules', [])
         saved = []
-        for s in schedules:
-            cl = s.get('class_level') or s.get('classLevel')
-            if not cl:
+        for s in schedules_data:
+            c_name = s.get('className') or s.get('class_name')
+            if not c_name:
                 continue
             obj, _ = ClassFeeSchedule.objects.update_or_create(
-                class_level=cl,
+                class_name=c_name,
                 defaults={
-                    'division': s.get('division', 'PRIMARY'),
-                    'tuition_fee': s.get('tuition_fee') or s.get('tuitionFee', 40000),
+                    'division': s.get('division', 'SECONDARY'),
+                    'tuition': s.get('tuition', 50000),
                     'development_levy': s.get('development_levy') or s.get('devLevy', 5000),
                     'books_materials': s.get('books_materials') or s.get('booksMaterials', 10000),
                     'uniform_sports': s.get('uniform_sports') or s.get('uniformSports', 8000),
@@ -214,7 +306,11 @@ class ClassFeeScheduleViewSet(viewsets.ModelViewSet):
 class DiscountPolicyViewSet(viewsets.ModelViewSet):
     queryset = DiscountPolicy.objects.all()
     serializer_class = DiscountPolicySerializer
-    permission_classes = [permissions.AllowAny]
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.IsAuthenticated()]
+        return [IsAdmin()]
 
     def get_queryset(self):
         if not DiscountPolicy.objects.exists():
@@ -239,10 +335,26 @@ class DiscountPolicyViewSet(viewsets.ModelViewSet):
 class StudentFeeAccountViewSet(viewsets.ModelViewSet):
     queryset = StudentFeeAccount.objects.all()
     serializer_class = StudentFeeAccountSerializer
-    permission_classes = [permissions.AllowAny]
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.IsAuthenticated()]
+        return [IsAdmin()]
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        user = self.request.user
+        if not user or not user.is_authenticated:
+            return StudentFeeAccount.objects.none()
+
+        if getattr(user, 'is_admin', False) or user.is_staff or user.is_superuser:
+            queryset = super().get_queryset()
+        elif getattr(user, 'is_student', False) and hasattr(user, 'student_profile'):
+            queryset = StudentFeeAccount.objects.filter(student=user.student_profile)
+        elif getattr(user, 'is_parent', False) and hasattr(user, 'parent_profile'):
+            queryset = StudentFeeAccount.objects.filter(student__in=user.parent_profile.children.all())
+        else:
+            return StudentFeeAccount.objects.none()
+
         cls = self.request.query_params.get('class_level')
         if cls and cls != 'ALL':
             queryset = queryset.filter(class_level=cls)

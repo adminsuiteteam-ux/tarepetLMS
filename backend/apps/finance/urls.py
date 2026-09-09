@@ -8,6 +8,8 @@ from .views import (
     ClassFeeScheduleViewSet,
     DiscountPolicyViewSet,
     StudentFeeAccountViewSet,
+    PaystackVerifyView,
+    PaystackWebhookView,
 )
 
 router = DefaultRouter()
@@ -21,5 +23,7 @@ router.register(r'income', IncomeRecordViewSet, basename='income-record')
 router.register(r'expenses', ExpenseRecordViewSet, basename='expense-record')
 
 urlpatterns = [
+    path('paystack/verify/', PaystackVerifyView.as_view(), name='paystack_verify'),
+    path('paystack/webhook/', PaystackWebhookView.as_view(), name='paystack_webhook'),
     path('', include(router.urls)),
 ]

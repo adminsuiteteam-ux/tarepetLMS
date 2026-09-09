@@ -576,8 +576,18 @@ class CBTExamViewSet(viewsets.ModelViewSet):
         exam = self.get_object()
         if exam.status not in ('PUBLISHED', 'ACTIVE', 'APPROVED'):
             return Response({'detail': 'This exam is not active or has not been launched by the teacher yet.'}, status=status.HTTP_400_BAD_REQUEST)
-        student = request.user.student_profile
-        attempt, created = CBTStudentAttempt.objects.get_or_create(exam=exam, student=student)
+        student = getattr(request.user, 'student_profile', None)
+        if not student:
+            from apps.users.models import StudentProfile
+            student, _ = StudentProfile.objects.get_or_create(
+                user=request.user,
+                defaults={'student_id': f'STD-{request.user.id}'}
+            )
+        attempt, created = CBTStudentAttempt.objects.get_or_create(
+            exam=exam,
+            student=student,
+            defaults={'started_at': timezone.now()}
+        )
         if attempt.is_submitted:
             return Response({'detail': 'You have already submitted this exam.'}, status=status.HTTP_400_BAD_REQUEST)
         # Return questions without correct answers
@@ -595,7 +605,13 @@ class CBTExamViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], permission_classes=[IsStudent])
     def save_answer(self, request, pk=None):
         exam = self.get_object()
-        student = request.user.student_profile
+        student = getattr(request.user, 'student_profile', None)
+        if not student:
+            from apps.users.models import StudentProfile
+            student, _ = StudentProfile.objects.get_or_create(
+                user=request.user,
+                defaults={'student_id': f'STD-{request.user.id}'}
+            )
         try:
             attempt = CBTStudentAttempt.objects.get(exam=exam, student=student, is_submitted=False)
         except CBTStudentAttempt.DoesNotExist:
@@ -619,17 +635,33 @@ class CBTExamViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], permission_classes=[IsStudent])
     def submit_attempt(self, request, pk=None):
         exam = self.get_object()
-        student = request.user.student_profile
+        student = getattr(request.user, 'student_profile', None)
+        if not student:
+            from apps.users.models import StudentProfile
+            student, _ = StudentProfile.objects.get_or_create(
+                user=request.user,
+                defaults={'student_id': f'STD-{request.user.id}'}
+            )
         auto = request.data.get('auto_submitted', False)
 
-        try:
-            attempt = CBTStudentAttempt.objects.get(exam=exam, student=student, is_submitted=False)
-        except CBTStudentAttempt.DoesNotExist:
-            return Response({'detail': 'No active attempt found or already submitted.'}, status=status.HTTP_400_BAD_REQUEST)
+        attempt, _ = CBTStudentAttempt.objects.get_or_create(
+            exam=exam,
+            student=student,
+            defaults={'started_at': timezone.now(), 'is_submitted': False}
+        )
 
-        # Save any bulk answers sent with the submission
-        answers_data = request.data.get('answers', [])
-        for ans in answers_data:
+        # Normalize answers (accepts both list of dicts or key-value dictionary)
+        raw_answers = request.data.get('answers', [])
+        normalized_answers = []
+        if isinstance(raw_answers, dict):
+            for q_id, sel in raw_answers.items():
+                normalized_answers.append({'question_id': q_id, 'selected_option': sel})
+        elif isinstance(raw_answers, list):
+            normalized_answers = raw_answers
+
+        for ans in normalized_answers:
+            if not isinstance(ans, dict):
+                continue
             q_id = ans.get('question_id')
             sel = ans.get('selected_option')
             try:
@@ -639,7 +671,7 @@ class CBTExamViewSet(viewsets.ModelViewSet):
                     question=question,
                     defaults={'selected_option': sel},
                 )
-            except CBTQuestion.DoesNotExist:
+            except (CBTQuestion.DoesNotExist, ValueError):
                 continue
 
         # Grade all answers
@@ -649,7 +681,7 @@ class CBTExamViewSet(viewsets.ModelViewSet):
             total_possible += question.points
             try:
                 answer = CBTStudentAnswer.objects.get(attempt=attempt, question=question)
-                is_correct = answer.selected_option == question.correct_option
+                is_correct = bool(answer.selected_option and answer.selected_option == question.correct_option)
                 pts = question.points if is_correct else 0.0
                 answer.is_correct = is_correct
                 answer.points_awarded = pts
@@ -668,27 +700,36 @@ class CBTExamViewSet(viewsets.ModelViewSet):
 
         # Notify teacher if assigned
         if exam.teacher and getattr(exam.teacher, 'user', None):
-            CBTNotification.objects.create(
-                user=exam.teacher.user,
-                title=f'Student Submitted: {exam.title}',
-                message=f'{student.user.get_full_name()} has {"auto-" if auto else ""}submitted "{exam.title}" — Score: {attempt.score}/{attempt.total_possible} ({attempt.percentage}%)',
-                notification_type='EXAM_SUBMITTED',
-                exam=exam,
-            )
+            try:
+                CBTNotification.objects.create(
+                    user=exam.teacher.user,
+                    title=f'Student Submitted: {exam.title}',
+                    message=f'{student.user.get_full_name()} has {"auto-" if auto else ""}submitted "{exam.title}" — Score: {attempt.score}/{attempt.total_possible} ({attempt.percentage}%)',
+                    notification_type='EXAM_SUBMITTED',
+                    exam=exam,
+                )
+            except Exception:
+                pass
 
-        return Response({
-            'detail': 'Exam submitted and graded.',
-            'score': attempt.score,
-            'total_possible': attempt.total_possible,
-            'percentage': attempt.percentage,
+        resp_data = {
+            'detail': 'Exam submitted and graded.' if exam.results_released else 'Exam submitted successfully. Results will be visible once published by your teacher.',
+            'attempt_id': attempt.id,
             'auto_submitted': attempt.auto_submitted,
-        })
+            'submitted_at': attempt.submitted_at,
+        }
+        if exam.results_released:
+            resp_data.update({
+                'score': attempt.score,
+                'total_possible': attempt.total_possible,
+                'percentage': attempt.percentage,
+            })
+        return Response(resp_data)
 
     # ---------- Teacher: View attempts for an exam ----------
     @action(detail=True, methods=['get'], permission_classes=[IsTeacher])
     def attempts(self, request, pk=None):
         exam = self.get_object()
-        attempts = CBTStudentAttempt.objects.filter(exam=exam, is_submitted=True)
+        attempts = CBTStudentAttempt.objects.filter(exam=exam, is_submitted=True).select_related('student__user', 'exam')
         serializer = CBTStudentAttemptSerializer(attempts, many=True)
         return Response(serializer.data)
 
@@ -754,12 +795,18 @@ class CBTAttemptViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_teacher and hasattr(user, 'teacher_profile'):
-            return CBTStudentAttempt.objects.filter(exam__teacher=user.teacher_profile)
-        elif user.is_student and hasattr(user, 'student_profile'):
-            return CBTStudentAttempt.objects.filter(student=user.student_profile)
-        elif user.is_admin:
-            return CBTStudentAttempt.objects.all()
+        exam_id = self.request.query_params.get('exam_id')
+        is_staff_or_admin = getattr(user, 'is_admin', False) or getattr(user, 'is_teacher', False) or user.is_staff or user.is_superuser
+        if is_staff_or_admin:
+            qs = CBTStudentAttempt.objects.filter(is_submitted=True).select_related('student__user', 'exam')
+            if exam_id:
+                qs = qs.filter(exam_id=exam_id)
+            return qs
+        elif hasattr(user, 'student_profile'):
+            qs = CBTStudentAttempt.objects.filter(student=user.student_profile).select_related('student__user', 'exam')
+            if exam_id:
+                qs = qs.filter(exam_id=exam_id)
+            return qs
         return CBTStudentAttempt.objects.none()
 
     @action(detail=True, methods=['post'], permission_classes=[IsTeacher])

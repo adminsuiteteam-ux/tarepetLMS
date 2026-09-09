@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings as django_settings
+from rest_framework.permissions import IsAdminUser
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularSwaggerView,
@@ -27,9 +28,29 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     # OpenAPI Schema & Docs (auth required in production)
-    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
-    path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    path(
+        'api/schema/',
+        SpectacularAPIView.as_view(
+            permission_classes=[IsAdminUser] if not django_settings.DEBUG else []
+        ),
+        name='schema'
+    ),
+    path(
+        'api/docs/',
+        SpectacularSwaggerView.as_view(
+            url_name='schema',
+            permission_classes=[IsAdminUser] if not django_settings.DEBUG else []
+        ),
+        name='swagger-ui'
+    ),
+    path(
+        'api/redoc/',
+        SpectacularRedocView.as_view(
+            url_name='schema',
+            permission_classes=[IsAdminUser] if not django_settings.DEBUG else []
+        ),
+        name='redoc'
+    ),
 
     # API v1 Router — canonical paths only (no duplicate aliases)
     path('api/v1/auth/', include('apps.users.urls')),

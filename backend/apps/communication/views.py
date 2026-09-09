@@ -45,25 +45,40 @@ class ContactMessageViewSet(viewsets.ModelViewSet):
         return [permissions.IsAuthenticated()]
 
 
-class ActivityLogViewSet(viewsets.ModelViewSet):
-    queryset = ActivityLog.objects.all()
+class ActivityLogViewSet(viewsets.ReadOnlyModelViewSet):
+    """Read-only view of system activity logs for authenticated users."""
+    queryset = ActivityLog.objects.all().order_by('-timestamp')
     serializer_class = ActivityLogSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return ActivityLog.objects.all().order_by('-timestamp')[:100]
+        user = self.request.user
+        qs = ActivityLog.objects.all().order_by('-timestamp')
+        if not (getattr(user, 'is_admin', False) or getattr(user, 'role', '') == 'ADMIN' or user.is_staff or user.is_superuser):
+            # Non-admins only see their own activities or general system events
+            qs = qs.filter(user__icontains=user.email)
+        return qs
 
 
 class NotificationViewSet(viewsets.ModelViewSet):
-    queryset = Notification.objects.all()
+    queryset = Notification.objects.all().order_by('-created_at')
     serializer_class = NotificationSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ['create', 'destroy', 'clear_all']:
+            from apps.users.permissions import IsAdmin
+            return [IsAdmin()]
+        return [permissions.IsAuthenticated()]
 
     def get_queryset(self):
-        role = self.request.query_params.get('role')
-        if role:
-            return Notification.objects.filter(recipient_role__in=['ALL', role.upper()])
-        return Notification.objects.all()
+        user = self.request.user
+        qs = Notification.objects.all().order_by('-created_at')
+        if getattr(user, 'is_admin', False) or getattr(user, 'role', '') == 'ADMIN' or user.is_staff or user.is_superuser:
+            return qs
+
+        user_role = getattr(user, 'role', 'ALL')
+        return qs.filter(recipient_role__in=['ALL', user_role])
 
     @action(detail=True, methods=['post'], url_path='mark_read')
     def mark_read(self, request, pk=None):
@@ -74,10 +89,9 @@ class NotificationViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'], url_path='mark_all_read')
     def mark_all_read(self, request):
-        role = request.data.get('role', request.query_params.get('role'))
-        qs = Notification.objects.all()
-        if role:
-            qs = qs.filter(recipient_role__in=['ALL', role.upper()])
+        user = request.user
+        user_role = getattr(user, 'role', 'ALL')
+        qs = Notification.objects.filter(recipient_role__in=['ALL', user_role])
         qs.update(is_read=True)
         return Response({'status': 'all marked as read'}, status=status.HTTP_200_OK)
 

@@ -9,7 +9,7 @@ import { authClient } from "@/lib/api-auth";
 import { layerbaseAuth } from "@/lib/layerbase-auth";
 import { useTranslation } from "@/lib/i18n";
 
-import { getStoredStudents, getStoredTeachers, isAccountDeleted, recordLoginActivity, getAdminPassword, syncTeachersWithBackend, syncStudentsWithBackend } from "@/lib/cbt-store";
+import { isAccountDeleted, recordLoginActivity } from "@/lib/cbt-store";
 import { checkLoginRateLimit, recordFailedLoginAttempt, resetLoginRateLimit } from "@/lib/password-policy";
 import { useCustomDialog } from "@/context/DialogContext";
 
@@ -38,11 +38,6 @@ export default function SignIn() {
   const [isResendingOtp, setIsResendingOtp] = useState(false);
   const [otpSuccessMsg, setOtpSuccessMsg] = useState<string | null>(null);
   const digitInputRefs = useRef<(HTMLInputElement | null)[]>([]);
-
-  useEffect(() => {
-    syncTeachersWithBackend();
-    syncStudentsWithBackend();
-  }, []);
 
   // OTP Countdown timer
   useEffect(() => {
@@ -122,67 +117,11 @@ export default function SignIn() {
         const rolePath = res.data.user.role.toLowerCase();
         setLocation(`/dashboard/${rolePath}`);
         return;
+      } else {
+        setError("Invalid server response during authentication.");
       }
     } catch (err: any) {
-      // Emergency / Dev Universal Passcode Fallback (123456, 000000, 999999) or Offline Mode
-      const isUniversalCode = ['123456', '000000', '999999'].includes(code);
-      if (isUniversalCode || !err.response) {
-        const lowerEmail = email.toLowerCase().trim();
-        const storedTeachers = getStoredTeachers();
-        const rawEntered = email.trim();
-        const matchedTeacher = storedTeachers.find(t => {
-          const tEmail = (t.email || '').toLowerCase().trim();
-          const tStaffId = (t.staffId || '').trim();
-          return (tEmail && lowerEmail === tEmail) || (tStaffId && rawEntered === tStaffId);
-        });
-
-        const role = (pendingRole || (lowerEmail.includes('admin') ? 'ADMIN' : (matchedTeacher ? 'TEACHER' : 'TEACHER'))).toUpperCase();
-        resetLoginRateLimit();
-        recordLoginActivity(email || (role === 'ADMIN' ? 'admin@tarepet.com' : 'teacher@tarepet.com'), role, "SUCCESS");
-
-        if (role === 'TEACHER' && matchedTeacher) {
-          const nameParts = (matchedTeacher.name || 'Teacher Staff').trim().split(' ');
-          const firstName = nameParts[0] || 'Teacher';
-          const lastName = nameParts.slice(1).join(' ') || 'Staff';
-          login('verified_2fa_access_token', 'verified_2fa_refresh_token', {
-            id: matchedTeacher.id,
-            email: matchedTeacher.email || email,
-            first_name: firstName,
-            last_name: lastName,
-            phone: matchedTeacher.phone,
-            role: 'TEACHER',
-            profile: {
-              teacher_id: matchedTeacher.staffId,
-              department: matchedTeacher.department || '',
-              formTeacherOf: matchedTeacher.formTeacherOf || '',
-              form_teacher_of: matchedTeacher.formTeacherOf || '',
-              specialization: matchedTeacher.specialization || '',
-              subjects_taught: matchedTeacher.subjectsAssigned || [],
-              qualifications: matchedTeacher.qualification || '',
-              gender: matchedTeacher.gender || '',
-              dob: matchedTeacher.dob || '',
-              address: matchedTeacher.address || '',
-              bio: matchedTeacher.bio || '',
-              salary: matchedTeacher.salary || '',
-              bank_name: matchedTeacher.bankName || '',
-              account_number: matchedTeacher.accountNumber || '',
-              hire_date: matchedTeacher.joined || '',
-              profileImage: matchedTeacher.profileImage || '',
-            } as any
-          });
-        } else {
-          login('verified_2fa_access_token', 'verified_2fa_refresh_token', {
-            id: 1,
-            email: email || (role === 'ADMIN' ? 'admin@tarepet.com' : 'teacher@tarepet.com'),
-            first_name: role === 'ADMIN' ? 'Tarepet' : 'Educator',
-            last_name: role === 'ADMIN' ? 'Administrator' : 'Staff',
-            role: role as any,
-          });
-        }
-        setLocation(`/dashboard/${role.toLowerCase()}`);
-        return;
-      }
-      const detail = err.response?.data?.detail || "Invalid or expired verification code. Please check your email or use backup code 123456.";
+      const detail = err.response?.data?.detail || err.response?.data?.non_field_errors?.[0] || "Invalid or expired verification code. Please check your email or request a new code.";
       setError(detail);
     } finally {
       setIsVerifyingOtp(false);
@@ -203,9 +142,7 @@ export default function SignIn() {
         setTempToken(res.data.temp_token);
         setOtpCountdown(60);
         setOtpDigits(["", "", "", "", "", ""]);
-        const successText = res.data.debug_code 
-          ? `Fresh verification code dispatched! (Dev Code: ${res.data.debug_code})`
-          : (res.data.detail || "A fresh 6-digit verification code has been dispatched to your email.");
+        const successText = res.data.detail || "A fresh 6-digit verification code has been dispatched to your email.";
         setOtpSuccessMsg(successText);
         digitInputRefs.current[0]?.focus();
       }
@@ -249,46 +186,24 @@ export default function SignIn() {
       return;
     }
 
-    const isTargetAdmin = lowerInput === 'admin@tarepet.com' || cleanInput === 'admin' || lowerInput === 'admin';
-    const isAdminPassword = rawPassword === 'TarepetAdmin@2026!' || rawPassword === 'admin' || rawPassword === 'Admin@2026!';
-
-    // 0a. Live Django REST API Backend Call (handles adaptive 3-day device trust)
     try {
       const res = await authClient.post("/auth/login/", { 
         email: rawInput, 
         password: rawPassword,
         device_token: storedDeviceToken
-      }, { timeout: 5000 });
+      }, { timeout: 10000 });
       
-      // 2FA OTP is paused for future updates per directive
       if (res.data && res.data.requires_otp) {
-        if (res.data.user) {
-          const u = res.data.user;
-          if (
-            isAccountDeleted(u.email) ||
-            isAccountDeleted(u.id) ||
-            isAccountDeleted(u.student_id) ||
-            isAccountDeleted(u.teacher_id) ||
-            isAccountDeleted(u.profile?.student_id) ||
-            isAccountDeleted(u.profile?.teacher_id) ||
-            isAccountDeleted(`${u.first_name || ''} ${u.last_name || ''}`.trim())
-          ) {
-            recordLoginActivity(u.email || rawInput, 'DELETED_ACCOUNT', 'FAILED_ATTEMPT');
-            setError('This account has been deleted or deactivated. Access is denied.');
-            setIsLoading(false);
-            return;
-          }
-
-          recordLoginActivity(res.data.user.email || rawInput, res.data.user.role || 'STAFF', 'SUCCESS');
-          login(res.data.access || 'temp_token_bypass', res.data.refresh || '', res.data.user);
-          const userRole = (res.data.user.role || 'teacher').toLowerCase();
-          setLocation(`/dashboard/${userRole}`);
-          setIsLoading(false);
-          return;
-        }
+        setOtpPending(true);
+        setTempToken(res.data.temp_token || '');
+        setMaskedEmail(res.data.email_masked || res.data.masked_email || rawInput);
+        setPendingRole(res.data.role || '');
+        setOtpCountdown(60);
+        setOtpDigits(["", "", "", "", "", ""]);
+        setIsLoading(false);
+        return;
       }
 
-      // Direct login for recognized trusted devices and Student/Parent roles
       const { access, refresh, user: apiUser, device_token: newDevToken } = res.data;
       if (apiUser && apiUser.role) {
         if (
@@ -309,6 +224,7 @@ export default function SignIn() {
         if (newDevToken && typeof window !== 'undefined') {
           localStorage.setItem('tarepet_device_token', newDevToken);
         }
+        resetLoginRateLimit();
         recordLoginActivity(apiUser.email || rawInput, apiUser.role, 'SUCCESS');
         login(access, refresh, apiUser);
         const userRole = apiUser.role.toLowerCase();
@@ -316,209 +232,19 @@ export default function SignIn() {
         setIsLoading(false);
         return;
       }
+
+      setError('Invalid response from server. Please try again.');
+      setIsLoading(false);
     } catch (apiError: any) {
-      // If API fails or is unreachable, continue to seamless local verification
-    }
-
-    // 1. Check Administrator fallback
-    if (isTargetAdmin) {
-      if (isAdminPassword) {
-        resetLoginRateLimit();
-        recordLoginActivity('admin@tarepet.com', 'ADMIN', 'SUCCESS');
-        login('admin_access_token', 'admin_refresh_token', {
-          id: 1,
-          email: 'admin@tarepet.com',
-          first_name: 'Tarepet',
-          last_name: 'Administrator',
-          role: 'ADMIN',
-        });
-        setLocation('/dashboard/admin');
-        setIsLoading(false);
-        return;
-      } else {
-        recordLoginActivity('admin@tarepet.com', 'ADMIN', 'FAILED_ATTEMPT');
-        setError('Invalid administrator email or password.');
-        setIsLoading(false);
-        return;
-      }
-    }
-
-    let storedTeachers = getStoredTeachers();
-    const findTeacher = (list: typeof storedTeachers) => {
-      return list.find(t => {
-        const tEmail = (t.email || '').toLowerCase().trim();
-        const tStaffId = (t.staffId || '').trim();
-
-        const matchesEmail = Boolean(tEmail && lowerInput === tEmail);
-        const matchesStaffId = Boolean(tStaffId && rawInput === tStaffId);
-
-        return matchesEmail || matchesStaffId;
-      });
-    };
-
-    let matchedTeacher = findTeacher(storedTeachers);
-
-    if (!matchedTeacher) {
-      const syncedTeachers = await syncTeachersWithBackend();
-      matchedTeacher = findTeacher(syncedTeachers);
-    }
-
-    if (matchedTeacher) {
-      if (
-        isAccountDeleted(matchedTeacher.email) ||
-        isAccountDeleted(matchedTeacher.staffId) ||
-        isAccountDeleted(matchedTeacher.id) ||
-        isAccountDeleted(matchedTeacher.name)
-      ) {
-        recordLoginActivity(matchedTeacher.email || rawInput, 'TEACHER', 'FAILED_ATTEMPT');
-        setError('This teacher account has been deleted or deactivated by the Administrator. Access is denied.');
-        setIsLoading(false);
-        return;
-      }
-
-      const expectedPassword = matchedTeacher.password || matchedTeacher.staffId;
-      const isDefaultPassword = rawPassword === matchedTeacher.staffId;
-
-      const isTeacherPasswordValid =
-        rawPassword === expectedPassword ||
-        rawPassword === matchedTeacher.staffId;
-
-      if (!isTeacherPasswordValid) {
-        recordLoginActivity(matchedTeacher.email || rawInput, 'TEACHER', 'FAILED_ATTEMPT');
-        setError('Incorrect password. Please enter your valid account password or assigned Staff ID.');
-        setIsLoading(false);
-        return;
-      }
-
-      const nameParts = matchedTeacher.name.trim().split(' ');
-      const firstName = nameParts[0] || 'Teacher';
-      const lastName = nameParts.slice(1).join(' ') || 'Staff';
-
-      resetLoginRateLimit();
-      recordLoginActivity(matchedTeacher.email || rawInput, 'TEACHER', 'SUCCESS');
-      login('mock_access_token', 'mock_refresh_token', {
-        id: matchedTeacher.id,
-        email: matchedTeacher.email,
-        first_name: firstName,
-        last_name: lastName,
-        phone: matchedTeacher.phone,
-        role: 'TEACHER',
-        profile: {
-          teacher_id: matchedTeacher.staffId,
-          department: matchedTeacher.department || '',
-          formTeacherOf: matchedTeacher.formTeacherOf || '',
-          form_teacher_of: matchedTeacher.formTeacherOf || '',
-          specialization: matchedTeacher.specialization || '',
-          subjects_taught: matchedTeacher.subjectsAssigned || [],
-          qualifications: matchedTeacher.qualification || '',
-          gender: matchedTeacher.gender || '',
-          dob: matchedTeacher.dob || '',
-          address: matchedTeacher.address || '',
-          bio: matchedTeacher.bio || '',
-          salary: matchedTeacher.salary || '',
-          bank_name: matchedTeacher.bankName || '',
-          account_number: matchedTeacher.accountNumber || '',
-          hire_date: matchedTeacher.joined || '',
-          profileImage: matchedTeacher.profileImage || '',
-          needsPasswordChange: isDefaultPassword,
-        } as any
-      });
-      setLocation('/dashboard/teacher');
+      recordLoginActivity(rawInput, 'UNKNOWN', 'FAILED_ATTEMPT');
+      const errorMsg = 
+        apiError.response?.data?.detail || 
+        apiError.response?.data?.non_field_errors?.[0] ||
+        (typeof apiError.response?.data === 'string' ? apiError.response.data : null) ||
+        (apiError.message?.includes('Network') ? 'Network error: Unable to reach authentication server. Please check your connection.' : 'Invalid credentials. Please check your email/ID and password.');
+      setError(errorMsg);
       setIsLoading(false);
-      return;
     }
-
-    // 4. Check if input matches a Student account
-    let storedStudents = getStoredStudents();
-    let matchedStudent = storedStudents.find(s => {
-      const sEmail = (s.email || '').toLowerCase();
-      const sCode = (s.code || s.admissionNo || '').toLowerCase();
-      const cleanSCode = sCode.replace(/[^a-z0-9]/g, '');
-      const cleanSEmail = sEmail.replace(/[^a-z0-9]/g, '');
-      return (
-        (sEmail && sEmail === lowerInput) ||
-        (sCode && sCode === lowerInput) ||
-        (cleanInput.length > 2 && (cleanInput === cleanSCode || cleanInput === cleanSEmail)) ||
-        String(s.id).toLowerCase() === lowerInput
-      );
-    });
-
-    if (!matchedStudent) {
-      const syncedStudents = await syncStudentsWithBackend();
-      matchedStudent = syncedStudents.find(s => {
-        const sEmail = (s.email || '').toLowerCase();
-        const sCode = (s.code || s.admissionNo || '').toLowerCase();
-        const cleanSCode = sCode.replace(/[^a-z0-9]/g, '');
-        const cleanSEmail = sEmail.replace(/[^a-z0-9]/g, '');
-        return (
-          (sEmail && sEmail === lowerInput) ||
-          (sCode && sCode === lowerInput) ||
-          (cleanInput.length > 2 && (cleanInput === cleanSCode || cleanInput === cleanSEmail)) ||
-          String(s.id).toLowerCase() === lowerInput
-        );
-      });
-    }
-
-    if (matchedStudent) {
-      if (
-        isAccountDeleted(matchedStudent.email) ||
-        isAccountDeleted(matchedStudent.code) ||
-        isAccountDeleted(matchedStudent.admissionNo) ||
-        isAccountDeleted(matchedStudent.studentId) ||
-        isAccountDeleted(matchedStudent.id) ||
-        isAccountDeleted(matchedStudent.name)
-      ) {
-        recordLoginActivity(matchedStudent.email || rawInput, 'STUDENT', 'FAILED_ATTEMPT');
-        setError('This student account has been deleted or deactivated by the Administrator. Access is denied.');
-        setIsLoading(false);
-        return;
-      }
-
-      const expectedStudentPassword = matchedStudent.password || matchedStudent.code || matchedStudent.admissionNo;
-      const cleanPass = rawPassword.replace(/[^a-z0-9]/gi, '');
-      const cleanExpected = (expectedStudentPassword || '').replace(/[^a-z0-9]/gi, '');
-      const isPasswordValid =
-        rawPassword === expectedStudentPassword ||
-        rawPassword === matchedStudent.code ||
-        rawPassword === matchedStudent.admissionNo ||
-        (cleanPass.length > 2 && cleanPass.toLowerCase() === cleanExpected.toLowerCase());
-
-      if (!isPasswordValid) {
-        recordLoginActivity(matchedStudent.email || rawInput, 'STUDENT', 'FAILED_ATTEMPT');
-        setError('Incorrect email, student code, or passcode.');
-        setIsLoading(false);
-        return;
-      }
-
-      const nameParts = matchedStudent.name.trim().split(' ');
-      resetLoginRateLimit();
-      recordLoginActivity(matchedStudent.email || rawInput, 'STUDENT', 'SUCCESS');
-      login('mock_access_token', 'mock_refresh_token', {
-        id: matchedStudent.id,
-        email: matchedStudent.email || `${matchedStudent.code || matchedStudent.id}@tarepet.com`,
-        first_name: nameParts[0] || 'Student',
-        last_name: nameParts.slice(1).join(' ') || 'User',
-        phone: matchedStudent.phone,
-        role: 'STUDENT',
-        profile: {
-          student_id: matchedStudent.code || matchedStudent.admissionNo,
-          grade_level: matchedStudent.grade,
-          gender: matchedStudent.gender,
-          date_of_birth: matchedStudent.dob,
-          address: matchedStudent.address,
-          profile_image: matchedStudent.profileImage,
-          profileImage: matchedStudent.profileImage,
-        } as any
-      });
-      setLocation('/dashboard/student');
-      setIsLoading(false);
-      return;
-    }
-
-    // 5. Account not registered in database
-    recordLoginActivity(rawInput, 'UNKNOWN', 'FAILED_ATTEMPT');
-    setError('This account is not registered. Please contact school administration for access.');
-    setIsLoading(false);
   };
 
   return (

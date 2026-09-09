@@ -112,8 +112,8 @@ class CustomTokenObtainPairView(APIView):
                     'detail': f'A 6-digit authentication code has been sent to your email ({mask_email(effective_email)}).'
                 }
                 
-                # In development or if SMTP is unconfigured, provide debug code for effortless testing
-                if getattr(settings, 'DEBUG', False) or not getattr(settings, 'EMAIL_HOST_USER', None):
+                # In development only, provide debug code for testing
+                if getattr(settings, 'DEBUG', False):
                     response_data['debug_code'] = raw_code
 
                 return Response(response_data, status=status.HTTP_200_OK)
@@ -236,7 +236,7 @@ class OTPResendView(APIView):
             'email_masked': mask_email(user.email),
             'detail': f'A new 6-digit authentication code was sent to {mask_email(user.email)}.'
         }
-        if getattr(settings, 'DEBUG', False) or not getattr(settings, 'EMAIL_HOST_USER', None):
+        if getattr(settings, 'DEBUG', False):
             resend_payload['debug_code'] = raw_code
 
         return Response(resend_payload, status=status.HTTP_200_OK)
@@ -311,9 +311,9 @@ from rest_framework.pagination import PageNumberPagination
 
 
 class UserPagination(PageNumberPagination):
-    page_size = 200
+    page_size = 50
     page_size_query_param = 'page_size'
-    max_page_size = 1000
+    max_page_size = 100
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -324,9 +324,17 @@ class UserViewSet(viewsets.ModelViewSet):
     search_fields = ['email', 'first_name', 'last_name', 'phone']
 
     def get_permissions(self):
-        if self.action in ['list', 'retrieve', 'destroy', 'delete', 'update', 'partial_update', 'create']:
-            return [permissions.AllowAny()]
-        return [permissions.AllowAny()]
+        if self.action in ['retrieve', 'update', 'partial_update']:
+            return [permissions.IsAuthenticated(), IsSelfOrAdmin()]
+        return [IsAdmin()]
+
+    def get_queryset(self):
+        user = self.request.user
+        if not user or not user.is_authenticated:
+            return User.objects.none()
+        if getattr(user, 'is_admin', False) or user.is_staff or user.is_superuser:
+            return User.objects.all().order_by('-date_joined')
+        return User.objects.filter(pk=user.pk)
 
     @action(detail=False, methods=['delete', 'post'], url_path='delete-by-identifier')
     def delete_by_identifier(self, request):

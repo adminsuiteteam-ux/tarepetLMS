@@ -60,6 +60,19 @@ from .models import CBTExam, CBTQuestion, CBTStudentAttempt, CBTStudentAnswer, C
 from apps.courses.serializers import CourseSerializer
 
 
+def is_privileged_cbt_user(user):
+    """Check if the user is authorized to view exam answer keys (teachers, admins, staff)."""
+    if not user or not getattr(user, 'is_authenticated', False):
+        return False
+    return bool(
+        getattr(user, 'is_admin', False) or
+        getattr(user, 'is_teacher', False) or
+        getattr(user, 'role', '') in ('ADMIN', 'TEACHER') or
+        getattr(user, 'is_staff', False) or
+        getattr(user, 'is_superuser', False)
+    )
+
+
 class CBTQuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = CBTQuestion
@@ -67,6 +80,15 @@ class CBTQuestionSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'exam': {'required': False, 'allow_null': True}
         }
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        request = self.context.get('request')
+        user = getattr(request, 'user', None) if request else None
+        if not is_privileged_cbt_user(user):
+            ret.pop('correct_option', None)
+            ret.pop('explanation', None)
+        return ret
 
 
 class CBTQuestionStudentSerializer(serializers.ModelSerializer):
@@ -161,6 +183,18 @@ class CBTExamSerializer(serializers.ModelSerializer):
                 CBTQuestion.objects.create(exam=instance, **q_data)
         return instance
 
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        request = self.context.get('request')
+        user = getattr(request, 'user', None) if request else None
+        if not is_privileged_cbt_user(user):
+            if 'questions' in ret and isinstance(ret['questions'], list):
+                for q in ret['questions']:
+                    if isinstance(q, dict):
+                        q.pop('correct_option', None)
+                        q.pop('explanation', None)
+        return ret
+
 
 class CBTStudentAnswerSerializer(serializers.ModelSerializer):
     class Meta:
@@ -170,16 +204,35 @@ class CBTStudentAnswerSerializer(serializers.ModelSerializer):
 
 class CBTStudentAttemptSerializer(serializers.ModelSerializer):
     student_name = serializers.CharField(source='student.user.get_full_name', read_only=True)
+    student_id = serializers.CharField(source='student.student_id', read_only=True)
+    student_email = serializers.CharField(source='student.user.email', read_only=True)
     exam_title = serializers.CharField(source='exam.title', read_only=True)
+    course_code = serializers.CharField(source='exam.course_code', read_only=True)
+    course_name = serializers.CharField(source='exam.course_name', read_only=True)
+    class_name = serializers.CharField(source='exam.class_name', read_only=True)
+    stream = serializers.CharField(source='exam.stream', read_only=True)
 
     class Meta:
         model = CBTStudentAttempt
         fields = [
-            'id', 'exam', 'exam_title', 'student', 'student_name', 'started_at',
-            'submitted_at', 'is_submitted', 'auto_submitted', 'score',
-            'total_possible', 'percentage', 'gradebook_synced'
+            'id', 'exam', 'exam_title', 'course_code', 'course_name',
+            'class_name', 'stream', 'student', 'student_id', 'student_email',
+            'student_name', 'started_at', 'submitted_at', 'is_submitted',
+            'auto_submitted', 'score', 'total_possible', 'percentage',
+            'gradebook_synced'
         ]
         read_only_fields = ['id', 'started_at', 'submitted_at', 'score', 'total_possible', 'percentage']
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        request = self.context.get('request')
+        user = getattr(request, 'user', None) if request else None
+        if not is_privileged_cbt_user(user):
+            exam = getattr(instance, 'exam', None)
+            if exam and not getattr(exam, 'results_released', False):
+                ret['score'] = None
+                ret['percentage'] = None
+        return ret
 
 
 class CBTNotificationSerializer(serializers.ModelSerializer):

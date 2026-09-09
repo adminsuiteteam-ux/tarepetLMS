@@ -89,7 +89,7 @@ const getStatusBadgeStyle = (status: string) => {
   }
 };
 
-import { getStoredExams, saveCBTExam, updateExamStatus, getStoredSubmissions, subscribeToCBTStore, syncExamsWithBackend, SENIOR_COURSES, JUNIOR_COURSES, getCoursesForClass, setExamResultsReleased, deleteCBTExam, SCHOOL_CLASSES, isSeniorSecondaryClass, getStoredTeachers } from '@/lib/cbt-store';
+import { getStoredExams, saveCBTExam, updateExamStatus, getStoredSubmissions, syncSubmissionsWithBackend, subscribeToCBTStore, syncExamsWithBackend, SENIOR_COURSES, JUNIOR_COURSES, getCoursesForClass, setExamResultsReleased, deleteCBTExam, SCHOOL_CLASSES, isSeniorSecondaryClass, getStoredTeachers } from '@/lib/cbt-store';
 import { addRealtimeNotification } from '@/lib/notifications-store';
 import { subscribeToWebSocketEvents } from '@/lib/websocket-client';
 
@@ -583,28 +583,67 @@ export default function CBTBuilder() {
     fetchExams();
   };
 
-  const fetchAttempts = (examId: number) => {
-    const subs = getStoredSubmissions().filter(s => s.exam_id === examId);
-    const mapped: StudentAttempt[] = subs.map(s => ({
+  const fetchAttempts = async (examId: number) => {
+    const mapSubs = (subs: any[]): StudentAttempt[] => subs.map(s => ({
       id: s.id,
-      student_name: s.student_name,
-      score: s.score,
-      total_possible: s.total_possible,
-      percentage: s.percentage,
-      auto_submitted: false,
-      submitted_at: s.submitted_at,
-      gradebook_synced: s.gradebook_synced,
+      student_name: s.student_name || 'Student',
+      score: typeof s.score === 'number' ? s.score : 0,
+      total_possible: typeof s.total_possible === 'number' ? s.total_possible : 0,
+      percentage: typeof s.percentage === 'number' ? s.percentage : 0,
+      auto_submitted: Boolean(s.auto_submitted),
+      submitted_at: s.submitted_at || new Date().toISOString(),
+      gradebook_synced: Boolean(s.gradebook_synced),
     }));
-    setAttempts(mapped);
+
+    const localSubs = getStoredSubmissions().filter(s => Number(s.exam_id) === Number(examId));
+    setAttempts(mapSubs(localSubs));
+
+    try {
+      const synced = await syncSubmissionsWithBackend(examId);
+      const filtered = synced.filter(s => Number(s.exam_id) === Number(examId));
+      setAttempts(mapSubs(filtered));
+    } catch (e) {}
   };
 
-  const fetchAttemptDetail = (examId: number, attemptId: number) => {
-    const sub = getStoredSubmissions().find(s => s.id === attemptId);
+  const fetchAttemptDetail = async (examId: number, attemptId: number) => {
+    try {
+      const res = await authClient.get(`/assessments/cbt-exams/${examId}/attempt-detail/${attemptId}/`);
+      if (res.data?.attempt && res.data?.answers) {
+        setAttemptDetail(res.data);
+        return;
+      }
+    } catch (e) {}
+
+    const sub = getStoredSubmissions().find(s => Number(s.id) === Number(attemptId));
     const ex = getStoredExams().find(e => Number(e.id) === Number(examId) || String(e.id) === String(examId));
     if (sub && ex) {
+      const answersList = (ex.questions || []).map((q: any, idx: number) => {
+        const selected = sub.answers ? (sub.answers as any)[q.id] : undefined;
+        const isCorrect = selected === q.correct_option;
+        return {
+          question_order: q.order || (idx + 1),
+          question_text: q.question_text,
+          option_a: q.option_a,
+          option_b: q.option_b,
+          option_c: q.option_c,
+          option_d: q.option_d,
+          correct_option: q.correct_option,
+          selected_option: selected,
+          is_correct: isCorrect,
+          points: q.points || 5,
+          points_awarded: isCorrect ? (q.points || 5) : 0,
+        };
+      });
       setAttemptDetail({
-        ...sub,
-        questions: ex.questions,
+        attempt: {
+          id: sub.id,
+          student_name: sub.student_name,
+          score: sub.score,
+          total_possible: sub.total_possible,
+          percentage: sub.percentage,
+          submitted_at: sub.submitted_at,
+        },
+        answers: answersList,
       });
     }
   };

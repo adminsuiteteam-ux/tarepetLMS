@@ -2583,11 +2583,11 @@ export default function AdminDashboard() {
       }
     });
 
-    // Continuous real-time multi-device sync polling (every 10s)
+    // Continuous real-time multi-device sync polling (fallback every 45s)
     const pollInterval = setInterval(() => {
       syncExamsWithBackend().then(res => setExamsList(res.map(mapCBTExamToAdminExam))).catch(() => {});
       syncStudentsWithBackend().then(res => setStudentsList(res)).catch(() => {});
-    }, 10000);
+    }, 45000);
 
     // Instant re-sync when admin unlocks device or focuses tab
     const handleVisibility = () => {
@@ -3092,9 +3092,9 @@ export default function AdminDashboard() {
     window.addEventListener('tarepet_avatar_deleted', handleAvatarOrStoreUpdate);
     window.addEventListener('tarepet_user_updated', handleAvatarOrStoreUpdate);
 
-    // 3. Periodic backend polling
+    // 3. Periodic backend polling (fallback every 45s)
     fetchBackendUsers();
-    const intervalId = setInterval(fetchBackendUsers, 8000);
+    const intervalId = setInterval(fetchBackendUsers, 45000);
 
     return () => {
       unsubscribe();

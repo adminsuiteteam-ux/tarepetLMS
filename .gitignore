@@ -54,4 +54,6 @@ __pycache__/
 *.pyc
 venv/
 *.sqlite3
+*secret_key.txt
+
 

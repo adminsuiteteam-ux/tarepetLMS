@@ -10,41 +10,10 @@ User = get_user_model()
 
 class GracefulJWTAuthentication(JWTAuthentication):
     """
-    Subclass of JWTAuthentication that supports standard JWT tokens as well as
-    fallback tokens ('admin_access_token', 'mock_access_token', 'verified_2fa_access_token')
-    mapping them to the proper database user.
-    Fails gracefully on invalid/expired tokens so that optional-auth endpoints do not block.
+    Standard JWT Authentication for DRF with OpenAPI scheme compatibility.
+    Invalid tokens raise appropriate authentication errors.
     """
-    def authenticate(self, request: Request) -> Optional[tuple[AuthUser, Token]]:
-        header = self.get_header(request)
-        if header is not None:
-            raw_token = self.get_raw_token(header)
-            if raw_token:
-                try:
-                    str_token = raw_token.decode('utf-8') if isinstance(raw_token, bytes) else str(raw_token)
-                except Exception:
-                    str_token = ''
-
-                # Handle offline / fallback session tokens
-                if str_token in ['admin_access_token', 'verified_2fa_access_token']:
-                    admin_user = (
-                        User.objects.filter(role='ADMIN').first() or
-                        User.objects.filter(is_superuser=True).first()
-                    )
-                    if admin_user:
-                        return (admin_user, AccessToken.for_user(admin_user))
-                elif str_token == 'mock_access_token':
-                    teacher_user = (
-                        User.objects.filter(role='TEACHER').first() or
-                        User.objects.filter(is_staff=True).first()
-                    )
-                    if teacher_user:
-                        return (teacher_user, AccessToken.for_user(teacher_user))
-
-        try:
-            return super().authenticate(request)
-        except (InvalidToken, AuthenticationFailed, Exception):
-            return None
+    pass
 
 
 try:

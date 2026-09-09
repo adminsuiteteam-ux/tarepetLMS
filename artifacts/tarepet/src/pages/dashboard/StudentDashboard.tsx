@@ -258,7 +258,7 @@ export default function StudentDashboard() {
       syncStudentsWithBackend().catch(() => {});
     };
     syncBackend();
-    const intervalId = setInterval(syncBackend, 15000);
+    const intervalId = setInterval(syncBackend, 60000);
 
     return () => {
       unsub();

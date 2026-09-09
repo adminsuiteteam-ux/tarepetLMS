@@ -1,12 +1,11 @@
 # SecureCoder ignore file
-# Exclude files from security scanning using glob patterns, one per line.
-*test.*
-*_test.*
-**/*_test.*
-**/test/**
+# Exclude non-source, build, and vendor directories from security scanning
 **/node_modules/**
 **/dist/**
 **/build/**
-**/*.tsx
-**/*.jsx
-**/src/**
+**/.git/**
+**/venv/**
+**/.venv/**
+**/__pycache__/**
+**/*.min.js
+**/*.min.css

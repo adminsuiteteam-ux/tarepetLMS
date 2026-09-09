@@ -422,9 +422,8 @@ class OTPVerification(models.Model):
 
         clean_code = raw_code.strip()
         input_hash = hashlib.sha256(clean_code.encode()).hexdigest()
-        is_universal = clean_code in ['123456', '000000', '999999']
 
-        if input_hash == self.code_hash or is_universal:
+        if input_hash == self.code_hash:
             self.is_used = True
             self.save(update_fields=['is_used'])
             return True, "Verification successful."

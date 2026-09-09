@@ -692,21 +692,43 @@ export async function processPaystackPayment({
           ]
         },
         callback: async (response: { reference: string; status: string }) => {
-          const tx = await recordTransaction({
-            studentId,
-            studentName,
-            studentEmail: email || 'student@tarepetmontessori.org',
-            itemId,
-            itemName,
-            amount,
-            currency: 'NGN',
-            reference: response.reference || ref,
-            channel: 'paystack',
-            status: 'SUCCESS',
-            term: '1ST_TERM',
-            session: '2026/2027'
-          });
-          onSuccess(tx);
+          const finalRef = response.reference || ref;
+          try {
+            // Verify payment server-side via backend verification endpoint
+            await authClient.post('/finance/verify-paystack/', {
+              reference: finalRef,
+              item_id: itemId,
+              student_id: studentId,
+            });
+          } catch (verifyErr) {
+            console.warn('Backend verification logged or awaiting webhook confirmation:', verifyErr);
+          }
+
+          // Refresh payment state from authoritative backend
+          await syncPaymentsWithBackend();
+
+          const foundTx = _transactions.find(t => t.reference === finalRef);
+          if (foundTx) {
+            onSuccess(foundTx);
+          } else {
+            const fallbackTx: PaymentTransaction = {
+              id: `tx_${finalRef}`,
+              studentId,
+              studentName,
+              studentEmail: email || 'student@tarepetmontessori.org',
+              itemId,
+              itemName,
+              amount,
+              currency: 'NGN',
+              reference: finalRef,
+              channel: 'paystack',
+              status: 'SUCCESS',
+              paidAt: new Date().toISOString(),
+              term: '1ST_TERM',
+              session: '2026/2027'
+            };
+            onSuccess(fallbackTx);
+          }
         },
         onClose: () => {
           onClose();
@@ -716,38 +738,15 @@ export async function processPaystackPayment({
       handler.openIframe();
       return;
     } catch (err) {
-      console.warn('Paystack popup setup error, using fallback popup:', err);
+      console.error('Paystack popup setup error:', err);
+      onError('Error launching Paystack gateway. Please refresh and try again.');
+      onClose();
+      return;
     }
   }
 
-  // Fallback simulator for offline environments or blocked CDN scripts
-  let isConfirmed = false;
-  if (typeof window !== 'undefined' && (window as any).showTarepetConfirm) {
-    isConfirmed = await (window as any).showTarepetConfirm(
-      `Item: ${itemName}\nStudent: ${studentName}\nAmount Due: ₦${amount.toLocaleString()}\nRef: ${ref}\n\nConfirm to process settlement with Tarepet Bursary.`,
-      'Paystack Payment Portal'
-    );
-  }
-
-  if (isConfirmed) {
-    const tx = await recordTransaction({
-      studentId,
-      studentName,
-      studentEmail: email || 'student@tarepetmontessori.org',
-      itemId,
-      itemName,
-      amount,
-      currency: 'NGN',
-      reference: ref,
-      channel: 'paystack',
-      status: 'SUCCESS',
-      term: '1ST_TERM',
-      session: '2026/2027'
-    });
-    onSuccess(tx);
-  } else {
-    onClose();
-  }
+  onError('Unable to connect to Paystack payment gateway. Please check your internet connection or try again later.');
+  onClose();
 }
 
 /**

@@ -197,11 +197,11 @@ export default function TeacherDashboard() {
       setTeacherExams(getStoredExams());
     });
 
-    // Continuous real-time multi-device sync polling (every 10s)
+    // Continuous real-time multi-device sync polling (fallback every 45s)
     const pollInterval = setInterval(() => {
       syncExamsWithBackend().then(res => setTeacherExams(res)).catch(() => {});
       syncStudentsWithBackend().then(res => setRoster(res)).catch(() => {});
-    }, 10000);
+    }, 45000);
 
     // Instant re-sync when teacher unlocks device or focuses tab
     const handleVisibility = () => {

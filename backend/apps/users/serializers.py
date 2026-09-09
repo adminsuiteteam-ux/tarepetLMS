@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
 from django.db.models import Q
 from .models import StudentProfile, TeacherProfile, ParentProfile, AdminProfile, SystemSettings
 
@@ -116,6 +117,22 @@ class TeacherProfileSerializer(serializers.ModelSerializer):
             'bank_name', 'account_number', 'form_teacher_of', 'bio', 'profile_image'
         ]
 
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        request = self.context.get('request')
+        is_admin = bool(request and request.user and (getattr(request.user, 'is_admin', False) or request.user.is_superuser))
+        is_owner = bool(request and request.user and hasattr(instance, 'user') and instance.user == request.user)
+        if not (is_admin or is_owner):
+            ret.pop('salary', None)
+            ret.pop('bank_name', None)
+            ret.pop('account_number', None)
+            ret.pop('address', None)
+        elif not is_admin and ret.get('account_number'):
+            raw_acc = str(ret['account_number'])
+            if len(raw_acc) > 4:
+                ret['account_number'] = '*' * (len(raw_acc) - 4) + raw_acc[-4:]
+        return ret
+
 
 class AdminProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -175,6 +192,12 @@ class UserSerializer(serializers.ModelSerializer):
         elif 'email' in raw_data and raw_data.get('email'):
             instance.email = raw_data['email']
         if 'password' in raw_data and raw_data['password']:
+            current_password = raw_data.get('current_password')
+            request = self.context.get('request')
+            is_admin = bool(request and request.user and (getattr(request.user, 'is_admin', False) or request.user.is_superuser))
+            if not is_admin:
+                if not current_password or not instance.check_password(current_password):
+                    raise serializers.ValidationError({'current_password': 'Valid current password is required to change password.'})
             instance.set_password(raw_data['password'])
         instance.save()
 
@@ -341,9 +364,9 @@ def parse_date_safe(val):
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
-    email = serializers.EmailField(required=False, allow_blank=True)
-    password = serializers.CharField(write_only=True, required=False, allow_blank=True)
-    role = serializers.ChoiceField(choices=User.Role.choices, default=User.Role.STUDENT)
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    role = serializers.CharField(read_only=True, default=User.Role.STUDENT)
     student_id = serializers.CharField(write_only=True, required=False, allow_blank=True)
     grade = serializers.CharField(write_only=True, required=False, allow_blank=True)
     grade_level = serializers.CharField(write_only=True, required=False, allow_blank=True)
@@ -401,15 +424,19 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             'account_number', 'accountNumber', 'form_teacher_of', 'formTeacherOf',
             'profile_image', 'profileImage', 'bio', 'teachingDivision'
         ]
-        extra_kwargs = {
-            'email': {'validators': []}
-        }
+    def validate_email(self, value):
+        norm = (value or '').strip().lower()
+        if not norm:
+            raise serializers.ValidationError("A valid email address is required.")
+        if User.objects.filter(email__iexact=norm).exists():
+            raise serializers.ValidationError("An account with this email address already exists.")
+        return norm
 
     def create(self, validated_data):
         email = validated_data.get('email', '')
         first_name = validated_data.get('first_name', '')
         last_name = validated_data.get('last_name', '')
-        role = validated_data.get('role', User.Role.STUDENT)
+        role = User.Role.STUDENT
 
         raw_input = getattr(self, 'initial_data', {})
         raw_data = raw_input if isinstance(raw_input, dict) else {}

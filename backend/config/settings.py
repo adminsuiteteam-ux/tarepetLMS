@@ -21,21 +21,8 @@ def get_secret_key():
     secret = env('SECRET_KEY', default=None) or os.getenv('SECRET_KEY')
     if secret:
         return secret
-    secret_file = BASE_DIR / 'secret_key.txt'
-    if secret_file.exists():
-        return secret_file.read_text().strip()
-    # Security: do NOT fall back to a hardcoded key.
-    # Generate a temporary random key and emit a loud warning so operators notice immediately.
     from django.core.exceptions import ImproperlyConfigured
-    import sys
-    _warn = (
-        "\n\n[SECURITY] SECRET_KEY environment variable is NOT set!\n"
-        "A random key has been generated for this process only — all existing "
-        "sessions and JWT tokens will be invalidated on restart.\n"
-        "Set SECRET_KEY in your Render environment variables immediately.\n"
-    )
-    print(_warn, file=sys.stderr)
-    return secrets.token_hex(50)
+    raise ImproperlyConfigured('SECRET_KEY environment variable is not set. Refusing to start.')
 
 SECRET_KEY = get_secret_key()
 # Security: default to False — debug mode must be explicitly opted into via env var.
@@ -86,8 +73,8 @@ CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[
     'https://tarepet-frontend.onrender.com',
 ])
 CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^https://.*\.onrender\.com$",
-    r"^https://.*\.tarepetmontessorischool\.com$",
+    r"^https://([a-zA-Z0-9-]+\.)?tarepetmontessorischool\.com$",
+    r"^https://tarepet-[a-zA-Z0-9-]+\.onrender\.com$",
 ]
 
 # Security settings
@@ -101,10 +88,7 @@ CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[
     'https://tarepetmontessorischool.com',
     'https://www.tarepetmontessorischool.com',
     'https://tarepet-backend-4iw6.onrender.com',
-    'https://*.onrender.com',
-    'https://*.serveousercontent.com',
-    'https://*.lhr.life',
-    'https://*.loca.lt',
+    'https://tarepet-frontend.onrender.com',
 ])
 SECURE_SSL_REDIRECT = env.bool('SECURE_SSL_REDIRECT', default=not DEBUG)
 SESSION_COOKIE_SECURE = env.bool('SESSION_COOKIE_SECURE', default=not DEBUG)
@@ -256,17 +240,27 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': env('THROTTLE_RATE_ANON', default='100/minute'),
+        'user': env('THROTTLE_RATE_USER', default='1000/minute'),
+        'login': '15/minute',
+        'otp': '5/minute',
+    },
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
 }
 
-# SimpleJWT Settings (Persistent 30-day session)
+# SimpleJWT Settings
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=env.int('ACCESS_TOKEN_LIFETIME_DAYS', default=30)),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=env.int('REFRESH_TOKEN_LIFETIME_DAYS', default=180)),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=env.int('ACCESS_TOKEN_LIFETIME_MINUTES', default=60)),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=env.int('REFRESH_TOKEN_LIFETIME_DAYS', default=7)),
     'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': False,
+    'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': True,
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,
@@ -281,6 +275,7 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'API backend for Tarepet Montessori School LMS with multi-role access control.',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
+    'SERVE_PERMISSIONS': ['rest_framework.permissions.IsAdminUser'] if not DEBUG else ['rest_framework.permissions.AllowAny'],
 }
 
 # Persistent Session & Cache Settings (Database Sessions for 100% reliability)
@@ -331,24 +326,6 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 # CELERY_ACCEPT_CONTENT = ['json']
 # CELERY_TASK_SERIALIZER = 'json'
 
-# CORS Headers
-CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOWED_ORIGINS = env.list(
-    'CORS_ALLOWED_ORIGINS',
-    default=[
-        'https://tarepetmontessorischool.com',
-        'https://tarepet-frontend.onrender.com',
-        'http://localhost:5173',
-        'http://127.0.0.1:5173',
-        'http://localhost:3000',
-        'http://127.0.0.1:3000',
-    ]
-)
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^https://.*\.onrender\.com$",
-    r"^https://.*\.github\.io$",
-]
-CORS_ALLOW_CREDENTIALS = True
 
 # Internationalization
 LANGUAGE_CODE = 'en-us'

@@ -17,7 +17,11 @@ class IsTeacher(permissions.BasePermission):
 
 class IsStudent(permissions.BasePermission):
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and request.user.is_student)
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and (request.user.is_student or request.user.is_admin or request.user.is_teacher)
+        )
 
 
 class IsParent(permissions.BasePermission):

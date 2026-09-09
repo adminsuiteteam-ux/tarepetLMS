@@ -80,10 +80,10 @@ export default function AdminCBTApproval() {
     syncExamsWithBackend().then(() => fetchExams());
     const unsub = subscribeToCBTStore(fetchExams);
 
-    // Continuous real-time multi-device sync polling (every 8s)
+    // Continuous real-time multi-device sync polling (fallback every 45s)
     const pollInterval = setInterval(() => {
       syncExamsWithBackend().then(() => fetchExams()).catch(() => {});
-    }, 8000);
+    }, 45000);
 
     // Instant re-sync when admin unlocks device or focuses tab
     const handleVisibility = () => {

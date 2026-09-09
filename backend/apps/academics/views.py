@@ -1,7 +1,9 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.db.models import Q
 from apps.users.models import StudentProfile
+from apps.users.permissions import IsAdmin, IsTeacher
 from .models import BroadsheetScore, PromotionRecord, ClassAttendanceRecord
 from .serializers import (
     BroadsheetScoreSerializer,
@@ -13,10 +15,31 @@ from .serializers import (
 class BroadsheetViewSet(viewsets.ModelViewSet):
     queryset = BroadsheetScore.objects.all()
     serializer_class = BroadsheetScoreSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ['batch_save', 'all_scores', 'create', 'update', 'partial_update', 'destroy']:
+            return [IsTeacher()]
+        return [permissions.IsAuthenticated()]
 
     def get_queryset(self):
+        user = self.request.user
+        if not user or not user.is_authenticated:
+            return BroadsheetScore.objects.none()
         qs = super().get_queryset()
+        if getattr(user, 'is_admin', False) or getattr(user, 'is_teacher', False) or user.is_staff or user.is_superuser:
+            pass
+        elif getattr(user, 'is_student', False) and hasattr(user, 'student_profile'):
+            std_id = user.student_profile.student_id or ''
+            qs = qs.filter(Q(student=user.student_profile) | Q(student_identifier=std_id) | Q(student_identifier=str(user.student_profile.id)))
+        elif getattr(user, 'is_parent', False) and hasattr(user, 'parent_profile'):
+            children = user.parent_profile.children.all()
+            children_ids = list(children.values_list('student_id', flat=True))
+            children_pks = [str(pk) for pk in children.values_list('id', flat=True)]
+            qs = qs.filter(Q(student__in=children) | Q(student_identifier__in=children_ids) | Q(student_identifier__in=children_pks))
+        else:
+            return BroadsheetScore.objects.none()
+
         student_id = self.request.query_params.get('student_id')
         if student_id:
             qs = qs.filter(student_identifier=student_id)
@@ -106,13 +129,13 @@ class BroadsheetViewSet(viewsets.ModelViewSet):
 class PromotionRecordViewSet(viewsets.ModelViewSet):
     queryset = PromotionRecord.objects.all()
     serializer_class = PromotionRecordSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [IsAdmin]
 
     @action(detail=False, methods=['post'], url_path='execute-batch')
     def execute_batch(self, request):
         payload = request.data
         promotions = payload.get('promotions', [])
-        promoted_by = payload.get('promotedBy', request.user.get_full_name() if request.user and request.user.is_authenticated else 'Administrator')
+        promoted_by = payload.get('promotedBy', request.user.get_full_name() if (request.user and request.user.is_authenticated and hasattr(request.user, 'get_full_name')) else 'Administrator')
         session = payload.get('academicSession', '2026/2027')
         term = payload.get('term', '3rd Term')
 
@@ -158,12 +181,13 @@ class PromotionRecordViewSet(viewsets.ModelViewSet):
 class ClassAttendanceViewSet(viewsets.ModelViewSet):
     queryset = ClassAttendanceRecord.objects.all()
     serializer_class = ClassAttendanceRecordSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [IsTeacher]
 
     @action(detail=False, methods=['post'], url_path='batch-mark')
     def batch_mark(self, request):
         attendances = request.data.get('records', [])
         saved = []
+        default_marker = request.user.get_full_name() if (request.user and request.user.is_authenticated and hasattr(request.user, 'get_full_name') and request.user.get_full_name()) else 'Teacher'
         for att in attendances:
             std_id = att.get('studentId') or att.get('student_identifier')
             std_name = att.get('studentName', '')
@@ -171,7 +195,7 @@ class ClassAttendanceViewSet(viewsets.ModelViewSet):
             exam_id = att.get('examId')
             status_val = att.get('status', 'PRESENT')
             stream = att.get('stream', '')
-            marked_by = att.get('markedBy', request.user.get_full_name())
+            marked_by = att.get('markedBy') or default_marker
 
             rec = ClassAttendanceRecord.objects.create(
                 student_name=std_name,

@@ -92,6 +92,7 @@ export function sanitizeMailto(email: string): string {
 
 export const authClient = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },
