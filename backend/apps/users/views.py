@@ -326,15 +326,10 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['retrieve', 'update', 'partial_update']:
             return [permissions.IsAuthenticated(), IsSelfOrAdmin()]
+        # Teachers need read-only list access to student roster for CBT sync
+        if self.action == 'list':
+            return [permissions.IsAuthenticated()]
         return [IsAdmin()]
-
-    def get_queryset(self):
-        user = self.request.user
-        if not user or not user.is_authenticated:
-            return User.objects.none()
-        if getattr(user, 'is_admin', False) or user.is_staff or user.is_superuser:
-            return User.objects.all().order_by('-date_joined')
-        return User.objects.filter(pk=user.pk)
 
     @action(detail=False, methods=['delete', 'post'], url_path='delete-by-identifier')
     def delete_by_identifier(self, request):
@@ -387,11 +382,31 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(read_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        user = self.request.user
+        if not user or not user.is_authenticated:
+            return User.objects.none()
+
+        base = User.objects.all().order_by('-date_joined')
+        is_admin = getattr(user, 'is_admin', False) or user.is_staff or user.is_superuser
+        is_teacher = getattr(user, 'role', None) == 'TEACHER'
+
+        # Apply role filter from query params
         role = self.request.query_params.get('role', None)
+
+        if is_admin:
+            qs = base
+        elif is_teacher:
+            # Teachers can only see students (enforced server-side)
+            qs = base.filter(role='STUDENT')
+            if role and role != 'STUDENT':
+                return User.objects.none()  # teachers cannot list non-students
+        else:
+            # Regular users can only see themselves
+            return User.objects.filter(pk=user.pk)
+
         if role:
-            queryset = queryset.filter(role=role)
-        return queryset
+            qs = qs.filter(role=role)
+        return qs
 
     def get_object(self):
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field

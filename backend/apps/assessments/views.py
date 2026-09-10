@@ -659,36 +659,76 @@ class CBTExamViewSet(viewsets.ModelViewSet):
         elif isinstance(raw_answers, list):
             normalized_answers = raw_answers
 
+        # --- Batch-optimized answer saving (replaces N+1 loop) ---
+        # 1. Collect valid question IDs from the submission
+        submitted_q_ids = set()
+        answer_map = {}  # question_id -> selected_option
         for ans in normalized_answers:
             if not isinstance(ans, dict):
                 continue
             q_id = ans.get('question_id')
             sel = ans.get('selected_option')
-            try:
-                question = CBTQuestion.objects.get(id=q_id, exam=exam)
-                CBTStudentAnswer.objects.update_or_create(
-                    attempt=attempt,
-                    question=question,
-                    defaults={'selected_option': sel},
-                )
-            except (CBTQuestion.DoesNotExist, ValueError):
-                continue
+            if q_id is not None:
+                try:
+                    submitted_q_ids.add(int(q_id))
+                    answer_map[int(q_id)] = sel
+                except (ValueError, TypeError):
+                    continue
 
-        # Grade all answers
+        # 2. Batch-fetch all exam questions in ONE query
+        all_questions = {q.id: q for q in exam.questions.all()}
+
+        # 3. Batch-fetch existing answers for this attempt in ONE query
+        existing_answers = {
+            a.question_id: a
+            for a in CBTStudentAnswer.objects.filter(attempt=attempt).select_related('question')
+        }
+
+        # 4. Separate into creates vs updates
+        to_create = []
+        to_update = []
+        for q_id, sel in answer_map.items():
+            if q_id not in all_questions:
+                continue  # question doesn't belong to this exam
+            if q_id in existing_answers:
+                ans_obj = existing_answers[q_id]
+                ans_obj.selected_option = sel
+                to_update.append(ans_obj)
+            else:
+                to_create.append(CBTStudentAnswer(
+                    attempt=attempt,
+                    question=all_questions[q_id],
+                    selected_option=sel,
+                ))
+
+        if to_create:
+            CBTStudentAnswer.objects.bulk_create(to_create, ignore_conflicts=True)
+        if to_update:
+            CBTStudentAnswer.objects.bulk_update(to_update, ['selected_option'])
+
+        # --- Batch-optimized grading (replaces N+1 loop) ---
+        # Re-fetch all answers for this attempt in one query (includes newly created)
+        all_answers = {
+            a.question_id: a
+            for a in CBTStudentAnswer.objects.filter(attempt=attempt)
+        }
+
         total_score = 0.0
         total_possible = 0.0
-        for question in exam.questions.all():
+        grade_updates = []
+        for q_id, question in all_questions.items():
             total_possible += question.points
-            try:
-                answer = CBTStudentAnswer.objects.get(attempt=attempt, question=question)
+            if q_id in all_answers:
+                answer = all_answers[q_id]
                 is_correct = bool(answer.selected_option and answer.selected_option == question.correct_option)
                 pts = question.points if is_correct else 0.0
                 answer.is_correct = is_correct
                 answer.points_awarded = pts
-                answer.save()
+                grade_updates.append(answer)
                 total_score += pts
-            except CBTStudentAnswer.DoesNotExist:
-                pass
+
+        if grade_updates:
+            CBTStudentAnswer.objects.bulk_update(grade_updates, ['is_correct', 'points_awarded'])
 
         attempt.is_submitted = True
         attempt.auto_submitted = bool(auto)
