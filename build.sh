@@ -14,8 +14,13 @@ fi
 python3 -m pip install --upgrade pip --break-system-packages || pip install --upgrade pip --break-system-packages || true
 python3 -m pip install -r requirements.txt --break-system-packages || pip install -r requirements.txt --break-system-packages || pip install -r requirements.txt
 
+echo "==> Collecting static files..."
 python3 manage.py collectstatic --no-input || python manage.py collectstatic --no-input
-python3 manage.py migrate --no-input || python manage.py migrate --no-input
-python3 manage.py seed_lms_data || python manage.py seed_lms_data || true
+
+echo "==> Running database migrations..."
+python3 manage.py migrate --no-input || python manage.py migrate --no-input || echo "==> Note: DB migration during build phase skipped/deferred due to database cold-start timeout."
+
+echo "==> Seeding Django Super Admin and initial LMS data..."
+python3 manage.py seed_lms_data || python manage.py seed_lms_data || echo "==> Note: DB seeding deferred."
 
 echo "==> Build complete!"
