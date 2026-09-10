@@ -52,12 +52,21 @@ except (ImportError, Exception):
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[
     'localhost',
     '127.0.0.1',
+    '0.0.0.0',
     '.onrender.com',
     'tarepetmontessorischool.com',
     'www.tarepetmontessorischool.com',
-    # Security: wildcard '*' removed — it enables Host-header injection attacks.
-    # In production the ALLOWED_HOSTS env var on Render overrides this list entirely.
 ])
+_render_external_hostname = os.getenv('RENDER_EXTERNAL_HOSTNAME')
+if _render_external_hostname and _render_external_hostname not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(_render_external_hostname)
+try:
+    import socket
+    _local_ip = socket.gethostbyname(socket.gethostname())
+    if _local_ip and _local_ip not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(_local_ip)
+except Exception:
+    pass
 
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
@@ -157,6 +166,7 @@ else:
     }
 
 MIDDLEWARE = [
+    'config.middleware.HealthCheckMiddleware',  # Top of stack: instant 200 OK for health probes without Host check
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Render static files
     'corsheaders.middleware.CorsMiddleware',

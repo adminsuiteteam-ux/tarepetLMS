@@ -4,7 +4,7 @@ services:
     runtime: python
     rootDir: backend
     buildCommand: "./build.sh"
-    startCommand: "python manage.py migrate --no-input || true; python manage.py seed_lms_data || true; daphne -b 0.0.0.0 -p $PORT config.asgi:application"
+    startCommand: "daphne -b 0.0.0.0 -p $PORT config.asgi:application"
     plan: free
     envVars:
       - key: SECRET_KEY
