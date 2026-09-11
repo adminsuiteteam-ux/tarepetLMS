@@ -3,6 +3,7 @@
 import { authClient, getAccessToken } from './api-auth';
 import { addRealtimeNotification } from './notifications-store';
 import { sendWebSocketEvent, initWebSocket, subscribeToWebSocketEvents } from './websocket-client';
+import rawStudentsData from '../data/students_data.json';
 
 function safeGetProp<T>(obj: Record<string | number, T> | null | undefined, key: string | number): T | undefined {
   if (!obj) return undefined;
@@ -989,32 +990,61 @@ export function deleteStudent(studentIdOrAdmissionNo: number | string): boolean 
   return true;
 }
 
-export const DEFAULT_STUDENTS: StudentRecord[] = [];
+export const DEFAULT_STUDENTS: StudentRecord[] = Array.isArray(rawStudentsData) ? (rawStudentsData as StudentRecord[]) : [];
 let _cachedStudents: StudentRecord[] | null = null;
 
 function loadSavedStudents(forceReload = false): StudentRecord[] {
-  if (typeof window === 'undefined') return [];
-  if (!forceReload && _cachedStudents && _cachedStudents.length > 0) {
+  if (typeof window === 'undefined') return DEFAULT_STUDENTS;
+  if (!forceReload && _cachedStudents && _cachedStudents.length >= DEFAULT_STUDENTS.length && _cachedStudents.length > 0) {
     return _cachedStudents;
   }
   try {
     const saved = localStorage.getItem('tarepet_students_list');
+    let parsedList: any[] = [];
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed)) {
-        const liveOnly = parsed.filter((s: any) => {
-          const sCode = String(s.code || s.admissionNo || s.studentId || '').toLowerCase();
-          const sEmail = String(s.email || '').toLowerCase();
-          const isDeleted = isAccountDeleted(sCode) || isAccountDeleted(sEmail);
-          return !isDeleted;
-        });
-        _cachedStudents = liveOnly;
-        return liveOnly;
+        parsedList = parsed;
       }
     }
+
+    const existingKeys = new Set<string>();
+    const liveOnly: StudentRecord[] = [];
+
+    parsedList.forEach((s: any) => {
+      const sCode = String(s.code || s.admissionNo || s.studentId || '').toLowerCase().trim();
+      const sEmail = String(s.email || '').toLowerCase().trim();
+      const isDeleted = isAccountDeleted(sCode) || isAccountDeleted(sEmail) || isAccountDeleted(s.id);
+      if (!isDeleted) {
+        liveOnly.push(s);
+        if (sCode) existingKeys.add(sCode.replace(/[^a-z0-9]/g, ''));
+        if (sEmail) existingKeys.add(sEmail);
+      }
+    });
+
+    DEFAULT_STUDENTS.forEach((d: any) => {
+      const dCode = String(d.code || d.admissionNo || d.studentId || '').toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+      const dEmail = String(d.email || '').toLowerCase().trim();
+      const isDeleted = isAccountDeleted(dCode) || isAccountDeleted(dEmail) || isAccountDeleted(d.id);
+      if (!isDeleted) {
+        if (!existingKeys.has(dCode) && (!dEmail || !existingKeys.has(dEmail))) {
+          liveOnly.push(d);
+          if (dCode) existingKeys.add(dCode);
+          if (dEmail) existingKeys.add(dEmail);
+        }
+      }
+    });
+
+    _cachedStudents = liveOnly;
+    if (liveOnly.length > parsedList.length) {
+      try {
+        localStorage.setItem('tarepet_students_list', JSON.stringify(liveOnly));
+      } catch (e) {}
+    }
+    return liveOnly;
   } catch (e) {}
-  _cachedStudents = [];
-  return [];
+  _cachedStudents = DEFAULT_STUDENTS.filter(s => !isAccountDeleted(s.email) && !isAccountDeleted(s.code));
+  return _cachedStudents;
 }
 
 let _exams: CBTExam[] = loadSavedExams();
@@ -1138,10 +1168,32 @@ export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
   if (!token) return getStoredStudents();
 
   try {
-    const res = await authClient.get('/auth/users/?role=STUDENT&page_size=1000');
-    if (res.data) {
+    let allUsers: any[] = [];
+    let nextUrl: string | null = '/auth/users/?role=STUDENT&page_size=2000';
+    let safetyCounter = 0;
+
+    while (nextUrl && safetyCounter < 10) {
+      safetyCounter++;
+      const res: any = await authClient.get(nextUrl);
+      if (!res?.data) break;
+
       const dataArr = Array.isArray(res.data?.results) ? res.data.results : Array.isArray(res.data) ? res.data : [];
-      const fetched: StudentRecord[] = dataArr
+      allUsers = allUsers.concat(dataArr);
+
+      if (res.data.next) {
+        try {
+          const u = new URL(res.data.next);
+          nextUrl = `${u.pathname}${u.search}`;
+        } catch {
+          nextUrl = res.data.next;
+        }
+      } else {
+        nextUrl = null;
+      }
+    }
+
+    if (allUsers.length > 0) {
+      const fetched: StudentRecord[] = allUsers
         .filter((u: any) => {
           const admNo = u.student_id || u.profile?.student_id || u.username || '';
           // Use server-side is_test_account flag — no hardcoded email addresses in frontend

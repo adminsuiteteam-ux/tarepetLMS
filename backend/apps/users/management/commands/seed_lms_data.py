@@ -53,11 +53,12 @@ class Command(BaseCommand):
                 'email': 'allison.victoria@tarepet.com',
                 'phone': '08062571566',
                 'gender': 'Female',
-                'form_teacher_of': 'SS 1',
+                'form_teacher_of': 'SS 1 Science',
+                'class_assigned': 'SS 1 Science',
                 'department': 'Senior Secondary Section',
                 'specialization': 'Senior Secondary Language Arts & English',
                 'subjects_taught': [{'name': 'English Language', 'grade': 'SS 1'}],
-                'bio': 'Form Teacher for SS 1 guiding students in English Language and Senior Secondary curriculum.'
+                'bio': 'Form Teacher for SS 1 Science guiding students in English Language and Senior Secondary curriculum.'
             },
             {
                 'teacher_id': 'TMS/TCH/0016',
@@ -133,8 +134,9 @@ class Command(BaseCommand):
                 'gender': 'Male',
                 'department': 'Physical & Commercial Sciences',
                 'specialization': 'Physics (PRI - SS3) & Financial Accounting (JSS 1)',
-                'class_assigned': 'Senior Science',
-                'bio': 'Senior Physics instructor for Primary to SS 3 and Financial Accounting instructor for JSS 1.',
+                'form_teacher_of': 'SS 3 Science',
+                'class_assigned': 'SS 3 Science',
+                'bio': 'Form Teacher for SS 3 Science and Senior Physics instructor.',
                 'subjects_taught': [{'name': 'Physics', 'grade': 'SS 1'}]
             },
             {
@@ -250,8 +252,9 @@ class Command(BaseCommand):
                 'gender': 'Male',
                 'department': 'Mathematics & Sciences Department',
                 'specialization': 'Mathematics (JSS 2 & SS 2)',
-                'class_assigned': 'None',
-                'bio': 'Mathematics instructor for Junior Secondary 2 and Senior Secondary 2.',
+                'form_teacher_of': 'SS 3 Arts',
+                'class_assigned': 'SS 3 Arts',
+                'bio': 'Form Teacher for SS 3 Arts and Senior Secondary Mathematics instructor.',
                 'subjects_taught': [{'name': 'Mathematics', 'grade': 'SS 2'}]
             },
             {

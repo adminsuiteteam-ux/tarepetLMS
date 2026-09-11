@@ -18,7 +18,7 @@ OFFICIAL_TEACHERS = [
         'department': 'Senior Secondary Section',
         'specialization': 'Senior Secondary Language Arts & English',
         'subjects': [{'name': 'English Language', 'grade': 'SS 1'}],
-        'form_teacher_of': 'SS 1'
+        'form_teacher_of': 'SS 1 Science'
     },
     {
         'teacher_id': 'TMS/TCH/0016',
@@ -84,7 +84,7 @@ OFFICIAL_TEACHERS = [
         'department': 'Physical & Commercial Sciences',
         'specialization': 'Physics (PRI - SS3) & Financial Accounting (JSS 1)',
         'subjects': [{'name': 'Physics', 'grade': 'SS 1'}],
-        'form_teacher_of': 'Senior Science'
+        'form_teacher_of': 'SS 3 Science'
     },
     {
         'teacher_id': 'TMS/TCH/0019',
@@ -183,7 +183,7 @@ OFFICIAL_TEACHERS = [
         'department': 'Mathematics & Sciences Department',
         'specialization': 'Mathematics (JSS 2 & SS 2)',
         'subjects': [{'name': 'Mathematics', 'grade': 'SS 2'}],
-        'form_teacher_of': 'None'
+        'form_teacher_of': 'SS 3 Arts'
     },
     {
         'teacher_id': 'TMS/TCH/0025',

@@ -2916,7 +2916,7 @@ export default function AdminDashboard() {
     try {
       const [teacherRes, studentRes] = await Promise.allSettled([
         authClient.get('/auth/users/?role=TEACHER&page_size=200'),
-        authClient.get('/auth/users/?role=STUDENT&page_size=500')
+        authClient.get('/auth/users/?role=STUDENT&page_size=2000')
       ]);
 
       if (teacherRes.status === 'fulfilled' && teacherRes.value.data) {
