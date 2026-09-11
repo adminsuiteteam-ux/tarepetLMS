@@ -586,18 +586,42 @@ export default function StudentDashboard() {
   let reportCount = 0;
   const reportScoredCourses = coursesForReport.map(c => {
     const sc = broadsheetData[c.code] || { ca1: 0, ca2: 0, cbtScore: 0, paperExam: 0, exam: 0, remark: '' };
-    const total = isSS
-      ? (sc.ca1 || 0) + (sc.ca2 || 0) + (sc.cbtScore || 0) + (sc.paperExam || 0)
-      : (sc.ca1 || 0) + (sc.ca2 || 0) + (sc.exam !== undefined ? sc.exam : (sc.paperExam || 0));
+    const hasCa1 = typeof sc.ca1 === 'number' && sc.ca1 > 0;
+    const hasCa2 = typeof sc.ca2 === 'number' && sc.ca2 > 0;
+    const hasCbt = typeof sc.cbtScore === 'number' && sc.cbtScore > 0;
+    const hasExam = typeof sc.paperExam === 'number' && sc.paperExam > 0;
+    const hasAltExam = typeof sc.exam === 'number' && sc.exam > 0;
 
-    if (total > 0) {
+    const hasRecord = hasCa1 || hasCa2 || hasCbt || hasExam || hasAltExam || Boolean((sc as any).hasRecord);
+
+    const ca1Val = hasCa1 ? sc.ca1 : 0;
+    const ca2Val = hasCa2 ? sc.ca2 : 0;
+    const cbtVal = hasCbt ? sc.cbtScore : 0;
+    const examVal = hasExam ? sc.paperExam : (hasAltExam ? sc.exam : 0);
+
+    const total = isSS
+      ? ca1Val + ca2Val + cbtVal + examVal
+      : ca1Val + ca2Val + examVal;
+
+    if (hasRecord && total > 0) {
       reportTotalSum += total;
       reportCount++;
     }
-    const gradeInfo = isSS ? calculateWAECGrade(total) : calculateBECEGrade(total);
-    return { ...c, ...sc, total, gradeInfo };
+    const gradeInfo = hasRecord ? (isSS ? calculateWAECGrade(total) : calculateBECEGrade(total)) : { grade: '-', color: 'bg-muted text-muted-foreground', label: 'Pending' };
+
+    return {
+      ...c,
+      ...sc,
+      ca1: hasCa1 ? sc.ca1 : 0,
+      ca2: hasCa2 ? sc.ca2 : 0,
+      cbtScore: hasCbt ? sc.cbtScore : 0,
+      paperExam: examVal,
+      hasRecord,
+      total,
+      gradeInfo
+    };
   });
-  const overallAvg = reportCount > 0 ? Math.round(reportTotalSum / reportCount) : calculatedAvg || 84;
+  const overallAvg = reportCount > 0 ? Math.round(reportTotalSum / reportCount) : 0;
 
   const reportCardPayload: ReportCardData = {
     student_info: {
@@ -616,17 +640,17 @@ export default function StudentDashboard() {
     },
     overall_performance: {
       average_percentage: overallAvg,
-      grade_letter: isSS ? calculateWAECGrade(overallAvg).grade : calculateBECEGrade(overallAvg).grade,
-      total_subjects: myEnrolledCourses.length || 8,
+      grade_letter: reportCount > 0 ? (isSS ? calculateWAECGrade(overallAvg).grade : calculateBECEGrade(overallAvg).grade) : 'Pending',
+      total_subjects: myEnrolledCourses.length || coursesForReport.length || 8,
     },
     subjects: reportScoredCourses.map(g => ({
       code: g.code,
       title: g.name,
-      ca_score: (g.ca1 || 9) + (g.ca2 || 8),
-      cbt_exam_score: g.cbtScore || 18,
-      total_score: g.total || 87,
-      grade_letter: g.gradeInfo?.grade || 'A1',
-      teacher_remark: g.remark || 'Outstanding conceptual grasp and diligence.',
+      ca_score: g.hasRecord ? (g.ca1 + g.ca2) : 0,
+      cbt_exam_score: g.hasRecord ? g.cbtScore : 0,
+      total_score: g.hasRecord ? g.total : 0,
+      grade_letter: g.hasRecord ? (g.gradeInfo?.grade || '-') : '-',
+      teacher_remark: g.hasRecord ? (g.remark || 'Satisfactory academic progress.') : 'Awaiting assessment records.',
     })),
     attendance: {
       total_days: 65,
@@ -643,8 +667,9 @@ export default function StudentDashboard() {
     ],
     house_points: 125,
     remarks: {
-      teacher_remark: 'Outstanding intellectual performance and exemplary character.',
-      headmistress_remark: 'An exceptional student with strong leadership capabilities.',
+      teacher_remark: reportCount > 0 ? 'Good intellectual effort and discipline.' : 'Assessments in progress for the current term.',
+      headmistress_remark: reportCount > 0 ? (isSS ? 'Recommended for promotion to the next academic level.' : 'Passed with Distinction. Promoted.') : 'Pending completion of terminal assessments.',
+      ...(isSS ? { principal_remark: reportCount > 0 ? 'Recommended for promotion to the next academic level.' : 'Pending completion of terminal assessments.' } : {}),
     },
   };
 
@@ -1143,22 +1168,22 @@ export default function StudentDashboard() {
           <div className="bg-card rounded-2xl border border-border p-6 shadow-sm grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
             <div>
               <p className="text-[10px] font-bold uppercase text-muted-foreground">Term Average</p>
-              <p className="text-3xl font-serif font-bold text-emerald-600 mt-1">{overallAvg}%</p>
+              <p className="text-3xl font-serif font-bold text-emerald-600 mt-1">{reportCount > 0 ? `${overallAvg}%` : '-'}</p>
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase text-muted-foreground">Class Ranking</p>
-              <p className="text-3xl font-serif font-bold text-purple-600 mt-1">1st Position</p>
+              <p className="text-3xl font-serif font-bold text-purple-600 mt-1">{reportCount > 0 ? '1st Position' : '-'}</p>
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase text-muted-foreground">Academic Standing</p>
-              <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 inline-block mt-2">
-                Distinction
+              <span className={`text-xs font-bold px-3 py-1 rounded-full inline-block mt-2 ${reportCount > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                {reportCount > 0 ? 'Distinction' : 'Awaiting Assessment'}
               </span>
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase text-muted-foreground">Promotion Status</p>
-              <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 inline-block mt-2">
-                Cleared & In Good Standing
+              <span className={`text-xs font-bold px-3 py-1 rounded-full inline-block mt-2 ${reportCount > 0 ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-slate-100 text-slate-700 border border-slate-200'}`}>
+                {reportCount > 0 ? 'Cleared & In Good Standing' : 'Under Evaluation'}
               </span>
             </div>
           </div>
@@ -1195,17 +1220,17 @@ export default function StudentDashboard() {
                         {g.name}
                         <span className="text-[10px] font-mono text-muted-foreground block">{g.code}</span>
                       </td>
-                      <td className="p-3 text-center font-mono font-bold">{g.ca1 || 9}</td>
-                      <td className="p-3 text-center font-mono font-bold">{g.ca2 || 8}</td>
-                      <td className="p-3 text-center font-mono font-bold text-blue-700 bg-blue-500/5">{g.cbtScore || 18}</td>
-                      <td className="p-3 text-center font-mono font-bold">{g.paperExam || g.exam || 52}</td>
-                      <td className="p-3 text-center font-serif font-bold text-sm text-foreground">{g.total || 87}%</td>
+                      <td className="p-3 text-center font-mono font-bold">{g.hasRecord && g.ca1 > 0 ? g.ca1 : '-'}</td>
+                      <td className="p-3 text-center font-mono font-bold">{g.hasRecord && g.ca2 > 0 ? g.ca2 : '-'}</td>
+                      <td className="p-3 text-center font-mono font-bold text-blue-700 bg-blue-500/5">{g.hasRecord && g.cbtScore > 0 ? g.cbtScore : '-'}</td>
+                      <td className="p-3 text-center font-mono font-bold">{g.hasRecord && g.paperExam > 0 ? g.paperExam : '-'}</td>
+                      <td className="p-3 text-center font-serif font-bold text-sm text-foreground">{g.hasRecord ? `${g.total}%` : '-'}</td>
                       <td className="p-3 text-center">
-                        <span className="px-2 py-0.5 rounded-full font-bold text-[11px] bg-emerald-500/10 text-emerald-600">
-                          {g.gradeInfo?.grade || 'A1'}
+                        <span className={`px-2 py-0.5 rounded-full font-bold text-[11px] ${g.hasRecord ? (g.gradeInfo?.color || 'bg-emerald-500/10 text-emerald-600') : 'bg-muted text-muted-foreground'}`}>
+                          {g.hasRecord ? (g.gradeInfo?.grade || '-') : '-'}
                         </span>
                       </td>
-                      <td className="p-3 text-muted-foreground italic">{g.remark || 'Excellent conceptual understanding.'}</td>
+                      <td className="p-3 text-muted-foreground italic">{g.hasRecord ? (g.remark || 'Satisfactory.') : 'Awaiting assessment records.'}</td>
                     </tr>
                   ))}
                 </tbody>

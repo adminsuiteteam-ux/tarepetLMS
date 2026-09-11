@@ -1065,6 +1065,68 @@ export function matchStudentClass(studentGrade?: string, targetClass?: string): 
   return normS.includes(normT) || normT.includes(normS);
 }
 
+export function matchTeacherFormClass(studentGrade?: string, studentStream?: string, formClass?: string): boolean {
+  if (!studentGrade || !formClass) return false;
+  const fc = formClass.trim();
+  if (!fc || fc === 'None' || fc.toLowerCase().startsWith('no')) return false;
+
+  const fcUpper = fc.toUpperCase().replace(/\s+/g, ' ');
+  let targetGrade = fc;
+  let targetStream: 'SCIENCE' | 'ART' | 'COMMERCIAL' | '' = '';
+  let targetArm: 'FAITH' | 'LOVE' | 'GRACE' | '' = '';
+
+  if (fcUpper.includes('SCIENCE') || fcUpper.includes('STEM')) {
+    targetStream = 'SCIENCE';
+    targetGrade = fc.replace(/science|stem/gi, '').trim();
+  } else if (fcUpper.includes('ART') || fcUpper.includes('HUMANITIES')) {
+    targetStream = 'ART';
+    targetGrade = fc.replace(/arts?|humanities/gi, '').trim();
+  } else if (fcUpper.includes('COMMERCIAL') || fcUpper.includes('BUSINESS')) {
+    targetStream = 'COMMERCIAL';
+    targetGrade = fc.replace(/commercial|business/gi, '').trim();
+  }
+
+  if (fcUpper.includes('GRACE')) {
+    targetArm = 'GRACE';
+    targetGrade = targetGrade.replace(/grace/gi, '').trim();
+  } else if (fcUpper.includes('FAITH')) {
+    targetArm = 'FAITH';
+    targetGrade = targetGrade.replace(/faith/gi, '').trim();
+  } else if (fcUpper.includes('LOVE')) {
+    targetArm = 'LOVE';
+    targetGrade = targetGrade.replace(/love/gi, '').trim();
+  }
+
+  // First verify class grade matches
+  if (!matchStudentClass(studentGrade, targetGrade || fc)) {
+    return false;
+  }
+
+  // If teacher formClass assigns a stream, enforce student stream matching
+  if (targetStream) {
+    const sStream = ((studentStream || '') + ' ' + (studentGrade || '')).toUpperCase();
+    if (targetStream === 'SCIENCE') {
+      return sStream.includes('SCI') || sStream.includes('STEM');
+    }
+    if (targetStream === 'ART') {
+      return (sStream.includes('ART') || sStream.includes('COMM') || sStream.includes('HUMAN')) && !sStream.includes('SCI');
+    }
+    if (targetStream === 'COMMERCIAL') {
+      return sStream.includes('COMM') || sStream.includes('BUS');
+    }
+  }
+
+  // If teacher formClass assigns a specific arm, enforce arm matching if student has arm info
+  if (targetArm) {
+    const sArm = ((studentStream || '') + ' ' + (studentGrade || '')).toUpperCase();
+    if (sArm.includes('FAITH') || sArm.includes('LOVE') || sArm.includes('GRACE')) {
+      return sArm.includes(targetArm);
+    }
+  }
+
+  return true;
+}
+
 export function getStoredStudents(): StudentRecord[] {
   if (!_students || _students.length === 0) {
     _students = loadSavedStudents();
@@ -3076,8 +3138,11 @@ export function clearAllSiteDefaultData(): void {
  * Admin Password Storage & Management
  */
 export function getAdminPassword(): string {
-  return "";
-} catch {}
+  if (typeof window === 'undefined') return 'TarepetAdmin@2026!';
+  try {
+    const saved = localStorage.getItem('tarepet_admin_password');
+    if (saved) return saved;
+  } catch {}
   return 'TarepetAdmin@2026!';
 }
 

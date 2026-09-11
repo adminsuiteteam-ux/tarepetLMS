@@ -277,51 +277,65 @@ export const TerminalReportCard: React.FC<TerminalReportCardProps> = ({ data, on
             </div>
           </div>
 
-          {/* Montessori Conduct & Skill Ratings */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2 border border-slate-200 p-4 rounded-xl bg-slate-50/50">
-              <h4 className="font-serif font-bold text-xs text-slate-900 uppercase tracking-wide flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" /> {t('Montessori Practical Life & Character Ratings')}
-              </h4>
-              <div className="space-y-1.5 text-[11px]">
-                {report.montessori_conduct.map((item, i) => (
-                  <div key={i} className="flex justify-between items-center border-b border-slate-200/60 pb-1">
-                    <span className="text-slate-700 font-medium">{item.trait}</span>
-                    <span className="font-bold text-primary bg-primary/10 px-2 py-0.5 rounded text-[10px]">{item.rating}</span>
+          {/* Remarks Box */}
+          {(() => {
+            const gUpper = (report.student_info.grade_level || '').toUpperCase();
+            const isSecondary = gUpper.includes('SS') || gUpper.includes('JSS') || gUpper.includes('SECONDARY');
+            return (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2 border border-slate-200 p-4 rounded-xl bg-slate-50/50">
+                    <h4 className="font-serif font-bold text-xs text-slate-900 uppercase tracking-wide flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" /> {t('Montessori Practical Life & Character Ratings')}
+                    </h4>
+                    <div className="space-y-1.5 text-[11px]">
+                      {report.montessori_conduct.map((item, i) => (
+                        <div key={i} className="flex justify-between items-center border-b border-slate-200/60 pb-1">
+                          <span className="text-slate-700 font-medium">{item.trait}</span>
+                          <span className="font-bold text-primary bg-primary/10 px-2 py-0.5 rounded text-[10px]">{item.rating}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
 
-            {/* Remarks Box */}
-            <div className="space-y-3 border border-slate-200 p-4 rounded-xl bg-slate-50/50">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">{t('Form Teacher Remarks')}</span>
-                <p className="text-[11px] text-slate-800 font-serif italic mt-0.5">"{report.remarks.teacher_remark}"</p>
-              </div>
-              <div className="border-t border-slate-200 pt-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">{t('Headmistress Decision & Recommendation')}</span>
-                <p className="text-[11px] text-slate-800 font-serif italic mt-0.5">"{report.remarks.headmistress_remark}"</p>
-              </div>
-            </div>
-          </div>
+                  {/* Remarks Box */}
+                  <div className="space-y-3 border border-slate-200 p-4 rounded-xl bg-slate-50/50">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">{t('Form Teacher Remarks')}</span>
+                      <p className="text-[11px] text-slate-800 font-serif italic mt-0.5">"{report.remarks.teacher_remark || 'Satisfactory academic performance and good conduct.'}"</p>
+                    </div>
+                    <div className="border-t border-slate-200 pt-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                        {isSecondary ? t("Principal's Decision & Recommendation") : t("Headmistress Decision & Recommendation")}
+                      </span>
+                      <p className="text-[11px] text-slate-800 font-serif italic mt-0.5">
+                        "{report.remarks.principal_remark || report.remarks.headmistress_remark || (isSecondary ? 'Recommended for promotion to the next academic level.' : 'Passed with Credit. Recommended for promotion.')}"
+                      </p>
+                    </div>
+                  </div>
+                </div>
 
-          {/* Signatures & Official Stamp Footer */}
-          <div className="pt-6 border-t border-slate-200 grid grid-cols-2 gap-8 items-end">
-            <div>
-              <div className="h-10 border-b border-slate-400 flex items-end pb-1 font-serif text-slate-700 italic">
-                Mrs. Okafor C. (Senior Instructor)
-              </div>
-              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block mt-1">Form Teacher Signature</span>
-            </div>
-            
-            <div className="text-right">
-              <div className="h-10 border-b border-slate-400 flex items-end justify-end pb-1 font-serif text-primary font-bold italic">
-                Dr. (Mrs.) Tarepet E. (Headmistress)
-              </div>
-              <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block mt-1">School Seal & Headmistress Stamp</span>
-            </div>
-          </div>
+                {/* Signatures & Official Stamp Footer */}
+                <div className="pt-6 border-t border-slate-200 grid grid-cols-2 gap-8 items-end">
+                  <div>
+                    <div className="h-10 border-b border-slate-400 flex items-end pb-1 font-serif text-slate-700 italic">
+                      Form Teacher Signature
+                    </div>
+                    <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block mt-1">Form Teacher Signature</span>
+                  </div>
+                  
+                  <div className="text-right">
+                    <div className="h-10 border-b border-slate-400 flex items-end justify-end pb-1 font-serif text-primary font-bold italic">
+                      {isSecondary ? 'Dr. (Mrs.) Tarepet E. (Principal)' : 'Dr. (Mrs.) Tarepet E. (Headmistress)'}
+                    </div>
+                    <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider block mt-1">
+                      {isSecondary ? 'School Seal & Principal Stamp' : 'School Seal & Headmistress Stamp'}
+                    </span>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
 
         </div>
       </div>

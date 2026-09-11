@@ -18,7 +18,7 @@ import { authClient, getAccessToken } from '@/lib/api-auth';
 import { addRealtimeNotification } from '@/lib/notifications-store';
 import { ImageCropModal } from '@/components/ui/ImageCropModal';
 import { MobileProfileView } from '@/components/profile/MobileProfileView';
-import { getStoredExams, updateExamStatus, deleteCBTExam, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, getStoredTeachers, saveTeacher, saveStudent, deleteStudent, subscribeToCBTStore, broadcastRealtimeEvent, syncStudentsWithBackend, syncTeachersWithBackend, syncExamsWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, calculateBECEGrade, isSeniorSecondaryClass, CourseBroadsheetScore, PromotionRecord, getPromotionHistory, executeStudentPromotions, getNextProgressiveClass, getArchivedCohortsForTeacher, matchStudentClass } from '@/lib/cbt-store';
+import { getStoredExams, updateExamStatus, deleteCBTExam, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, getStoredTeachers, saveTeacher, saveStudent, deleteStudent, subscribeToCBTStore, broadcastRealtimeEvent, syncStudentsWithBackend, syncTeachersWithBackend, syncExamsWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, calculateBECEGrade, isSeniorSecondaryClass, CourseBroadsheetScore, PromotionRecord, getPromotionHistory, executeStudentPromotions, getNextProgressiveClass, getArchivedCohortsForTeacher, matchStudentClass, matchTeacherFormClass } from '@/lib/cbt-store';
 import { useTranslation } from '@/lib/i18n';
 import { TerminalReportCard, ReportCardData, SubjectScore } from '@/components/reports/TerminalReportCard';
 import { getTimeGreeting } from '@/lib/utils';
@@ -177,6 +177,19 @@ export default function TeacherDashboard() {
   const [selectedExamClass, setSelectedExamClass] = useState<string>('ALL');
   const [selectedExamStream, setSelectedExamStream] = useState<string>('ALL');
 
+  React.useEffect(() => {
+    if (formClass && selectedExamClass === 'ALL') {
+      const fcUpper = formClass.toUpperCase();
+      if (fcUpper.includes('SS 1') || fcUpper.includes('SS1')) setSelectedExamClass('SS1');
+      else if (fcUpper.includes('SS 2') || fcUpper.includes('SS2')) setSelectedExamClass('SS2');
+      else if (fcUpper.includes('SS 3') || fcUpper.includes('SS3')) setSelectedExamClass('SS3');
+
+      if (fcUpper.includes('SCIENCE') || fcUpper.includes('STEM')) setSelectedExamStream('Science');
+      else if (fcUpper.includes('ART') || fcUpper.includes('HUMANITIES')) setSelectedExamStream('Arts');
+      else if (fcUpper.includes('COMMERCIAL')) setSelectedExamStream('Commercial');
+    }
+  }, [formClass]);
+
   // Data states
   const [submissions, setSubmissions] = useState(PENDING_SUBMISSIONS);
   const [selectedSub, setSelectedSub] = useState<any>(null);
@@ -195,12 +208,14 @@ export default function TeacherDashboard() {
     const unsub = subscribeToCBTStore(() => {
       setRoster(getStoredStudents());
       setTeacherExams(getStoredExams());
+      setSubmissions(getStoredSubmissions());
     });
 
     // Continuous real-time multi-device sync polling (fallback every 45s)
     const pollInterval = setInterval(() => {
       syncExamsWithBackend().then(res => setTeacherExams(res)).catch(() => {});
       syncStudentsWithBackend().then(res => setRoster(res)).catch(() => {});
+      syncSubmissionsWithBackend().then(() => setSubmissions(getStoredSubmissions())).catch(() => {});
     }, 45000);
 
     // Instant re-sync when teacher unlocks device or focuses tab
@@ -208,6 +223,7 @@ export default function TeacherDashboard() {
       if (document.visibilityState === 'visible') {
         syncExamsWithBackend().then(res => setTeacherExams(res)).catch(() => {});
         syncStudentsWithBackend().then(res => setRoster(res)).catch(() => {});
+        syncSubmissionsWithBackend().then(() => setSubmissions(getStoredSubmissions())).catch(() => {});
       }
     };
     document.addEventListener('visibilitychange', handleVisibility);
@@ -787,8 +803,21 @@ export default function TeacherDashboard() {
       return;
     }
 
-    const selectedGrade = formClass || addStudentForm.grade || 'Nursery 1';
-    const targetStream = addStudentForm.stream || (selectedGrade.startsWith('SS') ? 'Science' : 'General');
+    let selectedGrade = formClass || addStudentForm.grade || 'Nursery 1';
+    let targetStream = addStudentForm.stream || (selectedGrade.startsWith('SS') ? 'Science' : 'General');
+    if (formClass) {
+      const fcUpper = formClass.toUpperCase();
+      if (fcUpper.includes('SCIENCE') || fcUpper.includes('STEM')) {
+        targetStream = 'Science';
+        selectedGrade = formClass.replace(/science|stem/gi, '').trim();
+      } else if (fcUpper.includes('ART') || fcUpper.includes('HUMANITIES')) {
+        targetStream = 'Art';
+        selectedGrade = formClass.replace(/arts?|humanities/gi, '').trim();
+      } else if (fcUpper.includes('COMMERCIAL') || fcUpper.includes('BUSINESS')) {
+        targetStream = 'Commercial';
+        selectedGrade = formClass.replace(/commercial|business/gi, '').trim();
+      }
+    }
     const autoCode = addStudentForm.code.trim() || generateAdmissionNumber(selectedGrade, targetStream);
     const autoEmail = addStudentForm.email.trim() || formatStudentEmail(addStudentForm.name);
 
@@ -857,8 +886,8 @@ export default function TeacherDashboard() {
       stateOfOrigin: 'Bayelsa',
       lga: 'Yenagoa',
       address: '',
-      grade: formClass || 'Nursery 1',
-      stream: 'General / Early Years',
+      grade: selectedGrade || formClass || 'Nursery 1',
+      stream: targetStream || 'General / Early Years',
       programme: 'Montessori Early Childhood Education',
       parentName: '',
       parentPhone: '',
@@ -877,10 +906,9 @@ export default function TeacherDashboard() {
     const q = studentSearch.toLowerCase();
     const matchSearch = !q || s.name.toLowerCase().includes(q) || s.code.toLowerCase().includes(q);
     
-    // Form Teachers are strictly restricted to their assigned form class only
+    // Form Teachers are strictly restricted to their assigned form class AND stream
     if (formClass) {
-      const matchClass = matchStudentClass(s.grade, formClass);
-      return matchSearch && matchClass;
+      return matchSearch && matchTeacherFormClass(s.grade, s.stream, formClass);
     }
     return matchSearch;
   });
@@ -890,7 +918,7 @@ export default function TeacherDashboard() {
     // 1. OVERVIEW
     // =========================================================
     if (activeSection === 'overview') {
-      const formClassStudents = roster.filter(s => formClass ? matchStudentClass(s.grade, formClass) : false);
+      const formClassStudents = roster.filter(s => formClass ? matchTeacherFormClass(s.grade, s.stream, formClass) : false);
       const formClassStudentsCount = formClassStudents.length;
 
       // School-wide class size metrics
@@ -2110,8 +2138,9 @@ export default function TeacherDashboard() {
       const activeExams = filteredExams.filter(e => e.status === 'ACTIVE');
 
       const filteredSubmissions = allSubmissions.filter(s => {
-        const matchClass = selectedExamClass === 'ALL' || matchStudentClass(s.class, selectedExamClass);
-        const matchStream = selectedExamStream === 'ALL' || s.stream === selectedExamStream || (selectedExamStream === 'Arts' && (s.stream === 'Art' || s.stream === 'Arts')) || (selectedExamStream === 'Science' && s.stream === 'Science');
+        if (!s) return false;
+        const matchClass = selectedExamClass === 'ALL' || !s.class || matchStudentClass(s.class, selectedExamClass) || s.class === 'SS 1 - SS 3' || s.class.includes('SS');
+        const matchStream = selectedExamStream === 'ALL' || !s.stream || s.stream === 'General' || s.stream === selectedExamStream || (selectedExamStream === 'Arts' && (s.stream === 'Art' || s.stream === 'Arts' || s.stream === 'Commercial')) || (selectedExamStream === 'Science' && (s.stream === 'Science' || s.stream === 'STEM'));
         return matchClass && matchStream;
       });
 
@@ -2544,15 +2573,13 @@ export default function TeacherDashboard() {
         const q = studentSearch.toLowerCase();
         const matchSearch = !q || s.name.toLowerCase().includes(q) || s.code.toLowerCase().includes(q);
         
+        // If user manually selected a broadsheet class, use matchTeacherFormClass to filter strictly
         if (broadsheetClassFilter) {
-          const bcClean = broadsheetClassFilter.toLowerCase().replace(/\s+/g, '');
-          const sGradeClean = (s.grade || '').toLowerCase().replace(/\s+/g, '');
-          return matchSearch && (sGradeClean.includes(bcClean) || bcClean.includes(sGradeClean));
+          return matchSearch && matchTeacherFormClass(s.grade, s.stream, broadsheetClassFilter);
         }
+        // Default: form teacher sees only their form class students
         if (formClass) {
-          const fcClean = formClass.toLowerCase().replace(/\s+/g, '');
-          const sGradeClean = (s.grade || '').toLowerCase().replace(/\s+/g, '');
-          return matchSearch && (sGradeClean.includes(fcClean) || fcClean.includes(sGradeClean));
+          return matchSearch && matchTeacherFormClass(s.grade, s.stream, formClass);
         }
         return matchSearch;
       });
@@ -5106,119 +5133,135 @@ export default function TeacherDashboard() {
         )}
 
         {/* ── PREVIEW STUDENT CBT ANSWER SHEET MODAL ── */}
-        {previewSubmissionModal && (
-          <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-            <div className="bg-card border border-border rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-              <div className="p-5 border-b border-border flex items-center justify-between bg-muted/20">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
-                    👨‍🎓
-                  </div>
-                  <div>
-                    <h3 className="font-serif font-bold text-base text-foreground">
-                      {previewSubmissionModal.submission.student_name}'s Answer Sheet Preview
-                    </h3>
-                    <p className="text-xs text-muted-foreground">
-                      {t('teacher.exam_label', 'Exam:')} <span className="font-bold text-foreground">{previewSubmissionModal.submission.exam_title}</span>
-                    </p>
-                  </div>
-                </div>
-                <button onClick={() => setPreviewSubmissionModal(null)} className="p-2 rounded-xl text-muted-foreground hover:bg-muted/50 transition-colors"><X className="w-5 h-5" /></button>
-              </div>
+        {previewSubmissionModal && (() => {
+          const sub = previewSubmissionModal.submission || previewSubmissionModal;
+          if (!sub) return null;
+          const studentName = sub.student_name || sub.studentName || 'Student';
+          const examTitle = sub.exam_title || sub.examTitle || (previewSubmissionModal.exam?.title) || 'CBT Examination';
+          const studentId = sub.student_id || sub.studentId || 'TMS-STU-001';
+          const className = sub.class || 'SS1';
+          const streamName = sub.stream || '';
+          const submittedAt = sub.submitted_at ? new Date(sub.submitted_at).toLocaleString() : 'Recently';
+          const score = typeof sub.score === 'number' ? sub.score : 0;
+          const totalPossible = typeof sub.total_possible === 'number' ? sub.total_possible : 0;
+          const percentage = typeof sub.percentage === 'number' ? sub.percentage : (totalPossible > 0 ? Math.round((score / totalPossible) * 100) : 0);
+          const answers = sub.answers || {};
+          const examQuestions = previewSubmissionModal.exam?.questions || [];
 
-              <div className="p-5 overflow-y-auto space-y-4 flex-1">
-                {/* Performance Summary Banner */}
-                <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-500/20 flex flex-wrap items-center justify-between gap-4">
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 block">{t('teacher.student_info_header', 'Student Information')}</span>
-                    <h4 className="font-bold text-sm text-foreground">{previewSubmissionModal.submission.student_name}</h4>
-                    <p className="text-xs text-muted-foreground">ID: {previewSubmissionModal.submission.student_id} • Class: {previewSubmissionModal.submission.class} {previewSubmissionModal.submission.stream}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{t('teacher.submitted_label', 'Submitted: ')}{new Date(previewSubmissionModal.submission.submitted_at).toLocaleString()}</p>
-                  </div>
-                  <div className="flex items-center gap-3 bg-card p-3 rounded-xl border border-border shadow-xs">
-                    <div className="text-right">
-                      <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.verified_score_label', 'Verified Score')}</span>
-                      <span className="text-2xl font-serif font-bold text-emerald-600">{previewSubmissionModal.submission.score} / {previewSubmissionModal.submission.total_possible}</span>
+          return (
+            <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+              <div className="bg-card border border-border rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                <div className="p-5 border-b border-border flex items-center justify-between bg-muted/20">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
+                      👨‍🎓
                     </div>
-                    <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center font-bold text-emerald-600 text-lg border border-emerald-500/20">
-                      {previewSubmissionModal.submission.percentage}%
+                    <div>
+                      <h3 className="font-serif font-bold text-base text-foreground">
+                        {studentName}'s Answer Sheet Preview
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        {t('teacher.exam_label', 'Exam:')} <span className="font-bold text-foreground">{examTitle}</span>
+                      </p>
                     </div>
                   </div>
+                  <button onClick={() => setPreviewSubmissionModal(null)} className="p-2 rounded-xl text-muted-foreground hover:bg-muted/50 transition-colors"><X className="w-5 h-5" /></button>
                 </div>
 
-                <h4 className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground px-1">
-                  {t('teacher.question_response_audit_prefix', 'Question-by-Question Response Audit (')}{previewSubmissionModal.exam?.questions?.length || 0} Questions)
-                </h4>
-
-                <div className="space-y-3">
-                  {(previewSubmissionModal.exam?.questions || []).map((q: any, idx: number) => {
-                    const studentAns = getSafeProperty(previewSubmissionModal.submission.answers || {}, q.id) || 'Not Answered';
-                    const isCorrect = studentAns === q.correct_option;
-                    return (
-                      <div key={q.id || idx} className={`p-4 rounded-2xl border transition-all ${isCorrect ? 'bg-emerald-500/5 border-emerald-200' : 'bg-rose-500/5 border-rose-200'}`}>
-                        <div className="flex items-start justify-between gap-3 mb-2">
-                          <h5 className="font-bold text-xs text-foreground flex items-center gap-1.5">
-                            <span className="w-5 h-5 rounded-md bg-muted flex items-center justify-center text-[10px] shrink-0 font-mono">{idx + 1}</span>
-                            {q.question_text}
-                          </h5>
-                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase shrink-0 ${isCorrect ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-rose-100 text-rose-800 border border-rose-300'}`}>
-                            {isCorrect ? '✓ Correct (+1 pt)' : '❌ Incorrect (0 pt)'}
-                          </span>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2 mt-3 text-xs">
-                          {['A', 'B', 'C', 'D'].map(optKey => {
-                            const optProp = `option_${optKey.toLowerCase()}`;
-                            const optText = getSafeProperty(q, optProp);
-                            const isSelected = studentAns === optKey;
-                            const isCorrectOpt = q.correct_option === optKey;
-                            return (
-                              <div
-                                key={optKey}
-                                className={`p-2.5 rounded-xl border text-xs flex items-center justify-between ${
-                                  isCorrectOpt
-                                    ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-900 font-bold'
-                                    : isSelected
-                                    ? 'bg-rose-500/10 border-rose-500/40 text-rose-900 font-bold'
-                                    : 'bg-card border-border text-muted-foreground'
-                                }`}
-                              >
-                                <span><strong className="mr-1">{optKey}.</strong> {String(optText || '')}</span>
-                                {isCorrectOpt && <span className="text-[10px] font-bold text-emerald-700">✓ Correct</span>}
-                                {isSelected && !isCorrectOpt && <span className="text-[10px] font-bold text-rose-700">{t('teacher.selected_incorrect', 'Selected ❌')}</span>}
-                              </div>
-                            );
-                          })}
-                        </div>
-
-                        {q.explanation && (
-                          <div className="mt-2.5 p-2.5 rounded-xl bg-muted/20 border border-border/50 text-[11px] text-muted-foreground">
-                            <strong className="text-foreground">{t('teacher.solution_explanation_prefix', 'Solution Explanation:')}</strong> {q.explanation}
-                          </div>
-                        )}
+                <div className="p-5 overflow-y-auto space-y-4 flex-1">
+                  {/* Performance Summary Banner */}
+                  <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-500/20 flex flex-wrap items-center justify-between gap-4">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 block">{t('teacher.student_info_header', 'Student Information')}</span>
+                      <h4 className="font-bold text-sm text-foreground">{studentName}</h4>
+                      <p className="text-xs text-muted-foreground">ID: {studentId} • Class: {className} {streamName}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{t('teacher.submitted_label', 'Submitted: ')}{submittedAt}</p>
+                    </div>
+                    <div className="flex items-center gap-3 bg-card p-3 rounded-xl border border-border shadow-xs">
+                      <div className="text-right">
+                        <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.verified_score_label', 'Verified Score')}</span>
+                        <span className="text-2xl font-serif font-bold text-emerald-600">{score} / {totalPossible}</span>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
+                      <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center font-bold text-emerald-600 text-lg border border-emerald-500/20">
+                        {percentage}%
+                      </div>
+                    </div>
+                  </div>
 
-              <div className="p-5 border-t border-border bg-muted/20 flex items-center justify-between">
-                <button onClick={() => setPreviewSubmissionModal(null)} className="px-5 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition shadow-sm">
-                  {t('teacher.close_audit_preview_btn', 'Close Audit Preview')}
-                </button>
-                <button
-                  onClick={() => {
-                    showToast(`Student CBT Answer sheet for ${previewSubmissionModal.submission.student_name} verified!`);
-                    setPreviewSubmissionModal(null);
-                  }}
-                  className="px-5 py-2.5 rounded-xl border border-border text-xs font-bold hover:bg-muted transition"
-                >
-                  ✓ Confirm & Sync Score
-                </button>
+                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground px-1">
+                    {t('teacher.question_response_audit_prefix', 'Question-by-Question Response Audit (')}{examQuestions.length} Questions)
+                  </h4>
+
+                  <div className="space-y-3">
+                    {examQuestions.map((q: any, idx: number) => {
+                      const studentAns = getSafeProperty(answers || {}, q.id) || 'Not Answered';
+                      const isCorrect = studentAns === q.correct_option;
+                      return (
+                        <div key={q.id || idx} className={`p-4 rounded-2xl border transition-all ${isCorrect ? 'bg-emerald-500/5 border-emerald-200' : 'bg-rose-500/5 border-rose-200'}`}>
+                          <div className="flex items-start justify-between gap-3 mb-2">
+                            <h5 className="font-bold text-xs text-foreground flex items-center gap-1.5">
+                              <span className="w-5 h-5 rounded-md bg-muted flex items-center justify-center text-[10px] shrink-0 font-mono">{idx + 1}</span>
+                              {q.question_text}
+                            </h5>
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase shrink-0 ${isCorrect ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-rose-100 text-rose-800 border border-rose-300'}`}>
+                              {isCorrect ? '✓ Correct (+1 pt)' : '❌ Incorrect (0 pt)'}
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-2 mt-3 text-xs">
+                            {['A', 'B', 'C', 'D'].map(optKey => {
+                              const optProp = `option_${optKey.toLowerCase()}`;
+                              const optText = getSafeProperty(q, optProp);
+                              const isSelected = studentAns === optKey;
+                              const isCorrectOpt = q.correct_option === optKey;
+                              return (
+                                <div
+                                  key={optKey}
+                                  className={`p-2.5 rounded-xl border text-xs flex items-center justify-between ${
+                                    isCorrectOpt
+                                      ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-900 font-bold'
+                                      : isSelected
+                                      ? 'bg-rose-500/10 border-rose-500/40 text-rose-900 font-bold'
+                                      : 'bg-card border-border text-muted-foreground'
+                                  }`}
+                                >
+                                  <span><strong className="mr-1">{optKey}.</strong> {String(optText || '')}</span>
+                                  {isCorrectOpt && <span className="text-[10px] font-bold text-emerald-700">✓ Correct</span>}
+                                  {isSelected && !isCorrectOpt && <span className="text-[10px] font-bold text-rose-700">{t('teacher.selected_incorrect', 'Selected ❌')}</span>}
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {q.explanation && (
+                            <div className="mt-2.5 p-2.5 rounded-xl bg-muted/20 border border-border/50 text-[11px] text-muted-foreground">
+                              <strong className="text-foreground">{t('teacher.solution_explanation_prefix', 'Solution Explanation:')}</strong> {q.explanation}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="p-5 border-t border-border bg-muted/20 flex items-center justify-between">
+                  <button onClick={() => setPreviewSubmissionModal(null)} className="px-5 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition shadow-sm">
+                    {t('teacher.close_audit_preview_btn', 'Close Audit Preview')}
+                  </button>
+                  <button
+                    onClick={() => {
+                      showToast(`Student CBT Answer sheet for ${studentName} verified!`);
+                      setPreviewSubmissionModal(null);
+                    }}
+                    className="px-5 py-2.5 rounded-xl border border-border text-xs font-bold hover:bg-muted transition"
+                  >
+                    ✓ Confirm & Sync Score
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Post-Login Teacher Password Configuration Modal */}
         {showPasswordPromptModal && (
