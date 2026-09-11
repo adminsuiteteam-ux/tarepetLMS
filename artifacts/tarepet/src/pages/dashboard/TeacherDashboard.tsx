@@ -317,6 +317,13 @@ export default function TeacherDashboard() {
   const [previewSubmissionModal, setPreviewSubmissionModal] = useState<any | null>(null);
   const [previewExamModal, setPreviewExamModal] = useState<any | null>(null);
   const [previewExamLocked, setPreviewExamLocked] = useState<boolean>(true);
+  // Track which submission IDs have been synced to result sheet
+  const [syncedSubmissionIds, setSyncedSubmissionIds] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem('tarepet_synced_submission_ids');
+      return new Set(saved ? JSON.parse(saved) : []);
+    } catch { return new Set(); }
+  });
 
   // Live real-time sync for attendance exam candidates roster (so newly enrolled students immediately appear)
   React.useEffect(() => {
@@ -452,6 +459,56 @@ export default function TeacherDashboard() {
     });
 
     setBroadsheetScores(initialScores);
+  };
+
+  /**
+   * Syncs a student's CBT exam score from their submission into their result broadsheet.
+   * Called when teacher clicks "Record to Broadsheet" or "✓ Confirm & Sync Score" in the preview modal.
+   */
+  const handleSyncCBTScoreToResult = async (sub: any) => {
+    if (!sub) return;
+    const studentId = sub.student_id || sub.studentId || '';
+    const studentName = sub.student_name || sub.studentName || 'Student';
+    const courseCode = sub.course_code || sub.courseCode || '';
+    const className = sub.class || sub.className || '';
+    const isSS = isSeniorSecondaryClass(className);
+
+    // Convert percentage to the correct score scale
+    const pct = typeof sub.percentage === 'number' ? sub.percentage : 0;
+    // SS: CBT is out of 30; JSS/Primary: exam is out of 70
+    const cbtScore = isSS ? Math.round((pct / 100) * 30) : Math.round((pct / 100) * 70);
+
+    // Load existing broadsheet data for this student
+    const existingBroadsheet = getStudentBroadsheet(studentId);
+    const existingCourse = getSafeProperty(existingBroadsheet, courseCode) || {
+      ca1: 0, ca2: 0, assignment: 0, cbtScore: 0, paperExam: 0, exam: 0, remark: ''
+    };
+
+    // Merge in the new CBT score
+    const updatedCourse = {
+      ...existingCourse,
+      ...(isSS ? { cbtScore } : { exam: cbtScore }),
+    };
+    // Recalculate total
+    const ca = (updatedCourse.ca1 || 0) + (updatedCourse.ca2 || 0) + (updatedCourse.assignment || 0);
+    updatedCourse.total = isSS
+      ? ca + (updatedCourse.cbtScore || 0) + (updatedCourse.paperExam || 0)
+      : ca + (updatedCourse.exam || 0);
+
+    const updatedBroadsheet = { ...existingBroadsheet, [courseCode]: updatedCourse };
+
+    // Persist to localStorage + backend
+    await saveStudentBroadsheet(studentId, updatedBroadsheet);
+
+    // Mark this submission as synced
+    setSyncedSubmissionIds(prev => {
+      const next = new Set(prev);
+      next.add(String(sub.id));
+      try { localStorage.setItem('tarepet_synced_submission_ids', JSON.stringify([...next])); } catch {}
+      return next;
+    });
+
+    showToast(`✅ ${studentName}'s CBT score (${cbtScore} pts) synced to result sheet!`);
   };
 
   const handleUpdateScoreInput = (courseCode: string, field: keyof CourseBroadsheetScore, val: any) => {
@@ -2538,12 +2595,18 @@ export default function TeacherDashboard() {
                       >
                         <Eye className="w-3.5 h-3.5" /> Preview Answer Sheet
                       </button>
-                      <button
-                        onClick={() => showToast(`Recorded ${sub.student_name}'s score (${sub.percentage}%) to class broadsheet!`)}
-                        className="bg-primary text-white font-bold px-3 py-2 rounded-xl text-xs hover:bg-primary/90 transition-colors"
-                      >
-                        {t('teacher.record_broadsheet', 'Record to Broadsheet')}
-                      </button>
+                      {syncedSubmissionIds.has(String(sub.id)) ? (
+                        <span className="bg-emerald-600 text-white font-bold px-3 py-2 rounded-xl text-xs flex items-center gap-1 cursor-default opacity-80">
+                          ✅ Synced to Results
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleSyncCBTScoreToResult(sub)}
+                          className="bg-primary text-white font-bold px-3 py-2 rounded-xl text-xs hover:bg-primary/90 transition-colors"
+                        >
+                          📥 Record to Result Sheet
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -5248,15 +5311,21 @@ export default function TeacherDashboard() {
                   <button onClick={() => setPreviewSubmissionModal(null)} className="px-5 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition shadow-sm">
                     {t('teacher.close_audit_preview_btn', 'Close Audit Preview')}
                   </button>
-                  <button
-                    onClick={() => {
-                      showToast(`Student CBT Answer sheet for ${studentName} verified!`);
-                      setPreviewSubmissionModal(null);
-                    }}
-                    className="px-5 py-2.5 rounded-xl border border-border text-xs font-bold hover:bg-muted transition"
-                  >
-                    ✓ Confirm & Sync Score
-                  </button>
+                  {syncedSubmissionIds.has(String(sub.id)) ? (
+                    <span className="px-5 py-2.5 rounded-xl bg-emerald-600/10 border border-emerald-500/40 text-emerald-700 text-xs font-bold">
+                      ✅ Score Already Synced to Result Sheet
+                    </span>
+                  ) : (
+                    <button
+                      onClick={async () => {
+                        await handleSyncCBTScoreToResult(sub);
+                        setPreviewSubmissionModal(null);
+                      }}
+                      className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-sm flex items-center gap-2"
+                    >
+                      📥 Confirm & Sync to Result Sheet
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
