@@ -3354,7 +3354,7 @@ export default function AdminDashboard() {
 
   // SS student filter by class + stream
   const filteredSSStudents = studentsList.filter(s => {
-    if (isAccountDeleted(s.email) || isAccountDeleted(s.id) || isAccountDeleted(s.code) || isAccountDeleted(s.admissionNo) || isAccountDeleted(s.name)) {
+    if (isAccountDeleted(s.email) || isAccountDeleted(s.id) || isAccountDeleted(s.admissionNo)) {
       return false;
     }
     const q = userSearch.toLowerCase();

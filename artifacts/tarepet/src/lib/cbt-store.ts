@@ -1008,29 +1008,38 @@ function loadSavedStudents(forceReload = false): StudentRecord[] {
       }
     }
 
-    const existingKeys = new Set<string>();
+    const existingEmails = new Set<string>();
+    const existingAdmNos = new Set<string>();
+    const existingIds = new Set<string | number>();
     const liveOnly: StudentRecord[] = [];
 
     parsedList.forEach((s: any) => {
-      const sCode = String(s.code || s.admissionNo || s.studentId || '').toLowerCase().trim();
       const sEmail = String(s.email || '').toLowerCase().trim();
-      const isDeleted = isAccountDeleted(sCode) || isAccountDeleted(sEmail) || isAccountDeleted(s.id);
+      const sAdm = String(s.admissionNo || s.studentId || s.admission_number || '').toLowerCase().trim();
+      const sAdmClean = sAdm.replace(/[^a-z0-9]/g, '');
+      const sId = s.id;
+      const isDeleted = isAccountDeleted(sEmail) || isAccountDeleted(sAdm) || isAccountDeleted(sId);
       if (!isDeleted) {
         liveOnly.push(s);
-        if (sCode) existingKeys.add(sCode.replace(/[^a-z0-9]/g, ''));
-        if (sEmail) existingKeys.add(sEmail);
+        if (sEmail) existingEmails.add(sEmail);
+        if (sAdmClean) existingAdmNos.add(sAdmClean);
+        if (sId) existingIds.add(sId);
       }
     });
 
     DEFAULT_STUDENTS.forEach((d: any) => {
-      const dCode = String(d.code || d.admissionNo || d.studentId || '').toLowerCase().trim().replace(/[^a-z0-9]/g, '');
       const dEmail = String(d.email || '').toLowerCase().trim();
-      const isDeleted = isAccountDeleted(dCode) || isAccountDeleted(dEmail) || isAccountDeleted(d.id);
+      const dAdm = String(d.admissionNo || d.studentId || d.admission_number || '').toLowerCase().trim();
+      const dAdmClean = dAdm.replace(/[^a-z0-9]/g, '');
+      const dId = d.id;
+      const isDeleted = isAccountDeleted(dEmail) || isAccountDeleted(dAdm) || isAccountDeleted(dId);
       if (!isDeleted) {
-        if (!existingKeys.has(dCode) && (!dEmail || !existingKeys.has(dEmail))) {
+        const alreadyIn = (dEmail && existingEmails.has(dEmail)) || (dId && existingIds.has(dId));
+        if (!alreadyIn) {
           liveOnly.push(d);
-          if (dCode) existingKeys.add(dCode);
-          if (dEmail) existingKeys.add(dEmail);
+          if (dEmail) existingEmails.add(dEmail);
+          if (dAdmClean) existingAdmNos.add(dAdmClean);
+          if (dId) existingIds.add(dId);
         }
       }
     });
@@ -1043,7 +1052,7 @@ function loadSavedStudents(forceReload = false): StudentRecord[] {
     }
     return liveOnly;
   } catch (e) {}
-  _cachedStudents = DEFAULT_STUDENTS.filter(s => !isAccountDeleted(s.email) && !isAccountDeleted(s.code));
+  _cachedStudents = DEFAULT_STUDENTS.filter(s => !isAccountDeleted(s.email) && !isAccountDeleted(s.id));
   return _cachedStudents;
 }
 
@@ -1239,21 +1248,15 @@ export async function syncStudentsWithBackend(): Promise<StudentRecord[]> {
       if (fetched.length > 0) {
         // Merge backend-fetched students with DEFAULT_STUDENTS so local roster is preserved
         const fetchedEmails = new Set<string>();
-        const fetchedCodes = new Set<string>();
+        const fetchedIds = new Set<string | number>();
         fetched.forEach(s => {
           if (s.email) fetchedEmails.add(s.email.trim().toLowerCase());
-          [s.studentId, s.code].forEach(k => {
-            if (k) {
-              const clean = String(k).trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-              if (clean && !['notprovided', 'none', 'null', 'undefined'].includes(clean)) fetchedCodes.add(clean);
-            }
-          });
+          if (s.id) fetchedIds.add(s.id);
         });
         const missingDefaults = DEFAULT_STUDENTS.filter(d => {
           const dEmail = String(d.email || '').trim().toLowerCase();
           if (dEmail && fetchedEmails.has(dEmail)) return false;
-          const dCode = String(d.studentId || d.code || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
-          if (dCode && fetchedCodes.has(dCode)) return false;
+          if (d.id && fetchedIds.has(d.id)) return false;
           return true;
         });
         _students = [...fetched, ...missingDefaults];
@@ -1498,26 +1501,30 @@ export function saveStoredStudents(backendStudents: StudentRecord[]) {
     b && b.name && 
     !isAccountDeleted(b.email) && 
     !isAccountDeleted(b.studentId) && 
-    !isAccountDeleted(b.code) && 
-    !isAccountDeleted(b.admissionNo)
+    !isAccountDeleted(b.admissionNo) &&
+    !isAccountDeleted(b.id)
   );
 
   // Map backend items over existing local items for enrichments
   const merged: StudentRecord[] = validBackend.map(s => {
-    const sAdm = String(s.admissionNo || s.studentId || s.code || '').toLowerCase().replace(/[^a-z0-9]/g, '');
     const sEmail = String(s.email || '').toLowerCase().trim();
+    const sAdm = String(s.admissionNo || s.studentId || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const sId = s.id;
     const existing = existingLocal.find(e => {
-      const eAdm = String(e.admissionNo || e.studentId || e.code || '').toLowerCase().replace(/[^a-z0-9]/g, '');
       const eEmail = String(e.email || '').toLowerCase().trim();
-      return (sAdm && eAdm && sAdm === eAdm) || (sEmail && eEmail && sEmail === eEmail);
+      const eAdm = String(e.admissionNo || e.studentId || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const eId = e.id;
+      return (sEmail && eEmail && sEmail === eEmail) || (sId && eId && sId === eId) || (sAdm && eAdm && sAdm === eAdm);
     });
     if (existing) {
       return {
         ...existing,
         ...s,
-        id: existing.id,
-        code: existing.code,
-        admissionNo: existing.admissionNo,
+        id: existing.id ?? s.id,
+        code: existing.code || s.code,
+        admissionNo: existing.admissionNo || s.admissionNo,
+        studentId: existing.studentId || s.studentId,
+        admission_number: existing.admission_number || s.admission_number,
         grade: existing.grade || s.grade,
         gender: existing.gender || s.gender,
         parentName: s.parentName || existing.parentName || '',
@@ -1536,18 +1543,20 @@ export function saveStoredStudents(backendStudents: StudentRecord[]) {
     return s;
   });
 
-  const mergedKeys = new Set(merged.map(m => String(m.admissionNo || m.studentId || m.code || m.email || '').toLowerCase().replace(/[^a-z0-9]/g, '')));
+  const mergedEmails = new Set(merged.map(m => String(m.email || '').toLowerCase().trim()).filter(Boolean));
+  const mergedIds = new Set(merged.map(m => m.id).filter(Boolean));
 
   // Preserve any local students not yet in merged
   for (const local of existingLocal) {
-    const locKey = String(local.admissionNo || local.studentId || local.code || local.email || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-    if (locKey && !mergedKeys.has(locKey)) {
+    const locEmail = String(local.email || '').toLowerCase().trim();
+    const locId = local.id;
+    const alreadyIn = (locEmail && mergedEmails.has(locEmail)) || (locId && mergedIds.has(locId));
+    if (!alreadyIn) {
       merged.push(local);
-      mergedKeys.add(locKey);
+      if (locEmail) mergedEmails.add(locEmail);
+      if (locId) mergedIds.add(locId);
     }
   }
-
-  // Default students injection removed for privacy and security
 
   _students = merged;
   if (typeof window !== 'undefined') {
