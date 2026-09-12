@@ -211,26 +211,55 @@ export const SCHOOL_CLASSES = [
 
 export function getCoursesForClass(className: string, stream?: string | null) {
   const clean = (className || '').toUpperCase();
+
+  // ── Nursery / Early Years ─────────────────────────────────────────────────
   if (clean.includes('CRECHE') || clean.includes('NURSERY') || clean.includes('NUR')) {
     return NURSERY_COURSES;
   }
-  if (clean.includes('PRIMARY') || clean.includes('PRI') || clean.includes('BASIC')) {
+
+  // ── Primary / Basic Education ─────────────────────────────────────────────
+  if (clean.includes('PRIMARY') || clean.includes('PRI') || clean.includes('BASIC') || clean.includes('BSC')) {
     return PRIMARY_COURSES;
   }
-  if (clean.includes('JSS') || clean.includes('JS')) {
+
+  // ── Senior Secondary — MUST be checked BEFORE JSS to avoid false positives ─
+  // Matches: SS1, SS 1, SS2, SS3, SENIOR, etc. — never starts with JSS.
+  const isSeniorSecondary =
+    /^SS\s*[123]/.test(clean) ||
+    clean.startsWith('SS1') || clean.startsWith('SS2') || clean.startsWith('SS3') ||
+    clean.startsWith('SENIOR') ||
+    clean.includes('SS 1') || clean.includes('SS 2') || clean.includes('SS 3');
+
+  if (isSeniorSecondary) {
+    // Auto-detect stream from className if not explicitly passed
+    let effectiveStream = stream;
+    if (!effectiveStream || effectiveStream === 'General' || effectiveStream === 'ALL') {
+      if (clean.includes('SCIENCE') || clean.includes('STEM') || clean.includes('SCI')) {
+        effectiveStream = 'Science';
+      } else if (clean.includes('ART') || clean.includes('COMMERCIAL') || clean.includes('COMM') || clean.includes('HUM')) {
+        effectiveStream = 'Arts';
+      }
+    }
+    if (!effectiveStream || effectiveStream === 'General' || effectiveStream === 'ALL') {
+      return SENIOR_COURSES;
+    }
+    const streamLower = effectiveStream.toLowerCase();
+    if (streamLower.includes('sci') || streamLower.includes('stem')) {
+      return SENIOR_COURSES.filter(c => c.stream === 'Science');
+    }
+    if (streamLower.includes('art') || streamLower.includes('comm') || streamLower.includes('hum')) {
+      return SENIOR_COURSES.filter(c => c.stream === 'Arts');
+    }
+    return SENIOR_COURSES.filter(c => c.stream === effectiveStream || (effectiveStream === 'Art' && c.stream === 'Arts'));
+  }
+
+  // ── Junior Secondary — strict JSS prefix only ─────────────────────────────
+  if (clean.startsWith('JSS') || clean.includes('JUNIOR')) {
     return JUNIOR_COURSES;
   }
-  if (!stream || stream === 'General' || stream === 'ALL') {
-    return SENIOR_COURSES;
-  }
-  const streamLower = stream.toLowerCase();
-  if (streamLower.includes('sci')) {
-    return SENIOR_COURSES.filter(c => c.stream === 'Science');
-  }
-  if (streamLower.includes('art') || streamLower.includes('comm') || streamLower.includes('hum')) {
-    return SENIOR_COURSES.filter(c => c.stream === 'Arts');
-  }
-  return SENIOR_COURSES.filter(c => c.stream === stream || (stream === 'Art' && c.stream === 'Arts'));
+
+  // ── Fallback: return all senior courses ───────────────────────────────────
+  return SENIOR_COURSES;
 }
 
 export function formatStudentEmail(fullName: string): string {

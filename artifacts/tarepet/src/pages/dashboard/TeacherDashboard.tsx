@@ -2626,10 +2626,15 @@ export default function TeacherDashboard() {
     // 4. MANAGE RESULTS
     // =========================================================
     if (activeSection === 'results') {
-      const activeClass = broadsheetClassFilter || formClass || 'JSS 3 Faith';
+      // Default class: SS teachers start on SS 1 Science, others use their formClass
+      const defaultClass = isSeniorSecondaryTeacher ? 'SS 1 Science' : (formClass || 'JSS 1 Faith');
+      const activeClass = broadsheetClassFilter || formClass || defaultClass;
       const isSS = isSeniorSecondaryClass(activeClass);
-      const classCourseList = getCoursesForClass(activeClass);
-      const activeCourse = classCourseList.find(c => c.code === broadsheetSubject) || classCourseList[0] || { code: 'MTH-001', name: 'Junior Mathematics' };
+      const classCourseList = getCoursesForClass(activeClass, undefined);
+      // Safe fallback: never default to a Junior subject when in SS mode
+      const ssDefaultCourse = { code: 'ENG-101', name: 'English Language' };
+      const jssDefaultCourse = { code: 'ENG-001', name: 'English Language' };
+      const activeCourse = classCourseList.find(c => c.code === broadsheetSubject) || classCourseList[0] || (isSS ? ssDefaultCourse : jssDefaultCourse);
 
       // Filter roster for the selected class or search query
       const classRoster = roster.filter(s => {
@@ -2688,11 +2693,13 @@ export default function TeacherDashboard() {
               <div>
                 <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">{t('teacher.class_grade_label', 'Class & Arm')}</label>
                 <select
-                  value={broadsheetClassFilter || formClass || 'JSS 3 Faith'}
+                  value={broadsheetClassFilter || formClass || (isSeniorSecondaryTeacher ? 'SS 1 Science' : (formClass || 'JSS 1 Faith'))}
                   onChange={e => {
-                    setBroadsheetClassFilter(e.target.value);
-                    const newCourses = getCoursesForClass(e.target.value);
-                    if (newCourses.length > 0) setBroadsheetSubject(newCourses[0].code);
+                    const newClass = e.target.value;
+                    setBroadsheetClassFilter(newClass);
+                    // Always reset subject when switching class so no stale Junior subject appears
+                    const newCourses = getCoursesForClass(newClass, undefined);
+                    setBroadsheetSubject(newCourses.length > 0 ? newCourses[0].code : (isSeniorSecondaryClass(newClass) ? 'ENG-101' : 'ENG-001'));
                   }}
                   className="px-3 py-2 rounded-xl border border-border bg-muted/20 text-xs font-bold text-foreground focus:ring-2 focus:ring-emerald-500 outline-none"
                 >
