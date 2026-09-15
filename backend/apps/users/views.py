@@ -19,7 +19,7 @@ from .serializers import (
     AdminProfileSerializer,
     SystemSettingsSerializer,
 )
-from .permissions import IsAdmin, IsSelfOrAdmin
+from .permissions import IsAdmin, IsSelfOrAdmin, IsTeacher
 # pyrefly: ignore [missing-import]
 from apps.courses.models import Course
 # pyrefly: ignore [missing-import]
@@ -326,9 +326,9 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['retrieve', 'update', 'partial_update']:
             return [permissions.IsAuthenticated(), IsSelfOrAdmin()]
-        # Teachers need read-only list access to student roster for CBT sync
+        # Teachers and Admins have list access to student roster; students and parents are forbidden
         if self.action == 'list':
-            return [permissions.IsAuthenticated()]
+            return [IsTeacher()]
         return [IsAdmin()]
 
     @action(detail=False, methods=['delete', 'post'], url_path='delete-by-identifier')

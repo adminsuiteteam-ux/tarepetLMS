@@ -67,16 +67,6 @@ export default function Home() {
         
         <div className="container mx-auto px-4 md:px-6 relative z-10">
           <div className="max-w-3xl">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.6 }}
-              className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full glass-button text-white text-xs md:text-sm font-semibold mb-6 shadow-xl"
-            >
-              <span className="w-2.5 h-2.5 rounded-full bg-primary animate-ping" />
-              <span>Admissions open for 2025/2026</span>
-            </motion.div>
-            
             <motion.h1 
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}

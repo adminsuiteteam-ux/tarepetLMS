@@ -19,7 +19,8 @@ import {
   getCoursesForClass, getStudentBroadsheet, calculateWAECGrade,
   calculateBECEGrade, isSeniorSecondaryClass, getStoredStudents,
   saveStudent, broadcastRealtimeEvent, syncStudentsWithBackend,
-  getStoredSubjects, matchStudentClass, SubjectRecord, CBTExam, CBTSubmission
+  getStoredSubjects, matchStudentClass, SubjectRecord, CBTExam, CBTSubmission,
+  getStudentCBTSubmissionForCourse, findStudentByAnyIdentifier
 } from '@/lib/cbt-store';
 import { authClient } from '@/lib/api-auth';
 import { StudentPaymentPanel } from '@/components/dashboard/StudentPaymentPanel';
@@ -131,7 +132,7 @@ const DEFAULT_ACADEMIC_CALENDAR = [
     category: 'Exam',
     scope: 'JSS 1 - SS 3',
     status: 'Active',
-    detail: 'Computer-Based Testing (CBT) assessment tests for Senior & Junior secondary classes (20 marks).'
+    detail: 'Computer-Based Testing (CBT) assessment tests and exams for all classes.'
   },
   {
     title: 'Tarepet Annual Inter-House Sports Festival',
@@ -515,7 +516,7 @@ export default function StudentDashboard() {
   myEnrolledCourses.forEach(c => {
     const scoreObj = broadsheetData[c.code];
     if (scoreObj) {
-      const tot = (scoreObj.ca1 || 0) + (scoreObj.ca2 || 0) + (scoreObj.cbtScore || 0) + (scoreObj.paperExam || scoreObj.exam || 0);
+      const tot = (scoreObj.ca1 || 0) + (scoreObj.ca2 || 0) + (scoreObj.cbtTest || 0) + (scoreObj.cbtExam || scoreObj.cbtScore || 0) + (scoreObj.paperExam || scoreObj.theoryExam || scoreObj.exam || 0);
       if (tot > 0) {
         totalScoreSum += tot;
         scoredCount++;
@@ -585,23 +586,38 @@ export default function StudentDashboard() {
   let reportTotalSum = 0;
   let reportCount = 0;
   const reportScoredCourses = coursesForReport.map(c => {
-    const sc = broadsheetData[c.code] || { ca1: 0, ca2: 0, cbtScore: 0, paperExam: 0, exam: 0, remark: '' };
+    const sc = broadsheetData[c.code] || { ca1: 0, ca2: 0, cbtTest: 0, cbtExam: 0, cbtScore: 0, paperExam: 0, exam: 0, remark: '' };
+
+    // Check if there are CBT submissions for this student for this course (test vs exam)
+    const cbtSub = getStudentCBTSubmissionForCourse(studentIdForScores, c.code);
+    const isCbtSynced = Boolean(cbtSub?.gradebook_synced || (typeof sc.cbtScore === 'number' && sc.cbtScore > 0) || (typeof sc.cbtTest === 'number' && sc.cbtTest > 0) || (typeof sc.cbtExam === 'number' && sc.cbtExam > 0));
+    const cbtPending = Boolean(cbtSub && !isCbtSynced);
+
+    // Use raw scores — no /30 or /20 scaling
+    const effectiveCbtTest = (typeof sc.cbtTest === 'number' && sc.cbtTest > 0)
+      ? sc.cbtTest
+      : 0;
+    const effectiveCbtExam = (typeof sc.cbtExam === 'number' && sc.cbtExam > 0)
+      ? sc.cbtExam
+      : (typeof sc.cbtScore === 'number' && sc.cbtScore > 0 ? sc.cbtScore : 0);
+
     const hasCa1 = typeof sc.ca1 === 'number' && sc.ca1 > 0;
     const hasCa2 = typeof sc.ca2 === 'number' && sc.ca2 > 0;
-    const hasCbt = typeof sc.cbtScore === 'number' && sc.cbtScore > 0;
+    const hasCbtTest = effectiveCbtTest > 0;
+    const hasCbtExam = effectiveCbtExam > 0;
     const hasExam = typeof sc.paperExam === 'number' && sc.paperExam > 0;
     const hasAltExam = typeof sc.exam === 'number' && sc.exam > 0;
 
-    const hasRecord = hasCa1 || hasCa2 || hasCbt || hasExam || hasAltExam || Boolean((sc as any).hasRecord);
+    const hasRecord = hasCa1 || hasCa2 || hasCbtTest || hasCbtExam || hasExam || hasAltExam || Boolean((sc as any).hasRecord);
 
     const ca1Val = hasCa1 ? sc.ca1 : 0;
     const ca2Val = hasCa2 ? sc.ca2 : 0;
-    const cbtVal = hasCbt ? sc.cbtScore : 0;
+    const cbtTestVal = effectiveCbtTest;
+    const cbtExamVal = effectiveCbtExam;
     const examVal = hasExam ? sc.paperExam : (hasAltExam ? sc.exam : 0);
 
-    const total = isSS
-      ? ca1Val + ca2Val + cbtVal + examVal
-      : ca1Val + ca2Val + examVal;
+    // Universal total: CA1 + CA2 + CBT Test + CBT Exam + Theory Exam
+    const total = ca1Val + ca2Val + cbtTestVal + cbtExamVal + examVal;
 
     if (hasRecord && total > 0) {
       reportTotalSum += total;
@@ -614,7 +630,10 @@ export default function StudentDashboard() {
       ...sc,
       ca1: hasCa1 ? sc.ca1 : 0,
       ca2: hasCa2 ? sc.ca2 : 0,
-      cbtScore: hasCbt ? sc.cbtScore : 0,
+      cbtTest: cbtTestVal,
+      cbtExam: cbtExamVal,
+      cbtScore: cbtTestVal + cbtExamVal,
+      cbtPending,
       paperExam: examVal,
       hasRecord,
       total,
@@ -879,7 +898,7 @@ export default function StudentDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredEnrolledCourses.map((c, idx) => {
               const scoreObj = broadsheetData[c.code];
-              const totalScore = scoreObj ? (scoreObj.ca1 || 0) + (scoreObj.ca2 || 0) + (scoreObj.cbtScore || 0) + (scoreObj.paperExam || scoreObj.exam || 0) : 0;
+              const totalScore = scoreObj ? (scoreObj.ca1 || 0) + (scoreObj.ca2 || 0) + (scoreObj.cbtTest || 0) + (scoreObj.cbtExam || scoreObj.cbtScore || 0) + (scoreObj.paperExam || scoreObj.theoryExam || scoreObj.exam || 0) : 0;
               const gradeLetter = isSS ? calculateWAECGrade(totalScore).grade : calculateBECEGrade(totalScore).grade;
 
               return (
@@ -1076,20 +1095,36 @@ export default function StudentDashboard() {
             </h3>
 
             <div className="space-y-3">
-              {myCompletedCBTSubmissions.map(sub => (
-                <div key={sub.id} className="p-4 rounded-2xl border border-emerald-200 dark:border-emerald-900/40 bg-emerald-500/5 flex items-center justify-between flex-wrap gap-3">
-                  <div>
-                    <h4 className="font-bold text-foreground text-sm">{sub.exam_title}</h4>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Submitted on {new Date(sub.submitted_at).toLocaleDateString()} at {new Date(sub.submitted_at).toLocaleTimeString()}
-                    </p>
+              {myCompletedCBTSubmissions.map(sub => {
+                const isSynced = Boolean(sub.gradebook_synced);
+                return (
+                  <div key={sub.id} className="p-4 rounded-2xl border border-border bg-card/60 flex items-center justify-between flex-wrap gap-3">
+                    <div>
+                      <h4 className="font-bold text-foreground text-sm">{sub.exam_title}</h4>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Submitted on {new Date(sub.submitted_at).toLocaleDateString()} at {new Date(sub.submitted_at).toLocaleTimeString()}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      {isSynced ? (
+                        <div>
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-2.5 py-1 rounded-full">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Certified & Synced
+                          </span>
+                          <span className="text-[10px] text-muted-foreground block mt-0.5 font-medium">Recorded to Result Sheet</span>
+                        </div>
+                      ) : (
+                        <div>
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 px-2.5 py-1 rounded-full">
+                            ⏳ Submitted (Pending Teacher Review)
+                          </span>
+                          <span className="text-[10px] text-muted-foreground block mt-0.5">Score withheld per academic policy</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <span className="text-xl font-serif font-bold text-emerald-600">{sub.score} / {sub.total_possible}</span>
-                    <span className="text-xs font-mono font-bold text-emerald-700 block">({sub.percentage}%)</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -1204,10 +1239,11 @@ export default function StudentDashboard() {
                 <thead className="bg-muted/40 uppercase text-[10px] text-muted-foreground tracking-wider border-b border-border">
                   <tr>
                     <th className="p-3">Subject Name</th>
-                    <th className="p-3 text-center">1st CA (10)</th>
-                    <th className="p-3 text-center">2nd CA (10)</th>
-                    <th className="p-3 text-center bg-blue-500/10 text-blue-700">CBT (20)</th>
-                    <th className="p-3 text-center">Exam (60)</th>
+                    <th className="p-3 text-center">1st CA</th>
+                    <th className="p-3 text-center">2nd CA</th>
+                    <th className="p-3 text-center bg-indigo-500/10 text-indigo-700">CBT Test</th>
+                    <th className="p-3 text-center bg-blue-500/10 text-blue-700">CBT Exam</th>
+                    <th className="p-3 text-center">Theory Exam</th>
                     <th className="p-3 text-center">Total (100)</th>
                     <th className="p-3 text-center">Grade</th>
                     <th className="p-3">Teacher's Remark</th>
@@ -1222,7 +1258,37 @@ export default function StudentDashboard() {
                       </td>
                       <td className="p-3 text-center font-mono font-bold">{g.hasRecord && g.ca1 > 0 ? g.ca1 : '-'}</td>
                       <td className="p-3 text-center font-mono font-bold">{g.hasRecord && g.ca2 > 0 ? g.ca2 : '-'}</td>
-                      <td className="p-3 text-center font-mono font-bold text-blue-700 bg-blue-500/5">{g.hasRecord && g.cbtScore > 0 ? g.cbtScore : '-'}</td>
+                      {/* CBT Test */}
+                      <td className="p-3 text-center font-mono font-bold text-indigo-700 bg-indigo-500/5">
+                        {g.cbtTest > 0 ? (
+                          <span className="font-bold text-indigo-600 dark:text-indigo-400">{g.cbtTest}</span>
+                        ) : g.cbtPending ? (
+                          <span
+                            className="inline-flex items-center gap-1 text-[10px] text-amber-600 font-semibold bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800"
+                            title="CBT test completed. Score withheld pending teacher verification."
+                          >
+                            ⏳ Pending
+                          </span>
+                        ) : (
+                          '-'
+                        )}
+                      </td>
+                      {/* CBT Exam */}
+                      <td className="p-3 text-center font-mono font-bold text-blue-700 bg-blue-500/5">
+                        {g.cbtExam > 0 ? (
+                          <span className="font-bold text-blue-600 dark:text-blue-400">{g.cbtExam}</span>
+                        ) : g.cbtPending ? (
+                          <span
+                            className="inline-flex items-center gap-1 text-[10px] text-amber-600 font-semibold bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800"
+                            title="CBT exam completed. Score withheld pending teacher verification."
+                          >
+                            ⏳ Pending
+                          </span>
+                        ) : (
+                          '-'
+                        )}
+                      </td>
+                      {/* Theory Exam */}
                       <td className="p-3 text-center font-mono font-bold">{g.hasRecord && g.paperExam > 0 ? g.paperExam : '-'}</td>
                       <td className="p-3 text-center font-serif font-bold text-sm text-foreground">{g.hasRecord ? `${g.total}%` : '-'}</td>
                       <td className="p-3 text-center">
@@ -1230,7 +1296,11 @@ export default function StudentDashboard() {
                           {g.hasRecord ? (g.gradeInfo?.grade || '-') : '-'}
                         </span>
                       </td>
-                      <td className="p-3 text-muted-foreground italic">{g.hasRecord ? (g.remark || 'Satisfactory.') : 'Awaiting assessment records.'}</td>
+                      <td className="p-3 text-muted-foreground italic">
+                        {g.hasRecord
+                          ? (g.remark || 'Satisfactory.')
+                          : (g.cbtPending ? 'CBT exam completed. Awaiting teacher verification & sync.' : 'Awaiting assessment records.')}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

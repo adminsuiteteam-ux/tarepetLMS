@@ -61,6 +61,13 @@ export interface CBTExam {
   results_released?: boolean;
 }
 
+export interface CBTIntegrityFlag {
+  type: 'FULLSCREEN_EXIT' | 'TAB_SWITCH' | 'COPY_ATTEMPT' | 'SCREENSHOT_ATTEMPT' | 'RIGHT_CLICK';
+  timestamp: string;
+  flagCount: number;
+  detail?: string;
+}
+
 export interface CBTSubmission {
   id: number;
   exam_id: number;
@@ -77,6 +84,10 @@ export interface CBTSubmission {
   submitted_at: string;
   answers: Record<number, string>;
   gradebook_synced: boolean;
+  flags?: CBTIntegrityFlag[];
+  autoPaused?: boolean;
+  pauseEvents?: Array<{ timestamp: string; durationMinutes: number }>;
+  assessment_type?: 'TEST' | 'EXAM';
 }
 
 export interface LMSActivity {
@@ -2302,7 +2313,12 @@ export async function syncSubmissionsWithBackend(examId?: number): Promise<CBTSu
 export async function submitStudentCBTAttempt(
   examId: number,
   answers: Record<number, string>,
-  studentInfo: { name?: string; email?: string; student_id?: string }
+  studentInfo: { name?: string; email?: string; student_id?: string },
+  integrityData?: {
+    flags?: CBTIntegrityFlag[];
+    autoPaused?: boolean;
+    pauseEvents?: Array<{ timestamp: string; durationMinutes: number }>;
+  }
 ): Promise<CBTSubmission> {
   const exam = _exams.find(e => e.id === examId) || _exams[0];
 
@@ -2336,7 +2352,11 @@ export async function submitStudentCBTAttempt(
     percentage,
     submitted_at: new Date().toISOString(),
     answers,
-    gradebook_synced: true,
+    gradebook_synced: false,
+    flags: integrityData?.flags || [],
+    autoPaused: integrityData?.autoPaused || false,
+    pauseEvents: integrityData?.pauseEvents || [],
+    assessment_type: exam.assessment_type || 'EXAM',
   };
 
   _submissions = [newSub, ..._submissions];
@@ -2362,33 +2382,15 @@ export async function submitStudentCBTAttempt(
     console.warn('Backend attempt submission failed, recorded locally in CBT store:', apiErr);
   }
 
-  // Auto-sync CBT score directly to student's live broadsheet mark in Django backend
-  const calculatedCbtScore = Math.round((percentage / 100) * 30);
-  try {
-    const existingScores = getStudentBroadsheet(autoId) || {};
-    const currentCourseScore = (Reflect.get(existingScores, exam.course_code) as any) || { ca1: 0, ca2: 0, exam: 0 };
-    const updatedScores = {
-      ...existingScores,
-      [exam.course_code]: {
-        ...currentCourseScore,
-        cbtScore: calculatedCbtScore,
-        cbtExam: calculatedCbtScore,
-        courseCode: exam.course_code,
-        courseName: exam.course_name,
-      }
-    };
-    await saveStudentBroadsheet(autoId, updatedScores);
-  } catch (e) {}
-
   addRealtimeActivity(
     'SUBMISSION_RECEIVED',
     `CBT Submission: ${sName}`,
-    `Scored ${score}/${total_possible} (${percentage}%) in ${exam.course_name}. Gradebook auto-synced.`,
+    `Completed ${exam.title} (${score}/${total_possible} - ${percentage}%). Awaiting teacher broadsheet sync.`,
     sName
   );
   addRealtimeNotification({
     title: `CBT Submission Received: ${sName}`,
-    message: `${sName} (${exam.class} ${exam.stream}) completed ${exam.title} (${exam.course_code}). Score: ${score}/${total_possible} (${percentage}%). Click to preview.`,
+    message: `${sName} (${exam.class} ${exam.stream}) completed ${exam.title} (${exam.course_code}). Score: ${score}/${total_possible} (${percentage}%). Click to preview and sync to broadsheet.`,
     type: 'exam',
     recipientRole: 'TEACHER',
     actionUrl: `/dashboard/teacher?section=results`,
@@ -2402,22 +2404,62 @@ export function hasStudentSubmittedExam(examId: number, studentIdentifier?: stri
   if (!studentIdentifier) {
     return _submissions.some(s => s.exam_id === examId);
   }
+  const student = findStudentByAnyIdentifier(studentIdentifier);
   const lower = studentIdentifier.trim().toLowerCase();
-  return _submissions.some(s =>
-    s.exam_id === examId &&
-    (s.student_email.toLowerCase() === lower || s.student_id.toLowerCase() === lower)
-  );
+  const clean = lower.replace(/[^a-z0-9]/g, '');
+
+  return _submissions.some(s => {
+    if (s.exam_id !== examId) return false;
+    if (s.student_email?.toLowerCase() === lower || s.student_id?.toLowerCase() === lower) return true;
+    if (clean && s.student_id && s.student_id.toLowerCase().replace(/[^a-z0-9]/g, '') === clean) return true;
+    if (student) {
+      const aliases = [
+        String(student.id),
+        student.code,
+        student.admissionNo,
+        student.studentId,
+        student.admission_number,
+        student.email,
+        student.name,
+      ].filter(Boolean).map(a => a.toLowerCase().trim());
+      const sIdLower = (s.student_id || '').toLowerCase().trim();
+      const sEmailLower = (s.student_email || '').toLowerCase().trim();
+      const sNameLower = (s.student_name || '').toLowerCase().trim();
+      return aliases.includes(sIdLower) || aliases.includes(sEmailLower) || aliases.includes(sNameLower);
+    }
+    return false;
+  });
 }
 
 export function getStudentSubmission(examId: number, studentIdentifier?: string): CBTSubmission | undefined {
   if (!studentIdentifier) {
     return _submissions.find(s => s.exam_id === examId);
   }
+  const student = findStudentByAnyIdentifier(studentIdentifier);
   const lower = studentIdentifier.trim().toLowerCase();
-  return _submissions.find(s =>
-    s.exam_id === examId &&
-    (s.student_email.toLowerCase() === lower || s.student_id.toLowerCase() === lower)
-  );
+  const clean = lower.replace(/[^a-z0-9]/g, '');
+
+  return _submissions.find(s => {
+    if (s.exam_id !== examId) return false;
+    if (s.student_email?.toLowerCase() === lower || s.student_id?.toLowerCase() === lower) return true;
+    if (clean && s.student_id && s.student_id.toLowerCase().replace(/[^a-z0-9]/g, '') === clean) return true;
+    if (student) {
+      const aliases = [
+        String(student.id),
+        student.code,
+        student.admissionNo,
+        student.studentId,
+        student.admission_number,
+        student.email,
+        student.name,
+      ].filter(Boolean).map(a => a.toLowerCase().trim());
+      const sIdLower = (s.student_id || '').toLowerCase().trim();
+      const sEmailLower = (s.student_email || '').toLowerCase().trim();
+      const sNameLower = (s.student_name || '').toLowerCase().trim();
+      return aliases.includes(sIdLower) || aliases.includes(sEmailLower) || aliases.includes(sNameLower);
+    }
+    return false;
+  });
 }
 
 // â”€â”€ Student CBT Attendance System â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -2767,6 +2809,7 @@ export interface CourseBroadsheetScore {
   ca2: number;
   assignment?: number;
   cbtScore?: number;
+  cbtTest?: number;
   cbtExam?: number;
   paperExam?: number;
   theoryExam?: number;
@@ -2775,6 +2818,7 @@ export interface CourseBroadsheetScore {
   grade?: string;
   remark?: string;
   remarks?: string;
+  courseCode?: string;
 }
 
 export function calculateWAECGrade(total: number): { grade: string; color: string; label: string } {
@@ -2836,9 +2880,81 @@ function loadSavedBroadsheet(): Record<string, Record<string, CourseBroadsheetSc
 
 let _broadsheetScores = loadSavedBroadsheet();
 
+/**
+ * Resolves a student record from memory/storage across any possible identifier
+ * (numeric id, string id, admissionNo, studentId, code, email, or full name).
+ */
+export function findStudentByAnyIdentifier(identifier: string | number | undefined | null): StudentRecord | undefined {
+  if (!identifier && identifier !== 0) return undefined;
+  const raw = String(identifier).trim();
+  if (!raw) return undefined;
+  const lower = raw.toLowerCase();
+  const clean = lower.replace(/[^a-z0-9]/g, '');
+  const num = Number(raw);
+
+  const allStudents = getStoredStudents();
+
+  return allStudents.find(s => {
+    if (!s) return false;
+    // Direct numeric/string ID check
+    if (!isNaN(num) && s.id === num) return true;
+    if (String(s.id).toLowerCase() === lower) return true;
+
+    // Code check (e.g. "3254")
+    if (s.code) {
+      const cLower = s.code.toLowerCase().trim();
+      if (cLower === lower || (clean && cLower.replace(/[^a-z0-9]/g, '') === clean)) return true;
+    }
+
+    // Admission Number / Student ID check (e.g. "TMS/BSC3/3254" or "TMS-2024-101")
+    const admFields = [s.admissionNo, s.studentId, s.admission_number].filter(Boolean) as string[];
+    for (const adm of admFields) {
+      const aLower = adm.toLowerCase().trim();
+      const aClean = aLower.replace(/[^a-z0-9]/g, '');
+      if (aLower === lower || (clean && aClean === clean)) return true;
+      if (clean && clean.length >= 3 && aClean.includes(clean)) return true;
+      if (aClean && aClean.length >= 3 && clean.includes(aClean)) return true;
+    }
+
+    // Email check
+    if (s.email && s.email.toLowerCase().trim() === lower) return true;
+
+    // Full name check
+    if (s.name && s.name.toLowerCase().trim() === lower) return true;
+
+    return false;
+  });
+}
+
 export function getStudentBroadsheet(studentIdOrCode: string | number): Record<string, CourseBroadsheetScore> {
   _broadsheetScores = loadSavedBroadsheet();
   const key = String(studentIdOrCode);
+
+  if (_broadsheetScores[key] && Object.keys(_broadsheetScores[key]).length > 0) {
+    return _broadsheetScores[key];
+  }
+
+  // Check all aliases for this student
+  const student = findStudentByAnyIdentifier(studentIdOrCode);
+  if (student) {
+    const aliases = [
+      String(student.id),
+      student.code,
+      student.admissionNo,
+      student.studentId,
+      student.admission_number,
+      student.email,
+      student.name,
+    ].filter(Boolean) as string[];
+
+    for (const alias of aliases) {
+      if (_broadsheetScores[alias] && Object.keys(_broadsheetScores[alias]).length > 0) {
+        _broadsheetScores[key] = _broadsheetScores[alias];
+        return _broadsheetScores[alias];
+      }
+    }
+  }
+
   return _broadsheetScores[key] || {};
 }
 
@@ -2859,6 +2975,24 @@ export async function saveStudentBroadsheet(studentIdOrCode: string | number, co
   _broadsheetScores = loadSavedBroadsheet();
   const key = String(studentIdOrCode);
   _broadsheetScores[key] = courseScores;
+
+  // Persist across all aliases for this student so any lookup finds the exact same scores
+  const student = findStudentByAnyIdentifier(studentIdOrCode);
+  if (student) {
+    const aliases = [
+      String(student.id),
+      student.code,
+      student.admissionNo,
+      student.studentId,
+      student.admission_number,
+      student.email,
+    ].filter(Boolean) as string[];
+
+    for (const alias of aliases) {
+      _broadsheetScores[alias] = courseScores;
+    }
+  }
+
   if (typeof window !== 'undefined') {
     try {
       localStorage.setItem('tarepet_broadsheet_scores', JSON.stringify(_broadsheetScores));
@@ -2867,7 +3001,7 @@ export async function saveStudentBroadsheet(studentIdOrCode: string | number, co
 
   try {
     await authClient.post('/academics/broadsheet/batch-save/', {
-      student_id: key,
+      student_id: student ? String(student.id) : key,
       scores: courseScores
     });
   } catch (e) {}
@@ -2875,20 +3009,119 @@ export async function saveStudentBroadsheet(studentIdOrCode: string | number, co
   broadcastRealtimeEvent();
 }
 
-export function getAutomaticCBTScore(studentCodeOrEmail: string, courseCode: string): number {
+/**
+ * Finds student completed CBT submissions for a given course code.
+ * Matches student across aliases and matches course by code or subject name in title.
+ */
+export function getStudentCBTSubmissionsForCourse(
+  studentIdentifier: string | number | undefined | null, 
+  courseCode: string,
+  assessmentType?: 'test' | 'exam'
+): CBTSubmission[] {
+  if (!studentIdentifier && studentIdentifier !== 0) return [];
   const subs = getStoredSubmissions();
-  const lower = (studentCodeOrEmail || '').toLowerCase().trim();
-  if (!lower) return 0;
+  const student = findStudentByAnyIdentifier(studentIdentifier);
+  const cleanCourse = (courseCode || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
-  const match = subs.find(s => 
-    (s.student_id?.toLowerCase() === lower || s.student_email?.toLowerCase() === lower || s.student_name?.toLowerCase().includes(lower)) &&
-    (s.course_code === courseCode || s.exam_title?.toLowerCase().includes(courseCode.toLowerCase()))
-  );
+  return subs.filter(s => {
+    // 1. Verify student match
+    let matchesStudent = false;
+    if (student) {
+      const sIdClean = (s.student_id || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const sEmailClean = (s.student_email || '').toLowerCase().trim();
+      const sNameClean = (s.student_name || '').toLowerCase().trim();
 
-  if (match && typeof match.percentage === 'number') {
-    return Math.round((match.percentage / 100) * 30);
+      const aliases = [
+        String(student.id),
+        student.code,
+        student.admissionNo,
+        student.studentId,
+        student.admission_number,
+      ].filter(Boolean).map(a => a.toLowerCase().replace(/[^a-z0-9]/g, ''));
+
+      matchesStudent = 
+        aliases.some(a => a === sIdClean || (a.length >= 3 && sIdClean.includes(a)) || (sIdClean.length >= 3 && a.includes(sIdClean))) ||
+        (sEmailClean && sEmailClean === student.email?.toLowerCase().trim()) ||
+        (sNameClean && sNameClean === student.name?.toLowerCase().trim());
+    } else {
+      const raw = String(studentIdentifier).toLowerCase().trim();
+      const cleanRaw = raw.replace(/[^a-z0-9]/g, '');
+      matchesStudent = 
+        (s.student_id?.toLowerCase().trim() === raw || (s.student_id && s.student_id.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanRaw)) ||
+        s.student_email?.toLowerCase().trim() === raw ||
+        s.student_name?.toLowerCase().trim() === raw;
+    }
+
+    if (!matchesStudent) return false;
+
+    // 2. Verify course match
+    const subCourseClean = (s.course_code || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const subTitleLower = (s.exam_title || '').toLowerCase();
+
+    let courseMatched = false;
+    if (subCourseClean && (subCourseClean === cleanCourse || subCourseClean.includes(cleanCourse) || cleanCourse.includes(subCourseClean))) {
+      courseMatched = true;
+    } else if (cleanCourse.length >= 3 && subTitleLower.replace(/[^a-z0-9]/g, '').includes(cleanCourse)) {
+      courseMatched = true;
+    } else {
+      const courseObj = ALL_COURSES.find(c => c.code === courseCode || c.code.replace(/[^a-z0-9]/g, '').toLowerCase() === cleanCourse);
+      if (courseObj) {
+        const cNamePrefix = courseObj.name.toLowerCase().split(' ')[0].replace(/[^a-z]/g, '');
+        if (cNamePrefix.length >= 3 && subTitleLower.includes(cNamePrefix)) {
+          courseMatched = true;
+        }
+      }
+    }
+
+    if (!courseMatched) return false;
+
+    // 3. Verify assessment type filter if provided
+    if (assessmentType) {
+      const isTest = s.assessment_type === 'test' || /test|ca|quiz|mid-?term/i.test(s.exam_title || '');
+      if (assessmentType === 'test' && !isTest) return false;
+      if (assessmentType === 'exam' && isTest) return false;
+    }
+
+    return true;
+  });
+}
+
+/**
+ * Finds a student's completed CBT submission for a given course code.
+ * Matches student across aliases and matches course by code or subject name in title.
+ */
+export function getStudentCBTSubmissionForCourse(
+  studentIdentifier: string | number | undefined | null, 
+  courseCode: string,
+  assessmentType?: 'test' | 'exam'
+): CBTSubmission | undefined {
+  const matches = getStudentCBTSubmissionsForCourse(studentIdentifier, courseCode, assessmentType);
+  return matches[0];
+}
+
+/**
+ * Marks a CBT submission as synced to the student result sheet and broadcasts update.
+ */
+export function markSubmissionSynced(subId: number | string): void {
+  const numId = Number(subId);
+  const sub = _submissions.find(s => s.id === numId || String(s.id) === String(subId));
+  if (sub) {
+    sub.gradebook_synced = true;
+    persistSubmissions(_submissions);
+    broadcastRealtimeEvent();
   }
+}
 
+export function getAutomaticCBTScore(studentCodeOrEmail: string | number, courseCode: string): number {
+  const match = getStudentCBTSubmissionForCourse(studentCodeOrEmail, courseCode);
+  if (match) {
+    if (typeof match.score === 'number' && match.score > 0) {
+      return match.score;
+    }
+    if (typeof match.percentage === 'number') {
+      return match.percentage;
+    }
+  }
   return 0;
 }
 

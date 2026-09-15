@@ -28,6 +28,7 @@ interface PortalLayoutProps {
   title: string;
   activeSection: string;
   onNavigate: (sectionId: string) => void;
+  badges?: Record<string, number>;
 }
 
 const ROLE_NAV: Record<string, NavSection[]> = {
@@ -141,7 +142,7 @@ function getMobileNavItems(role?: string): NavSection[] {
 }
 
 export const PortalLayout: React.FC<PortalLayoutProps> = ({
-  children, title, activeSection, onNavigate,
+  children, title, activeSection, onNavigate, badges,
 }) => {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
@@ -215,8 +216,23 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
   }, []);
 
   const roleColor = getRoleColor(user?.role);
-  const navItems = getRoleNav(user?.role);
-  const mobileNavItems = getMobileNavItems(user?.role);
+  const rawNavItems = getRoleNav(user?.role);
+  const navItems = useMemo(() => {
+    if (!badges) return rawNavItems;
+    return rawNavItems.map(item => ({
+      ...item,
+      badge: badges[item.id] !== undefined ? badges[item.id] : item.badge
+    }));
+  }, [rawNavItems, badges]);
+
+  const rawMobileNavItems = getMobileNavItems(user?.role);
+  const mobileNavItems = useMemo(() => {
+    if (!badges) return rawMobileNavItems;
+    return rawMobileNavItems.map(item => ({
+      ...item,
+      badge: badges[item.id] !== undefined ? badges[item.id] : item.badge
+    }));
+  }, [rawMobileNavItems, badges]);
   const userAvatar = useMemo(() => {
     if (!user) return null;
     const candidates = [

@@ -11,14 +11,14 @@ import {
   TrendingUp, Play, Lock, MessageSquare, ChevronDown, ChevronRight, ChevronLeft,
   CheckSquare, XCircle, RefreshCw, PenLine, Globe, Layers, ArrowUpRight,
   ClipboardList, Settings, ShieldCheck, User, Bell, Printer, CreditCard, GraduationCap, Zap, School,
-  Save, History, Sparkles, RotateCcw, FileSpreadsheet, Check, Scissors, Sun, Moon, Rocket, Edit3, Unlock, Lightbulb
+  Save, History, Sparkles, RotateCcw, FileSpreadsheet, Check, Scissors, Sun, Moon, Rocket, Edit3, Unlock, Lightbulb, AlertTriangle
 } from 'lucide-react';
 
 import { authClient, getAccessToken } from '@/lib/api-auth';
 import { addRealtimeNotification } from '@/lib/notifications-store';
 import { ImageCropModal } from '@/components/ui/ImageCropModal';
 import { MobileProfileView } from '@/components/profile/MobileProfileView';
-import { getStoredExams, updateExamStatus, deleteCBTExam, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, getStoredTeachers, saveTeacher, saveStudent, deleteStudent, subscribeToCBTStore, broadcastRealtimeEvent, syncStudentsWithBackend, syncTeachersWithBackend, syncExamsWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, calculateBECEGrade, isSeniorSecondaryClass, CourseBroadsheetScore, PromotionRecord, getPromotionHistory, executeStudentPromotions, getNextProgressiveClass, getArchivedCohortsForTeacher, matchStudentClass, matchTeacherFormClass } from '@/lib/cbt-store';
+import { getStoredExams, updateExamStatus, deleteCBTExam, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, getStoredTeachers, saveTeacher, saveStudent, deleteStudent, subscribeToCBTStore, broadcastRealtimeEvent, syncStudentsWithBackend, syncTeachersWithBackend, syncExamsWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, calculateBECEGrade, isSeniorSecondaryClass, CourseBroadsheetScore, PromotionRecord, getPromotionHistory, executeStudentPromotions, getNextProgressiveClass, getArchivedCohortsForTeacher, matchStudentClass, matchTeacherFormClass, findStudentByAnyIdentifier, getStudentCBTSubmissionForCourse, getStudentCBTSubmissionsForCourse, markSubmissionSynced, CBTSubmission, CBTExam, CBTQuestion } from '@/lib/cbt-store';
 import { useTranslation } from '@/lib/i18n';
 import { TerminalReportCard, ReportCardData, SubjectScore } from '@/components/reports/TerminalReportCard';
 import { getTimeGreeting } from '@/lib/utils';
@@ -176,6 +176,8 @@ export default function TeacherDashboard() {
 
   const [selectedExamClass, setSelectedExamClass] = useState<string>('ALL');
   const [selectedExamStream, setSelectedExamStream] = useState<string>('ALL');
+  const [submissionClassFilter, setSubmissionClassFilter] = useState<string>('ALL');
+  const [submissionSearch, setSubmissionSearch] = useState<string>('');
 
   React.useEffect(() => {
     if (formClass && selectedExamClass === 'ALL') {
@@ -215,7 +217,7 @@ export default function TeacherDashboard() {
     const pollInterval = setInterval(() => {
       syncExamsWithBackend().then(res => setTeacherExams(res)).catch(() => {});
       syncStudentsWithBackend().then(res => setRoster(res)).catch(() => {});
-      syncSubmissionsWithBackend().then(() => setSubmissions(getStoredSubmissions())).catch(() => {});
+      setSubmissions(getStoredSubmissions());
     }, 45000);
 
     // Instant re-sync when teacher unlocks device or focuses tab
@@ -223,7 +225,7 @@ export default function TeacherDashboard() {
       if (document.visibilityState === 'visible') {
         syncExamsWithBackend().then(res => setTeacherExams(res)).catch(() => {});
         syncStudentsWithBackend().then(res => setRoster(res)).catch(() => {});
-        syncSubmissionsWithBackend().then(() => setSubmissions(getStoredSubmissions())).catch(() => {});
+        setSubmissions(getStoredSubmissions());
       }
     };
     document.addEventListener('visibilitychange', handleVisibility);
@@ -463,7 +465,7 @@ export default function TeacherDashboard() {
 
   /**
    * Syncs a student's CBT exam score from their submission into their result broadsheet.
-   * Called when teacher clicks "Record to Broadsheet" or "✓ Confirm & Sync Score" in the preview modal.
+   * Called when teacher clicks "Record to Broadsheet", "Sync CBT", or "✓ Confirm & Sync Score" in the preview modal.
    */
   const handleSyncCBTScoreToResult = async (sub: any) => {
     if (!sub) return;
@@ -473,34 +475,63 @@ export default function TeacherDashboard() {
     const className = sub.class || sub.className || '';
     const isSS = isSeniorSecondaryClass(className);
 
-    // Convert percentage to the correct score scale
-    const pct = typeof sub.percentage === 'number' ? sub.percentage : 0;
-    // SS: CBT is out of 30; JSS/Primary: exam is out of 70
-    const cbtScore = isSS ? Math.round((pct / 100) * 30) : Math.round((pct / 100) * 70);
+    // Resolve actual student record to obtain canonical numeric ID and all aliases
+    const student = findStudentByAnyIdentifier(studentId) || roster.find(r => 
+      r.code === studentId || r.admissionNo === studentId || r.name?.toLowerCase().trim() === studentName.toLowerCase().trim()
+    );
+    const effectiveStudentId = student ? student.id : studentId;
+    const resolvedStudentName = student ? student.name : studentName;
 
-    // Load existing broadsheet data for this student
-    const existingBroadsheet = getStudentBroadsheet(studentId);
-    const existingCourse = getSafeProperty(existingBroadsheet, courseCode) || {
-      ca1: 0, ca2: 0, assignment: 0, cbtScore: 0, paperExam: 0, exam: 0, remark: ''
+    // Resolve course code: if sub.course_code is generic or missing, check exam title against known course list
+    let effectiveCourseCode = courseCode;
+    if (!effectiveCourseCode || effectiveCourseCode === 'ENG-101' || effectiveCourseCode.trim() === '') {
+      const titleLower = (sub.exam_title || '').toLowerCase();
+      const allClassCourses = getCoursesForClass(className || (student?.grade) || 'SS1', undefined);
+      const match = allClassCourses.find(c => {
+        const cPrefix = c.name.toLowerCase().split(' ')[0];
+        return titleLower.includes(cPrefix) || titleLower.includes(c.code.toLowerCase());
+      });
+      if (match) effectiveCourseCode = match.code;
+    }
+    if (!effectiveCourseCode) effectiveCourseCode = broadsheetSubject || 'ENG-101';
+
+    // Extract score: use raw earned score if available and > 0, otherwise percentage
+    const pct = typeof sub.percentage === 'number' ? sub.percentage : 0;
+    const rawScore = (typeof sub.score === 'number' && sub.score > 0) ? sub.score : pct;
+    const isTest = sub.assessment_type === 'TEST';
+
+    // Load existing broadsheet data for this student across all their aliases
+    const existingBroadsheet = getStudentBroadsheet(effectiveStudentId);
+    const existingCourse = getSafeProperty(existingBroadsheet, effectiveCourseCode) || {
+      ca1: 0, ca2: 0, assignment: 0, cbtScore: 0, cbtTest: 0, cbtExam: 0, paperExam: 0, exam: 0, remark: ''
     };
 
     // Merge in the new CBT score
-    const updatedCourse = {
+    const updatedCourse: CourseBroadsheetScore = {
       ...existingCourse,
-      ...(isSS ? { cbtScore } : { exam: cbtScore }),
+      cbtScore: rawScore,
+      cbtTest: isTest ? rawScore : (existingCourse.cbtTest ?? 0),
+      cbtExam: !isTest ? rawScore : (existingCourse.cbtExam ?? 0),
+      courseCode: effectiveCourseCode,
     };
+
     // Recalculate total
-    const ca = (updatedCourse.ca1 || 0) + (updatedCourse.ca2 || 0) + (updatedCourse.assignment || 0);
-    updatedCourse.total = isSS
-      ? ca + (updatedCourse.cbtScore || 0) + (updatedCourse.paperExam || 0)
-      : ca + (updatedCourse.exam || 0);
+    const ca = (Number(updatedCourse.ca1) || 0) + (Number(updatedCourse.ca2) || 0) + (Number(updatedCourse.assignment) || 0);
+    const cbtT = Number(updatedCourse.cbtTest) || 0;
+    const cbtE = Number(updatedCourse.cbtExam) || Number(updatedCourse.cbtScore) || 0;
+    const written = Number(updatedCourse.paperExam) || Number(updatedCourse.theoryExam) || Number(updatedCourse.exam) || 0;
+    updatedCourse.total = ca + cbtT + cbtE + written;
+    updatedCourse.grade = isSS ? calculateWAECGrade(updatedCourse.total).grade : calculateBECEGrade(updatedCourse.total).grade;
 
-    const updatedBroadsheet = { ...existingBroadsheet, [courseCode]: updatedCourse };
+    const updatedBroadsheet = { ...existingBroadsheet, [effectiveCourseCode]: updatedCourse };
 
-    // Persist to localStorage + backend
-    await saveStudentBroadsheet(studentId, updatedBroadsheet);
+    // Persist to all student aliases in localStorage + backend
+    await saveStudentBroadsheet(effectiveStudentId, updatedBroadsheet);
 
-    // Mark this submission as synced
+    // Mark submission as synced in cbt-store memory & localStorage
+    markSubmissionSynced(sub.id);
+
+    // Update syncedSubmissionIds set
     setSyncedSubmissionIds(prev => {
       const next = new Set(prev);
       next.add(String(sub.id));
@@ -508,37 +539,38 @@ export default function TeacherDashboard() {
       return next;
     });
 
-    showToast(`✅ ${studentName}'s CBT score (${cbtScore} pts) synced to result sheet!`);
+    // If currently viewing this student's individual broadsheet, update that state too
+    if (selectedBroadsheetStudent && (String(selectedBroadsheetStudent.id) === String(effectiveStudentId) || selectedBroadsheetStudent.code === studentId)) {
+      setBroadsheetScores(updatedBroadsheet);
+    }
+
+    showToast(`✅ ${resolvedStudentName}'s CBT ${isTest ? 'Test' : 'Exam'} score (${rawScore} marks) synced to ${effectiveCourseCode} result sheet!`);
   };
 
   const handleUpdateScoreInput = (courseCode: string, field: keyof CourseBroadsheetScore, val: any) => {
     const isSS = selectedBroadsheetStudent ? isSeniorSecondaryClass(selectedBroadsheetStudent.grade) : true;
     setBroadsheetScores(prev => {
-      const current = getSafeProperty(prev, courseCode) || { ca1: 0, ca2: 0, assignment: 0, cbtScore: 0, paperExam: 0, exam: 0, remark: '' };
+      const current = getSafeProperty(prev, courseCode) || { ca1: 0, ca2: 0, assignment: 0, cbtScore: 0, cbtTest: 0, cbtExam: 0, paperExam: 0, exam: 0, remark: '' };
       let numVal = typeof val === 'number' ? val : parseFloat(val);
       if (isNaN(numVal)) numVal = 0;
-
-      if (isSS) {
-        if (field === 'ca1' || field === 'ca2') numVal = Math.min(10, Math.max(0, numVal));
-        if (field === 'cbtScore') numVal = Math.min(30, Math.max(0, numVal));
-        if (field === 'paperExam') numVal = Math.min(40, Math.max(0, numVal));
-      } else {
-        if (field === 'ca1' || field === 'ca2') numVal = Math.min(20, Math.max(0, numVal));
-        if (field === 'paperExam' || field === 'exam') numVal = Math.min(60, Math.max(0, numVal));
-      }
+      numVal = Math.min(100, Math.max(0, numVal));
 
       const updated: CourseBroadsheetScore = {
         ...current,
-        ca1: field === 'ca1' ? numVal : current.ca1,
-        ca2: field === 'ca2' ? numVal : current.ca2,
-        assignment: field === 'assignment' ? numVal : current.assignment,
-        cbtScore: isSS ? (field === 'cbtScore' ? numVal : (current.cbtScore ?? 0)) : 0,
-        paperExam: (field === 'paperExam' || field === 'exam') ? numVal : (current.paperExam ?? current.exam ?? 0),
-        exam: (field === 'paperExam' || field === 'exam') ? numVal : (current.exam ?? current.paperExam ?? 0),
-        remark: field === 'remark' ? String(val || '') : (current.remark || '')
+        [field]: field === 'remark' ? String(val || '') : numVal,
+        courseCode,
       };
-      const nextState = { ...prev, [courseCode]: updated };
+      if (field === 'cbtExam') updated.cbtScore = numVal;
+      if (field === 'cbtScore' && !updated.cbtExam) updated.cbtExam = numVal;
 
+      const ca = (Number(updated.ca1) || 0) + (Number(updated.ca2) || 0) + (Number(updated.assignment) || 0);
+      const cbtT = Number(updated.cbtTest) || 0;
+      const cbtE = Number(updated.cbtExam) || Number(updated.cbtScore) || 0;
+      const written = Number(updated.paperExam) || Number(updated.theoryExam) || Number(updated.exam) || 0;
+      updated.total = ca + cbtT + cbtE + written;
+      updated.grade = isSS ? calculateWAECGrade(updated.total).grade : calculateBECEGrade(updated.total).grade;
+
+      const nextState = { ...prev, [courseCode]: updated };
       if (selectedBroadsheetStudent) {
         saveStudentBroadsheet(selectedBroadsheetStudent.id, nextState);
       }
@@ -546,14 +578,16 @@ export default function TeacherDashboard() {
     });
   };
 
-  const handleInlineStudentScoreUpdate = (student: any, courseCode: string, field: 'ca1' | 'ca2' | 'cbtScore' | 'paperExam' | 'exam', val: any) => {
+  const handleInlineStudentScoreUpdate = (student: any, courseCode: string, field: keyof CourseBroadsheetScore, val: any) => {
     const isSS = isSeniorSecondaryClass(student.grade);
     const saved = getStudentBroadsheet(student.id);
     const current = getSafeProperty(saved, courseCode) || {
       ca1: 0,
       ca2: 0,
       assignment: 0,
-      cbtScore: isSS ? getAutomaticCBTScore(student.code || student.email, courseCode) : 0,
+      cbtScore: getAutomaticCBTScore(student.code || student.email, courseCode),
+      cbtTest: 0,
+      cbtExam: 0,
       paperExam: 0,
       exam: 0,
       remark: ''
@@ -561,24 +595,26 @@ export default function TeacherDashboard() {
 
     let numVal = typeof val === 'number' ? val : parseFloat(val);
     if (isNaN(numVal)) numVal = 0;
-
-    if (isSS) {
-      if (field === 'ca1' || field === 'ca2') numVal = Math.min(10, Math.max(0, numVal));
-      if (field === 'cbtScore') numVal = Math.min(30, Math.max(0, numVal));
-      if (field === 'paperExam') numVal = Math.min(40, Math.max(0, numVal));
-    } else {
-      if (field === 'ca1' || field === 'ca2') numVal = Math.min(20, Math.max(0, numVal));
-      if (field === 'paperExam' || field === 'exam') numVal = Math.min(60, Math.max(0, numVal));
-    }
+    numVal = Math.min(100, Math.max(0, numVal));
 
     const updated: CourseBroadsheetScore = {
       ...current,
-      ca1: field === 'ca1' ? numVal : current.ca1,
-      ca2: field === 'ca2' ? numVal : current.ca2,
-      cbtScore: isSS ? (field === 'cbtScore' ? numVal : (current.cbtScore ?? 0)) : 0,
-      paperExam: (field === 'paperExam' || field === 'exam') ? numVal : (current.paperExam ?? current.exam ?? 0),
-      exam: (field === 'paperExam' || field === 'exam') ? numVal : (current.exam ?? current.paperExam ?? 0),
+      [field]: numVal,
+      courseCode,
     };
+    if (field === 'cbtExam') updated.cbtScore = numVal;
+    if (field === 'cbtScore' && !updated.cbtExam) updated.cbtExam = numVal;
+    if (field === 'paperExam' || field === 'exam') {
+      updated.paperExam = numVal;
+      updated.exam = numVal;
+    }
+
+    const ca = (Number(updated.ca1) || 0) + (Number(updated.ca2) || 0) + (Number(updated.assignment) || 0);
+    const cbtT = Number(updated.cbtTest) || 0;
+    const cbtE = Number(updated.cbtExam) || Number(updated.cbtScore) || 0;
+    const written = Number(updated.paperExam) || Number(updated.theoryExam) || Number(updated.exam) || 0;
+    updated.total = ca + cbtT + cbtE + written;
+    updated.grade = isSS ? calculateWAECGrade(updated.total).grade : calculateBECEGrade(updated.total).grade;
 
     const nextScores = { ...saved, [courseCode]: updated };
     saveStudentBroadsheet(student.id, nextScores);
@@ -2194,11 +2230,27 @@ export default function TeacherDashboard() {
       const approvedExams = filteredExams.filter(e => e.status === 'APPROVED');
       const activeExams = filteredExams.filter(e => e.status === 'ACTIVE');
 
+      const allClassOptions = Array.from(new Set([
+        ...allSubmissions.map(s => s.class?.trim()).filter(Boolean),
+        ...roster.map(r => r.grade?.trim()).filter(Boolean),
+        ...allExams.map(e => e.class?.trim()).filter(Boolean)
+      ] as string[])).sort();
+
       const filteredSubmissions = allSubmissions.filter(s => {
         if (!s) return false;
-        const matchClass = selectedExamClass === 'ALL' || !s.class || matchStudentClass(s.class, selectedExamClass) || s.class === 'SS 1 - SS 3' || s.class.includes('SS');
-        const matchStream = selectedExamStream === 'ALL' || !s.stream || s.stream === 'General' || s.stream === selectedExamStream || (selectedExamStream === 'Arts' && (s.stream === 'Art' || s.stream === 'Arts' || s.stream === 'Commercial')) || (selectedExamStream === 'Science' && (s.stream === 'Science' || s.stream === 'STEM'));
-        return matchClass && matchStream;
+        const matchClass = submissionClassFilter === 'ALL' || !submissionClassFilter ||
+          (s.class && s.class.toLowerCase().trim() === submissionClassFilter.toLowerCase().trim()) ||
+          matchStudentClass(s.class, submissionClassFilter);
+
+        const q = submissionSearch.trim().toLowerCase();
+        const matchSearch = !q ||
+          (s.student_name && s.student_name.toLowerCase().includes(q)) ||
+          (s.student_id && s.student_id.toLowerCase().includes(q)) ||
+          (s.student_email && s.student_email.toLowerCase().includes(q)) ||
+          (s.exam_title && s.exam_title.toLowerCase().includes(q)) ||
+          (s.course_code && s.course_code.toLowerCase().includes(q));
+
+        return matchClass && matchSearch;
       });
 
       return (
@@ -2209,7 +2261,7 @@ export default function TeacherDashboard() {
               <h2 className="text-2xl sm:text-3xl font-serif font-bold">
                 {t('teacher.cbt_exam_control', 'CBT Exam Control')}
               </h2>
-              <p className="text-blue-100 text-xs mt-1 max-w-xl">{t('teacher.cbt_exam_sub', 'Create, schedule, and manage online CBT examination papers for Senior Secondary students (SS 1 - SS 3).')}</p>
+              <p className="text-blue-100 text-xs mt-1 max-w-xl">{t('teacher.cbt_exam_sub', 'Create, schedule, and manage online CBT examination papers across all school classes (Primary, Junior & Senior Secondary).')}</p>
             </div>
             {isSeniorSecondaryTeacher ? (
               <Link href="/dashboard/cbt-builder">
@@ -2220,6 +2272,144 @@ export default function TeacherDashboard() {
             ) : (
               <div className="bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2.5 rounded-xl text-xs text-blue-100 font-medium">
                 {t('teacher.cbt_restricted', '🔒 CBT Builder is restricted to Senior Secondary (SS1 - SS3)')}
+              </div>
+            )}
+          </div>
+
+          {/* Real-Time Student CBT Submissions Queue (Prominently Placed at Top) */}
+          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-serif font-bold text-foreground text-lg">
+                    {t('teacher.received_submissions', 'Received Student CBT Submissions')}
+                  </h3>
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-700 border border-blue-200">
+                    {filteredSubmissions.length} Total
+                  </span>
+                  {allSubmissions.filter(s => !s.gradebook_synced && !syncedSubmissionIds.has(String(s.id))).length > 0 && (
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-700 border border-amber-300 animate-pulse">
+                      {allSubmissions.filter(s => !s.gradebook_synced && !syncedSubmissionIds.has(String(s.id))).length} Unreviewed
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Universal queue for all class arms (Primary, JSS, SS). Filter by class, search by student name or ID, review integrity audit, and sync to broadsheets.
+                </p>
+              </div>
+
+              {/* Submissions Filter & Search */}
+              <div className="flex flex-wrap items-center gap-2.5">
+                {/* Search */}
+                <div className="relative">
+                  <Search className="w-3.5 h-3.5 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={submissionSearch}
+                    onChange={e => setSubmissionSearch(e.target.value)}
+                    placeholder="Search student or ID..."
+                    className="pl-8 pr-3 py-1.5 rounded-xl border border-border bg-background text-xs font-medium focus:ring-2 focus:ring-primary outline-none w-44 md:w-56"
+                  />
+                  {submissionSearch && (
+                    <button onClick={() => setSubmissionSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Class Dropdown */}
+                <select
+                  value={submissionClassFilter}
+                  onChange={e => setSubmissionClassFilter(e.target.value)}
+                  className="px-3 py-1.5 rounded-xl border border-border bg-background text-xs font-bold focus:ring-2 focus:ring-primary outline-none cursor-pointer"
+                >
+                  <option value="ALL">All Classes / All Students</option>
+                  {allClassOptions.map(cls => (
+                    <option key={cls} value={cls}>{cls}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {filteredSubmissions.length > 0 ? (
+              <div className="space-y-3">
+                {filteredSubmissions.map(sub => {
+                  const isSynced = Boolean(sub.gradebook_synced) || syncedSubmissionIds.has(String(sub.id));
+                  const hasFlags = Boolean(sub.flags && sub.flags.length > 0);
+
+                  return (
+                    <div key={sub.id} className="p-4 rounded-xl border border-border bg-card hover:bg-muted/10 transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className="font-bold text-foreground text-sm">{sub.student_name}</span>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                            {sub.class} {sub.stream ? `(${sub.stream})` : ''}
+                          </span>
+                          <span className="text-xs font-mono text-muted-foreground">({sub.student_id})</span>
+                          
+                          {/* Integrity Badge */}
+                          {hasFlags ? (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-700 border border-rose-300 flex items-center gap-1">
+                              <AlertTriangle className="w-3 h-3 text-rose-600" />
+                              {sub.flags?.length} {sub.flags?.length === 1 ? 'Integrity Flag' : 'Integrity Flags'}
+                              {sub.autoPaused && ' • Locked 5m'}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 border border-emerald-300 flex items-center gap-1">
+                              <ShieldCheck className="w-3 h-3 text-emerald-600" /> Clean Attempt
+                            </span>
+                          )}
+
+                          {/* Assessment Type Badge */}
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-muted text-muted-foreground">
+                            {sub.assessment_type === 'TEST' ? 'CBT Test' : 'CBT Exam'}
+                          </span>
+                        </div>
+                        <h4 className="font-semibold text-foreground text-xs">{sub.exam_title} ({sub.course_code})</h4>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          {t('teacher.submitted_at', 'Submitted:')} {new Date(sub.submitted_at).toLocaleTimeString()} ({new Date(sub.submitted_at).toLocaleDateString()}) · {t('teacher.score_label', 'Score:')} <strong>{sub.score} / {sub.total_possible}</strong>
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-3 self-start lg:self-auto flex-wrap">
+                        <div className="text-right mr-1">
+                          <span className="text-xl font-serif font-bold text-emerald-600">{sub.percentage}%</span>
+                          <p className="text-[9px] font-bold uppercase text-emerald-700">{sub.score} Marks</p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            const examsList = getStoredExams();
+                            const ex = examsList.find(e => e.id === sub.exam_id) || examsList[0];
+                            setPreviewSubmissionModal({
+                              submission: sub,
+                              exam: ex
+                            });
+                          }}
+                          className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                        >
+                          <Eye className="w-3.5 h-3.5" /> Preview Answer Sheet
+                        </button>
+                        {isSynced ? (
+                          <span className="bg-emerald-600 text-white font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 cursor-default opacity-85 shadow-xs">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Synced to Results
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleSyncCBTScoreToResult(sub)}
+                            className="bg-primary hover:bg-primary/90 text-white font-bold px-3.5 py-2 rounded-xl text-xs transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
+                          >
+                            <Zap className="w-3.5 h-3.5 text-amber-300" /> Record to Result Sheet
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="py-8 text-center text-muted-foreground bg-muted/10 rounded-xl border border-border/50">
+                <p className="text-sm font-semibold">{t('teacher.no_submissions_yet', 'No student submissions matching your filter.')}</p>
+                <p className="text-xs mt-1">Check back once students complete exams, or clear your search/class filter.</p>
               </div>
             )}
           </div>
@@ -2557,67 +2747,6 @@ export default function TeacherDashboard() {
             </div>
           )}
 
-          {/* Real-Time Student CBT Submissions Queue */}
-          <div className="bg-card rounded-2xl border border-border p-6 shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-serif font-bold text-foreground text-base">{t('teacher.received_submissions', 'Received Student CBT Submissions')} ({filteredSubmissions.length})</h3>
-              <span className="text-xs font-semibold text-muted-foreground">{t('teacher.auto_graded_verified', 'Auto-Graded & Verified')}</span>
-            </div>
-
-            {filteredSubmissions.length > 0 ? (
-              <div className="space-y-3">
-                {filteredSubmissions.map(sub => (
-                  <div key={sub.id} className="p-4 rounded-xl border border-border bg-card hover:bg-muted/10 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-bold text-foreground text-sm">{sub.student_name}</span>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary">{sub.class} {sub.stream}</span>
-                        <span className="text-xs text-muted-foreground">({sub.student_id})</span>
-                      </div>
-                      <h4 className="font-semibold text-foreground text-xs">{sub.exam_title}</h4>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">{t('teacher.submitted_at', 'Submitted:')} {new Date(sub.submitted_at).toLocaleTimeString()} · {t('teacher.score_label', 'Score:')} <strong>{sub.score} / {sub.total_possible}</strong></p>
-                    </div>
-                    <div className="flex items-center gap-2.5 self-start sm:self-auto">
-                      <div className="text-right mr-1">
-                        <span className="text-lg font-serif font-bold text-emerald-600">{sub.percentage}%</span>
-                        <p className="text-[9px] font-bold uppercase text-emerald-700">{t('teacher.auto_graded', 'Auto-Graded')}</p>
-                      </div>
-                      <button
-                        onClick={() => {
-                          const examsList = getStoredExams();
-                          const ex = examsList.find(e => e.id === sub.exam_id) || examsList[0];
-                          setPreviewSubmissionModal({
-                            submission: sub,
-                            exam: ex
-                          });
-                        }}
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-3 py-2 rounded-xl text-xs transition flex items-center gap-1 shadow-sm"
-                      >
-                        <Eye className="w-3.5 h-3.5" /> Preview Answer Sheet
-                      </button>
-                      {syncedSubmissionIds.has(String(sub.id)) ? (
-                        <span className="bg-emerald-600 text-white font-bold px-3 py-2 rounded-xl text-xs flex items-center gap-1 cursor-default opacity-80">
-                          ✅ Synced to Results
-                        </span>
-                      ) : (
-                        <button
-                          onClick={() => handleSyncCBTScoreToResult(sub)}
-                          className="bg-primary text-white font-bold px-3 py-2 rounded-xl text-xs hover:bg-primary/90 transition-colors"
-                        >
-                          📥 Record to Result Sheet
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="py-8 text-center text-muted-foreground bg-muted/10 rounded-xl border border-border/50">
-                <p className="text-sm font-semibold">{t('teacher.no_submissions_yet', 'No student submissions received yet.')}</p>
-                <p className="text-xs mt-1">{t('teacher.no_submissions_desc', 'Once students start and submit their exams in the student portal, their scores will appear here automatically.')}</p>
-              </div>
-            )}
-          </div>
         </div>
       );
     }
@@ -2665,6 +2794,12 @@ export default function TeacherDashboard() {
               </p>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={() => setActiveSection('exams')}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer"
+              >
+                <Eye className="w-4 h-4" /> Review CBT Submissions {unreviewedSubmissionsCount > 0 && `(${unreviewedSubmissionsCount} Unsynced)`}
+              </button>
               <button
                 onClick={() => {
                   classRoster.forEach(student => {
@@ -2943,48 +3078,45 @@ export default function TeacherDashboard() {
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs text-left border-collapse">
                       <thead className="bg-muted/40 uppercase text-[10px] text-muted-foreground tracking-wider border-b border-border">
-                        {isSeniorSecondaryClass(selectedBroadsheetStudent.grade) ? (
-                          /* SS 1 - SS 3 Headers: Student Name, Student ID, 1st CA, 2nd CA, CBT Exam, Theory Exam, Total, Teacher Remarks */
-                          <tr>
-                            <th className="p-3 min-w-[200px]">{t('teacher.course_subject', 'Course / Subject')}</th>
-                            <th className="p-3 text-center min-w-[90px]">{t('teacher.th_1st_ca', '1st CA')}</th>
-                            <th className="p-3 text-center min-w-[90px]">{t('teacher.th_2nd_ca', '2nd CA')}</th>
-                            <th className="p-3 text-center min-w-[120px] bg-blue-500/10 text-blue-700">
-                              <span className="flex items-center justify-center gap-1">
-                                {t('teacher.th_cbt_exam', 'CBT Exam')} <Zap className="w-3 h-3 text-blue-600 shrink-0" />
-                              </span>
-                            </th>
-                            <th className="p-3 text-center min-w-[110px]">{t('teacher.th_theory_exam', 'Theory Exam')}</th>
-                            <th className="p-3 text-center min-w-[90px]">{t('teacher.total_col', 'Total')}</th>
-                            <th className="p-3 min-w-[200px]">{t('teacher.teacher_remarks_col', 'Teacher Remarks')}</th>
-                          </tr>
-                        ) : (
-                          /* JSS 1 - JSS 3 / Basic Education Headers: 1st CA, 2nd CA, Exam, Total, Teacher Remarks */
-                          <tr>
-                            <th className="p-3 min-w-[200px]">{t('teacher.course_subject', 'Course / Subject')}</th>
-                            <th className="p-3 text-center min-w-[100px]">{t('teacher.th_1st_ca', '1st CA')}</th>
-                            <th className="p-3 text-center min-w-[100px]">{t('teacher.th_2nd_ca', '2nd CA')}</th>
-                            <th className="p-3 text-center min-w-[120px]">{t('teacher.th_exam', 'Exam')}</th>
-                            <th className="p-3 text-center min-w-[90px]">{t('teacher.total_col', 'Total')}</th>
-                            <th className="p-3 min-w-[200px]">{t('teacher.teacher_remarks_col', 'Teacher Remarks')}</th>
-                          </tr>
-                        )}
+                        <tr>
+                          <th className="p-3 min-w-[180px]">{t('teacher.course_subject', 'Course / Subject')}</th>
+                          <th className="p-3 text-center min-w-[80px]">{t('teacher.th_1st_ca', '1st CA')}</th>
+                          <th className="p-3 text-center min-w-[80px]">{t('teacher.th_2nd_ca', '2nd CA')}</th>
+                          <th className="p-3 text-center min-w-[110px] bg-blue-500/10 text-blue-700">
+                            <span className="flex items-center justify-center gap-1">
+                              CBT Test <Zap className="w-3 h-3 text-blue-600 shrink-0" />
+                            </span>
+                          </th>
+                          <th className="p-3 text-center min-w-[110px] bg-indigo-500/10 text-indigo-700">
+                            <span className="flex items-center justify-center gap-1">
+                              CBT Exam <Zap className="w-3 h-3 text-indigo-600 shrink-0" />
+                            </span>
+                          </th>
+                          <th className="p-3 text-center min-w-[100px]">{t('teacher.th_theory_exam', 'Theory Exam')}</th>
+                          <th className="p-3 text-center min-w-[80px]">{t('teacher.total_col', 'Total')}</th>
+                          <th className="p-3 min-w-[180px]">{t('teacher.teacher_remarks_col', 'Teacher Remarks')}</th>
+                        </tr>
                       </thead>
                       <tbody className="divide-y divide-border">
                         {getCoursesForClass(selectedBroadsheetStudent.grade || 'SS1', selectedBroadsheetStudent.stream || 'Science').map(course => {
-                          const isStudentSS = isSeniorSecondaryClass(selectedBroadsheetStudent.grade);
+                          const cbtSub = getStudentCBTSubmissionForCourse(selectedBroadsheetStudent.id || selectedBroadsheetStudent.code || selectedBroadsheetStudent.email, course.code);
+                          const isCbtSynced = cbtSub ? (Boolean(cbtSub.gradebook_synced) || syncedSubmissionIds.has(String(cbtSub.id))) : false;
+                          const cbtSubScore = cbtSub ? (typeof cbtSub.score === 'number' && cbtSub.score > 0 ? cbtSub.score : cbtSub.percentage) : 0;
+                          const isSubTest = cbtSub?.assessment_type === 'TEST';
+
                           const sc = getSafeProperty(broadsheetScores, course.code) || {
                             ca1: 0,
                             ca2: 0,
-                            cbtScore: isStudentSS ? getAutomaticCBTScore(selectedBroadsheetStudent.code || selectedBroadsheetStudent.email, course.code) : 0,
+                            cbtScore: 0,
+                            cbtTest: 0,
+                            cbtExam: 0,
                             paperExam: 0,
+                            theoryExam: 0,
                             exam: 0,
                             remark: ''
                           };
                           
-                          const total = isStudentSS
-                            ? (Number(sc.ca1) || 0) + (Number(sc.ca2) || 0) + (Number(sc.cbtScore) || 0) + (Number(sc.paperExam) || 0)
-                            : (Number(sc.ca1) || 0) + (Number(sc.ca2) || 0) + (sc.exam !== undefined ? (Number(sc.exam) || 0) : (Number(sc.paperExam) || 0));
+                          const total = (Number(sc.ca1) || 0) + (Number(sc.ca2) || 0) + (Number(sc.cbtTest) || 0) + (Number(sc.cbtExam) || Number(sc.cbtScore) || 0) + (Number(sc.paperExam) || Number(sc.theoryExam) || Number(sc.exam) || 0);
 
                           return (
                             <tr key={course.code} className="hover:bg-muted/20 transition-colors">
@@ -3019,45 +3151,151 @@ export default function TeacherDashboard() {
                                 />
                               </td>
 
-                              {/* For SS: CBT Exam & Theory Exam */}
-                              {isStudentSS && (
-                                <>
-                                  <td className="p-3 text-center bg-blue-500/5 border-x border-blue-200/50">
-                                    <input
-                                      type="number"
-                                      min={0}
-                                      max={100}
-                                      value={sc.cbtScore ?? 0}
-                                      onChange={e => handleUpdateScoreInput(course.code, 'cbtScore', e.target.value)}
-                                      className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-blue-300 bg-blue-50/50 text-blue-800 focus:ring-2 focus:ring-blue-500 outline-none"
-                                    />
-                                  </td>
-                                  <td className="p-3 text-center">
-                                    <input
-                                      type="number"
-                                      min={0}
-                                      max={100}
-                                      value={sc.paperExam ?? 0}
-                                      onChange={e => handleUpdateScoreInput(course.code, 'paperExam', e.target.value)}
-                                      className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-emerald-500 outline-none"
-                                    />
-                                  </td>
-                                </>
-                              )}
-
-                              {/* For JSS / Basic: Handwritten Exam Input */}
-                              {!isStudentSS && (
-                                <td className="p-3 text-center">
+                              {/* CBT Test Input & Sync */}
+                              <td className="p-3 text-center bg-blue-500/5 border-x border-blue-200/50">
+                                {cbtSub && isSubTest ? (
+                                  isCbtSynced || (typeof sc.cbtTest === 'number' && sc.cbtTest > 0) ? (
+                                    <div className="flex items-center justify-center gap-1">
+                                      <input
+                                        type="number"
+                                        min={0}
+                                        max={100}
+                                        value={sc.cbtTest ?? cbtSubScore}
+                                        onChange={e => handleUpdateScoreInput(course.code, 'cbtTest', e.target.value)}
+                                        className="w-14 text-center font-mono font-bold text-xs py-1.5 px-1 rounded-lg border border-blue-400 bg-blue-50/80 text-blue-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          const examsList = getStoredExams();
+                                          const ex = examsList.find(x => x.id === cbtSub.exam_id) || examsList[0];
+                                          setPreviewSubmissionModal({ submission: cbtSub, exam: ex });
+                                        }}
+                                        className="p-1 text-emerald-600 hover:bg-emerald-100 rounded-lg cursor-pointer transition-colors"
+                                        title="CBT Test Synced — Audit Student Answers"
+                                      >
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center justify-center gap-1">
+                                      <button
+                                        type="button"
+                                        onClick={async (e) => {
+                                          e.stopPropagation();
+                                          await handleSyncCBTScoreToResult(cbtSub);
+                                        }}
+                                        className="px-2 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
+                                        title="Click to sync verified CBT test score"
+                                      >
+                                        <Zap className="w-3 h-3 text-amber-300" /> Sync ({cbtSubScore})
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          const examsList = getStoredExams();
+                                          const ex = examsList.find(x => x.id === cbtSub.exam_id) || examsList[0];
+                                          setPreviewSubmissionModal({ submission: cbtSub, exam: ex });
+                                        }}
+                                        className="p-1 text-blue-600 hover:bg-blue-100 rounded-lg cursor-pointer transition-colors"
+                                        title="Audit Student CBT Answers"
+                                      >
+                                        <Eye className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  )
+                                ) : (
                                   <input
                                     type="number"
                                     min={0}
                                     max={100}
-                                    value={sc.exam !== undefined ? sc.exam : (sc.paperExam ?? 0)}
-                                    onChange={e => handleUpdateScoreInput(course.code, 'exam', e.target.value)}
-                                    className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-emerald-500 outline-none"
+                                    value={sc.cbtTest ?? 0}
+                                    onChange={e => handleUpdateScoreInput(course.code, 'cbtTest', e.target.value)}
+                                    className="w-14 text-center font-mono font-bold text-xs py-1.5 px-1 rounded-lg border border-blue-200 bg-blue-50/30 text-blue-800 focus:ring-2 focus:ring-blue-500 outline-none"
                                   />
-                                </td>
-                              )}
+                                )}
+                              </td>
+
+                              {/* CBT Exam Input & Sync */}
+                              <td className="p-3 text-center bg-indigo-500/5 border-r border-indigo-200/50">
+                                {cbtSub && !isSubTest ? (
+                                  isCbtSynced || (typeof sc.cbtExam === 'number' && sc.cbtExam > 0) || (typeof sc.cbtScore === 'number' && sc.cbtScore > 0) ? (
+                                    <div className="flex items-center justify-center gap-1">
+                                      <input
+                                        type="number"
+                                        min={0}
+                                        max={100}
+                                        value={sc.cbtExam ?? sc.cbtScore ?? cbtSubScore}
+                                        onChange={e => handleUpdateScoreInput(course.code, 'cbtExam', e.target.value)}
+                                        className="w-14 text-center font-mono font-bold text-xs py-1.5 px-1 rounded-lg border border-indigo-400 bg-indigo-50/80 text-indigo-900 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                      />
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          const examsList = getStoredExams();
+                                          const ex = examsList.find(x => x.id === cbtSub.exam_id) || examsList[0];
+                                          setPreviewSubmissionModal({ submission: cbtSub, exam: ex });
+                                        }}
+                                        className="p-1 text-emerald-600 hover:bg-emerald-100 rounded-lg cursor-pointer transition-colors"
+                                        title="CBT Exam Synced — Audit Student Answers"
+                                      >
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center justify-center gap-1">
+                                      <button
+                                        type="button"
+                                        onClick={async (e) => {
+                                          e.stopPropagation();
+                                          await handleSyncCBTScoreToResult(cbtSub);
+                                        }}
+                                        className="px-2 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
+                                        title="Click to sync verified CBT exam score"
+                                      >
+                                        <Zap className="w-3 h-3 text-amber-300" /> Sync ({cbtSubScore})
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          const examsList = getStoredExams();
+                                          const ex = examsList.find(x => x.id === cbtSub.exam_id) || examsList[0];
+                                          setPreviewSubmissionModal({ submission: cbtSub, exam: ex });
+                                        }}
+                                        className="p-1 text-indigo-600 hover:bg-indigo-100 rounded-lg cursor-pointer transition-colors"
+                                        title="Audit Student CBT Answers"
+                                      >
+                                        <Eye className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  )
+                                ) : (
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    max={100}
+                                    value={sc.cbtExam ?? sc.cbtScore ?? 0}
+                                    onChange={e => handleUpdateScoreInput(course.code, 'cbtExam', e.target.value)}
+                                    className="w-14 text-center font-mono font-bold text-xs py-1.5 px-1 rounded-lg border border-indigo-200 bg-indigo-50/30 text-indigo-800 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                  />
+                                )}
+                              </td>
+
+                              {/* Theory / Written Exam */}
+                              <td className="p-3 text-center">
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={100}
+                                  value={sc.paperExam ?? sc.theoryExam ?? sc.exam ?? 0}
+                                  onChange={e => handleUpdateScoreInput(course.code, 'paperExam', e.target.value)}
+                                  className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-emerald-500 outline-none"
+                                />
+                              </td>
 
                               {/* Total Score */}
                               <td className="p-3 text-center font-bold text-sm text-foreground font-serif">
@@ -3109,10 +3347,7 @@ export default function TeacherDashboard() {
                       <BarChart2 className="w-5 h-5 text-emerald-700" /> {t('teacher.broadsheet_table_title', 'Class Broadsheet & Terminal Master Register')}
                     </h3>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {isSS
-                        ? t('teacher.ss_table_guide', 'Senior Secondary (SS 1–3): Record 1st CA, 2nd CA, CBT Exam, and Theory Exam for ')
-                        : t('teacher.jss_table_guide', 'Junior Secondary (JSS 1–3) & Basic: Record 1st CA, 2nd CA, and Exam for ')
-                      }
+                      {t('teacher.universal_table_guide', 'Record 1st CA, 2nd CA, CBT Test, CBT Exam, and Theory Exam for ')}
                       <strong className="text-emerald-700">{activeCourse.name} ({activeCourse.code})</strong>.
                     </p>
                   </div>
@@ -3132,20 +3367,14 @@ export default function TeacherDashboard() {
                   <div>
                     <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.assessment_scheme', 'Assessment Scheme')}</span>
                     <strong className="text-xs font-bold text-emerald-700">
-                      {isSS ? '1st CA + 2nd CA + CBT Exam + Theory Exam' : '1st CA + 2nd CA + Exam'}
+                      1st CA + 2nd CA + CBT Test + CBT Exam + Theory Exam
                     </strong>
                   </div>
                   <div>
                     <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.cbt_integration', 'Examination Mode')}</span>
-                    {isSS ? (
-                      <strong className="text-xs font-bold text-blue-600 flex items-center justify-center gap-1">
-                        <Zap className="w-3.5 h-3.5 text-blue-600 shrink-0" /> {t('teacher.cbt_plus_theory', 'CBT (OBJ) + Theory')}
-                      </strong>
-                    ) : (
-                      <strong className="text-xs font-bold text-amber-700">
-                        {t('teacher.handwritten_exam_mode', '100% Handwritten Exam')}
-                      </strong>
-                    )}
+                    <strong className="text-xs font-bold text-blue-600 flex items-center justify-center gap-1">
+                      <Zap className="w-3.5 h-3.5 text-blue-600 shrink-0" /> {t('teacher.cbt_plus_theory', 'CBT Test + CBT Exam + Theory')}
+                    </strong>
                   </div>
                   <div>
                     <span className="text-[10px] font-bold uppercase text-muted-foreground block">{t('teacher.term_status_scale', 'Terminal Score Basis')}</span>
@@ -3155,55 +3384,100 @@ export default function TeacherDashboard() {
                   </div>
                 </div>
 
+                {/* Real-time CBT Pending Submissions Banner */}
+                {(() => {
+                  const pendingClassCBTSubmissions = classRoster
+                    .map(s => getStudentCBTSubmissionForCourse(s.id || s.code || s.email, activeCourse.code))
+                    .filter(Boolean) as CBTSubmission[];
+                  const unsyncedPendingCBT = pendingClassCBTSubmissions.filter(sub => !syncedSubmissionIds.has(String(sub.id)) && !sub.gradebook_synced);
+
+                  if (unsyncedPendingCBT.length === 0) return null;
+
+                  return (
+                    <div className="bg-blue-50 dark:bg-blue-950/40 border-2 border-blue-300 dark:border-blue-700 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-base shrink-0">
+                          <Zap className="w-5 h-5 text-amber-300" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-xs text-blue-950 dark:text-blue-100 flex items-center gap-2">
+                            <span>{unsyncedPendingCBT.length} CBT Submission{unsyncedPendingCBT.length > 1 ? 's' : ''} Received for {activeCourse.name} ({activeCourse.code})</span>
+                            <span className="text-[10px] bg-blue-200 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-0.5 rounded-full font-extrabold">Ready to Sync</span>
+                          </h4>
+                          <p className="text-[11px] text-blue-800 dark:text-blue-300 mt-0.5">
+                            Students have submitted their CBT tests. Click below to batch-sync all scores into this term broadsheet, or sync individually per student.
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          for (const sub of unsyncedPendingCBT) {
+                            await handleSyncCBTScoreToResult(sub);
+                          }
+                          showToast(`Successfully synced ${unsyncedPendingCBT.length} CBT exam scores to broadsheet!`);
+                        }}
+                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-sm flex items-center gap-1.5 shrink-0 cursor-pointer transition-all"
+                      >
+                        <CheckCircle2 className="w-4 h-4 text-emerald-300" /> Sync All ({unsyncedPendingCBT.length}) Scores
+                      </button>
+                    </div>
+                  );
+                })()}
+
                 {/* All Students Broadsheet Table with Direct Score Entry */}
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs text-left border-collapse">
                     <thead className="bg-muted/40 uppercase text-[10px] text-muted-foreground tracking-wider border-b border-border">
-                      {isSS ? (
-                        /* SS 1 - SS 3 Column Layout: Student Name, Student ID, 1st CA, 2nd CA, CBT Exam, Theory Exam, Total, Action */
-                        <tr>
-                          <th className="p-3 min-w-[180px]">{t('teacher.student_name_col', 'Student Name')}</th>
-                          <th className="p-3 min-w-[120px]">{t('teacher.student_id_col', 'Student ID')}</th>
-                          <th className="p-3 text-center min-w-[90px]">{t('teacher.th_1st_ca', '1st CA')}</th>
-                          <th className="p-3 text-center min-w-[90px]">{t('teacher.th_2nd_ca', '2nd CA')}</th>
-                          <th className="p-3 text-center min-w-[120px] bg-blue-500/10 text-blue-700">
-                            <span className="flex items-center justify-center gap-1">
-                              {t('teacher.th_cbt_exam', 'CBT Exam')} <Zap className="w-3 h-3 text-blue-600 shrink-0" />
-                            </span>
-                          </th>
-                          <th className="p-3 text-center min-w-[110px]">{t('teacher.th_theory_exam', 'Theory Exam')}</th>
-                          <th className="p-3 text-center min-w-[90px]">{t('teacher.total_col', 'Total')}</th>
-                          <th className="p-3 text-right min-w-[120px]">{t('teacher.action_col', 'Action')}</th>
-                        </tr>
-                      ) : (
-                        /* JSS 1 - JSS 3 Column Layout: Student Name, Student ID, 1st CA, 2nd CA, Exam, Total, Action */
-                        <tr>
-                          <th className="p-3 min-w-[180px]">{t('teacher.student_name_col', 'Student Name')}</th>
-                          <th className="p-3 min-w-[120px]">{t('teacher.student_id_col', 'Student ID')}</th>
-                          <th className="p-3 text-center min-w-[100px]">{t('teacher.th_1st_ca', '1st CA')}</th>
-                          <th className="p-3 text-center min-w-[100px]">{t('teacher.th_2nd_ca', '2nd CA')}</th>
-                          <th className="p-3 text-center min-w-[110px]">{t('teacher.th_exam', 'Exam')}</th>
-                          <th className="p-3 text-center min-w-[90px]">{t('teacher.total_col', 'Total')}</th>
-                          <th className="p-3 text-right min-w-[120px]">{t('teacher.action_col', 'Action')}</th>
-                        </tr>
-                      )}
+                      {/* Universal Column Layout for ALL classes: Student Name, Student ID, 1st CA, 2nd CA, CBT Test, CBT Exam, Theory Exam, Total, Action */}
+                      <tr>
+                        <th className="p-3 min-w-[180px]">{t('teacher.student_name_col', 'Student Name')}</th>
+                        <th className="p-3 min-w-[120px]">{t('teacher.student_id_col', 'Student ID')}</th>
+                        <th className="p-3 text-center min-w-[90px]">{t('teacher.th_1st_ca', '1st CA')}</th>
+                        <th className="p-3 text-center min-w-[90px]">{t('teacher.th_2nd_ca', '2nd CA')}</th>
+                        <th className="p-3 text-center min-w-[120px] bg-indigo-500/10 text-indigo-700">
+                          <span className="flex items-center justify-center gap-1">
+                            {t('teacher.th_cbt_test', 'CBT Test')} <Zap className="w-3 h-3 text-indigo-600 shrink-0" />
+                          </span>
+                        </th>
+                        <th className="p-3 text-center min-w-[120px] bg-blue-500/10 text-blue-700">
+                          <span className="flex items-center justify-center gap-1">
+                            {t('teacher.th_cbt_exam', 'CBT Exam')} <Zap className="w-3 h-3 text-blue-600 shrink-0" />
+                          </span>
+                        </th>
+                        <th className="p-3 text-center min-w-[110px]">{t('teacher.th_theory_exam', 'Theory Exam')}</th>
+                        <th className="p-3 text-center min-w-[90px]">{t('teacher.total_col', 'Total')}</th>
+                        <th className="p-3 text-right min-w-[120px]">{t('teacher.action_col', 'Action')}</th>
+                      </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
                       {classRoster.map(s => {
                         const saved = getStudentBroadsheet(s.id);
+                        const studentIdentifier = s.id || s.code || s.email;
+                        const cbtTestSub = getStudentCBTSubmissionForCourse(studentIdentifier, activeCourse.code, 'test');
+                        const cbtExamSub = getStudentCBTSubmissionForCourse(studentIdentifier, activeCourse.code, 'exam');
+                        // Fallback: if no type-filtered match, try unfiltered (legacy submissions without assessment_type)
+                        const cbtSubAny = cbtTestSub || cbtExamSub || getStudentCBTSubmissionForCourse(studentIdentifier, activeCourse.code);
+                        const isCbtTestSynced = cbtTestSub ? (Boolean(cbtTestSub.gradebook_synced) || syncedSubmissionIds.has(String(cbtTestSub.id))) : false;
+                        const isCbtExamSynced = cbtExamSub ? (Boolean(cbtExamSub.gradebook_synced) || syncedSubmissionIds.has(String(cbtExamSub.id))) : false;
+                        // Use raw earned score (no /30 scaling)
+                        const cbtTestScore = cbtTestSub ? (typeof cbtTestSub.score === 'number' && cbtTestSub.score > 0 ? cbtTestSub.score : Math.round(cbtTestSub.percentage)) : 0;
+                        const cbtExamScore = cbtExamSub ? (typeof cbtExamSub.score === 'number' && cbtExamSub.score > 0 ? cbtExamSub.score : Math.round(cbtExamSub.percentage)) : 0;
+
                         const sc = getSafeProperty(saved, activeCourse.code) || {
                           ca1: 0,
                           ca2: 0,
                           assignment: 0,
-                          cbtScore: isSS ? getAutomaticCBTScore(s.code || s.email, activeCourse.code) : 0,
+                          cbtTest: isCbtTestSynced ? cbtTestScore : 0,
+                          cbtExam: isCbtExamSynced ? cbtExamScore : 0,
+                          cbtScore: 0,
                           paperExam: 0,
                           exam: 0,
                           remark: ''
                         };
 
-                        const rowTotal = isSS
-                          ? ((Number(sc.ca1) || 0) + (Number(sc.ca2) || 0) + (Number(sc.cbtScore) || 0) + (Number(sc.paperExam) || 0))
-                          : ((Number(sc.ca1) || 0) + (Number(sc.ca2) || 0) + (sc.exam !== undefined ? (Number(sc.exam) || 0) : (Number(sc.paperExam) || 0)));
+                        // Universal total: CA1 + CA2 + CBT Test + CBT Exam + Theory Exam
+                        const rowTotal = (Number(sc.ca1) || 0) + (Number(sc.ca2) || 0) + (Number(sc.cbtTest) || 0) + (Number(sc.cbtExam) || Number(sc.cbtScore) || 0) + (Number(sc.paperExam) || Number(sc.theoryExam) || Number(sc.exam) || 0);
 
                         return (
                           <tr
@@ -3252,45 +3526,151 @@ export default function TeacherDashboard() {
                               />
                             </td>
 
-                            {/* SS 1-3: CBT Exam & Theory Exam */}
-                            {isSS && (
-                              <>
-                                <td className="p-3 text-center bg-blue-500/5 border-x border-blue-200/40">
-                                  <input
-                                    type="number"
-                                    min={0}
-                                    max={100}
-                                    value={sc.cbtScore ?? 0}
-                                    onChange={e => handleInlineStudentScoreUpdate(s, activeCourse.code, 'cbtScore', e.target.value)}
-                                    className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-blue-300 bg-blue-50/60 text-blue-800 focus:ring-2 focus:ring-blue-500 outline-none"
-                                  />
-                                </td>
-                                <td className="p-3 text-center">
-                                  <input
-                                    type="number"
-                                    min={0}
-                                    max={100}
-                                    value={sc.paperExam ?? 0}
-                                    onChange={e => handleInlineStudentScoreUpdate(s, activeCourse.code, 'paperExam', e.target.value)}
-                                    className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-emerald-500 outline-none"
-                                  />
-                                </td>
-                              </>
-                            )}
-
-                            {/* JSS 1-3: Handwritten Exam */}
-                            {!isSS && (
-                              <td className="p-3 text-center">
+                            {/* CBT Test Column (universal) */}
+                            <td className="p-3 text-center bg-indigo-500/5 border-x border-indigo-200/40">
+                              {cbtTestSub ? (
+                                isCbtTestSynced || (typeof sc.cbtTest === 'number' && sc.cbtTest > 0) ? (
+                                  <div className="flex items-center justify-center gap-1">
+                                    <input
+                                      type="number"
+                                      min={0}
+                                      max={100}
+                                      value={sc.cbtTest ?? cbtTestScore}
+                                      onChange={e => handleInlineStudentScoreUpdate(s, activeCourse.code, 'cbtTest', e.target.value)}
+                                      className="w-14 text-center font-mono font-bold text-xs py-1.5 px-1 rounded-lg border border-indigo-400 bg-indigo-50/80 text-indigo-900 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        const examsList = getStoredExams();
+                                        const ex = examsList.find(x => x.id === cbtTestSub.exam_id) || examsList[0];
+                                        setPreviewSubmissionModal({ submission: cbtTestSub, exam: ex });
+                                      }}
+                                      className="p-1 text-emerald-600 hover:bg-emerald-100 rounded-lg cursor-pointer transition-colors"
+                                      title="CBT Test Synced — Click to Audit"
+                                    >
+                                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center justify-center gap-1">
+                                    <button
+                                      type="button"
+                                      onClick={async (e) => {
+                                        e.stopPropagation();
+                                        await handleSyncCBTScoreToResult(cbtTestSub);
+                                      }}
+                                      className="px-2 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
+                                      title="Click to sync CBT test score"
+                                    >
+                                      <Zap className="w-3 h-3 text-amber-300" /> Sync ({cbtTestScore})
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        const examsList = getStoredExams();
+                                        const ex = examsList.find(x => x.id === cbtTestSub.exam_id) || examsList[0];
+                                        setPreviewSubmissionModal({ submission: cbtTestSub, exam: ex });
+                                      }}
+                                      className="p-1 text-indigo-600 hover:bg-indigo-100 rounded-lg cursor-pointer transition-colors"
+                                      title="Audit CBT Test Answers"
+                                    >
+                                      <Eye className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                )
+                              ) : (
                                 <input
                                   type="number"
                                   min={0}
                                   max={100}
-                                  value={sc.exam !== undefined ? sc.exam : (sc.paperExam ?? 0)}
-                                  onChange={e => handleInlineStudentScoreUpdate(s, activeCourse.code, 'exam', e.target.value)}
-                                  className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-emerald-500 outline-none"
+                                  value={sc.cbtTest ?? 0}
+                                  onChange={e => handleInlineStudentScoreUpdate(s, activeCourse.code, 'cbtTest', e.target.value)}
+                                  className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-indigo-300 bg-indigo-50/60 text-indigo-800 focus:ring-2 focus:ring-indigo-500 outline-none"
                                 />
-                              </td>
-                            )}
+                              )}
+                            </td>
+
+                            {/* CBT Exam Column (universal) */}
+                            <td className="p-3 text-center bg-blue-500/5 border-x border-blue-200/40">
+                              {cbtExamSub ? (
+                                isCbtExamSynced || (typeof sc.cbtExam === 'number' && sc.cbtExam > 0) ? (
+                                  <div className="flex items-center justify-center gap-1">
+                                    <input
+                                      type="number"
+                                      min={0}
+                                      max={100}
+                                      value={sc.cbtExam ?? cbtExamScore}
+                                      onChange={e => handleInlineStudentScoreUpdate(s, activeCourse.code, 'cbtExam', e.target.value)}
+                                      className="w-14 text-center font-mono font-bold text-xs py-1.5 px-1 rounded-lg border border-blue-400 bg-blue-50/80 text-blue-900 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        const examsList = getStoredExams();
+                                        const ex = examsList.find(x => x.id === cbtExamSub.exam_id) || examsList[0];
+                                        setPreviewSubmissionModal({ submission: cbtExamSub, exam: ex });
+                                      }}
+                                      className="p-1 text-emerald-600 hover:bg-emerald-100 rounded-lg cursor-pointer transition-colors"
+                                      title="CBT Exam Synced — Click to Audit"
+                                    >
+                                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center justify-center gap-1">
+                                    <button
+                                      type="button"
+                                      onClick={async (e) => {
+                                        e.stopPropagation();
+                                        await handleSyncCBTScoreToResult(cbtExamSub);
+                                      }}
+                                      className="px-2 py-1 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] flex items-center gap-1 shadow-xs transition-colors cursor-pointer"
+                                      title="Click to sync CBT exam score"
+                                    >
+                                      <Zap className="w-3 h-3 text-amber-300" /> Sync ({cbtExamScore})
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        const examsList = getStoredExams();
+                                        const ex = examsList.find(x => x.id === cbtExamSub.exam_id) || examsList[0];
+                                        setPreviewSubmissionModal({ submission: cbtExamSub, exam: ex });
+                                      }}
+                                      className="p-1 text-blue-600 hover:bg-blue-100 rounded-lg cursor-pointer transition-colors"
+                                      title="Audit CBT Exam Answers"
+                                    >
+                                      <Eye className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                )
+                              ) : (
+                                <input
+                                  type="number"
+                                  min={0}
+                                  max={100}
+                                  value={sc.cbtExam ?? sc.cbtScore ?? 0}
+                                  onChange={e => handleInlineStudentScoreUpdate(s, activeCourse.code, 'cbtExam', e.target.value)}
+                                  className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-blue-300 bg-blue-50/60 text-blue-800 focus:ring-2 focus:ring-blue-500 outline-none"
+                                />
+                              )}
+                            </td>
+
+                            {/* Theory / Written Exam Column (universal) */}
+                            <td className="p-3 text-center">
+                              <input
+                                type="number"
+                                min={0}
+                                max={100}
+                                value={sc.paperExam ?? sc.theoryExam ?? sc.exam ?? 0}
+                                onChange={e => handleInlineStudentScoreUpdate(s, activeCourse.code, 'paperExam', e.target.value)}
+                                className="w-16 text-center font-mono font-bold text-xs py-1.5 px-2 rounded-lg border border-border bg-card focus:ring-2 focus:ring-emerald-500 outline-none"
+                              />
+                            </td>
 
                             {/* Total Score */}
                             <td className="p-3 text-center font-bold text-sm text-foreground font-serif">
@@ -4662,12 +5042,21 @@ export default function TeacherDashboard() {
     );
   };
 
+  const unreviewedSubmissionsCount = React.useMemo(() => {
+    const allSubs = getStoredSubmissions();
+    return allSubs.filter(s => !s.gradebook_synced && !syncedSubmissionIds.has(String(s.id))).length;
+  }, [syncedSubmissionIds, submissions]);
+
   return (
     <ProtectedRoute allowedRoles={['TEACHER', 'ADMIN']}>
       <PortalLayout
         title="Teacher Portal"
         activeSection={activeSection}
         onNavigate={setActiveSection}
+        badges={{
+          exams: unreviewedSubmissionsCount,
+          results: unreviewedSubmissionsCount,
+        }}
       >
         {/* Toast Notification */}
         {toastMsg && (
@@ -5256,6 +5645,89 @@ export default function TeacherDashboard() {
                         {percentage}%
                       </div>
                     </div>
+                  </div>
+
+                  {/* ── Integrity & Anti-Cheat Audit Log ── */}
+                  <div className="rounded-2xl border overflow-hidden">
+                    {sub.flags && sub.flags.length > 0 ? (
+                      <div className="border-red-300 bg-red-50/60 dark:bg-red-950/30">
+                        <div className="p-4 flex flex-wrap items-center justify-between gap-3 border-b border-red-200 dark:border-red-800">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-9 h-9 rounded-xl bg-red-600 text-white flex items-center justify-center text-sm font-bold shrink-0">
+                              🚩
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-xs text-red-900 dark:text-red-200 flex items-center gap-2">
+                                Integrity Violations Detected
+                                <span className="text-[10px] bg-red-200 dark:bg-red-900 text-red-800 dark:text-red-200 px-2 py-0.5 rounded-full font-extrabold">
+                                  {sub.flags.length} Flag{sub.flags.length > 1 ? 's' : ''}
+                                </span>
+                              </h4>
+                              <p className="text-[11px] text-red-800/70 dark:text-red-300/70 mt-0.5">
+                                This student triggered anti-cheat measures during the exam. Review the audit trail below.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {sub.autoPaused && (
+                          <div className="mx-4 mt-3 p-3 rounded-xl bg-red-600/10 border border-red-400/40 text-xs text-red-800 dark:text-red-300 font-semibold flex items-center gap-2">
+                            ⚠️ Auto-Paused: Student accumulated ≥5 flags and their exam was automatically paused for 5 minutes.
+                            {sub.pauseEvents && sub.pauseEvents.length > 0 && (
+                              <span className="text-[10px] font-mono text-red-600 dark:text-red-400">
+                                ({sub.pauseEvents.length} pause event{sub.pauseEvents.length > 1 ? 's' : ''})
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="p-4">
+                          <table className="w-full text-xs border-collapse">
+                            <thead>
+                              <tr className="text-[10px] uppercase text-red-800/60 dark:text-red-300/60 tracking-wider border-b border-red-200 dark:border-red-800">
+                                <th className="p-2 text-left">#</th>
+                                <th className="p-2 text-left">Violation Type</th>
+                                <th className="p-2 text-left">Timestamp</th>
+                                <th className="p-2 text-left">Details</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-red-100 dark:divide-red-900">
+                              {sub.flags.map((flag: any, fIdx: number) => (
+                                <tr key={fIdx} className="hover:bg-red-100/40 dark:hover:bg-red-900/30 transition-colors">
+                                  <td className="p-2 font-mono font-bold text-red-700 dark:text-red-400">{flag.flagCount || fIdx + 1}</td>
+                                  <td className="p-2">
+                                    <span className="px-2 py-0.5 rounded-md bg-red-200/60 dark:bg-red-800/50 text-red-800 dark:text-red-200 font-bold text-[10px]">
+                                      {(flag.type || 'UNKNOWN').replace(/_/g, ' ')}
+                                    </span>
+                                  </td>
+                                  <td className="p-2 font-mono text-muted-foreground text-[11px]">
+                                    {flag.timestamp ? new Date(flag.timestamp).toLocaleTimeString() : '-'}
+                                  </td>
+                                  <td className="p-2 text-muted-foreground">{flag.detail || '-'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-emerald-50/60 dark:bg-emerald-950/30 border-emerald-300 flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-sm font-bold shrink-0">
+                          ✅
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-xs text-emerald-900 dark:text-emerald-200 flex items-center gap-2">
+                            100% Clean Attempt
+                            <span className="text-[10px] bg-emerald-200 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 px-2 py-0.5 rounded-full font-extrabold">
+                              0 Flags
+                            </span>
+                          </h4>
+                          <p className="text-[11px] text-emerald-800/70 dark:text-emerald-300/70 mt-0.5">
+                            No integrity violations were detected during this exam session.
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <h4 className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground px-1">
@@ -6015,6 +6487,319 @@ export default function TeacherDashboard() {
             </div>
           </div>
         )}
+
+        {/* 📋 Student CBT Submission Audit Modal (Review Student's Answers vs Correct Keys & One-Click Sync) */}
+        {previewSubmissionModal && (() => {
+          const sub: CBTSubmission = previewSubmissionModal.submission;
+          const exam: CBTExam = previewSubmissionModal.exam || getStoredExams().find(e => e.id === sub.exam_id) || {
+            id: sub.exam_id,
+            title: sub.exam_title,
+            course_name: sub.exam_title,
+            course_code: sub.course_code,
+            questions: []
+          } as any;
+          const isStudentSS = isSeniorSecondaryClass(sub.class);
+          // Use raw earned score — no /30 or /20 scaling
+          const earnedScore = (typeof sub.score === 'number' && sub.score > 0) ? sub.score : Math.round(sub.percentage);
+          const isSynced = Boolean(sub.gradebook_synced) || syncedSubmissionIds.has(String(sub.id));
+          const questions = exam.questions || [];
+
+          return (
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+              <div className="bg-card rounded-3xl border border-border shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+                {/* Header */}
+                <div className="p-5 border-b border-border flex items-center justify-between bg-gradient-to-r from-blue-500/10 via-emerald-500/5 to-transparent">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-md shrink-0">
+                      <Zap className="w-5 h-5 text-amber-300" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-serif font-bold text-base text-foreground">
+                          {sub.student_name} — CBT Submission Audit
+                        </h3>
+                        {isSynced ? (
+                          <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 flex items-center gap-1">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Synced to Broadsheet
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-300 flex items-center gap-1">
+                            <Clock className="w-3 h-3 text-amber-600" /> Ready to Sync
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Exam: <strong className="text-foreground">{sub.exam_title}</strong> • Student ID: <strong className="font-mono text-foreground">{sub.student_id}</strong> • Class: <strong className="text-foreground">{sub.class || 'SS1'}</strong> • Submitted: {new Date(sub.submitted_at).toLocaleTimeString()} ({new Date(sub.submitted_at).toLocaleDateString()})
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewSubmissionModal(null)}
+                    className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Score Summary Metrics Bar */}
+                <div className="px-6 py-3.5 border-b border-border bg-muted/20 flex flex-wrap items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-card border border-border px-3.5 py-1.5 rounded-xl text-center">
+                      <span className="text-[10px] uppercase font-bold text-muted-foreground block">Raw Score</span>
+                      <span className="text-sm font-mono font-bold text-foreground">{sub.score} / {sub.total_possible}</span>
+                    </div>
+                    <div className="bg-card border border-border px-3.5 py-1.5 rounded-xl text-center">
+                      <span className="text-[10px] uppercase font-bold text-muted-foreground block">Percentage</span>
+                      <span className="text-sm font-mono font-bold text-foreground">{sub.percentage}%</span>
+                    </div>
+                    <div className="bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 px-3.5 py-1.5 rounded-xl text-center">
+                      <span className="text-[10px] uppercase font-bold text-blue-700 dark:text-blue-300 block">Earned Score</span>
+                      <span className="text-base font-serif font-bold text-blue-700 dark:text-blue-300">{earnedScore}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await handleSyncCBTScoreToResult(sub);
+                        setPreviewSubmissionModal((prev: any) => prev ? {
+                          ...prev,
+                          submission: { ...prev.submission, gradebook_synced: true }
+                        } : null);
+                      }}
+                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 py-2 rounded-xl shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Zap className="w-3.5 h-3.5 text-amber-300" />
+                      {isSynced ? `Re-Sync Score (${earnedScore})` : `Sync to Broadsheet (${earnedScore})`}
+                    </button>
+                  </div>
+                </div>
+
+                {/* ── Integrity & Anti-Cheat Audit Log ── */}
+                <div className="mx-6 mt-4 rounded-2xl border overflow-hidden">
+                  {sub.flags && sub.flags.length > 0 ? (
+                    <div className="border-red-300 bg-red-50/60 dark:bg-red-950/30">
+                      <div className="p-4 flex flex-wrap items-center justify-between gap-3 border-b border-red-200 dark:border-red-800">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-9 h-9 rounded-xl bg-red-600 text-white flex items-center justify-center text-sm font-bold shrink-0">
+                            🚩
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-xs text-red-900 dark:text-red-200 flex items-center gap-2">
+                              Integrity Violations Detected
+                              <span className="text-[10px] bg-red-200 dark:bg-red-900 text-red-800 dark:text-red-200 px-2 py-0.5 rounded-full font-extrabold">
+                                {sub.flags.length} Flag{sub.flags.length > 1 ? 's' : ''}
+                              </span>
+                            </h4>
+                            <p className="text-[11px] text-red-800/70 dark:text-red-300/70 mt-0.5">
+                              This student triggered anti-cheat measures during the exam.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {sub.autoPaused && (
+                        <div className="mx-4 mt-3 p-3 rounded-xl bg-red-600/10 border border-red-400/40 text-xs text-red-800 dark:text-red-300 font-semibold flex items-center gap-2">
+                          ⚠️ Auto-Paused: Student accumulated ≥5 flags. Exam was paused for 5 minutes.
+                          {sub.pauseEvents && sub.pauseEvents.length > 0 && (
+                            <span className="text-[10px] font-mono text-red-600 dark:text-red-400">
+                              ({sub.pauseEvents.length} pause event{sub.pauseEvents.length > 1 ? 's' : ''})
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="p-4">
+                        <table className="w-full text-xs border-collapse">
+                          <thead>
+                            <tr className="text-[10px] uppercase text-red-800/60 dark:text-red-300/60 tracking-wider border-b border-red-200 dark:border-red-800">
+                              <th className="p-2 text-left">#</th>
+                              <th className="p-2 text-left">Violation Type</th>
+                              <th className="p-2 text-left">Timestamp</th>
+                              <th className="p-2 text-left">Details</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-red-100 dark:divide-red-900">
+                            {sub.flags.map((flag: any, fIdx: number) => (
+                              <tr key={fIdx} className="hover:bg-red-100/40 dark:hover:bg-red-900/30 transition-colors">
+                                <td className="p-2 font-mono font-bold text-red-700 dark:text-red-400">{flag.flagCount || fIdx + 1}</td>
+                                <td className="p-2">
+                                  <span className="px-2 py-0.5 rounded-md bg-red-200/60 dark:bg-red-800/50 text-red-800 dark:text-red-200 font-bold text-[10px]">
+                                    {(flag.type || 'UNKNOWN').replace(/_/g, ' ')}
+                                  </span>
+                                </td>
+                                <td className="p-2 font-mono text-muted-foreground text-[11px]">
+                                  {flag.timestamp ? new Date(flag.timestamp).toLocaleTimeString() : '-'}
+                                </td>
+                                <td className="p-2 text-muted-foreground">{flag.detail || '-'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-emerald-50/60 dark:bg-emerald-950/30 border-emerald-300 flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-sm font-bold shrink-0">
+                        ✅
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-xs text-emerald-900 dark:text-emerald-200 flex items-center gap-2">
+                          100% Clean Attempt
+                          <span className="text-[10px] bg-emerald-200 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 px-2 py-0.5 rounded-full font-extrabold">
+                            0 Flags
+                          </span>
+                        </h4>
+                        <p className="text-[11px] text-emerald-800/70 dark:text-emerald-300/70 mt-0.5">
+                          No integrity violations were detected during this exam session.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Question-by-Question Breakdown */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                  {questions.length === 0 ? (
+                    <div className="text-center py-10 text-muted-foreground text-xs">
+                      No question details available for this archived assessment.
+                    </div>
+                  ) : (
+                    questions.map((q: CBTQuestion, idx: number) => {
+                      const studentAns = sub.answers?.[q.id] || (sub.answers as any)?.[String(q.id)];
+                      const isCorrect = studentAns && studentAns.toUpperCase() === (q.correct_option || '').toUpperCase();
+                      const isUnanswered = !studentAns;
+
+                      return (
+                        <div
+                          key={q.id || idx}
+                          className={`p-4 rounded-2xl border transition-all ${
+                            isCorrect
+                              ? 'border-emerald-300 dark:border-emerald-800 bg-emerald-500/5'
+                              : isUnanswered
+                              ? 'border-amber-200 dark:border-amber-800 bg-amber-500/5'
+                              : 'border-rose-300 dark:border-rose-800 bg-rose-500/5'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-3 mb-2">
+                            <div className="flex items-start gap-2.5">
+                              <span className={`w-7 h-7 rounded-xl flex items-center justify-center text-xs font-bold shrink-0 mt-0.5 ${
+                                isCorrect
+                                  ? 'bg-emerald-600 text-white'
+                                  : isUnanswered
+                                  ? 'bg-amber-500 text-white'
+                                  : 'bg-rose-600 text-white'
+                              }`}>
+                                {idx + 1}
+                              </span>
+                              <div>
+                                <p className="font-semibold text-foreground text-sm leading-relaxed">
+                                  {q.question_text}
+                                </p>
+                                {q.image_url && (
+                                  <img src={q.image_url} alt="Question Diagram" className="mt-2 max-h-40 rounded-xl border border-border object-contain" />
+                                )}
+                              </div>
+                            </div>
+                            <span className={`text-[11px] font-mono font-bold px-2.5 py-1 rounded-lg border shrink-0 ${
+                              isCorrect
+                                ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                                : 'bg-rose-100 text-rose-800 border-rose-300'
+                            }`}>
+                              {isCorrect ? `+${q.points || 1} pt` : '0 pt'}
+                            </span>
+                          </div>
+
+                          {/* Options grid with student answer & correct answer highlighted */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
+                            {(['A', 'B', 'C', 'D'] as const).map(optKey => {
+                              const optText = (q as any)[`option_${optKey.toLowerCase()}`];
+                              if (!optText) return null;
+                              const isStudentSelected = studentAns === optKey;
+                              const isKey = (q.correct_option || '').toUpperCase() === optKey;
+
+                              let optBorder = 'border-border bg-card text-foreground';
+                              if (isKey) {
+                                optBorder = 'border-emerald-500/60 bg-emerald-500/10 text-emerald-900 dark:text-emerald-200 font-bold';
+                              } else if (isStudentSelected && !isCorrect) {
+                                optBorder = 'border-rose-500/60 bg-rose-500/10 text-rose-900 dark:text-rose-200 font-bold';
+                              }
+
+                              return (
+                                <div key={optKey} className={`p-2.5 rounded-xl border text-xs flex items-center justify-between gap-2 ${optBorder}`}>
+                                  <div className="flex items-center gap-2 truncate">
+                                    <span className={`w-5 h-5 rounded-lg flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                                      isKey ? 'bg-emerald-600 text-white' : isStudentSelected ? 'bg-rose-600 text-white' : 'bg-muted text-muted-foreground'
+                                    }`}>
+                                      {optKey}
+                                    </span>
+                                    <span className="truncate">{optText}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    {isStudentSelected && (
+                                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                                        isCorrect ? 'bg-emerald-200 text-emerald-900' : 'bg-rose-200 text-rose-900'
+                                      }`}>
+                                        Student's Choice
+                                      </span>
+                                    )}
+                                    {isKey && !isStudentSelected && (
+                                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-200 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-200">
+                                        Correct Key
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {q.explanation && (
+                            <div className="mt-2 text-xs bg-muted/40 p-2.5 rounded-xl border border-border/60 text-muted-foreground">
+                              <strong className="text-foreground">Solution:</strong> {q.explanation}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Footer */}
+                <div className="p-4 border-t border-border bg-muted/10 flex items-center justify-between gap-3">
+                  <div className="text-xs text-muted-foreground">
+                    Audit Verification Status: <strong className="text-foreground">{isSynced ? 'Synced to Broadsheet' : 'Pending Teacher Sync'}</strong>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setPreviewSubmissionModal(null)}
+                      className="px-5 py-2 rounded-xl border border-border text-xs font-bold text-foreground hover:bg-muted transition-colors cursor-pointer"
+                    >
+                      Close Audit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await handleSyncCBTScoreToResult(sub);
+                        setPreviewSubmissionModal((prev: any) => prev ? {
+                          ...prev,
+                          submission: { ...prev.submission, gradebook_synced: true }
+                        } : null);
+                      }}
+                      className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Zap className="w-3.5 h-3.5 text-amber-300" />
+                      {isSynced ? `Re-Sync Score (${earnedScore})` : `Sync to Result Sheet (${earnedScore})`}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {selectedReportCardStudent && (
           <TerminalReportCard

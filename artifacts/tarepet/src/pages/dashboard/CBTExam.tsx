@@ -4,7 +4,8 @@ import { authClient } from '@/lib/api-auth';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Clock, CheckCircle2, AlertTriangle, ArrowLeft, ArrowRight, 
-  BookOpen, Timer, Send, Shield, ChevronLeft, Calculator, Flag, GraduationCap
+  BookOpen, Timer, Send, Shield, ChevronLeft, Calculator, Flag, GraduationCap,
+  Lock, Maximize2, ShieldAlert, EyeOff, Copy
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { useCustomDialog } from '@/context/DialogContext';
@@ -46,7 +47,7 @@ interface AvailableExam {
 
 type Phase = 'list' | 'confirm' | 'exam' | 'result';
 
-import { getStoredExams, submitStudentCBTAttempt, subscribeToCBTStore, hasStudentSubmittedExam, getStudentSubmission, isStudentMarkedPresent } from '@/lib/cbt-store';
+import { getStoredExams, submitStudentCBTAttempt, subscribeToCBTStore, hasStudentSubmittedExam, getStudentSubmission, isStudentMarkedPresent, CBTIntegrityFlag } from '@/lib/cbt-store';
 
 function getQuestionOption(q: Question, opt: 'A' | 'B' | 'C' | 'D'): string {
   switch (opt) {
@@ -135,26 +136,170 @@ export default function StudentCBTExam() {
   const [flaggedQuestions, setFlaggedQuestions] = useState<Record<number, boolean>>({});
   const [showCalculator, setShowCalculator] = useState(false);
   const [calcInput, setCalcInput] = useState('0');
-  const [warningCount, setWarningCount] = useState(0);
-  const [showWarningModal, setShowWarningModal] = useState(false);
   const [showAttendanceNoticeModal, setShowAttendanceNoticeModal] = useState(false);
 
+  // Anti-Cheat & Integrity State
+  const [integrityFlags, setIntegrityFlags] = useState<CBTIntegrityFlag[]>([]);
+  const [autoPaused, setAutoPaused] = useState(false);
+  const [pauseCountdown, setPauseCountdown] = useState(300); // 5 minutes = 300s
+  const [pauseEvents, setPauseEvents] = useState<Array<{ timestamp: string; durationMinutes: number }>>([]);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [activeWarningToast, setActiveWarningToast] = useState<string | null>(null);
+
+  const autoPausedRef = useRef(false);
+  autoPausedRef.current = autoPaused;
+  const flagsRef = useRef<CBTIntegrityFlag[]>([]);
+  flagsRef.current = integrityFlags;
+  const pauseTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const warningToastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const requestBrowserFullscreen = useCallback(() => {
+    try {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().then(() => {
+          setIsFullscreen(true);
+        }).catch((err) => {
+          console.warn('[CBTExam] Fullscreen request blocked:', err);
+        });
+      }
+    } catch (e) {
+      console.warn('[CBTExam] Fullscreen API error:', e);
+    }
+  }, []);
+
+  const recordIntegrityFlag = useCallback((type: CBTIntegrityFlag['type'], detail?: string) => {
+    if (submittedRef.current) return;
+    const now = new Date().toISOString();
+    setIntegrityFlags(prev => {
+      const nextCount = prev.length + 1;
+      const newFlag: CBTIntegrityFlag = {
+        type,
+        timestamp: now,
+        flagCount: nextCount,
+        detail,
+      };
+      const updated = [...prev, newFlag];
+
+      // Auto-pause locks exam for 5 minutes when 5 flags are reached
+      if (nextCount >= 5 && !autoPausedRef.current) {
+        setAutoPaused(true);
+        autoPausedRef.current = true;
+        setPauseCountdown(300);
+        setPauseEvents(p => [...p, { timestamp: now, durationMinutes: 5 }]);
+      }
+      return updated;
+    });
+
+    if (warningToastTimeoutRef.current) clearTimeout(warningToastTimeoutRef.current);
+    setActiveWarningToast(detail || `Integrity Warning: ${type.replace(/_/g, ' ')} detected!`);
+    warningToastTimeoutRef.current = setTimeout(() => {
+      setActiveWarningToast(null);
+    }, 4500);
+  }, []);
+
+  // 5-minute Auto-pause countdown timer
+  useEffect(() => {
+    if (!autoPaused) {
+      if (pauseTimerRef.current) clearInterval(pauseTimerRef.current);
+      return;
+    }
+    pauseTimerRef.current = setInterval(() => {
+      setPauseCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(pauseTimerRef.current!);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => {
+      if (pauseTimerRef.current) clearInterval(pauseTimerRef.current);
+    };
+  }, [autoPaused]);
+
+  // Anti-Cheat Event Listeners (Fullscreen exit, window blur, tab switch, copy, contextmenu, key shortcuts)
   useEffect(() => {
     if (phase !== 'exam') return;
+
+    const handleFsChange = () => {
+      const inFs = Boolean(document.fullscreenElement);
+      setIsFullscreen(inFs);
+      if (!inFs && !submittedRef.current) {
+        recordIntegrityFlag('FULLSCREEN_EXIT', 'Exited fullscreen examination mode.');
+      }
+    };
+
     const handleBlur = () => {
-      setWarningCount(prev => prev + 1);
-      setShowWarningModal(true);
+      if (!submittedRef.current) {
+        recordIntegrityFlag('TAB_SWITCH', 'Lost window focus or switched application.');
+      }
     };
+
     const handleVisibility = () => {
-      if (document.hidden) handleBlur();
+      if (document.hidden && !submittedRef.current) {
+        recordIntegrityFlag('TAB_SWITCH', 'Browser tab minimized or switched away.');
+      }
     };
+
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      if (!submittedRef.current) {
+        recordIntegrityFlag('RIGHT_CLICK', 'Context menu / right-click attempted on examination.');
+      }
+    };
+
+    const handleCopy = (e: ClipboardEvent) => {
+      e.preventDefault();
+      if (!submittedRef.current) {
+        recordIntegrityFlag('COPY_ATTEMPT', 'Clipboard copy attempted on questions.');
+      }
+    };
+
+    const handleCut = (e: ClipboardEvent) => {
+      e.preventDefault();
+      if (!submittedRef.current) {
+        recordIntegrityFlag('COPY_ATTEMPT', 'Clipboard cut attempted.');
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'PrintScreen') {
+        e.preventDefault();
+        recordIntegrityFlag('SCREENSHOT_ATTEMPT', 'PrintScreen key pressed (Screenshot attempt).');
+        return;
+      }
+      const isModifier = e.ctrlKey || e.metaKey;
+      if (isModifier) {
+        const key = e.key.toLowerCase();
+        if (['c', 'v', 'x', 'u', 'p', 'a', 's'].includes(key)) {
+          e.preventDefault();
+          recordIntegrityFlag('COPY_ATTEMPT', `Keyboard shortcut Ctrl/Cmd+${key.toUpperCase()} blocked.`);
+        }
+      }
+      if (e.altKey && (e.key === 'Tab' || e.key === 'F4')) {
+        e.preventDefault();
+        recordIntegrityFlag('TAB_SWITCH', 'Alt+Tab / Alt+F4 hotkey combination detected.');
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleFsChange);
     window.addEventListener('blur', handleBlur);
     document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('contextmenu', handleContextMenu);
+    window.addEventListener('copy', handleCopy);
+    window.addEventListener('cut', handleCut);
+    window.addEventListener('keydown', handleKeyDown);
+
     return () => {
+      document.removeEventListener('fullscreenchange', handleFsChange);
       window.removeEventListener('blur', handleBlur);
       document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('contextmenu', handleContextMenu);
+      window.removeEventListener('copy', handleCopy);
+      window.removeEventListener('cut', handleCut);
+      window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [phase]);
+  }, [phase, recordIntegrityFlag]);
 
   const toggleFlag = (questionId: number) => {
     setFlaggedQuestions(prev => ({ ...prev, [questionId]: !prev[questionId] }));
@@ -179,9 +324,9 @@ export default function StudentCBTExam() {
     return () => unsub();
   }, []);
 
-  // Timer
+  // Timer (pauses countdown during auto-pause)
   useEffect(() => {
-    if (phase !== 'exam' || timeLeft <= 0) return;
+    if (phase !== 'exam' || timeLeft <= 0 || autoPaused) return;
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
@@ -193,7 +338,7 @@ export default function StudentCBTExam() {
       });
     }, 1000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [phase, timeLeft]);
+  }, [phase, timeLeft, autoPaused]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -272,8 +417,14 @@ export default function StudentCBTExam() {
       setTimeLeft(data.duration_minutes * 60);
       setAnswers({});
       setCurrentPage(0);
+      setIntegrityFlags([]);
+      flagsRef.current = [];
+      setAutoPaused(false);
+      autoPausedRef.current = false;
+      setPauseEvents([]);
       submittedRef.current = false;
       setPhase('exam');
+      requestBrowserFullscreen();
     } catch (err: any) {
       showAlert({
         title: 'Exam Launch Failed',
@@ -294,6 +445,13 @@ export default function StudentCBTExam() {
     submittedRef.current = true;
     setIsSubmitting(true);
     if (timerRef.current) clearInterval(timerRef.current);
+    if (pauseTimerRef.current) clearInterval(pauseTimerRef.current);
+
+    if (typeof document !== 'undefined' && document.fullscreenElement) {
+      try {
+        document.exitFullscreen().catch(() => {});
+      } catch (e) {}
+    }
 
     try {
       const studentName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Student' : 'Student';
@@ -304,6 +462,10 @@ export default function StudentCBTExam() {
         name: studentName,
         email: studentEmail,
         student_id: studentId,
+      }, {
+        flags: flagsRef.current,
+        autoPaused: autoPausedRef.current,
+        pauseEvents: pauseEvents,
       });
 
       const isReleased = Boolean(selectedExam.results_released);
@@ -555,9 +717,36 @@ export default function StudentCBTExam() {
     const currentQ = examData.questions[currentPage] || examData.questions[0];
 
     return (
-      <div className="min-h-screen bg-background flex flex-col font-sans">
+      <div className="min-h-screen bg-background flex flex-col font-sans select-none">
+        {/* Fullscreen Alert Banner */}
+        {!isFullscreen && (
+          <div className="bg-amber-500 text-slate-950 px-4 py-2 text-xs font-bold flex items-center justify-between shadow-md z-50 sticky top-0">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-slate-950 shrink-0" />
+              <span>Fullscreen Required: Exiting fullscreen mode is flagged as an exam integrity violation.</span>
+            </div>
+            <button
+              onClick={requestBrowserFullscreen}
+              className="px-3 py-1 bg-slate-950 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shrink-0"
+            >
+              <Maximize2 className="w-3.5 h-3.5" /> Re-enter Fullscreen
+            </button>
+          </div>
+        )}
+
+        {/* Floating Anti-Cheat Toast */}
+        {activeWarningToast && (
+          <div className="fixed top-14 right-6 z-50 bg-rose-600 text-white px-4 py-3 rounded-2xl shadow-2xl border border-rose-400 flex items-center gap-3 animate-in slide-in-from-top-2 duration-200">
+            <ShieldAlert className="w-5 h-5 text-white shrink-0" />
+            <div>
+              <p className="text-xs font-bold">Anti-Cheat Alert</p>
+              <p className="text-[11px] text-rose-100">{activeWarningToast}</p>
+            </div>
+          </div>
+        )}
+
         {/* Top Sticky Header with Timer */}
-        <div className={`sticky top-0 z-50 px-4 md:px-6 py-3.5 flex items-center justify-between border-b shadow-sm ${timerWarning ? 'bg-red-600 text-white' : 'bg-primary text-primary-foreground'}`}>
+        <div className={`sticky ${!isFullscreen ? 'top-8' : 'top-0'} z-40 px-4 md:px-6 py-3.5 flex items-center justify-between border-b shadow-sm ${timerWarning ? 'bg-red-600 text-white' : 'bg-primary text-primary-foreground'}`}>
           <div className="flex items-center gap-3">
             <Link href="/dashboard/student">
               <button className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition cursor-pointer">
@@ -572,7 +761,13 @@ export default function StudentCBTExam() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4 md:gap-6">
+          <div className="flex items-center gap-3 md:gap-5">
+            {/* Integrity Flags Badge */}
+            <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold ${integrityFlags.length > 0 ? 'bg-rose-500/25 text-white border border-rose-400/50' : 'bg-white/15 text-white/90'}`}>
+              <Shield className="w-3.5 h-3.5" />
+              <span>{integrityFlags.length} {integrityFlags.length === 1 ? 'Violation' : 'Violations'}</span>
+            </div>
+
             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/15 font-mono text-sm md:text-base font-bold text-white ${timerWarning ? 'animate-pulse bg-red-700' : ''}`}>
               <Clock className="w-4 h-4 text-white/80" />
               <span>{formatTime(timeLeft)}</span>
@@ -645,27 +840,64 @@ export default function StudentCBTExam() {
             </div>
           )}
 
-          {/* Anti-Cheat Window Blur Warning Modal */}
-          {showWarningModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 animate-in fade-in">
-              <div className="bg-white rounded-2xl p-6 max-w-md w-full border-2 border-amber-500 shadow-2xl text-center space-y-4">
-                <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-600 mx-auto flex items-center justify-center">
-                  <AlertTriangle className="w-8 h-8" />
+          {/* 5-Flag Anti-Cheat Auto-Pause Countdown Modal */}
+          {autoPaused && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in">
+              <div className="bg-slate-900 border-2 border-rose-500 text-white rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl text-center space-y-5">
+                <div className="w-16 h-16 rounded-2xl bg-rose-500/20 border border-rose-500/40 text-rose-400 mx-auto flex items-center justify-center animate-pulse">
+                  <Lock className="w-8 h-8" />
                 </div>
-                <div className="space-y-1">
-                  <h3 className="text-lg font-bold text-slate-900">Anti-Cheat Warning Notice</h3>
-                  <p className="text-xs text-slate-600">
-                    Window blur / tab switching detected! Warning count: <span className="font-bold text-amber-600">{warningCount}</span>
-                  </p>
-                  <p className="text-[11px] text-slate-400 pt-1">
-                    Please remain on the exam screen until completion. Excessive focus loss may be logged for teacher review.
+
+                <div className="space-y-2">
+                  <span className="px-3 py-1 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[10px] font-mono uppercase tracking-widest font-bold">
+                    Auto-Pause Security Enforcement
+                  </span>
+                  <h3 className="text-xl font-bold font-serif text-white">Examination Temporarily Locked</h3>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    The CBT anti-cheat monitor detected <strong className="text-rose-400">{integrityFlags.length} integrity violations</strong> (window focus loss, fullscreen exit, copying attempts, or screenshot shortcuts).
                   </p>
                 </div>
+
+                <div className="bg-slate-800/80 rounded-2xl p-4 border border-slate-700 space-y-1">
+                  <p className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">Mandatory Lockout Countdown</p>
+                  <p className="text-4xl font-mono font-black text-rose-400 tracking-wider">
+                    {Math.floor(pauseCountdown / 60).toString().padStart(2, '0')}:{(pauseCountdown % 60).toString().padStart(2, '0')}
+                  </p>
+                  <p className="text-[10px] text-slate-400">
+                    {pauseCountdown > 0 ? 'Exam is locked. Timer is paused. Do not close or reload this window.' : 'Lockout time has elapsed. You may resume your examination.'}
+                  </p>
+                </div>
+
+                <div className="text-left bg-slate-950/60 rounded-xl p-3 border border-slate-800 text-[11px] text-slate-300 space-y-1 max-h-28 overflow-y-auto font-mono">
+                  <div className="text-[10px] uppercase text-slate-400 font-bold mb-1">Recent Integrity Flag Log:</div>
+                  {integrityFlags.slice(-4).map((f, i) => (
+                    <div key={i} className="flex justify-between items-center text-slate-300">
+                      <span className="text-rose-400">#{f.flagCount} {f.type}</span>
+                      <span className="text-slate-500 text-[10px]">{new Date(f.timestamp).toLocaleTimeString()}</span>
+                    </div>
+                  ))}
+                </div>
+
                 <button
-                  onClick={() => setShowWarningModal(false)}
-                  className="w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-sm transition"
+                  onClick={() => {
+                    if (pauseCountdown <= 0) {
+                      setAutoPaused(false);
+                      autoPausedRef.current = false;
+                      requestBrowserFullscreen();
+                    }
+                  }}
+                  disabled={pauseCountdown > 0}
+                  className="w-full py-3.5 bg-rose-600 hover:bg-rose-500 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-bold text-xs rounded-xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  I Understand — Return to Exam
+                  {pauseCountdown > 0 ? (
+                    <>
+                      <Lock className="w-4 h-4" /> Locked ({Math.floor(pauseCountdown / 60)}:{(pauseCountdown % 60).toString().padStart(2, '0')} remaining)
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Acknowledge & Resume Exam
+                    </>
+                  )}
                 </button>
               </div>
             </div>
