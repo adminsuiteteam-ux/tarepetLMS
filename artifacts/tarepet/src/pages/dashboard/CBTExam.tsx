@@ -121,6 +121,160 @@ function safeEval(expr: string): number {
   return result;
 }
 
+// ── Persistent CBT Lockout & Session Storage ──────────────────────────────
+const CBT_SESSION_STORAGE_PREFIX = 'tarepet_cbt_active_session_';
+const CBT_LOCKOUT_STORAGE_PREFIX = 'tarepet_cbt_lockout_';
+
+interface SavedLockout {
+  studentId: string;
+  examId: number | string;
+  lockoutUntil: number; // Unix timestamp in ms
+  integrityFlags: CBTIntegrityFlag[];
+  pauseEvents?: Array<{ timestamp: string; durationMinutes: number }>;
+  savedAt: number;
+}
+
+interface SavedSession {
+  examId: number | string;
+  attemptId: number | string;
+  startedAt: string;
+  durationMinutes: number;
+  timeLeft: number;
+  answers: Record<number, string>;
+  flaggedQuestions: Record<number, boolean>;
+  currentPage: number;
+  integrityFlags: CBTIntegrityFlag[];
+  autoPaused: boolean;
+  pauseEvents?: Array<{ timestamp: string; durationMinutes: number }>;
+  savedAt: number;
+  examData?: ExamData;
+}
+
+function getSessionKey(studentId: string, examId: number | string): string {
+  return `${CBT_SESSION_STORAGE_PREFIX}${studentId}_${examId}`;
+}
+
+function getLockoutKey(studentId: string, examId: number | string): string {
+  return `${CBT_LOCKOUT_STORAGE_PREFIX}${studentId}_${examId}`;
+}
+
+function saveLockout(
+  studentId: string,
+  examId: number | string,
+  lockoutUntil: number,
+  integrityFlags: CBTIntegrityFlag[],
+  pauseEvents?: Array<{ timestamp: string; durationMinutes: number }>
+) {
+  if (!studentId || !examId || typeof window === 'undefined') return;
+  try {
+    const data: SavedLockout = {
+      studentId: String(studentId),
+      examId: String(examId),
+      lockoutUntil,
+      integrityFlags,
+      pauseEvents,
+      savedAt: Date.now(),
+    };
+    localStorage.setItem(getLockoutKey(studentId, examId), JSON.stringify(data));
+  } catch (e) {}
+}
+
+function getActiveLockout(studentId: string, examId: number | string): (SavedLockout & { remainingSeconds: number }) | null {
+  if (!studentId || !examId || typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(getLockoutKey(studentId, examId));
+    if (!raw) return null;
+    const data: SavedLockout = JSON.parse(raw);
+    const remaining = Math.ceil((data.lockoutUntil - Date.now()) / 1000);
+    if (remaining > 0) {
+      return { ...data, remainingSeconds: remaining };
+    } else {
+      localStorage.removeItem(getLockoutKey(studentId, examId));
+      return null;
+    }
+  } catch (e) {
+    return null;
+  }
+}
+
+function findActiveLockoutForStudent(studentId: string): (SavedLockout & { remainingSeconds: number }) | null {
+  if (!studentId || typeof window === 'undefined') return null;
+  try {
+    const now = Date.now();
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(CBT_LOCKOUT_STORAGE_PREFIX) && key.includes(`_${studentId}_`)) {
+        const raw = localStorage.getItem(key);
+        if (!raw) continue;
+        const parsed: SavedLockout = JSON.parse(raw);
+        const remaining = Math.ceil((parsed.lockoutUntil - now) / 1000);
+        if (remaining > 0) {
+          return { ...parsed, remainingSeconds: remaining };
+        } else {
+          localStorage.removeItem(key);
+        }
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
+function clearLockout(studentId: string, examId: number | string) {
+  if (!studentId || !examId || typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(getLockoutKey(studentId, examId));
+  } catch (e) {}
+}
+
+function saveActiveSession(studentId: string, examId: number | string, partial: Partial<SavedSession>) {
+  if (!studentId || !examId || typeof window === 'undefined') return;
+  try {
+    const key = getSessionKey(studentId, examId);
+    const existing = getActiveSession(studentId, examId) || {};
+    const updated: SavedSession = {
+      ...existing,
+      ...partial,
+      studentId: String(studentId),
+      examId: String(examId),
+      savedAt: Date.now(),
+    } as SavedSession;
+    localStorage.setItem(key, JSON.stringify(updated));
+  } catch (e) {}
+}
+
+function getActiveSession(studentId: string, examId: number | string): SavedSession | null {
+  if (!studentId || !examId || typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(getSessionKey(studentId, examId));
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch (e) {
+    return null;
+  }
+}
+
+function findActiveSessionForStudent(studentId: string): SavedSession | null {
+  if (!studentId || typeof window === 'undefined') return null;
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(CBT_SESSION_STORAGE_PREFIX) && key.includes(`_${studentId}_`)) {
+        const raw = localStorage.getItem(key);
+        if (!raw) continue;
+        return JSON.parse(raw);
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
+function clearActiveSession(studentId: string, examId: number | string) {
+  if (!studentId || !examId || typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(getSessionKey(studentId, examId));
+  } catch (e) {}
+}
+
 export default function StudentCBTExam() {
   const { user } = useAuth();
   const { showAlert, showConfirm } = useCustomDialog();
@@ -168,6 +322,33 @@ export default function StudentCBTExam() {
     }
   }, []);
 
+  const getStudentIdentifier = useCallback((u: any): string => {
+    if (!u) {
+      if (typeof window !== 'undefined') {
+        try {
+          const stored = localStorage.getItem('tarepet_auth_user') || sessionStorage.getItem('tarepet_auth_user');
+          if (stored) {
+            const p = JSON.parse(stored);
+            if (p) return getStudentIdentifier(p);
+          }
+        } catch (e) {}
+      }
+      return 'student_session';
+    }
+    return (
+      u.profile?.student_id ||
+      u.profile?.studentId ||
+      u.profile?.admission_number ||
+      u.student_id ||
+      u.studentId ||
+      u.admissionNo ||
+      u.code ||
+      u.email ||
+      String(u.id || '') ||
+      'student_session'
+    );
+  }, []);
+
   const recordIntegrityFlag = useCallback((type: CBTIntegrityFlag['type'], detail?: string) => {
     if (submittedRef.current) return;
     const now = new Date().toISOString();
@@ -180,13 +361,36 @@ export default function StudentCBTExam() {
         detail,
       };
       const updated = [...prev, newFlag];
+      const stId = getStudentIdentifier(user);
 
       // Auto-pause locks exam for 5 minutes when 5 flags are reached
       if (nextCount >= 5 && !autoPausedRef.current) {
         setAutoPaused(true);
         autoPausedRef.current = true;
-        setPauseCountdown(300);
-        setPauseEvents(p => [...p, { timestamp: now, durationMinutes: 5 }]);
+        const durationSeconds = 300;
+        setPauseCountdown(durationSeconds);
+        const lockoutUntil = Date.now() + durationSeconds * 1000;
+        const newEvents = [...pauseEvents, { timestamp: now, durationMinutes: 5 }];
+        setPauseEvents(newEvents);
+        if (selectedExam) {
+          saveLockout(stId, selectedExam.id, lockoutUntil, updated, newEvents);
+          saveActiveSession(stId, selectedExam.id, {
+            examId: selectedExam.id,
+            integrityFlags: updated,
+            autoPaused: true,
+            pauseEvents: newEvents,
+            examData: examData || undefined,
+            answers,
+            flaggedQuestions,
+            currentPage,
+            timeLeft,
+          });
+        }
+        requestBrowserFullscreen();
+      } else if (selectedExam) {
+        saveActiveSession(stId, selectedExam.id, {
+          integrityFlags: updated,
+        });
       }
       return updated;
     });
@@ -196,25 +400,90 @@ export default function StudentCBTExam() {
     warningToastTimeoutRef.current = setTimeout(() => {
       setActiveWarningToast(null);
     }, 4500);
-  }, []);
+  }, [user, selectedExam, examData, answers, flaggedQuestions, currentPage, timeLeft, pauseEvents, requestBrowserFullscreen, getStudentIdentifier]);
 
-  // 5-minute Auto-pause countdown timer
+  // 5-minute Auto-pause countdown timer synced in real-time with stored lockoutUntil
   useEffect(() => {
     if (!autoPaused) {
       if (pauseTimerRef.current) clearInterval(pauseTimerRef.current);
       return;
     }
-    pauseTimerRef.current = setInterval(() => {
+
+    requestBrowserFullscreen();
+
+    const updateCountdown = () => {
+      const stId = getStudentIdentifier(user);
+      const examId = selectedExam?.id;
+      if (stId && examId) {
+        const lock = getActiveLockout(stId, examId);
+        if (lock && lock.remainingSeconds > 0) {
+          setPauseCountdown(lock.remainingSeconds);
+          return;
+        } else if (lock && lock.remainingSeconds <= 0) {
+          setPauseCountdown(0);
+          if (pauseTimerRef.current) clearInterval(pauseTimerRef.current);
+          return;
+        }
+      }
       setPauseCountdown(prev => {
         if (prev <= 1) {
-          clearInterval(pauseTimerRef.current!);
+          if (pauseTimerRef.current) clearInterval(pauseTimerRef.current);
           return 0;
         }
         return prev - 1;
       });
-    }, 1000);
+    };
+
+    updateCountdown();
+    pauseTimerRef.current = setInterval(updateCountdown, 1000);
+
     return () => {
       if (pauseTimerRef.current) clearInterval(pauseTimerRef.current);
+    };
+  }, [autoPaused, selectedExam, user, requestBrowserFullscreen, getStudentIdentifier]);
+
+  // Full Screen Lockdown & Tamper Prevention: block key shortcuts, contextmenu, beforeunload while autoPaused
+  useEffect(() => {
+    if (!autoPaused) return;
+
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+
+    const handleKeyDownLock = (e: KeyboardEvent) => {
+      // Intercept reload keys: F5, Ctrl+R, Cmd+R
+      if (e.key === 'F5' || ((e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R'))) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+      // Intercept navigation keys: Escape, Backspace, Alt+Left, F11, F12
+      if (['Escape', 'Backspace', 'F11', 'F12'].includes(e.key) || (e.altKey && e.key === 'ArrowLeft')) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+    };
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = 'Your examination session is currently locked due to integrity violations. Leaving or refreshing will NOT clear your lockout.';
+      return e.returnValue;
+    };
+
+    const handleContextMenuLock = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+
+    window.addEventListener('keydown', handleKeyDownLock, { capture: true });
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('contextmenu', handleContextMenuLock);
+
+    return () => {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDownLock, { capture: true });
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('contextmenu', handleContextMenuLock);
     };
   }, [autoPaused]);
 
@@ -325,6 +594,96 @@ export default function StudentCBTExam() {
     return () => unsub();
   }, []);
 
+  // Auto-restore active exam session or active lockout on page reload/mount
+  useEffect(() => {
+    if (!user) return;
+    const stId = getStudentIdentifier(user);
+    if (!stId) return;
+
+    // 1. Check if there is an active lockout for this student
+    const activeLock = findActiveLockoutForStudent(stId);
+    if (activeLock && activeLock.remainingSeconds > 0) {
+      const allExams = getStoredExams();
+      const matched = allExams.find(e => String(e.id) === String(activeLock.examId));
+      if (matched) {
+        const savedSession = getActiveSession(stId, matched.id);
+        const mappedExam: AvailableExam = {
+          ...matched,
+          course_detail: { name: matched.course_name, code: matched.course_code },
+        };
+        setSelectedExam(mappedExam);
+
+        const fullData: ExamData = savedSession?.examData || {
+          attempt_id: savedSession?.attemptId ? Number(savedSession.attemptId) : Date.now(),
+          started_at: savedSession?.startedAt || new Date().toISOString(),
+          duration_minutes: matched.duration_minutes || 45,
+          questions_per_page: matched.questions_per_page || 2,
+          instructions: matched.instructions || 'Answer all objective questions.',
+          questions: matched.questions as any[],
+        };
+        setExamData(fullData);
+        if (savedSession?.answers) setAnswers(savedSession.answers);
+        if (savedSession?.flaggedQuestions) setFlaggedQuestions(savedSession.flaggedQuestions);
+        if (savedSession?.currentPage !== undefined) setCurrentPage(savedSession.currentPage);
+        if (savedSession?.timeLeft !== undefined) setTimeLeft(savedSession.timeLeft);
+        else setTimeLeft(fullData.duration_minutes * 60);
+
+        setIntegrityFlags(activeLock.integrityFlags || []);
+        flagsRef.current = activeLock.integrityFlags || [];
+        setPauseEvents(activeLock.pauseEvents || []);
+        setAutoPaused(true);
+        autoPausedRef.current = true;
+        setPauseCountdown(activeLock.remainingSeconds);
+        setPhase('exam');
+        requestBrowserFullscreen();
+        return;
+      }
+    }
+
+    // 2. Check if there is an active session in progress that hasn't expired and hasn't been submitted
+    const activeSession = findActiveSessionForStudent(stId);
+    if (activeSession && phase === 'list' && !submittedRef.current) {
+      const allExams = getStoredExams();
+      const matched = allExams.find(e => String(e.id) === String(activeSession.examId));
+      if (matched && !hasStudentSubmittedExam(matched.id, stId)) {
+        const elapsedSinceSave = Math.floor((Date.now() - activeSession.savedAt) / 1000);
+        const remainingTime = Math.max(0, activeSession.timeLeft - (activeSession.autoPaused ? 0 : elapsedSinceSave));
+        if (remainingTime > 0) {
+          const mappedExam: AvailableExam = {
+            ...matched,
+            course_detail: { name: matched.course_name, code: matched.course_code },
+          };
+          setSelectedExam(mappedExam);
+          setExamData(activeSession.examData || {
+            attempt_id: activeSession.attemptId ? Number(activeSession.attemptId) : Date.now(),
+            started_at: activeSession.startedAt || new Date().toISOString(),
+            duration_minutes: matched.duration_minutes || 45,
+            questions_per_page: matched.questions_per_page || 2,
+            instructions: matched.instructions || 'Answer all objective questions.',
+            questions: matched.questions as any[],
+          });
+          setAnswers(activeSession.answers || {});
+          setFlaggedQuestions(activeSession.flaggedQuestions || {});
+          setCurrentPage(activeSession.currentPage || 0);
+          setTimeLeft(remainingTime);
+          setIntegrityFlags(activeSession.integrityFlags || []);
+          flagsRef.current = activeSession.integrityFlags || [];
+          setPauseEvents(activeSession.pauseEvents || []);
+          if (activeSession.autoPaused) {
+            const lock = getActiveLockout(stId, matched.id);
+            if (lock && lock.remainingSeconds > 0) {
+              setAutoPaused(true);
+              autoPausedRef.current = true;
+              setPauseCountdown(lock.remainingSeconds);
+            }
+          }
+          setPhase('exam');
+          requestBrowserFullscreen();
+        }
+      }
+    }
+  }, [user, requestBrowserFullscreen, getStudentIdentifier, phase]);
+
   // Timer (pauses countdown during auto-pause)
   useEffect(() => {
     if (phase !== 'exam' || timeLeft <= 0 || autoPaused) return;
@@ -363,19 +722,18 @@ export default function StudentCBTExam() {
     setCalcInput(prev => (prev === '0' || prev === 'Error' ? val : prev + val));
   };
 
-  const getStudentIdentifier = (u: any): string => {
-    if (!u) return '';
-    return (
-      u.profile?.student_id ||
-      u.profile?.studentId ||
-      u.profile?.admission_number ||
-      u.student_id ||
-      u.studentId ||
-      u.admissionNo ||
-      u.code ||
-      u.email ||
-      ''
-    );
+  const handleResumeFromLock = () => {
+    if (pauseCountdown > 0) return;
+    const studentIdentifier = getStudentIdentifier(user);
+    if (selectedExam) {
+      clearLockout(studentIdentifier, selectedExam.id);
+      saveActiveSession(studentIdentifier, selectedExam.id, {
+        autoPaused: false,
+      });
+    }
+    setAutoPaused(false);
+    autoPausedRef.current = false;
+    requestBrowserFullscreen();
   };
 
   const handleStartExam = async () => {
@@ -400,14 +758,47 @@ export default function StudentCBTExam() {
       return;
     }
 
+    // CHECK IF CURRENTLY LOCKED OUT: PREVENT BYPASS AND RE-ENGAGE FULLSCREEN LOCK
+    const activeLock = getActiveLockout(studentIdentifier, selectedExam.id);
+    if (activeLock && activeLock.remainingSeconds > 0) {
+      const fullEx = getStoredExams().find(e => e.id === selectedExam.id);
+      const savedSession = getActiveSession(studentIdentifier, selectedExam.id);
+      const data: ExamData = savedSession?.examData || {
+        attempt_id: savedSession?.attemptId ? Number(savedSession.attemptId) : Date.now(),
+        started_at: savedSession?.startedAt || new Date().toISOString(),
+        duration_minutes: fullEx?.duration_minutes || 45,
+        questions_per_page: fullEx?.questions_per_page || 2,
+        instructions: fullEx?.instructions || 'Answer all objective questions.',
+        questions: fullEx?.questions as any[],
+      };
+      setExamData(data);
+      if (savedSession?.answers) setAnswers(savedSession.answers);
+      if (savedSession?.flaggedQuestions) setFlaggedQuestions(savedSession.flaggedQuestions);
+      if (savedSession?.currentPage !== undefined) setCurrentPage(savedSession.currentPage);
+      if (savedSession?.timeLeft !== undefined) setTimeLeft(savedSession.timeLeft);
+      else setTimeLeft(data.duration_minutes * 60);
+
+      setIntegrityFlags(activeLock.integrityFlags || []);
+      flagsRef.current = activeLock.integrityFlags || [];
+      setPauseEvents(activeLock.pauseEvents || []);
+      setAutoPaused(true);
+      autoPausedRef.current = true;
+      setPauseCountdown(activeLock.remainingSeconds);
+      setPhase('exam');
+      requestBrowserFullscreen();
+      return;
+    }
+
     setLoading(true);
     try {
       const fullEx = getStoredExams().find(e => e.id === selectedExam.id);
       if (!fullEx) throw new Error('Exam not found');
 
-      const data: ExamData = {
-        attempt_id: Date.now(),
-        started_at: new Date().toISOString(),
+      // Check if resuming an ongoing attempt
+      const savedSession = getActiveSession(studentIdentifier, selectedExam.id);
+      const data: ExamData = savedSession?.examData || {
+        attempt_id: savedSession?.attemptId ? Number(savedSession.attemptId) : Date.now(),
+        started_at: savedSession?.startedAt || new Date().toISOString(),
         duration_minutes: fullEx.duration_minutes || 45,
         questions_per_page: fullEx.questions_per_page || 2,
         instructions: fullEx.instructions || 'Answer all objective questions.',
@@ -415,15 +806,32 @@ export default function StudentCBTExam() {
       };
 
       setExamData(data);
-      setTimeLeft(data.duration_minutes * 60);
-      setAnswers({});
-      setCurrentPage(0);
-      setIntegrityFlags([]);
-      flagsRef.current = [];
+      const remainingTime = savedSession?.timeLeft !== undefined ? savedSession.timeLeft : data.duration_minutes * 60;
+      setTimeLeft(remainingTime);
+      setAnswers(savedSession?.answers || {});
+      setCurrentPage(savedSession?.currentPage || 0);
+      setFlaggedQuestions(savedSession?.flaggedQuestions || {});
+      setIntegrityFlags(savedSession?.integrityFlags || []);
+      flagsRef.current = savedSession?.integrityFlags || [];
       setAutoPaused(false);
       autoPausedRef.current = false;
-      setPauseEvents([]);
+      setPauseEvents(savedSession?.pauseEvents || []);
       submittedRef.current = false;
+
+      saveActiveSession(studentIdentifier, selectedExam.id, {
+        examId: selectedExam.id,
+        attemptId: data.attempt_id,
+        startedAt: data.started_at,
+        durationMinutes: data.duration_minutes,
+        timeLeft: remainingTime,
+        answers: savedSession?.answers || {},
+        flaggedQuestions: savedSession?.flaggedQuestions || {},
+        currentPage: savedSession?.currentPage || 0,
+        integrityFlags: savedSession?.integrityFlags || [],
+        autoPaused: false,
+        examData: data,
+      });
+
       setPhase('exam');
       requestBrowserFullscreen();
     } catch (err: any) {
@@ -438,7 +846,16 @@ export default function StudentCBTExam() {
   };
 
   const handleSelectOption = async (questionId: number, option: string) => {
-    setAnswers(prev => ({ ...prev, [questionId]: option }));
+    const nextAnswers = { ...answers, [questionId]: option };
+    setAnswers(nextAnswers);
+    const studentIdentifier = getStudentIdentifier(user);
+    if (selectedExam) {
+      saveActiveSession(studentIdentifier, selectedExam.id, {
+        answers: nextAnswers,
+        currentPage,
+        timeLeft,
+      });
+    }
   };
 
   const handleSubmit = useCallback(async (auto = false) => {
@@ -469,6 +886,10 @@ export default function StudentCBTExam() {
         pauseEvents: pauseEvents,
       });
 
+      // Clear storage on successful submission
+      clearLockout(studentId, selectedExam.id);
+      clearActiveSession(studentId, selectedExam.id);
+
       const isReleased = Boolean(selectedExam.results_released);
 
       setResult({
@@ -494,7 +915,7 @@ export default function StudentCBTExam() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [selectedExam, examData, answers, user, showAlert]);
+  }, [selectedExam, examData, answers, user, showAlert, getStudentIdentifier, pauseEvents]);
 
   // Pagination
   const questionsPerPage = examData?.questions_per_page || 1;
@@ -537,6 +958,8 @@ export default function StudentCBTExam() {
                 const isReleased = Boolean(exam.results_released);
                 const subData = submitted ? getStudentSubmission(exam.id, studentIdentifier) : null;
 
+                const activeLock = getActiveLockout(studentIdentifier, exam.id);
+
                 return (
                   <motion.div
                     key={exam.id}
@@ -568,6 +991,35 @@ export default function StudentCBTExam() {
                         }
                       } else {
                         setSelectedExam(exam);
+                        const lock = getActiveLockout(studentIdentifier, exam.id);
+                        if (lock && lock.remainingSeconds > 0) {
+                          const fullEx = getStoredExams().find(e => e.id === exam.id);
+                          const savedSession = getActiveSession(studentIdentifier, exam.id);
+                          const data: ExamData = savedSession?.examData || {
+                            attempt_id: savedSession?.attemptId ? Number(savedSession.attemptId) : Date.now(),
+                            started_at: savedSession?.startedAt || new Date().toISOString(),
+                            duration_minutes: fullEx?.duration_minutes || 45,
+                            questions_per_page: fullEx?.questions_per_page || 2,
+                            instructions: fullEx?.instructions || 'Answer all objective questions.',
+                            questions: fullEx?.questions as any[],
+                          };
+                          setExamData(data);
+                          if (savedSession?.answers) setAnswers(savedSession.answers);
+                          if (savedSession?.flaggedQuestions) setFlaggedQuestions(savedSession.flaggedQuestions);
+                          if (savedSession?.currentPage !== undefined) setCurrentPage(savedSession.currentPage);
+                          if (savedSession?.timeLeft !== undefined) setTimeLeft(savedSession.timeLeft);
+                          else setTimeLeft(data.duration_minutes * 60);
+
+                          setIntegrityFlags(lock.integrityFlags || []);
+                          flagsRef.current = lock.integrityFlags || [];
+                          setPauseEvents(lock.pauseEvents || []);
+                          setAutoPaused(true);
+                          autoPausedRef.current = true;
+                          setPauseCountdown(lock.remainingSeconds);
+                          setPhase('exam');
+                          requestBrowserFullscreen();
+                          return;
+                        }
                         setPhase('confirm');
                       }
                     }}
@@ -583,6 +1035,11 @@ export default function StudentCBTExam() {
                           <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
                             {exam.term.replace('_', ' ')}
                           </span>
+                          {!submitted && activeLock && activeLock.remainingSeconds > 0 && (
+                            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300 flex items-center gap-1 animate-pulse">
+                              <Lock className="w-3.5 h-3.5 text-rose-600" /> Locked ({formatTime(activeLock.remainingSeconds)})
+                            </span>
+                          )}
                           {submitted && !isReleased && (
                             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1">
                               <Shield className="w-3.5 h-3.5 text-amber-600" /> Submitted (Results Withheld)
@@ -821,23 +1278,40 @@ export default function StudentCBTExam() {
 
               {/* Action Buttons */}
               <div className="space-y-2.5 pt-2">
-                <button
-                  onClick={handleStartExam}
-                  disabled={loading}
-                  className="w-full h-12 rounded-xl bg-[#C8102E] hover:bg-[#A60D25] text-white font-bold transition duration-200 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-red-900/20 active:scale-[0.99] cursor-pointer text-sm"
-                >
-                  {loading ? (
-                    <span className="flex items-center gap-2">
-                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Initializing Session...
-                    </span>
-                  ) : (
-                    <>
-                      <Play className="w-4 h-4 fill-current" />
-                      <span>Start Examination</span>
-                    </>
-                  )}
-                </button>
+                {(() => {
+                  const studentIdentifier = getStudentIdentifier(user);
+                  const activeLock = selectedExam ? getActiveLockout(studentIdentifier, selectedExam.id) : null;
+                  const isLocked = Boolean(activeLock && activeLock.remainingSeconds > 0);
+
+                  return (
+                    <button
+                      onClick={handleStartExam}
+                      disabled={loading}
+                      className={`w-full h-12 rounded-xl text-white font-bold transition duration-200 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg active:scale-[0.99] cursor-pointer text-sm ${
+                        isLocked
+                          ? 'bg-rose-700 hover:bg-rose-800 shadow-rose-950/30'
+                          : 'bg-[#C8102E] hover:bg-[#A60D25] shadow-red-900/20'
+                      }`}
+                    >
+                      {loading ? (
+                        <span className="flex items-center gap-2">
+                          <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          Initializing Session...
+                        </span>
+                      ) : isLocked ? (
+                        <>
+                          <Lock className="w-4 h-4" />
+                          <span>Exam Locked ({formatTime(activeLock!.remainingSeconds)} remaining)</span>
+                        </>
+                      ) : (
+                        <>
+                          <Play className="w-4 h-4 fill-current" />
+                          <span>Start Examination</span>
+                        </>
+                      )}
+                    </button>
+                  );
+                })()}
 
                 <button
                   onClick={() => setPhase('list')}
@@ -876,6 +1350,157 @@ export default function StudentCBTExam() {
             </div>
           )}
         </motion.div>
+      </div>
+    );
+  }
+
+  // ============ FULL SCREEN SECURITY LOCKOUT VIEW ============
+  if (autoPaused) {
+    const studentIdentifier = getStudentIdentifier(user);
+    const candidateName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email : 'Student';
+    const examTitle = selectedExam?.title || examData?.instructions || 'CBT Assessment';
+    const lockoutProgress = Math.min(100, Math.max(0, ((300 - pauseCountdown) / 300) * 100));
+
+    return (
+      <div className="fixed inset-0 z-[999999] w-screen h-screen min-h-screen bg-[#070B14] text-white flex flex-col justify-between p-4 sm:p-8 select-none overflow-hidden font-sans">
+        {/* Top Security Header */}
+        <div className="flex items-center justify-between border-b border-slate-800/80 pb-4 shrink-0 flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <img
+              src={tarepetLogo}
+              alt="Tarepet Montessori Logo"
+              className="w-10 h-10 object-contain drop-shadow bg-white/10 p-1 rounded-full border border-white/20"
+            />
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs uppercase tracking-wider font-extrabold text-[#C8102E]">
+                  Tarepet Montessori School
+                </span>
+                <span className="text-slate-600">•</span>
+                <span className="text-xs font-semibold text-slate-400">Security Operations Center</span>
+              </div>
+              <h2 className="text-xs font-semibold text-slate-300">
+                Automated Integrity Lockdown Engine
+              </h2>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {!isFullscreen && (
+              <button
+                onClick={requestBrowserFullscreen}
+                className="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-bold flex items-center gap-1.5 hover:bg-amber-500/30 transition cursor-pointer"
+                title="Enter Fullscreen Lockdown"
+              >
+                <Maximize2 className="w-3.5 h-3.5" /> Enforce Fullscreen
+              </button>
+            )}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-400 text-xs font-bold font-mono">
+              <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+              <span>LOCKOUT ENFORCED</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Center Lockdown Card */}
+        <div className="max-w-xl mx-auto w-full bg-slate-900/95 border-2 border-rose-500/70 rounded-3xl p-6 sm:p-8 shadow-[0_0_80px_rgba(225,29,72,0.3)] text-center space-y-4 backdrop-blur-xl relative overflow-hidden my-auto">
+          {/* Ambient Glows */}
+          <div className="absolute -top-24 -left-24 w-48 h-48 bg-rose-600/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-amber-600/15 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-rose-500/20 border-2 border-rose-500/50 text-rose-400 mx-auto flex items-center justify-center animate-pulse shadow-lg shadow-rose-950">
+            <Lock className="w-8 h-8 sm:w-10 sm:h-10" />
+          </div>
+
+          <div className="space-y-1">
+            <span className="inline-block px-3 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[10px] font-mono uppercase tracking-widest font-bold">
+              Maximum Integrity Violations Exceeded
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold font-serif text-white tracking-tight">
+              Examination Screen Locked
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-md mx-auto">
+              The CBT proctor detected <strong className="text-rose-400">{integrityFlags.length} security flags</strong> (window focus loss, fullscreen exit, or forbidden hotkeys). Your examination is locked for mandatory security enforcement.
+            </p>
+          </div>
+
+          {/* Countdown Display Box */}
+          <div className="bg-slate-950/80 rounded-2xl p-4 sm:p-5 border border-slate-800 shadow-inner space-y-2">
+            <div className="flex items-center justify-between text-[11px] text-slate-400 uppercase tracking-wider font-bold">
+              <span>Mandatory Lockout Countdown</span>
+              <span className="text-rose-400 font-mono font-bold animate-pulse">Testing Session Paused</span>
+            </div>
+
+            <div className="text-4xl sm:text-6xl font-mono font-black text-rose-400 tracking-wider py-1 drop-shadow-[0_0_20px_rgba(244,63,94,0.4)]">
+              {Math.floor(pauseCountdown / 60).toString().padStart(2, '0')}:{(pauseCountdown % 60).toString().padStart(2, '0')}
+            </div>
+
+            {/* Progress Bar */}
+            <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-rose-600 via-amber-500 to-emerald-500 transition-all duration-1000"
+                style={{ width: `${lockoutProgress}%` }}
+              />
+            </div>
+
+            <p className="text-[11px] text-slate-400 pt-0.5">
+              {pauseCountdown > 0
+                ? '🔒 Refreshing the page, closing the tab, or reopening the browser will NOT bypass this lock. The lockout countdown is strictly enforced.'
+                : '✓ Mandatory lockout time has elapsed. You may now resume your examination.'}
+            </p>
+          </div>
+
+          {/* Anti-Tamper Notice Banner */}
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 text-left flex items-start gap-2.5 text-xs text-amber-300">
+            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <strong className="block font-bold">Anti-Bypass Protection Active</strong>
+              <span>Your responses and remaining exam time are protected. Testing time is frozen so you will not lose exam minutes while locked.</span>
+            </div>
+          </div>
+
+          {/* Violation Log */}
+          <div className="text-left bg-slate-950/70 rounded-xl p-3 border border-slate-800/80 text-[11px] text-slate-300 space-y-1 max-h-24 overflow-y-auto font-mono">
+            <div className="text-[10px] uppercase text-slate-400 font-bold mb-1 flex items-center justify-between">
+              <span>Recorded Integrity Flags ({integrityFlags.length}):</span>
+              <span className="text-rose-400 text-[9px]">Logged to Invigilator</span>
+            </div>
+            {integrityFlags.slice(-4).map((f, i) => (
+              <div key={i} className="flex justify-between items-center text-slate-300 text-[10px]">
+                <span className="text-rose-400 font-semibold">#{f.flagCount} {f.type}</span>
+                <span className="text-slate-500">{new Date(f.timestamp).toLocaleTimeString()}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Action Button */}
+          <button
+            onClick={handleResumeFromLock}
+            disabled={pauseCountdown > 0}
+            className={`w-full py-3.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-xl cursor-pointer ${
+              pauseCountdown > 0
+                ? 'bg-slate-800/80 text-slate-500 border border-slate-700 cursor-not-allowed opacity-80'
+                : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-950/50 animate-pulse'
+            }`}
+          >
+            {pauseCountdown > 0 ? (
+              <>
+                <Lock className="w-4 h-4" /> Locked ({Math.floor(pauseCountdown / 60)}:{(pauseCountdown % 60).toString().padStart(2, '0')} remaining)
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="w-4 h-4 text-emerald-200" /> Acknowledge Violations & Resume Examination
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Bottom Status Footer */}
+        <div className="border-t border-slate-800/80 pt-3 flex items-center justify-between text-[11px] text-slate-400 shrink-0 flex-wrap gap-2">
+          <span>Candidate: <strong className="text-slate-200">{candidateName}</strong></span>
+          <span>Exam: <strong className="text-slate-200">{examTitle}</strong></span>
+          <span className="text-slate-500">Need help? Raise your hand in the CBT hall to notify your invigilator.</span>
+        </div>
       </div>
     );
   }
@@ -1008,68 +1633,7 @@ export default function StudentCBTExam() {
             </div>
           )}
 
-          {/* 5-Flag Anti-Cheat Auto-Pause Countdown Modal */}
-          {autoPaused && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in">
-              <div className="bg-slate-900 border-2 border-rose-500 text-white rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl text-center space-y-5">
-                <div className="w-16 h-16 rounded-2xl bg-rose-500/20 border border-rose-500/40 text-rose-400 mx-auto flex items-center justify-center animate-pulse">
-                  <Lock className="w-8 h-8" />
-                </div>
-
-                <div className="space-y-2">
-                  <span className="px-3 py-1 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[10px] font-mono uppercase tracking-widest font-bold">
-                    Auto-Pause Security Enforcement
-                  </span>
-                  <h3 className="text-xl font-bold font-serif text-white">Examination Temporarily Locked</h3>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    The CBT anti-cheat monitor detected <strong className="text-rose-400">{integrityFlags.length} integrity violations</strong> (window focus loss, fullscreen exit, copying attempts, or screenshot shortcuts).
-                  </p>
-                </div>
-
-                <div className="bg-slate-800/80 rounded-2xl p-4 border border-slate-700 space-y-1">
-                  <p className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">Mandatory Lockout Countdown</p>
-                  <p className="text-4xl font-mono font-black text-rose-400 tracking-wider">
-                    {Math.floor(pauseCountdown / 60).toString().padStart(2, '0')}:{(pauseCountdown % 60).toString().padStart(2, '0')}
-                  </p>
-                  <p className="text-[10px] text-slate-400">
-                    {pauseCountdown > 0 ? 'Exam is locked. Timer is paused. Do not close or reload this window.' : 'Lockout time has elapsed. You may resume your examination.'}
-                  </p>
-                </div>
-
-                <div className="text-left bg-slate-950/60 rounded-xl p-3 border border-slate-800 text-[11px] text-slate-300 space-y-1 max-h-28 overflow-y-auto font-mono">
-                  <div className="text-[10px] uppercase text-slate-400 font-bold mb-1">Recent Integrity Flag Log:</div>
-                  {integrityFlags.slice(-4).map((f, i) => (
-                    <div key={i} className="flex justify-between items-center text-slate-300">
-                      <span className="text-rose-400">#{f.flagCount} {f.type}</span>
-                      <span className="text-slate-500 text-[10px]">{new Date(f.timestamp).toLocaleTimeString()}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <button
-                  onClick={() => {
-                    if (pauseCountdown <= 0) {
-                      setAutoPaused(false);
-                      autoPausedRef.current = false;
-                      requestBrowserFullscreen();
-                    }
-                  }}
-                  disabled={pauseCountdown > 0}
-                  className="w-full py-3.5 bg-rose-600 hover:bg-rose-500 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed text-white font-bold text-xs rounded-xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  {pauseCountdown > 0 ? (
-                    <>
-                      <Lock className="w-4 h-4" /> Locked ({Math.floor(pauseCountdown / 60)}:{(pauseCountdown % 60).toString().padStart(2, '0')} remaining)
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Acknowledge & Resume Exam
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Full Screen Anti-Cheat Security Lockout is handled globally above */}
 
           {/* Left Primary Sidebar */}
           <div className="w-64 bg-card border-r border-border p-5 flex flex-col justify-between hidden lg:flex shrink-0">
