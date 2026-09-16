@@ -736,6 +736,9 @@ class CBTExamViewSet(viewsets.ModelViewSet):
         attempt.score = total_score
         attempt.total_possible = total_possible
         attempt.percentage = round((total_score / total_possible * 100), 2) if total_possible > 0 else 0.0
+        attempt.integrity_flags = request.data.get('flags', [])
+        attempt.auto_paused = bool(request.data.get('auto_paused', False))
+        attempt.pause_events = request.data.get('pause_events', [])
         attempt.save()
 
         # Notify teacher if assigned

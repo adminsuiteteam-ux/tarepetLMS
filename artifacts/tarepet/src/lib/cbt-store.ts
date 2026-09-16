@@ -400,6 +400,25 @@ function persistSubmissions(subs: CBTSubmission[]) {
   } catch (e) {}
 }
 
+function loadSavedActivities(): LMSActivity[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const saved = localStorage.getItem('tarepet_lms_activities');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (e) {}
+  return [];
+}
+
+function persistActivities(acts: LMSActivity[]) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem('tarepet_lms_activities', JSON.stringify(acts));
+  } catch (e) {}
+}
+
 
 export interface TeacherRecord {
   id: number | string;
@@ -1114,7 +1133,7 @@ function loadSavedStudents(forceReload = false): StudentRecord[] {
 
 let _exams: CBTExam[] = loadSavedExams();
 let _submissions: CBTSubmission[] = loadSavedSubmissions();
-let _activities: LMSActivity[] = [];
+let _activities: LMSActivity[] = loadSavedActivities();
 let _students: StudentRecord[] = loadSavedStudents();
 
 export function matchStudentClass(studentGrade?: string, targetClass?: string): boolean {
@@ -2300,6 +2319,7 @@ export function addRealtimeActivity(type: LMSActivity['type'], title: string, de
     user,
   };
   _activities = [newAct, ..._activities].slice(0, 50);
+  persistActivities(_activities);
   broadcastRealtimeEvent();
 
   authClient.post('/communication/activities/', {
@@ -2329,6 +2349,7 @@ export async function syncActivitiesWithBackend(): Promise<LMSActivity[]> {
           detail: a.detail || '',
           user: a.user || 'System',
         }));
+        persistActivities(_activities);
         broadcastRealtimeEvent();
       }
     }
@@ -2337,10 +2358,13 @@ export async function syncActivitiesWithBackend(): Promise<LMSActivity[]> {
 }
 
 export function getRealtimeActivities(): LMSActivity[] {
+  if ((!_activities || _activities.length === 0) && typeof window !== 'undefined') {
+    _activities = loadSavedActivities();
+  }
   return _activities;
 }
 
-// â”€â”€ Submissions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Submissions ─────────────────────────────────────────────────────────────
 
 export function getStoredSubmissions(): CBTSubmission[] {
   if ((!_submissions || _submissions.length === 0) && typeof window !== 'undefined') {
@@ -2355,7 +2379,7 @@ export async function syncSubmissionsWithBackend(examId?: number): Promise<CBTSu
   try {
     const url = examId
       ? `/assessments/cbt-exams/${examId}/attempts/`
-      : `/assessments/cbt-exams/attempts/`;
+      : `/assessments/cbt-attempts/`;
     const res = await authClient.get(url);
     if (res.data && Array.isArray(res.data)) {
       if (!_submissions || _submissions.length === 0) {
@@ -2375,7 +2399,10 @@ export async function syncSubmissionsWithBackend(examId?: number): Promise<CBTSu
         total_possible: typeof att.total_possible === 'number' ? att.total_possible : 0,
         percentage: typeof att.percentage === 'number' ? att.percentage : 0,
         submitted_at: att.submitted_at || new Date().toISOString(),
-        answers: {},
+        answers: att.answers || {},
+        flags: att.integrity_flags || att.flags || [],
+        autoPaused: att.auto_paused ?? false,
+        pauseEvents: att.pause_events || [],
         gradebook_synced: att.gradebook_synced ?? true,
       }));
 
@@ -2397,12 +2424,18 @@ export async function syncSubmissionsWithBackend(examId?: number): Promise<CBTSu
           local.total_possible = rem.total_possible;
           local.percentage = rem.percentage;
           local.submitted_at = rem.submitted_at;
+          if (rem.flags && rem.flags.length > 0) local.flags = rem.flags;
+          if (rem.autoPaused !== undefined) local.autoPaused = rem.autoPaused;
+          if (rem.pauseEvents && rem.pauseEvents.length > 0) local.pauseEvents = rem.pauseEvents;
         } else if (existingMap.has(idKey)) {
           const local = existingMap.get(idKey)!;
           local.score = rem.score;
           local.total_possible = rem.total_possible;
           local.percentage = rem.percentage;
           local.submitted_at = rem.submitted_at;
+          if (rem.flags && rem.flags.length > 0) local.flags = rem.flags;
+          if (rem.autoPaused !== undefined) local.autoPaused = rem.autoPaused;
+          if (rem.pauseEvents && rem.pauseEvents.length > 0) local.pauseEvents = rem.pauseEvents;
         } else {
           _submissions.unshift(rem);
           existingMap.set(key, rem);
@@ -2420,12 +2453,13 @@ export async function syncSubmissionsWithBackend(examId?: number): Promise<CBTSu
 export async function submitStudentCBTAttempt(
   examId: number,
   answers: Record<number, string>,
-  studentInfo: { name?: string; email?: string; student_id?: string },
+  studentInfo: { name?: string; email?: string; student_id?: string; class?: string; stream?: string },
   integrityData?: {
     flags?: CBTIntegrityFlag[];
     autoPaused?: boolean;
     pauseEvents?: Array<{ timestamp: string; durationMinutes: number }>;
-  }
+  },
+  auto: boolean = false
 ): Promise<CBTSubmission> {
   const exam = _exams.find(e => e.id === examId) || _exams[0];
 
@@ -2443,6 +2477,8 @@ export async function submitStudentCBTAttempt(
   const sName = studentInfo.name || 'Student';
   const autoEmail = studentInfo.email || formatStudentEmail(sName);
   const autoId = studentInfo.student_id || `TMS/STU/${Date.now()}`;
+  const studentClass = studentInfo.class || exam.class || 'SS1';
+  const studentStream = studentInfo.stream || exam.stream || 'Science';
 
   const newSub: CBTSubmission = {
     id: Date.now(),
@@ -2452,8 +2488,8 @@ export async function submitStudentCBTAttempt(
     student_name: sName,
     student_email: autoEmail,
     student_id: autoId,
-    class: exam.class || 'SS1',
-    stream: exam.stream || 'Science',
+    class: studentClass,
+    stream: studentStream,
     score,
     total_possible,
     percentage,
@@ -2475,7 +2511,13 @@ export async function submitStudentCBTAttempt(
     if (token) {
       const resp = await authClient.post(`/assessments/cbt-exams/${exam.id}/submit_attempt/`, {
         answers,
-        auto_submitted: false,
+        auto_submitted: Boolean(auto),
+        flags: integrityData?.flags || [],
+        auto_paused: Boolean(integrityData?.autoPaused || false),
+        pause_events: integrityData?.pauseEvents || [],
+        student_name: sName,
+        student_email: autoEmail,
+        student_id: autoId,
       });
       if (resp.data?.attempt_id) {
         newSub.id = resp.data.attempt_id;
@@ -2489,36 +2531,66 @@ export async function submitStudentCBTAttempt(
     console.warn('Backend attempt submission failed, recorded locally in CBT store:', apiErr);
   }
 
+  // Real-time activity entry (persisted)
   addRealtimeActivity(
     'SUBMISSION_RECEIVED',
     `CBT Submission: ${sName}`,
     `Completed ${exam.title} (${score}/${total_possible} - ${percentage}%). Awaiting teacher broadsheet sync.`,
     sName
   );
+
+  // Real-time notification for TEACHER
   addRealtimeNotification({
     title: `CBT Submission Received: ${sName}`,
-    message: `${sName} (${exam.class} ${exam.stream}) completed ${exam.title} (${exam.course_code}). Score: ${score}/${total_possible} (${percentage}%). Click to preview and sync to broadsheet.`,
+    message: `${sName} (${newSub.class} ${newSub.stream || ''}) completed ${exam.title} (${exam.course_code}). Score: ${score}/${total_possible} (${percentage}%). Click to preview and sync to broadsheet.`,
     type: 'exam',
     recipientRole: 'TEACHER',
     actionUrl: `/dashboard/teacher?section=results`,
   });
+
+  // Real-time notification for ADMIN
+  addRealtimeNotification({
+    title: `CBT Exam Completed: ${sName}`,
+    message: `${sName} (${newSub.class}) completed ${exam.title} (${exam.course_code}). Score: ${score}/${total_possible} (${percentage}%).`,
+    type: 'exam',
+    recipientRole: 'ADMIN',
+    actionUrl: `/dashboard/cbt-approval`,
+  });
+
   broadcastRealtimeEvent();
   sendWebSocketEvent('EXAM_SUBMISSION', { submission: newSub, examId: exam.id });
+
+  // Browser window & cross-tab sync events
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('tarepet_submission_received', { detail: newSub }));
+    window.dispatchEvent(new CustomEvent('tarepet_store_updated', { detail: { type: 'submission_received', submission: newSub } }));
+    window.dispatchEvent(new Event('cbt_store_updated'));
+  }
+
   return newSub;
 }
 
 export function hasStudentSubmittedExam(examId: number, studentIdentifier?: string): boolean {
+  if ((!_submissions || _submissions.length === 0) && typeof window !== 'undefined') {
+    _submissions = loadSavedSubmissions();
+  }
   if (!studentIdentifier) {
-    return _submissions.some(s => s.exam_id === examId);
+    return _submissions.some(s => Number(s.exam_id) === Number(examId));
   }
   const student = findStudentByAnyIdentifier(studentIdentifier);
   const lower = studentIdentifier.trim().toLowerCase();
   const clean = lower.replace(/[^a-z0-9]/g, '');
 
   return _submissions.some(s => {
-    if (s.exam_id !== examId) return false;
-    if (s.student_email?.toLowerCase() === lower || s.student_id?.toLowerCase() === lower) return true;
-    if (clean && s.student_id && s.student_id.toLowerCase().replace(/[^a-z0-9]/g, '') === clean) return true;
+    if (Number(s.exam_id) !== Number(examId)) return false;
+    const sIdLower = (s.student_id || '').toLowerCase().trim();
+    const sEmailLower = (s.student_email || '').toLowerCase().trim();
+    const sNameLower = (s.student_name || '').toLowerCase().trim();
+
+    if (sEmailLower && sEmailLower === lower) return true;
+    if (sIdLower && (sIdLower === lower || (clean && sIdLower.replace(/[^a-z0-9]/g, '') === clean))) return true;
+    if (sNameLower && sNameLower === lower) return true;
+
     if (student) {
       const aliases = [
         String(student.id),
@@ -2529,9 +2601,6 @@ export function hasStudentSubmittedExam(examId: number, studentIdentifier?: stri
         student.email,
         student.name,
       ].filter(Boolean).map(a => a.toLowerCase().trim());
-      const sIdLower = (s.student_id || '').toLowerCase().trim();
-      const sEmailLower = (s.student_email || '').toLowerCase().trim();
-      const sNameLower = (s.student_name || '').toLowerCase().trim();
       return aliases.includes(sIdLower) || aliases.includes(sEmailLower) || aliases.includes(sNameLower);
     }
     return false;
@@ -2539,17 +2608,26 @@ export function hasStudentSubmittedExam(examId: number, studentIdentifier?: stri
 }
 
 export function getStudentSubmission(examId: number, studentIdentifier?: string): CBTSubmission | undefined {
+  if ((!_submissions || _submissions.length === 0) && typeof window !== 'undefined') {
+    _submissions = loadSavedSubmissions();
+  }
   if (!studentIdentifier) {
-    return _submissions.find(s => s.exam_id === examId);
+    return _submissions.find(s => Number(s.exam_id) === Number(examId));
   }
   const student = findStudentByAnyIdentifier(studentIdentifier);
   const lower = studentIdentifier.trim().toLowerCase();
   const clean = lower.replace(/[^a-z0-9]/g, '');
 
   return _submissions.find(s => {
-    if (s.exam_id !== examId) return false;
-    if (s.student_email?.toLowerCase() === lower || s.student_id?.toLowerCase() === lower) return true;
-    if (clean && s.student_id && s.student_id.toLowerCase().replace(/[^a-z0-9]/g, '') === clean) return true;
+    if (Number(s.exam_id) !== Number(examId)) return false;
+    const sIdLower = (s.student_id || '').toLowerCase().trim();
+    const sEmailLower = (s.student_email || '').toLowerCase().trim();
+    const sNameLower = (s.student_name || '').toLowerCase().trim();
+
+    if (sEmailLower && sEmailLower === lower) return true;
+    if (sIdLower && (sIdLower === lower || (clean && sIdLower.replace(/[^a-z0-9]/g, '') === clean))) return true;
+    if (sNameLower && sNameLower === lower) return true;
+
     if (student) {
       const aliases = [
         String(student.id),
@@ -2560,13 +2638,30 @@ export function getStudentSubmission(examId: number, studentIdentifier?: string)
         student.email,
         student.name,
       ].filter(Boolean).map(a => a.toLowerCase().trim());
-      const sIdLower = (s.student_id || '').toLowerCase().trim();
-      const sEmailLower = (s.student_email || '').toLowerCase().trim();
-      const sNameLower = (s.student_name || '').toLowerCase().trim();
       return aliases.includes(sIdLower) || aliases.includes(sEmailLower) || aliases.includes(sNameLower);
     }
     return false;
   });
+}
+
+export async function toggleExamResultsReleased(examId: number, released: boolean): Promise<boolean> {
+  const all = getStoredExams();
+  const target = all.find(e => Number(e.id) === Number(examId));
+  if (target) {
+    target.results_released = released;
+    persistExams(all);
+    _exams = all;
+    try {
+      await authClient.patch(`/assessments/cbt-exams/${examId}/`, { results_released: released });
+    } catch (e) {}
+    broadcastRealtimeEvent();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('tarepet_store_updated', { detail: { type: 'results_released_toggled', examId, released } }));
+      window.dispatchEvent(new Event('cbt_store_updated'));
+    }
+    return true;
+  }
+  return false;
 }
 
 // â”€â”€ Student CBT Attendance System â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

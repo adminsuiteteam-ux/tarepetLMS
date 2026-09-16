@@ -875,16 +875,20 @@ export default function StudentCBTExam() {
       const studentName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Student' : 'Student';
       const studentEmail = user?.email || 'student@tarepet.com';
       const studentId = getStudentIdentifier(user) || 'TMS-STU-001';
+      const studentClass = (user?.profile as any)?.grade_level || (user?.profile as any)?.grade || (user as any)?.grade || selectedExam.class || 'SS1';
+      const studentStream = (user?.profile as any)?.stream || (user as any)?.stream || selectedExam.stream || 'Science';
 
       const subResult = await submitStudentCBTAttempt(selectedExam.id, answers, {
         name: studentName,
         email: studentEmail,
         student_id: studentId,
+        class: studentClass,
+        stream: studentStream,
       }, {
         flags: flagsRef.current,
         autoPaused: autoPausedRef.current,
         pauseEvents: pauseEvents,
-      });
+      }, auto);
 
       // Clear storage on successful submission
       clearLockout(studentId, selectedExam.id);

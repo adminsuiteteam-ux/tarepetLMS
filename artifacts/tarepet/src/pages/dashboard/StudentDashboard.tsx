@@ -507,7 +507,7 @@ export default function StudentDashboard() {
     });
   }, [myEnrolledCourses, subjectSearchQuery, subjectCategoryFilter]);
 
-  const studentIdForScores = matchedStoredStudent?.id || user?.id || 101;
+  const studentIdForScores = matchedStoredStudent?.id || (user?.profile as any)?.student_id || (user?.profile as any)?.studentId || (user as any)?.admissionNo || (user as any)?.code || user?.email || user?.id || 101;
   const broadsheetData = getStudentBroadsheet(studentIdForScores);
   const isSS = isSeniorSecondaryClass(studentGrade);
 

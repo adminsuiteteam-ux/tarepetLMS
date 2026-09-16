@@ -219,7 +219,7 @@ class CBTStudentAttemptSerializer(serializers.ModelSerializer):
             'class_name', 'stream', 'student', 'student_id', 'student_email',
             'student_name', 'started_at', 'submitted_at', 'is_submitted',
             'auto_submitted', 'score', 'total_possible', 'percentage',
-            'gradebook_synced'
+            'gradebook_synced', 'integrity_flags', 'auto_paused', 'pause_events'
         ]
         read_only_fields = ['id', 'started_at', 'submitted_at', 'score', 'total_possible', 'percentage']
 

@@ -208,6 +208,9 @@ class CBTStudentAttempt(models.Model):
     total_possible = models.FloatField(default=0.0)
     percentage = models.FloatField(default=0.0)
     gradebook_synced = models.BooleanField(default=False)
+    integrity_flags = models.JSONField(default=list, blank=True, help_text=_('Proctoring violation logs'))
+    auto_paused = models.BooleanField(default=False, help_text=_('True if auto-paused/locked due to violations'))
+    pause_events = models.JSONField(default=list, blank=True, help_text=_('History of pause and lockout intervals'))
 
     class Meta:
         unique_together = ('exam', 'student')
