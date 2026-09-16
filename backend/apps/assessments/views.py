@@ -773,7 +773,7 @@ class CBTExamViewSet(viewsets.ModelViewSet):
     def attempts(self, request, pk=None):
         exam = self.get_object()
         attempts = CBTStudentAttempt.objects.filter(exam=exam, is_submitted=True).select_related('student__user', 'exam')
-        serializer = CBTStudentAttemptSerializer(attempts, many=True)
+        serializer = CBTStudentAttemptSerializer(attempts, many=True, context={'request': request})
         return Response(serializer.data)
 
     # ---------- Teacher: View detailed student attempt ----------
@@ -801,7 +801,7 @@ class CBTExamViewSet(viewsets.ModelViewSet):
                 'points_awarded': ans.points_awarded,
             })
         return Response({
-            'attempt': CBTStudentAttemptSerializer(attempt).data,
+            'attempt': CBTStudentAttemptSerializer(attempt, context={'request': request}).data,
             'answers': result,
         })
 
@@ -839,7 +839,7 @@ class CBTAttemptViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         user = self.request.user
         exam_id = self.request.query_params.get('exam_id')
-        is_staff_or_admin = getattr(user, 'is_admin', False) or getattr(user, 'is_teacher', False) or user.is_staff or user.is_superuser
+        is_staff_or_admin = getattr(user, 'is_admin', False) or getattr(user, 'is_teacher', False) or user.is_staff or user.is_superuser or (hasattr(user, 'role') and user.role in ['ADMIN', 'TEACHER'])
         if is_staff_or_admin:
             qs = CBTStudentAttempt.objects.filter(is_submitted=True).select_related('student__user', 'exam')
             if exam_id:

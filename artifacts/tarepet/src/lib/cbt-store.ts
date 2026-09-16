@@ -2367,10 +2367,24 @@ export function getRealtimeActivities(): LMSActivity[] {
 // ── Submissions ─────────────────────────────────────────────────────────────
 
 export function getStoredSubmissions(): CBTSubmission[] {
-  if ((!_submissions || _submissions.length === 0) && typeof window !== 'undefined') {
-    _submissions = loadSavedSubmissions();
+  if (typeof window !== 'undefined') {
+    const saved = loadSavedSubmissions();
+    if (saved && saved.length > 0) {
+      const map = new Map<string, CBTSubmission>();
+      for (const s of saved) {
+        map.set(String(s.id), s);
+      }
+      for (const s of (_submissions || [])) {
+        if (!map.has(String(s.id))) {
+          map.set(String(s.id), s);
+        }
+      }
+      _submissions = Array.from(map.values()).sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime());
+    } else if (!_submissions) {
+      _submissions = [];
+    }
   }
-  return _submissions;
+  return _submissions || [];
 }
 
 export async function syncSubmissionsWithBackend(examId?: number): Promise<CBTSubmission[]> {
@@ -2380,12 +2394,26 @@ export async function syncSubmissionsWithBackend(examId?: number): Promise<CBTSu
     const url = examId
       ? `/assessments/cbt-exams/${examId}/attempts/`
       : `/assessments/cbt-attempts/`;
-    const res = await authClient.get(url);
-    if (res.data && Array.isArray(res.data)) {
+    let rawList: any[] = [];
+    try {
+      const res = await authClient.get(url);
+      if (Array.isArray(res.data?.results)) rawList = res.data.results;
+      else if (Array.isArray(res.data)) rawList = res.data;
+    } catch (err) {
+      if (examId) {
+        try {
+          const fallbackRes = await authClient.get(`/assessments/cbt-attempts/?exam_id=${examId}`);
+          if (Array.isArray(fallbackRes.data?.results)) rawList = fallbackRes.data.results;
+          else if (Array.isArray(fallbackRes.data)) rawList = fallbackRes.data;
+        } catch (fbErr) {}
+      }
+    }
+
+    if (rawList && rawList.length > 0) {
       if (!_submissions || _submissions.length === 0) {
         _submissions = loadSavedSubmissions();
       }
-      const remoteAttempts: CBTSubmission[] = res.data.map((att: any) => ({
+      const remoteAttempts: CBTSubmission[] = rawList.map((att: any) => ({
         id: att.id,
         exam_id: att.exam || examId || 0,
         exam_title: att.exam_title || '',
@@ -2461,30 +2489,35 @@ export async function submitStudentCBTAttempt(
   },
   auto: boolean = false
 ): Promise<CBTSubmission> {
-  const exam = _exams.find(e => e.id === examId) || _exams[0];
+  if (!_exams || _exams.length === 0) {
+    _exams = loadSavedExams();
+  }
+  const exam = _exams.find(e => String(e.id) === String(examId) || Number(e.id) === Number(examId)) || _exams[0];
 
   let score = 0;
   let total_possible = 0;
 
-  exam.questions.forEach(q => {
-    total_possible += q.points || 5;
-    if (safeGetProp(answers, q.id) === q.correct_option) {
-      score += q.points || 5;
-    }
-  });
+  if (exam && Array.isArray(exam.questions)) {
+    exam.questions.forEach(q => {
+      total_possible += q.points || 5;
+      if (safeGetProp(answers, q.id) === q.correct_option) {
+        score += q.points || 5;
+      }
+    });
+  }
 
   const percentage = total_possible > 0 ? Math.round((score / total_possible) * 100) : 100;
   const sName = studentInfo.name || 'Student';
   const autoEmail = studentInfo.email || formatStudentEmail(sName);
   const autoId = studentInfo.student_id || `TMS/STU/${Date.now()}`;
-  const studentClass = studentInfo.class || exam.class || 'SS1';
-  const studentStream = studentInfo.stream || exam.stream || 'Science';
+  const studentClass = studentInfo.class || exam?.class || 'SS1';
+  const studentStream = studentInfo.stream || exam?.stream || 'Science';
 
   const newSub: CBTSubmission = {
     id: Date.now(),
-    exam_id: exam.id,
-    exam_title: exam.title,
-    course_code: exam.course_code,
+    exam_id: exam ? exam.id : examId,
+    exam_title: exam ? exam.title : (studentInfo as any)?.exam_title || 'CBT Assessment',
+    course_code: exam ? exam.course_code : '',
     student_name: sName,
     student_email: autoEmail,
     student_id: autoId,

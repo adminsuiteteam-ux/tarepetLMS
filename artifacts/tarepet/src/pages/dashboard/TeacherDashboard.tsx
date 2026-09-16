@@ -18,7 +18,7 @@ import { authClient, getAccessToken } from '@/lib/api-auth';
 import { addRealtimeNotification } from '@/lib/notifications-store';
 import { ImageCropModal } from '@/components/ui/ImageCropModal';
 import { MobileProfileView } from '@/components/profile/MobileProfileView';
-import { getStoredExams, updateExamStatus, deleteCBTExam, getStoredSubmissions, formatStudentEmail, generateAdmissionNumber, getStoredStudents, getStoredTeachers, saveTeacher, saveStudent, deleteStudent, subscribeToCBTStore, broadcastRealtimeEvent, syncStudentsWithBackend, syncTeachersWithBackend, syncExamsWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, calculateBECEGrade, isSeniorSecondaryClass, CourseBroadsheetScore, PromotionRecord, getPromotionHistory, executeStudentPromotions, getNextProgressiveClass, getArchivedCohortsForTeacher, matchStudentClass, matchTeacherFormClass, findStudentByAnyIdentifier, getStudentCBTSubmissionForCourse, getStudentCBTSubmissionsForCourse, markSubmissionSynced, CBTSubmission, CBTExam, CBTQuestion } from '@/lib/cbt-store';
+import { getStoredExams, updateExamStatus, deleteCBTExam, getStoredSubmissions, syncSubmissionsWithBackend, formatStudentEmail, generateAdmissionNumber, getStoredStudents, getStoredTeachers, saveTeacher, saveStudent, deleteStudent, subscribeToCBTStore, broadcastRealtimeEvent, syncStudentsWithBackend, syncTeachersWithBackend, syncExamsWithBackend, getExamAttendance, setStudentExamAttendance, markAllStudentsAttendance, CBTAttendanceRecord, SCHOOL_CLASSES, getClassArms, getCoursesForClass, getStudentBroadsheet, saveStudentBroadsheet, getAutomaticCBTScore, calculateWAECGrade, calculateBECEGrade, isSeniorSecondaryClass, CourseBroadsheetScore, PromotionRecord, getPromotionHistory, executeStudentPromotions, getNextProgressiveClass, getArchivedCohortsForTeacher, matchStudentClass, matchTeacherFormClass, findStudentByAnyIdentifier, getStudentCBTSubmissionForCourse, getStudentCBTSubmissionsForCourse, markSubmissionSynced, CBTSubmission, CBTExam, CBTQuestion } from '@/lib/cbt-store';
 import { useTranslation } from '@/lib/i18n';
 import { TerminalReportCard, ReportCardData, SubjectScore } from '@/components/reports/TerminalReportCard';
 import { getTimeGreeting } from '@/lib/utils';
@@ -194,6 +194,7 @@ export default function TeacherDashboard() {
 
   // Data states
   const [submissions, setSubmissions] = useState(PENDING_SUBMISSIONS);
+  const [cbtSubmissions, setCbtSubmissions] = useState<CBTSubmission[]>(() => getStoredSubmissions());
   const [selectedSub, setSelectedSub] = useState<any>(null);
   const [gradeInput, setGradeInput] = useState('');
   const [feedbackInput, setFeedbackInput] = useState('');
@@ -203,18 +204,22 @@ export default function TeacherDashboard() {
   React.useEffect(() => {
     setRoster(getStoredStudents());
     setTeacherExams(getStoredExams());
+    setCbtSubmissions(getStoredSubmissions());
     syncStudentsWithBackend().then(res => setRoster(res));
     syncTeachersWithBackend();
     syncExamsWithBackend().then(res => setTeacherExams(res));
+    syncSubmissionsWithBackend().then(res => setCbtSubmissions(res)).catch(() => {});
 
     const unsub = subscribeToCBTStore(() => {
       setRoster(getStoredStudents());
       setTeacherExams(getStoredExams());
-      setSubmissions(getStoredSubmissions());
+      setCbtSubmissions(getStoredSubmissions());
     });
 
     const handleSubmissionReceived = () => {
-      setSubmissions(getStoredSubmissions());
+      syncSubmissionsWithBackend().then(res => setCbtSubmissions(res)).catch(() => {
+        setCbtSubmissions(getStoredSubmissions());
+      });
     };
     window.addEventListener('tarepet_submission_received', handleSubmissionReceived);
     window.addEventListener('cbt_store_updated', handleSubmissionReceived);
@@ -223,7 +228,7 @@ export default function TeacherDashboard() {
     const pollInterval = setInterval(() => {
       syncExamsWithBackend().then(res => setTeacherExams(res)).catch(() => {});
       syncStudentsWithBackend().then(res => setRoster(res)).catch(() => {});
-      setSubmissions(getStoredSubmissions());
+      syncSubmissionsWithBackend().then(res => setCbtSubmissions(res)).catch(() => {});
     }, 45000);
 
     // Instant re-sync when teacher unlocks device or focuses tab
@@ -231,7 +236,7 @@ export default function TeacherDashboard() {
       if (document.visibilityState === 'visible') {
         syncExamsWithBackend().then(res => setTeacherExams(res)).catch(() => {});
         syncStudentsWithBackend().then(res => setRoster(res)).catch(() => {});
-        setSubmissions(getStoredSubmissions());
+        syncSubmissionsWithBackend().then(res => setCbtSubmissions(res)).catch(() => {});
       }
     };
     document.addEventListener('visibilitychange', handleVisibility);
@@ -2225,7 +2230,7 @@ export default function TeacherDashboard() {
     // =========================================================
     if (activeSection === 'exams') {
       const allExams = teacherExams;
-      const allSubmissions = getStoredSubmissions();
+      const allSubmissions = cbtSubmissions.length > 0 ? cbtSubmissions : getStoredSubmissions();
 
       const filteredExams = allExams.filter(e => {
         const matchClass = selectedExamClass === 'ALL' || matchStudentClass(e.class, selectedExamClass);
@@ -2387,7 +2392,7 @@ export default function TeacherDashboard() {
                         <button
                           onClick={() => {
                             const examsList = getStoredExams();
-                            const ex = examsList.find(e => e.id === sub.exam_id) || examsList[0];
+                            const ex = examsList.find(e => String(e.id) === String(sub.exam_id) || Number(e.id) === Number(sub.exam_id) || (sub.exam_title && e.title && e.title.trim().toLowerCase() === sub.exam_title.trim().toLowerCase())) || examsList[0];
                             setPreviewSubmissionModal({
                               submission: sub,
                               exam: ex

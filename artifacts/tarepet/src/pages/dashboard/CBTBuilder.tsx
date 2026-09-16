@@ -272,6 +272,21 @@ export default function CBTBuilder() {
     }
   }, [selectedExamId]);
 
+  useEffect(() => {
+    if (selectedExamId && view === 'attempts') {
+      fetchAttempts(selectedExamId);
+      const handleSubmission = () => {
+        fetchAttempts(selectedExamId);
+      };
+      window.addEventListener('tarepet_submission_received', handleSubmission);
+      window.addEventListener('cbt_store_updated', handleSubmission);
+      return () => {
+        window.removeEventListener('tarepet_submission_received', handleSubmission);
+        window.removeEventListener('cbt_store_updated', handleSubmission);
+      };
+    }
+  }, [selectedExamId, view]);
+
   const handleCreateExam = async () => {
     if (!form.title) {
       showAlert({ title: 'Title Required', message: 'Please enter exam title', type: 'warning' });
@@ -595,13 +610,31 @@ export default function CBTBuilder() {
       gradebook_synced: Boolean(s.gradebook_synced),
     }));
 
-    const localSubs = getStoredSubmissions().filter(s => Number(s.exam_id) === Number(examId));
+    const allExams = getStoredExams();
+    const currentExam = allExams.find(e => String(e.id) === String(examId) || Number(e.id) === Number(examId)) || exams.find(e => String(e.id) === String(examId) || Number(e.id) === Number(examId));
+
+    const isMatch = (s: any) => {
+      if (!s) return false;
+      if (String(s.exam_id) === String(examId) || Number(s.exam_id) === Number(examId)) return true;
+      if (currentExam && s.exam_title && currentExam.title && s.exam_title.trim().toLowerCase() === currentExam.title.trim().toLowerCase()) return true;
+      return false;
+    };
+
+    const localSubs = getStoredSubmissions().filter(isMatch);
     setAttempts(mapSubs(localSubs));
 
     try {
       const synced = await syncSubmissionsWithBackend(examId);
-      const filtered = synced.filter(s => Number(s.exam_id) === Number(examId));
-      setAttempts(mapSubs(filtered));
+      const matchedSynced = (synced || []).filter(isMatch);
+      const mergedMap = new Map<string | number, any>();
+      for (const s of localSubs) mergedMap.set(String(s.id), s);
+      for (const s of matchedSynced) mergedMap.set(String(s.id), s);
+      const finalAttempts = Array.from(mergedMap.values());
+      if (finalAttempts.length > 0) {
+        setAttempts(mapSubs(finalAttempts));
+      } else if (localSubs.length > 0) {
+        setAttempts(mapSubs(localSubs));
+      }
     } catch (e) {}
   };
 
@@ -614,8 +647,9 @@ export default function CBTBuilder() {
       }
     } catch (e) {}
 
-    const sub = getStoredSubmissions().find(s => Number(s.id) === Number(attemptId));
-    const ex = getStoredExams().find(e => Number(e.id) === Number(examId) || String(e.id) === String(examId));
+    const sub = getStoredSubmissions().find(s => String(s.id) === String(attemptId) || Number(s.id) === Number(attemptId));
+    const allExams = getStoredExams();
+    const ex = allExams.find(e => String(e.id) === String(examId) || Number(e.id) === Number(examId) || (sub?.exam_title && e.title && e.title.trim().toLowerCase() === sub.exam_title.trim().toLowerCase()));
     if (sub && ex) {
       const answersList = (ex.questions || []).map((q: any, idx: number) => {
         const selected = sub.answers ? (sub.answers as any)[q.id] : undefined;
