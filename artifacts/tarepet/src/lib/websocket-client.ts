@@ -17,13 +17,24 @@ export interface WSEventMessage {
     | 'PONG'
     | 'CBT_STORE_MUTATED'
     | 'NOTIFICATION_RECEIVED'
+    | 'NOTIFICATION_DELETED'
+    | 'NOTIFICATIONS_CLEARED'
     | 'ACTIVITY_LOGGED'
     | 'PAYMENTS_MUTATED'
     | 'ROSTER_UPDATED'
     | 'BROADSHEET_SCORES_UPDATED'
     | 'ATTENDANCE_MARKED'
     | 'AVATAR_UPDATED'
+    | 'AVATAR_DELETED'
     | 'PROFILE_UPDATED'
+    | 'EXAM_DELETED'
+    | 'EXAM_UPDATED'
+    | 'STUDENT_DELETED'
+    | 'TEACHER_DELETED'
+    | 'SUBJECT_DELETED'
+    | 'TIMETABLE_MUTATED'
+    | 'CALENDAR_MUTATED'
+    | 'ALL_DATA_CLEARED'
     | string;
   payload?: any;
   timestamp?: number | string;
@@ -113,12 +124,26 @@ function dispatchIncomingEvent(data: WSEventMessage, isLocalOrigin = false) {
       data.type === 'CBT_STORE_MUTATED' ||
       data.type === 'ROSTER_UPDATED' ||
       data.type === 'BROADSHEET_SCORES_UPDATED' ||
-      data.type === 'ATTENDANCE_MARKED'
+      data.type === 'ATTENDANCE_MARKED' ||
+      data.type === 'EXAM_DELETED' ||
+      data.type === 'EXAM_UPDATED' ||
+      data.type === 'STUDENT_DELETED' ||
+      data.type === 'TEACHER_DELETED' ||
+      data.type === 'SUBJECT_DELETED' ||
+      data.type === 'AVATAR_UPDATED' ||
+      data.type === 'AVATAR_DELETED' ||
+      data.type === 'TIMETABLE_MUTATED' ||
+      data.type === 'CALENDAR_MUTATED' ||
+      data.type === 'ALL_DATA_CLEARED'
     ) {
       window.dispatchEvent(new Event('cbt_store_updated'));
     }
     if (data.type === 'PAYMENTS_MUTATED') {
       window.dispatchEvent(new Event('tarepet_payments_updated'));
+    }
+    if (data.type === 'AVATAR_DELETED' || data.type === 'AVATAR_UPDATED') {
+      window.dispatchEvent(new CustomEvent('tarepet_avatar_deleted', { detail: data.payload }));
+      window.dispatchEvent(new CustomEvent('tarepet_user_updated', { detail: data.payload }));
     }
   }
 }

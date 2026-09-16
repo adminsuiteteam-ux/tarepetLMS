@@ -699,8 +699,11 @@ export function clearAllStoredTeachers() {
       localStorage.removeItem('tarepet_teachers_list');
       localStorage.removeItem('tarepet_deleted_accounts');
     } catch (e) {}
+    window.dispatchEvent(new CustomEvent('tarepet_store_updated', { detail: { type: 'all_teachers_cleared' } }));
+    window.dispatchEvent(new Event('cbt_store_updated'));
   }
   broadcastRealtimeEvent();
+  sendWebSocketEvent('ROSTER_UPDATED', { action: 'clear_teachers' });
 }
 
 // â”€â”€â”€ Master Subjects & Curriculum System â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -842,8 +845,10 @@ export function deleteSubject(id: number | string) {
       localStorage.setItem('tarepet_subjects_list', JSON.stringify(_subjects));
     } catch (e) {}
     window.dispatchEvent(new CustomEvent('tarepet_store_updated', { detail: { type: 'subject_deleted', id } }));
+    window.dispatchEvent(new CustomEvent('tarepet_subject_deleted', { detail: { id } }));
   }
   broadcastRealtimeEvent();
+  sendWebSocketEvent('SUBJECT_DELETED', { id });
 }
 
 export function saveStoredSubjects(subjects: SubjectRecord[]) {
@@ -972,9 +977,12 @@ export function deleteTeacher(teacherIdOrStaffId: number | string): boolean {
   }
 
   broadcastRealtimeEvent();
+  sendWebSocketEvent('TEACHER_DELETED', { teacherId: teacherIdOrStaffId, identifiers: deleteIds });
+  sendWebSocketEvent('ROSTER_UPDATED', { action: 'delete_teacher', teacherId: teacherIdOrStaffId, identifiers: deleteIds });
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('tarepet_store_updated', { detail: { type: 'teacher_deleted', id: teacherIdOrStaffId } }));
     window.dispatchEvent(new CustomEvent('tarepet_teacher_deleted', { detail: { id: teacherIdOrStaffId } }));
+    window.dispatchEvent(new Event('cbt_store_updated'));
   }
   return true;
 }
@@ -983,7 +991,7 @@ export function deleteStudent(studentIdOrAdmissionNo: number | string): boolean 
   if (!studentIdOrAdmissionNo || String(studentIdOrAdmissionNo).trim() === '' || ['not provided', 'notprovided', 'none', 'null', 'undefined'].includes(String(studentIdOrAdmissionNo).trim().toLowerCase())) {
     return false;
   }
-  _students = loadSavedStudents();
+  _students = loadSavedStudents(true);
   const target = _students.find(s => 
     s.id === studentIdOrAdmissionNo || 
     (s.code && s.code === studentIdOrAdmissionNo) || 
@@ -1009,6 +1017,8 @@ export function deleteStudent(studentIdOrAdmissionNo: number | string): boolean 
     (!target || s.id !== target.id)
   );
 
+  _cachedStudents = _students;
+
   if (typeof window !== 'undefined') {
     try {
       localStorage.setItem('tarepet_students_list', JSON.stringify(_students));
@@ -1023,9 +1033,12 @@ export function deleteStudent(studentIdOrAdmissionNo: number | string): boolean 
   }
 
   broadcastRealtimeEvent();
+  sendWebSocketEvent('STUDENT_DELETED', { studentId: studentIdOrAdmissionNo, identifiers: deleteIds });
+  sendWebSocketEvent('ROSTER_UPDATED', { action: 'delete_student', studentId: studentIdOrAdmissionNo, identifiers: deleteIds });
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('tarepet_store_updated', { detail: { type: 'student_deleted', id: studentIdOrAdmissionNo } }));
     window.dispatchEvent(new CustomEvent('tarepet_student_deleted', { detail: { id: studentIdOrAdmissionNo } }));
+    window.dispatchEvent(new Event('cbt_store_updated'));
   }
   return true;
 }
@@ -1035,7 +1048,10 @@ let _cachedStudents: StudentRecord[] | null = null;
 
 function loadSavedStudents(forceReload = false): StudentRecord[] {
   if (typeof window === 'undefined') return DEFAULT_STUDENTS;
-  if (!forceReload && _cachedStudents && _cachedStudents.length >= DEFAULT_STUDENTS.length && _cachedStudents.length > 0) {
+  if (forceReload) {
+    _cachedStudents = null;
+  }
+  if (!forceReload && _cachedStudents !== null) {
     return _cachedStudents;
   }
   try {
@@ -1610,12 +1626,16 @@ export function saveStoredStudents(backendStudents: StudentRecord[]) {
 
 export function clearAllStoredStudents() {
   _students = [];
+  _cachedStudents = [];
   if (typeof window !== 'undefined') {
     try {
       localStorage.removeItem('tarepet_students_list');
     } catch (e) {}
+    window.dispatchEvent(new CustomEvent('tarepet_store_updated', { detail: { type: 'all_students_cleared' } }));
+    window.dispatchEvent(new Event('cbt_store_updated'));
   }
   broadcastRealtimeEvent();
+  sendWebSocketEvent('ROSTER_UPDATED', { action: 'clear_students' });
 }
 
 
@@ -1687,9 +1707,37 @@ if (typeof window !== 'undefined') {
     }
 
     if (event.type === 'ROSTER_UPDATED') {
+      if (event.payload?.action === 'clear_students') {
+        _students = [];
+        _cachedStudents = [];
+        refreshLocalState();
+        return;
+      }
+      if (event.payload?.action === 'clear_teachers') {
+        _teachers = [];
+        refreshLocalState();
+        return;
+      }
+      if (event.payload?.action === 'delete_student' && event.payload?.identifiers) {
+        recordDeletedAccount(event.payload.identifiers);
+        _cachedStudents = null;
+        _students = loadSavedStudents(true);
+        refreshLocalState();
+        return;
+      }
+      if (event.payload?.action === 'delete_teacher' && event.payload?.identifiers) {
+        recordDeletedAccount(event.payload.identifiers);
+        _teachers = loadSavedTeachers();
+        refreshLocalState();
+        return;
+      }
+
       const incomingStudent = event.payload?.student;
       if (incomingStudent && (incomingStudent.id || incomingStudent.code || incomingStudent.studentId)) {
-        _students = loadSavedStudents();
+        if (isAccountDeleted(incomingStudent.email) || isAccountDeleted(incomingStudent.id) || isAccountDeleted(incomingStudent.code)) {
+          return;
+        }
+        _students = loadSavedStudents(true);
         const existingIdx = _students.findIndex(s =>
           (incomingStudent.id && s.id === incomingStudent.id) ||
           (incomingStudent.email && s.email && s.email.toLowerCase() === incomingStudent.email.toLowerCase()) ||
@@ -1701,6 +1749,7 @@ if (typeof window !== 'undefined') {
         } else {
           _students = [incomingStudent, ..._students];
         }
+        _cachedStudents = _students;
         if (typeof window !== 'undefined') {
           try {
             localStorage.setItem('tarepet_students_list', JSON.stringify(_students));
@@ -1711,6 +1760,9 @@ if (typeof window !== 'undefined') {
 
       const incomingTeacher = event.payload?.teacher;
       if (incomingTeacher && (incomingTeacher.id || incomingTeacher.staffId || incomingTeacher.email)) {
+        if (isAccountDeleted(incomingTeacher.email) || isAccountDeleted(incomingTeacher.id) || isAccountDeleted(incomingTeacher.staffId)) {
+          return;
+        }
         _teachers = loadSavedTeachers();
         const existingIdx = _teachers.findIndex(t =>
           (incomingTeacher.id && t.id === incomingTeacher.id) ||
@@ -1731,17 +1783,68 @@ if (typeof window !== 'undefined') {
       }
     }
 
+    if (event.type === 'STUDENT_DELETED') {
+      const deleteIds = event.payload?.identifiers || [event.payload?.studentId || event.payload?.id];
+      recordDeletedAccount(deleteIds);
+      _cachedStudents = null;
+      _students = loadSavedStudents(true);
+      if (typeof window !== 'undefined') {
+        try { localStorage.setItem('tarepet_students_list', JSON.stringify(_students)); } catch (e) {}
+        window.dispatchEvent(new CustomEvent('tarepet_store_updated', { detail: { type: 'student_deleted', id: event.payload?.studentId } }));
+        window.dispatchEvent(new CustomEvent('tarepet_student_deleted', { detail: { id: event.payload?.studentId } }));
+      }
+      refreshLocalState();
+    }
+
+    if (event.type === 'TEACHER_DELETED') {
+      const deleteIds = event.payload?.identifiers || [event.payload?.teacherId || event.payload?.id];
+      recordDeletedAccount(deleteIds);
+      _teachers = loadSavedTeachers();
+      if (typeof window !== 'undefined') {
+        try { localStorage.setItem('tarepet_teachers_list', JSON.stringify(_teachers)); } catch (e) {}
+        window.dispatchEvent(new CustomEvent('tarepet_store_updated', { detail: { type: 'teacher_deleted', id: event.payload?.teacherId } }));
+        window.dispatchEvent(new CustomEvent('tarepet_teacher_deleted', { detail: { id: event.payload?.teacherId } }));
+      }
+      refreshLocalState();
+    }
+
+    if (event.type === 'SUBJECT_DELETED') {
+      const subjectId = event.payload?.id || event.payload?.subjectId;
+      if (subjectId) {
+        _subjects = loadSavedSubjects().filter(s => s.id !== subjectId && String(s.id) !== String(subjectId));
+        if (typeof window !== 'undefined') {
+          try { localStorage.setItem('tarepet_subjects_list', JSON.stringify(_subjects)); } catch (e) {}
+          window.dispatchEvent(new CustomEvent('tarepet_store_updated', { detail: { type: 'subject_deleted', id: subjectId } }));
+          window.dispatchEvent(new CustomEvent('tarepet_subject_deleted', { detail: { id: subjectId } }));
+        }
+        refreshLocalState();
+      }
+    }
+
     if (event.type === 'EXAM_DELETED') {
       const deletedExamId = Number(event.payload?.examId || event.payload?.id);
       if (deletedExamId) {
         _exams = loadSavedExams().filter(e => Number(e.id) !== deletedExamId);
+        _submissions = loadSavedSubmissions().filter(s => Number(s.exam_id) !== deletedExamId);
         persistExams(_exams);
+        persistSubmissions(_submissions);
         refreshLocalState();
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('tarepet_store_updated', { detail: { type: 'exam_deleted', id: deletedExamId } }));
           window.dispatchEvent(new CustomEvent('tarepet_exam_deleted', { detail: { id: deletedExamId } }));
         }
       }
+    }
+
+    if (event.type === 'ALL_DATA_CLEARED') {
+      _exams = [];
+      _submissions = [];
+      _activities = [];
+      _teachers = [];
+      _students = [];
+      _cachedStudents = [];
+      _subjects = [];
+      refreshLocalState();
     }
   });
 }
@@ -2153,6 +2256,9 @@ export function deleteCBTExam(examId: number): boolean {
   _exams = filtered;
   persistExams(_exams);
 
+  _submissions = loadSavedSubmissions().filter(s => Number(s.exam_id) !== Number(examId));
+  persistSubmissions(_submissions);
+
   // Record deleted exam id in tarepet_deleted_exams so sync does not resurrect it
   try {
     const raw = localStorage.getItem('tarepet_deleted_exams');
@@ -2178,6 +2284,7 @@ export function deleteCBTExam(examId: number): boolean {
   }
   window.dispatchEvent(new CustomEvent('tarepet_store_updated', { detail: { type: 'exam_deleted', id: examId } }));
   window.dispatchEvent(new CustomEvent('tarepet_exam_deleted', { detail: { id: examId } }));
+  window.dispatchEvent(new Event('cbt_store_updated'));
   return true;
 }
 
@@ -2764,22 +2871,30 @@ export function subscribeToCBTStore(callback: () => void) {
     }, 50);
   };
 
+  const reloadAllState = () => {
+    _exams = loadSavedExams();
+    _submissions = loadSavedSubmissions();
+    _cachedStudents = null;
+    _students = loadSavedStudents(true);
+    _teachers = loadSavedTeachers();
+    _subjects = loadSavedSubjects();
+  };
+
   const handleUpdate = () => {
+    reloadAllState();
     debouncedCallback();
   };
 
   const handleStorage = (e: StorageEvent) => {
-    if (!e.key || e.key.startsWith('tarepet_cbt_')) {
-      _exams = loadSavedExams();
-      _submissions = loadSavedSubmissions();
+    if (!e.key || e.key.startsWith('tarepet_')) {
+      reloadAllState();
       debouncedCallback();
     }
   };
 
   const handleBcMessage = (event: MessageEvent) => {
-    if (event.data && event.data.type === 'CBT_STORE_MUTATED') {
-      _exams = loadSavedExams();
-      _submissions = loadSavedSubmissions();
+    if (event.data && (event.data.type === 'CBT_STORE_MUTATED' || String(event.data.type).includes('DELETED'))) {
+      reloadAllState();
       debouncedCallback();
     }
   };
@@ -3453,8 +3568,11 @@ export function clearAllSiteDefaultData(): void {
   _activities = [];
   _teachers = [];
   _students = [];
+  _cachedStudents = [];
+  _subjects = [];
 
   broadcastRealtimeEvent();
+  sendWebSocketEvent('ALL_DATA_CLEARED');
 }
 
 /**

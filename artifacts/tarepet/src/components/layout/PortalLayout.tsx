@@ -375,14 +375,14 @@ export const PortalLayout: React.FC<PortalLayoutProps> = ({
             >
               <Icon className="w-4 h-4 shrink-0" />
               <span>{item.label}</span>
-              {item.badge && (
-                <span className={`ml-auto text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center ${
+              {Boolean(typeof item.badge === 'number' ? item.badge > 0 : item.badge) && (
+                <span className={`ml-auto text-[10px] font-bold min-w-[20px] h-5 px-1.5 rounded-full flex items-center justify-center shrink-0 ${
                   isActive ? 'bg-white/20 text-white' : 'bg-primary text-white'
                 }`}>
                   {item.badge}
                 </span>
               )}
-              {isActive && <ChevronRight className="w-3 h-3 ml-auto opacity-70" />}
+              {isActive && <ChevronRight className="w-3 h-3 ml-auto opacity-70 shrink-0" />}
             </button>
           );
         })}

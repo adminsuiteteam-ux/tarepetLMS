@@ -147,6 +147,34 @@ if (typeof window !== 'undefined') {
       setAll(_notifications);
       notifyListeners();
     }
+
+    if (event.type === 'NOTIFICATION_DELETED' && event.payload?.id) {
+      const deletedId = String(event.payload.id);
+      _dismissedIds.add(deletedId);
+      saveDismissedIds(_dismissedIds);
+      _notifications = _notifications.filter(n => String(n.id) !== deletedId);
+      setAll(_notifications);
+      notifyListeners();
+    }
+
+    if (event.type === 'NOTIFICATIONS_CLEARED' && event.payload?.role) {
+      const clearedRole = String(event.payload.role).toUpperCase();
+      const ts = Number(event.payload.timestamp) || Date.now();
+      _clearAllTimestamps[clearedRole] = ts;
+      saveClearAllTimestamps(_clearAllTimestamps);
+      _notifications = _notifications.filter(n => !matchesRole(n.role, clearedRole));
+      setAll(_notifications);
+      notifyListeners();
+    }
+  });
+
+  window.addEventListener('storage', (e) => {
+    if (e.key === DISMISSED_IDS_KEY || e.key === CLEAR_ALL_TS_KEY || e.key === 'tarepet_notifications') {
+      _dismissedIds = loadDismissedIds();
+      _clearAllTimestamps = loadClearAllTimestamps();
+      _notifications = getAll();
+      notifyListeners();
+    }
   });
 }
 
@@ -260,8 +288,10 @@ export function clearNotification(id: string) {
   _dismissedIds.add(sId);
   saveDismissedIds(_dismissedIds);
 
-  setAll(getAll().filter(n => String(n.id) !== sId));
+  _notifications = getAll().filter(n => String(n.id) !== sId);
+  setAll(_notifications);
   notifyListeners();
+  sendWebSocketEvent('NOTIFICATION_DELETED', { id: sId });
   authClient.delete(`/communication/notifications/${id}/`).catch(() =>
     authClient.delete(`/notifications/${id}/`).catch(() => {})
   );
@@ -270,8 +300,9 @@ export function clearNotification(id: string) {
 export function clearAllNotifications(role: NotifRole) {
   const targetRole = (role || '').toUpperCase();
   // ★ Record the "clear all" timestamp for this role
-  _clearAllTimestamps[role] = Date.now();
-  if (targetRole !== role) _clearAllTimestamps[targetRole] = Date.now();
+  const nowTs = Date.now();
+  _clearAllTimestamps[role] = nowTs;
+  if (targetRole !== role) _clearAllTimestamps[targetRole] = nowTs;
   saveClearAllTimestamps(_clearAllTimestamps);
 
   // Also add every current notification for this role (or ALL) to the dismissed set
@@ -280,8 +311,10 @@ export function clearAllNotifications(role: NotifRole) {
   toClear.forEach(n => _dismissedIds.add(String(n.id)));
   saveDismissedIds(_dismissedIds);
 
-  setAll(allNotifs.filter(n => !matchesRole(n.role, targetRole)));
+  _notifications = allNotifs.filter(n => !matchesRole(n.role, targetRole));
+  setAll(_notifications);
   notifyListeners();
+  sendWebSocketEvent('NOTIFICATIONS_CLEARED', { role: targetRole, timestamp: nowTs });
   authClient.post(`/communication/notifications/clear-all/`, { role }).catch(() =>
     authClient.post(`/notifications/clear-all/`, { role }).catch(() => {})
   );

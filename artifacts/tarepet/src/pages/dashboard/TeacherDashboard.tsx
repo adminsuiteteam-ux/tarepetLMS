@@ -5047,6 +5047,10 @@ export default function TeacherDashboard() {
     return allSubs.filter(s => !s.gradebook_synced && !syncedSubmissionIds.has(String(s.id))).length;
   }, [syncedSubmissionIds, submissions]);
 
+  const teacherExamsCount = React.useMemo(() => {
+    return teacherExams?.length || 0;
+  }, [teacherExams]);
+
   return (
     <ProtectedRoute allowedRoles={['TEACHER', 'ADMIN']}>
       <PortalLayout
@@ -5054,7 +5058,7 @@ export default function TeacherDashboard() {
         activeSection={activeSection}
         onNavigate={setActiveSection}
         badges={{
-          exams: unreviewedSubmissionsCount,
+          exams: teacherExamsCount,
           results: unreviewedSubmissionsCount,
         }}
       >

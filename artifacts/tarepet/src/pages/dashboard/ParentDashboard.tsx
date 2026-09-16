@@ -15,6 +15,7 @@ import {
 import { authClient } from '@/lib/api-auth';
 import { getStoredExams, getStoredSubmissions, subscribeToCBTStore, getCoursesForClass, getStudentBroadsheet, calculateWAECGrade, syncStudentsWithBackend, broadcastRealtimeEvent, getStoredStudents } from '@/lib/cbt-store';
 import { subscribeToPaymentStore, syncPaymentsWithBackend } from '@/lib/payments-store';
+import { sendWebSocketEvent } from '@/lib/websocket-client';
 import { RealTimeSyncStatus } from '@/components/cbt/RealTimeSyncStatus';
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
 import { getTimeGreeting } from '@/lib/utils';
@@ -106,6 +107,7 @@ export default function ParentDashboard() {
     profileImage: user?.profile?.profile_image || (user as any)?.profile_image || user?.profile?.profileImage || '',
   }));
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [storeVersion, setStoreVersion] = useState(0);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -123,21 +125,34 @@ export default function ParentDashboard() {
     const intervalId = setInterval(syncBackend, 15000);
 
     const handleStoreUpdate = () => {
-      // Re-read student and exam data when store updates
+      setStoreVersion(v => v + 1);
     };
+
+    const handleAvatarUpdate = () => {
+      setParentProfile(prev => ({
+        ...prev,
+        profileImage: user?.profile?.profile_image || (user as any)?.profile_image || ''
+      }));
+      setStoreVersion(v => v + 1);
+    };
+
     const unsubCBT = subscribeToCBTStore(handleStoreUpdate);
     const unsubPayments = subscribeToPaymentStore(handleStoreUpdate);
     window.addEventListener('cbt_store_updated', handleStoreUpdate);
+    window.addEventListener('tarepet_avatar_deleted', handleAvatarUpdate);
+    window.addEventListener('tarepet_user_updated', handleAvatarUpdate);
 
     return () => {
       unsubCBT();
       unsubPayments();
       window.removeEventListener('cbt_store_updated', handleStoreUpdate);
+      window.removeEventListener('tarepet_avatar_deleted', handleAvatarUpdate);
+      window.removeEventListener('tarepet_user_updated', handleAvatarUpdate);
       clearInterval(intervalId);
     };
   }, []);
 
-  const allStoredStudents = getStoredStudents();
+  const allStoredStudents = React.useMemo(() => getStoredStudents(), [storeVersion]);
   const parentChildren = React.useMemo(() => {
     const parentPhone = (user?.phone || (user?.profile as any)?.phone || '').trim();
     const parentLastName = (user?.last_name || '').trim().toLowerCase();
@@ -731,6 +746,12 @@ export default function ParentDashboard() {
                         refreshUserProfile().catch(() => {});
                       }).catch(() => {});
                       broadcastRealtimeEvent();
+                      sendWebSocketEvent('AVATAR_DELETED', { role: 'PARENT', userId: user?.id });
+                      if (typeof window !== 'undefined') {
+                        window.dispatchEvent(new CustomEvent('tarepet_avatar_deleted'));
+                        window.dispatchEvent(new CustomEvent('tarepet_user_updated'));
+                        window.dispatchEvent(new Event('cbt_store_updated'));
+                      }
                       showToast('Photo removed!');
                     }}
                     className="px-3 py-1.5 text-rose-600 border border-rose-200 rounded-xl text-xs font-bold hover:bg-rose-50"

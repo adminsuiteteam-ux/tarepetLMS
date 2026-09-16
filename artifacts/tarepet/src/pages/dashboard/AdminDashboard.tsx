@@ -3060,10 +3060,12 @@ export default function AdminDashboard() {
       setStudentsList(latestStudents);
       setSelectedTeacher((prev: any) => {
         if (!prev) return null;
-        return latestTeachers.find((t: any) => (prev.id && t.id === prev.id) || (prev.staffId && t.staffId === prev.staffId) || (prev.email && t.email === prev.email)) || prev;
+        if (isAccountDeleted(prev.id) || isAccountDeleted(prev.staffId) || isAccountDeleted(prev.email)) return null;
+        return latestTeachers.find((t: any) => (prev.id && t.id === prev.id) || (prev.staffId && t.staffId === prev.staffId) || (prev.email && t.email === prev.email)) || null;
       });
       setSelectedUser((prev: any) => {
         if (!prev) return null;
+        if (isAccountDeleted(prev.id) || isAccountDeleted(prev.admissionNo) || isAccountDeleted(prev.studentId) || isAccountDeleted(prev.email)) return null;
         const isValidId = (v: any) => v && typeof v === 'string' && !['', 'not provided', 'notprovided', 'none', 'n/a', 'undefined', 'null'].includes(v.trim().toLowerCase());
         return latestStudents.find((s: any) => 
           (prev.id && s.id === prev.id) || 
@@ -3071,7 +3073,7 @@ export default function AdminDashboard() {
           (isValidId(prev.admissionNo) && s.admissionNo === prev.admissionNo) || 
           (isValidId(prev.studentId) && s.studentId === prev.studentId) ||
           (isValidId(prev.code) && s.code === prev.code)
-        ) || prev;
+        ) || null;
       });
     };
 
@@ -3197,6 +3199,12 @@ export default function AdminDashboard() {
       }).catch(() => {});
     }
     broadcastRealtimeEvent();
+    sendWebSocketEvent('AVATAR_DELETED', { role: 'TEACHER', id: updated.id, email: updated.email });
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('tarepet_avatar_deleted', { detail: { role: 'TEACHER', id: updated.id } }));
+      window.dispatchEvent(new CustomEvent('tarepet_user_updated', { detail: { role: 'TEACHER', id: updated.id } }));
+      window.dispatchEvent(new Event('cbt_store_updated'));
+    }
     showToast(`Photo for teacher ${updated.name} removed.`);
   };
 
@@ -3221,6 +3229,12 @@ export default function AdminDashboard() {
       }).catch(() => {});
     }
     broadcastRealtimeEvent();
+    sendWebSocketEvent('AVATAR_DELETED', { role: 'STUDENT', id: updated.id, email: updated.email });
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('tarepet_avatar_deleted', { detail: { role: 'STUDENT', id: updated.id } }));
+      window.dispatchEvent(new CustomEvent('tarepet_user_updated', { detail: { role: 'STUDENT', id: updated.id } }));
+      window.dispatchEvent(new Event('cbt_store_updated'));
+    }
     showToast(`Photo for student ${updated.name} removed.`);
   };
 
@@ -3273,8 +3287,11 @@ export default function AdminDashboard() {
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem('tarepet_class_timetables', JSON.stringify(newTimetables));
+        window.dispatchEvent(new CustomEvent('tarepet_timetable_updated', { detail: newTimetables }));
       } catch (e) {}
     }
+    broadcastRealtimeEvent();
+    sendWebSocketEvent('TIMETABLE_MUTATED', { timetables: newTimetables });
   };
 
   // Results & Report Card state
@@ -11422,8 +11439,11 @@ export default function AdminDashboard() {
         if (typeof window !== 'undefined') {
           try {
             localStorage.setItem('tarepet_calendar_events', JSON.stringify(updated));
+            window.dispatchEvent(new CustomEvent('tarepet_calendar_updated', { detail: updated }));
           } catch (e) {}
         }
+        broadcastRealtimeEvent();
+        sendWebSocketEvent('CALENDAR_MUTATED', { action: 'delete_event', id });
       };
 
       return (
@@ -11639,7 +11659,14 @@ export default function AdminDashboard() {
 
   return (
     <ProtectedRoute allowedRoles={['ADMIN']}>
-      <PortalLayout title="Admin Control Center" activeSection={activeSection} onNavigate={setActiveSection}>
+      <PortalLayout
+        title="Admin Control Center"
+        activeSection={activeSection}
+        onNavigate={setActiveSection}
+        badges={{
+          exams: examsList?.length || 0,
+        }}
+      >
         {idCardUser && <StudentIDModal student={idCardUser} onClose={() => setIdCardUser(null)} />}
         {showEditTeacherModal && editTeacherForm && (
           <EditTeacherModal

@@ -5,10 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Clock, CheckCircle2, AlertTriangle, ArrowLeft, ArrowRight, 
   BookOpen, Timer, Send, Shield, ChevronLeft, Calculator, Flag, GraduationCap,
-  Lock, Maximize2, ShieldAlert, EyeOff, Copy
+  Lock, Maximize2, ShieldAlert, EyeOff, Copy, Layers, ShieldCheck, FileText, Play, Check
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { useCustomDialog } from '@/context/DialogContext';
+import tarepetLogo from '@assets/tarepet__1784835204178.png';
 
 interface Question {
   id: number;
@@ -626,81 +627,248 @@ export default function StudentCBTExam() {
   // ============ PRE-EXAM CONFIRMATION ============
   if (phase === 'confirm' && selectedExam) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-blue-900 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-[#140608] to-slate-900 flex items-center justify-center p-4 md:p-8 relative overflow-hidden">
+        {/* Ambient Brand Background Glows */}
+        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-[#C8102E]/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-[#0F8A3D]/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-10 right-1/3 w-64 h-64 bg-[#D4AF37]/10 rounded-full blur-3xl pointer-events-none" />
+
         <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-8"
+          initial={{ scale: 0.95, opacity: 0, y: 15 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          transition={{ duration: 0.25, ease: 'easeOut' }}
+          className="bg-white dark:bg-slate-900 rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.4)] border border-slate-200/80 dark:border-slate-800 max-w-4xl w-full overflow-hidden relative z-10 flex flex-col"
         >
-          <div className="text-center mb-6">
-            <div className="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="w-8 h-8 text-amber-600" />
+          {/* Top Brand Banner */}
+          <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/80 flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-3">
+              <img
+                src={tarepetLogo}
+                alt="Tarepet Montessori Logo"
+                className="w-9 h-9 object-contain drop-shadow-sm rounded-full bg-white p-0.5"
+              />
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] uppercase tracking-wider font-bold text-[#C8102E]">
+                    Tarepet Montessori School
+                  </span>
+                  <span className="text-slate-300 dark:text-slate-600">•</span>
+                  <span className="text-[11px] font-semibold text-slate-500">CBT Portal</span>
+                </div>
+                <h3 className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Computer-Based Assessment Center
+                </h3>
+              </div>
             </div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">Ready to Start?</h2>
-            <p className="text-slate-500 text-sm">Please read the information below carefully before starting.</p>
+
+            <div className="flex items-center gap-2">
+              <span className={`text-xs font-bold px-3 py-1 rounded-full border ${
+                selectedExam.assessment_type === 'TEST'
+                  ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20'
+                  : 'bg-[#C8102E]/10 text-[#C8102E] dark:text-red-400 border-[#C8102E]/20'
+              }`}>
+                {selectedExam.assessment_type === 'TEST' ? 'Continuous Assessment' : 'Terminal Examination'}
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-emerald-500/10 text-[#0F8A3D] dark:text-emerald-400 border border-emerald-500/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#0F8A3D] animate-pulse"></span>
+                Anti-Cheat Active
+              </span>
+            </div>
           </div>
 
-          <div className="space-y-3 mb-6">
-            <div className="flex items-center gap-3 bg-slate-50 rounded-xl p-3">
-              <BookOpen className="w-5 h-5 text-blue-600 shrink-0" />
-              <div><span className="text-xs text-slate-400">Exam</span><p className="font-semibold text-slate-800 text-sm">{selectedExam.title}</p></div>
-            </div>
-            <div className="flex items-center gap-3 bg-slate-50 rounded-xl p-3">
-              <Timer className="w-5 h-5 text-red-500 shrink-0" />
-              <div><span className="text-xs text-slate-400">Duration</span><p className="font-semibold text-slate-800 text-sm">{selectedExam.duration_minutes} minutes</p></div>
-            </div>
-            <div className="flex items-center gap-3 bg-slate-50 rounded-xl p-3">
-              <Shield className="w-5 h-5 text-green-600 shrink-0" />
-              <div><span className="text-xs text-slate-400">Questions</span><p className="font-semibold text-slate-800 text-sm">{selectedExam.questions_count} questions, {selectedExam.questions_per_page} per page</p></div>
-            </div>
-          </div>
+          {/* Landscape 2-Column Split */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-slate-100 dark:divide-slate-800">
+            {/* Left Column: Exam Details & Parameters */}
+            <div className="lg:col-span-7 p-6 sm:p-8 flex flex-col justify-between space-y-6">
+              <div>
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  <span>{selectedExam.course_detail?.name || 'Academic Course'}</span>
+                  {selectedExam.course_detail?.code && (
+                    <>
+                      <span>•</span>
+                      <span className="text-slate-500">{selectedExam.course_detail.code}</span>
+                    </>
+                  )}
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug mt-1">
+                  {selectedExam.title}
+                </h2>
+                <div className="flex items-center flex-wrap gap-y-1 gap-x-4 mt-2.5 text-xs text-slate-500">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#C8102E]" />
+                    Term: <strong className="text-slate-700 dark:text-slate-200">{selectedExam.term || 'Current Term'}</strong>
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <GraduationCap className="w-3.5 h-3.5 text-slate-400" />
+                    Examiner: <strong className="text-slate-700 dark:text-slate-200">{selectedExam.teacher_name || 'Academic Faculty'}</strong>
+                  </span>
+                </div>
+              </div>
 
-          {selectedExam.instructions && (
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-              <h4 className="font-semibold text-amber-800 text-sm mb-1">Instructions:</h4>
-              <p className="text-amber-700 text-xs leading-relaxed">{selectedExam.instructions}</p>
+              {/* Metrics Grid (2x2) */}
+              <div className="grid grid-cols-2 gap-3.5">
+                <div className="bg-slate-50/80 dark:bg-slate-800/60 rounded-2xl p-3.5 border border-slate-200/60 dark:border-slate-700/60 flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 text-[#C8102E] flex items-center justify-center shrink-0">
+                    <Timer className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-medium text-slate-400 block">Duration</span>
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">
+                      {selectedExam.duration_minutes} Minutes
+                    </span>
+                    <span className="text-[10px] text-slate-400 block mt-0.5">Continuous countdown</span>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50/80 dark:bg-slate-800/60 rounded-2xl p-3.5 border border-slate-200/60 dark:border-slate-700/60 flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-[#0F8A3D] flex items-center justify-center shrink-0">
+                    <BookOpen className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-medium text-slate-400 block">Questions</span>
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">
+                      {selectedExam.questions_count} Questions
+                    </span>
+                    <span className="text-[10px] text-slate-400 block mt-0.5">Standard objective</span>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50/80 dark:bg-slate-800/60 rounded-2xl p-3.5 border border-slate-200/60 dark:border-slate-700/60 flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[#D4AF37] flex items-center justify-center shrink-0">
+                    <Layers className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-medium text-slate-400 block">Layout</span>
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">
+                      {selectedExam.questions_per_page} Per Page
+                    </span>
+                    <span className="text-[10px] text-slate-400 block mt-0.5">Paginated navigation</span>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50/80 dark:bg-slate-800/60 rounded-2xl p-3.5 border border-slate-200/60 dark:border-slate-700/60 flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-slate-500/10 border border-slate-500/20 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-medium text-slate-400 block">Attempts</span>
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">Single Attempt</span>
+                    <span className="text-[10px] text-slate-400 block mt-0.5">Auto-submits on timeout</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Strict Warning Banner */}
+              <div className="bg-[#C8102E]/5 border border-[#C8102E]/20 rounded-2xl p-4 flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-[#C8102E]/10 text-[#C8102E] flex items-center justify-center shrink-0 mt-0.5">
+                  <AlertTriangle className="w-4 h-4" />
+                </div>
+                <div className="text-xs">
+                  <strong className="text-slate-900 dark:text-slate-100 font-semibold block">
+                    Immediate Countdown & Auto-Submission
+                  </strong>
+                  <p className="text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                    Once you start, the timer begins immediately. If your time elapses, all saved answers are automatically locked and submitted for grading.
+                  </p>
+                </div>
+              </div>
             </div>
-          )}
 
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
-            <p className="text-red-700 text-xs font-medium flex items-center gap-1.5"><AlertTriangle className="w-4 h-4 text-red-600 shrink-0" /> Once you start, the timer begins immediately. If the timer runs out, your exam will be <strong>automatically submitted</strong>.</p>
-          </div>
+            {/* Right Column: Instructions & Actions */}
+            <div className="lg:col-span-5 p-6 sm:p-8 bg-slate-50/50 dark:bg-slate-950/40 flex flex-col justify-between space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <FileText className="w-4 h-4 text-[#C8102E]" /> Candidate Honor Code
+                  </h4>
+                  <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-md">
+                    Proctored
+                  </span>
+                </div>
 
-          <div className="flex gap-3">
-            <button
-              onClick={() => setPhase('list')}
-              className="flex-1 h-12 rounded-xl border border-slate-200 text-slate-600 font-medium hover:bg-slate-50 transition"
-            >
-              Go Back
-            </button>
-            <button
-              onClick={handleStartExam}
-              disabled={loading}
-              className="flex-1 h-12 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {loading ? 'Starting...' : 'Start Exam'}
-            </button>
+                {selectedExam.instructions && (
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-amber-800 dark:text-amber-400 mb-1.5">
+                      <span>📌 Exam Instructions:</span>
+                    </div>
+                    <p className="text-amber-900 dark:text-amber-200 text-xs leading-relaxed font-medium">
+                      {selectedExam.instructions}
+                    </p>
+                  </div>
+                )}
+
+                <div className="space-y-2.5 text-xs text-slate-600 dark:text-slate-400">
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-4 h-4 rounded-full bg-emerald-500/10 text-[#0F8A3D] flex items-center justify-center shrink-0 mt-0.5">
+                      <Check className="w-3 h-3" />
+                    </div>
+                    <span>Fullscreen browser lock is enforced throughout the examination.</span>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-4 h-4 rounded-full bg-emerald-500/10 text-[#0F8A3D] flex items-center justify-center shrink-0 mt-0.5">
+                      <Check className="w-3 h-3" />
+                    </div>
+                    <span>Switching tabs, minimizing, or copying text flags an integrity violation.</span>
+                  </div>
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-4 h-4 rounded-full bg-emerald-500/10 text-[#0F8A3D] flex items-center justify-center shrink-0 mt-0.5">
+                      <Check className="w-3 h-3" />
+                    </div>
+                    <span>Built-in scratch calculator is accessible from the top toolbar.</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="space-y-2.5 pt-2">
+                <button
+                  onClick={handleStartExam}
+                  disabled={loading}
+                  className="w-full h-12 rounded-xl bg-[#C8102E] hover:bg-[#A60D25] text-white font-bold transition duration-200 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-red-900/20 active:scale-[0.99] cursor-pointer text-sm"
+                >
+                  {loading ? (
+                    <span className="flex items-center gap-2">
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Initializing Session...
+                    </span>
+                  ) : (
+                    <>
+                      <Play className="w-4 h-4 fill-current" />
+                      <span>Start Examination</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => setPhase('list')}
+                  className="w-full h-10 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold hover:bg-slate-100 dark:hover:bg-slate-700/60 transition flex items-center justify-center gap-1.5 text-xs cursor-pointer"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Return to Exam Catalog</span>
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Attendance Clearance Notice Modal */}
           {showAttendanceNoticeModal && (
             <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-              <div className="bg-card border-2 border-rose-500/30 rounded-3xl shadow-2xl w-full max-w-md p-6 text-center space-y-5 animate-in fade-in zoom-in-95 duration-200">
-                <div className="w-16 h-16 rounded-full bg-rose-500/10 border-2 border-rose-500/20 text-rose-600 flex items-center justify-center mx-auto">
+              <div className="bg-card border-2 border-[#C8102E]/30 rounded-3xl shadow-2xl w-full max-w-md p-6 text-center space-y-5 animate-in fade-in zoom-in-95 duration-200">
+                <div className="w-16 h-16 rounded-full bg-[#C8102E]/10 border-2 border-[#C8102E]/20 text-[#C8102E] flex items-center justify-center mx-auto">
                   <Shield className="w-8 h-8" />
                 </div>
                 <div>
                   <h3 className="font-serif font-bold text-lg text-foreground">Attendance Verification Required</h3>
                   <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                    You have not yet been marked <strong className="text-rose-600">PRESENT</strong> by your exam invigilator/subject teacher for this CBT session.
+                    You have not yet been marked <strong className="text-[#C8102E]">PRESENT</strong> by your exam invigilator/subject teacher for this CBT session.
                   </p>
-                  <div className="mt-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-700 text-left">
+                  <div className="mt-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-700 dark:text-amber-300 text-left">
                     <strong>📌 Instructions:</strong> Please report to your class invigilator in the CBT exam hall to verify your physical presence and mark your attendance before clicking Start Examination.
                   </div>
                 </div>
                 <button
                   onClick={() => setShowAttendanceNoticeModal(false)}
-                  className="w-full py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs shadow-md transition-colors"
+                  className="w-full py-3 bg-[#C8102E] hover:bg-[#A60D25] text-white font-bold rounded-xl text-xs shadow-md transition-colors cursor-pointer"
                 >
                   Understand & Dismiss
                 </button>
@@ -781,9 +949,9 @@ export default function StudentCBTExam() {
               >
                 <Calculator className="w-3.5 h-3.5 text-primary" /> Calculator
               </button>
-              {warningCount > 0 && (
+              {integrityFlags.length > 0 && (
                 <span className="bg-amber-500/20 text-amber-300 text-[11px] font-bold px-2.5 py-1 rounded-lg border border-amber-400/30 flex items-center gap-1">
-                  <AlertTriangle className="w-3.5 h-3.5" /> Warnings: {warningCount}
+                  <AlertTriangle className="w-3.5 h-3.5" /> Warnings: {integrityFlags.length}
                 </span>
               )}
               <button

@@ -250,12 +250,23 @@ function broadcastPaymentMutation() {
 export function subscribeToPaymentStore(callback: () => void): () => void {
   if (typeof window === 'undefined') return () => {};
 
-  const handleEvent = () => callback();
+  const handleEvent = () => {
+    _paymentItems = loadSavedPaymentItems();
+    _transactions = loadSavedTransactions();
+    _classSchedules = loadSavedClassSchedules();
+    _discountPolicies = loadSavedDiscountPolicies();
+    callback();
+  };
   window.addEventListener('tarepet_payments_updated', handleEvent);
+  window.addEventListener('storage', (e) => {
+    if (!e.key || e.key.startsWith('tarepet_fee_') || e.key.startsWith('tarepet_class_fee') || e.key.startsWith('tarepet_discount')) {
+      handleEvent();
+    }
+  });
 
   let messageListener: ((e: MessageEvent) => void) | null = null;
   if (paymentBroadcastChannel) {
-    messageListener = () => callback();
+    messageListener = () => handleEvent();
     paymentBroadcastChannel.addEventListener('message', messageListener);
   }
 
