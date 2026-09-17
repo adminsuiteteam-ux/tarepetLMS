@@ -5764,15 +5764,17 @@ export default function TeacherDashboard() {
                       const isCorrect = correctOption !== undefined && correctOption !== null && studentAns !== 'Not Answered' && studentAns === correctOption;
                       const noAnswerKey = correctOption === undefined || correctOption === null;
                       return (
-                        <div key={q.id || idx} className={`p-4 rounded-2xl border transition-all ${isCorrect ? 'bg-emerald-500/5 border-emerald-200' : noAnswerKey ? 'bg-amber-500/5 border-amber-200' : 'bg-rose-500/5 border-rose-200'}`}>
+                        <div key={q.id || idx} className={`p-4 rounded-2xl border transition-all ${isCorrect ? 'bg-emerald-500/5 border-emerald-200' : noAnswerKey ? 'bg-muted/30 border-border' : 'bg-rose-500/5 border-rose-200'}`}>
                           <div className="flex items-start justify-between gap-3 mb-2">
                             <h5 className="font-bold text-xs text-foreground flex items-center gap-1.5">
                               <span className="w-5 h-5 rounded-md bg-muted flex items-center justify-center text-[10px] shrink-0 font-mono">{idx + 1}</span>
                               {q.question_text}
                             </h5>
-                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase shrink-0 ${isCorrect ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : noAnswerKey ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-rose-100 text-rose-800 border border-rose-300'}`}>
-                              {isCorrect ? '✓ Correct (+1 pt)' : noAnswerKey ? '⚠ No Answer Key' : '❌ Incorrect (0 pt)'}
-                            </span>
+                            {!noAnswerKey && (
+                              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase shrink-0 ${isCorrect ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-rose-100 text-rose-800 border border-rose-300'}`}>
+                                {isCorrect ? '✓ Correct (+1 pt)' : '❌ Incorrect (0 pt)'}
+                              </span>
+                            )}
                           </div>
 
                           <div className="grid grid-cols-2 gap-2 mt-3 text-xs">
@@ -5780,21 +5782,29 @@ export default function TeacherDashboard() {
                               const optProp = `option_${optKey.toLowerCase()}`;
                               const optText = getSafeProperty(q, optProp);
                               const isSelected = studentAns === optKey;
-                              const isCorrectOpt = q.correct_option === optKey;
+                              const isCorrectOpt = !noAnswerKey && q.correct_option === optKey;
+                              const isSelectedCorrect = isSelected && isCorrectOpt;
+                              const isSelectedWrong = isSelected && !isCorrectOpt && !noAnswerKey;
                               return (
                                 <div
                                   key={optKey}
-                                  className={`p-2.5 rounded-xl border text-xs flex items-center justify-between ${
-                                    isCorrectOpt
+                                  className={`p-2.5 rounded-xl border text-xs flex items-center justify-between gap-1 ${
+                                    isSelectedCorrect
+                                      ? 'bg-emerald-500/15 border-emerald-500 text-emerald-900 font-bold ring-1 ring-emerald-400'
+                                      : isCorrectOpt
                                       ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-900 font-bold'
-                                      : isSelected
+                                      : isSelectedWrong
                                       ? 'bg-rose-500/10 border-rose-500/40 text-rose-900 font-bold'
+                                      : isSelected
+                                      ? 'bg-sky-500/10 border-sky-500/40 text-sky-900 font-bold'
                                       : 'bg-card border-border text-muted-foreground'
                                   }`}
                                 >
                                   <span><strong className="mr-1">{optKey}.</strong> {String(optText || '')}</span>
-                                  {isCorrectOpt && <span className="text-[10px] font-bold text-emerald-700">✓ Correct</span>}
-                                  {isSelected && !isCorrectOpt && <span className="text-[10px] font-bold text-rose-700">{t('teacher.selected_incorrect', 'Selected ❌')}</span>}
+                                  <span className="flex items-center gap-1 shrink-0 flex-wrap justify-end">
+                                    {isCorrectOpt && <span className="px-1.5 py-0.5 rounded-md bg-emerald-600 text-white text-[9px] font-bold">✓ Answer</span>}
+                                    {isSelected && <span className={`px-1.5 py-0.5 rounded-md text-white text-[9px] font-bold ${isCorrectOpt ? 'bg-emerald-700' : 'bg-rose-600'}`}>👤 Student</span>}
+                                  </span>
                                 </div>
                               );
                             })}
