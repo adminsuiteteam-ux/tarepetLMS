@@ -302,7 +302,7 @@ SESSION_COOKIE_AGE = 86400 * 30  # 30 days
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 
-if _redis_url and is_render and not _redis_url.startswith('redis://red-'):
+if _redis_url:
     try:
         # pyrefly: ignore [missing-import]
         import django_redis
