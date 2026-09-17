@@ -5782,29 +5782,19 @@ export default function TeacherDashboard() {
                               const optProp = `option_${optKey.toLowerCase()}`;
                               const optText = getSafeProperty(q, optProp);
                               const isSelected = studentAns === optKey;
-                              const isCorrectOpt = !noAnswerKey && q.correct_option === optKey;
-                              const isSelectedCorrect = isSelected && isCorrectOpt;
-                              const isSelectedWrong = isSelected && !isCorrectOpt && !noAnswerKey;
+                              const isCorrectOpt = q.correct_option === optKey;
                               return (
                                 <div
                                   key={optKey}
-                                  className={`p-2.5 rounded-xl border text-xs flex items-center justify-between gap-1 ${
-                                    isSelectedCorrect
-                                      ? 'bg-emerald-500/15 border-emerald-500 text-emerald-900 font-bold ring-1 ring-emerald-400'
-                                      : isCorrectOpt
+                                  className={`p-2.5 rounded-xl border text-xs flex items-center gap-2 ${
+                                    isCorrectOpt
                                       ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-900 font-bold'
-                                      : isSelectedWrong
-                                      ? 'bg-rose-500/10 border-rose-500/40 text-rose-900 font-bold'
                                       : isSelected
-                                      ? 'bg-sky-500/10 border-sky-500/40 text-sky-900 font-bold'
+                                      ? 'bg-rose-500/10 border-rose-500/40 text-rose-900 font-bold'
                                       : 'bg-card border-border text-muted-foreground'
                                   }`}
                                 >
                                   <span><strong className="mr-1">{optKey}.</strong> {String(optText || '')}</span>
-                                  <span className="flex items-center gap-1 shrink-0 flex-wrap justify-end">
-                                    {isCorrectOpt && <span className="px-1.5 py-0.5 rounded-md bg-emerald-600 text-white text-[9px] font-bold">✓ Answer</span>}
-                                    {isSelected && <span className={`px-1.5 py-0.5 rounded-md text-white text-[9px] font-bold ${isCorrectOpt ? 'bg-emerald-700' : 'bg-rose-600'}`}>👤 Student</span>}
-                                  </span>
                                 </div>
                               );
                             })}
