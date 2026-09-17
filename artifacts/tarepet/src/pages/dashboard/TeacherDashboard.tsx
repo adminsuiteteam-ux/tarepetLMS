@@ -1,4 +1,4 @@
-// Tarepet Montessori Teacher Dashboard Component (Fully Internationalized)
+﻿// Tarepet Montessori Teacher Dashboard Component (Fully Internationalized)
 import React, { useState, useMemo } from 'react';
 import { PortalLayout } from '@/components/layout/PortalLayout';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -5753,17 +5753,25 @@ export default function TeacherDashboard() {
 
                   <div className="space-y-3">
                     {examQuestions.map((q: any, idx: number) => {
-                      const studentAns = getSafeProperty(answers || {}, q.id) || 'Not Answered';
-                      const isCorrect = studentAns === q.correct_option;
+                      // Try both string and numeric key forms — JSON serialization always produces string keys
+                      const answersObj = answers || {};
+                      const studentAns: string =
+                        (getSafeProperty(answersObj, String(q.id)) as string) ||
+                        (getSafeProperty(answersObj, q.id) as string) ||
+                        'Not Answered';
+                      // Only mark as correct when both values are defined and match (avoids false "Incorrect" when correct_option is missing)
+                      const correctOption: string | undefined = q.correct_option;
+                      const isCorrect = correctOption !== undefined && correctOption !== null && studentAns !== 'Not Answered' && studentAns === correctOption;
+                      const noAnswerKey = correctOption === undefined || correctOption === null;
                       return (
-                        <div key={q.id || idx} className={`p-4 rounded-2xl border transition-all ${isCorrect ? 'bg-emerald-500/5 border-emerald-200' : 'bg-rose-500/5 border-rose-200'}`}>
+                        <div key={q.id || idx} className={`p-4 rounded-2xl border transition-all ${isCorrect ? 'bg-emerald-500/5 border-emerald-200' : noAnswerKey ? 'bg-amber-500/5 border-amber-200' : 'bg-rose-500/5 border-rose-200'}`}>
                           <div className="flex items-start justify-between gap-3 mb-2">
                             <h5 className="font-bold text-xs text-foreground flex items-center gap-1.5">
                               <span className="w-5 h-5 rounded-md bg-muted flex items-center justify-center text-[10px] shrink-0 font-mono">{idx + 1}</span>
                               {q.question_text}
                             </h5>
-                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase shrink-0 ${isCorrect ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-rose-100 text-rose-800 border border-rose-300'}`}>
-                              {isCorrect ? '✓ Correct (+1 pt)' : '❌ Incorrect (0 pt)'}
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase shrink-0 ${isCorrect ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : noAnswerKey ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-rose-100 text-rose-800 border border-rose-300'}`}>
+                              {isCorrect ? '✓ Correct (+1 pt)' : noAnswerKey ? '⚠ No Answer Key' : '❌ Incorrect (0 pt)'}
                             </span>
                           </div>
 
