@@ -5782,19 +5782,26 @@ export default function TeacherDashboard() {
                               const optProp = `option_${optKey.toLowerCase()}`;
                               const optText = getSafeProperty(q, optProp);
                               const isSelected = studentAns === optKey;
-                              const isCorrectOpt = q.correct_option === optKey;
+                              const isCorrectOpt = String(q.correct_option || '').trim().toUpperCase() === optKey;
+                              const studentPickedCorrect = isSelected && isCorrectOpt;
+                              const studentPickedWrong = isSelected && !isCorrectOpt;
                               return (
                                 <div
                                   key={optKey}
-                                  className={`p-2.5 rounded-xl border text-xs flex items-center gap-2 ${
+                                  className={`p-2.5 rounded-xl border text-xs flex items-center justify-between gap-2 ${
                                     isCorrectOpt
-                                      ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-900 font-bold'
-                                      : isSelected
-                                      ? 'bg-rose-500/10 border-rose-500/40 text-rose-900 font-bold'
+                                      ? 'bg-emerald-500/10 border-emerald-500 text-emerald-900 font-semibold'
+                                      : studentPickedWrong
+                                      ? 'bg-rose-500/10 border-rose-500 text-rose-900 font-semibold'
                                       : 'bg-card border-border text-muted-foreground'
                                   }`}
                                 >
                                   <span><strong className="mr-1">{optKey}.</strong> {String(optText || '')}</span>
+                                  <span className="shrink-0 text-[9px] font-bold">
+                                    {isCorrectOpt && studentPickedCorrect && <span className="text-emerald-700">✓ Correct · Student</span>}
+                                    {isCorrectOpt && !studentPickedCorrect && <span className="text-emerald-700">✓ Correct</span>}
+                                    {studentPickedWrong && <span className="text-rose-700">✗ Student</span>}
+                                  </span>
                                 </div>
                               );
                             })}
