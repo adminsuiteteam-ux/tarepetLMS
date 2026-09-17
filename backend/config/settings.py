@@ -228,7 +228,7 @@ if _db_config.get('ENGINE') != 'django.db.backends.sqlite3':
         'connect_timeout': 60,  # allow 60s for Layerbase/Neon cold-start wake-up
     }
     _db_config.update({
-        'CONN_MAX_AGE': 0,   # serverless: no persistent connections (prevents mid-op drops)
+        'CONN_MAX_AGE': 60,  # reuse database connections for 60s to handle concurrent student traffic without connection storms
         'OPTIONS': _db_options,
     })
 DATABASES = {'default': _db_config}

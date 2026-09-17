@@ -159,6 +159,7 @@ class CBTExam(models.Model):
     questions_per_page = models.PositiveIntegerField(default=1, help_text=_('Number of questions displayed per screen view'))
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.DRAFT)
     results_released = models.BooleanField(default=False, help_text=_('Whether students can view their detailed exam scores'))
+    is_locked = models.BooleanField(default=False, help_text=_('Whether exam is locked from starting or submitting'))
     rejection_reason = models.TextField(blank=True, null=True)
     approved_by = models.ForeignKey('users.CustomUser', on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_exams')
     created_at = models.DateTimeField(auto_now_add=True)

@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Clock, CheckCircle2, AlertTriangle, ArrowLeft, ArrowRight, 
   BookOpen, Timer, Send, Shield, ChevronLeft, Calculator, Flag, GraduationCap,
-  Lock, Maximize2, ShieldAlert, EyeOff, Copy, Layers, ShieldCheck, FileText, Play, Check
+  Lock, Maximize2, ShieldAlert, EyeOff, Copy, Layers, ShieldCheck, FileText, Play, Check,
+  Printer, RefreshCw, Loader2, Cloud, CloudOff
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { useCustomDialog } from '@/context/DialogContext';
@@ -44,6 +45,7 @@ interface AvailableExam {
   questions_per_page: number;
   teacher_name: string;
   results_released?: boolean;
+  is_locked?: boolean;
   class?: string;
   stream?: string;
   course_code?: string;
@@ -53,7 +55,7 @@ interface AvailableExam {
 
 type Phase = 'list' | 'confirm' | 'exam' | 'result';
 
-import { getStoredExams, submitStudentCBTAttempt, subscribeToCBTStore, hasStudentSubmittedExam, getStudentSubmission, isStudentMarkedPresent, CBTIntegrityFlag } from '@/lib/cbt-store';
+import { getStoredExams, submitStudentCBTAttempt, saveStudentCBTProgress, subscribeToCBTStore, hasStudentSubmittedExam, getStudentSubmission, isStudentMarkedPresent, CBTIntegrityFlag } from '@/lib/cbt-store';
 
 function getQuestionOption(q: Question, opt: 'A' | 'B' | 'C' | 'D'): string {
   switch (opt) {
@@ -312,6 +314,14 @@ export default function StudentCBTExam() {
   flagsRef.current = integrityFlags;
   const pauseTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const warningToastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Real-Time Autosave, Sync Status, and Incognito Warning State
+  const [syncStatus, setSyncStatus] = useState<'saved' | 'saving' | 'error' | 'offline'>('saved');
+  const [lastSavedTime, setLastSavedTime] = useState<string | null>(null);
+  const [isIncognito, setIsIncognito] = useState(false);
+  const [dismissIncognitoWarning, setDismissIncognitoWarning] = useState(false);
+  const [submissionError, setSubmissionError] = useState<{ message: string; isNetwork?: boolean } | null>(null);
+  const autosaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const requestBrowserFullscreen = useCallback(() => {
     try {
@@ -599,6 +609,65 @@ export default function StudentCBTExam() {
     return () => unsub();
   }, []);
 
+  // Detect Private / Incognito Browsing Mode
+  useEffect(() => {
+    const detectIncognito = async () => {
+      try {
+        const fs = (window as any).RequestFileSystem || (window as any).webkitRequestFileSystem;
+        if (fs) {
+          fs((window as any).TEMPORARY, 100, () => setIsIncognito(false), () => setIsIncognito(true));
+          return;
+        }
+        if ('storage' in navigator && 'estimate' in navigator.storage) {
+          const { quota } = await navigator.storage.estimate();
+          if (quota && quota < 2147483648) {
+            setIsIncognito(true);
+          }
+        }
+      } catch (e) {}
+    };
+    detectIncognito();
+  }, []);
+
+  // Autosave Progress to Backend
+  const triggerAutosave = useCallback(async (currentAnswers = answers) => {
+    if (!selectedExam || phase !== 'exam') return;
+    if (Object.keys(currentAnswers).length === 0) return;
+
+    setSyncStatus('saving');
+    try {
+      const res = await saveStudentCBTProgress(selectedExam.id, currentAnswers, {
+        flags: flagsRef.current,
+        autoPaused: autoPausedRef.current,
+        pauseEvents: pauseEvents,
+      });
+      if (res.success) {
+        setSyncStatus('saved');
+        setLastSavedTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+      } else {
+        setSyncStatus(navigator.onLine ? 'saved' : 'offline');
+      }
+    } catch (err: any) {
+      if (err?.message?.includes('locked')) {
+        showAlert({
+          title: 'Exam Locked by Examiner',
+          message: 'The examiner has locked this exam session. Progress autosave and submissions are paused.',
+          type: 'warning',
+        });
+      }
+      setSyncStatus('error');
+    }
+  }, [selectedExam, phase, answers, pauseEvents, showAlert]);
+
+  // Periodic autosave every 45s while in exam phase
+  useEffect(() => {
+    if (phase !== 'exam' || !selectedExam) return;
+    const interval = setInterval(() => {
+      triggerAutosave();
+    }, 45000);
+    return () => clearInterval(interval);
+  }, [phase, selectedExam, triggerAutosave]);
+
   // Auto-restore active exam session or active lockout on page reload/mount
   useEffect(() => {
     if (!user) return;
@@ -746,6 +815,17 @@ export default function StudentCBTExam() {
     const studentIdentifier = getStudentIdentifier(user);
     const studentName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email : 'Student';
 
+    if (selectedExam.is_locked) {
+      showAlert({
+        title: 'Exam Locked by Examiner',
+        message: 'This examination has been temporarily locked by the examiner. You cannot start until the supervisor unlocks it.',
+        type: 'warning',
+        badge: 'Session Locked',
+        confirmText: 'Understood',
+      });
+      return;
+    }
+
     if (hasStudentSubmittedExam(selectedExam.id, studentIdentifier)) {
       showAlert({
         title: 'Single Attempt Restriction',
@@ -860,13 +940,19 @@ export default function StudentCBTExam() {
         currentPage,
         timeLeft,
       });
+      // Debounce autosave to server (2 seconds)
+      if (autosaveTimeoutRef.current) clearTimeout(autosaveTimeoutRef.current);
+      autosaveTimeoutRef.current = setTimeout(() => {
+        triggerAutosave(nextAnswers);
+      }, 2000);
     }
   };
 
-  const handleSubmit = useCallback(async (auto = false) => {
+  const handleSubmit = useCallback(async (auto = false, forceOffline = false) => {
     if (submittedRef.current || !selectedExam || !examData) return;
     submittedRef.current = true;
     setIsSubmitting(true);
+    setSubmissionError(null);
     if (timerRef.current) clearInterval(timerRef.current);
     if (pauseTimerRef.current) clearInterval(pauseTimerRef.current);
 
@@ -893,7 +979,7 @@ export default function StudentCBTExam() {
         flags: flagsRef.current,
         autoPaused: autoPausedRef.current,
         pauseEvents: pauseEvents,
-      }, auto);
+      }, auto, forceOffline);
 
       // Clear storage on successful submission
       clearLockout(studentId, selectedExam.id);
@@ -903,8 +989,14 @@ export default function StudentCBTExam() {
 
       setResult({
         exam_title: selectedExam.title,
-        course_name: selectedExam.course_detail?.name || selectedExam.title,
+        course_name: selectedExam.course_name || selectedExam.course_code || selectedExam.title,
         submitted_at: subResult.submitted_at,
+        submission_receipt_id: subResult.submission_receipt_id || `TMS-REC-${subResult.id}`,
+        server_confirmed: Boolean(subResult.server_confirmed),
+        student_name: studentName,
+        student_id: studentId,
+        class: studentClass,
+        stream: studentStream,
         auto_submitted: auto,
         results_released: isReleased,
         score: subResult.score,
@@ -915,16 +1007,24 @@ export default function StudentCBTExam() {
 
       setPhase('result');
     } catch (err: any) {
-      showAlert({
-        title: 'Submission Error',
-        message: 'Failed to record your exam attempt. Please check your internet connection and retry.',
-        type: 'error',
-      });
+      console.warn('[CBTExam] Submission failed:', err);
       submittedRef.current = false;
+      const isNet = Boolean(err.isNetworkError);
+      setSubmissionError({
+        message: err.message || 'Failed to record your exam attempt. Please check your internet connection and retry.',
+        isNetwork: isNet,
+      });
+      if (!isNet) {
+        showAlert({
+          title: 'Submission Blocked',
+          message: err.message || 'Failed to submit exam attempt. The exam may be locked by the examiner.',
+          type: 'error',
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
-  }, [selectedExam, examData, answers, user, showAlert, getStudentIdentifier, pauseEvents]);
+  }, [selectedExam, examData, answers, user, showAlert, getStudentIdentifier, pauseEvents, triggerAutosave]);
 
   // Pagination
   const questionsPerPage = examData?.questions_per_page || 1;
@@ -998,6 +1098,14 @@ export default function StudentCBTExam() {
                             confirmText: 'Understood',
                           });
                         }
+                      } else if (exam.is_locked) {
+                        showAlert({
+                          title: 'Exam Locked by Examiner',
+                          message: `"${exam.title}" has been temporarily locked by your teacher or exam supervisor. Please wait until they unlock it to begin.`,
+                          type: 'warning',
+                          badge: 'Exam Locked',
+                          confirmText: 'Understood',
+                        });
                       } else {
                         setSelectedExam(exam);
                         const lock = getActiveLockout(studentIdentifier, exam.id);
@@ -1044,6 +1152,11 @@ export default function StudentCBTExam() {
                           <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
                             {exam.term.replace('_', ' ')}
                           </span>
+                          {!submitted && exam.is_locked && (
+                            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1">
+                              <Lock className="w-3.5 h-3.5 text-amber-700" /> Locked by Examiner
+                            </span>
+                          )}
                           {!submitted && activeLock && activeLock.remainingSeconds > 0 && (
                             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300 flex items-center gap-1 animate-pulse">
                               <Lock className="w-3.5 h-3.5 text-rose-600" /> Locked ({formatTime(activeLock.remainingSeconds)})
@@ -1075,6 +1188,10 @@ export default function StudentCBTExam() {
                           ) : (
                             <span className="text-xs font-bold text-amber-700 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200">1 Attempt Used</span>
                           )
+                        ) : exam.is_locked ? (
+                          <span className="text-xs font-bold text-amber-800 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200 flex items-center gap-1">
+                            <Lock className="w-3 h-3 text-amber-600" /> Locked
+                          </span>
                         ) : (
                           <ArrowRight className="w-5 h-5 text-slate-300" />
                         )}
@@ -1141,6 +1258,37 @@ export default function StudentCBTExam() {
               </span>
             </div>
           </div>
+
+          {/* Incognito Warning Banner */}
+          {isIncognito && !dismissIncognitoWarning && (
+            <div className="bg-amber-500/15 border-b border-amber-500/30 px-6 py-3 text-amber-900 dark:text-amber-200 text-xs flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2.5">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                <div>
+                  <span className="font-bold">Private / Incognito Window Detected: </span>
+                  <span>Browser memory and local autosave may not persist if this tab closes or is refreshed. For guaranteed exam recovery, take this in a standard browser window.</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDismissIncognitoWarning(true)}
+                className="text-amber-800 dark:text-amber-300 hover:text-amber-950 font-bold underline cursor-pointer shrink-0 text-xs ml-auto"
+              >
+                Acknowledge & Dismiss
+              </button>
+            </div>
+          )}
+
+          {/* Exam Locked Banner */}
+          {selectedExam.is_locked && (
+            <div className="bg-rose-500/15 border-b border-rose-500/30 px-6 py-3 text-rose-900 dark:text-rose-200 text-xs flex items-center gap-2.5">
+              <Lock className="w-4 h-4 text-rose-600 shrink-0" />
+              <div>
+                <span className="font-bold">Exam Session Locked: </span>
+                <span>The examiner has currently locked this exam. Students cannot start new attempts until the supervisor unlocks it.</span>
+              </div>
+            </div>
+          )}
 
           {/* Landscape 2-Column Split */}
           <div className="grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-slate-100 dark:divide-slate-800">
@@ -1295,9 +1443,11 @@ export default function StudentCBTExam() {
                   return (
                     <button
                       onClick={handleStartExam}
-                      disabled={loading}
+                      disabled={loading || selectedExam.is_locked}
                       className={`w-full h-12 rounded-xl text-white font-bold transition duration-200 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg active:scale-[0.99] cursor-pointer text-sm ${
-                        isLocked
+                        selectedExam.is_locked
+                          ? 'bg-amber-700 hover:bg-amber-800 shadow-amber-950/30'
+                          : isLocked
                           ? 'bg-rose-700 hover:bg-rose-800 shadow-rose-950/30'
                           : 'bg-[#C8102E] hover:bg-[#A60D25] shadow-red-900/20'
                       }`}
@@ -1307,10 +1457,15 @@ export default function StudentCBTExam() {
                           <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                           Initializing Session...
                         </span>
+                      ) : selectedExam.is_locked ? (
+                        <>
+                          <Lock className="w-4 h-4" />
+                          <span>Exam Locked by Examiner</span>
+                        </>
                       ) : isLocked ? (
                         <>
                           <Lock className="w-4 h-4" />
-                          <span>Exam Locked ({formatTime(activeLock!.remainingSeconds)} remaining)</span>
+                          <span>Security Lockout ({formatTime(activeLock!.remainingSeconds)} remaining)</span>
                         </>
                       ) : (
                         <>
@@ -1519,7 +1674,57 @@ export default function StudentCBTExam() {
     const currentQ = examData.questions[currentPage] || examData.questions[0];
 
     return (
-      <div className="min-h-screen bg-background flex flex-col font-sans select-none">
+      <div className="min-h-screen bg-background flex flex-col font-sans select-none relative">
+        {/* Fullscreen Submitting Overlay */}
+        {isSubmitting && (
+          <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 animate-in zoom-in-95 duration-200">
+              <div className="w-14 h-14 rounded-full border-4 border-primary/30 border-t-primary animate-spin mx-auto" />
+              <h3 className="font-bold text-base text-slate-900 dark:text-white">Securing & Submitting Exam...</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Contacting examination server to record and confirm your attempt receipt. Please remain on this screen.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Submission Error & Offline Recovery Modal */}
+        {submissionError && (
+          <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 max-w-md w-full text-center shadow-2xl border border-rose-200 dark:border-rose-900 space-y-4 animate-in zoom-in-95 duration-200">
+              <div className="w-14 h-14 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+                <AlertTriangle className="w-7 h-7" />
+              </div>
+              <h3 className="font-bold text-lg text-slate-900 dark:text-white">Submission Unconfirmed</h3>
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                {submissionError.message}
+              </p>
+              <div className="bg-amber-50 dark:bg-amber-950/40 p-3.5 rounded-xl text-left border border-amber-200 dark:border-amber-800 text-xs text-amber-800 dark:text-amber-300 space-y-1">
+                <span className="font-bold block">Answers Preserved:</span>
+                <span>All {answeredCount} answered responses are securely cached in local storage. No work has been lost.</span>
+              </div>
+              <div className="flex flex-col gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => handleSubmit(false, false)}
+                  disabled={isSubmitting}
+                  className="w-full h-11 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  <RefreshCw className="w-4 h-4" /> Retry Server Submission
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSubmit(false, true)}
+                  disabled={isSubmitting}
+                  className="w-full h-10 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs transition cursor-pointer disabled:opacity-50"
+                >
+                  Submit Offline Copy & Alert Invigilator
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Fullscreen Alert Banner */}
         {!isFullscreen && (
           <div className="bg-amber-500 text-slate-950 px-4 py-2 text-xs font-bold flex items-center justify-between shadow-md z-50 sticky top-0">
@@ -1547,7 +1752,7 @@ export default function StudentCBTExam() {
           </div>
         )}
 
-        {/* Top Sticky Header with Timer */}
+        {/* Top Sticky Header with Timer & Sync Status */}
         <div className={`sticky ${!isFullscreen ? 'top-8' : 'top-0'} z-40 px-4 md:px-6 py-3.5 flex items-center justify-between border-b shadow-sm ${timerWarning ? 'bg-red-600 text-white' : 'bg-primary text-primary-foreground'}`}>
           <div className="flex items-center gap-3">
             <Link href="/dashboard/student">
@@ -1563,7 +1768,34 @@ export default function StudentCBTExam() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 md:gap-5">
+          <div className="flex items-center gap-2.5 md:gap-4 flex-wrap">
+            {/* Sync / Autosave Status Pill */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-white/15 text-white">
+              {syncStatus === 'saving' && (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-300" />
+                  <span className="text-amber-200 hidden sm:inline">Saving answers...</span>
+                </>
+              )}
+              {syncStatus === 'saved' && (
+                <>
+                  <Cloud className="w-3.5 h-3.5 text-emerald-300" />
+                  <span className="text-emerald-100 hidden sm:inline">Saved {lastSavedTime ? `(${lastSavedTime})` : ''}</span>
+                </>
+              )}
+              {(syncStatus === 'error' || syncStatus === 'offline') && (
+                <button
+                  type="button"
+                  onClick={() => triggerAutosave()}
+                  className="flex items-center gap-1 text-rose-200 hover:text-white cursor-pointer"
+                  title="Click to retry saving progress"
+                >
+                  <CloudOff className="w-3.5 h-3.5 text-rose-300 animate-pulse" />
+                  <span className="underline hidden sm:inline">Offline / Sync Issue (Retry)</span>
+                </button>
+              )}
+            </div>
+
             {/* Integrity Flags Badge */}
             <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold ${integrityFlags.length > 0 ? 'bg-rose-500/25 text-white border border-rose-400/50' : 'bg-white/15 text-white/90'}`}>
               <Shield className="w-3.5 h-3.5" />
@@ -1883,100 +2115,131 @@ export default function StudentCBTExam() {
     );
   }
 
-  // ============ RESULT / CONFIRMATION PHASE ============
+  // ============ RESULT / SUBMISSION RECEIPT PHASE ============
   if (phase === 'result' && result) {
     const isReleased = Boolean(result.results_released);
     const pct = result.percentage || 0;
     const passed = pct >= 50;
+    const isServerConfirmed = Boolean(result.server_confirmed);
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-blue-50 flex items-center justify-center p-4 md:p-8 print:p-0 print:bg-white">
         <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
+          initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-8 text-center"
+          className="bg-white rounded-3xl shadow-2xl max-w-xl w-full p-6 sm:p-8 text-center border border-slate-200/80 relative print:shadow-none print:border-none print:max-w-none"
         >
+          {/* Official Tarepet Header */}
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
+            <div className="flex items-center gap-3 text-left">
+              <img
+                src={tarepetLogo}
+                alt="Tarepet Logo"
+                className="w-10 h-10 object-contain rounded-full bg-slate-50 p-1 border border-slate-100"
+              />
+              <div>
+                <h3 className="font-bold text-sm text-slate-900 leading-tight">TAREPET MONTESSORI SCHOOL</h3>
+                <p className="text-[11px] font-medium text-slate-500">CBT Examination Center • Official Submission Receipt</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <span className={`text-[10px] font-bold uppercase px-2.5 py-1 rounded-full border flex items-center gap-1 ${
+                isServerConfirmed
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  : 'bg-amber-50 text-amber-700 border-amber-200'
+              }`}>
+                {isServerConfirmed ? <CheckCircle2 className="w-3 h-3 text-emerald-600" /> : <CloudOff className="w-3 h-3 text-amber-600" />}
+                {isServerConfirmed ? 'Server Confirmed' : 'Offline Stored'}
+              </span>
+            </div>
+          </div>
+
+          <div className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center bg-emerald-100 text-emerald-600 shadow-inner">
+            <ShieldCheck className="w-8 h-8" />
+          </div>
+
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 mb-1">
+            {result.auto_submitted ? "Time Expired — Exam Auto-Submitted!" : "Examination Submitted Successfully!"}
+          </h2>
+          <p className="text-slate-500 text-xs mb-6">
+            Your responses have been processed and locked. This document is your official submission confirmation.
+          </p>
+
+          {/* Reference Receipt Card */}
+          <div className="bg-slate-50 rounded-2xl p-4 mb-6 text-left border border-slate-200/70 space-y-2.5 text-xs">
+            <div className="flex justify-between items-center py-1 border-b border-slate-200/60 font-mono">
+              <span className="text-slate-500 font-medium uppercase text-[10px] tracking-wider">Receipt Reference ID:</span>
+              <span className="font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200/60">{result.submission_receipt_id || `TMS-REC-${result.id}`}</span>
+            </div>
+            <div className="flex justify-between py-1 border-b border-slate-200/60">
+              <span className="text-slate-500 font-medium">Student Name:</span>
+              <span className="font-bold text-slate-800">{result.student_name || user?.first_name || 'Student'}</span>
+            </div>
+            <div className="flex justify-between py-1 border-b border-slate-200/60">
+              <span className="text-slate-500 font-medium">Student ID / Reg No:</span>
+              <span className="font-mono font-semibold text-slate-700">{result.student_id || 'TMS-STD-001'}</span>
+            </div>
+            <div className="flex justify-between py-1 border-b border-slate-200/60">
+              <span className="text-slate-500 font-medium">Exam Title:</span>
+              <span className="font-bold text-slate-800 truncate max-w-[220px]">{result.exam_title || selectedExam?.title}</span>
+            </div>
+            <div className="flex justify-between py-1 border-b border-slate-200/60">
+              <span className="text-slate-500 font-medium">Submission Timestamp:</span>
+              <span className="font-mono text-slate-700">{result.submitted_at ? new Date(result.submitted_at).toLocaleString() : new Date().toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between py-1">
+              <span className="text-slate-500 font-medium">Security & Integrity State:</span>
+              <span className="font-bold text-emerald-600 flex items-center gap-1">
+                <Check className="w-3.5 h-3.5" /> 1 of 1 Attempt Recorded (Locked)
+              </span>
+            </div>
+          </div>
+
           {!isReleased ? (
-            // SECURE SUBMISSION CONFIRMATION (WITHHELD RESULTS)
-            <>
-              <div className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center bg-emerald-100 text-emerald-600 shadow-inner">
-                <Shield className="w-10 h-10" />
+            // Results Withheld Policy Notice
+            <div className="bg-amber-50/80 border border-amber-200 rounded-2xl p-4 mb-6 text-left space-y-2">
+              <div className="flex items-center gap-2 text-amber-900 font-bold text-xs">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>Results Withheld Policy</span>
               </div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-2">
-                {result.auto_submitted ? "Time Expired — Exam Auto-Submitted!" : "Exam Submitted Successfully!"}
-              </h2>
-              <p className="text-slate-500 text-sm mb-6">
-                Your examination responses have been logged securely.
+              <p className="text-amber-800 text-xs leading-relaxed">
+                To safeguard assessment integrity across cohorts, student scores are withheld upon submission. Your official score and grade will be released once authorized by your educator or the school administration.
               </p>
-
-              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 text-left space-y-2">
-                <div className="flex items-center gap-2 text-amber-800 font-bold text-xs">
-                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span>Results Withheld Policy</span>
-                </div>
-                <p className="text-amber-700 text-xs leading-relaxed">
-                  To protect exam confidentiality and maintain academic standards, student scores are not displayed immediately after submission. Your official result will be viewable once released by your teacher or school administrator.
-                </p>
-              </div>
-
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 mb-6 text-left space-y-2 text-xs">
-                <div className="flex justify-between py-1 border-b border-slate-200">
-                  <span className="text-slate-500 font-medium">Exam Title:</span>
-                  <span className="font-bold text-slate-800 truncate max-w-[200px]">{result.exam_title || selectedExam?.title}</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-slate-200">
-                  <span className="text-slate-500 font-medium">Submitted At:</span>
-                  <span className="font-mono text-slate-700">{result.submitted_at ? new Date(result.submitted_at).toLocaleTimeString() : new Date().toLocaleTimeString()}</span>
-                </div>
-                <div className="flex justify-between py-1">
-                  <span className="text-slate-500 font-medium">Attempt Status:</span>
-                  <span className="font-bold text-emerald-600">✓ 1 of 1 Attempt Recorded (Locked)</span>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setPhase('list')}
-                  className="flex-1 h-12 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition cursor-pointer"
-                >
-                  Back to Exams
-                </button>
-                <Link href="/dashboard/student" className="flex-1">
-                  <button className="w-full h-12 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition cursor-pointer">
-                    Dashboard
-                  </button>
-                </Link>
-              </div>
-            </>
+            </div>
           ) : (
-            // RELEASED RESULTS VIEW
-            <>
-              <div className={`w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center ${passed ? 'bg-green-100' : 'bg-red-100'}`}>
-                {passed ? <CheckCircle2 className="w-10 h-10 text-green-600" /> : <AlertTriangle className="w-10 h-10 text-red-500" />}
+            // Results Released View
+            <div className="bg-slate-50 rounded-2xl p-5 mb-6 border border-slate-200">
+              <div className="text-4xl font-black mb-1" style={{ color: passed ? '#16a34a' : '#dc2626' }}>
+                {pct}%
               </div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-2">
-                Official Results Released
-              </h2>
-              <p className="text-slate-500 text-sm mb-6">
-                {result.exam_title || selectedExam?.title}
+              <p className="text-xs font-bold text-slate-600">
+                Score: {result.score} / {result.total_possible} Points • {passed ? 'PASSED' : 'NEEDS IMPROVEMENT'}
               </p>
-
-              <div className="bg-slate-50 rounded-2xl p-6 mb-6">
-                <div className="text-5xl font-black mb-2" style={{ color: passed ? '#16a34a' : '#dc2626' }}>
-                  {pct}%
-                </div>
-                <p className="text-slate-500 text-sm">
-                  Score: {result.score} / {result.total_possible}
-                </p>
-              </div>
-
-              <Link href="/dashboard/student">
-                <button className="w-full h-12 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition cursor-pointer">
-                  Back to Dashboard
-                </button>
-              </Link>
-            </>
+            </div>
           )}
+
+          {/* Action buttons (hidden when printing receipt) */}
+          <div className="flex flex-col sm:flex-row gap-2.5 print:hidden">
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="h-11 px-4 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <Printer className="w-3.5 h-3.5" /> Print Receipt
+            </button>
+            <button
+              type="button"
+              onClick={() => setPhase('list')}
+              className="flex-1 h-11 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition text-xs cursor-pointer"
+            >
+              Back to Exams
+            </button>
+            <Link href="/dashboard/student" className="flex-1">
+              <button className="w-full h-11 rounded-xl bg-primary text-white font-semibold hover:bg-primary/90 transition text-xs cursor-pointer shadow-md">
+                Student Dashboard
+              </button>
+            </Link>
+          </div>
         </motion.div>
       </div>
     );

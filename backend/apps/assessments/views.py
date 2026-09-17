@@ -551,6 +551,20 @@ class CBTExamViewSet(viewsets.ModelViewSet):
         exam.save()
         return Response({'detail': f'Results {"released" if released else "withheld"}.', 'results_released': exam.results_released})
 
+    # ---------- Teacher/Admin: Lock / Unlock Exam ----------
+    @action(detail=True, methods=['post'], permission_classes=[IsTeacher | IsAdmin])
+    def toggle_lock(self, request, pk=None):
+        exam = self.get_object()
+        locked = request.data.get('is_locked', not exam.is_locked)
+        exam.is_locked = bool(locked)
+        exam.save()
+        broadcast_cbt_event('EXAM_LOCKED' if exam.is_locked else 'EXAM_UNLOCKED', exam)
+        return Response({
+            'detail': f'Exam {"locked" if exam.is_locked else "unlocked"}.',
+            'is_locked': exam.is_locked,
+            'status': exam.status,
+        })
+
     # ---------- Admin: Reject ----------
     @action(detail=True, methods=['post'], permission_classes=[IsAdmin])
     def reject(self, request, pk=None):
@@ -574,6 +588,8 @@ class CBTExamViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], permission_classes=[IsStudent])
     def start(self, request, pk=None):
         exam = self.get_object()
+        if exam.is_locked:
+            return Response({'detail': 'This exam has been locked by the examiner and cannot be started.'}, status=status.HTTP_403_FORBIDDEN)
         if exam.status not in ('PUBLISHED', 'ACTIVE', 'APPROVED'):
             return Response({'detail': 'This exam is not active or has not been launched by the teacher yet.'}, status=status.HTTP_400_BAD_REQUEST)
         student = getattr(request.user, 'student_profile', None)
@@ -598,6 +614,7 @@ class CBTExamViewSet(viewsets.ModelViewSet):
             'duration_minutes': exam.duration_minutes,
             'questions_per_page': exam.questions_per_page,
             'instructions': exam.instructions,
+            'is_locked': exam.is_locked,
             'questions': questions,
         })
 
@@ -605,6 +622,8 @@ class CBTExamViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], permission_classes=[IsStudent])
     def save_answer(self, request, pk=None):
         exam = self.get_object()
+        if exam.is_locked:
+            return Response({'detail': 'This exam has been locked by the examiner.'}, status=status.HTTP_403_FORBIDDEN)
         student = getattr(request.user, 'student_profile', None)
         if not student:
             from apps.users.models import StudentProfile
@@ -631,10 +650,97 @@ class CBTExamViewSet(viewsets.ModelViewSet):
         )
         return Response({'detail': 'Answer saved.', 'question_id': question_id, 'selected_option': selected_option})
 
+    # ---------- Student: Batch save progress (autosave) ----------
+    @action(detail=True, methods=['post'], permission_classes=[IsStudent])
+    def save_progress(self, request, pk=None):
+        exam = self.get_object()
+        if exam.is_locked:
+            return Response({'detail': 'This exam has been locked by the examiner.'}, status=status.HTTP_403_FORBIDDEN)
+        student = getattr(request.user, 'student_profile', None)
+        if not student:
+            from apps.users.models import StudentProfile
+            student, _ = StudentProfile.objects.get_or_create(
+                user=request.user,
+                defaults={'student_id': f'STD-{request.user.id}'}
+            )
+        attempt, _ = CBTStudentAttempt.objects.get_or_create(
+            exam=exam,
+            student=student,
+            defaults={'started_at': timezone.now(), 'is_submitted': False}
+        )
+        if attempt.is_submitted:
+            return Response({'detail': 'Exam already submitted.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Update proctoring flags and pause status
+        if 'flags' in request.data:
+            attempt.integrity_flags = request.data.get('flags', [])
+        if 'auto_paused' in request.data:
+            attempt.auto_paused = bool(request.data.get('auto_paused', False))
+        if 'pause_events' in request.data:
+            attempt.pause_events = request.data.get('pause_events', [])
+
+        raw_answers = request.data.get('answers', {})
+        normalized_answers = []
+        if isinstance(raw_answers, dict):
+            for q_id, sel in raw_answers.items():
+                normalized_answers.append({'question_id': q_id, 'selected_option': sel})
+        elif isinstance(raw_answers, list):
+            normalized_answers = raw_answers
+
+        answer_map = {}
+        for ans in normalized_answers:
+            if not isinstance(ans, dict):
+                continue
+            q_id = ans.get('question_id')
+            sel = ans.get('selected_option')
+            if q_id is not None:
+                try:
+                    answer_map[int(q_id)] = sel
+                except (ValueError, TypeError):
+                    continue
+
+        if answer_map:
+            all_questions = {q.id: q for q in exam.questions.all()}
+            existing_answers = {
+                a.question_id: a
+                for a in CBTStudentAnswer.objects.filter(attempt=attempt).select_related('question')
+            }
+            to_create = []
+            to_update = []
+            for q_id, sel in answer_map.items():
+                if q_id not in all_questions:
+                    continue
+                if q_id in existing_answers:
+                    ans_obj = existing_answers[q_id]
+                    if ans_obj.selected_option != sel:
+                        ans_obj.selected_option = sel
+                        to_update.append(ans_obj)
+                else:
+                    to_create.append(CBTStudentAnswer(
+                        attempt=attempt,
+                        question=all_questions[q_id],
+                        selected_option=sel,
+                    ))
+
+            if to_create:
+                CBTStudentAnswer.objects.bulk_create(to_create, ignore_conflicts=True)
+            if to_update:
+                CBTStudentAnswer.objects.bulk_update(to_update, ['selected_option'])
+
+        attempt.save()
+        return Response({
+            'detail': 'Progress saved successfully.',
+            'attempt_id': attempt.id,
+            'saved_answers_count': CBTStudentAnswer.objects.filter(attempt=attempt).count(),
+            'timestamp': timezone.now().isoformat(),
+        })
+
     # ---------- Student: Submit attempt (manual or auto) ----------
     @action(detail=True, methods=['post'], permission_classes=[IsStudent])
     def submit_attempt(self, request, pk=None):
         exam = self.get_object()
+        if exam.is_locked:
+            return Response({'detail': 'This exam has been locked by the examiner and cannot be submitted.'}, status=status.HTTP_403_FORBIDDEN)
         student = getattr(request.user, 'student_profile', None)
         if not student:
             from apps.users.models import StudentProfile

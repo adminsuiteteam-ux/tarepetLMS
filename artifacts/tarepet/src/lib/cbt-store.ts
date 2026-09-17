@@ -59,6 +59,7 @@ export interface CBTExam {
   created_at: string;
   activated_at?: string;
   results_released?: boolean;
+  is_locked?: boolean;
 }
 
 export interface CBTIntegrityFlag {
@@ -88,6 +89,8 @@ export interface CBTSubmission {
   autoPaused?: boolean;
   pauseEvents?: Array<{ timestamp: string; durationMinutes: number }>;
   assessment_type?: 'TEST' | 'EXAM';
+  server_confirmed?: boolean;
+  submission_receipt_id?: string;
 }
 
 export interface LMSActivity {
@@ -2478,6 +2481,35 @@ export async function syncSubmissionsWithBackend(examId?: number): Promise<CBTSu
   return _submissions;
 }
 
+export async function saveStudentCBTProgress(
+  examId: number,
+  answers: Record<number, string>,
+  integrityData?: {
+    flags?: CBTIntegrityFlag[];
+    autoPaused?: boolean;
+    pauseEvents?: Array<{ timestamp: string; durationMinutes: number }>;
+  }
+): Promise<{ success: boolean; savedCount?: number; timestamp?: string }> {
+  try {
+    const token = getAccessToken();
+    if (token) {
+      const resp = await authClient.post(`/assessments/cbt-exams/${examId}/save_progress/`, {
+        answers,
+        flags: integrityData?.flags || [],
+        auto_paused: Boolean(integrityData?.autoPaused || false),
+        pause_events: integrityData?.pauseEvents || [],
+      });
+      return { success: true, savedCount: resp.data?.saved_answers_count, timestamp: resp.data?.timestamp };
+    }
+  } catch (e: any) {
+    if (e?.response?.status === 403) {
+      throw new Error(e?.response?.data?.detail || 'This exam has been locked by the examiner.');
+    }
+    console.warn('[CBTStore] saveStudentCBTProgress network error:', e);
+  }
+  return { success: false };
+}
+
 export async function submitStudentCBTAttempt(
   examId: number,
   answers: Record<number, string>,
@@ -2487,7 +2519,8 @@ export async function submitStudentCBTAttempt(
     autoPaused?: boolean;
     pauseEvents?: Array<{ timestamp: string; durationMinutes: number }>;
   },
-  auto: boolean = false
+  auto: boolean = false,
+  forceOffline: boolean = false
 ): Promise<CBTSubmission> {
   if (!_exams || _exams.length === 0) {
     _exams = loadSavedExams();
@@ -2506,15 +2539,77 @@ export async function submitStudentCBTAttempt(
     });
   }
 
-  const percentage = total_possible > 0 ? Math.round((score / total_possible) * 100) : 100;
+  let percentage = total_possible > 0 ? Math.round((score / total_possible) * 100) : 100;
   const sName = studentInfo.name || 'Student';
   const autoEmail = studentInfo.email || formatStudentEmail(sName);
   const autoId = studentInfo.student_id || `TMS/STU/${Date.now()}`;
   const studentClass = studentInfo.class || exam?.class || 'SS1';
   const studentStream = studentInfo.stream || exam?.stream || 'Science';
 
+  let serverAttemptId: number | null = null;
+  let isServerConfirmed = false;
+
+  // 1. If online and not forced offline, attempt authoritative server submission FIRST
+  const token = getAccessToken();
+  if (token && !forceOffline) {
+    try {
+      const resp = await authClient.post(`/assessments/cbt-exams/${exam ? exam.id : examId}/submit_attempt/`, {
+        answers,
+        auto_submitted: Boolean(auto),
+        flags: integrityData?.flags || [],
+        auto_paused: Boolean(integrityData?.autoPaused || false),
+        pause_events: integrityData?.pauseEvents || [],
+        student_name: sName,
+        student_email: autoEmail,
+        student_id: autoId,
+      });
+
+      if (resp.data?.attempt_id) {
+        serverAttemptId = resp.data.attempt_id;
+        isServerConfirmed = true;
+        if (typeof resp.data.score === 'number') score = resp.data.score;
+        if (typeof resp.data.total_possible === 'number') total_possible = resp.data.total_possible;
+        if (typeof resp.data.percentage === 'number') percentage = resp.data.percentage;
+      }
+    } catch (apiErr: any) {
+      // If exam is locked or student has already submitted (400 or 403), stop immediately with clear error
+      if (apiErr?.response?.status === 403 || apiErr?.response?.status === 400) {
+        const errorDetail = apiErr.response?.data?.detail || 'This exam has been locked or you have already submitted.';
+        const err: any = new Error(errorDetail);
+        err.statusCode = apiErr.response?.status;
+        err.detail = errorDetail;
+        throw err;
+      }
+
+      // Connection / Server error: cache payload locally so responses are guaranteed safe
+      try {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('tarepet_cbt_pending_submission', JSON.stringify({
+            examId: exam ? exam.id : examId,
+            answers,
+            studentInfo,
+            integrityData,
+            auto,
+            savedAt: new Date().toISOString(),
+          }));
+        }
+      } catch (cacheErr) {}
+
+      // Raise network error so caller can prompt retry or offline fallback
+      const netErr: any = new Error('Could not reach the examination server to confirm submission. Your answers are securely preserved. Please check your connection and retry.');
+      netErr.isNetworkError = true;
+      netErr.originalError = apiErr;
+      throw netErr;
+    }
+  }
+
+  const generatedId = serverAttemptId || Date.now();
+  const receiptId = isServerConfirmed
+    ? `TMS-REC-${generatedId}-${new Date().getFullYear()}`
+    : `TMS-OFFLINE-${Date.now().toString().slice(-6)}`;
+
   const newSub: CBTSubmission = {
-    id: Date.now(),
+    id: generatedId,
     exam_id: exam ? exam.id : examId,
     exam_title: exam ? exam.title : (studentInfo as any)?.exam_title || 'CBT Assessment',
     course_code: exam ? exam.course_code : '',
@@ -2532,50 +2627,33 @@ export async function submitStudentCBTAttempt(
     flags: integrityData?.flags || [],
     autoPaused: integrityData?.autoPaused || false,
     pauseEvents: integrityData?.pauseEvents || [],
-    assessment_type: exam.assessment_type || 'EXAM',
+    assessment_type: exam?.assessment_type || 'EXAM',
+    server_confirmed: isServerConfirmed,
+    submission_receipt_id: receiptId,
   };
 
   _submissions = [newSub, ..._submissions];
   persistSubmissions(_submissions);
 
-  // Sync attempt to Django backend
+  // Clear cached pending submission on successful local persistence
   try {
-    const token = getAccessToken();
-    if (token) {
-      const resp = await authClient.post(`/assessments/cbt-exams/${exam.id}/submit_attempt/`, {
-        answers,
-        auto_submitted: Boolean(auto),
-        flags: integrityData?.flags || [],
-        auto_paused: Boolean(integrityData?.autoPaused || false),
-        pause_events: integrityData?.pauseEvents || [],
-        student_name: sName,
-        student_email: autoEmail,
-        student_id: autoId,
-      });
-      if (resp.data?.attempt_id) {
-        newSub.id = resp.data.attempt_id;
-        if (typeof resp.data.score === 'number') newSub.score = resp.data.score;
-        if (typeof resp.data.total_possible === 'number') newSub.total_possible = resp.data.total_possible;
-        if (typeof resp.data.percentage === 'number') newSub.percentage = resp.data.percentage;
-        persistSubmissions(_submissions);
-      }
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('tarepet_cbt_pending_submission');
     }
-  } catch (apiErr) {
-    console.warn('Backend attempt submission failed, recorded locally in CBT store:', apiErr);
-  }
+  } catch (e) {}
 
   // Real-time activity entry (persisted)
   addRealtimeActivity(
     'SUBMISSION_RECEIVED',
     `CBT Submission: ${sName}`,
-    `Completed ${exam.title} (${score}/${total_possible} - ${percentage}%). Awaiting teacher broadsheet sync.`,
+    `Completed ${exam?.title || 'Exam'} (${score}/${total_possible} - ${percentage}%). ${isServerConfirmed ? 'Server Confirmed' : 'Offline Stored'}.`,
     sName
   );
 
   // Real-time notification for TEACHER
   addRealtimeNotification({
     title: `CBT Submission Received: ${sName}`,
-    message: `${sName} (${newSub.class} ${newSub.stream || ''}) completed ${exam.title} (${exam.course_code}). Score: ${score}/${total_possible} (${percentage}%). Click to preview and sync to broadsheet.`,
+    message: `${sName} (${newSub.class} ${newSub.stream || ''}) completed ${exam?.title || 'Exam'} (${exam?.course_code || ''}). Score: ${score}/${total_possible} (${percentage}%). Click to preview and sync to broadsheet.`,
     type: 'exam',
     recipientRole: 'TEACHER',
     actionUrl: `/dashboard/teacher?section=results`,
@@ -2584,14 +2662,14 @@ export async function submitStudentCBTAttempt(
   // Real-time notification for ADMIN
   addRealtimeNotification({
     title: `CBT Exam Completed: ${sName}`,
-    message: `${sName} (${newSub.class}) completed ${exam.title} (${exam.course_code}). Score: ${score}/${total_possible} (${percentage}%).`,
+    message: `${sName} (${newSub.class}) completed ${exam?.title || 'Exam'} (${exam?.course_code || ''}). Score: ${score}/${total_possible} (${percentage}%).`,
     type: 'exam',
     recipientRole: 'ADMIN',
     actionUrl: `/dashboard/cbt-approval`,
   });
 
   broadcastRealtimeEvent();
-  sendWebSocketEvent('EXAM_SUBMISSION', { submission: newSub, examId: exam.id });
+  sendWebSocketEvent('EXAM_SUBMISSION', { submission: newSub, examId: exam ? exam.id : examId });
 
   // Browser window & cross-tab sync events
   if (typeof window !== 'undefined') {
@@ -2690,6 +2768,30 @@ export async function toggleExamResultsReleased(examId: number, released: boolea
     broadcastRealtimeEvent();
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('tarepet_store_updated', { detail: { type: 'results_released_toggled', examId, released } }));
+      window.dispatchEvent(new Event('cbt_store_updated'));
+    }
+    return true;
+  }
+  return false;
+}
+
+export async function toggleExamLocked(examId: number, locked: boolean): Promise<boolean> {
+  const all = getStoredExams();
+  const target = all.find(e => Number(e.id) === Number(examId));
+  if (target) {
+    target.is_locked = locked;
+    persistExams(all);
+    _exams = all;
+    try {
+      await authClient.post(`/assessments/cbt-exams/${examId}/toggle_lock/`, { is_locked: locked });
+    } catch (e) {
+      try {
+        await authClient.patch(`/assessments/cbt-exams/${examId}/`, { is_locked: locked });
+      } catch (err) {}
+    }
+    broadcastRealtimeEvent();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('tarepet_store_updated', { detail: { type: 'exam_lock_toggled', examId, locked } }));
       window.dispatchEvent(new Event('cbt_store_updated'));
     }
     return true;

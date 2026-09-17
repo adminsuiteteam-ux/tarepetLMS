@@ -112,7 +112,7 @@ class CBTExamSerializer(serializers.ModelSerializer):
             'id', 'title', 'description', 'instructions', 'course', 'course_detail',
             'course_name', 'course_code',
             'teacher', 'teacher_name', 'class_name', 'stream', 'assessment_type', 'term', 'duration_minutes',
-            'questions_per_page', 'status', 'results_released', 'rejection_reason', 'approved_by',
+            'questions_per_page', 'status', 'results_released', 'is_locked', 'rejection_reason', 'approved_by',
             'questions_count', 'questions', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'teacher', 'approved_by', 'created_at', 'updated_at']
