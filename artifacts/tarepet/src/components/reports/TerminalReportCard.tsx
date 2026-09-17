@@ -48,6 +48,7 @@ export interface ReportCardData {
   remarks: {
     teacher_remark: string;
     headmistress_remark: string;
+    principal_remark?: string;
   };
 }
 

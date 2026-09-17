@@ -614,7 +614,7 @@ export default function StudentDashboard() {
     const ca2Val = hasCa2 ? sc.ca2 : 0;
     const cbtTestVal = effectiveCbtTest;
     const cbtExamVal = effectiveCbtExam;
-    const examVal = hasExam ? sc.paperExam : (hasAltExam ? sc.exam : 0);
+    const examVal = (hasExam ? sc.paperExam : (hasAltExam ? sc.exam : 0)) ?? 0;
 
     // Universal total: CA1 + CA2 + CBT Test + CBT Exam + Theory Exam
     const total = ca1Val + ca2Val + cbtTestVal + cbtExamVal + examVal;
@@ -1289,7 +1289,7 @@ export default function StudentDashboard() {
                         )}
                       </td>
                       {/* Theory Exam */}
-                      <td className="p-3 text-center font-mono font-bold">{g.hasRecord && g.paperExam > 0 ? g.paperExam : '-'}</td>
+                      <td className="p-3 text-center font-mono font-bold">{g.hasRecord && (g.paperExam ?? 0) > 0 ? g.paperExam : '-'}</td>
                       <td className="p-3 text-center font-serif font-bold text-sm text-foreground">{g.hasRecord ? `${g.total}%` : '-'}</td>
                       <td className="p-3 text-center">
                         <span className={`px-2 py-0.5 rounded-full font-bold text-[11px] ${g.hasRecord ? (g.gradeInfo?.color || 'bg-emerald-500/10 text-emerald-600') : 'bg-muted text-muted-foreground'}`}>

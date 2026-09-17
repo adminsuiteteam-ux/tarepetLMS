@@ -2633,7 +2633,7 @@ export function hasStudentSubmittedExam(examId: number, studentIdentifier?: stri
         student.admission_number,
         student.email,
         student.name,
-      ].filter(Boolean).map(a => a.toLowerCase().trim());
+      ].filter((a): a is string => Boolean(a)).map(a => a.toLowerCase().trim());
       return aliases.includes(sIdLower) || aliases.includes(sEmailLower) || aliases.includes(sNameLower);
     }
     return false;
@@ -2670,7 +2670,7 @@ export function getStudentSubmission(examId: number, studentIdentifier?: string)
         student.admission_number,
         student.email,
         student.name,
-      ].filter(Boolean).map(a => a.toLowerCase().trim());
+      ].filter((a): a is string => Boolean(a)).map(a => a.toLowerCase().trim());
       return aliases.includes(sIdLower) || aliases.includes(sEmailLower) || aliases.includes(sNameLower);
     }
     return false;
@@ -3280,19 +3280,21 @@ export function getStudentCBTSubmissionsForCourse(
         student.admissionNo,
         student.studentId,
         student.admission_number,
-      ].filter(Boolean).map(a => a.toLowerCase().replace(/[^a-z0-9]/g, ''));
+      ].filter((a): a is string => Boolean(a)).map(a => a.toLowerCase().replace(/[^a-z0-9]/g, ''));
 
-      matchesStudent = 
+      matchesStudent = Boolean(
         aliases.some(a => a === sIdClean || (a.length >= 3 && sIdClean.includes(a)) || (sIdClean.length >= 3 && a.includes(sIdClean))) ||
         (sEmailClean && sEmailClean === student.email?.toLowerCase().trim()) ||
-        (sNameClean && sNameClean === student.name?.toLowerCase().trim());
+        (sNameClean && sNameClean === student.name?.toLowerCase().trim())
+      );
     } else {
       const raw = String(studentIdentifier).toLowerCase().trim();
       const cleanRaw = raw.replace(/[^a-z0-9]/g, '');
-      matchesStudent = 
+      matchesStudent = Boolean(
         (s.student_id?.toLowerCase().trim() === raw || (s.student_id && s.student_id.toLowerCase().replace(/[^a-z0-9]/g, '') === cleanRaw)) ||
         s.student_email?.toLowerCase().trim() === raw ||
-        s.student_name?.toLowerCase().trim() === raw;
+        s.student_name?.toLowerCase().trim() === raw
+      );
     }
 
     if (!matchesStudent) return false;
@@ -3320,7 +3322,7 @@ export function getStudentCBTSubmissionsForCourse(
 
     // 3. Verify assessment type filter if provided
     if (assessmentType) {
-      const isTest = s.assessment_type === 'test' || /test|ca|quiz|mid-?term/i.test(s.exam_title || '');
+      const isTest = String(s.assessment_type).toUpperCase() === 'TEST' || /test|ca|quiz|mid-?term/i.test(s.exam_title || '');
       if (assessmentType === 'test' && !isTest) return false;
       if (assessmentType === 'exam' && isTest) return false;
     }

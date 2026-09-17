@@ -44,6 +44,11 @@ interface AvailableExam {
   questions_per_page: number;
   teacher_name: string;
   results_released?: boolean;
+  class?: string;
+  stream?: string;
+  course_code?: string;
+  course_name?: string;
+  status?: string;
 }
 
 type Phase = 'list' | 'confirm' | 'exam' | 'result';
@@ -449,18 +454,18 @@ export default function StudentCBTExam() {
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
 
-    const handleKeyDownLock = (e: KeyboardEvent) => {
+    const handleKeyDownLock = (e: KeyboardEvent): void => {
       // Intercept reload keys: F5, Ctrl+R, Cmd+R
       if (e.key === 'F5' || ((e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R'))) {
         e.preventDefault();
         e.stopPropagation();
-        return false;
+        return;
       }
       // Intercept navigation keys: Escape, Backspace, Alt+Left, F11, F12
       if (['Escape', 'Backspace', 'F11', 'F12'].includes(e.key) || (e.altKey && e.key === 'ArrowLeft')) {
         e.preventDefault();
         e.stopPropagation();
-        return false;
+        return;
       }
     };
 

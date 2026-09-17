@@ -285,6 +285,7 @@ export default function CBTBuilder() {
         window.removeEventListener('cbt_store_updated', handleSubmission);
       };
     }
+    return undefined;
   }, [selectedExamId, view]);
 
   const handleCreateExam = async () => {
