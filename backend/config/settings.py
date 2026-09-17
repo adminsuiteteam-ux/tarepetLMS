@@ -163,7 +163,7 @@ ASGI_APPLICATION = 'config.asgi.application'
 _redis_url = env('REDIS_URL', default='')
 is_render = 'RENDER' in os.environ or bool(os.environ.get('RENDER_SERVICE_ID'))
 
-if _redis_url and (is_render or not 'red-' in _redis_url):
+if _redis_url:
     CHANNEL_LAYERS = {
         'default': {
             'BACKEND': 'channels_redis.core.RedisChannelLayer',
@@ -228,7 +228,8 @@ if _db_config.get('ENGINE') != 'django.db.backends.sqlite3':
         'connect_timeout': 60,  # allow 60s for Layerbase/Neon cold-start wake-up
     }
     _db_config.update({
-        'CONN_MAX_AGE': 60,  # reuse database connections for 60s to handle concurrent student traffic without connection storms
+        'CONN_MAX_AGE': env.int('CONN_MAX_AGE', default=600),  # keep connections alive for 10 min to handle 45+ simultaneous submissions without connection storms
+        'CONN_HEALTH_CHECKS': True,  # automatically verify connection health before reuse
         'OPTIONS': _db_options,
     })
 DATABASES = {'default': _db_config}
