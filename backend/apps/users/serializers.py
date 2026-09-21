@@ -365,8 +365,8 @@ def parse_date_safe(val):
 class UserRegistrationSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
     email = serializers.EmailField(required=True)
-    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
-    role = serializers.CharField(read_only=True, default=User.Role.STUDENT)
+    password = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    role = serializers.CharField(required=False, default=User.Role.STUDENT)
     student_id = serializers.CharField(write_only=True, required=False, allow_blank=True)
     grade = serializers.CharField(write_only=True, required=False, allow_blank=True)
     grade_level = serializers.CharField(write_only=True, required=False, allow_blank=True)
@@ -428,21 +428,36 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         norm = (value or '').strip().lower()
         if not norm:
             raise serializers.ValidationError("A valid email address is required.")
-        if User.objects.filter(email__iexact=norm).exists():
-            raise serializers.ValidationError("An account with this email address already exists.")
+        existing = User.objects.filter(email__iexact=norm).first()
+        if existing:
+            request = self.context.get('request')
+            is_admin = bool(request and request.user and request.user.is_authenticated and (getattr(request.user, 'is_admin', False) or request.user.is_staff or request.user.is_superuser))
+            if not is_admin and self.instance != existing:
+                raise serializers.ValidationError("An account with this email address already exists.")
         return norm
 
     def create(self, validated_data):
         email = validated_data.get('email', '')
         first_name = validated_data.get('first_name', '')
         last_name = validated_data.get('last_name', '')
-        role = User.Role.STUDENT
 
         raw_input = getattr(self, 'initial_data', {})
         raw_data = raw_input if isinstance(raw_input, dict) else {}
         prof_input = raw_data.get('profile', {})
         raw_prof = prof_input if isinstance(prof_input, dict) else {}
         merged_source = {**raw_prof, **raw_data, **validated_data}
+
+        # Role determination: allow TEACHER, STUDENT, PARENT, or ADMIN (if authorized)
+        req_role = (merged_source.get('role') or validated_data.get('role') or '').strip().upper()
+        request = self.context.get('request')
+        is_admin = bool(request and request.user and request.user.is_authenticated and (getattr(request.user, 'is_admin', False) or request.user.is_staff or request.user.is_superuser))
+
+        if req_role in [User.Role.TEACHER, User.Role.STUDENT, User.Role.PARENT]:
+            role = req_role
+        elif req_role == User.Role.ADMIN and is_admin:
+            role = User.Role.ADMIN
+        else:
+            role = User.Role.STUDENT
 
         # Extract student profile extra fields robustly
         grade_val = merged_source.get('grade_level') or merged_source.get('grade') or 'SS1'

@@ -577,7 +577,7 @@ export async function saveTeacher(teacherData: Partial<TeacherRecord> & { name: 
     salary: teacherData.salary !== undefined ? teacherData.salary : (existing?.salary || ''),
     bankName: teacherData.bankName !== undefined ? teacherData.bankName : (existing?.bankName || ''),
     accountNumber: teacherData.accountNumber !== undefined ? teacherData.accountNumber : (existing?.accountNumber || ''),
-    password: teacherData.password !== undefined ? teacherData.password : (existing?.password || staffId),
+    password: teacherData.password !== undefined ? teacherData.password : (existing?.password || `${staffId}2026!`),
   };
 
   unmarkDeletedAccount([updatedTeacher.id, updatedTeacher.staffId, updatedTeacher.email, updatedTeacher.name]);
@@ -586,7 +586,7 @@ export async function saveTeacher(teacherData: Partial<TeacherRecord> & { name: 
   const tNames = (updatedTeacher.name || '').trim().split(' ');
   const tPayload = {
     email: updatedTeacher.email,
-    password: updatedTeacher.password || updatedTeacher.staffId,
+    password: updatedTeacher.password || `${updatedTeacher.staffId}2026!`,
     first_name: tNames[0] || updatedTeacher.name,
     last_name: tNames.slice(1).join(' ') || 'Staff',
     phone: updatedTeacher.phone,
@@ -627,10 +627,10 @@ export async function saveTeacher(teacherData: Partial<TeacherRecord> & { name: 
       res = await authClient.patch(`/auth/users/${updatedTeacher.id}/`, tPayload);
     } else {
       try {
-        res = await authClient.post('/auth/register/', tPayload);
-      } catch (errReg: any) {
-        // Fallback to /auth/users/ if register returned an auth/route conflict
         res = await authClient.post('/auth/users/', tPayload);
+      } catch (errUsers: any) {
+        // Fallback to /auth/register/ if needed
+        res = await authClient.post('/auth/register/', tPayload);
       }
     }
     if (res && res.data) {

@@ -374,10 +374,10 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response({'success': False, 'detail': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
 
     def create(self, request, *args, **kwargs):
-        serializer = UserRegistrationSerializer(data=request.data)
+        serializer = UserRegistrationSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        read_serializer = UserSerializer(user)
+        read_serializer = UserSerializer(user, context={'request': request})
         headers = self.get_success_headers(serializer.data)
         return Response(read_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
