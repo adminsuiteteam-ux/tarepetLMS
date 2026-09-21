@@ -579,13 +579,43 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                     <div className="sm:col-span-2 space-y-3">
                       <label
                         htmlFor="wizardPhotoUpload"
-                        className="border-2 border-dashed border-primary/30 hover:border-primary bg-primary/5 hover:bg-primary/10 transition-all rounded-2xl p-4 text-center cursor-pointer block group shadow-2xs"
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                        onDragEnter={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          const file = e.dataTransfer.files?.[0];
+                          if (file) {
+                            if (file.size > 10 * 1024 * 1024) {
+                              (window as any).showTarepetAlert?.('The selected image file exceeds 10MB. Please select a photo below 10MB.', 'Image Size Limit Exceeded', 'warning');
+                              return;
+                            }
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              const base64 = reader.result as string;
+                              triggerCropModal(base64, (cropped) => setF('profileImage', cropped));
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                        className="border-2 border-dashed border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50/70 transition-all rounded-2xl p-6 sm:p-7 text-center cursor-pointer block group shadow-2xs"
                       >
-                        <UploadCloud className="w-8 h-8 text-primary mx-auto mb-1.5 group-hover:scale-110 transition-transform" />
-                        <p className="text-xs font-bold text-slate-800">
-                          {t('staff.clickToBrowse', 'Click to browse')} <span className="text-primary">{t('staff.orDragDrop', 'or drag & drop photo here')}</span>
+                        <div className="inline-flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-lg bg-white border border-slate-200/90 shadow-2xs text-xs font-semibold text-slate-700 group-hover:border-slate-300 group-hover:shadow-xs transition-all">
+                          <Upload className="w-3.5 h-3.5 text-slate-600" />
+                          <span>{t('staff.upload', 'Upload')}</span>
+                        </div>
+                        <p className="text-xs sm:text-sm font-semibold text-slate-800 mt-3">
+                          {t('staff.chooseOrDragDrop', 'Choose a file or drag & drop it here')}
                         </p>
-                        <p className="text-[10px] text-slate-600 mt-0.5 font-bold">{t('staff.supportsFormats', 'Supports PNG, JPG, WEBP or SVG (Max 10MB)')}</p>
+                        <p className="text-[11px] text-slate-400 font-normal mt-1">
+                          {t('staff.maxFileSize', 'Maximum 10 MB file size')}
+                        </p>
                       </label>
                       <input
                         type="file"

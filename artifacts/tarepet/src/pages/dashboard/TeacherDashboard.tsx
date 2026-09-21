@@ -2728,7 +2728,7 @@ export default function TeacherDashboard() {
                             message: willLock
                               ? `Are you sure you want to lock "${ex.title}"?\n\nStudents currently taking the exam will be blocked from submitting or starting new attempts until unlocked.`
                               : `Are you sure you want to unlock "${ex.title}"?\n\nStudents will be permitted to start or submit their exam answers.`,
-                            type: willLock ? 'danger' : 'confirm',
+                            type: willLock ? 'warning' : 'confirm',
                             badge: willLock ? 'Lock Exam' : 'Unlock Exam',
                             confirmText: willLock ? 'Yes, Lock Exam' : 'Yes, Unlock Exam',
                             cancelText: 'Cancel',
