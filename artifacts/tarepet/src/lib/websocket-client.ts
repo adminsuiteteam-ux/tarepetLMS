@@ -180,8 +180,9 @@ function getWebSocketUrl(): string | null {
   } else {
     const loc = window.location;
 
-    // 2. Local development with Django Channels on port 8000
-    if (loc.hostname === 'localhost' || loc.hostname === '127.0.0.1') {
+    // 2. Local or LAN development with Django Channels on port 8000
+    const isLocalOrLan = loc.hostname === 'localhost' || loc.hostname === '127.0.0.1' || /^(\d{1,3}\.){3}\d{1,3}$/.test(loc.hostname);
+    if (isLocalOrLan) {
       const protocol = loc.protocol === 'https:' ? 'wss:' : 'ws:';
       baseWsUrl = `${protocol}//${loc.hostname}:8000/ws/live/`;
     } else {

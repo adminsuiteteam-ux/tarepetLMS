@@ -1378,9 +1378,6 @@ function prof_code(u: any): string {
 }
 
 export async function syncTeachersWithBackend(): Promise<TeacherRecord[]> {
-  const token = getAccessToken();
-  if (!token) return getStoredTeachers();
-
   try {
     const res = await authClient.get('/auth/users/?role=TEACHER&page_size=200');
     if (res.data) {

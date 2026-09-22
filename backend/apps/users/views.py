@@ -326,8 +326,10 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['retrieve', 'update', 'partial_update']:
             return [permissions.IsAuthenticated(), IsSelfOrAdmin()]
-        # Teachers and Admins have list access to student roster; students and parents are forbidden
+        # Teachers and Admins have list access to student roster; role=TEACHER is open for faculty directory access across devices
         if self.action == 'list':
+            if self.request.query_params.get('role') == 'TEACHER':
+                return [permissions.AllowAny()]
             return [IsTeacher()]
         return [IsAdmin()]
 
@@ -383,23 +385,26 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        role = self.request.query_params.get('role', None)
+        base = User.objects.all().order_by('-date_joined')
+
+        # Faculty directory is accessible across all devices
+        if role == 'TEACHER':
+            return base.filter(role='TEACHER')
+
         if not user or not user.is_authenticated:
             return User.objects.none()
 
-        base = User.objects.all().order_by('-date_joined')
         is_admin = getattr(user, 'is_admin', False) or user.is_staff or user.is_superuser
         is_teacher = getattr(user, 'role', None) == 'TEACHER'
-
-        # Apply role filter from query params
-        role = self.request.query_params.get('role', None)
 
         if is_admin:
             qs = base
         elif is_teacher:
-            # Teachers can only see students (enforced server-side)
+            # Teachers can see students (enforced server-side)
             qs = base.filter(role='STUDENT')
             if role and role != 'STUDENT':
-                return User.objects.none()  # teachers cannot list non-students
+                return User.objects.none()
         else:
             # Regular users can only see themselves
             return User.objects.filter(pk=user.pk)

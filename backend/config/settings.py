@@ -82,7 +82,7 @@ try:
 except Exception:
     pass
 
-CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_ALL_ORIGINS = DEBUG
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[
     'http://localhost:5173',
@@ -98,6 +98,9 @@ CORS_ALLOWED_ORIGINS = env.list('CORS_ALLOWED_ORIGINS', default=[
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://([a-zA-Z0-9-]+\.)?tarepetmontessorischool\.com$",
     r"^https://tarepet-[a-zA-Z0-9-]+\.onrender\.com$",
+    r"^http://(192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+)(:\d+)?$",
+    r"^http://localhost(:\d+)?$",
+    r"^http://127\.0\.0\.1(:\d+)?$",
 ]
 
 # Security settings
@@ -113,6 +116,8 @@ CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=[
     'https://tarepet-backend-4iw6.onrender.com',
     'https://tarepet-frontend.onrender.com',
 ])
+if _local_ip:
+    CSRF_TRUSTED_ORIGINS.extend([f"http://{_local_ip}:8000", f"http://{_local_ip}:5173", f"http://{_local_ip}:3000"])
 SECURE_SSL_REDIRECT = env.bool('SECURE_SSL_REDIRECT', default=not DEBUG)
 SESSION_COOKIE_SECURE = env.bool('SESSION_COOKIE_SECURE', default=not DEBUG)
 CSRF_COOKIE_SECURE = env.bool('CSRF_COOKIE_SECURE', default=not DEBUG)
@@ -219,6 +224,9 @@ _db_config = env.db(
 )
 # Layerbase serverless keepalive & pool settings
 if _db_config.get('ENGINE') != 'django.db.backends.sqlite3':
+    # Strip -pooler from host if present to prevent Windows psycopg2 SSL EOF disconnects
+    if '-pooler' in str(_db_config.get('HOST', '')):
+        _db_config['HOST'] = _db_config['HOST'].replace('-pooler', '')
     _db_options = {
         'sslmode': 'require',
         'keepalives': 1,
@@ -228,7 +236,7 @@ if _db_config.get('ENGINE') != 'django.db.backends.sqlite3':
         'connect_timeout': 60,  # allow 60s for Layerbase/Neon cold-start wake-up
     }
     _db_config.update({
-        'CONN_MAX_AGE': env.int('CONN_MAX_AGE', default=600),  # keep connections alive for 10 min to handle 45+ simultaneous submissions without connection storms
+        'CONN_MAX_AGE': env.int('CONN_MAX_AGE', default=600),
         'CONN_HEALTH_CHECKS': True,  # automatically verify connection health before reuse
         'OPTIONS': _db_options,
     })

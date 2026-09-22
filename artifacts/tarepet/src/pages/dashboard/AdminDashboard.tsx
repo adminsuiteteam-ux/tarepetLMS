@@ -2567,12 +2567,14 @@ export default function AdminDashboard() {
     refreshExamsRealtime();
 
     syncStudentsWithBackend().then(res => setStudentsList(res));
+    syncTeachersWithBackend().then(res => setTeachersList(res));
     syncExamsWithBackend().then(res => {
       setExamsList(res.map(mapCBTExamToAdminExam));
     });
 
     const unsubCBT = subscribeToCBTStore(() => {
       setStudentsList(getStoredStudents());
+      setTeachersList(getStoredTeachers());
       setSubjectsListState(getStoredSubjects());
       refreshExamsRealtime();
     });
@@ -2582,6 +2584,11 @@ export default function AdminDashboard() {
     });
 
     const unsubEvents = subscribeToWebSocketEvents((event: any) => {
+      if (event.type === 'ROSTER_UPDATED') {
+        syncTeachersWithBackend().then(res => setTeachersList(res)).catch(() => {});
+        syncStudentsWithBackend().then(res => setStudentsList(res)).catch(() => {});
+      }
+
       if (event.type === 'STUDENT_ENROLLED_BY_TEACHER' && event.payload) {
         setStudentsList(getStoredStudents());
         syncStudentsWithBackend().then(res => setStudentsList(res));
@@ -2654,6 +2661,7 @@ export default function AdminDashboard() {
     const pollInterval = setInterval(() => {
       syncExamsWithBackend().then(res => setExamsList(res.map(mapCBTExamToAdminExam))).catch(() => {});
       syncStudentsWithBackend().then(res => setStudentsList(res)).catch(() => {});
+      syncTeachersWithBackend().then(res => setTeachersList(res)).catch(() => {});
     }, 45000);
 
     // Instant re-sync when admin unlocks device or focuses tab
@@ -2661,6 +2669,7 @@ export default function AdminDashboard() {
       if (document.visibilityState === 'visible') {
         syncExamsWithBackend().then(res => setExamsList(res.map(mapCBTExamToAdminExam))).catch(() => {});
         syncStudentsWithBackend().then(res => setStudentsList(res)).catch(() => {});
+        syncTeachersWithBackend().then(res => setTeachersList(res)).catch(() => {});
       }
     };
     document.addEventListener('visibilitychange', handleVisibility);

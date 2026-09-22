@@ -1,12 +1,27 @@
 import axios from 'axios';
 
 // Enterprise Layerbase Authentication Client Configuration
-const LAYERBASE_API_URL =
-  import.meta.env.VITE_LAYERBASE_API_URL ||
-  import.meta.env.VITE_API_URL ||
-  (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://127.0.0.1:8000/api/v1'
-    : 'https://tarepet-backend-4iw6.onrender.com/api/v1');
+export function getLayerbaseApiUrl(): string {
+  if (typeof window === 'undefined') {
+    return 'https://tarepet-backend-4iw6.onrender.com/api/v1';
+  }
+  const hostname = window.location.hostname;
+  const protocol = window.location.protocol || 'http:';
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return `${protocol}//127.0.0.1:8000/api/v1`;
+  }
+  const isLanIp = /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname);
+  if (isLanIp) {
+    return `${protocol}//${hostname}:8000/api/v1`;
+  }
+  const envBase = (import.meta as any).env?.VITE_LAYERBASE_API_URL || (import.meta as any).env?.VITE_API_URL;
+  if (envBase && !envBase.includes('localhost') && !envBase.includes('127.0.0.1')) {
+    return envBase;
+  }
+  return 'https://tarepet-backend-4iw6.onrender.com/api/v1';
+}
+
+const LAYERBASE_API_URL = getLayerbaseApiUrl();
 
 export interface LayerbaseUser {
   id: number | string;

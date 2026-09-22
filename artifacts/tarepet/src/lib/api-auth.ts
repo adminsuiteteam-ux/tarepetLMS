@@ -2,12 +2,35 @@ import axios from 'axios';
 import { layerbaseAuth } from './layerbase-auth';
 
 // Enterprise API Client for Django / Layerbase JWT Authentication
-const API_BASE_URL = 
-  import.meta.env.VITE_API_BASE_URL ||
-  import.meta.env.VITE_API_URL || 
-  (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://127.0.0.1:8000/api/v1'
-    : 'https://tarepet-backend-4iw6.onrender.com/api/v1');
+export function getApiBaseUrl(): string {
+  if (typeof window === 'undefined') {
+    return 'https://tarepet-backend-4iw6.onrender.com/api/v1';
+  }
+  const hostname = window.location.hostname;
+  const protocol = window.location.protocol || 'http:';
+
+  // 1. If accessing via localhost / 127.0.0.1 on the host machine
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return `${protocol}//127.0.0.1:8000/api/v1`;
+  }
+
+  // 2. If accessing via LAN IP (e.g. 192.168.x.x, 10.x.x.x, 172.x.x.x) from Device B
+  const isLanIp = /^(\d{1,3}\.){3}\d{1,3}$/.test(hostname);
+  if (isLanIp) {
+    return `${protocol}//${hostname}:8000/api/v1`;
+  }
+
+  // 3. If explicit non-localhost production URL configured in env
+  const envBase = (import.meta as any).env?.VITE_API_BASE_URL || (import.meta as any).env?.VITE_API_URL;
+  if (envBase && !envBase.includes('localhost') && !envBase.includes('127.0.0.1')) {
+    return envBase;
+  }
+
+  // 4. Production default live cloud backend (Render)
+  return 'https://tarepet-backend-4iw6.onrender.com/api/v1';
+}
+
+export const API_BASE_URL = getApiBaseUrl();
 
 // ── Persistent & Cached Token Store ──────────────────────────────────────────
 // Tokens are cached in localStorage + sessionStorage so users remain securely logged in across page reloads.
@@ -98,9 +121,10 @@ export const authClient = axios.create({
   },
 });
 
-// Request Interceptor: Attach Access Token reliably from storage or memory
+// Request Interceptor: Attach Access Token reliably and dynamically ensure correct API host
 authClient.interceptors.request.use(
   (config) => {
+    config.baseURL = getApiBaseUrl();
     const token = getAccessToken();
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -120,7 +144,7 @@ authClient.interceptors.response.use(
       const rToken = getRefreshToken();
       if (rToken && !rToken.startsWith('mock_')) {
         try {
-          const res = await axios.post(`${API_BASE_URL}/auth/refresh/`, {
+          const res = await axios.post(`${getApiBaseUrl()}/auth/refresh/`, {
             refresh: rToken,
           });
           const { access, refresh } = res.data;
