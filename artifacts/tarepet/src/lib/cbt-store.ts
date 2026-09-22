@@ -488,6 +488,9 @@ let _cachedTeachers: TeacherRecord[] | null = null;
 
 function loadSavedTeachers(forceReload = false): TeacherRecord[] {
   if (typeof window === 'undefined') return DEFAULT_FORM_TEACHERS;
+  if (forceReload) {
+    _cachedTeachers = null;
+  }
   if (!forceReload && _cachedTeachers && _cachedTeachers.length > 0) {
     return _cachedTeachers;
   }
@@ -507,6 +510,7 @@ function loadSavedTeachers(forceReload = false): TeacherRecord[] {
         );
         const result = deduplicateTeachers(liveOnly);
         _cachedTeachers = result;
+        _teachers = result;
         return result;
       }
     }
@@ -527,6 +531,7 @@ function loadSavedTeachers(forceReload = false): TeacherRecord[] {
   } catch (e) {}
 
   _cachedTeachers = initList;
+  _teachers = initList;
   return initList;
 }
 
@@ -534,13 +539,13 @@ let _teachers: TeacherRecord[] = loadSavedTeachers();
 
 export function getStoredTeachers(): TeacherRecord[] {
   if (!_teachers || _teachers.length === 0) {
-    _teachers = loadSavedTeachers();
+    _teachers = loadSavedTeachers(true);
   }
   return _teachers;
 }
 
 export async function saveTeacher(teacherData: Partial<TeacherRecord> & { name: string }): Promise<TeacherRecord> {
-  _teachers = loadSavedTeachers();
+  _teachers = loadSavedTeachers(true);
   const serial = String(Math.floor(1000 + Math.random() * 9000));
   const existing = _teachers.find(t => 
     (teacherData.id && t.id === teacherData.id) ||
@@ -648,8 +653,20 @@ export async function saveTeacher(teacherData: Partial<TeacherRecord> & { name: 
     }
   } catch (err: any) {
     console.warn('Backend teacher sync response:', err?.response?.data || err?.message);
-    if (typeof updatedTeacher.id === 'number' && updatedTeacher.id < 1000000000) {
-      await authClient.patch(`/auth/users/${updatedTeacher.id}/`, tPayload).catch(() => {});
+    try {
+      if (typeof updatedTeacher.id === 'number' && updatedTeacher.id < 1000000000) {
+        await authClient.patch(`/auth/users/${updatedTeacher.id}/`, tPayload).catch(() => {});
+      } else if (updatedTeacher.email) {
+        const existingUserRes = await authClient.get(`/auth/users/?search=${encodeURIComponent(updatedTeacher.email)}`);
+        const foundUsers = Array.isArray(existingUserRes.data?.results) ? existingUserRes.data.results : (Array.isArray(existingUserRes.data) ? existingUserRes.data : []);
+        const matched = foundUsers.find((u: any) => (u.email || '').toLowerCase() === updatedTeacher.email.toLowerCase());
+        if (matched && matched.id) {
+          updatedTeacher.id = matched.id;
+          await authClient.patch(`/auth/users/${matched.id}/`, tPayload).catch(() => {});
+        }
+      }
+    } catch (fallbackErr) {
+      console.warn('Fallback teacher patch failed:', fallbackErr);
     }
   }
 
@@ -666,6 +683,7 @@ export async function saveTeacher(teacherData: Partial<TeacherRecord> & { name: 
   }
 
   _teachers = deduplicateTeachers(_teachers);
+  _cachedTeachers = _teachers;
 
   if (typeof window !== 'undefined') {
     try {
@@ -680,7 +698,7 @@ export async function saveTeacher(teacherData: Partial<TeacherRecord> & { name: 
 }
 
 export function saveStoredTeachers(backendTeachers: TeacherRecord[]) {
-  const existingLocal = loadSavedTeachers();
+  const existingLocal = loadSavedTeachers(true);
   const validBackend = backendTeachers.filter(b => 
     b && b.name && 
     !isAccountDeleted(b.email) && 
@@ -694,7 +712,7 @@ export function saveStoredTeachers(backendTeachers: TeacherRecord[]) {
   for (const local of existingLocal) {
     if (isAccountDeleted(local.email) || isAccountDeleted(local.staffId) || isAccountDeleted(local.id) || isAccountDeleted(local.name)) continue;
     const isAlreadyInBackend = validBackend.some(b => 
-      b.id === local.id ||
+      (local.id && b.id === local.id) ||
       (local.staffId && b.staffId && b.staffId.toLowerCase().replace(/[^a-z0-9]/g, '') === (local.staffId || '').toLowerCase().replace(/[^a-z0-9]/g, '')) ||
       (local.email && b.email && b.email.toLowerCase().trim() === (local.email || '').toLowerCase().trim())
     );
@@ -704,6 +722,7 @@ export function saveStoredTeachers(backendTeachers: TeacherRecord[]) {
   }
 
   _teachers = deduplicateTeachers(merged);
+  _cachedTeachers = _teachers;
   if (typeof window !== 'undefined') {
     try {
       localStorage.setItem('tarepet_teachers_list', JSON.stringify(_teachers));
@@ -716,6 +735,7 @@ export function saveStoredTeachers(backendTeachers: TeacherRecord[]) {
 
 export function clearAllStoredTeachers() {
   _teachers = [];
+  _cachedTeachers = [];
   if (typeof window !== 'undefined') {
     try {
       localStorage.removeItem('tarepet_teachers_list');
@@ -981,6 +1001,7 @@ export function deleteTeacher(teacherIdOrStaffId: number | string): boolean {
     String(t.id) !== String(teacherIdOrStaffId) &&
     (!target || t.id !== target.id)
   );
+  _cachedTeachers = _teachers;
 
   if (typeof window !== 'undefined') {
     try {
@@ -1863,6 +1884,7 @@ if (typeof window !== 'undefined') {
       _submissions = [];
       _activities = [];
       _teachers = [];
+      _cachedTeachers = [];
       _students = [];
       _cachedStudents = [];
       _subjects = [];

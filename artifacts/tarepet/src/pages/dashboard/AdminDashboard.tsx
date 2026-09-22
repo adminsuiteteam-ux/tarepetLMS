@@ -375,10 +375,11 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
     try {
       const serial = String(Math.floor(1 + Math.random() * 9999)).padStart(4, '0');
       const staffId = form.staffId || `TMS/TCH/${serial}`;
-      const nameParts = (form.name || '').trim().split(' ');
-      const firstName = nameParts[0] || '';
-      const lastName = nameParts.slice(1).join(' ') || '';
-      const email = form.email || (firstName ? `${firstName.toLowerCase()}.${lastName ? lastName.toLowerCase() : 'staff'}@tarepet.com` : '');
+      const cleanName = (form.name || '').trim().replace(/^(mr|mrs|ms|dr|prof)\.?\s+/i, '');
+      const nameParts = cleanName.split(/\s+/);
+      const firstName = nameParts[0] || 'Teacher';
+      const lastName = nameParts.slice(1).join(' ') || 'Staff';
+      const email = form.email || `${firstName.toLowerCase()}.${lastName.toLowerCase().replace(/\s+/g, '')}@tarepet.com`;
 
       const formCls = form.isFormTeacher === 'Yes' ? (form.formTeacherClass || '') : '';
       let targetDivision = '';
@@ -413,10 +414,10 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
       const created = {
         id: Date.now(),
         staffId: staffId,
-        name: form.name || `${firstName} ${lastName}`.trim(),
+        name: form.name.trim(),
         email: email,
         phone: form.phone || '',
-        gender: form.gender || '',
+        gender: form.gender || 'Male',
         department: targetDivision,
         teachingDivision: targetDivision,
         specialization: form.specialization || '',
@@ -439,7 +440,7 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
       };
 
       const savedTeacher = await saveTeacher(created);
-      await syncTeachersWithBackend();
+      await syncTeachersWithBackend().catch(() => {});
       onSave(savedTeacher);
     } catch (err) {
       console.error('Error saving teacher:', err);
@@ -656,7 +657,27 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
 
                 <div>
                   <label htmlFor="wizard-teacher-name" className={labelCls}>{t('staff.fullNameTitle', 'Full Name & Title')} <span className="text-rose-500">*</span></label>
-                  <input id="wizard-teacher-name" name="teacher_name" aria-label="Full Name and Title" className={inputCls} value={form.name} onChange={e => setF('name', e.target.value)} placeholder="e.g. Mr. Okonkwo Paul" />
+                  <input
+                    id="wizard-teacher-name"
+                    name="teacher_name"
+                    aria-label="Full Name and Title"
+                    className={inputCls}
+                    value={form.name}
+                    onChange={e => {
+                      const newName = e.target.value;
+                      setForm(prev => {
+                        const next = { ...prev, name: newName };
+                        const parts = newName.trim().replace(/^(mr|mrs|ms|dr|prof)\.?\s+/i, '').split(/\s+/);
+                        const fn = parts[0] ? parts[0].toLowerCase() : '';
+                        const ln = parts.slice(1).join('') ? parts.slice(1).join('.').toLowerCase() : 'staff';
+                        if (!prev.email || prev.email.includes('@tarepet.')) {
+                          next.email = fn ? `${fn}.${ln}@tarepet.com` : '';
+                        }
+                        return next;
+                      });
+                    }}
+                    placeholder="e.g. Mr. Okonkwo Paul"
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -680,8 +701,8 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                     <input id="wizard-teacher-phone" name="teacher_phone" aria-label="Phone Number" className={inputCls} value={form.phone} onChange={e => setF('phone', e.target.value)} placeholder="+234 800 000 0000" />
                   </div>
                   <div>
-                    <label htmlFor="wizard-teacher-email" className={labelCls}>{t('common.email', 'Email Address')} <span className="text-rose-500">*</span></label>
-                    <input type="email" id="wizard-teacher-email" name="teacher_email" aria-label="Email Address" className={inputCls} value={form.email} onChange={e => setF('email', e.target.value)} placeholder="name@tarepet.edu.ng" />
+                    <label htmlFor="wizard-teacher-email" className={labelCls}>{t('common.email', 'Email Address')} <span className="text-slate-400 font-normal text-[10px]">(auto-suggested)</span></label>
+                    <input type="email" id="wizard-teacher-email" name="teacher_email" aria-label="Email Address" className={inputCls} value={form.email} onChange={e => setF('email', e.target.value)} placeholder="e.g. okonkwo.paul@tarepet.com" />
                   </div>
                 </div>
 
@@ -981,8 +1002,18 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
             <div>
               {step < 5 ? (
                 <button
-                  onClick={() => setStep(s => s + 1)}
-                  disabled={step === 1 && (!form.name || !form.email)}
+                  type="button"
+                  onClick={() => {
+                    if (!form.email && form.name) {
+                      const clean = form.name.trim().replace(/^(mr|mrs|ms|dr|prof)\.?\s+/i, '');
+                      const parts = clean.split(/\s+/);
+                      const fn = parts[0] ? parts[0].toLowerCase() : 'teacher';
+                      const ln = parts.slice(1).join('') ? parts.slice(1).join('.').toLowerCase() : 'staff';
+                      setF('email', `${fn}.${ln}@tarepet.com`);
+                    }
+                    setStep(s => s + 1);
+                  }}
+                  disabled={step === 1 && !form.name.trim()}
                   className="px-6 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl text-xs font-bold shadow-md transition disabled:opacity-50 cursor-pointer"
                 >
                   Next Step →
@@ -991,7 +1022,7 @@ const AddTeacherWizardModal = ({ onClose, onSave }: { onClose: () => void; onSav
                 <button
                   type="button"
                   onClick={handleSave}
-                  disabled={!form.name || !form.email || isSaving}
+                  disabled={!form.name.trim() || isSaving}
                   className="px-7 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-xl text-xs font-bold shadow-md transition flex items-center gap-2 disabled:opacity-50 cursor-pointer"
                 >
                   {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
@@ -1982,19 +2013,24 @@ const AddUserModal = ({ onClose }: { onClose: () => void }) => {
         status: 'ACTIVE'
       });
       await syncStudentsWithBackend();
+    } else if (form.role === 'TEACHER') {
+      await saveTeacher({
+        name: form.name.trim(),
+        email: finalEmail,
+        staffId: schoolId,
+        password: schoolId,
+        status: 'Active',
+      });
+      await syncTeachersWithBackend().catch(() => {});
+      setTeachersList(getStoredTeachers());
     } else {
-      // Post to Django REST API for TEACHER / ADMIN
+      // Post to Django REST API for ADMIN
       authClient.post('/auth/register/', {
         email: finalEmail,
         password: schoolId,
         first_name: form.name.trim().split(' ')[0],
         last_name: form.name.trim().split(' ').slice(1).join(' ') || 'Staff',
         role: form.role,
-        teacher_id: form.role === 'TEACHER' ? schoolId : undefined,
-      }).then(async () => {
-        if (form.role === 'TEACHER') {
-          await syncTeachersWithBackend();
-        }
       }).catch(() => {});
     }
 
@@ -2136,7 +2172,8 @@ const CreateUserForTypeModal = ({
           subjectsAssigned: subs,
           status: 'Active',
         });
-        await syncTeachersWithBackend();
+        await syncTeachersWithBackend().catch(() => {});
+        setTeachersList(getStoredTeachers());
       } else if (defaultRole === 'STUDENT') {
         const schoolId = generateAdmissionNumber(form.grade || 'SS1', 'Science');
         await saveStudent({
@@ -3541,7 +3578,7 @@ export default function AdminDashboard() {
 
       const quickActionButtons = [
         { label: 'Add Student', icon: UserPlus, color: 'bg-primary/10 text-primary hover:bg-primary/20 border-primary/20', action: () => { setActiveSection('users'); setUserSubPage('STUDENT'); } },
-        { label: 'Add Teacher', icon: GraduationCap, color: 'bg-secondary/10 text-secondary hover:bg-secondary/20 border-secondary/20', action: () => { setActiveSection('users'); setUserSubPage('TEACHER'); } },
+        { label: 'Add Teacher', icon: GraduationCap, color: 'bg-secondary/10 text-secondary hover:bg-secondary/20 border-secondary/20', action: () => { setActiveSection('teachers'); setShowAddTeacherModal(true); } },
         { label: 'Manage Exams', icon: ClipboardList, color: 'bg-primary/10 text-primary hover:bg-primary/20 border-primary/20', action: () => setActiveSection('exams') },
         { label: 'Upload Results', icon: FileSpreadsheet, color: 'bg-secondary/10 text-secondary hover:bg-secondary/20 border-secondary/20', action: () => setActiveSection('results') },
         { label: 'Class Timetable', icon: School, color: 'bg-primary/10 text-primary hover:bg-primary/20 border-primary/20', action: () => setActiveSection('classes') },
@@ -7870,7 +7907,11 @@ export default function AdminDashboard() {
               onClose={() => setShowAddTeacherModal(false)}
               onSave={(created) => {
                 const updatedList = getStoredTeachers();
-                setTeachersList(updatedList);
+                const finalList = [
+                  created,
+                  ...updatedList.filter(t => t.id !== created.id && t.staffId !== created.staffId && t.email !== created.email)
+                ];
+                setTeachersList(finalList);
                 setSelectedTeacher(created);
                 setShowAddTeacherModal(false);
                 showToast(`Teacher profile for ${created.name} successfully registered and saved!`);
