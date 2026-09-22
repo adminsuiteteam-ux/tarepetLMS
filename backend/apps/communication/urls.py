@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     AnnouncementViewSet, ContactMessageViewSet,
-    ActivityLogViewSet, NotificationViewSet
+    ActivityLogViewSet, NotificationViewSet, TelemetryErrorAlertView
 )
 
 router = DefaultRouter()
@@ -14,6 +14,7 @@ router.register(r'notifications', NotificationViewSet, basename='notification')
 router.register(r'cbt-notifications', NotificationViewSet, basename='cbt-notification-alias')
 
 urlpatterns = [
+    path('report-error/', TelemetryErrorAlertView.as_view(), name='report-error'),
     path('', include(router.urls)),
 ]
 

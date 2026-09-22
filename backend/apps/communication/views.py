@@ -104,3 +104,72 @@ class NotificationViewSet(viewsets.ModelViewSet):
         qs.delete()
         return Response({'status': 'all notifications cleared'}, status=status.HTTP_200_OK)
 
+
+from django.core.mail import send_mail
+from django.conf import settings
+from rest_framework.views import APIView
+import time
+
+_recent_error_hashes = {}
+
+class TelemetryErrorAlertView(APIView):
+    """
+    Automated real-time client error reporting endpoint.
+    Catches JavaScript runtime errors, broken components, or unhandled exceptions
+    and immediately emails the school admin so defects are addressed before users report them.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        data = request.data or {}
+        error_msg = str(data.get('message', 'Unknown Client Error'))[:1000]
+        stack = str(data.get('stack', 'No stack trace provided'))[:3000]
+        url = str(data.get('url', request.META.get('HTTP_REFERER', 'Unknown URL')))[:300]
+        user_info = str(data.get('user', 'Guest / Unauthenticated'))[:200]
+        device = str(data.get('device', request.META.get('HTTP_USER_AGENT', 'Unknown Device')))[:300]
+
+        # Rate-limit duplicate errors to avoid spamming the admin inbox (1 per identical error every 10 min)
+        err_hash = f"{error_msg[:120]}_{url[:80]}"
+        now = time.time()
+        last_sent = _recent_error_hashes.get(err_hash, 0)
+        if now - last_sent < 600:
+            return Response({'status': 'throttled', 'detail': 'Error alerted recently.'}, status=status.HTTP_200_OK)
+        _recent_error_hashes[err_hash] = now
+
+        subject = f"🚨 [Tarepet Live Alert] Code Error on {url}"
+        html_message = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; border: 1px solid #fee2e2; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+            <div style="background: linear-gradient(135deg, #ef4444, #b91c1c); color: white; padding: 20px 24px;">
+                <h2 style="margin: 0; font-size: 19px;">🚨 Tarepet LMS: Live Runtime Error Detected</h2>
+                <p style="margin: 6px 0 0 0; font-size: 13px; opacity: 0.9;">An automated error occurred in the browser before users reported it.</p>
+            </div>
+            <div style="padding: 24px; background: #ffffff; color: #1e293b; font-size: 14px; line-height: 1.6;">
+                <p><strong>Error Message:</strong><br><span style="color: #dc2626; font-family: monospace; font-size: 13px; background: #fef2f2; padding: 4px 8px; border-radius: 6px; display: inline-block;">{error_msg}</span></p>
+                <p><strong>Page URL:</strong> <a href="{url}" style="color: #2563eb; text-decoration: underline;">{url}</a></p>
+                <p><strong>Affected User:</strong> {user_info}</p>
+                <p><strong>Device / Browser:</strong> {device}</p>
+                <div style="margin-top: 16px;">
+                    <strong>Stack Trace:</strong>
+                    <pre style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; font-size: 12px; overflow-x: auto; color: #475569; max-height: 250px;">{stack}</pre>
+                </div>
+            </div>
+            <div style="background: #f8fafc; border-top: 1px solid #f1f5f9; padding: 14px 24px; text-align: center; font-size: 12px; color: #94a3b8;">
+                Tarepet Montessori School Telemetry Alert Service • Automated system email
+            </div>
+        </div>
+        """
+        try:
+            admin_email = getattr(settings, 'EMAIL_HOST_USER', 'tarepetm@gmail.com') or 'tarepetm@gmail.com'
+            send_mail(
+                subject=subject,
+                message=f"Tarepet Error Alert on {url}\n\nError: {error_msg}\nUser: {user_info}\nDevice: {device}\n\nStack:\n{stack}",
+                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', admin_email),
+                recipient_list=[admin_email],
+                html_message=html_message,
+                fail_silently=True,
+            )
+        except Exception:
+            pass
+
+        return Response({'status': 'alert_dispatched'}, status=status.HTTP_200_OK)
+

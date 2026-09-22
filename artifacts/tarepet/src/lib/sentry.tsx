@@ -48,10 +48,75 @@ export function initSentry() {
   } catch {
     // Gracefully ignore initialization failure
   }
+
+  // Global uncaught error and promise rejection listeners to alert the school admin immediately
+  window.addEventListener('error', (event) => {
+    if (event.error && !isChunkLoadError(event.error)) {
+      reportLiveErrorToAdmin(event.error, {
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+      });
+    }
+  });
+
+  window.addEventListener('unhandledrejection', (event) => {
+    if (event.reason && !isChunkLoadError(event.reason)) {
+      reportLiveErrorToAdmin(event.reason, { type: 'unhandledrejection' });
+    }
+  });
+}
+
+import { getApiBaseUrl } from './api-auth';
+
+let _lastReportedHash = '';
+let _lastReportedTime = 0;
+
+export function reportLiveErrorToAdmin(error: any, context?: Record<string, any>) {
+  if (typeof window === 'undefined') return;
+  const msg = String(error?.message || error || 'Unknown Error');
+  const stack = String(error?.stack || context?.componentStack || '');
+  const url = window.location.href;
+
+  // Throttle duplicate client alerts (1 per identical error every 30s)
+  const now = Date.now();
+  const hash = `${msg}_${url}`;
+  if (hash === _lastReportedHash && now - _lastReportedTime < 30000) return;
+  _lastReportedHash = hash;
+  _lastReportedTime = now;
+
+  let userInfo = 'Guest / Unauthenticated';
+  try {
+    const rawUser = localStorage.getItem('tarepet_auth_user') || sessionStorage.getItem('tarepet_auth_user');
+    if (rawUser) {
+      const u = JSON.parse(rawUser);
+      userInfo = `${u.first_name || ''} ${u.last_name || ''} (${u.email || ''}, Role: ${u.role || 'N/A'})`.trim();
+    }
+  } catch {}
+
+  const payload = {
+    message: msg,
+    stack: stack || (context ? JSON.stringify(context) : 'No stack trace'),
+    url: url,
+    user: userInfo,
+    device: navigator.userAgent,
+    timestamp: new Date().toISOString(),
+  };
+
+  try {
+    const apiUrl = `${getApiBaseUrl()}/communication/report-error/`;
+    fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      keepalive: true,
+    }).catch(() => {});
+  } catch {}
 }
 
 export function captureException(error: any, context?: Record<string, any>) {
   if (typeof window === 'undefined') return;
+  reportLiveErrorToAdmin(error, context);
   try {
     const pkg = '@sentry/react';
     // @ts-ignore

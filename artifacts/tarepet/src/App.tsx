@@ -126,7 +126,22 @@ function Router() {
         </ProtectedRoute>
       </Route>
       <Route path="/dashboard/cbt-exam">
-        <ProtectedRoute allowedRoles={['STUDENT', 'ADMIN']}>
+        <ProtectedRoute allowedRoles={['STUDENT', 'ADMIN', 'TEACHER']}>
+          <CBTExam />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/cbt-exam">
+        <ProtectedRoute allowedRoles={['STUDENT', 'ADMIN', 'TEACHER']}>
+          <CBTExam />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/exam">
+        <ProtectedRoute allowedRoles={['STUDENT', 'ADMIN', 'TEACHER']}>
+          <CBTExam />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/cbt">
+        <ProtectedRoute allowedRoles={['STUDENT', 'ADMIN', 'TEACHER']}>
           <CBTExam />
         </ProtectedRoute>
       </Route>

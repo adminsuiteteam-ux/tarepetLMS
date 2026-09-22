@@ -55,7 +55,7 @@ interface AvailableExam {
 
 type Phase = 'list' | 'confirm' | 'exam' | 'result';
 
-import { getStoredExams, submitStudentCBTAttempt, saveStudentCBTProgress, subscribeToCBTStore, hasStudentSubmittedExam, getStudentSubmission, isStudentMarkedPresent, CBTIntegrityFlag } from '@/lib/cbt-store';
+import { getStoredExams, submitStudentCBTAttempt, saveStudentCBTProgress, subscribeToCBTStore, hasStudentSubmittedExam, getStudentSubmission, isStudentMarkedPresent, CBTIntegrityFlag, syncExamsWithBackend } from '@/lib/cbt-store';
 
 function getQuestionOption(q: Question, opt: 'A' | 'B' | 'C' | 'D'): string {
   switch (opt) {
@@ -605,6 +605,7 @@ export default function StudentCBTExam() {
 
   useEffect(() => {
     fetchExams();
+    syncExamsWithBackend().then(() => fetchExams()).catch(() => {});
     const unsub = subscribeToCBTStore(fetchExams);
     return () => unsub();
   }, []);

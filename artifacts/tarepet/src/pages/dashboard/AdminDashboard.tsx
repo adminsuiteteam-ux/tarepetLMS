@@ -2022,7 +2022,6 @@ const AddUserModal = ({ onClose }: { onClose: () => void }) => {
         status: 'Active',
       });
       await syncTeachersWithBackend().catch(() => {});
-      setTeachersList(getStoredTeachers());
     } else {
       // Post to Django REST API for ADMIN
       authClient.post('/auth/register/', {
@@ -2173,7 +2172,6 @@ const CreateUserForTypeModal = ({
           status: 'Active',
         });
         await syncTeachersWithBackend().catch(() => {});
-        setTeachersList(getStoredTeachers());
       } else if (defaultRole === 'STUDENT') {
         const schoolId = generateAdmissionNumber(form.grade || 'SS1', 'Science');
         await saveStudent({
