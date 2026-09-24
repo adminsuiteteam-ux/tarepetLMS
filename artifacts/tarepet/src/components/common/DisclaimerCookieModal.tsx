@@ -82,19 +82,19 @@ export function DisclaimerCookieModal() {
         {/* Content Body */}
         <div className="p-6 sm:p-7 space-y-4 text-[13.5px] sm:text-[14.5px] leading-relaxed text-[#2d3748] dark:text-[#cbd5e1] font-serif">
           <p>
-            It has come to the notice of the Management of <strong className="font-semibold text-foreground">Tare Pet Montessori School</strong> that fraudulent individuals and unauthorized agents are circulating personal account numbers to unsuspecting parents and guardians for school fees, admission forms, uniforms, and other levies.
+            The Management of <strong className="font-semibold text-foreground">Tare Pet Montessori School</strong> wishes to inform all parents, guardians, and students that the website currently does not process or accept online payments for school fees, admissions, or other levies, as the online payment gateway is currently under procedure and setup.
           </p>
 
           <p>
-            The general public, parents, and prospective guardians are hereby strongly advised that <strong className="text-[#e00] font-bold">PAYMENT OF SCHOOL FEES OR ANY LEVY INTO THE PERSONAL BANK ACCOUNT OF ANY INDIVIDUAL, AGENT, OR STAFF MEMBER IS STRICTLY PROHIBITED.</strong>
+            In view of this, <strong className="text-[#e00] font-bold">NO PERSON SHOULD ATTEMPT TO MAKE PAYMENTS ON OR THROUGH THIS WEBSITE.</strong>
           </p>
 
           <p>
-            All legitimate school payments, registrations, and fee clearances must be conducted directly at the <strong className="font-semibold">School Bursary Office on campus</strong> or paid strictly into the school's verified corporate bank accounts issued officially by the Bursary.
+            All school fee payments, admission fees, and other official transactions should be made directly to the <strong className="font-semibold">School Bursary / Administrative Office on campus</strong>, or paid directly into the <strong className="font-semibold">designated School Bank Account obtained directly from the Bursary</strong>.
           </p>
 
           <p>
-            Tare Pet Montessori School will not be held liable or responsible for any financial loss incurred through payments made to unauthorized personal accounts, private individuals, or third-party intermediaries.
+            Please contact the school office directly for official account details or any payment verification.
           </p>
 
           <div className="pt-2 font-bold text-[#1a202c] dark:text-white leading-snug">
