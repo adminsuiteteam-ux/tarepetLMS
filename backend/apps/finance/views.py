@@ -79,6 +79,58 @@ class FeeItemViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+def reconcile_student_fee_account(student_profile, student_name, session, term, class_level=None):
+    if not class_level:
+        class_level = (
+            (student_profile.current_class if student_profile and student_profile.current_class else None) or
+            'Primary 1'
+        )
+
+    sched = ClassFeeSchedule.objects.filter(class_level__iexact=class_level).first()
+    total_billed = sched.total_fee if sched else Decimal('0.00')
+
+    account, _ = StudentFeeAccount.objects.get_or_create(
+        student=student_profile,
+        session=session,
+        term=term,
+        defaults={
+            'student_name': student_name,
+            'class_level': class_level,
+            'total_billed': total_billed,
+        }
+    )
+
+    if student_profile and not account.student:
+        account.student = student_profile
+    account.student_name = student_name
+    account.class_level = class_level
+    if account.total_billed == 0 and total_billed > 0:
+        account.total_billed = total_billed
+
+    match_filter = Q(student=student_profile) if student_profile else Q(student_name__iexact=student_name)
+    total_paid = FeeTransaction.objects.filter(
+        match_filter,
+        status=FeeTransaction.Status.SUCCESS,
+        session=session,
+        term=term
+    ).aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
+
+    account.amount_paid = total_paid
+    effective_billed = max(Decimal('0.00'), account.total_billed - account.discount_applied)
+    account.balance_due = max(Decimal('0.00'), effective_billed - total_paid)
+
+    if account.balance_due == 0 and effective_billed > 0:
+        account.status = StudentFeeAccount.PaymentStatus.PAID
+    elif total_paid > 0:
+        account.status = StudentFeeAccount.PaymentStatus.PARTIAL
+    else:
+        account.status = StudentFeeAccount.PaymentStatus.UNPAID
+
+    account.last_payment_date = timezone.now()
+    account.save()
+    return account
+
+
 class FeeTransactionViewSet(viewsets.ModelViewSet):
     """
     Transaction viewset scoped strictly to caller's role.
@@ -187,55 +239,11 @@ class FeeTransactionViewSet(viewsets.ModelViewSet):
                 }
             )
 
-            # Reconcile StudentFeeAccount
             class_level = (
                 (student_profile.current_class if student_profile and student_profile.current_class else None) or
                 data.get('classLevel') or data.get('class_level') or 'Primary 1'
             )
-
-            sched = ClassFeeSchedule.objects.filter(class_level__iexact=class_level).first()
-            total_billed = sched.total_fee if sched else Decimal('0.00')
-
-            account, _ = StudentFeeAccount.objects.get_or_create(
-                student=student_profile,
-                session=session,
-                term=term,
-                defaults={
-                    'student_name': student_name,
-                    'class_level': class_level,
-                    'total_billed': total_billed,
-                }
-            )
-
-            if student_profile and not account.student:
-                account.student = student_profile
-            account.student_name = student_name
-            account.class_level = class_level
-            if account.total_billed == 0 and total_billed > 0:
-                account.total_billed = total_billed
-
-            # Re-sum all successful payments for this student
-            match_filter = Q(student=student_profile) if student_profile else Q(student_name__iexact=student_name)
-            total_paid = FeeTransaction.objects.filter(
-                match_filter,
-                status=FeeTransaction.Status.SUCCESS,
-                session=session,
-                term=term
-            ).aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
-
-            account.amount_paid = total_paid
-            effective_billed = max(Decimal('0.00'), account.total_billed - account.discount_applied)
-            account.balance_due = max(Decimal('0.00'), effective_billed - total_paid)
-
-            if account.balance_due == 0 and effective_billed > 0:
-                account.status = StudentFeeAccount.PaymentStatus.PAID
-            elif total_paid > 0:
-                account.status = StudentFeeAccount.PaymentStatus.PARTIAL
-            else:
-                account.status = StudentFeeAccount.PaymentStatus.UNPAID
-
-            account.last_payment_date = timezone.now()
-            account.save()
+            reconcile_student_fee_account(student_profile, student_name, session, term, class_level)
 
         return Response(FeeTransactionSerializer(tx).data, status=status.HTTP_201_CREATED)
 
@@ -306,6 +314,7 @@ class PaystackVerifyView(APIView):
                     'receipt_url': receipt_url,
                 }
             )
+            reconcile_student_fee_account(student_profile, student_name, session, term)
 
         return Response(FeeTransactionSerializer(tx).data, status=status.HTTP_200_OK)
 
@@ -331,7 +340,11 @@ class PaystackWebhookView(APIView):
             data = event_data.get('data', {})
             ref = data.get('reference')
             if ref:
-                FeeTransaction.objects.filter(reference=ref).update(status=FeeTransaction.Status.SUCCESS)
+                tx = FeeTransaction.objects.filter(reference=ref).first()
+                if tx:
+                    tx.status = FeeTransaction.Status.SUCCESS
+                    tx.save(update_fields=['status'])
+                    reconcile_student_fee_account(tx.student, tx.student_name, tx.session, tx.term)
 
         return Response({'status': 'ok'}, status=status.HTTP_200_OK)
 
