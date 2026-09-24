@@ -937,6 +937,10 @@ export async function processPaystackPayment({
       });
 
       handler.openIframe();
+      // Safety unlock: Reset loading spinner state after Paystack modal opens
+      setTimeout(() => {
+        onClose();
+      }, 4000);
       return;
     } catch (err) {
       console.error('Paystack popup setup error:', err);
