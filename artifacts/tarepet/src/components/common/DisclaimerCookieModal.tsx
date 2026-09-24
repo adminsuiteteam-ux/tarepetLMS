@@ -6,15 +6,18 @@ export function DisclaimerCookieModal() {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
     // Check if disclaimer & cookie consent has already been acknowledged
     const storedConsent = localStorage.getItem('tarepet_cookie_consent');
     if (!storedConsent) {
       // Short delay for smooth entrance
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
         setIsOpen(true);
       }, 500);
-      return () => clearTimeout(timer);
     }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, []);
 
   useEffect(() => {
@@ -79,24 +82,24 @@ export function DisclaimerCookieModal() {
         {/* Content Body */}
         <div className="p-6 sm:p-7 space-y-4 text-[13.5px] sm:text-[14.5px] leading-relaxed text-[#2d3748] dark:text-[#cbd5e1] font-serif">
           <p>
-            It has come to our notice that there have been instances where account numbers of individuals are being
-            given to prospective and returning students to make school fees and other payments. The public is, by this
-            notice, informed that <strong className="text-[#e00] font-bold">PAYMENT OF FEES TO THE ACCOUNTS OF ANY INDIVIDUAL OR STAFF OF THE SCHOOL IS HIGHLY PROHIBITED.</strong>
+            It has come to the notice of the Management of <strong className="font-semibold text-foreground">Tare Pet Montessori School</strong> that fraudulent individuals and unauthorized agents are circulating personal account numbers to unsuspecting parents and guardians for school fees, admission forms, uniforms, and other levies.
           </p>
 
           <p>
-            All payments must be made through the School Portal at <a href="https://tarepetmontessorischool.com" className="text-blue-600 dark:text-blue-400 hover:underline">https://tarepetmontessorischool.com</a>. Any payment being
-            made directly to the bank must be into a designated School Account Number.
+            The general public, parents, and prospective guardians are hereby strongly advised that <strong className="text-[#e00] font-bold">PAYMENT OF SCHOOL FEES OR ANY LEVY INTO THE PERSONAL BANK ACCOUNT OF ANY INDIVIDUAL, AGENT, OR STAFF MEMBER IS STRICTLY PROHIBITED.</strong>
           </p>
 
           <p>
-            The School Management will not take responsibility for any payment that is not made through the portal or directly
-            into a bank, using the School’s Account details. This Disclaimer is effective From September 2026.
+            All legitimate school payments, registrations, and fee clearances must be conducted directly at the <strong className="font-semibold">School Bursary Office on campus</strong> or paid strictly into the school's verified corporate bank accounts issued officially by the Bursary.
+          </p>
+
+          <p>
+            Tare Pet Montessori School will not be held liable or responsible for any financial loss incurred through payments made to unauthorized personal accounts, private individuals, or third-party intermediaries.
           </p>
 
           <div className="pt-2 font-bold text-[#1a202c] dark:text-white leading-snug">
             SIGNED<br />
-            MGT
+            MANAGEMENT
           </div>
         </div>
 

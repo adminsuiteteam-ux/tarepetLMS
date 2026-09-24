@@ -3,12 +3,12 @@ import { Link } from "wouter";
 import { motion, useInView, animate } from "framer-motion";
 import { useRef, useEffect, useState } from "react";
 import { ArrowRight, BookOpen, Heart, Users, CheckCircle2, Quote, Sparkles, GraduationCap, Globe, Building2, HeartHandshake } from "lucide-react";
-import heroImg from "@assets/classroom_hero.jpg";
 import philosophyImg from "@assets/school_building.jpg";
 import vibrantCampusImg from "@assets/vibrant_campus.jpg";
 import { GlareCard } from "@/components/ui/glare-card";
 import BackgroundNoiseEffect from "@/components/ui/background-snippets-noise-effect11";
 import { StaggerTestimonials } from "@/components/ui/stagger-testimonials";
+import { HeroCarousel } from "@/components/home/HeroCarousel";
 
 function Counter({ target, suffix = "", duration = 2 }: { target: number; suffix?: string; duration?: number }) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -53,61 +53,8 @@ export default function Home() {
 
   return (
     <PageTransition>
-      {/* Hero Section with Background Image */}
-      <section className="relative min-h-[95vh] flex items-center pt-28 md:pt-36 pb-20 overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <img
-            src={heroImg}
-            alt="Tare Pet Montessori School Citadel of Praise Campus Building"
-            className="w-full h-full object-cover object-center scale-105 opacity-95 brightness-100"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-black/20" />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-black/25" />
-        </div>
-        
-        <div className="container mx-auto px-4 md:px-6 relative z-10">
-          <div className="max-w-3xl">
-            <motion.h1 
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.6 }}
-              className="text-5xl md:text-7xl font-serif font-bold text-white leading-[1.1] mb-6 tracking-tight"
-            >
-              Nurturing <span className="text-primary italic font-light hover:text-white transition-colors duration-300">Excellence</span> <br/>in Every Child.
-            </motion.h1>
-            
-            <motion.p 
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.6 }}
-              className="text-lg md:text-xl text-white/90 mb-10 max-w-2xl font-sans leading-relaxed font-normal"
-            >
-              Tare Pet Montessori School provides a premium, holistic education in Yenagoa. Offering Nursery, Primary, Junior & Senior Secondary, Boarding, and Special Education.
-            </motion.p>
-            
-            <motion.div 
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.6 }}
-              className="flex flex-col sm:flex-row gap-4"
-            >
-              <Link 
-                href="/sign-in" 
-                className="inline-flex items-center justify-center rounded-full text-base font-semibold transition-all duration-300 bg-gradient-to-r from-primary to-primary/90 text-white hover:shadow-2xl hover:shadow-primary/40 hover:scale-105 active:scale-95 h-14 px-8 py-3 group"
-              >
-                Portal Login
-                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1.5 transition-transform duration-300" />
-              </Link>
-              <Link 
-                href="/about" 
-                className="inline-flex items-center justify-center rounded-full text-base font-semibold transition-all duration-300 glass-button text-white hover:bg-white/20 hover:scale-105 active:scale-95 h-14 px-8 py-3"
-              >
-                Discover Our Method
-              </Link>
-            </motion.div>
-          </div>
-        </div>
-      </section>
+      {/* Dynamic Interactive Hero Carousel */}
+      <HeroCarousel />
 
 
       {/* Programs Preview section with 5 School Programs */}
