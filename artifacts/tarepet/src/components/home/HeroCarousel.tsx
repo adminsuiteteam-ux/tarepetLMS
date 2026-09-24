@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 
 import classroomHeroImg from "@assets/classroom_hero.jpg";
-import admissionsHeroImg from "@assets/admissions_hero.jpg";
+import journalHeroImg from "@assets/journal_hero.jpg";
 import programsHeroImg from "@assets/programs_hero.jpg";
 import vibrantCampusImg from "@assets/vibrant_campus.jpg";
 
@@ -57,7 +57,7 @@ const slides: SlideData[] = [
     primaryBtn: { text: "Apply for Admission", href: "/admissions" },
     secondaryBtn: { text: "Schedule a Campus Tour", href: "/contact" },
     tags: ["Creche to Secondary", "Individualized Attention", "Proven Academic Track Record"],
-    image: admissionsHeroImg,
+    image: journalHeroImg,
     imageAlt: "Admissions open at Tare Pet Montessori School campus",
   },
   {
