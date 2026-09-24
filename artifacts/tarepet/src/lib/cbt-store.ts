@@ -485,6 +485,7 @@ const OFFICIAL_TEACHER_EMAILS = new Set(DEFAULT_FORM_TEACHERS.map(t => t.email.t
 const OFFICIAL_TEACHER_NAMES = new Set(DEFAULT_FORM_TEACHERS.map(t => t.name.toLowerCase().trim()));
 
 let _cachedTeachers: TeacherRecord[] | null = null;
+let _teachers: TeacherRecord[] = [];
 
 function loadSavedTeachers(forceReload = false): TeacherRecord[] {
   if (typeof window === 'undefined') return DEFAULT_FORM_TEACHERS;
@@ -510,7 +511,6 @@ function loadSavedTeachers(forceReload = false): TeacherRecord[] {
         );
         const result = deduplicateTeachers(liveOnly);
         _cachedTeachers = result;
-        _teachers = result;
         return result;
       }
     }
@@ -531,11 +531,8 @@ function loadSavedTeachers(forceReload = false): TeacherRecord[] {
   } catch (e) {}
 
   _cachedTeachers = initList;
-  _teachers = initList;
   return initList;
 }
-
-let _teachers: TeacherRecord[] = loadSavedTeachers();
 
 export function getStoredTeachers(): TeacherRecord[] {
   if (!_teachers || _teachers.length === 0) {

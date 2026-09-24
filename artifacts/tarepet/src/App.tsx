@@ -6,6 +6,7 @@ import { Route, Switch, Redirect, Router as WouterRouter } from 'wouter';
 import { Layout } from '@/components/layout/Layout';
 import { AnimatePresence } from 'framer-motion';
 import { AuthProvider } from '@/context/AuthContext';
+import { DialogProvider } from '@/context/DialogContext';
 
 import { Suspense, lazy } from 'react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -202,8 +203,6 @@ function getRouterBase() {
   }
   return base.replace(/\/$/, '');
 }
-
-import { DialogProvider } from '@/context/DialogContext';
 
 function App() {
   return (

@@ -1,5 +1,6 @@
 import React from 'react';
 import { t } from '@/lib/i18n';
+import { getApiBaseUrl } from './api-auth';
 
 // Sentry Client Instrumentation for Vite / React
 export interface SentryConfig {
@@ -66,8 +67,6 @@ export function initSentry() {
     }
   });
 }
-
-import { getApiBaseUrl } from './api-auth';
 
 let _lastReportedHash = '';
 let _lastReportedTime = 0;
