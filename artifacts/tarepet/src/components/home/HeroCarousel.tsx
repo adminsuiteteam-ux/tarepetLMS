@@ -1,18 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  ArrowRight, 
-  ChevronLeft, 
-  ChevronRight, 
-  Pause, 
-  Play, 
-  Sparkles, 
-  GraduationCap, 
-  Laptop, 
-  ShieldCheck, 
-  CheckCircle2 
-} from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 
 import classroomHeroImg from "@assets/classroom_hero.jpg";
 import journalHeroImg from "@assets/journal_hero.jpg";
@@ -21,14 +10,11 @@ import vibrantCampusImg from "@assets/vibrant_campus.jpg";
 
 interface SlideData {
   id: number;
-  badge: string;
-  badgeIcon: React.ElementType;
   title: string;
   titleHighlight: string;
   subtitle: string;
   primaryBtn: { text: string; href: string };
   secondaryBtn: { text: string; href: string };
-  tags: string[];
   image: string;
   imageAlt: string;
 }
@@ -36,53 +22,41 @@ interface SlideData {
 const slides: SlideData[] = [
   {
     id: 1,
-    badge: "Citadel of Praise • Yenagoa, Bayelsa State",
-    badgeIcon: Sparkles,
     title: "Nurturing",
     titleHighlight: "Excellence in Every Child",
     subtitle: "Tare Pet Montessori School provides a premium, holistic educational foundation in Yenagoa. Offering Creche, Nursery, Primary, Junior & Senior Secondary, Boarding, and Special Education.",
     primaryBtn: { text: "Student Portal", href: "/sign-in" },
     secondaryBtn: { text: "Discover Our Method", href: "/about" },
-    tags: ["Montessori Foundation", "Character & Morals", "Dedicated Educators"],
     image: classroomHeroImg,
     imageAlt: "Students learning in modern Montessori classroom at Tare Pet",
   },
   {
     id: 2,
-    badge: "Admissions Ongoing • 2026/2027 Academic Session",
-    badgeIcon: GraduationCap,
     title: "Give Your Child a",
     titleHighlight: "World-Class Head Start",
     subtitle: "Enroll your child today in an inspiring learning environment where curiosity, intellectual rigor, and leadership are cultivated from their earliest formative years.",
     primaryBtn: { text: "Apply for Admission", href: "/admissions" },
     secondaryBtn: { text: "Schedule a Campus Tour", href: "/contact" },
-    tags: ["Creche to Secondary", "Individualized Attention", "Proven Academic Track Record"],
     image: journalHeroImg,
     imageAlt: "Admissions open at Tare Pet Montessori School campus",
   },
   {
     id: 3,
-    badge: "Digital Learning & Modern STEM Hub",
-    badgeIcon: Laptop,
     title: "Empowering with Modern",
     titleHighlight: "CBT & ICT Facilities",
     subtitle: "Equipped with state-of-the-art computer laboratories, continuous computer-based testing (CBT), and hands-on science labs to prepare students for national and global excellence.",
     primaryBtn: { text: "Explore Academic Programs", href: "/programs" },
     secondaryBtn: { text: "View Student Portal", href: "/sign-in" },
-    tags: ["WAEC & JAMB CBT Ready", "High-Speed ICT Labs", "STEM & Digital Skills"],
     image: programsHeroImg,
     imageAlt: "Students practicing computer and science skills in ICT lab",
   },
   {
     id: 4,
-    badge: "Safe Boarding & Vibrant Campus",
-    badgeIcon: ShieldCheck,
     title: "A Secure, Serene &",
     titleHighlight: "Thriving Community",
     subtitle: "Modern boarding hostels, round-the-clock security, loving pastoral care, spacious sports amenities, and rich extracurricular clubs where every learner flourishes.",
     primaryBtn: { text: "Explore Campus Life", href: "/about" },
     secondaryBtn: { text: "Contact Bursary & Admin", href: "/contact" },
-    tags: ["24/7 Monitored Campus", "Sports & Creative Arts", "Loving Pastoral Care"],
     image: vibrantCampusImg,
     imageAlt: "Vibrant campus activities and facilities at Tare Pet Montessori",
   },
@@ -93,23 +67,15 @@ const AUTOPLAY_INTERVAL = 6500; // 6.5 seconds
 export function HeroCarousel() {
   const [current, setCurrent] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [direction, setDirection] = useState(1);
   const touchStartX = useRef<number | null>(null);
 
   const nextSlide = useCallback(() => {
-    setDirection(1);
     setCurrent((prev) => (prev + 1) % slides.length);
   }, []);
 
   const prevSlide = useCallback(() => {
-    setDirection(-1);
     setCurrent((prev) => (prev - 1 + slides.length) % slides.length);
   }, []);
-
-  const goToSlide = (index: number) => {
-    setDirection(index > current ? 1 : -1);
-    setCurrent(index);
-  };
 
   // Autoplay effect
   useEffect(() => {
@@ -146,7 +112,6 @@ export function HeroCarousel() {
   };
 
   const activeSlide = slides[current];
-  const BadgeIcon = activeSlide.badgeIcon;
 
   return (
     <section 
@@ -192,12 +157,6 @@ export function HeroCarousel() {
               transition={{ duration: 0.55, ease: "easeOut" }}
               className="space-y-6"
             >
-              {/* Category / Campus Badge */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs sm:text-sm font-medium shadow-lg">
-                <BadgeIcon className="w-4 h-4 text-primary animate-pulse" />
-                <span>{activeSlide.badge}</span>
-              </div>
-
               {/* Slide Headline */}
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-serif font-bold text-white leading-[1.1] tracking-tight drop-shadow-md">
                 {activeSlide.title}{" "}
@@ -210,19 +169,6 @@ export function HeroCarousel() {
               <p className="text-base sm:text-lg md:text-xl text-white/90 max-w-2xl font-sans leading-relaxed font-normal drop-shadow">
                 {activeSlide.subtitle}
               </p>
-
-              {/* Key Highlights / Tags */}
-              <div className="flex flex-wrap gap-2.5 pt-1">
-                {activeSlide.tags.map((tag, idx) => (
-                  <span
-                    key={idx}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/40 backdrop-blur-sm border border-white/15 text-white/90 text-xs sm:text-sm font-medium"
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
-                    {tag}
-                  </span>
-                ))}
-              </div>
 
               {/* Call-to-Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 pt-3">
@@ -260,54 +206,6 @@ export function HeroCarousel() {
           className="pointer-events-auto w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-black/30 hover:bg-black/60 backdrop-blur-md border border-white/20 text-white flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 hover:border-primary cursor-pointer shadow-lg"
         >
           <ChevronRight className="w-6 h-6" />
-        </button>
-      </div>
-
-      {/* Bottom Carousel Controls: Indicators & Play/Pause */}
-      <div className="absolute bottom-6 sm:bottom-8 left-0 right-0 z-20 flex items-center justify-between px-4 md:px-8 max-w-7xl mx-auto">
-        {/* Slide Indicators */}
-        <div className="flex items-center gap-2 sm:gap-3 bg-black/30 backdrop-blur-md px-4 py-2 rounded-full border border-white/15">
-          {slides.map((slide, index) => {
-            const isActive = index === current;
-            return (
-              <button
-                key={slide.id}
-                onClick={() => goToSlide(index)}
-                aria-label={`Go to slide ${index + 1}: ${slide.title}`}
-                className="group relative py-1 focus:outline-none cursor-pointer"
-              >
-                <div
-                  className={`h-2 rounded-full transition-all duration-400 ${
-                    isActive 
-                      ? "w-8 sm:w-10 bg-primary shadow-sm shadow-primary/60" 
-                      : "w-2.5 sm:w-3 bg-white/40 group-hover:bg-white/70"
-                  }`}
-                />
-              </button>
-            );
-          })}
-          <span className="text-white/60 text-xs font-mono pl-1">
-            0{current + 1} / 0{slides.length}
-          </span>
-        </div>
-
-        {/* Autoplay Pause / Play Toggle */}
-        <button
-          onClick={() => setIsPaused((prev) => !prev)}
-          aria-label={isPaused ? "Play slideshow" : "Pause slideshow"}
-          className="bg-black/30 hover:bg-black/60 backdrop-blur-md border border-white/15 text-white/80 hover:text-white p-2.5 rounded-full transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer flex items-center gap-1.5 text-xs font-medium"
-        >
-          {isPaused ? (
-            <>
-              <Play className="w-3.5 h-3.5 fill-current" />
-              <span className="hidden sm:inline">Play</span>
-            </>
-          ) : (
-            <>
-              <Pause className="w-3.5 h-3.5 fill-current" />
-              <span className="hidden sm:inline">Pause</span>
-            </>
-          )}
         </button>
       </div>
     </section>
