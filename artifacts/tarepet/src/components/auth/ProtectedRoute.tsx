@@ -39,6 +39,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const userRoleUpper = (user?.role || '').toUpperCase();
   const allowedUpper = allowedRoles?.map(r => r.toUpperCase());
 
+  // Administrators and Superusers have administrative oversight to inspect student/parent/teacher views
+  if (userRoleUpper === 'ADMIN') {
+    return <>{children}</>;
+  }
+
   if (allowedUpper && user && !allowedUpper.includes(userRoleUpper)) {
     return (
       <div className="flex min-h-[70vh] items-center justify-center p-6 text-center">
