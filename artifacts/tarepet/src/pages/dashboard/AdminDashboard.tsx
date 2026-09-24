@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { subscribeToWebSocketEvents, getWebSocketStatus, subscribeToWebSocketStatus, sendWebSocketEvent } from '@/lib/websocket-client';
 import { getStoredExams, updateExamStatus, saveCBTExam, subscribeToCBTStore, syncExamsWithBackend, mapCBTExamToAdminExam, deleteCBTExam, generateAdmissionNumber, formatStudentEmail, getStoredStudents, saveStudent, saveStoredStudents, clearAllStoredStudents, deleteStudent, syncStudentsWithBackend, getStoredTeachers, saveTeacher, saveStoredTeachers, clearAllStoredTeachers, deleteTeacher, syncTeachersWithBackend, listenToRealtimeEvents, clearCBTStoreCache, clearAllSiteDefaultData, isAccountDeleted, getAdminPassword, setAdminPassword, matchStudentClass, broadcastRealtimeEvent, getStoredSubjects, saveSubject, deleteSubject, DEFAULT_SUBJECTS, SubjectRecord } from '@/lib/cbt-store';
 import { AdminManagementPanel } from '@/components/dashboard/AdminManagementPanel';
+import { ActivityLogPanel } from '@/components/dashboard/ActivityLogPanel';
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
 import { ImageCropModal } from '@/components/ui/ImageCropModal';
 import { validatePasswordStrength } from '@/lib/password-policy';
@@ -11807,6 +11808,9 @@ export default function AdminDashboard() {
       );
     }
     if (activeSection === 'reports') return renderModuleHeader('Reports', 'Generate comprehensive academic, attendance, teacher, and student analytical reports.', BarChart2);
+    if (activeSection === 'activity_log' || activeSection === 'logs' || activeSection === 'telemetry') {
+      return <ActivityLogPanel />;
+    }
 
     return null;
   };

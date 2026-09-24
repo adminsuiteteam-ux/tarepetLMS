@@ -45,8 +45,18 @@ class ContactMessageViewSet(viewsets.ModelViewSet):
         return [permissions.IsAuthenticated()]
 
 
-class ActivityLogViewSet(viewsets.ReadOnlyModelViewSet):
-    """Read-only view of system activity logs for authenticated users."""
+import json
+import time
+from django.db import connection
+from django.conf import settings
+from rest_framework.views import APIView
+from .models import CookieConsent, SystemAlert
+from .serializers import CookieConsentSerializer, SystemAlertSerializer
+from .alerts import dispatch_live_alert, log_system_activity, get_client_ip
+
+
+class ActivityLogViewSet(viewsets.ModelViewSet):
+    """Activity log management with filtering, searching, and custom logging."""
     queryset = ActivityLog.objects.all().order_by('-timestamp')
     serializer_class = ActivityLogSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -55,9 +65,158 @@ class ActivityLogViewSet(viewsets.ReadOnlyModelViewSet):
         user = self.request.user
         qs = ActivityLog.objects.all().order_by('-timestamp')
         if not (getattr(user, 'is_admin', False) or getattr(user, 'role', '') == 'ADMIN' or user.is_staff or user.is_superuser):
-            # Non-admins only see their own activities or general system events
             qs = qs.filter(user__icontains=user.email)
+
+        # Filters
+        severity = self.request.query_params.get('severity')
+        category = self.request.query_params.get('category')
+        activity_type = self.request.query_params.get('type')
+        search = self.request.query_params.get('search')
+
+        if severity:
+            qs = qs.filter(severity__iexact=severity)
+        if category:
+            qs = qs.filter(category__iexact=category)
+        if activity_type:
+            qs = qs.filter(activity_type__icontains=activity_type)
+        if search:
+            qs = qs.filter(models.Q(title__icontains=search) | models.Q(detail__icontains=search) | models.Q(user__icontains=search))
+
         return qs
+
+    @action(detail=False, methods=['post'], url_path='log', permission_classes=[permissions.AllowAny])
+    def log_event(self, request):
+        """Allows both authenticated clients and public pages to record user interactions."""
+        data = request.data or {}
+        act_type = data.get('type') or data.get('activity_type') or 'CLIENT_EVENT'
+        title = data.get('title', 'Client Action')
+        detail = data.get('detail', '')
+        severity = data.get('severity', 'INFO')
+        category = data.get('category', 'SYSTEM')
+
+        user_str = ''
+        if request.user.is_authenticated:
+            user_str = request.user.email
+        else:
+            user_str = data.get('user', 'Guest / Anonymous')
+
+        log_obj = log_system_activity(
+            activity_type=act_type,
+            title=title,
+            detail=detail,
+            user=user_str,
+            request=request,
+            severity=severity,
+            category=category
+        )
+        return Response({'status': 'logged', 'id': log_obj.id if log_obj else None}, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['get'], url_path='export')
+    def export_logs(self, request):
+        """Exports the latest 500 activity logs as a structured JSON ledger."""
+        qs = self.get_queryset()[:500]
+        serializer = self.get_serializer(qs, many=True)
+        return Response({'count': len(serializer.data), 'logs': serializer.data}, status=status.HTTP_200_OK)
+
+
+class CookieConsentViewSet(viewsets.ModelViewSet):
+    """
+    Manages browser cookie consent policies, stores consent records,
+    and sets secure response cookies.
+    """
+    queryset = CookieConsent.objects.all().order_by('-created_at')
+    serializer_class = CookieConsentSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get_permissions(self):
+        if self.action in ['create', 'consent_status']:
+            return [permissions.AllowAny()]
+        from apps.users.permissions import IsAdmin
+        return [IsAdmin()]
+
+    def create(self, request, *args, **kwargs):
+        data = request.data or {}
+        ip = get_client_ip(request)
+        ua = request.META.get('HTTP_USER_AGENT', '')
+        user = request.user if request.user.is_authenticated else None
+
+        consent_status = data.get('consent_status', 'ALL').upper()
+        necessary = data.get('necessary', True)
+        analytics = data.get('analytics', True if consent_status == 'ALL' else False)
+        functional = data.get('functional', True if consent_status == 'ALL' else False)
+        security = data.get('security', True)
+        disclaimer_ack = data.get('disclaimer_acknowledged', True)
+        session_id = data.get('session_id', request.session.session_key or '')
+
+        consent_obj = CookieConsent.objects.create(
+            user=user,
+            ip_address=ip,
+            user_agent=ua[:500] if ua else '',
+            consent_status=consent_status,
+            necessary=necessary,
+            analytics=analytics,
+            functional=functional,
+            security=security,
+            disclaimer_acknowledged=disclaimer_ack,
+            session_id=session_id
+        )
+
+        # Audit in ActivityLog
+        log_system_activity(
+            activity_type='COOKIE_CONSENT',
+            title=f"Cookie Consent: {consent_status}",
+            detail=f"Necessary: {necessary}, Analytics: {analytics}, Functional: {functional}, Disclaimer Ack: {disclaimer_ack}",
+            user=user.email if user else f"Guest ({ip})",
+            request=request,
+            severity='INFO',
+            category='SYSTEM'
+        )
+
+        resp_data = CookieConsentSerializer(consent_obj).data
+        response = Response({'status': 'consent_recorded', 'consent': resp_data}, status=status.HTTP_201_CREATED)
+
+        # Set secure HTTP cookie on response (persisted for 1 year)
+        cookie_payload = json.dumps({
+            'status': consent_status,
+            'necessary': necessary,
+            'analytics': analytics,
+            'functional': functional,
+            'security': security,
+            'disclaimer_acknowledged': disclaimer_ack,
+            'timestamp': int(time.time())
+        })
+        is_secure = getattr(settings, 'SESSION_COOKIE_SECURE', False) or request.is_secure()
+        response.set_cookie(
+            key='tarepet_cookie_consent',
+            value=cookie_payload,
+            max_age=31536000,  # 1 year
+            samesite='Lax',
+            secure=is_secure,
+            httponly=False  # Accessible to client JS for immediate UI sync
+        )
+        response.set_cookie(
+            key='tarepet_disclaimer_ack',
+            value='true',
+            max_age=31536000,
+            samesite='Lax',
+            secure=is_secure,
+            httponly=False
+        )
+        return response
+
+    @action(detail=False, methods=['get'], url_path='status')
+    def consent_status(self, request):
+        """Checks if consent is already recorded for this user or IP."""
+        ip = get_client_ip(request)
+        consent = None
+        if request.user.is_authenticated:
+            consent = CookieConsent.objects.filter(user=request.user).first()
+        if not consent and ip:
+            consent = CookieConsent.objects.filter(ip_address=ip).first()
+
+        if consent:
+            return Response({'has_consent': True, 'consent': CookieConsentSerializer(consent).data}, status=status.HTTP_200_OK)
+        return Response({'has_consent': False}, status=status.HTTP_200_OK)
 
 
 class NotificationViewSet(viewsets.ModelViewSet):
@@ -105,71 +264,97 @@ class NotificationViewSet(viewsets.ModelViewSet):
         return Response({'status': 'all notifications cleared'}, status=status.HTTP_200_OK)
 
 
-from django.core.mail import send_mail
-from django.conf import settings
-from rest_framework.views import APIView
-import time
-
-_recent_error_hashes = {}
-
 class TelemetryErrorAlertView(APIView):
     """
-    Automated real-time client error reporting endpoint.
-    Catches JavaScript runtime errors, broken components, or unhandled exceptions
-    and immediately emails the school admin so defects are addressed before users report them.
+    Live real-time error & telemetry reporting endpoint.
+    Catches broken code, uncaught runtime errors, unhandled rejections, unresponsive UI,
+    security breaches, and database spikes, sending instant live email notifications.
     """
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
         data = request.data or {}
-        error_msg = str(data.get('message', 'Unknown Client Error'))[:1000]
-        stack = str(data.get('stack', 'No stack trace provided'))[:3000]
-        url = str(data.get('url', request.META.get('HTTP_REFERER', 'Unknown URL')))[:300]
-        user_info = str(data.get('user', 'Guest / Unauthenticated'))[:200]
-        device = str(data.get('device', request.META.get('HTTP_USER_AGENT', 'Unknown Device')))[:300]
+        alert_type = str(data.get('alert_type', data.get('type', 'BROKEN_CODE'))).upper()
+        if alert_type not in dict(SystemAlert.ALERT_TYPES):
+            alert_type = 'BROKEN_CODE'
 
-        # Rate-limit duplicate errors to avoid spamming the admin inbox (1 per identical error every 10 min)
-        err_hash = f"{error_msg[:120]}_{url[:80]}"
-        now = time.time()
-        last_sent = _recent_error_hashes.get(err_hash, 0)
-        if now - last_sent < 600:
-            return Response({'status': 'throttled', 'detail': 'Error alerted recently.'}, status=status.HTTP_200_OK)
-        _recent_error_hashes[err_hash] = now
+        title = str(data.get('title') or data.get('message', 'Client Runtime Error'))[:250]
+        details = str(data.get('details') or data.get('stack') or data.get('error', 'No trace provided'))
+        url = str(data.get('url', request.META.get('HTTP_REFERER', 'Unknown URL')))[:500]
+        severity = str(data.get('severity', 'HIGH')).upper()
+        if severity not in ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']:
+            severity = 'HIGH'
 
-        subject = f"🚨 [Tarepet Live Alert] Code Error on {url}"
-        html_message = f"""
-        <div style="font-family: Arial, sans-serif; max-width: 650px; margin: 0 auto; border: 1px solid #fee2e2; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-            <div style="background: linear-gradient(135deg, #ef4444, #b91c1c); color: white; padding: 20px 24px;">
-                <h2 style="margin: 0; font-size: 19px;">🚨 Tarepet LMS: Live Runtime Error Detected</h2>
-                <p style="margin: 6px 0 0 0; font-size: 13px; opacity: 0.9;">An automated error occurred in the browser before users reported it.</p>
-            </div>
-            <div style="padding: 24px; background: #ffffff; color: #1e293b; font-size: 14px; line-height: 1.6;">
-                <p><strong>Error Message:</strong><br><span style="color: #dc2626; font-family: monospace; font-size: 13px; background: #fef2f2; padding: 4px 8px; border-radius: 6px; display: inline-block;">{error_msg}</span></p>
-                <p><strong>Page URL:</strong> <a href="{url}" style="color: #2563eb; text-decoration: underline;">{url}</a></p>
-                <p><strong>Affected User:</strong> {user_info}</p>
-                <p><strong>Device / Browser:</strong> {device}</p>
-                <div style="margin-top: 16px;">
-                    <strong>Stack Trace:</strong>
-                    <pre style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; font-size: 12px; overflow-x: auto; color: #475569; max-height: 250px;">{stack}</pre>
-                </div>
-            </div>
-            <div style="background: #f8fafc; border-top: 1px solid #f1f5f9; padding: 14px 24px; text-align: center; font-size: 12px; color: #94a3b8;">
-                Tarepet Montessori School Telemetry Alert Service • Automated system email
-            </div>
-        </div>
-        """
+        result = dispatch_live_alert(
+            alert_type=alert_type,
+            title=title,
+            details=details,
+            request=request,
+            severity=severity,
+            url=url
+        )
+        return Response(result, status=status.HTTP_200_OK)
+
+
+class SystemHealthStatusView(APIView):
+    """
+    Real-time system health diagnostic endpoint and live alert tester.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        db_healthy = False
+        db_latency_ms = None
+        t0 = time.time()
         try:
-            admin_email = getattr(settings, 'EMAIL_HOST_USER', 'tarepetm@gmail.com') or 'tarepetm@gmail.com'
-            send_mail(
-                subject=subject,
-                message=f"Tarepet Error Alert on {url}\n\nError: {error_msg}\nUser: {user_info}\nDevice: {device}\n\nStack:\n{stack}",
-                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', admin_email),
-                recipient_list=[admin_email],
-                html_message=html_message,
-                fail_silently=True,
-            )
-        except Exception:
-            pass
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1;")
+                cursor.fetchone()
+            db_latency_ms = round((time.time() - t0) * 1000, 2)
+            db_healthy = True
+        except Exception as e:
+            db_healthy = False
+            db_latency_ms = -1
 
-        return Response({'status': 'alert_dispatched'}, status=status.HTTP_200_OK)
+        now = time.time()
+        one_day_ago = now - 86400
+        total_recent_errors = SystemAlert.objects.filter(created_at__gte=time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(one_day_ago))).count()
+        total_activity_logs = ActivityLog.objects.count()
+        cookie_consents_count = CookieConsent.objects.count()
+
+        return Response({
+            'status': 'OPERATIONAL' if db_healthy else 'DEGRADED',
+            'database': {
+                'connected': db_healthy,
+                'latency_ms': db_latency_ms,
+                'engine': settings.DATABASES['default']['ENGINE'].split('.')[-1]
+            },
+            'telemetry': {
+                'errors_24h': total_recent_errors,
+                'total_activity_logs': total_activity_logs,
+                'total_cookie_consents': cookie_consents_count,
+            },
+            'email_service': {
+                'configured': bool(getattr(settings, 'EMAIL_HOST_USER', '')),
+                'backend': settings.EMAIL_BACKEND.split('.')[-1],
+                'alert_recipient': getattr(settings, 'ADMIN_ALERT_EMAIL', getattr(settings, 'EMAIL_HOST_USER', 'tarepetm@gmail.com'))
+            }
+        }, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        """Dispatches an on-demand test email to verify live alerting is working."""
+        from apps.users.permissions import IsAdmin
+        if not (request.user.is_authenticated and (getattr(request.user, 'is_admin', False) or getattr(request.user, 'role', '') == 'ADMIN' or request.user.is_staff or request.user.is_superuser)):
+            return Response({'error': 'Admin permissions required to send test alerts'}, status=status.HTTP_403_FORBIDDEN)
+
+        res = dispatch_live_alert(
+            alert_type='BROKEN_CODE',
+            title='Diagnostic Verification: Live Status Alert Pipeline is Active',
+            details='This is a confirmed live test email dispatched from the Tarepet LMS Admin Console to verify that error feedback, broken code alerts, database health, and security breaches are properly received.',
+            request=request,
+            severity='LOW',
+            url='https://tarepetmontessorischool.com/dashboard/admin'
+        )
+        return Response({'status': 'test_alert_dispatched', 'detail': res}, status=status.HTTP_200_OK)
+
 

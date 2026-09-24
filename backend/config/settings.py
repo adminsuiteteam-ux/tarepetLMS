@@ -186,6 +186,7 @@ else:
 
 MIDDLEWARE = [
     'config.middleware.HealthCheckMiddleware',  # Top of stack: instant 200 OK for health probes without Host check
+    'config.middleware.LiveSystemMonitorMiddleware',  # Intercepts exceptions & security events for live alerts
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Render static files
     'corsheaders.middleware.CorsMiddleware',

@@ -134,6 +134,12 @@ export function Footer() {
             &copy; 2026 Tare Pet Montessori School. All rights reserved.
           </p>
           <div className="flex items-center space-x-6">
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('tarepet_open_cookie_modal'))}
+              className="hover:text-white transition-colors cursor-pointer text-left"
+            >
+              Cookie & Disclaimer Settings
+            </button>
             <Link href="/privacy" className="hover:text-white transition-colors">
               Privacy Policy
             </Link>

@@ -41,6 +41,7 @@ const ROLE_NAV: Record<string, NavSection[]> = {
     { id: 'results',        label: 'Results',           icon: FileText },
     { id: 'exams',          label: 'Manage Exams',      icon: ClipboardList },
     { id: 'finance',        label: 'Finance',           icon: DollarSign },
+    { id: 'activity_log',   label: 'Activity & Logs',   icon: Activity },
     // ── ARCHIVED (Will be re-added in a future update) ───────────────────
     // { id: 'attendance',     label: 'Attendance',        icon: CalendarCheck },
     // { id: 'manage_admins',  label: 'Manage Sub-Admins', icon: ShieldAlert },

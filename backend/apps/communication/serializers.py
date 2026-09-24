@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Announcement, ContactMessage, ActivityLog, Notification
+from .models import Announcement, ContactMessage, ActivityLog, Notification, CookieConsent, SystemAlert
 
 
 class AnnouncementSerializer(serializers.ModelSerializer):
@@ -42,12 +42,46 @@ class ActivityLogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ActivityLog
-        fields = ['id', 'type', 'activity_type', 'title', 'detail', 'user', 'timestamp']
+        fields = [
+            'id', 'type', 'activity_type', 'title', 'detail',
+            'user', 'ip_address', 'user_agent', 'severity', 'category', 'timestamp'
+        ]
 
     def create(self, validated_data):
         if 'activity_type' not in validated_data and 'type' in self.initial_data:
             validated_data['activity_type'] = self.initial_data['type']
         return super().create(validated_data)
+
+
+class CookieConsentSerializer(serializers.ModelSerializer):
+    user_email = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CookieConsent
+        fields = [
+            'id', 'user', 'user_email', 'ip_address', 'user_agent',
+            'consent_status', 'necessary', 'analytics', 'functional', 'security',
+            'disclaimer_acknowledged', 'session_id', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_user_email(self, obj):
+        if obj.user:
+            return obj.user.email
+        return None
+
+
+class SystemAlertSerializer(serializers.ModelSerializer):
+    alert_type_display = serializers.CharField(source='get_alert_type_display', read_only=True)
+
+    class Meta:
+        model = SystemAlert
+        fields = [
+            'id', 'alert_type', 'alert_type_display', 'title', 'details',
+            'url', 'ip_address', 'user_agent', 'severity',
+            'email_dispatched', 'recipient', 'created_at'
+        ]
+        read_only_fields = ['id', 'email_dispatched', 'created_at']
 
 
 class NotificationSerializer(serializers.ModelSerializer):
@@ -71,4 +105,5 @@ class NotificationSerializer(serializers.ModelSerializer):
         if 'is_read' not in validated_data and 'read' in self.initial_data:
             validated_data['is_read'] = self.initial_data['read']
         return super().create(validated_data)
+
 

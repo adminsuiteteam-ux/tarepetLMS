@@ -8,8 +8,13 @@ import { AnimatePresence } from 'framer-motion';
 import { AuthProvider } from '@/context/AuthContext';
 import { DialogProvider } from '@/context/DialogContext';
 
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { DisclaimerCookieModal } from '@/components/common/DisclaimerCookieModal';
+import { initTelemetry } from '@/lib/telemetry';
+
+// Initialize real-time telemetry and error alert guardian
+initTelemetry();
 
 // Eager initial landing page
 import Home from '@/pages/home';
@@ -214,6 +219,7 @@ function App() {
               <Router />
             </WouterRouter>
             <Toaster />
+            <DisclaimerCookieModal />
           </TooltipProvider>
         </DialogProvider>
       </AuthProvider>
