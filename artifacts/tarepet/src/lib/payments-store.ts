@@ -895,21 +895,18 @@ export async function processPaystackPayment({
             { display_name: 'Item Name', variable_name: 'item_name', value: itemName }
           ]
         },
-        callback: async (response: { reference: string; status: string }) => {
-          const finalRef = response.reference || ref;
-          try {
-            // Verify payment server-side via backend verification endpoint
-            await authClient.post('/finance/verify-paystack/', {
-              reference: finalRef,
-              item_id: itemId,
-              student_id: studentId,
-            });
-          } catch (verifyErr) {
+        callback: function(response: { reference: string; status: string }) {
+          const finalRef = (response && response.reference) ? response.reference : ref;
+          // Verify payment server-side via backend verification endpoint
+          authClient.post('/finance/verify-paystack/', {
+            reference: finalRef,
+            item_id: itemId,
+            student_id: studentId,
+          }).catch((verifyErr) => {
             console.warn('Backend verification logged or awaiting webhook confirmation:', verifyErr);
-          }
-
-          // Refresh payment state from authoritative backend
-          await syncPaymentsWithBackend();
+          }).finally(() => {
+            syncPaymentsWithBackend().catch(() => {});
+          });
 
           const foundTx = _transactions.find(t => t.reference === finalRef);
           if (foundTx) {
@@ -934,7 +931,7 @@ export async function processPaystackPayment({
             onSuccess(fallbackTx);
           }
         },
-        onClose: () => {
+        onClose: function() {
           onClose();
         }
       });
