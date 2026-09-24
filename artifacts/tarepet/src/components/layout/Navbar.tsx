@@ -90,7 +90,7 @@ export function Navbar() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-1">
-            <ul className="flex items-center gap-1 bg-white/40 p-1.5 rounded-full border border-white/50 backdrop-blur-md">
+            <ul className="flex items-center gap-1">
               {NAV_LINKS.map((link) => {
                 const isActive = location === link.href;
                 return (
