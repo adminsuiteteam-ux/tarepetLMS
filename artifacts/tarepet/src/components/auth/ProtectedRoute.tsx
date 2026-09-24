@@ -39,25 +39,47 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const userRoleUpper = (user?.role || '').toUpperCase();
   const allowedUpper = allowedRoles?.map(r => r.toUpperCase());
 
-  // Administrators and Superusers have administrative oversight to inspect student/parent/teacher views
-  if (userRoleUpper === 'ADMIN') {
-    return <>{children}</>;
-  }
+  const getDashboardForRole = (role?: string) => {
+    const r = (role || '').toUpperCase();
+    if (r === 'ADMIN') return '/dashboard/admin';
+    if (r === 'TEACHER') return '/dashboard/teacher';
+    if (r === 'PARENT') return '/dashboard/parent';
+    if (r === 'STUDENT') return '/dashboard/student';
+    return '/';
+  };
 
   if (allowedUpper && user && !allowedUpper.includes(userRoleUpper)) {
+    const targetPortalName = allowedRoles && allowedRoles.length > 0
+      ? allowedRoles[0].charAt(0).toUpperCase() + allowedRoles[0].slice(1).toLowerCase()
+      : 'Target';
+
     return (
       <div className="flex min-h-[70vh] items-center justify-center p-6 text-center">
-        <div className="max-w-md rounded-2xl bg-card p-8 shadow-xl border border-border">
-          <h2 className="text-2xl font-serif font-bold text-destructive mb-3">{t('access_denied')}</h2>
-          <p className="text-muted-foreground mb-6">
-            {`${t('access_denied_desc_prefix')}${user.role}${t('access_denied_desc_suffix')}`}
+        <div className="max-w-md w-full rounded-2xl bg-card p-8 shadow-xl border border-border">
+          <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-600 flex items-center justify-center mx-auto mb-4 font-bold text-xl">
+            !
+          </div>
+          <h2 className="text-2xl font-serif font-bold text-foreground mb-2">{t('access_denied')}</h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            You are currently signed in as an <strong className="text-foreground">{userRoleUpper}</strong>. This section is reserved exclusively for <strong className="text-foreground">{targetPortalName}</strong> accounts.
           </p>
-          <button
-            onClick={() => setLocation('/')}
-            className="rounded-md bg-primary px-6 py-2.5 text-sm font-medium text-white hover:bg-primary/90 transition-colors"
-          >
-            {t('return_to_homepage')}
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              onClick={() => setLocation(getDashboardForRole(user?.role))}
+              className="rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white hover:bg-primary/90 transition-colors shadow-sm"
+            >
+              Go to {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1).toLowerCase() : ''} Portal
+            </button>
+            <button
+              onClick={async () => {
+                await logout();
+                setLocation('/sign-in');
+              }}
+              className="rounded-xl border border-border px-5 py-2.5 text-sm font-semibold text-foreground hover:bg-muted transition-colors"
+            >
+              Sign In as {targetPortalName}
+            </button>
+          </div>
         </div>
       </div>
     );

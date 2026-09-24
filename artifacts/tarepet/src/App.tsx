@@ -117,12 +117,12 @@ function Router() {
         </ProtectedRoute>
       </Route>
       <Route path="/dashboard/student">
-        <ProtectedRoute allowedRoles={['STUDENT', 'ADMIN']}>
+        <ProtectedRoute allowedRoles={['STUDENT']}>
           <StudentDashboard />
         </ProtectedRoute>
       </Route>
       <Route path="/dashboard/parent">
-        <ProtectedRoute allowedRoles={['PARENT', 'ADMIN']}>
+        <ProtectedRoute allowedRoles={['PARENT']}>
           <ParentDashboard />
         </ProtectedRoute>
       </Route>
