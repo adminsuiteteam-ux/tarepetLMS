@@ -1319,7 +1319,7 @@ export default function StudentDashboard() {
         studentId={user?.id || profileForm.studentId}
         studentName={`${user?.first_name || profileForm.firstName} ${user?.last_name || profileForm.lastName}`}
         studentEmail={user?.email || profileForm.email}
-        gradeLevel={(user?.profile as any)?.grade || 'SS1'}
+        gradeLevel={studentGrade}
       />
     );
 

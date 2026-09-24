@@ -4,7 +4,7 @@ import {
   Download, History, Receipt, ShieldCheck, Home, BookOpen,
   FlaskConical, Users, GraduationCap, Shirt, Bus,
   Trophy, XCircle, FileText, Banknote, LayoutList,
-  ChevronDown, BadgeAlert, RefreshCw, Sparkles, X
+  ChevronDown, BadgeAlert, RefreshCw, Sparkles, X, Building2
 } from 'lucide-react';
 import {
   getPaymentItems,
@@ -13,6 +13,7 @@ import {
   getItemAmountForGrade,
   processPaystackPayment,
   subscribeToPaymentStore,
+  syncPaymentsWithBackend,
   PaymentItem,
   PaymentTransaction
 } from '@/lib/payments-store';
@@ -36,11 +37,12 @@ interface SidebarSection {
 
 const SIDEBAR_MENU: SidebarSection[] = [
   { id: 'header_tuition', label: 'Tuition & Core Fees', icon: BookOpen, type: 'heading' },
-  { id: 'school_fees', label: 'School Tuition Fees', icon: BookOpen, type: 'item', itemId: 'school_fees' },
-  { id: 'exam', label: 'Terminal Exam Fee', icon: GraduationCap, type: 'item', itemId: 'exam' },
-  { id: 'books', label: 'Textbooks & Materials', icon: BookOpen, type: 'item', itemId: 'books' },
-  { id: 'header_attire', label: 'Uniform & Attire', icon: Shirt, type: 'heading' },
-  { id: 'uniform', label: 'School Uniform Package', icon: Shirt, type: 'item', itemId: 'uniform' },
+  { id: 'school_fees', label: 'Tuition Fee', icon: BookOpen, type: 'item', itemId: 'school_fees' },
+  { id: 'dev_levy', label: 'Development Levy', icon: Building2, type: 'item', itemId: 'dev_levy' },
+  { id: 'books', label: 'Books & Materials', icon: BookOpen, type: 'item', itemId: 'books' },
+  { id: 'uniform', label: 'Uniform & Sports Attire', icon: Shirt, type: 'item', itemId: 'uniform' },
+  { id: 'pta_medical', label: 'PTA & Medical Retainership', icon: Users, type: 'item', itemId: 'pta_medical' },
+  { id: 'exam', label: 'Exam / Assessment Levy', icon: GraduationCap, type: 'item', itemId: 'exam' },
   { id: 'header_services', label: 'Optional Student Services', icon: Bus, type: 'heading' },
   { id: 'boarding', label: 'Hostel & Boarding', icon: Home, type: 'item', itemId: 'boarding' },
   { id: 'school_bus', label: 'School Bus Transport', icon: Bus, type: 'item', itemId: 'school_bus' },
@@ -61,6 +63,7 @@ export function StudentPaymentPanel({ studentId, studentName, studentEmail, grad
   const [receiptModal, setReceiptModal] = useState<PaymentTransaction | null>(null);
 
   useEffect(() => {
+    syncPaymentsWithBackend().catch(() => {});
     const refreshData = () => {
       setStoreItems(getPaymentItems());
       setTransactions(getStudentTransactions(studentId));

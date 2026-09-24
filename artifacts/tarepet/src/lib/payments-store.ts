@@ -39,8 +39,8 @@ export interface PaymentTransaction {
 const DEFAULT_PAYMENT_ITEMS: PaymentItem[] = [
   {
     id: 'school_fees',
-    name: 'School Tuition Fees',
-    category: 'Tuition & Basic',
+    name: 'Tuition Fee',
+    category: 'Tuition & Core Fees',
     amount: 0,
     currency: 'NGN',
     dueDate: 'Term Scheduled Date',
@@ -50,9 +50,33 @@ const DEFAULT_PAYMENT_ITEMS: PaymentItem[] = [
     session: '2025/2026'
   },
   {
+    id: 'dev_levy',
+    name: 'Development Levy',
+    category: 'Tuition & Core Fees',
+    amount: 0,
+    currency: 'NGN',
+    dueDate: 'Term Scheduled Date',
+    description: 'Campus infrastructure maintenance and educational facility advancement levy',
+    isRequired: true,
+    term: '1ST_TERM',
+    session: '2025/2026'
+  },
+  {
+    id: 'books',
+    name: 'Books & Materials',
+    category: 'Tuition & Core Fees',
+    amount: 0,
+    currency: 'NGN',
+    dueDate: 'Term Scheduled Date',
+    description: 'Prescribed academic textbooks, exercise notebooks, and curriculum learning materials',
+    isRequired: false,
+    term: '1ST_TERM',
+    session: '2025/2026'
+  },
+  {
     id: 'uniform',
-    name: 'School Uniform Package',
-    category: 'Attire',
+    name: 'Uniform & Sports Attire',
+    category: 'Uniform & Attire',
     amount: 0,
     currency: 'NGN',
     dueDate: 'Term Scheduled Date',
@@ -62,25 +86,25 @@ const DEFAULT_PAYMENT_ITEMS: PaymentItem[] = [
     session: '2025/2026'
   },
   {
-    id: 'books',
-    name: 'Curriculum Textbooks & Materials',
-    category: 'Educational Supplies',
+    id: 'pta_medical',
+    name: 'PTA & Medical Retainership',
+    category: 'Tuition & Core Fees',
     amount: 0,
     currency: 'NGN',
     dueDate: 'Term Scheduled Date',
-    description: 'Prescribed academic textbooks, exercise notebooks, and learning materials',
-    isRequired: false,
+    description: 'Parent-Teacher Association dues and school clinic retainer fee',
+    isRequired: true,
     term: '1ST_TERM',
     session: '2025/2026'
   },
   {
     id: 'exam',
-    name: 'Terminal Assessment & Examination Fee',
-    category: 'Assessments',
+    name: 'Exam / Assessment Levy',
+    category: 'Tuition & Core Fees',
     amount: 0,
     currency: 'NGN',
     dueDate: 'Term Scheduled Date',
-    description: 'Continuous assessment and terminal examination processing',
+    description: 'Continuous assessment, term examination sheets, and report processing',
     isRequired: false,
     term: '1ST_TERM',
     session: '2025/2026'
@@ -88,7 +112,7 @@ const DEFAULT_PAYMENT_ITEMS: PaymentItem[] = [
   {
     id: 'boarding',
     name: 'Hostel & Boarding Accommodation',
-    category: 'Accommodation',
+    category: 'Optional Student Services',
     amount: 0,
     currency: 'NGN',
     dueDate: 'Term Scheduled Date',
@@ -100,7 +124,7 @@ const DEFAULT_PAYMENT_ITEMS: PaymentItem[] = [
   {
     id: 'school_bus',
     name: 'School Bus Transport',
-    category: 'Transport',
+    category: 'Optional Student Services',
     amount: 0,
     currency: 'NGN',
     dueDate: 'Term Scheduled Date',
@@ -311,11 +335,115 @@ export function getStudentTransactions(studentId: string | number): PaymentTrans
   return _transactions.filter(t => String(t.studentId) === String(studentId));
 }
 
+export function matchClassLevel(studentGrade?: string, targetClass?: string): boolean {
+  if (!studentGrade || !targetClass) return false;
+  const cleanS = String(studentGrade).toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const cleanT = String(targetClass).toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+  if (cleanS === cleanT) return true;
+
+  const normalize = (val: string) => {
+    return val
+      .replace(/^NURSERY/i, 'NUR')
+      .replace(/^PRIMARY/i, 'PRI')
+      .replace(/^BASIC/i, 'PRI')
+      .replace(/^BSC/i, 'PRI')
+      .replace(/^JUNIORSECONDARY/i, 'JSS')
+      .replace(/^SENIORSECONDARY/i, 'SS');
+  };
+
+  const normS = normalize(cleanS);
+  const normT = normalize(cleanT);
+
+  if (normS === normT) return true;
+
+  const isJssS = normS.startsWith('JSS') || normS.startsWith('JS');
+  const isJssT = normT.startsWith('JSS') || normT.startsWith('JS');
+  if (isJssS !== isJssT) return false;
+
+  const isNurS = normS.startsWith('NUR') || normS.startsWith('CRE');
+  const isNurT = normT.startsWith('NUR') || normT.startsWith('CRE');
+  if (isNurS !== isNurT) return false;
+
+  const isPriS = normS.startsWith('PRI');
+  const isPriT = normT.startsWith('PRI');
+  if (isPriS !== isPriT) return false;
+
+  const isSsS = (normS.startsWith('SS') || normS.startsWith('SENIOR')) && !isJssS;
+  const isSsT = (normT.startsWith('SS') || normT.startsWith('SENIOR')) && !isJssT;
+  if (isSsS !== isSsT) return false;
+
+  return normS.includes(normT) || normT.includes(normS);
+}
+
+export function syncScheduleToPaymentItems(schedule: ClassFeeSchedule): void {
+  const mapping: Record<string, number> = {
+    school_fees: Number(schedule.tuition_fee) || 0,
+    dev_levy: Number(schedule.development_levy) || 0,
+    books: Number(schedule.books_materials) || 0,
+    uniform: Number(schedule.uniform_sports) || 0,
+    pta_medical: Number(schedule.pta_medical) || 0,
+    exam: Number(schedule.exam_levy) || 0,
+  };
+
+  _paymentItems = _paymentItems.map(item => {
+    if (Object.prototype.hasOwnProperty.call(mapping, item.id)) {
+      const gAmounts = { ...(item.gradeAmounts || {}) };
+      gAmounts[schedule.class_level] = mapping[item.id];
+      return { ...item, gradeAmounts: gAmounts };
+    }
+    return item;
+  });
+
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('tarepet_fee_items', JSON.stringify(_paymentItems));
+    } catch (e) {}
+  }
+}
+
 export function getItemAmountForGrade(item: PaymentItem, grade?: string): number {
-  if (grade && item.gradeAmounts && Object.prototype.hasOwnProperty.call(item.gradeAmounts, grade)) {
-    const customAmount = item.gradeAmounts[grade];
-    if (typeof customAmount === 'number') {
-      return customAmount;
+  if (grade) {
+    const schedules = getClassFeeSchedules();
+    const matchedSchedule = schedules.find(s => 
+      matchClassLevel(grade, s.class_level) || 
+      matchClassLevel(s.class_level, grade)
+    );
+
+    if (matchedSchedule) {
+      if (item.id === 'school_fees') {
+        const val = Number(matchedSchedule.tuition_fee);
+        if (!isNaN(val) && val > 0) return val;
+      } else if (item.id === 'dev_levy') {
+        const val = Number(matchedSchedule.development_levy);
+        if (!isNaN(val) && val > 0) return val;
+      } else if (item.id === 'books') {
+        const val = Number(matchedSchedule.books_materials);
+        if (!isNaN(val) && val > 0) return val;
+      } else if (item.id === 'uniform') {
+        const val = Number(matchedSchedule.uniform_sports);
+        if (!isNaN(val) && val > 0) return val;
+      } else if (item.id === 'pta_medical') {
+        const val = Number(matchedSchedule.pta_medical);
+        if (!isNaN(val) && val > 0) return val;
+      } else if (item.id === 'exam') {
+        const val = Number(matchedSchedule.exam_levy);
+        if (!isNaN(val) && val > 0) return val;
+      }
+    }
+
+    if (item.gradeAmounts) {
+      if (Object.prototype.hasOwnProperty.call(item.gradeAmounts, grade)) {
+        const customAmount = item.gradeAmounts[grade];
+        if (typeof customAmount === 'number' && customAmount > 0) {
+          return customAmount;
+        }
+      }
+      for (const [gKey, gVal] of Object.entries(item.gradeAmounts)) {
+        if ((matchClassLevel(grade, gKey) || matchClassLevel(gKey, grade)) && typeof gVal === 'number' && gVal > 0) {
+          return gVal;
+        }
+      }
     }
   }
   return item.amount;
@@ -366,6 +494,7 @@ export function updateClassFeeSchedule(schedule: ClassFeeSchedule): void {
   } else {
     _classSchedules.push(schedule);
   }
+  syncScheduleToPaymentItems(schedule);
   if (typeof window !== 'undefined') {
     try { localStorage.setItem('tarepet_class_fee_schedules', JSON.stringify(_classSchedules)); } catch (e) {}
   }
@@ -375,6 +504,7 @@ export function updateClassFeeSchedule(schedule: ClassFeeSchedule): void {
 
 export async function bulkUpdateClassFeeSchedules(schedules: ClassFeeSchedule[]): Promise<void> {
   _classSchedules = schedules;
+  schedules.forEach(s => syncScheduleToPaymentItems(s));
   if (typeof window !== 'undefined') {
     try { localStorage.setItem('tarepet_class_fee_schedules', JSON.stringify(_classSchedules)); } catch (e) {}
   }
@@ -460,6 +590,7 @@ export async function syncPaymentsWithBackend(): Promise<void> {
           session: s.session || '2025/2026',
           term: s.term || '2nd Term'
         }));
+        _classSchedules.forEach(s => syncScheduleToPaymentItems(s));
         if (typeof window !== 'undefined') {
           try { localStorage.setItem('tarepet_class_fee_schedules', JSON.stringify(_classSchedules)); } catch (e) {}
         }
