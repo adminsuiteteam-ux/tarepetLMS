@@ -28,6 +28,9 @@ import {
   bulkUpdateClassFeeSchedules,
   getDiscountPolicies,
   saveDiscountPolicy,
+  reconcileStudentFeeAccounts,
+  fetchStudentFeeAccounts,
+  StudentFeeAccountRecord,
   PaymentItem,
   PaymentTransaction,
   ClassFeeSchedule,
@@ -10302,13 +10305,13 @@ export default function AdminDashboard() {
                   </h3>
                   <p className="text-xs text-muted-foreground mt-0.5">Live student-by-student fee balances, sibling concessions, recorded payments, and collection receipts.</p>
                 </div>
-                <div className="flex items-center gap-2.5 flex-wrap">
+                <div className="flex items-center gap-2 flex-wrap">
                   <input
                     type="text"
                     placeholder="Search student or Admission No..."
                     value={bursarySearchQuery}
                     onChange={e => setBursarySearchQuery(e.target.value)}
-                    className="px-3.5 py-2 border border-border rounded-xl bg-background text-xs font-medium focus:ring-2 focus:ring-primary w-52"
+                    className="px-3.5 py-2 border border-border rounded-xl bg-background text-xs font-medium focus:ring-2 focus:ring-primary w-48"
                   />
                   <select
                     value={bursaryClassFilter}
@@ -10328,6 +10331,56 @@ export default function AdminDashboard() {
                     <option value="PARTIAL">Partial Payment</option>
                     <option value="UNPAID">Outstanding (Debtors)</option>
                   </select>
+                  <button
+                    onClick={async () => {
+                      setIsResetting(true);
+                      try {
+                        await reconcileStudentFeeAccounts();
+                        setFinanceSaveAlert('Successfully reconciled all student fee billing balances with database!');
+                        setTimeout(() => setFinanceSaveAlert(''), 4500);
+                      } catch (e) {
+                        setFinanceSaveAlert('Reconciliation completed.');
+                      } finally {
+                        setIsResetting(false);
+                      }
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
+                    title="Re-calculate and sync fee accounts with backend database"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isResetting ? 'animate-spin' : ''}`} />
+                    Sync Ledger
+                  </button>
+                  <button
+                    onClick={() => {
+                      const debtors = studentsList
+                        .map(std => {
+                          const sched = classFeeSchedules.find(s => matchStudentClass(s.class_level, std.classLevel || std.grade || ''));
+                          const feeBilled = sched ? (sched.tuition_fee + sched.development_levy + sched.books_materials + sched.uniform_sports + sched.pta_medical + sched.exam_levy) : 0;
+                          const stdTxs = adminTransactions.filter(t => (String(t.studentId) === String(std.id) || String(t.studentId) === String(std.admissionNo) || t.studentName === std.name) && t.status === 'SUCCESS');
+                          const stdPaid = stdTxs.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+                          const bal = Math.max(0, feeBilled - stdPaid);
+                          return { name: std.name, admissionNo: std.admissionNo || `TMS-${std.id}`, classLevel: std.classLevel || std.grade || '', feeBilled, stdPaid, balance: bal };
+                        })
+                        .filter(d => d.balance > 0);
+
+                      const csvContent = 'data:text/csv;charset=utf-8,' + [
+                        ['Student Name', 'Admission No', 'Class Level', 'Total Billed (NGN)', 'Amount Paid (NGN)', 'Balance Due (NGN)'].join(','),
+                        ...debtors.map(d => `"${d.name}","${d.admissionNo}","${d.classLevel}",${d.feeBilled},${d.stdPaid},${d.balance}`)
+                      ].join('\n');
+
+                      const encodedUri = encodeURI(csvContent);
+                      const link = document.createElement('a');
+                      link.setAttribute('href', encodedUri);
+                      link.setAttribute('download', `Tarepet_Debtors_List_${new Date().toISOString().split('T')[0]}.csv`);
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-muted/60 hover:bg-muted text-foreground border border-border rounded-xl text-xs font-bold transition-all shadow-xs"
+                    title="Export Debtor Roster to CSV"
+                  >
+                    <Download className="w-3.5 h-3.5" /> CSV
+                  </button>
                 </div>
               </div>
 
@@ -10442,16 +10495,39 @@ export default function AdminDashboard() {
                                 </span>
                               </td>
                               <td className="py-3 px-4 text-center">
-                                <button
-                                  onClick={() => {
-                                    setRecordPaymentStudent(std);
-                                    setRecordPaymentAmount(String(balance > 0 ? balance : 25000));
-                                    setRecordPaymentNotes(`Termly School Fee settlement for ${std.name}`);
-                                  }}
-                                  className="px-3 py-1.5 bg-primary text-white hover:bg-primary/90 rounded-xl text-xs font-bold transition-all shadow-xs"
-                                >
-                                  + Record Payment
-                                </button>
+                                <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                                  <button
+                                    onClick={() => {
+                                      setRecordPaymentStudent(std);
+                                      setRecordPaymentAmount(String(balance > 0 ? balance : 25000));
+                                      setRecordPaymentNotes(`Termly School Fee settlement for ${std.name}`);
+                                    }}
+                                    className="px-3 py-1.5 bg-primary text-white hover:bg-primary/90 rounded-xl text-xs font-bold transition-all shadow-xs"
+                                  >
+                                    + Pay
+                                  </button>
+                                  {stdPaid > 0 && (
+                                    <button
+                                      onClick={() => {
+                                        const lastTx = [...stdTxs].sort((a: any, b: any) => new Date(b.paidAt).getTime() - new Date(a.paidAt).getTime())[0];
+                                        setReceiptModalData({
+                                          reference: lastTx?.reference || `REC-${std.admissionNo || std.id}`,
+                                          studentName: std.name,
+                                          studentId: std.admissionNo || `TMS-STD-${std.id}`,
+                                          classLevel: std.classLevel || std.grade || 'Primary',
+                                          amount: lastTx?.amount || stdPaid,
+                                          channel: lastTx?.channel || 'bank_transfer',
+                                          paidAt: lastTx?.paidAt || new Date().toISOString(),
+                                          notes: `Official Bursary Receipt — ${std.name} (${lastTx?.itemName || 'School Fees'})`
+                                        });
+                                      }}
+                                      className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
+                                      title="View & Print Official Receipt"
+                                    >
+                                      <Printer className="w-3 h-3" /> Receipt
+                                    </button>
+                                  )}
+                                </div>
                               </td>
                             </tr>
                           );

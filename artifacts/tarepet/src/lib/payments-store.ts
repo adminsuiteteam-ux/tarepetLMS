@@ -166,6 +166,25 @@ export interface DiscountPolicy {
   is_active: boolean;
 }
 
+export interface StudentFeeAccountRecord {
+  id?: number | string;
+  student?: number | string;
+  studentId?: string;
+  admissionNo?: string;
+  student_name: string;
+  class_level: string;
+  session: string;
+  term: string;
+  total_billed: number;
+  discount_applied: number;
+  discount_reason?: string;
+  amount_paid: number;
+  balance_due: number;
+  status: 'PAID' | 'PARTIAL' | 'UNPAID';
+  last_payment_date?: string;
+  profileImage?: string;
+}
+
 export const DEFAULT_CLASS_FEE_SCHEDULES: ClassFeeSchedule[] = [
   { class_level: 'Nursery 1', division: 'CRECHE_NURSERY', tuition_fee: 0, development_levy: 0, books_materials: 0, uniform_sports: 0, pta_medical: 0, exam_levy: 0, session: '2025/2026', term: '2nd Term' },
   { class_level: 'Nursery 2', division: 'CRECHE_NURSERY', tuition_fee: 0, development_levy: 0, books_materials: 0, uniform_sports: 0, pta_medical: 0, exam_levy: 0, session: '2025/2026', term: '2nd Term' },
@@ -597,7 +616,12 @@ export async function recordTransaction(txData: Omit<PaymentTransaction, 'id' | 
   }
 
   try {
-    await authClient.post('/finance/transactions/', newTx);
+    const res = await authClient.post('/finance/transactions/', newTx);
+    if (res?.data?.id) {
+      newTx.id = String(res.data.id);
+      if (res.data.paidAt) newTx.paidAt = res.data.paidAt;
+      if (res.data.reference) newTx.reference = res.data.reference;
+    }
   } catch (err) {}
 
   broadcastPaymentMutation();
@@ -612,6 +636,44 @@ export async function recordTransaction(txData: Omit<PaymentTransaction, 'id' | 
   });
 
   return newTx;
+}
+
+export async function fetchStudentFeeAccounts(classLevel?: string, status?: string): Promise<StudentFeeAccountRecord[]> {
+  try {
+    const params = new URLSearchParams();
+    if (classLevel && classLevel !== 'ALL') params.append('class_level', classLevel);
+    if (status && status !== 'ALL') params.append('status', status);
+    params.append('page_size', '1000');
+
+    const res = await authClient.get(`/finance/student-fee-accounts/?${params.toString()}`);
+    const results = Array.isArray(res.data?.results) ? res.data.results : (Array.isArray(res.data) ? res.data : []);
+    return results.map((a: any) => ({
+      ...a,
+      total_billed: Number(a.total_billed) || 0,
+      discount_applied: Number(a.discount_applied) || 0,
+      amount_paid: Number(a.amount_paid) || 0,
+      balance_due: Number(a.balance_due) || 0,
+    }));
+  } catch (e) {
+    return [];
+  }
+}
+
+export async function reconcileStudentFeeAccounts(session: string = '2025/2026', term: string = '2nd Term'): Promise<StudentFeeAccountRecord[]> {
+  try {
+    const res = await authClient.post('/finance/student-fee-accounts/reconcile/', { session, term });
+    const results = Array.isArray(res.data) ? res.data : [];
+    broadcastPaymentMutation();
+    return results.map((a: any) => ({
+      ...a,
+      total_billed: Number(a.total_billed) || 0,
+      discount_applied: Number(a.discount_applied) || 0,
+      amount_paid: Number(a.amount_paid) || 0,
+      balance_due: Number(a.balance_due) || 0,
+    }));
+  } catch (e) {
+    return [];
+  }
 }
 
 // ── PAYSTACK INLINE SDK HELPER ────────────────────────────────────────────────

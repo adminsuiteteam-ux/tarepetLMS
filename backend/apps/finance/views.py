@@ -3,15 +3,17 @@ import hmac
 import os
 import re
 import requests
+from decimal import Decimal
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.utils import timezone
 from rest_framework import viewsets, permissions, status
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from apps.users.models import StudentProfile
 from apps.users.permissions import IsAdmin, IsTeacher, IsParent, IsStudent
 from .models import (
     FeeItem, FeeTransaction, IncomeRecord, ExpenseRecord,
@@ -77,14 +79,20 @@ class FeeItemViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class FeeTransactionViewSet(viewsets.ReadOnlyModelViewSet):
+class FeeTransactionViewSet(viewsets.ModelViewSet):
     """
-    Read-only viewset for transactions scoped strictly to caller's role.
-    Transactions are recorded server-side via PaystackVerifyView or PaystackWebhookView.
+    Transaction viewset scoped strictly to caller's role.
+    Admins can record manual transactions (Cash, Bank Transfer, Paystack) directly,
+    which automatically links to the student profile and reconciles their StudentFeeAccount.
+    Students and parents can view their authoritative payment history.
     """
     queryset = FeeTransaction.objects.all().order_by('-paid_at')
     serializer_class = FeeTransactionSerializer
-    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [permissions.IsAuthenticated()]
+        return [IsAdmin()]
 
     def get_queryset(self):
         user = self.request.user
@@ -115,6 +123,121 @@ class FeeTransactionViewSet(viewsets.ReadOnlyModelViewSet):
         if email:
             qs = qs.filter(student_email__iexact=email)
         return qs
+
+    def create(self, request, *args, **kwargs):
+        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+        
+        ref = data.get('reference') or data.get('ref')
+        if not ref or ref.startswith('tx_'):
+            ref = f"REC-{timezone.now().strftime('%y%m%d%H%M%S')}"
+
+        student_id_val = data.get('studentId') or data.get('student_id')
+        student_name = data.get('studentName') or data.get('student_name') or 'Student'
+        student_email = data.get('studentEmail') or data.get('student_email') or ''
+        item_key = data.get('itemId') or data.get('item_key') or 'school_fees'
+        item_name = data.get('itemName') or data.get('item_name') or 'School Tuition Fees'
+        
+        try:
+            amount = Decimal(str(data.get('amount') or 0))
+        except Exception:
+            amount = Decimal('0.00')
+
+        channel = data.get('channel') or FeeTransaction.Channel.CASH
+        term = data.get('term') or '2nd Term'
+        session = data.get('session') or '2025/2026'
+        receipt_url = data.get('receiptUrl') or data.get('receipt_url') or ''
+
+        # Match student profile if possible
+        student_profile = None
+        if student_id_val:
+            try:
+                s_id_str = str(student_id_val).strip()
+                student_profile = StudentProfile.objects.filter(student_id__iexact=s_id_str).first()
+                if not student_profile and s_id_str.isdigit():
+                    student_profile = StudentProfile.objects.filter(id=int(s_id_str)).first()
+            except Exception:
+                pass
+
+        if not student_profile and student_email:
+            student_profile = StudentProfile.objects.filter(user__email__iexact=student_email).first()
+
+        if not student_profile and student_name:
+            parts = student_name.strip().split()
+            if len(parts) >= 2:
+                student_profile = StudentProfile.objects.filter(
+                    (Q(user__first_name__iexact=parts[0]) & Q(user__last_name__iexact=parts[-1])) |
+                    (Q(user__first_name__iexact=parts[-1]) & Q(user__last_name__iexact=parts[0]))
+                ).first()
+
+        with transaction.atomic():
+            tx, _ = FeeTransaction.objects.update_or_create(
+                reference=ref,
+                defaults={
+                    'student': student_profile,
+                    'student_name': student_name,
+                    'student_email': student_email,
+                    'item_key': item_key,
+                    'item_name': item_name,
+                    'amount': amount,
+                    'channel': channel,
+                    'status': FeeTransaction.Status.SUCCESS,
+                    'receipt_url': receipt_url,
+                    'term': term,
+                    'session': session,
+                }
+            )
+
+            # Reconcile StudentFeeAccount
+            class_level = (
+                (student_profile.current_class if student_profile and student_profile.current_class else None) or
+                data.get('classLevel') or data.get('class_level') or 'Primary 1'
+            )
+
+            sched = ClassFeeSchedule.objects.filter(class_level__iexact=class_level).first()
+            total_billed = sched.total_fee if sched else Decimal('0.00')
+
+            account, _ = StudentFeeAccount.objects.get_or_create(
+                student=student_profile,
+                session=session,
+                term=term,
+                defaults={
+                    'student_name': student_name,
+                    'class_level': class_level,
+                    'total_billed': total_billed,
+                }
+            )
+
+            if student_profile and not account.student:
+                account.student = student_profile
+            account.student_name = student_name
+            account.class_level = class_level
+            if account.total_billed == 0 and total_billed > 0:
+                account.total_billed = total_billed
+
+            # Re-sum all successful payments for this student
+            match_filter = Q(student=student_profile) if student_profile else Q(student_name__iexact=student_name)
+            total_paid = FeeTransaction.objects.filter(
+                match_filter,
+                status=FeeTransaction.Status.SUCCESS,
+                session=session,
+                term=term
+            ).aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
+
+            account.amount_paid = total_paid
+            effective_billed = max(Decimal('0.00'), account.total_billed - account.discount_applied)
+            account.balance_due = max(Decimal('0.00'), effective_billed - total_paid)
+
+            if account.balance_due == 0 and effective_billed > 0:
+                account.status = StudentFeeAccount.PaymentStatus.PAID
+            elif total_paid > 0:
+                account.status = StudentFeeAccount.PaymentStatus.PARTIAL
+            else:
+                account.status = StudentFeeAccount.PaymentStatus.UNPAID
+
+            account.last_payment_date = timezone.now()
+            account.save()
+
+        return Response(FeeTransactionSerializer(tx).data, status=status.HTTP_201_CREATED)
 
 
 class PaystackVerifyView(APIView):
@@ -214,9 +337,20 @@ class PaystackWebhookView(APIView):
 
 
 class IncomeRecordViewSet(viewsets.ModelViewSet):
-    queryset = IncomeRecord.objects.all().order_by('-date')
+    queryset = IncomeRecord.objects.all().order_by('-date', '-created_at')
     serializer_class = IncomeRecordSerializer
     permission_classes = [IsAdmin]
+
+    def create(self, request, *args, **kwargs):
+        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+        if 'id' in data and not IncomeRecord.objects.filter(id=data['id']).exists():
+            data.pop('id', None)
+        if not data.get('reference'):
+            data['reference'] = data.get('ref') or f"INC-{timezone.now().strftime('%y%m%d%H%M%S')}"
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def perform_create(self, serializer):
         user = self.request.user if self.request.user and self.request.user.is_authenticated else None
@@ -224,9 +358,20 @@ class IncomeRecordViewSet(viewsets.ModelViewSet):
 
 
 class ExpenseRecordViewSet(viewsets.ModelViewSet):
-    queryset = ExpenseRecord.objects.all().order_by('-date')
+    queryset = ExpenseRecord.objects.all().order_by('-date', '-created_at')
     serializer_class = ExpenseRecordSerializer
     permission_classes = [IsAdmin]
+
+    def create(self, request, *args, **kwargs):
+        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+        if 'id' in data and not ExpenseRecord.objects.filter(id=data['id']).exists():
+            data.pop('id', None)
+        if not data.get('reference'):
+            data['reference'] = data.get('ref') or f"EXP-{timezone.now().strftime('%y%m%d%H%M%S')}"
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def perform_create(self, serializer):
         user = self.request.user if self.request.user and self.request.user.is_authenticated else None
@@ -254,23 +399,23 @@ class ClassFeeScheduleViewSet(viewsets.ModelViewSet):
                 ('Primary 4', 'PRIMARY', 42000, 6000, 12000, 9000, 3000, 2000),
                 ('Primary 5', 'PRIMARY', 45000, 6000, 12000, 9000, 3000, 2000),
                 ('Primary 6', 'PRIMARY', 48000, 6000, 12000, 9000, 3000, 2000),
-                ('JSS 1', 'SECONDARY', 55000, 8000, 15000, 12000, 4000, 3000),
-                ('JSS 2', 'SECONDARY', 55000, 8000, 15000, 12000, 4000, 3000),
-                ('JSS 3', 'SECONDARY', 60000, 8000, 15000, 12000, 4000, 5000),
-                ('SS 1', 'SECONDARY', 65000, 10000, 18000, 14000, 5000, 4000),
-                ('SS 2', 'SECONDARY', 65000, 10000, 18000, 14000, 5000, 4000),
-                ('SS 3', 'SECONDARY', 75000, 10000, 18000, 14000, 5000, 10000),
+                ('JSS 1', 'JUNIOR_SECONDARY', 55000, 8000, 15000, 12000, 4000, 3000),
+                ('JSS 2', 'JUNIOR_SECONDARY', 55000, 8000, 15000, 12000, 4000, 3000),
+                ('JSS 3', 'JUNIOR_SECONDARY', 60000, 8000, 15000, 12000, 4000, 5000),
+                ('SS 1', 'SENIOR_SECONDARY', 65000, 10000, 18000, 14000, 5000, 4000),
+                ('SS 2', 'SENIOR_SECONDARY', 65000, 10000, 18000, 14000, 5000, 4000),
+                ('SS 3', 'SENIOR_SECONDARY', 75000, 10000, 18000, 14000, 5000, 10000),
             ]
             for c_name, div, tuit, dev, bks, unif, pta, ex in default_classes:
                 ClassFeeSchedule.objects.create(
-                    class_name=c_name,
+                    class_level=c_name,
                     division=div,
-                    tuition=tuit,
-                    development_levy=dev,
-                    books_materials=bks,
-                    uniform_sports=unif,
-                    pta_medical=pta,
-                    exam_levy=ex,
+                    tuition_fee=Decimal(str(tuit)),
+                    development_levy=Decimal(str(dev)),
+                    books_materials=Decimal(str(bks)),
+                    uniform_sports=Decimal(str(unif)),
+                    pta_medical=Decimal(str(pta)),
+                    exam_levy=Decimal(str(ex)),
                     session='2025/2026',
                     term='2nd Term'
                 )
@@ -281,19 +426,19 @@ class ClassFeeScheduleViewSet(viewsets.ModelViewSet):
         schedules_data = request.data if isinstance(request.data, list) else request.data.get('schedules', [])
         saved = []
         for s in schedules_data:
-            c_name = s.get('className') or s.get('class_name')
+            c_name = s.get('class_level') or s.get('className') or s.get('class_name')
             if not c_name:
                 continue
             obj, _ = ClassFeeSchedule.objects.update_or_create(
-                class_name=c_name,
+                class_level=c_name,
                 defaults={
-                    'division': s.get('division', 'SECONDARY'),
-                    'tuition': s.get('tuition', 50000),
-                    'development_levy': s.get('development_levy') or s.get('devLevy', 5000),
-                    'books_materials': s.get('books_materials') or s.get('booksMaterials', 10000),
-                    'uniform_sports': s.get('uniform_sports') or s.get('uniformSports', 8000),
-                    'pta_medical': s.get('pta_medical') or s.get('ptaMedical', 3000),
-                    'exam_levy': s.get('exam_levy') or s.get('examLevy', 2000),
+                    'division': s.get('division', 'PRIMARY'),
+                    'tuition_fee': Decimal(str(s.get('tuition_fee') or s.get('tuitionFee') or s.get('tuition', 0))),
+                    'development_levy': Decimal(str(s.get('development_levy') or s.get('devLevy', 0))),
+                    'books_materials': Decimal(str(s.get('books_materials') or s.get('booksMaterials', 0))),
+                    'uniform_sports': Decimal(str(s.get('uniform_sports') or s.get('uniformSports', 0))),
+                    'pta_medical': Decimal(str(s.get('pta_medical') or s.get('ptaMedical', 0))),
+                    'exam_levy': Decimal(str(s.get('exam_levy') or s.get('examLevy', 0))),
                     'session': s.get('session', '2025/2026'),
                     'term': s.get('term', '2nd Term'),
                 }
@@ -301,6 +446,10 @@ class ClassFeeScheduleViewSet(viewsets.ModelViewSet):
             saved.append(obj)
         serializer = ClassFeeScheduleSerializer(saved, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'], url_path='bulk-update')
+    def bulk_update(self, request):
+        return self.bulk_save(request)
 
 
 class DiscountPolicyViewSet(viewsets.ModelViewSet):
@@ -362,3 +511,55 @@ class StudentFeeAccountViewSet(viewsets.ModelViewSet):
         if st and st != 'ALL':
             queryset = queryset.filter(status=st)
         return queryset
+
+    @action(detail=False, methods=['post'], url_path='reconcile')
+    def reconcile(self, request):
+        session = request.data.get('session', '2025/2026')
+        term = request.data.get('term', '2nd Term')
+        students = StudentProfile.objects.select_related('user').all()
+        reconciled_accounts = []
+
+        with transaction.atomic():
+            for std in students:
+                s_name = std.user.get_full_name() if std.user else f"Student {std.student_id}"
+                c_level = std.current_class or 'Primary 1'
+                schedule = ClassFeeSchedule.objects.filter(class_level__iexact=c_level).first()
+                total_billed = schedule.total_fee if schedule else Decimal('0.00')
+
+                account, _ = StudentFeeAccount.objects.get_or_create(
+                    student=std,
+                    session=session,
+                    term=term,
+                    defaults={
+                        'student_name': s_name,
+                        'class_level': c_level,
+                        'total_billed': total_billed,
+                    }
+                )
+                account.student_name = s_name
+                account.class_level = c_level
+                if account.total_billed == 0 and total_billed > 0:
+                    account.total_billed = total_billed
+
+                # Compute total payments
+                paid = FeeTransaction.objects.filter(
+                    Q(student=std) | Q(student_email__iexact=std.user.email if std.user else ''),
+                    status=FeeTransaction.Status.SUCCESS,
+                    session=session,
+                    term=term
+                ).aggregate(Sum('amount'))['amount__sum'] or Decimal('0.00')
+
+                account.amount_paid = paid
+                effective_billed = max(Decimal('0.00'), account.total_billed - account.discount_applied)
+                account.balance_due = max(Decimal('0.00'), effective_billed - paid)
+                if account.balance_due == 0 and effective_billed > 0:
+                    account.status = StudentFeeAccount.PaymentStatus.PAID
+                elif paid > 0:
+                    account.status = StudentFeeAccount.PaymentStatus.PARTIAL
+                else:
+                    account.status = StudentFeeAccount.PaymentStatus.UNPAID
+                account.save()
+                reconciled_accounts.append(account)
+
+        serializer = StudentFeeAccountSerializer(reconciled_accounts, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

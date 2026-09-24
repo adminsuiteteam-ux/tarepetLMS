@@ -24,6 +24,7 @@ router.register(r'expenses', ExpenseRecordViewSet, basename='expense-record')
 
 urlpatterns = [
     path('paystack/verify/', PaystackVerifyView.as_view(), name='paystack_verify'),
+    path('verify-paystack/', PaystackVerifyView.as_view(), name='paystack_verify_alias'),
     path('paystack/webhook/', PaystackWebhookView.as_view(), name='paystack_webhook'),
     path('', include(router.urls)),
 ]

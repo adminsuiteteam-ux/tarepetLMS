@@ -32,12 +32,12 @@ class FeeItemSerializer(serializers.ModelSerializer):
 
 class ClassFeeScheduleSerializer(serializers.ModelSerializer):
     totalFee = serializers.DecimalField(source='total_fee', max_digits=12, decimal_places=2, read_only=True)
-    tuitionFee = serializers.DecimalField(source='tuition_fee', max_digits=12, decimal_places=2)
-    devLevy = serializers.DecimalField(source='development_levy', max_digits=12, decimal_places=2)
-    booksMaterials = serializers.DecimalField(source='books_materials', max_digits=12, decimal_places=2)
-    uniformSports = serializers.DecimalField(source='uniform_sports', max_digits=12, decimal_places=2)
-    ptaMedical = serializers.DecimalField(source='pta_medical', max_digits=12, decimal_places=2)
-    examLevy = serializers.DecimalField(source='exam_levy', max_digits=12, decimal_places=2)
+    tuitionFee = serializers.DecimalField(source='tuition_fee', max_digits=12, decimal_places=2, required=False)
+    devLevy = serializers.DecimalField(source='development_levy', max_digits=12, decimal_places=2, required=False)
+    booksMaterials = serializers.DecimalField(source='books_materials', max_digits=12, decimal_places=2, required=False)
+    uniformSports = serializers.DecimalField(source='uniform_sports', max_digits=12, decimal_places=2, required=False)
+    ptaMedical = serializers.DecimalField(source='pta_medical', max_digits=12, decimal_places=2, required=False)
+    examLevy = serializers.DecimalField(source='exam_levy', max_digits=12, decimal_places=2, required=False)
 
     class Meta:
         model = ClassFeeSchedule
@@ -51,9 +51,31 @@ class DiscountPolicySerializer(serializers.ModelSerializer):
 
 
 class StudentFeeAccountSerializer(serializers.ModelSerializer):
+    studentId = serializers.SerializerMethodField()
+    admissionNo = serializers.SerializerMethodField()
+    profileImage = serializers.SerializerMethodField()
+
     class Meta:
         model = StudentFeeAccount
         fields = '__all__'
+
+    def get_studentId(self, obj):
+        if obj.student:
+            return obj.student.student_id or str(obj.student.id)
+        return ''
+
+    def get_admissionNo(self, obj):
+        if obj.student:
+            return obj.student.student_id or ''
+        return ''
+
+    def get_profileImage(self, obj):
+        if obj.student and obj.student.user and obj.student.user.avatar:
+            try:
+                return obj.student.user.avatar.url
+            except Exception:
+                return ''
+        return ''
 
 
 class FeeTransactionSerializer(serializers.ModelSerializer):
