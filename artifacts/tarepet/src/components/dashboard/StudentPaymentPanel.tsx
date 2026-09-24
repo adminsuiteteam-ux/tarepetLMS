@@ -326,25 +326,29 @@ export function StudentPaymentPanel({ studentId, studentName, studentEmail, grad
           </div>
         )}
 
-        {!hasChildren && item.amount > 0 && (
+        {!hasChildren && effectiveAmount > 0 && (
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={() => handlePayItem(item)}
               disabled={itemStatus.status === 'PAID' || isProcessing === item.id}
-              className={`flex-1 py-3.5 rounded-2xl text-sm font-bold transition-all flex items-center justify-center gap-2 shadow-md ${
+              className={`flex-1 py-4 px-6 rounded-2xl text-sm font-bold transition-all flex items-center justify-center gap-2.5 shadow-lg ${
                 itemStatus.status === 'PAID'
-                  ? 'bg-muted text-muted-foreground cursor-not-allowed border border-border'
-                  : 'bg-primary text-white hover:bg-primary/90 hover:scale-[1.01]'
+                  ? 'bg-muted text-muted-foreground cursor-not-allowed border border-border shadow-none'
+                  : 'bg-primary text-white hover:bg-primary/90 hover:shadow-primary/25 hover:scale-[1.01] active:scale-[0.99]'
               }`}
             >
               <CreditCard className="w-4 h-4" />
-              {isProcessing === item.id ? t('Connecting to Paystack…', 'Connecting to Paystack…') : itemStatus.status === 'PAID' ? t('Payment Completed ✓', 'Payment Completed ✓') : `${t('Pay ', 'Pay ')}₦${Math.max(remaining, 0).toLocaleString()}${t(' via Paystack', ' via Paystack')}`}
+              {isProcessing === item.id
+                ? t('Connecting to Paystack…', 'Connecting to Paystack…')
+                : itemStatus.status === 'PAID'
+                ? t('Payment Completed ✓', 'Payment Completed ✓')
+                : `${t('Proceed to Pay ', 'Proceed to Pay ')}₦${Math.max(remaining, 0).toLocaleString()}${t(' with Paystack', ' with Paystack')}`}
             </button>
             <button
               onClick={() => setActiveSection('payment_history')}
-              className="px-5 py-3.5 rounded-2xl text-sm font-bold border border-border text-muted-foreground hover:bg-muted transition flex items-center gap-2"
+              className="px-5 py-4 rounded-2xl text-sm font-bold border border-border text-muted-foreground hover:bg-muted transition flex items-center justify-center gap-2"
             >
-              <History className="w-4 h-4" /> {t('View Receipt Log', 'View Receipt Log')}
+              <History className="w-4 h-4" /> {t('View Payment History', 'View Payment History')}
             </button>
           </div>
         )}
