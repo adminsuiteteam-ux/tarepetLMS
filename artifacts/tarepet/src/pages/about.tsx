@@ -60,20 +60,22 @@ export default function About() {
             {t('about.description', 'A premier educational institution in Yenagoa, Bayelsa State — dedicated to shaping confident, independent, and ethical leaders through child-centered discovery and academic excellence.')}
           </motion.p>
 
-          {/* Quick Highlight Pills Bar */}
+          {/* Quick Highlights */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex flex-wrap items-center justify-center gap-3 md:gap-4 text-xs md:text-sm font-sans"
+            className="flex flex-wrap items-center justify-center gap-4 md:gap-6 text-xs md:text-sm font-sans text-white/90"
           >
-            <span className="flex items-center gap-2 px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
+            <span className="flex items-center gap-2 font-medium">
               <Trophy className="w-4 h-4 text-yellow-400" /> {t('about.established', 'Established October 1, 2002')}
             </span>
-            <span className="flex items-center gap-2 px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
+            <span className="text-white/40 hidden md:inline">•</span>
+            <span className="flex items-center gap-2 font-medium">
               <Sprout className="w-4 h-4 text-green-400" /> {t('about.method', 'Montessori & Erdkinder Method')}
             </span>
-            <span className="flex items-center gap-2 px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
+            <span className="text-white/40 hidden md:inline">•</span>
+            <span className="flex items-center gap-2 font-medium">
               <MapPin className="w-4 h-4 text-red-400" /> {t('about.location', '47 Chief John Obi Str., Kpansia, Yenagoa')}
             </span>
           </motion.div>

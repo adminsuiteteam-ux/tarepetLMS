@@ -53,16 +53,17 @@ export default function Programs() {
             Explore our continuous educational pathway: Nursery, Primary, Junior & Senior Secondary, Boarding Facilities, and Special Needs Education.
           </motion.p>
 
-          {/* Interactive Program Category Badges */}
+          {/* Program Categories */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex flex-wrap items-center justify-center gap-2.5 md:gap-3 text-xs font-sans"
+            className="flex flex-wrap items-center justify-center gap-3 md:gap-5 text-xs md:text-sm font-sans text-white/90 font-medium"
           >
-            {['Nursery', 'Primary', 'Secondary', 'Boarding', 'Special Needs'].map((prog, idx) => (
-              <span key={idx} className="px-3.5 py-1.5 rounded-full glass-card bg-white/15 border border-white/25 text-white font-bold shadow-sm hover:bg-white/30 transition-all">
-                {prog}
+            {['Nursery', 'Primary', 'Secondary', 'Boarding', 'Special Needs'].map((prog, idx, arr) => (
+              <span key={idx} className="flex items-center gap-3 md:gap-5">
+                <span>{prog}</span>
+                {idx < arr.length - 1 && <span className="text-white/40 hidden md:inline">•</span>}
               </span>
             ))}
           </motion.div>

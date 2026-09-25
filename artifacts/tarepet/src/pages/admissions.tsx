@@ -108,20 +108,22 @@ export default function Admissions() {
             {t("admissions.hero_desc", "We welcome pupils and students dedicated to character development, curiosity, and academic leadership. Secure your child's place today.")}
           </motion.p>
 
-          {/* Quick Highlight Badges */}
+          {/* Quick Highlights */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
-            className="flex flex-wrap items-center justify-center gap-3 md:gap-4 text-xs md:text-sm font-sans"
+            className="flex flex-wrap items-center justify-center gap-4 md:gap-6 text-xs md:text-sm font-sans text-white/90"
           >
-            <span className="flex items-center gap-2 px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
+            <span className="flex items-center gap-2 font-medium">
               <FileText className="w-4 h-4 text-blue-400" /> {t("admissions.badge_1", "Simple 3-Step Process")}
             </span>
-            <span className="flex items-center gap-2 px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
+            <span className="text-white/40 hidden md:inline">•</span>
+            <span className="flex items-center gap-2 font-medium">
               <GraduationCap className="w-4 h-4 text-emerald-400" /> {t("admissions.badge_2", "Entrance Assessment")}
             </span>
-            <span className="flex items-center gap-2 px-4 py-2 rounded-full glass-card bg-white/10 border border-white/20 text-white font-semibold shadow-sm">
+            <span className="text-white/40 hidden md:inline">•</span>
+            <span className="flex items-center gap-2 font-medium">
               <Building className="w-4 h-4 text-amber-400" /> {t("admissions.badge_3", "Schedule Campus Visit")}
             </span>
           </motion.div>
