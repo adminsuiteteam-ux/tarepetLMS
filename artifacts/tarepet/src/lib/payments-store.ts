@@ -861,6 +861,8 @@ export async function processPaystackPayment({
   itemId,
   studentId,
   studentName,
+  term = '1ST_TERM',
+  session = '2026/2027',
   onSuccess,
   onError,
   onClose
@@ -871,6 +873,8 @@ export async function processPaystackPayment({
   itemId: string;
   studentId: string | number;
   studentName: string;
+  term?: string;
+  session?: string;
   onSuccess: (tx: PaymentTransaction) => void;
   onError: (msg: string) => void;
   onClose: () => void;
@@ -888,11 +892,14 @@ export async function processPaystackPayment({
         amount: Math.round(amount * 100), // Paystack requires amount in Kobo
         ref,
         currency: 'NGN',
+        channels: ['card', 'bank_transfer'], // Strictly card and bank transfer only
         metadata: {
           custom_fields: [
             { display_name: 'Student Name', variable_name: 'student_name', value: studentName },
             { display_name: 'Student ID', variable_name: 'student_id', value: String(studentId) },
-            { display_name: 'Item Name', variable_name: 'item_name', value: itemName }
+            { display_name: 'Item Name', variable_name: 'item_name', value: itemName },
+            { display_name: 'Term', variable_name: 'term', value: term },
+            { display_name: 'Academic Year', variable_name: 'academic_year', value: session }
           ]
         },
         callback: function(response: { reference: string; status: string }) {
@@ -902,6 +909,8 @@ export async function processPaystackPayment({
             reference: finalRef,
             item_id: itemId,
             student_id: studentId,
+            term,
+            session,
           }).catch((verifyErr) => {
             console.warn('Backend verification logged or awaiting webhook confirmation:', verifyErr);
           }).finally(() => {
@@ -925,8 +934,8 @@ export async function processPaystackPayment({
               channel: 'paystack',
               status: 'SUCCESS',
               paidAt: new Date().toISOString(),
-              term: '1ST_TERM',
-              session: '2026/2027'
+              term,
+              session
             };
             onSuccess(fallbackTx);
           }

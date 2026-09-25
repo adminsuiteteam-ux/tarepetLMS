@@ -82,26 +82,63 @@ export function StudentPaymentPanel({ studentId, studentName, studentEmail, grad
   const failedTxs = transactions.filter(t => t.status === 'FAILED');
   const successTxs = transactions.filter(t => t.status === 'SUCCESS');
 
+  interface CheckoutFlowState {
+    item: PaymentItem;
+    amount: number;
+    term: string;
+    year: string;
+    payerName: string;
+    payerEmail: string;
+    step: 'form' | 'preview';
+  }
+
+  const [checkoutFlow, setCheckoutFlow] = useState<CheckoutFlowState | null>(null);
+
   const handlePayItem = (item: PaymentItem) => {
     setFeedbackMessage(null);
-    setIsProcessing(item.id);
     const itemAmount = getItemAmountForGrade(item, gradeLevel);
     const itemStatus = getStudentItemStatus(studentId, item.id, gradeLevel);
     const remaining = itemAmount - itemStatus.paidAmount;
     if (remaining <= 0) {
       setFeedbackMessage({ type: 'success', text: `You have already fully paid for ${item.name}.` });
-      setIsProcessing(null);
       return;
     }
-    processPaystackPayment({
-      email: studentEmail,
+    setCheckoutFlow({
+      item,
       amount: remaining,
+      term: item.term || '1ST_TERM',
+      year: item.session || '2026/2027',
+      payerName: studentName,
+      payerEmail: studentEmail || 'student@tarepetmontessori.org',
+      step: 'form',
+    });
+  };
+
+  const handleLaunchPaystack = () => {
+    if (!checkoutFlow) return;
+    const { item, amount, term, year, payerEmail, payerName } = checkoutFlow;
+    setIsProcessing(item.id);
+    processPaystackPayment({
+      email: payerEmail,
+      amount,
       itemName: item.name,
       itemId: item.id,
       studentId,
-      studentName,
-      onSuccess: (tx) => { setIsProcessing(null); setFeedbackMessage({ type: 'success', text: `Payment of ₦${tx.amount.toLocaleString()} for ${item.name} completed! Ref: ${tx.reference}` }); },
-      onError: (msg) => { setIsProcessing(null); setFeedbackMessage({ type: 'error', text: msg }); },
+      studentName: payerName || studentName,
+      term,
+      session: year,
+      onSuccess: (tx) => {
+        setIsProcessing(null);
+        setCheckoutFlow(null);
+        setFeedbackMessage({
+          type: 'success',
+          text: `Payment of ₦${tx.amount.toLocaleString()} for ${item.name} (${term.replace('_', ' ')} ${year}) completed! Ref: ${tx.reference}`
+        });
+      },
+      onError: (msg) => {
+        setIsProcessing(null);
+        setFeedbackMessage({ type: 'error', text: msg });
+      },
       onClose: () => setIsProcessing(null),
     });
   };
@@ -451,6 +488,220 @@ export function StudentPaymentPanel({ studentId, studentName, studentEmail, grad
           {renderContent()}
         </div>
       </div>
+
+      {/* Checkout Flow Modal: Form -> Preview -> Continue to Paystack */}
+      {checkoutFlow && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-card w-full max-w-lg rounded-2xl border border-border shadow-2xl p-6 sm:p-7 space-y-5 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-border pb-3.5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                  <CreditCard className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-serif font-bold text-lg text-foreground">
+                    {checkoutFlow.step === 'form' ? t('Payment Configuration', 'Payment Configuration') : t('Confirm & Preview Payment', 'Confirm & Preview Payment')}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    {checkoutFlow.step === 'form'
+                      ? t('Step 1 of 2: Select term and academic year', 'Step 1 of 2: Select term and academic year')
+                      : t('Step 2 of 2: Review details before Paystack checkout', 'Step 2 of 2: Review details before Paystack checkout')}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setCheckoutFlow(null)}
+                className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Step Indicator */}
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className={`p-2 rounded-lg text-center font-bold transition-all ${checkoutFlow.step === 'form' ? 'bg-primary text-white shadow-xs' : 'bg-muted/50 text-muted-foreground'}`}>
+                1. {t('Fill Term & Year', 'Fill Term & Year')}
+              </div>
+              <div className={`p-2 rounded-lg text-center font-bold transition-all ${checkoutFlow.step === 'preview' ? 'bg-primary text-white shadow-xs' : 'bg-muted/50 text-muted-foreground'}`}>
+                2. {t('Preview & Confirm', 'Preview & Confirm')}
+              </div>
+            </div>
+
+            {/* Fee Snapshot Banner */}
+            <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t('Fee Item', 'Fee Item')}</span>
+                <h4 className="font-serif font-bold text-foreground text-sm sm:text-base">{checkoutFlow.item.name}</h4>
+                <p className="text-xs text-muted-foreground">{studentName} · {gradeLevel}</p>
+              </div>
+              <div className="text-right">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t('Amount Due', 'Amount Due')}</span>
+                <div className="text-xl sm:text-2xl font-serif font-bold text-primary">
+                  ₦{checkoutFlow.amount.toLocaleString()}
+                </div>
+              </div>
+            </div>
+
+            {/* STEP 1: FORM */}
+            {checkoutFlow.step === 'form' && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-foreground mb-1.5">
+                    {t('Academic Term', 'Academic Term')} <span className="text-destructive">*</span>
+                  </label>
+                  <select
+                    value={checkoutFlow.term}
+                    onChange={(e) => setCheckoutFlow({ ...checkoutFlow, term: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-xs font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition"
+                  >
+                    <option value="1ST_TERM">{t('1st Term (First Term)', '1st Term (First Term)')}</option>
+                    <option value="2ND_TERM">{t('2nd Term (Second Term)', '2nd Term (Second Term)')}</option>
+                    <option value="3RD_TERM">{t('3rd Term (Third Term)', '3rd Term (Third Term)')}</option>
+                    <option value="ALL">{t('Full Session / Annual', 'Full Session / Annual')}</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-foreground mb-1.5">
+                    {t('Academic Year / Session', 'Academic Year / Session')} <span className="text-destructive">*</span>
+                  </label>
+                  <select
+                    value={checkoutFlow.year}
+                    onChange={(e) => setCheckoutFlow({ ...checkoutFlow, year: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-xs font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition"
+                  >
+                    <option value="2026/2027">{t('2026/2027 (Current Academic Session)', '2026/2027 (Current Academic Session)')}</option>
+                    <option value="2025/2026">{t('2025/2026 (Previous Academic Session)', '2025/2026 (Previous Academic Session)')}</option>
+                    <option value="2027/2028">{t('2027/2028 (Upcoming Academic Session)', '2027/2028 (Upcoming Academic Session)')}</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-foreground mb-1.5">
+                    {t('Payer / Student Name', 'Payer / Student Name')}
+                  </label>
+                  <input
+                    type="text"
+                    value={checkoutFlow.payerName}
+                    onChange={(e) => setCheckoutFlow({ ...checkoutFlow, payerName: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-xs font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition"
+                    placeholder="Enter payer full name"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-foreground mb-1.5">
+                    {t('Email Address (for Receipt & Verification)', 'Email Address (for Receipt & Verification)')} <span className="text-destructive">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={checkoutFlow.payerEmail}
+                    onChange={(e) => setCheckoutFlow({ ...checkoutFlow, payerEmail: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-xs font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition"
+                    placeholder="name@example.com"
+                  />
+                </div>
+
+                {/* Channels Guarantee Notice */}
+                <div className="p-3 rounded-xl bg-muted/40 border border-border text-xs flex items-start gap-2.5 text-muted-foreground">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold text-foreground">{t('Paystack Checkout Channels: ', 'Paystack Checkout Channels: ')}</span>
+                    <span>{t('Strictly Card (Mastercard / Visa / Verve) and Bank Transfer only.', 'Strictly Card (Mastercard / Visa / Verve) and Bank Transfer only.')}</span>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2.5 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setCheckoutFlow(null)}
+                    className="flex-1 py-3 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted transition cursor-pointer"
+                  >
+                    {t('Cancel', 'Cancel')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCheckoutFlow({ ...checkoutFlow, step: 'preview' })}
+                    className="flex-1 py-3 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition flex items-center justify-center gap-1.5 shadow-md shadow-primary/20 cursor-pointer"
+                  >
+                    {t('Next: Preview & Confirm', 'Next: Preview & Confirm')}
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 2: PREVIEW & CONFIRMATION */}
+            {checkoutFlow.step === 'preview' && (
+              <div className="space-y-4">
+                <div className="rounded-xl border border-border bg-card/60 divide-y divide-border/60 overflow-hidden text-xs">
+                  <div className="p-3 flex justify-between">
+                    <span className="text-muted-foreground font-medium">{t('Student Name', 'Student Name')}</span>
+                    <span className="font-bold text-foreground">{checkoutFlow.payerName || studentName}</span>
+                  </div>
+                  <div className="p-3 flex justify-between">
+                    <span className="text-muted-foreground font-medium">{t('Student ID / Class', 'Student ID / Class')}</span>
+                    <span className="font-mono font-bold text-foreground">{studentId} · {gradeLevel}</span>
+                  </div>
+                  <div className="p-3 flex justify-between">
+                    <span className="text-muted-foreground font-medium">{t('Fee Category & Item', 'Fee Category & Item')}</span>
+                    <span className="font-bold text-foreground">{checkoutFlow.item.name}</span>
+                  </div>
+                  <div className="p-3 flex justify-between bg-primary/5">
+                    <span className="text-primary font-bold">{t('Academic Term', 'Academic Term')}</span>
+                    <span className="font-bold text-primary">{checkoutFlow.term.replace('_', ' ')}</span>
+                  </div>
+                  <div className="p-3 flex justify-between bg-primary/5">
+                    <span className="text-primary font-bold">{t('Academic Session / Year', 'Academic Session / Year')}</span>
+                    <span className="font-bold text-primary">{checkoutFlow.year}</span>
+                  </div>
+                  <div className="p-3 flex justify-between">
+                    <span className="text-muted-foreground font-medium">{t('Receipt Recipient', 'Receipt Recipient')}</span>
+                    <span className="font-mono text-foreground">{checkoutFlow.payerEmail}</span>
+                  </div>
+                  <div className="p-3.5 flex justify-between items-center bg-muted/20">
+                    <span className="font-bold text-foreground text-sm">{t('Total Amount to Pay', 'Total Amount to Pay')}</span>
+                    <span className="font-serif font-extrabold text-xl text-emerald-600">₦{checkoutFlow.amount.toLocaleString()}</span>
+                  </div>
+                </div>
+
+                {/* Payment channel reminder */}
+                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs flex items-center justify-between text-emerald-700 dark:text-emerald-400">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="w-4 h-4" />
+                    <span className="font-semibold">{t('Channels on Paystack: Card & Bank Transfer', 'Channels on Paystack: Card & Bank Transfer')}</span>
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 px-2 py-0.5 rounded-full">{t('Instant', 'Instant')}</span>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2.5 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setCheckoutFlow({ ...checkoutFlow, step: 'form' })}
+                    className="flex-1 py-3 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted transition flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    ← {t('Back / Edit Details', 'Back / Edit Details')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleLaunchPaystack}
+                    disabled={isProcessing === checkoutFlow.item.id}
+                    className="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/25 active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+                  >
+                    <CreditCard className="w-4 h-4" />
+                    {isProcessing === checkoutFlow.item.id
+                      ? t('Opening Paystack…', 'Opening Paystack…')
+                      : t('Continue to Paystack', 'Continue to Paystack')}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Receipt Modal */}
       {receiptModal && (

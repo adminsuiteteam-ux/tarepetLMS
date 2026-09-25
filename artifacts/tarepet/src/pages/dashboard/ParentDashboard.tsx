@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { authClient } from '@/lib/api-auth';
 import { getStoredExams, getStoredSubmissions, subscribeToCBTStore, getCoursesForClass, getStudentBroadsheet, calculateWAECGrade, syncStudentsWithBackend, broadcastRealtimeEvent, getStoredStudents } from '@/lib/cbt-store';
-import { subscribeToPaymentStore, syncPaymentsWithBackend } from '@/lib/payments-store';
+import { subscribeToPaymentStore, syncPaymentsWithBackend, processPaystackPayment } from '@/lib/payments-store';
 import { sendWebSocketEvent } from '@/lib/websocket-client';
 import { RealTimeSyncStatus } from '@/components/cbt/RealTimeSyncStatus';
 import { TerminalReportCard } from '@/components/reports/TerminalReportCard';
@@ -95,8 +95,18 @@ export default function ParentDashboard() {
     { id: 1, from: 'Mrs. Okafor Chioma', role: 'Teacher', time: 'Yesterday 10:30 AM', text: 'Good day! Emeka has been demonstrating remarkable leadership in mathematics and agronomy ledgers.', fromParent: false },
     { id: 2, from: 'Me', role: 'Parent', time: 'Yesterday 11:15 AM', text: 'Thank you Mrs. Okafor! We are very proud of his growth.', fromParent: true },
   ]);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  interface ParentPaymentFlow {
+    invoice: any;
+    amount: number;
+    term: string;
+    year: string;
+    payerName: string;
+    payerEmail: string;
+    step: 'form' | 'preview';
+  }
+  const [parentPaymentFlow, setParentPaymentFlow] = useState<ParentPaymentFlow | null>(null);
+  const [isProcessingParentPayment, setIsProcessingParentPayment] = useState(false);
+  const [parentPaymentReceipt, setParentPaymentReceipt] = useState<{ ref: string; amount: number; term: string; year: string } | null>(null);
   const [showConferenceModal, setShowConferenceModal] = useState(false);
   const [confDate, setConfDate] = useState('Aug 10, 2026 - 2:00 PM');
   const [confBooked, setConfBooked] = useState(false);
@@ -536,7 +546,21 @@ export default function ParentDashboard() {
               <div className="text-right flex items-center gap-3">
                 <span className="text-2xl font-serif font-bold text-foreground">{inv.amount}</span>
                 {inv.status === 'Pending' ? (
-                  <button onClick={() => setShowPaymentModal(true)} className="bg-primary text-white text-xs font-bold px-5 py-2.5 rounded-xl hover:bg-primary/90 transition-colors shadow-sm">
+                  <button
+                    onClick={() => {
+                      setParentPaymentReceipt(null);
+                      setParentPaymentFlow({
+                        invoice: inv,
+                        amount: parseInt(inv.amount.replace(/[^0-9]/g, ''), 10) || 185000,
+                        term: inv.term?.includes('1st') ? '1ST_TERM' : inv.term?.includes('2nd') ? '2ND_TERM' : '1ST_TERM',
+                        year: '2026/2027',
+                        payerName: parentProfile.name,
+                        payerEmail: user?.email || 'parent@tarepetmontessori.org',
+                        step: 'form',
+                      });
+                    }}
+                    className="bg-primary text-white text-xs font-bold px-5 py-2.5 rounded-xl hover:bg-primary/90 transition-colors shadow-sm cursor-pointer"
+                  >
                     {t('Pay Now')}
                   </button>
                 ) : (
@@ -547,30 +571,267 @@ export default function ParentDashboard() {
           ))}
         </div>
 
-        {showPaymentModal && (
+        {/* 2-Step Payment Modal: Form -> Preview -> Continue to Paystack */}
+        {parentPaymentFlow && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-md p-6 space-y-4">
-              <h3 className="font-serif font-bold text-xl text-foreground">{t('Pay School Fees')}</h3>
-              <p className="text-xs text-muted-foreground">{t('Amount: ')}<strong className="text-foreground text-base">₦185,000</strong></p>
-              {!paymentSuccess ? (
-                <div className="space-y-3">
-                  <div className="p-3 border border-border rounded-xl bg-muted/20 text-xs space-y-1">
-                    <p className="font-bold text-foreground">{t('Card / Bank Transfer (Flutterwave / Paystack)')}</p>
-                    <p className="text-muted-foreground">{t('Encrypted & instant school ledger update')}</p>
+            <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-lg p-6 sm:p-7 space-y-5 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+              {!parentPaymentReceipt ? (
+                <>
+                  {/* Header */}
+                  <div className="flex items-center justify-between border-b border-border pb-3.5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                        <CreditCard className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="font-serif font-bold text-lg text-foreground">
+                          {parentPaymentFlow.step === 'form' ? t('School Fee Payment Configuration') : t('Confirm & Preview Payment')}
+                        </h3>
+                        <p className="text-xs text-muted-foreground">
+                          {parentPaymentFlow.step === 'form'
+                            ? t('Step 1 of 2: Select term and academic year')
+                            : t('Step 2 of 2: Review details before Paystack checkout')}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setParentPaymentFlow(null)}
+                      className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
-                  <button onClick={() => setPaymentSuccess(true)} className="w-full bg-primary text-white py-3 rounded-xl font-bold text-xs hover:bg-primary/90 transition-colors">
-                    {t('Confirm & Complete Payment')}
-                  </button>
-                  <button onClick={() => setShowPaymentModal(false)} className="w-full border border-border py-2.5 rounded-xl text-xs hover:bg-accent transition-colors">
-                    {t('Cancel')}
-                  </button>
-                </div>
+
+                  {/* Step Progress */}
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className={`p-2 rounded-lg text-center font-bold transition-all ${parentPaymentFlow.step === 'form' ? 'bg-primary text-white shadow-xs' : 'bg-muted/50 text-muted-foreground'}`}>
+                      1. {t('Fill Term & Year')}
+                    </div>
+                    <div className={`p-2 rounded-lg text-center font-bold transition-all ${parentPaymentFlow.step === 'preview' ? 'bg-primary text-white shadow-xs' : 'bg-muted/50 text-muted-foreground'}`}>
+                      2. {t('Preview & Confirm')}
+                    </div>
+                  </div>
+
+                  {/* Invoice Summary Card */}
+                  <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t('Student / Invoice')}</span>
+                      <h4 className="font-serif font-bold text-foreground text-sm sm:text-base">{selectedChild.name}</h4>
+                      <p className="text-xs text-muted-foreground">{parentPaymentFlow.invoice.id} · {selectedChild.grade}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t('Amount Due')}</span>
+                      <div className="text-xl sm:text-2xl font-serif font-bold text-primary">
+                        ₦{parentPaymentFlow.amount.toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* STEP 1: FORM */}
+                  {parentPaymentFlow.step === 'form' && (
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-xs font-bold text-foreground mb-1.5">
+                          {t('Academic Term')} <span className="text-destructive">*</span>
+                        </label>
+                        <select
+                          value={parentPaymentFlow.term}
+                          onChange={(e) => setParentPaymentFlow({ ...parentPaymentFlow, term: e.target.value })}
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-xs font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition"
+                        >
+                          <option value="1ST_TERM">{t('1st Term (First Term)')}</option>
+                          <option value="2ND_TERM">{t('2nd Term (Second Term)')}</option>
+                          <option value="3RD_TERM">{t('3rd Term (Third Term)')}</option>
+                          <option value="ALL">{t('Full Session / Annual')}</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-foreground mb-1.5">
+                          {t('Academic Year / Session')} <span className="text-destructive">*</span>
+                        </label>
+                        <select
+                          value={parentPaymentFlow.year}
+                          onChange={(e) => setParentPaymentFlow({ ...parentPaymentFlow, year: e.target.value })}
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-xs font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition"
+                        >
+                          <option value="2026/2027">{t('2026/2027 (Current Academic Session)')}</option>
+                          <option value="2025/2026">{t('2025/2026 (Previous Academic Session)')}</option>
+                          <option value="2027/2028">{t('2027/2028 (Upcoming Academic Session)')}</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-foreground mb-1.5">
+                          {t('Payer / Parent Full Name')}
+                        </label>
+                        <input
+                          type="text"
+                          value={parentPaymentFlow.payerName}
+                          onChange={(e) => setParentPaymentFlow({ ...parentPaymentFlow, payerName: e.target.value })}
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-xs font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition"
+                          placeholder="Enter payer full name"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-foreground mb-1.5">
+                          {t('Email Address (for Receipt & Verification)')} <span className="text-destructive">*</span>
+                        </label>
+                        <input
+                          type="email"
+                          value={parentPaymentFlow.payerEmail}
+                          onChange={(e) => setParentPaymentFlow({ ...parentPaymentFlow, payerEmail: e.target.value })}
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-border bg-background text-foreground text-xs font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition"
+                          placeholder="name@example.com"
+                        />
+                      </div>
+
+                      {/* Channels Guarantee Notice */}
+                      <div className="p-3 rounded-xl bg-muted/40 border border-border text-xs flex items-start gap-2.5 text-muted-foreground">
+                        <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-bold text-foreground">{t('Paystack Checkout Channels: ')}</span>
+                          <span>{t('Strictly Card (Mastercard / Visa / Verve) and Bank Transfer only.')}</span>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex gap-2.5 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => setParentPaymentFlow(null)}
+                          className="flex-1 py-3 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted transition cursor-pointer"
+                        >
+                          {t('Cancel')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setParentPaymentFlow({ ...parentPaymentFlow, step: 'preview' })}
+                          className="flex-1 py-3 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 transition flex items-center justify-center gap-1.5 shadow-md shadow-primary/20 cursor-pointer"
+                        >
+                          {t('Next: Preview & Confirm')}
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* STEP 2: PREVIEW & CONFIRMATION */}
+                  {parentPaymentFlow.step === 'preview' && (
+                    <div className="space-y-4">
+                      <div className="rounded-xl border border-border bg-card/60 divide-y divide-border/60 overflow-hidden text-xs">
+                        <div className="p-3 flex justify-between">
+                          <span className="text-muted-foreground font-medium">{t('Student')}</span>
+                          <span className="font-bold text-foreground">{selectedChild.name} ({selectedChild.grade})</span>
+                        </div>
+                        <div className="p-3 flex justify-between">
+                          <span className="text-muted-foreground font-medium">{t('Payer')}</span>
+                          <span className="font-bold text-foreground">{parentPaymentFlow.payerName}</span>
+                        </div>
+                        <div className="p-3 flex justify-between bg-primary/5">
+                          <span className="text-primary font-bold">{t('Academic Term')}</span>
+                          <span className="font-bold text-primary">{parentPaymentFlow.term.replace('_', ' ')}</span>
+                        </div>
+                        <div className="p-3 flex justify-between bg-primary/5">
+                          <span className="text-primary font-bold">{t('Academic Session / Year')}</span>
+                          <span className="font-bold text-primary">{parentPaymentFlow.year}</span>
+                        </div>
+                        <div className="p-3 flex justify-between">
+                          <span className="text-muted-foreground font-medium">{t('Receipt Recipient')}</span>
+                          <span className="font-mono text-foreground">{parentPaymentFlow.payerEmail}</span>
+                        </div>
+                        <div className="p-3.5 flex justify-between items-center bg-muted/20">
+                          <span className="font-bold text-foreground text-sm">{t('Total Amount to Pay')}</span>
+                          <span className="font-serif font-extrabold text-xl text-emerald-600">₦{parentPaymentFlow.amount.toLocaleString()}</span>
+                        </div>
+                      </div>
+
+                      {/* Payment channel reminder */}
+                      <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs flex items-center justify-between text-emerald-700 dark:text-emerald-400">
+                        <div className="flex items-center gap-2">
+                          <CreditCard className="w-4 h-4" />
+                          <span className="font-semibold">{t('Channels on Paystack: Card & Bank Transfer')}</span>
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 px-2 py-0.5 rounded-full">{t('Instant')}</span>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex gap-2.5 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => setParentPaymentFlow({ ...parentPaymentFlow, step: 'form' })}
+                          className="flex-1 py-3 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted transition flex items-center justify-center gap-1 cursor-pointer"
+                        >
+                          ← {t('Back / Edit Details')}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={isProcessingParentPayment}
+                          onClick={() => {
+                            setIsProcessingParentPayment(true);
+                            processPaystackPayment({
+                              email: parentPaymentFlow.payerEmail,
+                              amount: parentPaymentFlow.amount,
+                              itemName: `${parentPaymentFlow.term.replace('_', ' ')} Tuition Fee`,
+                              itemId: 'school_fees',
+                              studentId: selectedChild.id,
+                              studentName: selectedChild.name,
+                              term: parentPaymentFlow.term,
+                              session: parentPaymentFlow.year,
+                              onSuccess: (tx) => {
+                                setIsProcessingParentPayment(false);
+                                setParentPaymentReceipt({
+                                  ref: tx.reference,
+                                  amount: tx.amount,
+                                  term: parentPaymentFlow.term,
+                                  year: parentPaymentFlow.year
+                                });
+                              },
+                              onError: (msg) => {
+                                setIsProcessingParentPayment(false);
+                                showToast(`Payment error: ${msg}`);
+                              },
+                              onClose: () => {
+                                setIsProcessingParentPayment(false);
+                              }
+                            });
+                          }}
+                          className="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/25 active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+                        >
+                          <CreditCard className="w-4 h-4" />
+                          {isProcessingParentPayment
+                            ? t('Opening Paystack…')
+                            : t('Continue to Paystack')}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
               ) : (
-                <div className="text-center space-y-3 py-4">
-                  <CheckCircle2 className="w-12 h-12 text-secondary mx-auto" />
-                  <p className="font-serif font-bold text-foreground text-lg">{t('Payment Successful!')}</p>
-                  <p className="text-xs text-muted-foreground">{t('Receipt RCP-99120 sent to your registered email.')}</p>
-                  <button onClick={() => { setShowPaymentModal(false); setPaymentSuccess(false); }} className="bg-primary text-white px-6 py-2 rounded-xl text-xs font-bold">{t('Done')}</button>
+                <div className="text-center space-y-4 py-4">
+                  <CheckCircle2 className="w-14 h-14 text-emerald-500 mx-auto animate-in zoom-in-50 duration-300" />
+                  <div>
+                    <p className="font-serif font-bold text-foreground text-xl">{t('Payment Successful!')}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {t('Your transaction of ')}<strong className="text-foreground">₦{parentPaymentReceipt.amount.toLocaleString()}</strong>{t(' has been verified.')}
+                    </p>
+                  </div>
+                  <div className="p-3.5 bg-muted/40 rounded-xl border border-border text-xs space-y-1 font-mono text-left max-w-sm mx-auto">
+                    <p><span className="text-muted-foreground">Reference: </span><span className="font-bold text-foreground">{parentPaymentReceipt.ref}</span></p>
+                    <p><span className="text-muted-foreground">Session / Term: </span><span className="font-bold text-foreground">{parentPaymentReceipt.year} ({parentPaymentReceipt.term.replace('_', ' ')})</span></p>
+                    <p><span className="text-muted-foreground">Gateway: </span><span className="font-bold text-emerald-600">Paystack Verified ✓</span></p>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{t('Official digital receipt has been dispatched to your email.')}</p>
+                  <button
+                    onClick={() => {
+                      setParentPaymentFlow(null);
+                      setParentPaymentReceipt(null);
+                    }}
+                    className="bg-primary text-white px-8 py-2.5 rounded-xl text-xs font-bold hover:bg-primary/90 transition shadow-sm cursor-pointer"
+                  >
+                    {t('Done')}
+                  </button>
                 </div>
               )}
             </div>
